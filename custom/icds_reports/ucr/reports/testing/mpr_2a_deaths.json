@@ -124,7 +124,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident = 'yes' AND date_death - dob <= 28": 1
+          "sex = 'F' AND resident = 1 AND date_death - dob <= 28": 1
         },
         "else_": 0
       },
@@ -135,7 +135,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident = 'yes' AND date_death - dob <= 28": 1
+          "sex = 'M' AND resident = 1 AND date_death - dob <= 28": 1
         },
         "else_": 0
       },
@@ -146,7 +146,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 'yes' AND date_death - dob <= 28": 1
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
         },
         "else_": 0
       },
@@ -157,7 +157,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 'yes' AND date_death - dob <= 28": 1
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
         },
         "else_": 0
       },
@@ -168,7 +168,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident = 'yes' AND date_death - dob BETWEEN 29 AND 364": 1
+          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
         },
         "else_": 0
       },
@@ -179,7 +179,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident = 'yes' AND date_death - dob BETWEEN 29 AND 364": 1
+          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
         },
         "else_": 0
       },
@@ -190,7 +190,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 'yes' AND date_death - dob BETWEEN 29 AND 364": 1
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
         },
         "else_": 0
       },
@@ -201,7 +201,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 'yes' AND date_death - dob BETWEEN 29 AND 364": 1
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
         },
         "else_": 0
       },
@@ -212,7 +212,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident = 'yes' AND date_death - dob BETWEEN 365 AND 1826": 1
+          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
         },
         "else_": 0
       },
@@ -223,7 +223,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident = 'yes' AND date_death - dob BETWEEN 365 AND 1826": 1
+          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
         },
         "else_": 0
       },
@@ -234,7 +234,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 'yes' AND date_death - dob BETWEEN 365 AND 1826": 1
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
         },
         "else_": 0
       },
@@ -245,7 +245,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 'yes' AND date_death - dob BETWEEN 365 AND 1826": 1
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
         },
         "else_": 0
       },
@@ -256,7 +256,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 'yes' AND age_at_death_yrs >= 11": 1
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND age_at_death_yrs >= 11": 1
         },
         "else_": 0
       },
@@ -267,7 +267,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "sex = 'F' AND resident = 'yes' AND age_at_death_yrs >= 11": 1
+          "sex = 'F' AND resident = 1 AND age_at_death_yrs >= 11": 1
         },
         "else_": 0
       },
@@ -278,7 +278,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'pregnant' AND resident = 'yes'": 1
+          "female_death_type = 'pregnant' AND resident = 1": 1
         },
         "else_": 0
       },
@@ -289,7 +289,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'pregnant' AND resident IS DISTINCT FROM  'yes'": 1
+          "female_death_type = 'pregnant' AND resident IS DISTINCT FROM 1": 1
         },
         "else_": 0
       },
@@ -300,7 +300,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'delivery' AND resident = 'yes'": 1
+          "female_death_type = 'delivery' AND resident = 1": 1
         },
         "else_": 0
       },
@@ -311,7 +311,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'delivery' AND resident IS DISTINCT FROM 'yes'": 1
+          "female_death_type = 'delivery' AND resident IS DISTINCT FROM 1": 1
         },
         "else_": 0
       },
@@ -322,7 +322,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'pnc' AND resident = 'yes'": 1
+          "female_death_type = 'pnc' AND resident = 1": 1
         },
         "else_": 0
       },
@@ -333,7 +333,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "female_death_type = 'pnc' AND resident IS DISTINCT FROM 'yes'": 1
+          "female_death_type = 'pnc' AND resident IS DISTINCT FROM 1": 1
         },
         "else_": 0
       }
