@@ -141,8 +141,8 @@ def paginate_releases(request, domain, app_id):
                 if build_doc and build_doc['_id'] not in app_ids:
                     total_apps = total_apps + 1
                     apps = apps + [build_doc]
-                apps = sorted(apps, key=lambda a: -a['version'])
-                apps = apps[:limit]
+                    apps = sorted(apps, key=lambda a: -a['version'])
+                    apps = apps[:limit]
 
         saved_apps = [
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
