@@ -6,17 +6,16 @@
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
-amqp==1.4.9
-anyjson==0.3.3
+amqp==2.4.1
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 backports-abc==0.5        # via tornado
 backports.shutil-get-terminal-size==1.0.0  # via ipython
-billiard==3.3.0.23
+billiard==3.5.0.5
 boto3==1.9.94
 botocore==1.12.94
-celery==3.1.25
+celery==4.2.1
 certifi==2018.11.29
 cffi==1.12.0
 chardet==3.0.4
@@ -36,7 +35,7 @@ django-angular==0.7.16
 django-appconf==1.0.2
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -93,7 +92,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37
+kombu==4.3.0
 laboratory==0.2.0
 lxml==4.3.1
 mako==1.0.7
@@ -171,7 +170,8 @@ ua-parser==0.8.0
 unidecode==0.04.20
 urllib3==1.24.1
 user-agents==1.1.0
-uwsgi==2.0.11.2
+uwsgi==2.0.18
+vine==1.2.0
 wcwidth==0.1.7            # via prompt-toolkit
 webencodings==0.5.1
 werkzeug==0.11.15
