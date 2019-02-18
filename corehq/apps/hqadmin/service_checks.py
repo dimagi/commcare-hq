@@ -91,7 +91,7 @@ def check_kafka():
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
     cluster_health = check_es_cluster_health()
-    if cluster_health != 'green':
+    if cluster_health != 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
     doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
