@@ -4,6 +4,7 @@ jsonobject==0.9.8
 jsonobject-couchdbkit~=0.9
 cloudant==2.7.0  # Remove after version is released containg bugfix https://github.com/cloudant/python-cloudant/pull/415
 celery~=4.2
+kombu==4.2.2.post1  # Remove once fix is released for https://github.com/celery/kombu/issues/1006
 # required by django-digest
 decorator==4.0.11
 django~=1.11
