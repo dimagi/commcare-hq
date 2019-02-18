@@ -244,6 +244,88 @@ class AggLsMonthly(models.Model):
         db_table = 'agg_ls_monthly'
 
 
+class ServiceDeliveryMonthly(models.Model):
+    """
+    Contains rows for Service delivery report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
+    num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
+    num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    gm_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 0-3 years of children"
+    )
+    gm_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 3-5 years of children"
+    )
+    children_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 0-3 years"
+    )
+    children_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-5 years"
+    )
+    children_3_6 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-6 years"
+    )
+
+    pse_attended_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended pse for atleast 21 days in the month"
+    )
+    lunch_count_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children had lunch for atleast 21 days in the month"
+    )
+    thr_given_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Take home ration given to PW/LW and children(6-36 months) for atleast 21 days"
+    )
+    total_thr_candidates = models.IntegerField(
+        blank=True, null=True,
+        help_text="Sum of PW/LW  and children of age 6-36 months"
+    )
+    valid_visits = models.IntegerField(
+        blank=True, null=True,
+        help_text="Valid home visits"
+    )
+    expected_visits = models.IntegerField(
+        blank=True, null=True,
+        help_text="Expected Home visits"
+    )
+
+    class Meta(object):
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'service_delivery_monthly'
+
+
 class AggAwcMonthly(models.Model):
     """Contains one row for the status of every AWC, Supervisor, Block,
     District and State at the end of each month
