@@ -51,7 +51,7 @@ del key, value
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
 
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
