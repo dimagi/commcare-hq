@@ -163,18 +163,25 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record.lactating_all) AS cases_ccs_lactating_all,
-                sum(agg_ccs_record.valid_visits) + SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
-                sum(agg_ccs_record.expected_visits) + sum(CASE WHEN agg_cf.valid_visits IS NOT NULL 
-                                                          THEN 0.39 ELSE 0 END) AS expected_visits
+                sum(agg_ccs_record.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
+                sum(agg_ccs_record.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record
-            LEFT OUTER JOIN "{ccs_record_case_ucr}" ucr ON agg_ccs_record.awc_id = ucr.awc_id AND (
-                %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
-                date_trunc('month', ucr.closed_on)::DATE > %(start_date)s) AND
-                date_trunc('month', ucr.opened_on) <= %(start_date)s
-                ) 
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+            LEFT OUTER JOIN (
+                    SELECT 
+                        ucr.awc_id,
+                        agg_cf.month,
+                        SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
+                        sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
+                        FROM  "{ccs_record_case_ucr}" ucr
+                        LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+                        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
+                            date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                            date_trunc('month', ucr.opened_on) <= %(start_date)s
+
+                        GROUP BY ucr.awc_id, agg_cf.month
+                    )  home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
             WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5 
-            GROUP BY agg_ccs_record.awc_id, agg_ccs_record.month
+            GROUP BY agg_ccs_record.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
@@ -183,7 +190,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
-        }
+            }
 
         yield """
         UPDATE "{tablename}" agg_awc SET
