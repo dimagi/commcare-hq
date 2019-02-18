@@ -8,6 +8,7 @@ hqDefine("hqwebapp/js/widgets", [
 ], function ($) {
     var init = function (additionalConfig) {
         additionalConfig = additionalConfig || {};
+
         _.each($(".hqwebapp-autocomplete"), function (input) {
             var $input = $(input);
             $input.select2(_.extend({
@@ -16,12 +17,51 @@ hqDefine("hqwebapp/js/widgets", [
             }, additionalConfig));
         });
 
+        _.each($(".hqwebapp-autocomplete-email"), function (input) {
+            var $input = $(input);
+            $input.select2(_.extend({
+                multiple: true,
+                placeholder: ' ',
+                tags: true,
+                createTag: function (params) {
+                    // Support pasting in comma-separated values
+                    var terms = parseEmails(params.term);
+                    if (terms.length === 1) {
+                        return {
+                            id: terms[0],
+                            text: terms[0],
+                        };
+                    }
+
+                    $input.select2('close');
+                    var values = $input.val() || [];
+                    if (!_.isArray(values)) {
+                        values = [values];
+                    }
+                    _.each(terms, function (term) {
+                        if (!_.contains(values, term)) {
+                            $input.append(new Option(term, term));
+                            values.push(term);
+                        }
+                    });
+                    $input.val(values).trigger("change");
+
+                    return null;
+                },
+            }, additionalConfig));
+        });
+
         _.each($(".ko-select2"), function (element) {
             $(element).select2(additionalConfig);
         });
     };
 
+    var parseEmails = function (input) {
+        return $.trim(input).split(/[, ]\s*/);
+    };
+
     return {
         init: init,
+        parseEmails: parseEmails,
     };
 });

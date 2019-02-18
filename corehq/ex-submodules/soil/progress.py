@@ -116,13 +116,13 @@ def get_task_status(task, is_multiple_download_task=False):
             # no result backend / improperly configured
             pass
         else:
+            result = task.result
             if task.successful():
                 is_ready = True
-                result = task.result
                 context_result = result and result.get('messages')
-                if result and result.get('errors'):
-                    failed = True
-                    context_error = result.get('errors')
+            if result and result.get('errors'):
+                failed = True
+                context_error = result.get('errors')
         progress = get_task_progress(task)
 
     def progress_complete():

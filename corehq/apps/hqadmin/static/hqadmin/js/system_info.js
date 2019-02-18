@@ -205,9 +205,6 @@ hqDefine('hqadmin/js/system_info', [
         self.seq = ko.observable();
         self.offsets = ko.observable();
         self.timeSinceLast = ko.observable();
-        self.showSupervisorInfo = ko.observable();
-        self.supervisorState = ko.observable();
-        self.supervisorMessage = ko.observable();
         self.operationInProgress = ko.observable(false);
         self.progress = ko.observableArray();
 
@@ -217,9 +214,6 @@ hqDefine('hqadmin/js/system_info', [
             self.seq(data.seq);
             self.offsets(data.offsets);
             self.timeSinceLast(data.timeSinceLast);
-            self.showSupervisorInfo(!!data.supervisorState);
-            self.supervisorState(data.supervisorState || '(unavailable)');
-            self.supervisorMessage(data.supervisorMessage);
 
             self.progress([]);
             if (self.seq_format() === 'json') {
@@ -240,31 +234,6 @@ hqDefine('hqadmin/js/system_info', [
 
         self.update(pillow);
 
-        self.processRunning = ko.computed(function () {
-            return self.supervisorState() === 'RUNNING';
-        });
-
-        self.startStopText = ko.computed(function () {
-            return self.processRunning() ? gettext("Stop") : gettext("Start");
-        });
-
-        self.disabled = ko.computed(function () {
-            return self.operationInProgress() || (self.supervisorState() !== 'RUNNING' && self.supervisorState() !== 'STOPPED');
-        });
-
-        self.supervisorStateCss = ko.computed(function () {
-            switch (self.supervisorState()) {
-                case ('(unavailable)'):
-                    return '';
-                case ('RUNNING'):
-                    return 'label-success';
-                case ('STOPPED'):
-                    return 'label-warning';
-                default:
-                    return 'label-danger';
-            }
-        });
-
         self.checkpointStatusCss = ko.computed(function () {
             var hours = pillow.hours_since_last;
             switch (true) {
@@ -280,7 +249,7 @@ hqDefine('hqadmin/js/system_info', [
         });
 
         self.overallStatus = ko.computed(function () {
-            var statusCombined = self.checkpointStatusCss() + self.supervisorStateCss();
+            var statusCombined = self.checkpointStatusCss();
             if (statusCombined.indexOf('important') !== -1) {
                 return 'error';
             } else if (statusCombined.indexOf('warning') !== -1) {
@@ -301,14 +270,6 @@ hqDefine('hqadmin/js/system_info', [
                 keyboard: false,
                 show: true,
             });
-        };
-
-        self.resetCheckpoint = function () {
-            self.showPillowDialog('reset_checkpoint');
-        };
-
-        self.startStop = function () {
-            self.showPillowDialog(self.processRunning() ? 'stop' : 'start');
         };
 
         self.refresh = function () {
@@ -335,8 +296,6 @@ hqDefine('hqadmin/js/system_info', [
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
                     self.operationInProgress(false);
-                    self.supervisorState('(unavailable)');
-                    self.supervisorMessage(err);
                 }).always(function () {
                     $('#pillow_operation_modal').modal('hide');
                     $("#" + self.name() + " td").fadeTo("fast" , 0.5).fadeTo("fast" , 1);

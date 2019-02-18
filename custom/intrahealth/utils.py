@@ -363,20 +363,28 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
         export_tables = []
         for individual_report in self.report_context['reports']:
             report_table = individual_report['report_table']
-            total_row = self._extract_value_from_report_table_row_value(report_table)
-            export_tables.append(self._export_table(report_table['title'], report_table['headers'],
-                                                    report_table['rows'], total_row))
+            extracted_rows = self._sanitize_all_rows(report_table)
+            extracted_total_row = self._sanitize_single_row(report_table['total_row'])
+            export_tables.append(self._export_table(report_table['title'],
+                                                    report_table['headers'],
+                                                    extracted_rows, extracted_total_row))
         return export_tables
 
+    def _sanitize_all_rows(self, report_table):
+        extracted_rows = []
+        for row in report_table['rows']:
+            extracted_rows.append(self._sanitize_single_row(row))
+        return extracted_rows
+
     @staticmethod
-    def _extract_value_from_report_table_row_value(report_table):
+    def _sanitize_single_row(row):
         extracted_row_values = []
-        for row_value in report_table['total_row']:
+        for row_value in row:
             if isinstance(row_value, dict):
                 # If keys are dicts, they contain html info (ie: row_value = {'html': 'title'})
-                extracted_row_values.append(row_value.items()[0][1])
+                extracted_row_values.append(row_value['html'])
             else:
-                extracted_row_values = report_table['total_row']
+                extracted_row_values = row
                 break
         return extracted_row_values
 

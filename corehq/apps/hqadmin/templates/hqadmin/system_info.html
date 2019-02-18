@@ -138,7 +138,6 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Supervisor Status</th>
                             <th>Time since last checkpoint</th>
                             <th>Checkpoint Status</th>
                             <th>Actions</th>
@@ -147,10 +146,6 @@
                     <tbody data-bind="foreach: models">
                         <tr data-bind="css: overallStatus, attr: {id: name}">
                             <td><code data-bind="text: name"></code></td>
-                            <td>
-                                    <label data-bind="text: supervisorState, css: supervisorStateCss" class="label"></label>
-                                    <span data-bind="makeHqHelp: { name: 'Info', description: supervisorMessage, format: 'html'}, visible: supervisorMessage"></span>
-                            </td>
                             <td><label data-bind="text: timeSinceLast, css: checkpointStatusCss" class="label"></label></td>
                             <td class="col-md-6" data-bind="foreach: progress">
                                 <div class="row">
@@ -169,15 +164,6 @@
                                 </div>
                             </td>
                             <td>
-                                {% if user_is_support %}
-                                <button class="btn btn-default" type="button" data-bind="
-                                    click: resetCheckpoint,
-                                    disable: disabled">{% trans "Reset" %}</button>
-                                <button class="btn btn-default" type="button" data-bind="
-                                    click: startStop,
-                                    text: startStopText,
-                                    disable: disabled"></button>
-                                {% endif %}
                                 <button class="btn btn-default" type="button" data-bind="
                                     click: refresh">
                                     <i class="fa fa-refresh" data-bind="css: {'fa-spin': operationInProgress}"></i>
