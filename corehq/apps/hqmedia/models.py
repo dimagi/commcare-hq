@@ -548,7 +548,7 @@ def _log_media_deletion(app, deleted_media):
         {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
         for path, map_item, media in deleted_media
     ]
-    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+    soft_assert(to=['{}@{}'.format(u, 'dimagi.com') for u in ('skelly', 'jschweers', 'mkangia')])(
         False, "path deleted from multimedia map", json.dumps({
             'domain': app.domain,
             'app_id': app._id,
