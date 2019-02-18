@@ -640,6 +640,7 @@ def iter_media_files(media_objects):
     errors will not include all error messages until the iterator is exhausted
 
     """
+    from dimagi.utils.logging import notify_exception
     errors = []
 
     def _media_files():
@@ -650,10 +651,12 @@ def iter_media_files(media_objects):
                 if not isinstance(data, six.text_type):
                     yield os.path.join(folder), data
             except NameError as e:
-                errors.append("%(path)s produced an ERROR: %(error)s" % {
+                message = "%(path)s produced an ERROR: %(error)s" % {
                     'path': path,
                     'error': e,
-                })
+                }
+                errors.append(message)
+                notify_exception(None, message)
     return _media_files(), errors
 
 
