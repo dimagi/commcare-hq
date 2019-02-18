@@ -10,7 +10,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0095_institutional_delivery_ccs_record_monthly'),
+        ('icds_reports', '0096_valid_visits'),
     ]
 
     operations = [
