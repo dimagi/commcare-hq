@@ -121,7 +121,7 @@ class MediaSuiteGenerator(object):
             self.app.multimedia_map = {}
         filter_multimedia = self.build_profile
         if filter_multimedia:
-            requested_media = set()
+            requested_media = self.app.logo_paths
             for lang in self.build_profile.langs:
                 requested_media |= self.app.all_media_paths(lang=lang)
         for path, m in sorted(list(self.app.multimedia_map.items()), key=lambda item: item[0]):

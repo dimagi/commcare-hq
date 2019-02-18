@@ -926,7 +926,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         found_missing_mm = False
         filter_multimedia = languages and domain_has_privilege(self.domain, privileges.BUILD_PROFILES)
         if filter_multimedia:
-            requested_media = set()
+            requested_media = self.logo_paths
             for lang in languages:
                 requested_media |= self.all_media_paths(lang=lang)
         # preload all the docs to avoid excessive couch queries.
