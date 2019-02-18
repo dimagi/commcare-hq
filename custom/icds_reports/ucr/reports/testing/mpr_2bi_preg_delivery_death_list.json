@@ -89,6 +89,18 @@
     ],
     "columns": [
       {
+        "display": "dead_preg_count (for filter only)",
+        "column_id": "dead_preg_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type IS NOT NULL AND age_at_death_yrs >= 11": 1
+        },
+        "else_": 0,
+        "visible": false
+      },
+      {
         "format": "default",
         "aggregation": "simple",
         "column_id": "name",
