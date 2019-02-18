@@ -155,14 +155,14 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
         if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
             manifest = json.dumps({
-                    'include_multimedia_files': include_multimedia_files,
-                    'include_index_files': include_index_files,
-                    'download_id': download_id,
-                    'build_profile_id': build_profile_id,
-                    'compress_zip': compress_zip,
-                    'filename': filename,
-                    'download_targeted_version': download_targeted_version,
-                    'app': app.to_json(),
+                'include_multimedia_files': include_multimedia_files,
+                'include_index_files': include_index_files,
+                'download_id': download_id,
+                'build_profile_id': build_profile_id,
+                'compress_zip': compress_zip,
+                'filename': filename,
+                'download_targeted_version': download_targeted_version,
+                'app': app.to_json(),
             }, indent=4)
             files = itertools.chain(files, [('manifest.json', manifest)])
 
@@ -176,7 +176,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
-
 
         # Integrity check that all media files present in media_suite.xml were added to the zip
         if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
