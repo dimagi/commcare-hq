@@ -11,12 +11,13 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView, CasDataExport
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView, CasDataExport, CasDataExportAPIView
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
-    url('^', DashboardView.as_view(), name='icds_dashboard')
+    url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
+    url('^', DashboardView.as_view(), name='icds_dashboard'),
 ]
 
 maternal_and_child_urls = [
