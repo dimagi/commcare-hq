@@ -938,6 +938,10 @@ for database in DATABASES.values():
     ):
         database['DISABLE_SERVER_SIDE_CURSORS'] = True
 
+DATABASES['domain_migrations'] = {
+    'ENGINE': 'django.db.backends.sqlite3',
+    'NAME': os.path.join(BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'db.sqlite3'),
+}
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
