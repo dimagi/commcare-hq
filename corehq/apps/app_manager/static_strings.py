@@ -73,6 +73,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Data and Sharing'),
     ugettext_noop('Days allowed without syncing before triggering a warning'),
     ugettext_noop('Days for Review'),
+    ugettext_noop('Demo Logo'),
     ugettext_noop('Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way. If set to Push Only, the Auto-Sync Frequency and Unsynced Time Limit settings will have no effect.'),
     ugettext_noop('Determines whether phone keys will type letters or numbers by default when typing in the password field.'),
     ugettext_noop('Disable'),
