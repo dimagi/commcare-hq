@@ -9,6 +9,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.years = [];
     vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     $rootScope.report_link = '';
 
     var getTaskStatus = function () {
@@ -436,7 +437,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function() {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
+        var incentiveReportErrors = vm.isIncentiveReportSelected() &&
+            (
+                vm.haveAccessToFeatures && !vm.isStateSelected()
+            ) || (
+                !vm.haveAccessToFeatures && !vm.isBlockSelected()
+            );
         return beneficiaryListErrors || incentiveReportErrors;
     };
 
