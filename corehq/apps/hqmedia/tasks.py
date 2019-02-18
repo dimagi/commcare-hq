@@ -8,6 +8,8 @@ from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+import itertools
+import json
 import re
 import zipfile
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -149,6 +151,19 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             app, include_multimedia_files, include_index_files, build_profile_id,
             download_targeted_version=download_targeted_version,
         )
+
+        if True:
+            manifest = json.dumps({
+                    'include_multimedia_files': include_multimedia_files,
+                    'include_index_files': include_index_files,
+                    'download_id': download_id,
+                    'build_profile_id': build_profile_id,
+                    'compress_zip': compress_zip,
+                    'filename': filename,
+                    'download_targeted_version': download_targeted_version,
+                    'app': app.to_json(),
+            }, indent=4)
+            files = itertools.chain(files, [('manifest.json', manifest)])
 
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
