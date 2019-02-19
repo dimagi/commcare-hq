@@ -672,7 +672,7 @@ class RestoreConfig(object):
             return content.get_fileobj()
 
     def set_cached_payload_if_necessary(self, fileobj, duration, is_async):
-        # only cache if the duration was longer than the threshold
+        # must cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
         if is_async or self.force_cache or is_long_restore:
             type_ = 'unknown'
