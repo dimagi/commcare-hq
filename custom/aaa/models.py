@@ -145,7 +145,11 @@ class Woman(LocationDenormalizedModel):
             WHERE sex = 'F' AND date_part('year', age(dob)) BETWEEN 15 AND 49
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           dob = EXCLUDED.dob,
+           marital_status = EXCLUDED.marital_status,
+           sex = EXCLUDED.sex,
+           migration_status = EXCLUDED.migration_status
         """.format(
             woman_tablename=cls._meta.db_table,
             person_cases_ucr_tablename=ucr_tablename,
@@ -488,7 +492,7 @@ class AggLocation(models.Model):
                 ) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
@@ -523,7 +527,7 @@ class AggLocation(models.Model):
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on AND opened_on < add
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
@@ -553,7 +557,7 @@ class AggLocation(models.Model):
                 COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
             FROM "{child_tablename}" child
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )

@@ -1,3 +1,13 @@
-id,domain,state_id,district_id,block_id,supervisor_id,awc_id,month,registered_eligible_couples,registered_pregnancies,registered_children,eligible_couples_using_fp_method,high_risk_pregnancies,institutional_deliveries,total_deliveries
-1,reach-test,ALL,ALL,ALL,ALL,ALL,2019-01-01,,,,,,,
-2,reach-test,ALL,ALL,ALL,ALL,ALL,2019-02-01,,,,,,,
+domain,state_id,district_id,block_id,supervisor_id,awc_id,month,registered_eligible_couples,registered_pregnancies,registered_children,eligible_couples_using_fp_method,high_risk_pregnancies,institutional_deliveries,total_deliveries
+reach-test,ALL,ALL,ALL,ALL,ALL,2019-01-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,ALL,ALL,ALL,ALL,2019-01-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,ALL,ALL,ALL,2019-01-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,block_1,ALL,ALL,2019-01-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,block_1,supervisor_1,ALL,2019-01-01,0,1,,0,0,0,0
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,2019-01-01,0,1,,0,0,0,0
+reach-test,ALL,ALL,ALL,ALL,ALL,2019-02-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,ALL,ALL,ALL,ALL,2019-02-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,ALL,ALL,ALL,2019-02-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,block_1,ALL,ALL,2019-02-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,block_1,supervisor_1,ALL,2019-02-01,0,1,,0,0,0,0,0,0
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,2019-02-01,0,1,,0,0,0,0,0,0

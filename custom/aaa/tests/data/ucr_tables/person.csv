@@ -1,2 +1,2 @@
 doc_id,inserted_at,household_case_id,opened_on,closed_on,modified_on,name,sex,dob,marital_status,age_marriage,aadhar_number,husband_name,contact_phone_number,num_male_children_died,num_female_children_died,blood_group,female_death_type,date_death,site_death,death_informed_authorities,is_pregnant,migration_status
-pregnant_woman,2019-01-01,household_case_1,2018-08-01,,2019-01-01,Pregnant Lady,F,2000-01-01,,,,,,,,,,,,,,
+pregnant_woman,2019-01-01,household_case_1,2018-08-01,,2019-01-01,Pregnant Lady,F,2000-01-01,married,,,,,,,,,,,,,

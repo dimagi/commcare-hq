@@ -121,22 +121,22 @@ class CcsRecordTest(AggregationScriptTestBase):
 
 
 class AggAwcTest(AggregationScriptTestBase):
-    always_include_columns = {'awc_id'}
+    always_include_columns = {'month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id'}
 
     def test_agg_awc_table(self):
         self._load_and_compare_data(
             AggAwc,
             os.path.join(OUTPUT_PATH, 'agg_awc.csv'),
-            sort_key=['awc_id']
+            sort_key=['month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
 
 class AggVillageTest(AggregationScriptTestBase):
-    always_include_columns = {'village_id'}
+    always_include_columns = {'month', 'state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id'}
 
     def test_agg_village_table(self):
         self._load_and_compare_data(
             AggVillage,
             os.path.join(OUTPUT_PATH, 'agg_village.csv'),
-            sort_key=['village_id']
+            sort_key=['month', 'state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
         )
