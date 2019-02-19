@@ -110,7 +110,8 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "create_index": true
+        "create_index": false,
+        "is_nullable": true
       },
       {
         "column_id": "received_on",
