@@ -87,6 +87,32 @@
         "create_index": true
       },
       {
+        "column_id": "supervisor_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "icds_user_location",
+            "user_id_expression": {
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "meta",
+                  "userID"
+                ]
+              },
+              "type": "root_doc"
+            }
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "create_index": true
+      },
+      {
         "column_id": "received_on",
         "datatype": "datetime",
         "type": "expression",

@@ -67,6 +67,28 @@
         "column_id": "awc_id"
       },
       {
+        "display_name": "",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "awc_selected_location_id"
+            ]
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "column_id": "supervisor_id"
+      },
+      {
         "display_name": null,
         "datatype": "string",
         "expression": {
