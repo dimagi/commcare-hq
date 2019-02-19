@@ -106,7 +106,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self._assertMediaSuiteResourcesEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.hqmedia.models.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
