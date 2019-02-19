@@ -1,1 +1,2 @@
 domain,state_id,district_id,block_id,supervisor_id,awc_id,taluka_id,phc_id,sc_id,village_id,person_case_id,ccs_record_case_id,opened_on,closed_on,hrp,child_birth_location,edd,add,household_case_id
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,pregnant_woman,pregnant_woman_ccs_record_1,2018-08-01,,,,2019-05-01,,household_case_1

@@ -182,15 +182,15 @@ class Woman(LocationDenormalizedModel):
 
         return """
         UPDATE "{woman_tablename}" AS woman SET
-            pregnant_ranges = pregnant_ranges
+            pregnant_ranges = ccs_record.pregnant_ranges
         FROM (
-            SELECT person_case_id, array_agg(pregnancy_range) as pregnancy_ranges
+            SELECT person_case_id, array_agg(pregnant_range) as pregnant_ranges
             FROM(
                 SELECT person_case_id,
-                       daterange(opened_on::date, add, '[]') as pregnancy_range
+                       daterange(opened_on::date, add, '[]') as pregnant_range
                 FROM "{ccs_record_cases_ucr_tablename}"
-                WHERE opened_on < add
-                GROUP BY person_case_id, pregnancy_range
+                WHERE opened_on < add OR add IS NULL
+                GROUP BY person_case_id, pregnant_range
             ) AS _tmp_table
             GROUP BY person_case_id
         ) ccs_record
@@ -265,12 +265,16 @@ class CcsRecord(LocationDenormalizedModel):
                 closed_on,
                 hrp,
                 child_birth_location,
-                edd,
-                add
+                add,
+                edd
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           hrp = EXCLUDED.hrp,
+           child_birth_location = EXCLUDED.child_birth_location,
+           add = EXCLUDED.add,
+           edd = EXCLUDED.edd
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,

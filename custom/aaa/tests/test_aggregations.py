@@ -115,8 +115,8 @@ class CcsRecordTest(AggregationScriptTestBase):
     def test_agg_ccs_record_table(self):
         self._load_and_compare_data(
             CcsRecord,
-            os.path.join(OUTPUT_PATH, 'child.csv'),
-            sort_key=['awc_id', 'village_id', 'person_case_id']
+            os.path.join(OUTPUT_PATH, 'ccs_record.csv'),
+            sort_key=['awc_id', 'village_id', 'ccs_record_case_id']
         )
 
 
