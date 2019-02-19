@@ -42,12 +42,12 @@ hqDefine('app_manager/js/source_files',[
         });
 
         $form.find("button").click(function () {
-            var version = $select.val();
-            if (!version) {
+            var buildId = $select.val();
+            if (!buildId) {
                 alert(gettext("Please enter a version to compare"));
                 return;
             }
-            window.location = initialPageData.reverse('diff', version);
+            window.location = initialPageData.reverse('diff', buildId);
         });
     });
 });
