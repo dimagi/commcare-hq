@@ -2,6 +2,10 @@ from __future__ import absolute_import
 from django.db import models
 """
 Models for storing temporary data for domain migrations
+
+.. NOTE:: These models are stored in the "domain_migrations" database.
+          See routers.DomainMigrationsRouter for details.
+
 """
 
 
