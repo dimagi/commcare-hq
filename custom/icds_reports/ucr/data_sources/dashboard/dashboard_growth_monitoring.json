@@ -89,13 +89,10 @@
         "column_id": "supervisor_id",
         "type": "ancestor_location",
         "location_id": {
-          "type": "icds_user_location",
-          "user_id_expression": {
-            "type": "named",
-            "name": "user_location_id"
-          }
+          "type": "named",
+          "name": "user_location_id"
         },
-        "location_type": "state"
+        "location_type": "supervisor"
       },
       {
         "column_id": "received_on",
