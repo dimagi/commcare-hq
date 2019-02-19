@@ -698,7 +698,7 @@ class RestoreConfig(object):
         return None
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.restore_payload_path_cache.get_value():
+        if self.overwrite_cache and self.restore_payload_path_cache.exists():
             self.restore_payload_path_cache.invalidate()
 
     def delete_initial_cached_payload_if_necessary(self):
