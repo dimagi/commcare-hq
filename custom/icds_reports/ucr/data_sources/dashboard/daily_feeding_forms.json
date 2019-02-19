@@ -110,7 +110,6 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "create_index": false,
         "is_nullable": true
       },
       {
