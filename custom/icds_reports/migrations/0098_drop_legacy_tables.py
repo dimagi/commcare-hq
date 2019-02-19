@@ -16,4 +16,5 @@ class Migration(migrations.Migration):
         RunSQL('DROP TABLE IF EXISTS agg_thr_data CASCADE'),
         RunSQL('DROP TABLE IF EXISTS ccs_record_categories'),
         RunSQL('DROP TABLE IF EXISTS child_health_categories'),
+        RunSQL('DROP TABLE IF EXISTS india_geo_data CASCADE'),
     ]

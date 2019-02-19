@@ -56,21 +56,6 @@ CREATE OR REPLACE VIEW awc_location_months AS
   FROM awc_location awc_location
   CROSS JOIN "icds_months" months;
 
--- Table: Geographic boundaries for states, districts and blocks
-DROP TABLE IF EXISTS india_geo_data CASCADE;
-CREATE TABLE india_geo_data
-(
-  state_site_code text NOT NULL,
-  district_site_code text NOT NULL,
-  block_site_code text NOT NULL,
-  PointID integer NOT NULL,
-  PolygonID integer NOT NULL,
-  SubPolygonID integer NOT NULL,
-  longitude numeric NOT NULL,
-  latitude numeric NOT NULL
-);
-CREATE INDEX "india_geo_data_indx1" ON "india_geo_data" (state_site_code, district_site_code, block_site_code);
-
 -- Table: Table Name Mapping
 -- DROP TABLE IF EXISTS ucr_table_name_mapping CASCADE;
 CREATE TABLE ucr_table_name_mapping
