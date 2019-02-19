@@ -182,7 +182,9 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             with open(fpath, 'rb') as tmp:
                 with zipfile.ZipFile(tmp, "r") as z:
                     media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
-                    if len(media_suites) == 1:
+                    if len(media_suites) != 1:
+                        errors.append(_('Could not identify media_suite.xml in CCZ'))
+                    else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
                             parsed = parse_xml(media_suite.read())
