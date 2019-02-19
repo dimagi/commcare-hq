@@ -389,25 +389,6 @@ CREATE TABLE agg_child_health
   fully_immunized_late integer NOT NULL
 );
 
--- Table: agg_thr_data
-DROP TABLE IF EXISTS agg_thr_data CASCADE;
-CREATE TABLE agg_thr_data
-(
-  state_id text NOT NULL,
-  district_id text NOT NULL,
-  block_id text NOT NULL,
-  supervisor_id text NOT NULL,
-  awc_id text NOT NULL,
-  month date NOT NULL,
-  beneficiary_type text NOT NULL,
-  caste text NOT NULL,
-  disabled text NOT NULL,
-  minority text NOT NULL,
-  resident text NOT NULL,
-  thr_eligible integer NOT NULL,
-  rations_21_plus_distributed integer NOT NULL
-);
-
 -- Table: daily_attendance
 DROP TABLE IF EXISTS daily_attendance CASCADE;
 CREATE TABLE daily_attendance
