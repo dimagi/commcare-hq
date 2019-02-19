@@ -39,7 +39,7 @@
             "name": "user_location_id"
           },
           "location_type": "state"
-          "location_propery": "_id",
+          "location_propery": "_id"
         }
       },
       {
