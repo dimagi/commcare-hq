@@ -158,6 +158,7 @@ if __name__ == "__main__":
 
     patch_assertItemsEqual()
 
+    # After PY3 migration: remove
     patch_pickle_version()
 
     set_default_settings_path(sys.argv)
