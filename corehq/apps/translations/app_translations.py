@@ -233,9 +233,14 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(media_audio, list)
     assert isinstance(unique_id, six.string_types)
 
-    return [item if item is not None else ""
-            for item in ([row_type, sheet_name] + languages
-                         + media_image + media_audio + [unique_id])]
+    return [item if item is not None else "" for item in
+            ([row_type, sheet_name] +
+             bulk_app_sheet_menu_row(languages, media_image, media_audio) +
+             [unique_id])]
+
+
+def bulk_app_sheet_menu_row(languages, media_image, media_audio):
+    return languages + media_image + media_audio
 
 
 def expected_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
@@ -417,7 +422,6 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                     row_type="Form",
                     sheet_name=form_string,
                     languages=[form.name.get(lang) for lang in app.langs],
-                    # leave all
                     media_image=[form.icon_by_language(lang) for lang in app.langs],
                     media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
@@ -465,7 +469,7 @@ def bulk_app_sheet_question_rows(form, lang=None):
     langs = [lang] if lang else app.langs
     for text_id, values in six.iteritems(itext_items):
         row = [text_id]
-        for value_form in ["default", "audio", "image", "video"]:
+        for value_form in ["default", "image", "audio", "video"]:
             # Get the fallback value for this form
             fallback = ""
             for lang in app.langs:
@@ -688,7 +692,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
     def has_translation(row_, langs):
         for lang_ in langs:
-            for trans_type_ in ['default', 'audio', 'image', 'video']:
+            for trans_type_ in ['default', 'image', 'audio', 'video']:
                 if row_.get(_get_col_key(trans_type_, lang_)):
                     return True
 
@@ -735,7 +739,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 continue
 
             translations = dict()
-            for trans_type in ['default', 'audio', 'image', 'video']:
+            for trans_type in ['default', 'image', 'audio', 'video']:
                 try:
                     col_key = _get_col_key(trans_type, lang)
                     translations[trans_type] = row[col_key]

@@ -22,6 +22,7 @@ from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.apps.translations.app_translations import (
+    bulk_app_sheet_menu_row,
     expected_bulk_app_sheet_headers,
     expected_bulk_app_sheet_rows,
     process_bulk_app_translation_upload,
@@ -117,19 +118,29 @@ def download_bulk_multimedia_translations(request, domain, app_id):
         'image',
         'video',
     )),)
-    rows = []
 
     # TODO: extract
+    rows = []
     for module_index, module in enumerate(app.modules):
         module_string = 'module{}'.format(module_index + 1)
+        prefix = [module_string, '', '']    # blank form and label columns
+        rows.append(prefix + bulk_app_sheet_menu_row([module.name.get(lang)],
+                                                     [module.icon_by_language(lang)],
+                                                     [module.audio_by_language(lang)]))
         for form_index, form in enumerate(module.forms):
             form_string = 'form{}'.format(form_index + 1)
+            prefix = [module_string, form_string]
+            # Name / menu media row, with a blank for the label column
+            rows.append(prefix + [''] + bulk_app_sheet_menu_row([form.name.get(lang)],
+                                                                [form.icon_by_language(lang)],
+                                                                [form.audio_by_language(lang)]))
+            # Questions
             for row in bulk_app_sheet_question_rows(form, lang):
-                rows.append([module_string, form_string] + row)
+                rows.append(prefix + row)
 
     temp = io.BytesIO()
     export_raw(headers, [('multimedia', rows)], temp)
-    filename = '{app_name} v.{app_version} - {lang} Multimedia Translations'.format(
+    filename = '{app_name} v.{app_version} - Multimedia Translations {lang}'.format(
         app_name=app.name,
         app_version=app.version,
         lang=lang)
