@@ -24,8 +24,6 @@ from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
-from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
@@ -198,44 +196,6 @@ class ProjectReportsTab(UITab):
             (header, list(map(show, pages)))
             for header, pages in self.sidebar_items
         ])
-
-
-class IndicatorAdminTab(UITab):
-    title = ugettext_noop("Administer Indicators")
-    view = "corehq.apps.indicators.views.default_admin"
-    dispatcher = IndicatorAdminInterfaceDispatcher
-
-    url_prefix_formats = ('/a/{domain}/indicators/',)
-
-    @property
-    def _is_viewable(self):
-        indicator_enabled_projects = get_indicator_domains()
-        return (self.couch_user.can_edit_data() and
-                self.domain in indicator_enabled_projects)
-
-    @property
-    def sidebar_items(self):
-        items = super(IndicatorAdminTab, self).sidebar_items
-        from corehq.apps.indicators.views import (
-            BulkExportIndicatorsView,
-            BulkImportIndicatorsView,
-        )
-        items.append([
-            _("Other Actions"), [
-                {
-                    'title': _(BulkImportIndicatorsView.page_title),
-                    'url': reverse(BulkImportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                    'urlname': BulkImportIndicatorsView.urlname,
-                },
-                {
-                    'title': _("Download Indicators Export"),
-                    'url': reverse(BulkExportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                }
-            ]
-        ])
-        return items
 
 
 class DashboardTab(UITab):

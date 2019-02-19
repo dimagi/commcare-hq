@@ -311,7 +311,6 @@ HQ_APPS = (
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
-    'corehq.apps.indicators',
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
@@ -346,9 +345,6 @@ HQ_APPS = (
 
     # custom reports
     'hsph',
-    'mvp',
-    'mvp_docs',
-    'mvp_indicators',
     'pact',
 
     'custom.reports.mc',
@@ -1284,11 +1280,7 @@ if helper.is_testing():
 
 DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
-MVP_INDICATOR_DB = 'mvp-indicators'
-
 INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
 }
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
@@ -1376,8 +1368,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'hsph',
-    'mvp',
-    ('mvp_docs', MVP_INDICATOR_DB),
     'pact',
     'accounting',
     'succeed',
@@ -1836,7 +1826,6 @@ REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
-    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
     os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
     os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
@@ -1944,7 +1933,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
-    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
@@ -2062,7 +2050,6 @@ CUSTOM_UCR_EXPRESSIONS = [
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
-    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
@@ -2092,16 +2079,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mvp-potou': 'mvp',
-    'mvp-sauri': 'mvp',
-    'mvp-bonsaaso': 'mvp',
-    'mvp-ruhiira': 'mvp',
-    'mvp-mwandama': 'mvp',
-    'mvp-sada': 'mvp',
-    'mvp-tiby': 'mvp',
-    'mvp-mbola': 'mvp',
-    'mvp-koraro': 'mvp',
-    'mvp-pampaida': 'mvp',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -2138,7 +2115,6 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-full-test': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
-    'mvp-mayange': 'mvp',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
