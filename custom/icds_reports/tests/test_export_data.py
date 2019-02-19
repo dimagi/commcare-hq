@@ -622,7 +622,7 @@ class TestExportData(TestCase):
                             "87.05 %",
                             "86.33 %",
                             "57.97 %"
-                        ], 
+                        ],
                         [
                             'st3',
                             2,
@@ -1839,7 +1839,7 @@ class TestExportData(TestCase):
                     'month': datetime(2017, 5, 1)
                 },
                 loc_level=5,
-            ).get_excel_data('b1'),
+            ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True),
             [
                 ['System Usage', [
                     [
@@ -1859,59 +1859,59 @@ class TestExportData(TestCase):
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a1', '91555555',
-                        18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
-                        11, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        11, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a25', 'Data Not Entered',
-                        13, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        13, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
-                        12, 'Data Not Entered', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
-                        16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
-                        14, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
-                        18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
-                        8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
-                        17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
-                        10, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        10, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a26', 'Data Not Entered',
-                        12, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        12, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
-                        4, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        4, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
-                        7, 'Data Not Entered', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
-                        19, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ]
                 ]],
                 ['Export Info', [

@@ -157,7 +157,12 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                 }
             }
         })
-        self._assert_properties(app.get_case_metadata(), {'name', 'save_to_case_p1', 'save_to_case_p2'})
+        meta = app.get_case_metadata()
+        self._assert_properties(meta, {'name', 'save_to_case_p1', 'save_to_case_p2'})
+        self.assertEqual(
+            meta.get_type('household').get_save_properties(m0f1.unique_id, '/data/question1'),
+            ['save_to_case_p1', 'save_to_case_p2']
+        )
 
     def test_case_references_advanced(self):
         app = Application.new_app('domain', 'New App')

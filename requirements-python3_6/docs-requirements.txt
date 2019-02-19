@@ -13,11 +13,11 @@ asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 billiard==3.3.0.23
-boto3==1.9.93
-botocore==1.12.93
+boto3==1.9.96
+botocore==1.12.96
 celery==3.1.25
 certifi==2018.11.29
-cffi==1.11.5
+cffi==1.12.1
 chardet==3.0.4
 cloudant==2.7.0
 concurrentloghandler==0.9.1
@@ -34,7 +34,7 @@ dimagi-memoized==1.1.1
 django-angular==0.7.16
 django-appconf==1.0.2
 django-braces==1.13.0
-django-bulk-update==1.1.10
+django-bulk-update==2.2.0
 django-celery==3.2.1
 django-compressor==2.1
 django-countries==4.6
@@ -43,7 +43,7 @@ django-cte==1.1.4
 django-extensions==1.7.7
 django-formtools==2.1
 django-otp==0.3.13
-django-partial-index==0.4.0
+django-partial-index==0.5.2
 django-phonenumber-field==1.3.0
 django-prbac==0.0.7
 django-ranged-response==0.2.0
@@ -75,7 +75,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
-httpagentparser==1.7.8
+httpagentparser==1.8.1
 idna==2.8
 imagesize==1.1.0          # via sphinx
 ipaddress==1.0.22
@@ -85,7 +85,7 @@ jinja2==2.10
 jmespath==0.9.3
 json-delta==2.0
 jsonfield==1.0.3
-jsonobject-couchdbkit==0.9.15
+jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
@@ -101,7 +101,7 @@ numpy==1.7.1
 openpyxl==2.6.0
 packaging==19.0           # via sphinx
 pbr==5.1.2
-phonenumberslite==8.8.9
+phonenumberslite==8.10.5
 pillow==5.4.1
 ply==3.11
 polib==1.1.0
@@ -119,7 +119,7 @@ pyopenssl==19.0.0
 pyparsing==2.3.1          # via packaging
 pypdf2==1.26.0
 pystache==0.5.4
-python-dateutil==2.6.1
+python-dateutil==2.8.0
 python-editor==1.0.4
 python-levenshtein==0.12.0
 python-magic==0.4.15
@@ -128,7 +128,7 @@ pytz==2018.9
 pyyaml==3.13
 pyzxcvbn==0.8.0
 qrcode==4.0.4
-quickcache==0.5.2
+quickcache==0.5.3
 raven==6.1.0
 rcssmin==1.0.6
 redis-py-cluster==1.3.6
@@ -140,7 +140,7 @@ s3transfer==0.2.0
 sh==1.09
 simpleeval==0.9.8
 simplejson==3.16.0
-six==1.11.0
+six==1.12.0
 smartypants==2.0.1
 snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
@@ -149,7 +149,7 @@ sphinx==1.8.4
 sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
-sqlalchemy==1.2.17
+sqlalchemy==1.2.18
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
