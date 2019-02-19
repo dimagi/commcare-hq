@@ -525,6 +525,7 @@ class EntriesHelper(object):
                 value=load_case_from_fixture.fixture_variable,
                 detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
                 detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
+                autoselect=load_case_from_fixture.auto_select_fixture,
             ),
             case_type=action.case_type,
             requires_selection=True,
