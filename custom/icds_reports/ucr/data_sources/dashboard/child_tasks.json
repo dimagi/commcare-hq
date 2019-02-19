@@ -56,6 +56,20 @@
         }
       },
       {
+        "column_id": "supervisor_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        }
+      },
+      {
         "column_id": "awc_id",
         "datatype": "string",
         "type": "expression",

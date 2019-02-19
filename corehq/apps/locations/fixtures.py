@@ -66,22 +66,18 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
     ):
         return True
 
-    if (locations_queryset.filter(last_modified__gte=last_sync.date).exists()
-        or LocationType.objects.filter(
-            domain=restore_user.domain, last_modified__gte=last_sync.date).exists()):
-        return True
-
-    if toggles.RELATED_LOCATIONS.enabled(restore_user.domain):
-        return _location_relation_changed(locations_queryset, last_sync.date)
-
-    return False
+    return locations_queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
+        LocationType.objects.filter(
+            domain=restore_user.domain, last_modified__gte=last_sync.date).values('last_modified'),
+        _location_relation_queryset(locations_queryset, last_sync.date)
+    ).exists()
 
 
-def _location_relation_changed(locations_queryset, time):
+def _location_relation_queryset(locations_queryset, time):
     return (LocationRelation.objects
             .filter(last_modified__gte=time)
             .filter(Q(location_a__in=locations_queryset) | Q(location_b__in=locations_queryset))
-            .exists())
+            .values('last_modified'))
 
 class LocationFixtureProvider(FixtureProvider):
 

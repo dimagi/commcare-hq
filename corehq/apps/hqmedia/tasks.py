@@ -3,10 +3,16 @@ from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
+from celery import states
+from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+import itertools
+import json
+import re
 import zipfile
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
@@ -46,6 +52,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     checked_paths = []
 
     try:
+        save_app = False
         for index, path in enumerate(zipped_files):
             status.update_progress(len(checked_paths))
             checked_paths.append(path)
@@ -79,7 +86,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                           _("Matching path found, but could not save the data to couch."))
                 continue
 
-            is_new = form_path not in list(app.multimedia_map)
+            is_new = form_path not in app.multimedia_map
             is_updated = multimedia.attach_data(data,
                                                 original_filename=file_name,
                                                 username=username)
@@ -94,11 +101,14 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                 if share_media:
                     multimedia.update_or_add_license(domain, type=license_name, author=author,
                                                      attribution_notes=attribution_notes)
-                app.create_mapping(multimedia, form_path)
+                save_app = True
+                app.create_mapping(multimedia, form_path, save=False)
 
             media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
             status.add_matched_path(media_class, media_info)
 
+        if save_app:
+            app.save()
         status.update_progress(len(checked_paths))
     except Exception as e:
         status.mark_with_error(_("Error while processing zip: %s" % e))
@@ -133,7 +143,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         if download_targeted_version:
             fpath += '-targeted'
     else:
-        _, fpath = tempfile.mkstemp()
+        dummy, fpath = tempfile.mkstemp()
 
     DownloadBase.set_progress(build_application_zip, initial_progress, 100)
 
@@ -142,6 +152,20 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             app, include_multimedia_files, include_index_files, build_profile_id,
             download_targeted_version=download_targeted_version,
         )
+
+        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
+            manifest = json.dumps({
+                'include_multimedia_files': include_multimedia_files,
+                'include_index_files': include_index_files,
+                'download_id': download_id,
+                'build_profile_id': build_profile_id,
+                'compress_zip': compress_zip,
+                'filename': filename,
+                'download_targeted_version': download_targeted_version,
+                'app': app.to_json(),
+            }, indent=4)
+            files = itertools.chain(files, [('manifest.json', manifest)])
+
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
                 progress = initial_progress
@@ -152,6 +176,26 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
+
+        # Integrity check that all media files present in media_suite.xml were added to the zip
+        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
+            with open(fpath, 'rb') as tmp:
+                with zipfile.ZipFile(tmp, "r") as z:
+                    media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
+                    if len(media_suites) == 1:
+                        with z.open(media_suites[0]) as media_suite:
+                            from corehq.apps.app_manager.xform import parse_xml
+                            parsed = parse_xml(media_suite.read())
+                            resources = {node.text for node in
+                                         parsed.findall("media/resource/location[@authority='local']")}
+                            names = z.namelist()
+                            missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
+                            for m in missing:
+                                errors.append(_('Media file missing from CCZ: {}').format(m))
+
+        if errors:
+            build_application_zip.update_state(state=states.FAILURE, meta={'errors': errors})
+            raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
@@ -175,6 +219,3 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
 
     DownloadBase.set_progress(build_application_zip, 100, 100)
-    return {
-        "errors": errors,
-    }

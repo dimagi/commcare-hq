@@ -474,7 +474,7 @@ def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('Location'), StaticDataSourceProvider('Location')],
         include_ucrs=include_ucrs,
     )
     if ucr_configs:

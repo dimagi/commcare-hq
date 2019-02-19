@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, date
 from functools import partial
 import itertools
 import json
-import csv
+import csv342 as csv
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection

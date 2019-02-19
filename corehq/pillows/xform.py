@@ -179,7 +179,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
 
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('XFormInstance'), StaticDataSourceProvider('XFormInstance')],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,

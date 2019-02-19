@@ -14,6 +14,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
@@ -108,7 +109,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
-    {'type': 'person', 'name': 'static-person_cases_v2'},
+    {'type': 'person', 'name': 'static-person_cases_v3'},
     {'type': 'usage', 'name': 'static-usage_forms'},
     {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
@@ -256,6 +257,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
+            _bust_awc_cache.delay()
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -640,7 +642,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             config=config,
             loc_level=aggregation_level,
             show_test=include_test
-        ).get_excel_data(location)
+        ).get_excel_data(
+            location,
+            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta
+        )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
         excel_data = AWCInfrastructureExport(
@@ -662,22 +667,34 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == AWW_INCENTIVE_REPORT:
         data_type = 'AWW_Performance'
         excel_data = IncentiveReport(
-            block=location,
-            month=config['month']
+            location=location,
+            month=config['month'],
+            aggregation_level=aggregation_level
         ).get_excel_data()
-        location_object = AwcLocationMonths.objects.filter(
-            block_id=location,
-            aggregation_level=3
-        ).first()
-        if file_format == 'xlsx' and beta:
-                cache_key = create_aww_performance_excel_file(
-                    excel_data,
-                    data_type,
-                    config['month'].strftime("%B %Y"),
-                    location_object.state_name,
-                    location_object.district_name,
-                    location_object.block_name,
-                )
+        if aggregation_level == 1:
+            location_object = AwcLocationMonths.objects.filter(
+                state_id=location,
+                aggregation_level=aggregation_level
+            ).first()
+        elif aggregation_level == 2:
+            location_object = AwcLocationMonths.objects.filter(
+                district_id=location,
+                aggregation_level=aggregation_level
+            ).first()
+        else:
+            location_object = AwcLocationMonths.objects.filter(
+                block_id=location,
+                aggregation_level=aggregation_level
+            ).first()
+        if file_format == 'xlsx':
+            cache_key = create_aww_performance_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                location_object.state_name,
+                location_object.district_name if aggregation_level >= 2 else None,
+                location_object.block_name if aggregation_level == 3 else None,
+            )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     if indicator != AWW_INCENTIVE_REPORT:
@@ -973,3 +990,9 @@ def create_mbt_for_month(state_id, month):
             icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
+
+
+@task(queue='background_queue')
+def _bust_awc_cache():
+    reach_keys = cache.keys('*cas_reach_data*')
+    cache.delete_many(reach_keys)

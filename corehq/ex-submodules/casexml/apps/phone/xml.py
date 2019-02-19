@@ -135,7 +135,8 @@ def get_registration_element_for_case(case):
 
 def get_data_element(name, dict):
     elem = safe_element(name)
-    for k, v in dict.items():
+    # sorted for deterministic unit tests
+    for k, v in sorted(dict.items()):
         sub_el = safe_element("data", v)
         sub_el.attrib = {"key": k}
         elem.append(sub_el)

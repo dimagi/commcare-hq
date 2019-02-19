@@ -1,16 +1,22 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date
+
+from dateutil.relativedelta import relativedelta
+from django.db.models import Q
 from django.http import JsonResponse
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import TemplateView, View
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView, View
 
-from custom.reach.const import INDICATOR_LIST, NUMERIC, PERCENT, COLORS
+from custom.aaa.const import INDICATOR_LIST, NUMERIC, PERCENT, COLORS
+from custom.aaa.models import AggVillage
+from custom.aaa.utils import build_location_filters
 
 
 class ReachDashboardView(TemplateView):
@@ -47,32 +53,47 @@ class ProgramOverviewReport(ReachDashboardView):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class ProgramOverviewReportAPI(View):
     def post(self, request, *args, **kwargs):
-        # TODO add query to database
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_location = self.request.POST.get('selectedLocation')
+        selected_date = date(selected_year, selected_month, 1)
+        prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
+
+        location_filters = build_location_filters(selected_location)
+        data = AggVillage.objects.filter(
+            (Q(month=selected_date) | Q(month=prev_month)),
+            **location_filters
+        ).order_by('month').values()
+
+        vals = {
+            val['month']: val
+            for val in data
+        }
+        data = vals.get(selected_date, {})
+        prev_month_data = vals.get(prev_month, {})
+
         return JsonResponse(data={'data': [
             [
                 {
                     'indicator': INDICATOR_LIST['registered_eligible_couples'],
                     'format': NUMERIC,
                     'color': COLORS['violet'],
-                    'value': 71682,
-                    'past_month_value': 69354,
+                    'value': data.get('registered_eligible_couples', 0),
+                    'past_month_value': prev_month_data.get('registered_eligible_couples', 0)
                 },
                 {
                     'indicator': INDICATOR_LIST['registered_pregnancies'],
                     'format': NUMERIC,
                     'color': COLORS['blue'],
-                    'value': 9908,
-                    'past_month_value': 12458,
+                    'value': data.get('registered_pregnancies', 0),
+                    'past_month_value': prev_month_data.get('registered_pregnancies', 0)
                 },
                 {
                     'indicator': INDICATOR_LIST['registered_children'],
                     'format': NUMERIC,
                     'color': COLORS['orange'],
-                    'value': 21630,
-                    'past_month_value': 40687,
+                    'value': data.get('registered_children', 0),
+                    'past_month_value': prev_month_data.get('registered_children', 0)
                 }
             ],
             [
@@ -80,25 +101,25 @@ class ProgramOverviewReportAPI(View):
                     'indicator': INDICATOR_LIST['couples_family_planning'],
                     'format': PERCENT,
                     'color': COLORS['aqua'],
-                    'value': 65028,
-                    'total': 928103,
-                    'past_month_value': 60486,
+                    'value': data.get('eligible_couples_using_fp_method', 0),
+                    'total': data.get('registered_eligible_couples', 0),
+                    'past_month_value': prev_month_data.get('eligible_couples_using_fp_method', 0),
                 },
                 {
                     'indicator': INDICATOR_LIST['high_risk_pregnancies'],
                     'format': PERCENT,
                     'color': COLORS['darkorange'],
-                    'value': 207,
-                    'total': 9908,
-                    'past_month_value': 204,
+                    'value': data.get('high_risk_pregnancies', 0),
+                    'total': data.get('registered_pregnancies', 0),
+                    'past_month_value': prev_month_data.get('high_risk_pregnancies', 0),
                 },
                 {
                     'indicator': INDICATOR_LIST['institutional_deliveries'],
                     'format': PERCENT,
                     'color': COLORS['mediumblue'],
-                    'value': 14311,
-                    'total': 21837,
-                    'past_month_value': 16486,
+                    'value': data.get('institutional_deliveries', 0),
+                    'total': data.get('total_deliveries', 0),
+                    'past_month_value': prev_month_data.get('institutional_deliveries', 0),
                 }
             ]
         ]})

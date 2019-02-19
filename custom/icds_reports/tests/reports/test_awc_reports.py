@@ -2499,10 +2499,12 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a15'
             )
+
             self.assertEqual(
                 len(data['data']),
-                1
+                2
             )
+
             self.assertEqual(
                 data['data'][0],
                 {
@@ -2511,11 +2513,11 @@ class TestAWCReport(TestCase):
                     'beneficiary': 'Yes',
                     'anemic': 'Data Not Entered',
                     'case_id': '7313c174-6b63-457c-a734-6eed0a2b2ac6',
-                    'edd': None,
+                    'edd': datetime.date(2017, 8, 31),
                     'last_date_thr': None,
                     'num_anc_complete': None,
                     'number_of_thrs_given': 0,
-                    'opened_on': None,
+                    'opened_on': datetime.date(2017, 5, 12),
                     'person_name': None,
                     'trimester': 2,
                 }
@@ -2540,7 +2542,27 @@ class TestAWCReport(TestCase):
             )
             self.assertEqual(
                 data['data'][1],
-                []
+                [
+                    {'opened_on': datetime.date(2017, 5, 12),
+                     'tt_taken': u'N',
+                     'person_name': u'Data Not Entered',
+                     'anc_weight': u'Data Not Entered',
+                     'edd': datetime.date(2017, 8, 31),
+                     'age': 23,
+                     'tt_date': u'None',
+                     'anc_hemoglobin': u'Data Not Entered',
+                     'symptoms': u'None',
+                     'preg_order': u'Data Not Entered',
+                     'using_ifa': u'Y',
+                     'case_id': u'7313c174-6b63-457c-a734-6eed0a2b2ac6',
+                     'bp': u'Data Not Entered',
+                     'ifa_consumed_last_seven_days': u'Y',
+                     'mobile_number': u'Data Not Entered',
+                     'trimester': 2,
+                     'counseling': u'Eating Extra, Taking Rest',
+                     'anc_abnormalities': u'None',
+                     'anemic': u'Data Not Entered',
+                     'home_visit_date': datetime.date(2017, 5, 4)}]
             )
 
     def test_pregnant_details_first_record_third_trimester(self):
@@ -2567,12 +2589,12 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'num_rations_distributed': 0,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 20,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2591,12 +2613,12 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 23,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 4, 20),
                     'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2615,12 +2637,12 @@ class TestAWCReport(TestCase):
                 data['data'][2],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 24,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2639,12 +2661,12 @@ class TestAWCReport(TestCase):
                 data['data'][3],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 20),
                     'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2663,12 +2685,12 @@ class TestAWCReport(TestCase):
                 data['data'][4],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2687,12 +2709,12 @@ class TestAWCReport(TestCase):
                 data['data'][5],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
@@ -2707,16 +2729,17 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a50'
             )
+
             self.assertEqual(
                 data['data'][6],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery_in_month': 'N',
+                    'institutional_delivery': 'N',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 29,
                     'num_pnc_visits': None,
-                    'add': None,
+                    'add': datetime.date(2017, 3, 1),
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
                     'breastfed_at_birth': 'N',
                     'is_ebf': 'N'}
