@@ -713,7 +713,7 @@ class RestoreConfig(object):
     def _record_timing(self, status):
         timing = self.timing_context
         assert timing.is_finished()
-        duration = timing.duration if timing is not None else -1
+        duration = timing.duration
         device_id = self.params.device_id
         if duration > 20 or status == 412:
             if status == 412:
@@ -740,26 +740,25 @@ class RestoreConfig(object):
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
             tags.append('domain:{}'.format(self.domain))
-        if timing is not None:
-            timer_buckets = (5, 20, 60, 120)
-            for timer in timing.to_list(exclude_root=True):
-                if timer.name in RESTORE_SEGMENTS:
-                    segment = RESTORE_SEGMENTS[timer.name]
-                    bucket = bucket_value(timer.duration, timer_buckets, 's')
-                    datadog_counter(
-                        'commcare.restores.{}'.format(segment),
-                        tags=tags + ['duration:%s' % bucket],
-                    )
-                elif timer.name.startswith('fixture:'):
-                    bucket = bucket_value(timer.duration, timer_buckets, 's')
-                    datadog_counter(
-                        'commcare.restores.fixture',
-                        tags=tags + [
-                            'duration:%s' % bucket,
-                            timer.name,
-                        ],
-                    )
-            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+        timer_buckets = (5, 20, 60, 120)
+        for timer in timing.to_list(exclude_root=True):
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = bucket_value(timer.duration, timer_buckets, 's')
+                datadog_counter(
+                    'commcare.restores.{}'.format(segment),
+                    tags=tags + ['duration:%s' % bucket],
+                )
+            elif timer.name.startswith('fixture:'):
+                bucket = bucket_value(timer.duration, timer_buckets, 's')
+                datadog_counter(
+                    'commcare.restores.fixture',
+                    tags=tags + [
+                        'duration:%s' % bucket,
+                        timer.name,
+                    ],
+                )
+        tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
 
         if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
             app_name = slugify(self.params.app.name)
