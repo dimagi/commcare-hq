@@ -59,13 +59,14 @@
         "column_id": "supervisor_id",
         "datatype": "string",
         "type": "expression",
-        "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "type": "ancestor_location",
+          "location_id": {
             "type": "property_name",
             "property_name": "owner_id"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id"
         }
       },
       {
