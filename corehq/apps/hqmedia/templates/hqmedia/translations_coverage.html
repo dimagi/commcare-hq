@@ -5,9 +5,12 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
     <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
+    <script src="{% static 'app_manager/js/widgets_v4.js' %}"></script>
 {% endblock js %}
 
 {% block page_content %}
+    {% registerurl "paginate_releases" domain app.get_id %}
+
     <p class="lead">{{ current_page.page_name }}</p>
 
     {% url "hqmedia_references" domain app.get_id as checker_url %}
@@ -28,7 +31,22 @@
     <form class="form-horizontal" method="post">
         {% csrf_token %}
         <div class="form-group">
-            <label for="id_first_name" class="{% css_label_class %} control-label">
+            <label class="{% css_label_class %} control-label">
+                {% trans "Version" %}
+            </label>
+            <div class="{% css_field_class %} controls">
+                <select class="form-control app-manager-version-dropdown" name="build_id">
+                    <option value="">{% trans "Latest" %}</option>
+                    {% if selected_build_id %}
+                        <option selected value="{{ selected_build_id }}">
+                            {{ selected_build_text }}
+                        </option>
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="{% css_label_class %} control-label">
                 {% trans "Language(s)" %}
             </label>
             <div class="{% css_field_class %} controls">
@@ -42,7 +60,7 @@
             </div>
         </div>
         <div class="form-group">
-            <label for="id_favorite_color" class="{% css_label_class %} control-label">
+            <label class="{% css_label_class %} control-label">
                 {% trans "Media Type(s)" %}
             </label>
             <div class="{% css_field_class %} controls">

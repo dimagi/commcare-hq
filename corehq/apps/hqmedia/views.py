@@ -314,11 +314,18 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
     @property
     def page_context(self):
         context = super(MultimediaTranslationsCoverageView, self).page_context
+        selected_build_id = self.request.POST.get('build_id')
+        selected_build_text = ''
+        if selected_build_id:
+            build = get_app(self.app.domain, selected_build_id)
+            selected_build_text = build.version
         context.update({
             "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
                             for t in CommCareMultimedia.get_doc_types()},
             "selected_langs": self.request.POST.getlist('langs', []),
             "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio', 'CommCareVideo']),
+            "selected_build_id": selected_build_id,
+            "selected_build_text": selected_build_text,
         })
         return context
 
@@ -336,12 +343,14 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
             messages.error(request, "Please select a media type.")
 
         if not error:
-            default_paths = self.app.all_media_paths(lang=self.app.default_language)
+            build_id = self.request.POST.get('build_id')
+            build = get_app(self.app.domain, build_id) if build_id else self.app
+            default_paths = build.all_media_paths(lang=build.default_language)
             default_paths = {p for p in default_paths
-                             if p in self.app.multimedia_map
-                             and self.app.multimedia_map[p].media_type in media_types}
+                             if p in build.multimedia_map
+                             and build.multimedia_map[p].media_type in media_types}
             for lang in langs:
-                fallbacks = default_paths.intersection(self.app.all_media_paths(lang=lang))
+                fallbacks = default_paths.intersection(build.all_media_paths(lang=lang))
                 if fallbacks:
                     messages.warning(request,
                                      "The following paths do not have references in <strong>{}</strong>:"
