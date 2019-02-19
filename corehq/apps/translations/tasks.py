@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import sys
+import six
 from io import open
 from zipfile import ZipFile
 
@@ -110,6 +112,7 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
             email.send()
     except Exception as e:
         notify_error(e)
+        six.reraise(*sys.exc_info())
     finally:
         if translation_file and os.path.exists(translation_file.name):
             os.remove(translation_file.name)
