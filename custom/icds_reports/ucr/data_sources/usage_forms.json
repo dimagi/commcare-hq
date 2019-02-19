@@ -58,6 +58,19 @@
         }
       },
       {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "type": "expression",
+        "column_id": "supervisor_id",
+        "expression": {
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "type": "location_parent_id"
+        }
+      },
+      {
         "display_name": null,
         "transform": {},
         "datatype": "date",
