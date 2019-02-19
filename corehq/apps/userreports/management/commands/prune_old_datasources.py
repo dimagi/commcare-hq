@@ -21,10 +21,10 @@ class Command(BaseCommand):
             help='Only check this DB engine',
         )
         parser.add_argument(
-            '--execute',
+            '--show-counts',
             action='store_true',
             default=False,
-            help='Not implemented: Actually call DROP TABLE',
+            help='Show the row counts for the tables.',
         )
 
     def handle(self, **options):
@@ -49,18 +49,25 @@ class Command(BaseCommand):
             tables_to_remove_by_engine[engine_id] = tables_in_db - expected_tables
 
         for engine_id, tablenames in tables_to_remove_by_engine.items():
-            print("Tables no longer referenced in database: {}".format(engine_id))
+            print("\nTables no longer referenced in database: {}:\n".format(engine_id))
             engine = connection_manager.get_engine(engine_id)
+            if not tablenames:
+                print("\t No tables to prune")
+                continue
+
             for tablename in tablenames:
-                with engine.begin() as connection:
-                    try:
-                        result = connection.execute(
-                            'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"'.format(tablename=tablename)
-                        )
-                    except Exception:
-                        print(tablename, "no inserted_at column, probably not UCR")
-                    else:
-                        print(tablename, result.fetchone())
+                if options['show_counts']:
+                    with engine.begin() as connection:
+                        try:
+                            result = connection.execute(
+                                'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"'.format(tablename=tablename)
+                            )
+                        except Exception:
+                            print("\t{}: no inserted_at column, probably not UCR".format(tablename))
+                        else:
+                            print("\t{}: {}".foramt(tablename, result.fetchone()))
+                else:
+                    print("\t{}".format(tablename))
 
     def _get_tables_by_engine_id(self, data_sources, engine_id):
         tables_by_engine_id = defaultdict(set)
