@@ -68,24 +68,25 @@
           "argument_expression": {
             "type": "ancestor_location",
             "location_id": {
-              "type": "icds_user_location",
-              "user_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "meta",
-                    "userID"
-                  ]
-                },
-                "type": "root_doc"
-              }
+              "type": "named",
+              "name": "user_location_id"
             },
             "location_type": "state"
           }
         },
         "create_index": true
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "type": "expression",
+        "column_id": "supervisor_id",
+        "type": "ancestor_location",
+        "location_id": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "location_type": "supervisor"
       },
       {
         "column_id": "received_on",
@@ -159,7 +160,23 @@
         }
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          },
+          "type": "root_doc"
+        }
+      }
+    },
     "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
