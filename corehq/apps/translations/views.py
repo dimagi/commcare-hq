@@ -21,16 +21,11 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.apps.translations.app_translations import (
-    get_menu_row,
-    get_module_rows,
-    get_form_question_rows,
     get_bulk_app_sheet_headers,
     get_bulk_multimedia_sheet_headers,
     get_bulk_app_sheet_rows,
     get_bulk_multimedia_sheet_rows,
     get_app_translation_workbook,
-    get_form_sheet_name,
-    get_module_sheet_name,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
 )
