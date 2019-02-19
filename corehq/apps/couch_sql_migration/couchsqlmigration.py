@@ -13,7 +13,7 @@ from time import time
 
 from django.db.utils import IntegrityError
 
-import settings
+from django.conf import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
     get_all_extensions_to_close,
