@@ -690,9 +690,10 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
+        export = self.rendered_as == 'export'
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
-        ):
+        ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -737,6 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             user_ids=user_ids,
             xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
+            export=self.rendered_as == 'export'
         )
 
 
