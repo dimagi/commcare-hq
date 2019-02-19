@@ -85,7 +85,7 @@ def get_case_pillow(
         topics, client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )
     ucr_processor = ConfigurableReportPillowProcessor(
-        data_source_providers=[DynamicDataSourceProvider(), StaticDataSourceProvider()],
+        data_source_providers=[DynamicDataSourceProvider('CommCareCase'), StaticDataSourceProvider('CommCareCase')],
         ucr_division=ucr_division,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,

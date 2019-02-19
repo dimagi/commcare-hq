@@ -10,36 +10,44 @@ hqDefine('app_manager/js/source_files',[
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
-    
-        var currentVersion = initialPageData.get('current_version'),
-            builtVersions = initialPageData.get('built_versions'),
-            $form = $("#compare-form"),
-            $input = $form.find("input");
 
-        builtVersions = _.sortBy(_.filter(builtVersions, function (v) {
-            return v.version !== currentVersion;
-        }), function (v) { return parseInt(v.version); }).reverse();
-        var versionMap = _.indexBy(builtVersions, 'version');
-    
-        $input.select2({
-            data: _.map(builtVersions, function (v) {
-                return {
-                    id: v.version,
-                    text: v.version + ": " + (v.comment || "no comment"),
-                };
-            }),
+        var currentVersion = initialPageData.get('current_version'),
+            $form = $("#compare-form"),
+            $select = $form.find("select");
+
+        $select.select2({
+            ajax: {
+                url: initialPageData.reverse('paginate_releases'),
+                dataType: 'json',
+                data: function (params) {
+                    return {
+                        limit: 10,
+                        query: params.term,
+                        page: params.page,
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: _.map(data.apps, function (build) {
+                            return {
+                                id: build.id,
+                                text: build.version + ": " + (build.build_comment || gettext("no comment")),
+                            };
+                        }),
+                        pagination: data.pagination,
+                    };
+                },
+            },
+            width: '200px',
         });
-    
+
         $form.find("button").click(function () {
-            var version = $input.val();
-            if (!version) {
-                alert("Please enter a version to compare");
-                return;
-            } else if (!versionMap[version]) {
-                alert(version + " is not a valid version");
+            var buildId = $select.val();
+            if (!buildId) {
+                alert(gettext("Please enter a version to compare"));
                 return;
             }
-            window.location = initialPageData.reverse('diff', versionMap[version].build_id);
+            window.location = initialPageData.reverse('diff', buildId);
         });
     });
 });

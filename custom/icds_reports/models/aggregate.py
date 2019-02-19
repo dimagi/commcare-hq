@@ -103,6 +103,7 @@ class CcsRecordMonthly(models.Model):
     lactating = models.IntegerField(blank=True, null=True)
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     add = models.DateField(blank=True, null=True)
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
     caste = models.TextField(blank=True, null=True)
@@ -459,6 +460,8 @@ class AggAwc(models.Model):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+    valid_visits = models.IntegerField(null=True)
+    expected_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False

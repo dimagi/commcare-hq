@@ -2,13 +2,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
-import re
-
 import mock
-from django.test import SimpleTestCase
+import re
+from lxml.etree import tostring
 
-from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.util.test_utils import flag_enabled
+from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
@@ -16,7 +14,6 @@ from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
     CaseSearchProperty,
-    DefaultCaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -34,12 +31,14 @@ from corehq.apps.app_manager.models import (
     CustomAssertion,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
+from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled, parse_normalize
 from corehq.apps.app_manager.xpath import (
     session_var,
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.models import ReportConfiguration
+from corehq.util.test_utils import flag_enabled
 import commcare_translations
 
 
@@ -393,7 +392,28 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('app_graphing', 'suite-graphing')
 
     def test_fixtures_in_graph(self):
-        self._test_generic_suite('app_fixture_graphing', 'suite-fixture-graphing')
+        expected_suite = parse_normalize(self.get_xml('suite-fixture-graphing'), to_string=False)
+        actual_suite = parse_normalize(
+            Application.wrap(self.get_json('app_fixture_graphing')).create_suite(), to_string=False)
+
+        expected_configuration_list = expected_suite.findall('detail/field/template/graph/configuration')
+        actual_configuration_list = actual_suite.findall('detail/field/template/graph/configuration')
+
+        self.assertEqual(len(expected_configuration_list), 1)
+        self.assertEqual(len(actual_configuration_list), 1)
+
+        expected_configuration = expected_configuration_list[0]
+        actual_configuration = actual_configuration_list[0]
+
+        self.assertItemsEqual(
+            [tostring(text_element) for text_element in expected_configuration],
+            [tostring(text_element) for text_element in actual_configuration]
+        )
+
+        expected_suite.find('detail/field/template/graph').remove(expected_configuration)
+        actual_suite.find('detail/field/template/graph').remove(actual_configuration)
+
+        self.assertXmlEqual(tostring(expected_suite), tostring(actual_suite))
 
     def test_printing(self):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')

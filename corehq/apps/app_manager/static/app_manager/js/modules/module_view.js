@@ -11,7 +11,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
-            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').DetailScreenConfig;
+            var DetailScreenConfig = hqImport('app_manager/js/details/screen_config').detailScreenConfig;
             state.requires_case_details(moduleBrief.requires_case_details);
 
             var details = initial_page_data('details');
@@ -194,7 +194,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {
                 var VisitScheduler = hqImport('app_manager/js/visit_scheduler');
-                var visitScheduler = new VisitScheduler.ModuleScheduler({
+                var visitScheduler = VisitScheduler.moduleScheduler({
                     home: $('#module-scheduler'),
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_schedule_phases'),
                     hasSchedule: moduleBrief.has_schedule,

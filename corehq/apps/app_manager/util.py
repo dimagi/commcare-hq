@@ -511,6 +511,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
     from corehq.apps.app_manager.models import ShadowForm
 
+    case_meta = app.get_case_metadata()
     modules = []
     errors = []
     for module in app.get_modules():
@@ -534,6 +535,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
                 'short_comment': form.short_comment,
                 'action_type': form.get_action_type(),
                 'form_filter': form.form_filter,
+                'questions': [],
             }
             try:
                 questions = form.get_questions(
@@ -542,7 +544,13 @@ def get_form_data(domain, app, include_shadow_forms=True):
                     include_groups=True,
                     include_translations=True
                 )
-                form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
+
+                for q in questions:
+                    response = FormQuestionResponse(q).to_json()
+                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, q['value'])
+                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, q['value'])
+                    form_meta['questions'].append(response)
+
             except XFormException as e:
                 form_meta['error'] = {
                     'details': six.text_type(e),
