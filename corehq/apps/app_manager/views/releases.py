@@ -84,7 +84,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
-    build_comment = request.GET.get('build_comment')
+    query = request.GET.get('query')
     page = int(request.GET.get('page', 1))
     page = max(page, 1)
     try:
@@ -106,7 +106,7 @@ def paginate_releases(request, domain, app_id):
                                                  scrap_old_conventions=False).releases_list_json(timezone),
         ).all()
 
-    if not bool(only_show_released or build_comment):
+    if not bool(only_show_released or query):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
         total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
@@ -123,17 +123,18 @@ def paginate_releases(request, domain, app_id):
         )
         if only_show_released:
             app_es = app_es.is_released()
-        if build_comment:
-            app_es = app_es.build_comment(build_comment)
+        if query:
+            app_es = app_es.build_comment(query)
 
         results = app_es.exclude_source().run()
         total_apps = results.total
         app_ids = results.doc_ids
         apps = get_docs(Application.get_db(), app_ids)
 
-        if build_comment:
+        # Check if user is searching for a specific version number
+        if query:
             try:
-                version = int(build_comment)
+                version = int(query)
             except ValueError:
                 pass
             else:
