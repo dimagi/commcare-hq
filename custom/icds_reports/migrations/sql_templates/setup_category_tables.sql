@@ -33,39 +33,6 @@ INSERT INTO child_health_categories (
         (VALUES ('yes'), ('no')) "resident"
 );
 
--- Table: CCS Record Categories
-DROP TABLE IF EXISTS ccs_record_categories;
-CREATE TABLE ccs_record_categories
-(
-	ccs_status text NOT NULL,
-	trimester text,
-	caste text NOT NULL,
-	disabled text NOT NULL,
-	minority text NOT NULL,
-	resident text NOT NULL
-);
-CREATE INDEX ccs_record_categories_indx1 ON ccs_record_categories (ccs_status, trimester, caste, disabled, minority, resident);
-
-INSERT INTO ccs_record_categories (
-    SELECT
-        "record_type"."column1" as "ccs_status",
-        "record_type"."column2" as "trimester",
-        "caste"."column1" as "caste",
-        "disabled"."column1" as "disabled",
-        "minority"."column1" as "minority",
-        "resident"."column1" as "resident"
-    FROM
-        (VALUES ('pregnant', '1'), ('pregnant', '2'), ('pregnant', '3'), ('lactating', '')) "record_type"
-    CROSS JOIN
-        (VALUES ('st'), ('sc'), ('obc'), ('other')) "caste"
-    CROSS JOIN
-        (VALUES ('yes'), ('no')) "disabled"
-    CROSS JOIN
-        (VALUES ('yes'), ('no')) "minority"
-    CROSS JOIN
-        (VALUES ('yes'), ('no')) "resident"
-);
-
 -- Table: THR Categories
 DROP TABLE IF EXISTS thr_categories;
 CREATE TABLE thr_categories
