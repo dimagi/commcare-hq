@@ -59,13 +59,11 @@
         "is_primary_key": false,
         "column_id": "supervisor_id",
         "expression": {
-          "location_id": {
+          "location_id_expression": {
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": "supervisor",
-          "location_propery": "_id",
-          "type": "ancestor_location"
+          "type": "location_parent_id"
         }
       },
       {
