@@ -811,9 +811,10 @@ def custom_strftime(format_to_use, date_to_format):
     )
 
 
-def create_aww_performance_excel_file(excel_data, data_type, month, state, district, block):
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district=None, block=None):
+    aggregation_level = 3 if block else (2 if district else 1)
     export_info = excel_data[1][1]
-    excel_data = [line[3:] for line in excel_data[0][1]]
+    excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -830,7 +831,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.title = "AWW Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
-    worksheet.merge_cells('B2:J2')
+    worksheet.merge_cells('B2:{0}2'.format(
+        "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
+    ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "AWW Performance Report for the month of {}".format(month)
@@ -838,36 +841,54 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    for cell in {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "J3"}:
+    header_cells = {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"}
+    if aggregation_level < 3:
+        header_cells.add("K3")
+    if aggregation_level < 2:
+        header_cells.add("L3")
+    for cell in header_cells:
         worksheet[cell].fill = blue_fill
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
     worksheet.merge_cells('B3:C3')
     worksheet['B3'].value = "State: {}".format(state)
-    worksheet['D3'].value = "District: {}".format(district)
+    if district:
+        worksheet['D3'].value = "District: {}".format(district)
     worksheet.merge_cells('E3:F3')
-    worksheet['E3'].value = "Block: {}".format(block)
-    worksheet.merge_cells('H3:I3')
-    worksheet['H3'].value = "Date when downloaded:"
-    worksheet['H3'].alignment = Alignment(horizontal="right")
+    if block:
+        worksheet['E3'].value = "Block: {}".format(block)
+    date_description_cell_start = "H3" if aggregation_level == 3 else ("I3" if aggregation_level == 2 else "J3")
+    date_description_cell_finish = "I3" if aggregation_level == 3 else ("J3" if aggregation_level == 2 else "K3")
+    date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+    worksheet.merge_cells('{0}:{1}'.format(
+        date_description_cell_start,
+        date_description_cell_finish,
+    ))
+    worksheet[date_description_cell_start].value = "Date when downloaded:"
+    worksheet[date_description_cell_start].alignment = Alignment(horizontal="right")
     utc_now = datetime.now(pytz.utc)
     now_in_india = utc_now.astimezone(india_timezone)
-    worksheet['J3'].value = custom_strftime('{S} %b %Y', now_in_india)
-    worksheet['J3'].alignment = Alignment(horizontal="right")
+    worksheet[date_column].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_column].alignment = Alignment(horizontal="right")
 
     # table header
     table_header_position_row = 5
-    table_header = {
-        'B': "S.No",
-        'C': "Supervisor",
-        'D': "AWC",
-        'E': "AWW Name",
-        'F': "AWW Contact Number",
-        'G': "Home Visits Conducted",
-        'H': "Number of Days AWC was Open",
-        'I': "Weighing Efficiency",
-        'J': "Eligible for Incentive",
-    }
+    headers = ["S.No"]
+    if aggregation_level < 2:
+        headers.append("District")
+    if aggregation_level < 3:
+        headers.append("Block")
+    headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
+                    "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
+    columns = 'B C D E F G H I J'
+    if aggregation_level < 3:
+        columns += " K"
+    if aggregation_level < 2:
+        columns += " L"
+    columns = columns.split()
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header
     for column, value in table_header.items():
         cell = "{}{}".format(column, table_header_position_row)
         worksheet[cell].fill = grey_fill
@@ -880,7 +901,6 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     row_position = table_header_position_row + 1
 
     for enum, row in enumerate(excel_data[1:], start=1):
-        columns = ["B", "C", "D", "E", "F", "G", "H", "I", "J"]
         for column_index in range(len(columns)):
             column = columns[column_index]
             cell = "{}{}".format(column, row_position)
@@ -895,18 +915,17 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_row = worksheet.row_dimensions[2]
     title_row.height = 23
     worksheet.row_dimensions[table_header_position_row].height = 46
-    widths = {
-        'A': 4,
-        'B': 7,
-        'C': max(15, len(state) * 4 // 3),
-        'D': 13 + (len(district) * 4 // 3),
-        'E': 12,
-        'F': max(13, len(block) * 4 // 3),
-        'G': 15,
-        'H': 11,
-        'I': 14,
-        'J': 14,
-    }
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7, 15]
+    standard_widths.extend([15] * (3 - aggregation_level))
+    standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
+    widths['D'] = 13 + (len(district) * 4 // 3 if district else 0)
+    widths['F'] = max(widths['F'], len(block) * 4 // 3 if block else 0)
     for column in ["C", "E", "G"]:
         if widths[column] > 25:
             worksheet.row_dimensions[3].height = max(
@@ -914,7 +933,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
                 worksheet.row_dimensions[3].height
             )
             widths[column] = 25
-    columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
+    columns = columns[1:]
     # column widths based on table contents
     for column_index in range(len(columns)):
         widths[columns[column_index]] = max(

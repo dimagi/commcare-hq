@@ -179,6 +179,7 @@ ATTACHMENT_REGEX = r'[^/]*\.xml'
 ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
+    'hq_logo_android_demo': 'brand-banner-demo',
 }
 
 
@@ -4890,8 +4891,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
-        xmlns_list = self.get_xmlns_map().keys()
-        for xmlns in xmlns_list:
+        for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
         signals.app_post_save.send(Application, application=self)
 

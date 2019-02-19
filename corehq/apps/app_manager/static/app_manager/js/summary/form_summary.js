@@ -11,10 +11,10 @@ hqDefine('app_manager/js/summary/form_summary',[
 ], function ($, _, ko, initialPageData, assertProperties, models, utils) {
     var formSummaryModel = function (options) {
         var self = models.contentModel(_.extend(options, {
-            query_label: gettext("Filter questions"),
+            query_label: gettext("Filter questions or cases"),
             onQuery: function (query) {
                 var match = function (needle, haystack) {
-                    return !needle || haystack.toLowerCase().indexOf(needle.toLowerCase()) !== -1;
+                    return !needle || haystack.toLowerCase().indexOf(needle.trim().toLowerCase()) !== -1;
                 };
                 _.each(self.modules, function (module) {
                     var moduleIsVisible = match(query, self.translate(module.name));
@@ -25,6 +25,11 @@ hqDefine('app_manager/js/summary/form_summary',[
                             questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
                                 return match(query, option.value + self.translateQuestion(option));
                             });
+                            var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
+                                return match(query, prop[0]) || match(query, prop[1]);
+                            });
+                            self.showCaseProperties(self.showCaseProperties() || casePropsVisible);
+                            questionIsVisible = questionIsVisible || casePropsVisible;
                             question.matchesQuery(questionIsVisible);
                             formIsVisible = formIsVisible || questionIsVisible;
                         });
@@ -71,6 +76,11 @@ hqDefine('app_manager/js/summary/form_summary',[
         self.showDefaultValues = ko.observable(false);
         self.toggleDefaultValues = function () {
             self.showDefaultValues(!self.showDefaultValues());
+        };
+
+        self.showCaseProperties = ko.observable(false);
+        self.toggleCaseProperties = function () {
+            self.showCaseProperties(!self.showCaseProperties());
         };
 
         return self;
