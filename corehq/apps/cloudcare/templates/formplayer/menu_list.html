@@ -47,6 +47,9 @@
             <% } %>
           </div>
         <% } %>
+        <% if (typeof badgeText !== 'undefined' && badgeText) { %>
+        <span class="badge badge-info"><%- badgeText %></span>
+        <% } %>
     </td>
     <td class="module-column module-column-name">
         <h3><%- displayText ? displayText : "" %></h3>
