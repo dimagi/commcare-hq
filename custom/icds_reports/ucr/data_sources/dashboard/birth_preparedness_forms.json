@@ -68,13 +68,12 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "expression": {
-          "location_id_expression": {
-            "type": "named",
-            "name": "user_location_id"
-          },
-          "type": "location_parent_id"
-        }
+        "type": "ancestor_location",
+        "location_id": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "location_type": "supervisor"
       },
       {
         "column_id": "received_on",
