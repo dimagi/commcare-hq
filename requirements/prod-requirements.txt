@@ -104,7 +104,6 @@ mock==2.0.0
 monotonic==1.5            # via eventlet
 msgpack-python==0.5.6
 ndg-httpsclient==0.5.1
-numpy==1.7.1
 openpyxl==2.6.0
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.2

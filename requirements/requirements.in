@@ -45,7 +45,6 @@ simplejson~=3.11
 sh==1.09
 gevent==1.2.2
 greenlet==0.4.12
-numpy==1.7.1
 openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3
