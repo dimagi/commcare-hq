@@ -625,7 +625,9 @@
           "type": "named",
           "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "state",
+        "location_propery": "_id",
+        "type": "ancestor_location"
       },
       "is_test": {
         "type": "conditional",
