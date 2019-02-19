@@ -46,6 +46,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
 TEST_DOMAIN = 'reach-test'
 TEST_ENVIRONMENT = 'icds'
 
+
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
 
@@ -98,7 +99,7 @@ class AggregationScriptTestBase(CSVTestCase):
                 elif isinstance(value, six.integer_types):
                     row[key] = str(value)
                 elif isinstance(value, (float, Decimal)):
-                    row[key] = self._convert_decimal_to_string(row[idx])
+                    row[key] = self._convert_decimal_to_string(row[key])
                 elif isinstance(value, six.string_types):
                     row[key] = value.encode('utf-8')
                 elif value is None:
