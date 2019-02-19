@@ -174,6 +174,7 @@ def paginate_releases(request, domain, app_id):
             'total': total_apps,
             'num_pages': num_pages,
             'current_page': page,
+            'more': page * limit < total_apps,  # needed when select2 uses this endpoint
         }
     })
 
