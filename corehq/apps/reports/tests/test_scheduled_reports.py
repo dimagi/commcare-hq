@@ -201,4 +201,4 @@ class ScheduledReportSendingTest(TestCase):
         response = get_scheduled_report_response(
             couch_user=self.user, domain=domain, scheduled_report_id=report._id
         )[0]
-        self.assertTrue(self.user.username in response)
+        self.assertTrue(self.user.username in response.decode('utf-8'))

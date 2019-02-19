@@ -71,6 +71,15 @@ def get_web_users_by_location(domain, location_id):
     return _cc_users_by_location(domain, location_id, user_class=WebUser)
 
 
+def get_commcare_users_by_location(domain, location_id):
+    from corehq.apps.users.models import CommCareUser
+    return _cc_users_by_location(domain, location_id, user_class=CommCareUser)
+
+
+def get_one_commcare_user_at_location(domain, location_id):
+    return get_commcare_users_by_location(domain, location_id).first()
+
+
 def get_users_location_ids(domain, user_ids):
     """Get the ids of the locations the users are assigned to"""
     result = (UserES()

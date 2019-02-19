@@ -26,3 +26,12 @@ SELECT
     '{{ batch_id }}'
 FROM
     {{ group_staging }}
+ON CONFLICT (group_id) DO UPDATE
+SET name = EXCLUDED.name,
+    domain = EXCLUDED.domain,
+    case_sharing = EXCLUDED.case_sharing,
+    reporting = EXCLUDED.reporting,
+    group_last_modified = EXCLUDED.group_last_modified,
+    deleted = EXCLUDED.deleted,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    batch_id = EXCLUDED.batch_id;

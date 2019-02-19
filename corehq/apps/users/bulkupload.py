@@ -21,10 +21,9 @@ from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 
 from corehq import privileges
-from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
@@ -51,7 +50,8 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role', 'User IMEIs (read only)',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
+    'User IMEIs (read only)', 'registered_on (read only)',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -368,12 +368,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
     allowed_roles = UserRole.by_domain(domain)
     roles_by_name = {role.name: role for role in allowed_roles}
     can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    # ToDo: We need more speccing on what/how locations can be assigned if location-restrictions is enabled
-    #       For now, don't support bulk assigning if location-restrictions are enabled
-    can_assign_locations = can_assign_locations and not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(domain)
     if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
-    project = Domain.get_by_name(domain)
+    domain_obj = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
 
     try:
@@ -401,7 +398,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             if password:
                 password = six.text_type(password)
             try:
-                username = normalize_username(str(username), domain)
+                username = normalize_username(six.text_type(username), domain)
             except TypeError:
                 username = None
             except ValidationError:
@@ -443,7 +440,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    if project.strong_mobile_passwords and is_password(password):
+                    if domain_obj.strong_mobile_passwords and is_password(password):
                         if raw_username(username) in usernames_with_dupe_passwords:
                             raise UserUploadError(_("Provide a unique password for each mobile worker"))
 
@@ -525,17 +522,17 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                                 "Role '%s' does not exist"
                             ) % role)
 
-                    # following blocks require user doc id, so it needs to be saved if new user
-                    user.save()
                     if can_assign_locations:
                         locations_updated = set(user.assigned_location_ids) != set(location_ids)
                         primary_location_removed = (user.location_id and not location_ids or
                                                     user.location_id not in location_ids)
 
                         if primary_location_removed:
-                            user.unset_location()
+                            user.unset_location(commit=False)
                         if locations_updated:
-                            user.reset_locations(location_ids)
+                            user.reset_locations(location_ids, commit=False)
+
+                    user.save()
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
@@ -597,7 +594,7 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
 
     def _get_group_names(user):
         return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
@@ -642,24 +639,26 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
             'role': role.name if role else '',
+            'registered_on (read only)': user.created_on.strftime('%Y-%m-%d %H:%M:%S') if user.created_on else ''
         }
 
     unrecognized_user_data_keys = set()
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_commcare_users_by_filters(domain, user_filters):
+    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
+        DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-    ]
+        'registered_on (read only)']
 
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -712,7 +711,14 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id, user_filters):
+def count_users_and_groups(domain, user_filters, group_memoizer):
+    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    groups_count = len(group_memoizer.groups)
+
+    return users_count + groups_count
+
+
+def dump_users_and_groups(domain, download_id, user_filters, task):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -730,9 +736,12 @@ def dump_users_and_groups(domain, download_id, user_filters):
 
         return group_memoizer
 
-    writer = Excel2007ExportWriter()
+    writer = Excel2007ExportWriter(format_as_text=True)
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
+
+    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
+    DownloadBase.set_progress(task, 0, users_groups_count)
 
     user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
@@ -744,7 +753,9 @@ def dump_users_and_groups(domain, download_id, user_filters):
         domain,
         user_data_model,
         location_cache,
-        user_filters
+        user_filters,
+        task,
+        users_groups_count,
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
@@ -768,3 +779,4 @@ def dump_users_and_groups(domain, download_id, user_filters):
     writer.close()
 
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    DownloadBase.set_progress(task, users_groups_count, users_groups_count)

@@ -162,6 +162,8 @@ class EntriesHelper(object):
             if form.uses_usercase():
                 EntriesHelper.add_usercase_id_assertion(e)
 
+            EntriesHelper.add_custom_assertions(e, form)
+
             if (
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
@@ -260,6 +262,12 @@ class EntriesHelper(object):
         ]
 
     @staticmethod
+    def add_custom_assertions(entry, form):
+        for id, assertion in enumerate(form.custom_assertions):
+            locale_id = id_strings.custom_assertion_locale(form.get_module(), form, id)
+            entry.assertions.append(EntriesHelper.get_assertion(assertion.test, locale_id))
+
+    @staticmethod
     def add_usercase_id_assertion(entry):
         assertion = EntriesHelper.get_assertion("count(instance('casedb')/casedb/case[@case_type='commcare-user']"
                                                 "[hq_user_id=instance('commcaresession')/session/context/userid])"
@@ -303,7 +311,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm.create_casexml_2
+                    # see XForm._create_casexml_2
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(
@@ -514,7 +522,7 @@ class EntriesHelper(object):
             datum=SessionDatum(
                 id=load_case_from_fixture.fixture_tag,
                 nodeset=load_case_from_fixture.fixture_nodeset,
-                value="./@" + load_case_from_fixture.fixture_variable,
+                value=load_case_from_fixture.fixture_variable,
                 detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
                 detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
             ),

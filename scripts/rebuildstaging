@@ -11,6 +11,7 @@ rebuild staging from yaml configuration (scripts/staging.yaml)
     --deploy        deploy after rebuild is complete
     --no-push       do not push changes (cannot be used with --deploy)
     --skip-fetch    assume local copy is already update date with remote
+    --enterprise    rebuild the enterprise branch
 EOF
 }
 
@@ -37,6 +38,10 @@ do
       --no-push)
         no_push=y
         echo no-push
+        ;;
+      --enterprise)
+        enterprise=y
+        echo enterprise
         ;;
       *)
         usage
@@ -66,7 +71,7 @@ then
     exit 1
 fi
 
-if [[ $deploy = 'y' && $no_push != 'y' ]]
+if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
 then
     rebuildstaging $args && {
         which commcare-cloud \

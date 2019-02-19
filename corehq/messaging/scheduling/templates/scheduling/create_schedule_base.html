@@ -2,11 +2,6 @@
 {% load hq_shared_tags %}
 
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
-{% endblock %}
-
 {% block stylesheets %}{{ block.super }}
 <style>
     /*

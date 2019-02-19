@@ -46,6 +46,46 @@ class CustomRecipientTest(BaseICDSTest):
                 ).recipient
             )
 
+    def test_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out(self):
+        recipient_id = 'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT'
+        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+            self.assertEqual(
+                cls(
+                    domain=self.domain,
+                    case_id=self.ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id=recipient_id
+                ).recipient.case_id,
+                self.mother_person_case.case_id
+            )
+
+            self.assertIsNone(
+                cls(
+                    domain=self.domain,
+                    case_id=self.migrated_mother_ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id=recipient_id
+                ).recipient
+            )
+
+            self.assertIsNone(
+                cls(
+                    domain=self.domain,
+                    case_id=self.opted_out_mother_ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id=recipient_id
+                ).recipient
+            )
+
+            self.assertIsNone(
+                cls(
+                    domain=self.domain,
+                    case_id=self.lone_ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id=recipient_id
+                ).recipient
+            )
+
     def test_mother_person_case_from_child_health_case(self):
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
             self.assertEqual(

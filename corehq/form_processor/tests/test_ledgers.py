@@ -20,6 +20,8 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_ba
 from corehq.form_processor.utils.general import should_use_sql_backend
 from six.moves import zip
 
+from corehq.util.test_utils import softer_assert
+
 DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
@@ -164,7 +166,7 @@ class LedgerTests(TestCase):
     def test_ledger_update_with_case_update(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         submit_case_blocks([
-            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
+            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string().decode('utf-8'),
             get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
             DOMAIN
         )
@@ -212,6 +214,7 @@ class LedgerTests(TestCase):
 
 
 @use_sql_backend
+@softer_assert()
 class LedgerTestsSQL(LedgerTests):
     def test_edit_form_that_removes_ledgers(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
@@ -231,7 +234,7 @@ class LedgerTestsSQL(LedgerTests):
         self.assertTrue(transactions[1].is_ledger_transaction)
 
         submit_case_blocks([
-            CaseBlock(case_id=self.case.case_id).as_string()],
+            CaseBlock(case_id=self.case.case_id).as_string().decode('utf-8')],
             DOMAIN,
             form_id=form_id
         )

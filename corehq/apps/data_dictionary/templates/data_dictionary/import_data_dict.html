@@ -3,23 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-{% endblock %}
-
-{% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url 'data_interfaces_default' domain %}"><strong>{% trans "Data" %}</strong></a>
-        </li>
-        <li>
-            <a href="{% url 'data_dictionary' domain %}">{% trans "Data Dictionary" %}</a>
-        </li>
-        <li>
-            <a href="{% url 'upload_data_dict' domain %}">{% trans "Upload Data Dictionary" %}</a>
-        </li>
-    </ol>
-{% endblock %}
+{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
 
 {% block page_content %}
     {% include "hqwebapp/partials/bulk_upload.html" %}

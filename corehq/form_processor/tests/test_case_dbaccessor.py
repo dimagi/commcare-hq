@@ -142,7 +142,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='image/jpeg',
             blob_id='122',
             md5='123',
-            identifier='pic.jpg',
         ))
         CaseAccessorSQL.save_case(case1)
 
@@ -164,7 +163,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='pic.jpg',
             content_type='image/jpeg',
             blob_id='123',
-            identifier='pic1',
             md5='123'
         ))
         case.track_create(CaseAttachmentSQL(
@@ -173,16 +171,15 @@ class CaseAccessorTestsSQL(TestCase):
             name='my_doc',
             content_type='text/xml',
             blob_id='124',
-            identifier='doc1',
             md5='123'
         ))
         CaseAccessorSQL.save_case(case)
 
         with self.assertRaises(AttachmentNotFound):
-            CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'missing')
+            CaseAccessorSQL.get_attachment_by_name(case.case_id, 'missing')
 
         with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
-            attachment_meta = CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'pic1')
+            attachment_meta = CaseAccessorSQL.get_attachment_by_name(case.case_id, 'pic.jpg')
 
         self.assertEqual(case.case_id, attachment_meta.case_id)
         self.assertEqual('pic.jpg', attachment_meta.name)
@@ -197,7 +194,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='pic.jpg',
             content_type='image/jpeg',
             blob_id='125',
-            identifier='pic1',
             md5='123',
         ))
         case.track_create(CaseAttachmentSQL(
@@ -206,7 +202,6 @@ class CaseAccessorTestsSQL(TestCase):
             name='doc',
             content_type='text/xml',
             blob_id='126',
-            identifier='doc1',
             md5='123',
         ))
         CaseAccessorSQL.save_case(case)
@@ -341,7 +336,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='text/xml',
             blob_id='127',
             md5='123',
-            identifier='doc',
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -360,7 +354,6 @@ class CaseAccessorTestsSQL(TestCase):
             content_type='text/xml',
             blob_id='128',
             md5='123',
-            identifier='doc'
         ))
         CaseAccessorSQL.save_case(case)
 
@@ -696,7 +689,7 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
-    :return: case_id
+    :return: CommCareCaseSQL
     """
     domain = domain or DOMAIN
     form_id = form_id or uuid.uuid4().hex
@@ -712,21 +705,19 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
         domain=domain
     )
 
-    cases = []
-    if case_id:
-        case = CommCareCaseSQL(
-            case_id=case_id,
-            domain=domain,
-            type=case_type or '',
-            owner_id=user_id,
-            opened_on=utcnow,
-            modified_on=utcnow,
-            modified_by=user_id,
-            server_modified_on=utcnow,
-            closed=closed or False
-        )
-        case.track_create(CaseTransaction.form_transaction(case, form))
-        cases = [case]
+    case = CommCareCaseSQL(
+        case_id=case_id,
+        domain=domain,
+        type=case_type or '',
+        owner_id=user_id,
+        opened_on=utcnow,
+        modified_on=utcnow,
+        modified_by=user_id,
+        server_modified_on=utcnow,
+        closed=closed or False
+    )
+    case.track_create(CaseTransaction.form_transaction(case, form, utcnow))
+    cases = [case]
 
     FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
     return CaseAccessorSQL.get_case(case_id)

@@ -4,6 +4,7 @@ from collections import defaultdict, namedtuple
 import datetime
 import logging
 
+import six
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -57,9 +58,9 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
         'feature_type': feature.feature_type,
         'feature_id': feature.id,
         'rate_id': feature_rate.id,
-        'monthly_fee': feature_rate.monthly_fee.__str__(),
+        'monthly_fee': six.text_type(feature_rate.monthly_fee),
         'monthly_limit': feature_rate.monthly_limit,
-        'per_excess_fee': feature_rate.per_excess_fee.__str__(),
+        'per_excess_fee': six.text_type(feature_rate.per_excess_fee),
     }
 
 
@@ -80,7 +81,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
     return {
         'name': product_rate.name,
         'rate_id': product_rate.id,
-        'monthly_fee': product_rate.monthly_fee.__str__(),
+        'monthly_fee': six.text_type(product_rate.monthly_fee),
     }
 
 
@@ -143,7 +144,7 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
 def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
     subscription = Subscription.get_active_subscription_by_domain(domain_name)
-    return subscription.is_trial
+    return subscription and subscription.is_trial
 
 
 def is_active_subscription(date_start, date_end, today=None):
@@ -241,30 +242,6 @@ def is_accounting_admin(user):
         return False
 
 
-def get_active_reminders_by_domain_name(domain_name):
-    from corehq.apps.reminders.models import (
-        CaseReminderHandler,
-        REMINDER_TYPE_DEFAULT,
-        REMINDER_TYPE_KEYWORD_INITIATED,
-    )
-    db = CaseReminderHandler.get_db()
-    key = [domain_name]
-    reminder_rules = db.view(
-        'reminders/handlers_by_reminder_type',
-        startkey=key,
-        endkey=(key + [{}]),
-        reduce=False
-    ).all()
-    return [
-        CaseReminderHandler.wrap(reminder_doc)
-        for reminder_doc in iter_docs(db, [r['id'] for r in reminder_rules])
-        if (
-            reminder_doc.get('active', True)
-            and reminder_doc.get('reminder_type', REMINDER_TYPE_DEFAULT) != REMINDER_TYPE_KEYWORD_INITIATED
-        )
-    ]
-
-
 def make_anchor_tag(href, name, attrs=None):
     context = {
         'href': href,
@@ -275,7 +252,7 @@ def make_anchor_tag(href, name, attrs=None):
 
 
 def get_default_domain_url(domain):
-    from corehq.apps.domain.views import DefaultProjectSettingsView
+    from corehq.apps.domain.views.settings import DefaultProjectSettingsView
     return absolute_reverse(
         DefaultProjectSettingsView.urlname,
         args=[domain],
@@ -368,3 +345,15 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
             web_user=web_user,
             note="Cancelled due to changing subscription",
         )
+
+
+def is_downgrade(current_edition, next_edition):
+    from corehq.apps.accounting.models import SoftwarePlanEdition
+    plans = SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]
+    return plans.index(current_edition) > plans.index(next_edition)
+
+
+def clear_plan_version_cache():
+    from corehq.apps.accounting.models import SoftwarePlan
+    for software_plan in SoftwarePlan.objects.all():
+        SoftwarePlan.get_version.clear(software_plan)

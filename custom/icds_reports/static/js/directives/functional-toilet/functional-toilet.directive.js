@@ -8,15 +8,15 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     var vm = this;
     vm.label = "AWCs Reported Functional Toilet";
     vm.steps = {
-        'map': {route: '/functional_toilet/map', label: 'Map View'},
-        'chart': {route: '/functional_toilet/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/functional_toilet/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/functional_toilet/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs that reported having a functional toilet',
+        info: 'Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported having a functional toilet',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +49,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of AWCs that reported having a functional toilet',
+        'captionContent': ' Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported having a functional toilet',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

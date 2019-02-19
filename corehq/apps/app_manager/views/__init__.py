@@ -1,18 +1,15 @@
 from __future__ import absolute_import
-from corehq.apps.app_manager.views.translations import (
-    upload_bulk_ui_translations,
-    download_bulk_ui_translations,
-    download_bulk_app_translations,
-    upload_bulk_app_translations,
-)
+
 from corehq.apps.app_manager.views.app_summary import (
+    AppCaseSummaryView,
     AppDataView,
-    AppSummaryView,
+    AppFormSummaryView,
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (
+    app_from_template,
     app_settings,
     app_source,
     copy_app,
@@ -53,10 +50,14 @@ from corehq.apps.app_manager.views.download import (
     download_profile,
     download_raw_jar,
     download_suite,
-    download_test_jar,
     download_xform,
     DownloadCCZ,
     validate_form_for_build,
+)
+from corehq.apps.app_manager.views.formdesigner import (
+    form_source,
+    form_source_legacy,
+    get_form_data_schema,
 )
 from corehq.apps.app_manager.views.forms import (
     copy_form,
@@ -73,8 +74,8 @@ from corehq.apps.app_manager.views.forms import (
     undo_delete_form,
     view_form_legacy,
     view_form,
-    xform_display,
     get_form_questions,
+    FormHasSubmissionsView,
 )
 from corehq.apps.app_manager.views.modules import (
     delete_module,
@@ -90,7 +91,6 @@ from corehq.apps.app_manager.views.modules import (
 )
 from corehq.apps.app_manager.views.multimedia import (
     multimedia_ajax,
-    multimedia_list_download,
 )
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,
@@ -102,12 +102,12 @@ from corehq.apps.app_manager.views.releases import (
     odk_qr_code,
     paginate_releases,
     release_build,
-    releases_ajax,
     revert_to_copy,
     save_copy,
     short_odk_url,
     short_url,
     update_build_comment,
+    toggle_build_profile,
 )
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,
@@ -118,15 +118,4 @@ from corehq.apps.app_manager.views.settings import (
     edit_commcare_profile,
     edit_commcare_settings,
     PromptSettingsUpdateView,
-)
-from corehq.apps.app_manager.views.translations import (
-    download_bulk_app_translations,
-    download_bulk_ui_translations,
-    upload_bulk_app_translations,
-    upload_bulk_ui_translations,
-)
-from corehq.apps.app_manager.views.formdesigner import (
-    form_source,
-    form_source_legacy,
-    get_form_data_schema,
 )

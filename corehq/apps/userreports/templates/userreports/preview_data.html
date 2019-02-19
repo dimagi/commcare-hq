@@ -1,19 +1,22 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
+{% endblock %}
+
+{% block page_actions %}
+    {% registerurl 'configurable_data_source_status' domain data_source.get_id %}
+    {% initial_page_data 'is_static_data_source' data_source.config.is_static %}
+{% endblock %}
+
 {% block page_content %}
+
+{% if not data_source.config.is_static %}
+    {% include 'userreports/partials/build_in_progress_warning.html' %}
+{% endif %}
+
 <h1>{% blocktrans with display_name=data_source.display_name %}Preview table: {{ display_name }} ({{ total_rows }} total rows){% endblocktrans %}</h1>
-<table class="table">
-    <tr>
-    {% for column in columns %}
-        <th>{{ column.name }}</th>
-    {% endfor %}
-    </tr>
-{% for row in data %}
-    <tr>
-    {% for value in row %}
-        <td>{{ value }}</td>
-    {% endfor %}
-    </tr>
-{% endfor %}
-</table>
+{% include 'userreports/partials/basic_data_table.html' %}
 {% endblock %}

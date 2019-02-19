@@ -1,0 +1,296 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "report_id": "static-ivr_weekly_mobile_job_aid",
+  "data_source_table": "static-hmis_job_aid",
+  "config": {
+    "title": "(mobile) IVR Weekly Mobile Job Aid",
+    "filters": [
+      {
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "Location",
+        "field": "health_post_id",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "health_post"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "show_all": true,
+        "display": "Reporting Week",
+        "field": "report_week_date",
+        "ancestor_expression": {},
+        "choice_provider": {},
+        "slug": "report_week_date"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "report_week_date_for_filter_gregorian",
+        "field": "report_week_date_for_filter_gregorian",
+        "type": "date",
+        "display": "Report Week (for mobile)"
+      },
+      {
+        "display": "Test or Real",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Test",
+            "value": "Test"
+          },
+          {
+            "display": "Real",
+            "value": "Real"
+          }
+        ],
+        "field": "test_or_real",
+        "type": "choice_list",
+        "slug": "test_or_real"
+      }
+    ],
+    "aggregation_columns": [
+      "report_week_date"
+    ],
+    "configured_charts": [],
+    "columns": [
+      {
+        "field": "report_week_date",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "report_week_date",
+        "visible": true,
+        "display": "Reporting Week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "still_live",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "report_live_births",
+        "visible": true,
+        "display": "# of deliveries attended by HEW - Live Births for this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "still_births",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "report_still_births",
+        "visible": true,
+        "display": "# of deliveries attended by HEW - Still Births for this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "type": "expression",
+        "transform": {},
+        "column_id": "report_total_births",
+        "visible": true,
+        "expression": {
+          "type": "evaluator",
+          "statement": "a + b",
+          "context_variables": {
+            "a": {
+              "type": "property_name",
+              "property_name": "report_live_births"
+            },
+            "b": {
+              "type": "property_name",
+              "property_name": "report_still_births"
+            }
+          }
+        },
+        "display": "Total # of deliveries attended by HEW"
+      },
+      {
+        "field": "total_deaths",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "total_deaths",
+        "visible": true,
+        "display": "# of maternal death observed in the community for this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "deaths_first_seven_days",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "deaths_first_seven_days",
+        "visible": true,
+        "display": "# of Early Neonatal Deaths for this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "postnatal_0_48",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "postnatal_0_48",
+        "visible": true,
+        "display": "# of Household visited for first PNC by HEWs within 48 hours after delivery for this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "total_malaria_confirmed_and_clinical",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "total_malaria_confirmed_and_clinical",
+        "visible": true,
+        "display": "Total Malaria - confirmed and clinical",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "total_malaria_suspected_fever_cases_examined_by_rdt",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "total_malaria_suspected_fever_cases_examined_by_rdt",
+        "visible": true,
+        "display": "Total Malaria suspected fever cases examined by RDT",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cases_positive_malaria_by_rdt_or_microscopy_pfalciparum",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cases_positive_malaria_by_rdt_or_microscopy_pfalciparum",
+        "visible": true,
+        "display": "# of cases positive for malaria parasites either by RDT or Microscopy - PFalciparum",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cases_positive_malaria_by_rdt_or_microscopy_pvivax",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cases_positive_malaria_by_rdt_or_microscopy_pvivax",
+        "visible": true,
+        "display": "# of cases positive for malaria parasites either by RDT or Microscopy - PVivax",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "diarrhoea_with_blood",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "diarrhoea_with_blood",
+        "visible": true,
+        "display": "Diarrhea with Blood (Dysentery)",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "acute_febrile_illness",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "acute_febrile_illness",
+        "visible": true,
+        "display": "Acute febrile illness (other than malaria and meningitis)",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cases_treated_for_malaria_diarrhea_pneumonia_iccm",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cases_treated_for_malaria_diarrhea_pneumonia_iccm",
+        "visible": true,
+        "display": "# of cases treated for malaria, diarrhea, or pneumonia based on iCCM this week",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      }
+    ]
+  }
+}

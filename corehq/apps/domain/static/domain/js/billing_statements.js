@@ -1,15 +1,23 @@
-/* global Stripe */
-hqDefine("domain/js/billing_statements", function() {
-
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        paymentMethodHandlers = hqImport("accounting/js/payment_method_handler"),
-        CRUDPaginatedList = hqImport("hqwebapp/js/crud_paginated_list");
-
+hqDefine("domain/js/billing_statements", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'accounting/js/payment_method_handler',
+    'hqwebapp/js/crud_paginated_list',
+    'accounting/js/lib/stripe',
+], function (
+    $,
+    ko,
+    initialPageData,
+    paymentMethodHandlers,
+    CRUDPaginatedList,
+    Stripe
+) {
     Stripe.setPublishableKey(initialPageData.get("stripe_options").stripe_public_key);
-    var WireInvoiceHandler = paymentMethodHandlers.WireInvoiceHandler;
-    var PaymentMethodHandler = paymentMethodHandlers.PaymentMethodHandler;
-    var Invoice = paymentMethodHandlers.Invoice;
-    var TotalCostItem = paymentMethodHandlers.TotalCostItem;
+    var wireInvoiceHandler = paymentMethodHandlers.wireInvoiceHandler;
+    var paymentMethodHandler = paymentMethodHandlers.paymentMethodHandler;
+    var invoice = paymentMethodHandlers.invoice;
+    var totalCostItem = paymentMethodHandlers.totalCostItem;
     var pagination = initialPageData.get("pagination");
     var paginatedListModel = new CRUDPaginatedList.CRUDPaginatedListModel(
         pagination.total,
@@ -23,10 +31,10 @@ hqDefine("domain/js/billing_statements", function() {
     );
 
     $(function () {
-        ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
+        $('#editable-paginated-list').koApplyBindings(paginatedListModel);
     });
 
-    var bulkPaymentHandler = new PaymentMethodHandler(
+    var bulkPaymentHandler = paymentMethodHandler(
         "bulk-payment-form",
         {
             submitBtnText: gettext("Submit Payment"),
@@ -35,7 +43,7 @@ hqDefine("domain/js/billing_statements", function() {
         }
     );
 
-    var bulkWirePaymentHandler = new WireInvoiceHandler(
+    var bulkWirePaymentHandler = wireInvoiceHandler(
         "bulk-wire-payment-form",
         {
             submitBtnText: gettext("Submit Invoice Request"),
@@ -45,7 +53,7 @@ hqDefine("domain/js/billing_statements", function() {
         }
     );
 
-    var paymentHandler = new PaymentMethodHandler(
+    var paymentHandler = paymentMethodHandler(
         "payment-form",
         {
             submitBtnText: gettext("Submit Payment"),
@@ -73,14 +81,14 @@ hqDefine("domain/js/billing_statements", function() {
     });
 
     $('#bulkPaymentBtn').click(function () {
-        bulkPaymentHandler.costItem(new TotalCostItem({
+        bulkPaymentHandler.costItem(totalCostItem({
             totalBalance: paginatedListModel.totalDue(),
             paginatedListModel: paginatedListModel,
         }));
         bulkPaymentHandler.reset();
     });
     $('#bulkWirePaymentBtn').click(function () {
-        bulkWirePaymentHandler.costItem(new TotalCostItem({
+        bulkWirePaymentHandler.costItem(totalCostItem({
             totalBalance: paginatedListModel.totalDue(),
             paginatedListModel: paginatedListModel,
         }));
@@ -114,7 +122,7 @@ hqDefine("domain/js/billing_statements", function() {
         var paymentButton = $(rowElems).find('.payment-button');
         if (paymentButton) {
             paymentButton.click(function (e) {
-                paymentHandler.costItem(new Invoice({
+                paymentHandler.costItem(invoice({
                     paginatedItem: paginatedItem,
                     paginatedList: paginatedListModel,
                 }));

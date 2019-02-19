@@ -50,6 +50,7 @@ class UserES(HQESQuery):
             analytics_enabled,
             is_practice_user,
             role_id,
+            is_active,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -57,9 +58,8 @@ class UserES(HQESQuery):
         return self.remove_default_filter('active')
 
     def show_only_inactive(self):
-        query = deepcopy(self)
-        query._default_filters['active'] = {"term": {"is_active": False}}
-        return query
+        query = self.remove_default_filter('active')
+        return query.is_active(False)
 
 
 def domain(domain):
@@ -152,3 +152,7 @@ def is_practice_user(practice_mode=True):
 
 def role_id(role_id):
     return filters.term('domain_membership.role_id', role_id)
+
+
+def is_active(active=True):
+    return filters.term("is_active", active)

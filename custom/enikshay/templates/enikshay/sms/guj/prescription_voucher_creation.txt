@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-લાભાર્થી આઈડી  {{ person_id }}  ધરાવતા {{ person_name }} ને ડ્રગ વાઉચર આઈડી   {{ voucher_id }} ઈશ્યુ કરવામાં આવ્યું છે.

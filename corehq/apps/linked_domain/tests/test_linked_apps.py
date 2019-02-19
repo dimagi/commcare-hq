@@ -17,9 +17,12 @@ from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
+from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map, update_linked_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
+from io import open
+
+from corehq.util.test_utils import softer_assert
 
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
@@ -28,20 +31,22 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(BaseLinkedAppsTest, cls).setUpClass()
-        cls.master_app_with_report_modules = Application.new_app('domain', "Master Application")
+        cls.domain = 'domain'
+        cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
         module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
         module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
+            ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
         ]
 
-        cls.plain_master_app = Application.new_app('domain', "Master Application")
-        cls.plain_master_app.linked_whitelist = ['domain-2']
+        cls.plain_master_app = Application.new_app(cls.domain, "Master Application")
+        cls.linked_domain = 'domain-2'
+        cls.plain_master_app.linked_whitelist = [cls.linked_domain]
         cls.plain_master_app.save()
 
-        cls.linked_app = LinkedApplication.new_app('domain-2', "Linked Application")
+        cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
         cls.linked_app.save()
 
-        cls.domain_link = DomainLink.link_domains('domain-2', 'domain')
+        cls.domain_link = DomainLink.link_domains(cls.linked_domain, cls.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -61,17 +66,17 @@ class TestLinkedApps(BaseLinkedAppsTest):
             overwrite_app(self.linked_app, self.master_app_with_report_modules, {})
 
     def test_report_mapping(self):
-        report_map = {'id': 'mapped_id'}
+        report_map = {'master_report_id': 'mapped_id'}
         overwrite_app(self.linked_app, self.master_app_with_report_modules, report_map)
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
 
     def test_overwrite_app_maintain_ids(self):
         module = self.plain_master_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         module = self.linked_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         id_map_before = _get_form_id_map(self.linked_app)
 
@@ -146,13 +151,95 @@ class TestLinkedApps(BaseLinkedAppsTest):
             # re-fetch to bust memoize cache
             LinkedApplication.get(self.linked_app._id).get_latest_master_release()
 
+    def test_override_translations(self):
+        translations = {'en': {'updates.check.begin': 'update?'}}
+
+        self.linked_app.master = self.plain_master_app.get_id
+
+        copy = self.plain_master_app.make_build()
+        copy.save()
+        self.addCleanup(copy.delete)
+
+        self.plain_master_app.save()  # increment version number
+        copy1 = self.plain_master_app.make_build()
+        copy1.is_released = True
+        copy1.save()
+        self.addCleanup(copy1.delete)
+
+        self.linked_app.linked_app_translations = translations
+        self.linked_app.save()
+        self.assertEqual(self.linked_app.translations, {})
+
+        update_linked_app(self.linked_app, 'test_override_translations')
+        # fetch after update to get the new version
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(self.plain_master_app.translations, {})
+        self.assertEqual(self.linked_app.linked_app_translations, translations)
+        self.assertEqual(self.linked_app.translations, translations)
+
+    def test_override_logo(self):
+        image_data = _get_image_data()
+        image = CommCareImage.get_by_data(image_data)
+        image.attach_data(image_data, original_filename='logo.png')
+        image.add_domain(self.linked_app.domain)
+        image.save()
+        self.addCleanup(image.delete)
+
+        image_path = "jr://file/commcare/logo/data/hq_logo_android_home.png"
+
+        logo_refs = {
+            "hq_logo_android_home": {
+                "humanized_content_length": "45.4 KB",
+                "icon_class": "fa fa-picture-o",
+                "image_size": "448 X 332 Pixels",
+                "m_id": image._id,
+                "media_type": "Image",
+                "path": "jr://file/commcare/logo/data/hq_logo_android_home.png",
+                "uid": "3b79a76a067baf6a23a0b6978b2fb352",
+                "updated": False,
+                "url": "/hq/multimedia/file/CommCareImage/e3c45dd61c5593fdc5d985f0b99f6199/"
+            },
+        }
+
+        self.linked_app.master = self.plain_master_app.get_id
+
+        copy = self.plain_master_app.make_build()
+        copy.save()
+        self.addCleanup(copy.delete)
+
+        self.plain_master_app.save()  # increment version number
+        copy1 = self.plain_master_app.make_build()
+        copy1.is_released = True
+        copy1.save()
+        self.addCleanup(copy1.delete)
+
+        self.linked_app.version = 1
+
+        self.linked_app.linked_app_logo_refs = logo_refs
+        self.linked_app.create_mapping(image, image_path, save=False)
+        self.linked_app.save()
+        self.assertEqual(self.linked_app.logo_refs, {})
+
+        update_linked_app(self.linked_app, 'test_override_logos')
+        # fetch after update to get the new version
+        self.linked_app = LinkedApplication.get(self.linked_app._id)
+
+        self.assertEqual(self.plain_master_app.logo_refs, {})
+        self.assertEqual(self.linked_app.linked_app_logo_refs, logo_refs)
+        self.assertEqual(self.linked_app.logo_refs, logo_refs)
+
+        # cleanup the linked app logo properties
+        self.linked_app.linked_app_logo_refs = {}
+        self.linked_app.save()
+
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
     @classmethod
     def setUpClass(cls):
         super(TestRemoteLinkedApps, cls).setUpClass()
-        image_data = cls._get_image_data('commcare-hq-logo.png')
+        image_data = _get_image_data()
         cls.image = CommCareImage.get_by_data(image_data)
         cls.image.attach_data(image_data, original_filename='logo.png')
         cls.image.add_domain(cls.plain_master_app.domain)
@@ -162,18 +249,12 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         cls.image.delete()
         super(TestRemoteLinkedApps, cls).tearDownClass()
 
-    @staticmethod
-    def _get_image_data(filename):
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
-        with open(image_path, 'r') as f:
-            return f.read()
-
     def test_remote_app(self):
         module = self.master_app_with_report_modules.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         linked_app = _mock_pull_remote_master(
-            self.master_app_with_report_modules, self.linked_app, {'id': 'mapped_id'}
+            self.master_app_with_report_modules, self.linked_app, {'master_report_id': 'mapped_id'}
         )
         master_id_map = _get_form_id_map(self.master_app_with_report_modules)
         linked_id_map = _get_form_id_map(linked_app)
@@ -213,6 +294,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         image = CommCareImage.get(self.image._id)
         self.assertIn(self.master_app_with_report_modules.domain, image.valid_domains)
 
+    @softer_assert()
     def test_fetch_missing_media(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
@@ -221,7 +303,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = 'this is a test'
+        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -231,7 +313,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
-        content = media.fetch_attachment(list(media.blobs.keys())[0])
+        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True)
         self.assertEqual(data, content)
 
 
@@ -240,3 +322,9 @@ def _mock_pull_remote_master(master_app, linked_app, report_map=None):
     master_app = _convert_app_from_remote_linking_source(master_source)
     overwrite_app(linked_app, master_app, report_map or {})
     return Application.get(linked_app._id)
+
+
+def _get_image_data():
+    image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
+    with open(image_path, 'rb') as f:
+        return f.read()

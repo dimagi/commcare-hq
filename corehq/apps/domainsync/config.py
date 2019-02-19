@@ -1,7 +1,46 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
-from corehq.blobs.mixin import BlobHelper
+from corehq.blobs.mixin import BlobHelper, CODES
+
+
+COUCH_DOC_TYPE_CODES = {
+    "CommCareBuild": CODES.commcarebuild,
+    "Domain": CODES.domain,
+    "InvoicePdf": CODES.invoice,
+    "SavedBasicExport": CODES.basic_export,
+
+    "CommCareCase": CODES._default,
+    "CommCareCase-deleted": CODES._default,
+    "CommCareCase-Deleted": CODES._default,
+    "CommCareCase-Deleted-Deleted": CODES._default,
+
+    "Application": CODES.application,
+    "Application-Deleted": CODES.application,
+    "LinkedApplication": CODES.application,
+    "RemoteApp": CODES.application,
+    "RemoteApp-Deleted": CODES.application,
+    "SavedAppBuild": CODES.application,
+
+    "ExportInstance": CODES.data_export,
+    "CaseExportInstance": CODES.data_export,
+    "FormExportInstance": CODES.data_export,
+    "SMSExportInstance": CODES.data_export,
+
+    "XFormInstance": CODES.form_xml,
+    "XFormInstance-Deleted": CODES.form_xml,
+    "XFormArchived": CODES.form_xml,
+    "XFormDeprecated": CODES.form_xml,
+    "XFormDuplicate": CODES.form_xml,
+    "XFormError": CODES.form_xml,
+    "SubmissionErrorLog": CODES.form_xml,
+    "HQSubmission": CODES.form_xml,
+
+    "CommCareAudio": CODES.multimedia,
+    "CommCareImage": CODES.multimedia,
+    "CommCareVideo": CODES.multimedia,
+    "CommCareMultimedia": CODES.multimedia,
+}
 
 
 class DocumentTransform(object):
@@ -19,7 +58,7 @@ class DocumentTransform(object):
         if _attachments:
             if not exclude_attachments:
                 self._attachments = _attachments
-                obj = BlobHelper(doc, database)
+                obj = BlobHelper(doc, database, None)
                 self.attachments = {k: obj.fetch_attachment(k) for k in _attachments}
             if doc.get("_attachments"):
                 doc["_attachments"] = {}
@@ -43,7 +82,8 @@ def save(transform, database):
             transform.doc['_rev'] = rev
             database.save_doc(transform.doc)
     if transform.attachments:
-        obj = BlobHelper(transform.doc, database)
+        type_code = COUCH_DOC_TYPE_CODES[transform.doc["doc_type"]]
+        obj = BlobHelper(transform.doc, database, type_code)
         with obj.atomic_blobs(save):
             for name, attach in transform.attachments.items():
                 content_type = transform._attachments[name]["content_type"]

@@ -94,6 +94,7 @@
                 "display_name": "Count",
                 "type": "count"
             }
-        ]
+        ],
+        "asynchronous": true
     }
 }

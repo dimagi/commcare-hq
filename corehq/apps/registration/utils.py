@@ -6,6 +6,7 @@ from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
 from django.template.loader import render_to_string
+from celery import chain
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount, BillingContactInfo,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
@@ -14,6 +15,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.tasks import send_domain_registration_email
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.name_to_url import name_to_url
 from dimagi.utils.web import get_ip, get_url_base, get_site_domain
@@ -28,6 +30,10 @@ from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_P
 from corehq import toggles
 from corehq.util.view_utils import absolute_reverse
 
+HEALTH_APP = 'health'
+AGG_APP = 'agriculture'
+WASH_APP = 'wash'
+
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
@@ -39,7 +45,6 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
-    new_user.email_opt_out = False  # auto add new users
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -61,7 +66,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
 
 def request_new_domain(request, form, is_new_user=True):
     now = datetime.utcnow()
-    current_user = CouchUser.from_django_user(request.user)
+    current_user = CouchUser.from_django_user(request.user, strict=True)
 
     dom_req = RegistrationRequest()
     if is_new_user:
@@ -105,7 +110,10 @@ def request_new_domain(request, form, is_new_user=True):
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain, current_user.username)
     else:
-        ensure_explicit_community_subscription(new_domain.name, date.today())
+        ensure_explicit_community_subscription(
+            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=current_user.username,
+        )
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -129,51 +137,30 @@ def request_new_domain(request, form, is_new_user=True):
 
     if is_new_user:
         dom_req.save()
-        send_domain_registration_email(request.user.email,
-                                       dom_req.domain,
-                                       dom_req.activation_guid,
-                                       request.user.get_full_name())
+        if settings.IS_SAAS_ENVIRONMENT:
+            from corehq.apps.app_manager.tasks import load_appcues_template_app
+            chain(
+                load_appcues_template_app.si(new_domain.name, current_user.username, HEALTH_APP),
+                load_appcues_template_app.si(new_domain.name, current_user.username, AGG_APP),
+                load_appcues_template_app.si(new_domain.name, current_user.username, WASH_APP),
+                send_domain_registration_email.si(
+                    request.user.email,
+                    dom_req.domain,
+                    dom_req.activation_guid,
+                    request.user.get_full_name(),
+                    request.user.first_name
+                )
+            ).apply_async()
+        else:
+            send_domain_registration_email(request.user.email,
+                                           dom_req.domain,
+                                           dom_req.activation_guid,
+                                           request.user.get_full_name(),
+                                           request.user.first_name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
-
-
-WIKI_LINK = 'http://help.commcarehq.org'
-FORUM_LINK = 'https://forum.dimagi.com/'
-PRICING_LINK = 'https://www.commcarehq.org/pricing'
-
-
-def send_domain_registration_email(recipient, domain_name, guid, full_name):
-    DNS_name = get_site_domain()
-    registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-
-    params = {
-        "domain": domain_name,
-        "pricing_link": PRICING_LINK,
-        "registration_link": registration_link,
-        "full_name": full_name,
-        "forum_link": FORUM_LINK,
-        "wiki_link": WIKI_LINK,
-        'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
-        "is_mobile_experience": (
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                recipient) and
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                recipient, toggles.NAMESPACE_USER)
-        ),
-    }
-    message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
-    message_html = render_to_string('registration/email/confirm_account.html', params)
-
-    subject = ugettext('Activate your CommCare project')
-
-    try:
-        send_html_email_async.delay(subject, recipient, message_html,
-                                    text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
-    except Exception:
-        logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):

@@ -97,7 +97,6 @@ GIR_FIELDS = [
     "Domain Start Date",
     "Dominant Device Type",
     "Active Users",
-    "Eligible for WAMs",
     "Eligible for PAMs",
     "WAMs current month",
     "WAMs 1 month prior",

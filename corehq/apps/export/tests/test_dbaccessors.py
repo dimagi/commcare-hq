@@ -16,7 +16,9 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_form_export_instances,
     get_case_export_instances,
-    get_all_daily_saved_export_instance_ids,
+    get_export_count_by_domain,
+    get_deid_export_count,
+    get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
     get_case_inferred_schema,
     get_form_inferred_schema,
@@ -128,6 +130,8 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.form_instance_daily_saved = FormExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True,
+            last_accessed=datetime.utcnow()
         )
         cls.case_instance_deid = CaseExportInstance(
             domain=cls.domain,
@@ -142,6 +146,8 @@ class TestExportInstanceDBAccessors(TestCase):
         cls.case_instance_daily_saved = CaseExportInstance(
             domain='wrong-domain',
             is_daily_saved_export=True,
+            auto_rebuild_enabled=True,
+            last_accessed=(datetime.utcnow() - timedelta(days=4))
         )
 
         cls.instances = [
@@ -170,15 +176,28 @@ class TestExportInstanceDBAccessors(TestCase):
         instances = get_case_export_instances(self.domain)
         self.assertEqual(len(instances), 2)
 
+    def test_get_count_export_instances(self):
+        self.assertEqual(
+            get_export_count_by_domain(self.domain),
+            4
+        )
+
+    def test_get_count_deid_export_instances(self):
+        self.assertEqual(
+            get_deid_export_count(self.domain),
+            2
+        )
+
     def test_get_case_export_instances_wrong_domain(self):
         instances = get_case_export_instances('wrong')
         self.assertEqual(len(instances), 0)
 
     def test_get_daily_saved_exports(self):
-        instance_ids = get_all_daily_saved_export_instance_ids()
+        recently_accessed_instance_ids = get_daily_saved_export_ids_for_auto_rebuild(
+            datetime.utcnow() - timedelta(days=2))
         self.assertEqual(
-            set(instance_ids),
-            {self.form_instance_daily_saved._id, self.case_instance_daily_saved._id}
+            set(recently_accessed_instance_ids),
+            {self.form_instance_daily_saved._id}
         )
 
     def test_get_properly_wrapped_export_instance(self):

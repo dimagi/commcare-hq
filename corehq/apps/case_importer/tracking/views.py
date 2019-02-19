@@ -14,6 +14,7 @@ from corehq.apps.case_importer.tracking.permissions import user_may_view_file_up
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.web import json_response
+from io import open
 
 
 @require_can_edit_data
@@ -23,7 +24,12 @@ def case_uploads(request, domain):
     except (TypeError, ValueError):
         limit = 10
 
-    case_upload_records = get_case_upload_records(domain, limit)
+    try:
+        page = int(request.GET.get('page'))
+    except (TypeError, ValueError):
+        page = 1
+
+    case_upload_records = get_case_upload_records(domain, limit, skip=limit * (page - 1))
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:

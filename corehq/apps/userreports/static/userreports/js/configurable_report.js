@@ -1,8 +1,11 @@
-/* globals HQReport */
-hqDefine("userreports/js/configurable_report", function() {
+hqDefine("userreports/js/configurable_report", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
-    var getStandardHQReport = function(isFirstLoad) {
+    if (typeof define === 'function' && define.amd || window.USE_REQUIREJS) {
+        throw new Error("This part of UCR is not yet migrated to RequireJS. Update the UCR logic in reports/js/standard_hq_report before removing this error.");
+    }
+
+    var getStandardHQReport = function (isFirstLoad) {
         if (!initial_page_data("standardHQReport")) {
             return undefined;
         }
@@ -23,34 +26,9 @@ hqDefine("userreports/js/configurable_report", function() {
             });
         }
 
-        _.each(initial_page_data("report_builder_events"), function(e) {
+        _.each(initial_page_data("report_builder_events"), function (e) {
             hqImport('userreports/js/report_analytix').track.event.apply(this, e);
         });
-
-        // Poll the status of the data source
-        if (!initial_page_data("is_static")) {
-            var retrying = false;
-            (function poll() {
-                $.ajax({
-                    url: hqImport("hqwebapp/js/initial_page_data").reverse('configurable_data_source_status'),
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.isBuilt){
-                            $('#built-warning').addClass('hide');
-                            if (retrying){
-                                location.reload();
-                            } else if ($('#report-filters').find('.control-label').length === 0) {
-                                $('#report-filters').submit();
-                            }
-                        } else {
-                            retrying = true;
-                            $('#built-warning').removeClass('hide');
-                            setTimeout(poll, 5000);
-                        }
-                    },
-                });
-            })();
-        }
 
         var urlSerialize = hqImport('reports/js/reports.util').urlSerialize;
         var reportOptions = {
@@ -67,7 +45,7 @@ hqDefine("userreports/js/configurable_report", function() {
             emailDefaultSubject: initial_page_data('title'),
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-            getReportRenderUrl: function(renderType) {
+            getReportRenderUrl: function (renderType) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
             },
@@ -78,18 +56,18 @@ hqDefine("userreports/js/configurable_report", function() {
                 enddate: initial_page_data('enddate'),
             };
         }
-        var standardHQReport = new HQReport(reportOptions);
+        var standardHQReport = hqImport("reports/js/hq_report").hqReport(reportOptions);
         standardHQReport.init();
         return standardHQReport;
     };
 
-    $(function() {
+    $(function () {
         getStandardHQReport(true);
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initial_page_data("default_config");
         if (initial_page_data("has_datespan")) {
-            if(!defaultConfig.date_range) {
+            if (!defaultConfig.date_range) {
                 defaultConfig.date_range = 'last7';
             }
             defaultConfig.has_ucr_datespan = true;
@@ -99,15 +77,19 @@ hqDefine("userreports/js/configurable_report", function() {
             defaultConfig.has_ucr_datespan = false;
             defaultConfig.datespan_filters = [];
         }
-        if(!defaultConfig.datespan_slug) {
+        if (!defaultConfig.datespan_slug) {
             defaultConfig.datespan_slug = null;
         }
-        $("#savedReports").reportUserConfigurableConfigEditor({
-            filterForm: $("#paramSelectorForm"),
-            items: initial_page_data("report_configs"),
-            defaultItem: defaultConfig,
-            saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
-        });
+
+        var reportConfigModels = hqImport("reports/js/report_config_models"),
+            reportConfigsView = reportConfigModels.reportConfigsViewModel({
+                filterForm: $("#paramSelectorForm"),
+                items: initial_page_data("report_configs"),
+                defaultItem: defaultConfig,
+                saveUrl: hqImport("hqwebapp/js/initial_page_data").reverse("add_report_config"),
+            });
+        $("#savedReports").koApplyBindings(reportConfigsView);
+        reportConfigsView.setUserConfigurableConfigBeingViewed(reportConfigModels.reportConfig(defaultConfig));
 
         $('#email-enabled').tooltip({
             placement: 'right',

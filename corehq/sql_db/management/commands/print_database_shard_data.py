@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from corehq.sql_db.shard_data_management import get_database_shard_info
+from corehq.sql_db.shard_data_management import get_database_shard_info_for_testing
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
@@ -30,7 +30,7 @@ class Command(BaseCommand):
         for database in get_db_aliases_for_partitioned_query():
             if verbose:
                 print('Checking database {}...'.format(database))
-            shard_info = get_database_shard_info(database)
+            shard_info = get_database_shard_info_for_testing(database)
             if options['csv']:
                 print(shard_info.to_csv())
             else:

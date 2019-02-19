@@ -13,15 +13,15 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     }
     vm.label = "AWCs that reported having a source of clean drinking water";
     vm.steps = {
-        'map': {route: '/clean_water/map', label: 'Map View'},
-        'chart': {route: '/clean_water/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/clean_water/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/clean_water/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs that reported having a source of clean drinking water',
+        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a source of clean drinking water. ',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -54,7 +54,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of AWCs that reported having a source of clean drinking water',
+        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a source of clean drinking water. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

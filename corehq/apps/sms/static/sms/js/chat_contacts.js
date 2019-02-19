@@ -1,29 +1,40 @@
-hqDefine('sms/js/chat_contacts', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('sms/js/chat_contacts', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'datatables.bootstrap',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var contactListTable = null;
 
-    function FilterViewModel() {
+    function filterViewModel() {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.filterText = ko.observable();
 
-        self.performFilter = function() {
+        self.performFilter = function () {
             contactListTable.fnFilter(self.filterText());
         };
 
-        self.clearFilter = function() {
+        self.clearFilter = function () {
             self.filterText("");
             self.performFilter();
         };
+        return self;
     }
 
-    $(function(){
+    $(function () {
         contactListTable = $("#contact_list").dataTable({
             "aoColumnDefs": [
                 {
                     "aTargets": [0],
-                    "render": function(data, type, row) {
+                    "render": function (data, type, row) {
                         return _.template(
                             '<a target="_blank" href="<%= href %>"><%= content %></a>' +
                             '<span class="btn btn-primary pull-right" ' +
@@ -53,7 +64,6 @@ hqDefine('sms/js/chat_contacts', function() {
             "sAjaxSource": initialPageData.reverse("chat_contact_list"),
             "sDom": "lrtip",
         });
-        var filterViewModel = new FilterViewModel();
-        $('#id_filter').koApplyBindings(filterViewModel);
+        $('#id_filter').koApplyBindings(filterViewModel());
     });
 });

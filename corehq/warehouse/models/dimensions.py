@@ -13,9 +13,9 @@ from corehq.warehouse.const import (
     GROUP_STAGING_SLUG,
     DOMAIN_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
-    LOCATION_TYPE_STAGING_SLUG,
     APPLICATION_DIM_SLUG,
-    APPLICATION_STAGING_SLUG
+    APPLICATION_STAGING_SLUG,
+    DOMAIN_MEMBERSHIP_DIM_SLUG,
 )
 
 from corehq.sql_db.routers import db_for_read_write
@@ -26,7 +26,6 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 
 class BaseDim(models.Model, WarehouseTable):
-    domain = models.CharField(max_length=255)
     batch = models.ForeignKey(
         'Batch',
         on_delete=models.PROTECT,
@@ -59,11 +58,11 @@ class UserDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = USER_DIM_SLUG
 
-    user_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=150)
     user_type = models.CharField(max_length=100)
-    first_name = models.CharField(max_length=30, null=True)
-    last_name = models.CharField(max_length=30, null=True)
+    first_name = models.TextField(null=True)
+    last_name = models.TextField(null=True)
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
 
@@ -87,8 +86,9 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = GROUP_DIM_SLUG
 
-    group_id = models.CharField(max_length=255)
+    group_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -108,7 +108,8 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = LOCATION_DIM_SLUG
 
-    location_id = models.CharField(max_length=100)
+    domain = models.CharField(max_length=255)
+    location_id = models.CharField(max_length=100, unique=True)
     sql_location_id = models.IntegerField()
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
@@ -149,7 +150,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [LOCATION_STAGING_SLUG, LOCATION_TYPE_STAGING_SLUG]
+        return [LOCATION_STAGING_SLUG]
 
 
 class DomainDim(BaseDim, CustomSQLETLMixin):
@@ -160,7 +161,8 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = DOMAIN_DIM_SLUG
 
-    domain_id = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
+    domain_id = models.CharField(max_length=255, unique=True)
     default_timezone = models.CharField(max_length=255)
     hr_name = models.CharField(max_length=255, null=True)
     creating_user_id = models.CharField(max_length=255, null=True)
@@ -191,12 +193,13 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
     # TODO: Write Update SQL Query
     slug = USER_LOCATION_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
     @classmethod
     def dependencies(cls):
-        return [USER_DIM_SLUG, LOCATION_DIM_SLUG]
+        return [USER_DIM_SLUG, LOCATION_DIM_SLUG, USER_STAGING_SLUG]
 
 
 class UserGroupDim(BaseDim, CustomSQLETLMixin):
@@ -207,6 +210,7 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = USER_GROUP_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
 
@@ -223,10 +227,31 @@ class ApplicationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = APPLICATION_DIM_SLUG
 
-    application_id = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
+    application_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     application_last_modified = models.DateTimeField(null=True)
+    version = models.IntegerField(null=True)
+    copy_of = models.CharField(max_length=255, null=True, blank=True)
 
     @classmethod
     def dependencies(cls):
         return [APPLICATION_STAGING_SLUG]
+
+
+class DomainMembershipDim(BaseDim, CustomSQLETLMixin):
+    '''
+    Dimension for domain memberships for Web/CommCare users
+    '''
+    slug = DOMAIN_MEMBERSHIP_DIM_SLUG
+
+    domain = models.CharField(max_length=255)
+    user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
+    is_domain_admin = models.BooleanField()
+
+    @classmethod
+    def dependencies(cls):
+        return [USER_STAGING_SLUG, USER_DIM_SLUG]
+
+    class Meta:
+        unique_together = ('domain', 'user_dim')

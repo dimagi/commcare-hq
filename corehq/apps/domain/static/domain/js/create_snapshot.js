@@ -1,8 +1,17 @@
-/* globals hqDefine */
-hqDefine("domain/js/create_snapshot", function() {
-    $(function(){
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            ids = initial_page_data('app_ids').concat(initial_page_data('fixture_ids'));
+hqDefine("domain/js/create_snapshot", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'jquery-ui/ui/datepicker',
+], function (
+    $,
+    _,
+    initialPageData,
+    googleAnalytics
+) {
+    $(function () {
+        var ids = initialPageData.get('app_ids').concat(initialPageData.get('fixture_ids'));
 
         _.each(ids, function (id) {
             var publish = $('#id_' + id + '-publish');
@@ -25,7 +34,7 @@ hqDefine("domain/js/create_snapshot", function() {
             $('#snapshot-form').submit();
         });
 
-        $('input:radio[name="publisher"]').change(function() {
+        $('input:radio[name="publisher"]').change(function () {
             if ($(this).val() === 'user') {
                 $('#author-input').show(250);
             } else {
@@ -33,8 +42,8 @@ hqDefine("domain/js/create_snapshot", function() {
             }
         });
 
-        $('#publish-now-button').on('click', function() {
-            hqImport('analytix/js/google').track.event('Exchange', 'Publish Now', '?', "", {}, function() {
+        $('#publish-now-button').on('click', function () {
+            googleAnalytics.track.event('Exchange', 'Publish Now', '?', "", {}, function () {
                 $('#snapshot-form').submit();
             });
         });

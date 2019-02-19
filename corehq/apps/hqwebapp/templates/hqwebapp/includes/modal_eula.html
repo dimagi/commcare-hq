@@ -1,33 +1,39 @@
 {% load i18n %}
-<div class="modal fade remote-modal" id="eulaModal" data-url="{% url "eula_basic" %}" data-show-on-page-load="{% if needs_agreement %}1{% endif %}">
+<div class="modal fade" id="eulaModal" style="z-index: 2147483548;"><!-- This is ridiculous, needed for Appcues -->
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
-                <h4 class="modal-title">{% trans "CommCare HQ End User License Agreement" %}</h4>
+                <h4 class="modal-title">{% trans "CommCare HQ Terms" %}</h4>
             </div>
             <div class="modal-body">
-                <div class="panel panel-default fetched-data" style="height: 200px; overflow-y: scroll">{% trans "Loading Terms of Service..." %}</div>
-                {% if needs_agreement %}
-                    <div class="alert alert-warning">
-                        {% blocktrans %}
-                            To use CommCare HQ, please agree to our End User License Agreement.
-                        {% endblocktrans %}
-                    </div>
-                {% endif %}
+                {% blocktrans %}
+                    On May 25, 2018 our new
+                    <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">
+                            Privacy Policy, Terms of Service, Business Agreement, and Acceptable Use Policy
+                    </a>
+                    (collectively, "Terms") went into effect. We made these updates to clarify our terms and address
+                    some new privacy laws in Europe. The spirit of our previous terms remains unchanged and,
+                    as always, you are the owner of your data.
+                    <a href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Notices" target="_blank">Click here</a> to learn more.
+
+                    <br><br>
+
+                    Click on the 'I Agree' button to let us know that you agree to our new Terms. If you do not
+                    agree to our new Terms, you may choose to stop using our services. Before doing so, however,
+                    please get in touch with us at <a href="mailto:privacy@dimagi.com">privacy@dimagi.com</a>.
+                    We're here to answer any questions you have. Again, our updates are intended to reflect the
+                    spirit of our previous terms.
+
+                    <br><br>
+
+                    Thank you,
+                    <br><br>
+                    - The Dimagi Team
+                {% endblocktrans %}
             </div>
             <div class="modal-footer">
-                {% if needs_agreement %}
-                    <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
-                        {% csrf_token %}
-                        <input name="next" type="hidden" value="{{ request.path }}" />
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Disagree' %}</button>
-                        <button type="submit" class="btn btn-primary">{% trans 'Agree' %}</button>
-                    </form>
-                {% else %}
-                    <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Close" %}</a>
-                {% endif %}
+                <button id="eula-agree" type="submit" class="btn btn-primary">{% trans 'I Agree' %}</button>
             </div>
-            </div>
+        </div>
     </div>
 </div>

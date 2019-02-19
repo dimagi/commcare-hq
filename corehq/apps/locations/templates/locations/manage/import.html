@@ -1,9 +1,7 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
-{% block js %} {{ block.super }}
-    <script src="{% static 'commtrack/js/location_bulk_upload_file.js' %}"></script>
-    <script src="{% static 'locations/js/import.js' %}"></script>
-{% endblock %}
+
+{% requirejs_main 'locations/js/import' %}
 
 {% block page_content %}
     {% include "locations/manage/partials/bulk_upload.html" %}

@@ -4,12 +4,14 @@ from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
 from io import BytesIO
 
+import six
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 
 from .utils import get_index_schema_node
@@ -82,26 +84,40 @@ class ItemListsProvider(FixtureProvider):
             global_id = GLOBAL_USER_ID.encode('utf-8')
             b_user_id = user_id.encode('utf-8')
             try:
-                data = db.get(domain, FIXTURE_BUCKET).read()
+                data = db.get(key=FIXTURE_BUCKET + '/' + domain).read()
                 return [data.replace(global_id, b_user_id)] if data else []
             except NotFound:
                 pass
-        global_items = self._get_global_items(global_types, domain)
+        global_items = self._get_global_items(global_types, domain, bypass_cache=restore_state.overwrite_cache)
         io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
-        io.write(bytes(len(global_items)))
+        io.write(six.text_type(len(global_items)).encode('utf-8'))
         io.write(b'-->')
         for element in global_items:
             io.write(ElementTree.tostring(element, encoding='utf-8'))
             # change user_id AFTER writing to string for the cache
             element.attrib["user_id"] = user_id
         io.seek(0)
-        db.put(io, domain, FIXTURE_BUCKET)
+        try:
+            kw = {"meta": db.metadb.get(
+                parent_id=domain,
+                type_code=CODES.fixture,
+                name="",
+            )}
+        except BlobMeta.DoesNotExist:
+            kw = {
+                "domain": domain,
+                "parent_id": domain,
+                "type_code": CODES.fixture,
+                "name": "",
+                "key": FIXTURE_BUCKET + '/' + domain,
+            }
+        db.put(io, **kw)
         return global_items
 
-    def _get_global_items(self, global_types, domain):
+    def _get_global_items(self, global_types, domain, bypass_cache):
         items_by_type = defaultdict(list)
-        for item in FixtureDataItem.by_data_types(domain, global_types):
+        for item in FixtureDataItem.by_data_types(domain, global_types, bypass_cache):
             data_type = global_types[item.data_type_id]
             self._set_cached_type(item, data_type)
             items_by_type[data_type].append(item)

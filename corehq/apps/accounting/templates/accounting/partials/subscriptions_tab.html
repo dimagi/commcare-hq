@@ -18,7 +18,6 @@
                 <th>{% trans "Currently Active" %}</th>
                 <th>{% trans "Salesforce Contract ID" %}</th>
                 <th>{% trans "Last Invoice Due Date" %}</th>
-                <th>{% trans "Delay Invoicing Until" %}</th>
                 <th>{% trans "Do Not Invoice" %}</th>
                 <th>{% trans '"Do Not Invoice" Reason' %}</th>
                 <th>{% trans "Edit" %}</th>
@@ -34,7 +33,6 @@
                     <td>{{ subscription.is_active }}</td>
                     <td>{{ subscription.salesforce_contract_id }}</td>
                     <td>{{ last_due_date }}</td>
-                    <td>{{ subscription.date_delay_invoicing }}</td>
                     <td>{{ subscription.do_not_invoice }}</td>
                     <td>{{ subscription.no_invoice_reason }}</td>
                     <td><a href="{% url 'edit_subscription' subscription.id %}" class="btn btn-default">Edit</a></td>

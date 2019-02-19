@@ -4,9 +4,9 @@
 {% block title %}
     {% trans "500 Error" %}
 {% endblock %}
-{% block js %}
-    <script src="{% static 'hqwebapp/js/500.js' %}"></script>
-{% endblock %}
+
+{% requirejs_main 'hqwebapp/js/500' %}
+
 {% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
 {% block page_content %}
     <div class="row">

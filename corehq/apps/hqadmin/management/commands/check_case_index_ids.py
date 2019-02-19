@@ -1,7 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from django.core.management import BaseCommand, call_command
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.hqcase.utils import resave_case
@@ -10,6 +10,7 @@ from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from io import open
 
 
 class Command(BaseCommand):
@@ -45,7 +46,7 @@ class Command(BaseCommand):
             .run().hits
         )
 
-        with open(options['filename'], 'w') as csvfile:
+        with open(options['filename'], 'w', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             headers = [
                 'case id',

@@ -1,13 +1,13 @@
 /* globals Formplayer, TaskQueue, WebFormSession */
 /* eslint-env mocha */
 
-describe('WebForm', function() {
+describe('WebForm', function () {
 
-    describe('TaskQueue', function() {
+    describe('TaskQueue', function () {
         var tq,
             taskOne,
             taskTwo;
-        beforeEach(function() {
+        beforeEach(function () {
             tq = new TaskQueue();
             taskOne = sinon.spy();
             taskTwo = sinon.spy();
@@ -15,7 +15,7 @@ describe('WebForm', function() {
             tq.addTask('two', taskTwo, [5,6,7]);
         });
 
-        it('Executes tasks in order', function() {
+        it('Executes tasks in order', function () {
             tq.execute();
             assert.isTrue(taskOne.calledOnce);
             assert.isTrue(taskOne.calledWith(1, 2, 3));
@@ -29,7 +29,7 @@ describe('WebForm', function() {
             tq.execute(); // ensure no hard failure when no tasks in queue
         });
 
-        it('Executes tasks by name', function() {
+        it('Executes tasks by name', function () {
             tq.execute('two');
             assert.isFalse(taskOne.calledOnce);
             assert.isTrue(taskTwo.calledOnce);
@@ -42,7 +42,7 @@ describe('WebForm', function() {
             tq.execute();
         });
 
-        it('Clears tasks by name', function() {
+        it('Clears tasks by name', function () {
             tq.addTask('two', taskTwo, [5,6,7]);
             assert.equal(tq.queue.length, 3);
 
@@ -54,11 +54,11 @@ describe('WebForm', function() {
         });
     });
 
-    describe('WebFormSession', function() {
+    describe('WebFormSession', function () {
         var server,
             params;
 
-        beforeEach(function() {
+        beforeEach(function () {
             // Setup HTML
             affix('input#submit');
             affix('#content');
@@ -95,10 +95,10 @@ describe('WebForm', function() {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Formplayer.Utils, 'initialRender');
-            sinon.stub(window, 'getIx').callsFake(function() { return 3; });
+            sinon.stub(window, 'getIx').callsFake(function () { return 3; });
         });
 
-        afterEach(function() {
+        afterEach(function () {
             $('#submit').remove();
             server.restore();
             Formplayer.Utils.initialRender.restore();
@@ -106,7 +106,7 @@ describe('WebForm', function() {
             $.unsubscribe();
         });
 
-        it('Should queue requests', function() {
+        it('Should queue requests', function () {
             var sess = new WebFormSession(params);
             sess.serverRequest({}, sinon.spy(), false);
 
@@ -119,7 +119,7 @@ describe('WebForm', function() {
             assert.isTrue(sess.taskQueue.execute.calledOnce);
         });
 
-        it('Should only subscribe once', function() {
+        it('Should only subscribe once', function () {
             var spy = sinon.spy(),
                 spy2 = sinon.spy(),
                 sess = new WebFormSession(params),
@@ -133,7 +133,7 @@ describe('WebForm', function() {
             assert.isTrue(spy2.calledOnce);
         });
 
-        it('Should block requests', function() {
+        it('Should block requests', function () {
             var sess = new WebFormSession(params);
 
             // First blocking request
@@ -151,7 +151,7 @@ describe('WebForm', function() {
             assert.equal(server.requests.length, 1);
         });
 
-        it('Should not block requests', function() {
+        it('Should not block requests', function () {
             var sess = new WebFormSession(params);
 
             // First blocking request
@@ -170,7 +170,7 @@ describe('WebForm', function() {
 
         });
 
-        it('Should handle error in callback', function() {
+        it('Should handle error in callback', function () {
             var sess = new WebFormSession(params);
 
             sess.handleSuccess({}, 'action', sinon.stub().throws());
@@ -178,7 +178,7 @@ describe('WebForm', function() {
             assert.isTrue(sess.onerror.calledOnce);
         });
 
-        it('Should handle error in response', function() {
+        it('Should handle error in response', function () {
             var sess = new WebFormSession(params),
                 cb = sinon.stub();
 
@@ -188,14 +188,14 @@ describe('WebForm', function() {
             assert.isFalse(cb.calledOnce);
         });
 
-        it('Should handle failure in ajax call', function() {
+        it('Should handle failure in ajax call', function () {
             var sess = new WebFormSession(params);
             sess.handleFailure({ responseJSON: { message: 'error' } });
 
             assert.isTrue(sess.onerror.calledOnce);
         });
 
-        it('Should handle timeout error', function() {
+        it('Should handle timeout error', function () {
             var sess = new WebFormSession(params);
             sess.handleFailure({}, 'action', 'timeout');
 
@@ -205,7 +205,7 @@ describe('WebForm', function() {
             }));
         });
 
-        it('Should ensure session id is set', function() {
+        it('Should ensure session id is set', function () {
             var sess = new WebFormSession(params),
                 spy = sinon.spy(WebFormSession.prototype, 'renderFormXml');
             sess.loadForm($('div'), 'en');

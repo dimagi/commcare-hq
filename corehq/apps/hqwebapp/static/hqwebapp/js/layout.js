@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
+hqDefine("hqwebapp/js/layout", ['jquery'], function ($) {
     var self = {};
 
     self.selector = {
@@ -119,16 +119,16 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
         },
         balancePreview: function () {
             // set with setBalancePreviewFn in utils.
-            self.balancePreviewPromise.done(function(callback) {
+            self.balancePreviewPromise.done(function (callback) {
                 if (_.isFunction(callback)) {
                     callback();
                 }
             });
         },
-        showPublishStatus: function() {
+        showPublishStatus: function () {
             $(self.selector.publishStatus).fadeIn();
         },
-        hidePublishStatus: function() {
+        hidePublishStatus: function () {
             $(self.selector.publishStatus).fadeOut();
         },
     };
@@ -155,8 +155,8 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
     });
 
     return {
-        getMessagesContainer: function() { return $(self.selector.messages); },
-        getNavigationContainer: function() { return $(self.selector.navigation);},
+        getMessagesContainer: function () { return $(self.selector.messages); },
+        getNavigationContainer: function () { return $(self.selector.navigation);},
         hidePublishStatus: self.actions.hidePublishStatus,
         showPublishStatus: self.actions.showPublishStatus,
         setBalancePreviewFn: self.utils.setBalancePreviewFn,

@@ -62,18 +62,23 @@ class SuiteGenerator(object):
         entries = EntriesContributor(self.suite, self.app, self.modules)
         menus = MenuContributor(self.suite, self.app, self.modules)
         remote_requests = RemoteRequestContributor(self.suite, self.app, self.modules)
-        for module in self.modules:
-            self.suite.entries.extend(entries.get_module_contributions(module))
-
-            self.suite.menus.extend(
-                menus.get_module_contributions(module)
-            )
-
-            self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
 
         if any(module.is_training_module for module in self.modules):
             training_menu = LocalizedMenu(id='training-root')
             training_menu.text = Text(locale_id=id_strings.training_module_locale())
+        else:
+            training_menu = None
+
+        for module in self.modules:
+            self.suite.entries.extend(entries.get_module_contributions(module))
+
+            self.suite.menus.extend(
+                menus.get_module_contributions(module, training_menu)
+            )
+
+            self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
+
+        if training_menu:
             self.suite.menus.append(training_menu)
 
         self._add_sections([
@@ -114,14 +119,13 @@ class MediaSuiteGenerator(object):
         self.app.remove_unused_mappings()
         if self.app.multimedia_map is None:
             self.app.multimedia_map = {}
-        filter_multimedia = self.app.media_language_map and self.build_profile
+        filter_multimedia = self.build_profile
         if filter_multimedia:
-            media_list = []
+            requested_media = set()
             for lang in self.build_profile.langs:
-                media_list += self.app.media_language_map[lang].media_refs
-            requested_media = set(media_list)
+                requested_media |= self.app.all_media_paths(lang=lang)
         for path, m in sorted(list(self.app.multimedia_map.items()), key=lambda item: item[0]):
-            if filter_multimedia and m.form_media and path not in requested_media:
+            if filter_multimedia and path not in requested_media:
                 continue
             unchanged_path = path
             if path.startswith(PREFIX):

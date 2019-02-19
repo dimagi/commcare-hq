@@ -1,5 +1,6 @@
 {
     "domains": ["succeed"],
+    "server_environment": ["production"],
     "config": {
         "referenced_doc_type": "XFormInstance",
         "engine_id": "default",

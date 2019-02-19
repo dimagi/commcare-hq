@@ -1,124 +1,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
+from itertools import chain
+from operator import eq
+
+from jsonpath_rw import (
+    Child,
+    Fields,
+    Slice,
+    Union,
+    Where,
+    parse as parse_jsonpath,
+)
+
+from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
+from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
+from corehq.motech.value_source import ValueSource
 from dimagi.ext.couchdbkit import (
-    DictProperty,
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
-    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
 
 
-def recurse_subclasses(cls):
-    return (
-        cls.__subclasses__() +
-        [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
-    )
-
-
 class IdMatcher(DocumentSchema):
     case_property = StringProperty()
     identifier_type_id = StringProperty()
-
-
-class ValueSource(DocumentSchema):
-    @classmethod
-    def wrap(cls, data):
-        if cls is ValueSource:
-            return {
-                sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
-        else:
-            return super(ValueSource, cls).wrap(data)
-
-    def get_value(self, case_trigger_info):
-        raise NotImplementedError()
-
-
-class CaseProperty(ValueSource):
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "CaseProperty",
-    #         "case_property": "dob"
-    #       }
-    #     }
-    #
-    case_property = StringProperty()
-
-    def get_value(self, case_trigger_info):
-        return case_trigger_info.updates.get(self.case_property)
-
-
-class FormQuestion(ValueSource):
-    form_question = StringProperty()  # e.g. "/data/foo/bar"
-
-    def get_value(self, case_trigger_info):
-        return case_trigger_info.form_question_values.get(self.form_question)
-
-
-class ConstantString(ValueSource):
-    # Example "person_property" value::
-    #
-    #     {
-    #       "birthdate": {
-    #         "doc_type": "ConstantString",
-    #         "value": "Sep 7, 3761 BC"
-    #       }
-    #     }
-    #
-    value = StringProperty()
-
-    def get_value(self, case_trigger_info):
-        return self.value
-
-
-class CasePropertyMap(CaseProperty):
-    """
-    Maps case property values to OpenMRS values or concept UUIDs
-    """
-    # Example "person_attribute" value::
-    #
-    #     {
-    #       "00000000-771d-0000-0000-000000000000": {
-    #         "doc_type": "CasePropertyMap",
-    #         "case_property": "pill"
-    #         "value_map": {
-    #           "red": "00ff0000-771d-0000-0000-000000000000",
-    #           "blue": "000000ff-771d-0000-0000-000000000000",
-    #         }
-    #       }
-    #     }
-    #
-    value_map = DictProperty()
-
-    def get_value(self, case_trigger_info):
-        value = super(CasePropertyMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]
-        except KeyError:
-            # We don't care if some CommCare answers are not mapped to OpenMRS concepts, e.g. when only the "yes"
-            # value of a yes-no question in CommCare is mapped to a concept in OpenMRS.
-            return None
-
-
-class FormQuestionMap(FormQuestion):
-    """
-    Maps form question values to OpenMRS values or concept UUIDs
-    """
-    value_map = DictProperty()
-
-    def get_value(self, case_trigger_info):
-        value = super(FormQuestionMap, self).get_value(case_trigger_info)
-        try:
-            return self.value_map[value]
-        except KeyError:
-            return None
 
 
 class OpenmrsCaseConfig(DocumentSchema):
@@ -156,10 +67,25 @@ class OpenmrsCaseConfig(DocumentSchema):
     #     "searchable_properties": ["nid", "family_name"],
     #     "property_weights": [
     #         {"case_property": "nid", "weight": 0.9},
+    #         // if "match_type" is not given it defaults to "exact"
     #         {"case_property": "family_name", "weight": 0.4},
-    #         {"case_property": "given_name", "weight": 0.3},
+    #         {
+    #             "case_property": "given_name",
+    #             "weight": 0.3,
+    #             "match_type": "levenshtein",
+    #             // levenshtein function takes edit_distance / len
+    #             "match_params": [0.2]
+    #             // i.e. 0.2 (20%) is one edit for every 5 characters
+    #             // e.g. "Riyaz" matches "Riaz" but not "Riazz"
+    #         },
     #         {"case_property": "city", "weight": 0.2},
-    #         {"case_property": "dob", "weight": 0.3}
+    #         {
+    #             "case_property": "dob",
+    #             "weight": 0.3,
+    #             "match_type": "days_diff",
+    #             // days_diff matches based on days difference from given date
+    #             "match_params": [364]
+    #         }
     #     ]
     # }
     patient_finder = PatientFinder(required=False)
@@ -233,6 +159,14 @@ class OpenmrsCaseConfig(DocumentSchema):
             data['patient_identifiers'] = patient_identifiers
             data['match_on_ids'] = list(patient_identifiers)
             data.pop('id_matchers')
+        # Set default data types for known properties
+        for property_, value_source in chain(
+            six.iteritems(data.get('person_properties', {})),
+            six.iteritems(data.get('person_preferred_name', {})),
+            six.iteritems(data.get('person_preferred_address', {})),
+        ):
+            data_type = OPENMRS_PROPERTIES[property_]
+            value_source.setdefault('external_data_type', data_type)
         return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
@@ -240,9 +174,21 @@ class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
 
+    # Import Observations as case updates from Atom feed. (Case type is
+    # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
+    # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
+    case_property = StringProperty(required=False)
+
 
 class OpenmrsFormConfig(DocumentSchema):
     xmlns = StringProperty()
+
+    # Used to determine the start of a visit and an encounter. The end
+    # of a visit is set to one day (specifically 23:59:59) later. If not
+    # given, the value defaults to when the form was completed according
+    # to the device, /meta/timeEnd.
+    openmrs_start_datetime = SchemaProperty(ValueSource, required=False)
+
     openmrs_visit_type = StringProperty()
     openmrs_encounter_type = StringProperty()
     openmrs_form = StringProperty()
@@ -253,3 +199,87 @@ class OpenmrsConfig(DocumentSchema):
     openmrs_provider = StringProperty(required=False)
     case_config = SchemaProperty(OpenmrsCaseConfig)
     form_configs = ListProperty(OpenmrsFormConfig)
+
+
+def get_property_map(case_config):
+    """
+    Returns a map of case properties to OpenMRS patient properties and
+    attributes, and a ValueSource instance to deserialize them.
+    """
+    property_map = {}
+
+    for person_prop, value_source in case_config['person_properties'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.' + person_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for attr_type_uuid, value_source in case_config['person_attributes'].items():
+        # jsonpath_rw offers programmatic JSONPath expressions. For details on how to create JSONPath
+        # expressions programmatically see the
+        # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
+        #
+        # The `Where` JSONPath expression "*jsonpath1* `where` *jsonpath2*" returns nodes matching *jsonpath1*
+        # where a child matches *jsonpath2*. `Cmp` does a comparison in *jsonpath2*. It accepts a
+        # comparison operator and a value. The JSONPath expression for matching simple attribute values is::
+        #
+        #     (person.attributes[*] where attributeType.uuid eq attr_type_uuid).value
+        #
+        # This extracts the person attribute values where their attribute type UUIDs match those configured in
+        # case_config['person_attributes'].
+        #
+        # Person attributes with Concept values have UUIDs. The following JSONPath uses Union to match both simple
+        # values and Concept values.
+        if 'case_property' in value_source:
+            jsonpath = Union(
+                # Simple values: Return value if it has no children.
+                # (person.attributes[*] where attributeType.uuid eq attr_type_uuid).(value where not *)
+                Child(
+                    Where(
+                        Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_type_uuid)
+                    ),
+                    WhereNot(Fields('value'), Fields('*'))
+                ),
+                # Concept values: Return value.uuid if value.uuid exists:
+                # (person.attributes[*] where attributeType.uuid eq attr_type_uuid).value.uuid
+                Child(
+                    Where(
+                        Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                        Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_type_uuid)
+                    ),
+                    Child(Fields('value'), Fields('uuid'))
+                )
+            )
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for name_prop, value_source in case_config['person_preferred_name'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.preferredName.' + name_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for addr_prop, value_source in case_config['person_preferred_address'].items():
+        if 'case_property' in value_source:
+            jsonpath = parse_jsonpath('person.preferredAddress.' + addr_prop)
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    for id_type_uuid, value_source in case_config['patient_identifiers'].items():
+        if 'case_property' in value_source:
+            if id_type_uuid == 'uuid':
+                jsonpath = parse_jsonpath('uuid')
+            else:
+                # The JSONPath expression below is the equivalent of::
+                #
+                #     (identifiers[*] where identifierType.uuid eq id_type_uuid).identifier
+                #
+                # Similar to `person_attributes` above, this will extract the person identifier values where
+                # their identifier type UUIDs match those configured in case_config['patient_identifiers']
+                jsonpath = Child(
+                    Where(
+                        Child(Fields('identifiers'), Slice()),
+                        Cmp(Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid)
+                    ),
+                    Fields('identifier')
+                )
+            property_map[value_source['case_property']] = (jsonpath, value_source)
+
+    return property_map

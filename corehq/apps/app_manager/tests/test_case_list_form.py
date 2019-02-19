@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
+from corehq.apps.app_manager.const import (
+    AUTO_SELECT_USERCASE,
+    WORKFLOW_MODULE,
+    WORKFLOW_CASE_LIST,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
@@ -12,8 +16,6 @@ from corehq.apps.app_manager.models import (
     Module,
     OpenCaseAction,
     PreloadAction,
-    WORKFLOW_MODULE,
-    WORKFLOW_CASE_LIST,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -81,7 +83,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         )
 
     def test_case_list_registration_form_advanced(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         register_module, register_form = factory.new_advanced_module('register_dugong', 'dugong')
         factory.form_opens_case(register_form)
@@ -96,7 +98,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-advanced'), factory.app.create_suite())
 
     def test_case_list_registration_form_advanced_autoload(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         register_module, register_form = factory.new_advanced_module('register_dugong', 'dugong')
         factory.form_opens_case(register_form)
@@ -146,7 +148,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #   * Register person form
         # * Manager person (case type = person, case list form = 'Register person form', basic)
         #   * Manage person form
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
 
@@ -173,7 +175,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #   * Register person form
         # * Manager person (case type = person, case list form = 'Register person form', basic)
         #   * Manage person form
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
 
         factory.form_opens_case(register_house_form)
@@ -201,7 +203,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         self.assertXmlEqual(self.get_xml('case-list-form-suite-parent-child-basic'), factory.app.create_suite())
 
     def test_case_list_form_reg_form_creates_child_case(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_person_module, register_person_form = factory.new_basic_module('reg_person_and_stub', 'person')
 
         factory.form_opens_case(register_person_form)
@@ -227,7 +229,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #   * Update house form
         #   * Update person (case type = person, case list form = 'Register person form', basic, parent module = 'Update house')
         #       * Update person form
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
 
@@ -262,7 +264,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #   * Update house form
         #   * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
         #       * Update person form
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
 
@@ -295,7 +297,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         # to match the parent (and to avoid naming conflicts).
         # m3-f0: 'case_id_load_house' -> 'case_id_load_house_renamed'
         # m3-f0: 'case_id_load_house_renamed' -> 'case_id_load_house_renamed_person'
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
 
@@ -337,7 +339,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #   * Update house form
         #   * Update person (case type = person, case list form = 'Register person form', advanced, parent module = 'Update house')
         #       * Update person form
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         register_house_module, register_house_form = factory.new_basic_module('register_house', 'house')
         factory.form_opens_case(register_house_form)
 
@@ -375,7 +377,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         #     * update case, open child case (visit)
         #   * Update patient
         #     * update case
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         registration_module, registration_form = factory.new_basic_module('registration', 'patient')
 
         factory.form_opens_case(registration_form)
@@ -404,7 +406,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             './entry')
 
     def test_case_list_form_requires_parent_case_but_target_doesnt(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         register_household_module, register_household_form = factory.new_basic_module('new_household', 'household')
         factory.form_opens_case(register_household_form)
 
@@ -441,7 +443,8 @@ class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     def _add_module_and_form(self, ModuleClass):
         self.module = self.app.add_module(ModuleClass.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
-        self.form = self.module.new_form("Untitled Form", "en", self.get_xml('original_form', override_path=('data',)))
+        self.form = self.module.new_form("Untitled Form", "en",
+                                         self.get_xml('original_form', override_path=('data',)).decode('utf-8'))
 
     def test_case_list_form_basic(self):
         self._add_module_and_form(Module)

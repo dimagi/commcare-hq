@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main "accounting/js/invoice_main" %}
+{% requirejs_main "accounting/js/widgets" %} {# Uses .ko-adjust-balance-form #}
 
 {% block page_content %}
     {% if adjust_balance_form %}
@@ -31,12 +31,15 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs" id="user-settings-tabs">
+    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
         <li><a href="#invoice" data-toggle="tab">{% trans "Invoice" %}</a></li>
         {% if adjustment_list %}
         <li><a href="#adjustments" data-toggle="tab">{% trans "Adjustments" %}</a></li>
         {% endif %}
         <li><a href="#suppress" data-toggle="tab">{% trans "Suppress" %}</a></li>
+        {% if not hide_invoice_form.invoice.is_hidden %}
+        <li><a href="#hide" data-toggle="tab">{% trans "Hide From Client" %}</a></li>
+        {% endif %}
     </ul>
 
     <div class="tab-content tab-padded">
@@ -57,11 +60,19 @@
                         <tr>
                             <td>{{ billing_record.date_created }} UTC</td>
                             <td>{{ billing_record.email_recipients }}</td>
-                            <td>
-                                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
-                                    View PDF
-                                </a>
-                            </td>
+                            {% if billing_record.invoice.is_customer_invoice %}
+                                <td>
+                                    <a href="{% url 'invoice_pdf_view' billing_record.pdf_data_id %}">
+                                        View PDF
+                                    </a>
+                                </td>
+                            {% else %}
+                                <td>
+                                    <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
+                                        View PDF
+                                    </a>
+                                </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -109,6 +120,10 @@
         {% endif %}
         <div class="tab-pane" id="suppress">
             {% crispy suppress_invoice_form %}
+        </div>
+
+        <div class="tab-pane" id="hide">
+            {% crispy hide_invoice_form %}
         </div>
     </div>
 {% endblock %}

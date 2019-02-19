@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
+from io import open
 
 
 rcache = cache.caches['redis']

@@ -22,6 +22,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from six.moves import input
+from io import open
 
 
 ONE_HOUR = 60 * 60
@@ -184,7 +185,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:

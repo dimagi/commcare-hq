@@ -1,13 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.core.exceptions import ValidationError
+
+import datetime
+import dateutil
 import pytz
+import six
+from functools import reduce
+from memoized import memoized
+
+from django.core.exceptions import ValidationError
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
-import six
-from functools import reduce
+from corehq.util.dates import iso_string_to_datetime
 
 
 def coerce_timezone_value(value):
@@ -64,3 +71,28 @@ def get_timezone_for_user(couch_user_or_id, domain):
                 return coerce_timezone_value(domain_membership.timezone)
 
     return get_timezone_for_domain(domain)
+
+
+@memoized
+def get_timezone(request, domain):
+    if not domain:
+        return pytz.utc
+    else:
+        try:
+            return get_timezone_for_user(request.couch_user, domain)
+        except AttributeError:
+            return get_timezone_for_user(None, domain)
+
+
+def parse_date(date_string):
+    try:
+        return iso_string_to_datetime(date_string)
+    except Exception:
+        try:
+            date_obj = dateutil.parser.parse(date_string)
+            if isinstance(date_obj, datetime.datetime):
+                return date_obj.replace(tzinfo=None)
+            else:
+                return date_obj
+        except Exception:
+            return date_string

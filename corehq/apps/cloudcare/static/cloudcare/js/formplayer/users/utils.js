@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone, Marionette){
+FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone, Marionette) {
     Utils.Users = {
         /**
          * logInAsUser
@@ -9,7 +9,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * Logs a user in by setting the property on the current user and
          * setting it in a cookie
          */
-        logInAsUser: function(restoreAsUsername) {
+        logInAsUser: function (restoreAsUsername) {
             var currentUser = FormplayerFrontend.request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
 
@@ -21,7 +21,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
                 currentUser.restoreAs
             );
         },
-        restoreAsKey: function(domain, username) {
+        restoreAsKey: function (domain, username) {
             return 'restoreAs:' + domain + ':' + username;
         },
         /**
@@ -32,7 +32,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          *
          * Returns the restore as user from the cookies or null if it doesn't exist
          */
-        getRestoreAsUser: function(domain, username) {
+        getRestoreAsUser: function (domain, username) {
             return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
         },
 
@@ -44,7 +44,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          *
          * Clears the restore as user from the cookies
          */
-        clearRestoreAsUser: function(domain, username) {
+        clearRestoreAsUser: function (domain, username) {
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };

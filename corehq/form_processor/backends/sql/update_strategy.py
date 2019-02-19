@@ -1,22 +1,42 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
-from collections import defaultdict
+import sys
+import datetime
+from functools import cmp_to_key
 
 from iso8601 import iso8601
-
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported, CaseValueError
+from casexml.apps.case.exceptions import (
+    UsesReferrals,
+    VersionNotSupported,
+    CaseValueError,
+    ReconciliationError,
+    MissingServerDate
+)
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq import toggles
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
+from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.models import (
+    CommCareCaseSQL,
+    CommCareCaseIndexSQL,
+    CaseTransaction,
+    CaseAttachmentSQL,
+    RebuildWithReason
+)
 from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL
+)
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter
+reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
 
 
 def _validate_length(length):
@@ -73,7 +93,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     @staticmethod
     def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
-        transaction = CaseTransaction.form_transaction(case, form, types)
+        transaction = CaseTransaction.form_transaction(case, form, case_update.guess_modified_on(), types)
         for trans in case.get_tracked_models_to_create(CaseTransaction):
             if transaction == trans:
                 trans.type |= transaction.type
@@ -191,22 +211,37 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform):
+        if not toggles.MM_CASE_PROPERTIES.enabled(self.case.domain):
+            return
+
+        # NOTE `attachment_action` is a
+        # `casexml.apps.case.xml.parser.CaseAttachmentAction` and
+        # `attachment_action.attachments` is a dict with values of
+        # `casexml.apps.case.xml.parser.CaseAttachment`
+
         current_attachments = self.case.case_attachments
-        for identifier, att in attachment_action.attachments.items():
-            new_attachment = CaseAttachmentSQL.from_case_update(att)
-            if new_attachment.is_present:
+        for name, att in attachment_action.attachments.items():
+            if att.is_delete:
+                if name in current_attachments:
+                    self.case.track_delete(current_attachments[name])
+            elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if identifier in current_attachments:
-                    existing_attachment = current_attachments[identifier]
-                    existing_attachment.from_form_attachment(form_attachment)
+                if form_attachment is None:
+                    # Probably an improperly configured form. We need a way to
+                    # convey errors like this to domain admins.
+                    raise AttachmentNotFound(
+                        "%s: %r" % (xform.form_id, att.attachment_src))
+                if name in current_attachments:
+                    existing_attachment = current_attachments[name]
+                    existing_attachment.from_form_attachment(
+                        form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment.from_form_attachment(form_attachment)
+                    new_attachment = CaseAttachmentSQL.new(att.identifier)
+                    new_attachment.from_form_attachment(
+                        form_attachment, att.attachment_src)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
-            elif identifier in current_attachments:
-                existing_attachment = current_attachments[identifier]
-                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True
@@ -255,16 +290,25 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._reset_case_state()
 
         original_indices = {index.identifier: index for index in self.case.indices}
-        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
+        original_attachments = {attach.name: attach for attach in self.case.get_attachments()}
 
         real_transactions = []
         for transaction in transactions:
             if transaction.is_form_transaction and transaction.is_relevant:
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
+                if not transaction.is_saved():
+                    self.case.track_create(transaction)
 
-        self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
-        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
+        self._delete_old_related_models(
+            original_indices,
+            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+        )
+        self._delete_old_related_models(
+            original_attachments,
+            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            key="name",
+        )
 
         self.case.deleted = already_deleted or not bool(real_transactions)
 
@@ -272,9 +316,38 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
-    def _delete_old_related_models(self, original_models_by_id, models_to_keep):
+    def reconcile_transactions_if_necessary(self):
+        if self.case.check_transaction_order():
+            return False
+        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
+        try:
+            self.reconcile_transactions()
+        except ReconciliationError as e:
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+
+        return True
+
+    def reconcile_transactions(self):
+        transactions = self.case.transactions
+        sorted_transactions = sorted(
+            transactions,
+            key=_transaction_sort_key_function(self.case)
+        )
+        if sorted_transactions:
+            if not sorted_transactions[0].is_case_create:
+                error = "Case {0} first transaction not create transaction: {1}"
+                raise ReconciliationError(
+                    error.format(self.case.case_id, sorted_transactions[0])
+                )
+
+        CaseAccessorSQL.fetch_case_transaction_forms(self.case, sorted_transactions)
+        rebuild_detail = RebuildWithReason(reason="client_date_reconciliation")
+        rebuild_transaction = CaseTransaction.rebuild_transaction(self.case, rebuild_detail)
+        self.rebuild_from_transactions(sorted_transactions, rebuild_transaction)
+
+    def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
-            original_models_by_id.pop(model.identifier, None)
+            original_models_by_id.pop(getattr(model, key), None)
 
         for model in original_models_by_id.values():
             self.case.track_delete(model)
@@ -287,3 +360,62 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             filtered_updates = [u for u in case_updates if u.id == self.case.case_id]
             for case_update in filtered_updates:
                 self._apply_case_update(case_update, form)
+
+
+def _transaction_sort_key_function(case):
+    xform_ids = list(case.xform_ids)
+    fudge_factor = datetime.timedelta(hours=12)
+
+    def cc_cmp(first, second):
+        if first > second:
+            return 1
+        if first < second:
+            return -1
+        return 0
+
+    def _transaction_cmp(first_transaction, second_transaction):
+        # if the forms aren't submitted by the same user, just default to server dates
+        if first_transaction.user_id != second_transaction.user_id:
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+
+        if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
+            # short circuit if they are from the same form
+            return cc_cmp(
+                _type_sort(first_transaction.type),
+                _type_sort(second_transaction.type)
+            )
+
+        if not (first_transaction.server_date and second_transaction.server_date):
+            raise MissingServerDate()
+
+        # checks if the dates received are within a particular range
+        if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
+            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+
+        def _sortkey(transaction):
+            def form_index(form_id):
+                try:
+                    return xform_ids.index(form_id)
+                except ValueError:
+                    return sys.maxsize
+
+            # if the user is the same you should compare with the special logic below
+            return (
+                transaction.client_date,
+                form_index(transaction.form_id),
+                _type_sort(transaction.type),
+            )
+
+        return cc_cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+
+    return cmp_to_key(_transaction_cmp)
+
+
+def _type_sort(action_type):
+    """
+    Consistent ordering for action types
+    """
+    for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
+        if action_type & type_action == action_type:
+            return idx
+    return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)

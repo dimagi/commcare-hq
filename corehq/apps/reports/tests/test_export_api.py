@@ -18,6 +18,7 @@ from couchforms.util import spoof_submission
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import get_submit_url
@@ -30,6 +31,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup, generate_cases
 from pillowtop.es_utils import initialize_index_and_mapping
+from six.moves import map
 
 FORM_TEMPLATE = """<?xml version='1.0' ?>
 <foo xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://www.commcarehq.org/export/test">
@@ -61,7 +63,7 @@ def get_export_response(client, previous="", include_errors=False, domain=DOMAIN
 
 
 def _content(streaming_response):
-    return ''.join(streaming_response.streaming_content)
+    return ''.join(map(lambda content: content.decode('utf-8'), streaming_response.streaming_content))
 
 
 class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
@@ -94,6 +96,7 @@ class ExportTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.domain.delete()
 
         self.teardown_subscription()
+        clear_plan_version_cache()
 
         super(ExportTest, self).tearDown()
 

@@ -1,8 +1,14 @@
-/* globals hqDefine, ko, $, _ */
-
-hqDefine('dhis2/js/dhis2_map_settings', function () {
-    'use strict';
-
+hqDefine('dhis2/js/dhis2_map_settings', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+], function (
+    $,
+    ko,
+    initialPageData,
+    alertUser
+) {
     var dataValueMap = function (properties) {
         var self = {};
 
@@ -95,7 +101,6 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
 
     var dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
         var self = {};
-        var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
         self.frequencyOptions = [
             {"value": "monthly", "text": "Monthly"},
@@ -132,15 +137,15 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
             $.post(
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
-                function (data) { alert_user(data['success'], 'success', true); }
-            ).fail(function () { alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
+                function (data) { alertUser.alert_user(data['success'], 'success', true); }
+            ).fail(function () { alertUser.alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
 
         self.sendData = function () {
             $.post(
                 sendDataUrl,
                 {},
-                function (data) { alert_user(data['success'], 'success', true); }
+                function (data) { alertUser.alert_user(data['success'], 'success', true); }
             );
         };
 
@@ -148,8 +153,7 @@ hqDefine('dhis2/js/dhis2_map_settings', function () {
     };
 
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            viewModel = dhis2MapSettings(initialPageData('dataset_maps'), initialPageData('send_data_url'));
+        var viewModel = dhis2MapSettings(initialPageData.get('dataset_maps'), initialPageData.get('send_data_url'));
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
     });

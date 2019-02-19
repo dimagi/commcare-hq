@@ -10,13 +10,13 @@ from corehq.util.datadog.gauges import datadog_gauge
 from pillow_retry.models import PillowError
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute="*/15"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def record_pillow_error_queue_size():
     data = PillowError.objects.values('pillow').annotate(num_errors=Count('id'))
     for row in data:
-        datadog_gauge('commcare.pillowtop.errors', row['num_errors'], tags=[
+        datadog_gauge('commcare.pillowtop.error_queue', row['num_errors'], tags=[
             'pillow_name:%s' % row['pillow']
         ])

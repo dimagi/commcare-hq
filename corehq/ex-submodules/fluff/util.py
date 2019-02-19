@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import logging
 import datetime
 import sqlalchemy
+from sqlalchemy.dialects import postgresql
 from .const import (
+    TYPE_ARRAY,
     TYPE_DATE,
     TYPE_DATETIME,
     TYPE_DECIMAL,
@@ -54,7 +56,7 @@ def get_indicator_model(name, indicator_doc):
 
     calculators = indicator_doc._calculators
     for calc_name in sorted(calculators.keys()):
-        for emitter_name in calculators[calc_name]._fluff_emitters:
+        for emitter_name in sorted(calculators[calc_name]._fluff_emitters):
             col_name = '{0}_{1}'.format(calc_name, emitter_name)
             columns.append(sqlalchemy.Column(
                 col_name,
@@ -78,8 +80,10 @@ def get_column_type(data_type):
         return sqlalchemy.Numeric(precision=64, scale=16)
     if data_type == TYPE_STRING:
         return sqlalchemy.Unicode(255)
+    if data_type == TYPE_ARRAY:
+        return postgresql.ARRAY(sqlalchemy.UnicodeText)
 
-    raise Exception('Enexpected type: {0}'.format(data_type))
+    raise Exception('Unexpected type: {0}'.format(data_type))
 
 
 def default_null_value_placeholder(data_type):

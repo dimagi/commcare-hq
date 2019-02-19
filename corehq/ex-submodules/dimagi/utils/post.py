@@ -5,9 +5,8 @@ import subprocess
 import tempfile
 from subprocess import PIPE
 import requests
-from zeep import Client, Transport
-from zeep.cache import InMemoryCache
 import six
+from io import open
 
 
 def tmpfile(*args, **kwargs):
@@ -24,7 +23,7 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
         data = data.encode('utf-8')  # can't pass unicode to http request posts
     default_headers = requests.structures.CaseInsensitiveDict({
         "content-type": content_type,
-        "content-length": len(data),
+        "content-length": str(len(data)),
     })
     if headers:
         default_headers.update(headers)
@@ -39,31 +38,6 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
         kwargs["verify"] = verify
 
     return requests.post(url, data, **kwargs)
-
-
-def get_SOAP_client(url, verify=True):
-    # http://docs.python-zeep.org/en/master/transport.html#ssl-verification
-    # Disable SSL cert verification meanwhile a better way is found
-    session = requests.Session()
-    session.verify = verify
-    transport = Transport(cache=InMemoryCache(), session=session)
-    return Client(url, transport=transport)
-
-
-def perform_SOAP_operation(data, url, operation, verify=True):
-    client = get_SOAP_client(url, verify)
-    # for just response message use
-    # with client.options(raw_response=False) # explicitly set it to avoid caching mysteries
-    #     return client.service[operation](**data)
-    with client.options(raw_response=True):
-        return client.service[operation](**data)
-
-
-def parse_SOAP_response(url, operation, response, verify=True):
-    # parse the xml content on response object to return just the message
-    client = get_SOAP_client(url, verify)
-    binding = client.service[operation]._proxy._binding
-    return binding.process_reply(client, binding.get(operation), response)
 
 
 def post_data(data, url, curl_command="curl", use_curl=False,

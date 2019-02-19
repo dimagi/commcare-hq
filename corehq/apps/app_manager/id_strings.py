@@ -42,12 +42,24 @@ def _regex_union(regexes):
     return '|'.join('({})'.format(regex) for regex in regexes)
 
 
+def _clean_field_for_mobile(field):
+    """Used for translations that are intended to be sent down to mobile in app_strings.txt
+    Both # and = are un-escapable in this file, so lets remove them and cross our fingers
+    that no one ever wants some_property and some_#property as fields in the same case list
+    """
+    return field.replace('#', '').replace('=', '')
+
+
 REGEXES = []
+REGEX_DEFAULT_VALUES = {}
 
 
-def pattern(*patterns):
-    for pattern in patterns:
-        REGEXES.append(_format_to_regex(pattern))
+# Do not use this outside of this module, since it modifies module-level variables
+def pattern(pattern, default=None):
+    REGEXES.append(_format_to_regex(pattern))
+    if default:
+        REGEX_DEFAULT_VALUES[pattern] = default
+
     return lambda fn: fn
 
 
@@ -66,12 +78,22 @@ def current_language():
     return "lang.current"
 
 
+@pattern('cchq.case', default="Case")
+def _case_detail_title_locale():
+    return 'cchq.case'
+
+
+@pattern('cchq.referral', default="Referral")
+def _referral_detail_title_locale():
+    return 'cchq.referral'
+
+
 @pattern('m%d.%s.title')
 def detail_title_locale(detail_type):
     if detail_type.startswith('case') or detail_type.startswith('search'):
-        return "cchq.case"
+        return _case_detail_title_locale()
     elif detail_type.startswith('referral'):
-        return "cchq.referral"
+        return _referral_detail_title_locale()
 
 
 @pattern('m%d.%s.tab.%d.title')
@@ -88,7 +110,7 @@ def detail_column_header_locale(module, detail_type, column):
     if column.useXpathExpression:
         field = 'calculated_property'
     else:
-        field = column.field.replace('#', '')
+        field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
         detail_type=detail_type,
         module=module,
@@ -100,7 +122,7 @@ def detail_column_header_locale(module, detail_type, column):
 
 @pattern('m%d.%s.%s_%s_%s.enum.%s')
 def detail_column_enum_variable(module, detail_type, column, key_as_var):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.{key_as_var}".format(
         module=module,
         detail_type=detail_type,
@@ -113,7 +135,7 @@ def detail_column_enum_variable(module, detail_type, column, key_as_var):
 
 @pattern('m%d.%s.%s_%s_%s.graph.key.%s')
 def graph_configuration(module, detail_type, column, key):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.key.{key}".format(
         module=module,
         detail_type=detail_type,
@@ -135,7 +157,7 @@ def mobile_ucr_configuration(module, uuid, key):
 
 @pattern('m%d.%s.%s_%s_%s.graph.series_%d.key.%s')
 def graph_series_configuration(module, detail_type, column, series_index, key):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
         module=module,
         detail_type=detail_type,
@@ -159,7 +181,7 @@ def mobile_ucr_series_configuration(module, uuid, series_index, key):
 
 @pattern('m%d.%s.%s_%s_%s.graph.a.%d')
 def graph_annotation(module, detail_type, column, annotation_index):
-    field = column.field.replace('#', '')
+    field = _clean_field_for_mobile(column.field)
     return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.a.{a_id}".format(
         module=module,
         detail_type=detail_type,
@@ -225,6 +247,11 @@ def search_property_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
 
 
+@pattern('custom_assertion.m%d.f%d.%d')
+def custom_assertion_locale(module, form, id):
+    return 'custom_assertion.m{module.id}.f{form.id}.{id}'.format(module=module, form=form, id=id)
+
+
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""
@@ -236,22 +263,22 @@ def report_command(report_id):
     return 'reports.{report_id}'.format(report_id=report_id)
 
 
-@pattern('cchq.report_menu')
+@pattern('cchq.report_menu', default='Reports')
 def report_menu():
     return 'cchq.report_menu'
 
 
-@pattern('cchq.report_name_header')
+@pattern('cchq.report_name_header', default='Report Name')
 def report_name_header():
     return 'cchq.report_name_header'
 
 
-@pattern('cchq.report_description_header')
+@pattern('cchq.report_description_header', default='Report Description')
 def report_description_header():
     return 'cchq.report_description_header'
 
 
-@pattern('cchq.report_data_table')
+@pattern('cchq.report_data_table', default='Data Table')
 def report_data_table():
     return 'cchq.report_data_table'
 
@@ -271,7 +298,7 @@ def report_description(report_id):
     return 'cchq.reports.{report_id}.description'.format(report_id=report_id)
 
 
-@pattern('cchq.report_last_sync')
+@pattern('cchq.report_last_sync', default='Last Sync')
 def report_last_sync():
     return 'cchq.report_last_sync'
 

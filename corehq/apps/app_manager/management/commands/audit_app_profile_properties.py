@@ -10,7 +10,6 @@ from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settin
 import six
 
 logger = logging.getLogger('audit_app_profile_properties')
-logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
@@ -19,6 +18,7 @@ class Command(BaseCommand):
     '''
 
     def handle(self, **options):
+        logger.setLevel('DEBUG')
         domains = [row['key'] for row in Domain.get_all(include_docs=False)]
         settings = {s['id']: s['default'] for s in get_custom_commcare_settings() if 'default' in s}
         deviant_counts = {id: 0 for id in settings.keys()}

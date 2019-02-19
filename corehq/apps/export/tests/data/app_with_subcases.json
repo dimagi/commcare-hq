@@ -18,8 +18,6 @@
     "admin_password_charset": "n",
     "amplifies_project": "not_set",
     "amplifies_workers": "not_set",
-    "anonymous_cloudcare_enabled": false,
-    "anonymous_cloudcare_hash": "Z87B7L",
     "application_version": "2.0",
     "archived_media": {},
     "attribution_notes": null,
@@ -69,7 +67,6 @@
     "last_modified": "2017-08-29T11:16:47.300285Z",
     "linked_whitelist": [],
     "logo_refs": {},
-    "media_language_map": {},
     "minimum_use_threshold": "15",
     "modules": [
         {
@@ -484,7 +481,8 @@
                             {
                                 "case_name": "/data/babies/whats_the_babys_name",
                                 "case_properties": {
-                                    "eye_color": "/data/babies/eye_color"
+                                    "eye_color": "/data/babies/eye_color",
+                                    "facility_name": "/data/facility_name"
                                 },
                                 "case_type": "baby",
                                 "close_condition": {

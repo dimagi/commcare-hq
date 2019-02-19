@@ -1,10 +1,10 @@
 {
   "domains": [
     "icds-dashboard-qa",
-    "icds-test",
-    "icds-sql",
+    "reach-sandbox",
+    "reach-test",
     "icds-cas",
-    "icds-cas-sandbox"
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",

@@ -12,6 +12,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
@@ -27,6 +28,7 @@ from dateutil.parser import parse
 import uuid
 from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
+from io import open
 
 
 def time_parser(value):
@@ -64,6 +66,7 @@ class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
 
     def tearDown(self):
         self.teardown_subscription()
+        clear_plan_version_cache()
         super(BaseSMSTest, self).tearDown()
 
 
@@ -71,20 +74,33 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     """
     For now, these test cases need to be run manually. Before running, the
     following dependencies must be met:
-        1. touchforms/backend/localsettings.py:
-            URL_ROOT = "http://localhost:8081/a/{{DOMAIN}}"
-        2. Django localsettings.py:
-            TOUCHFORMS_API_USER = "touchforms_user"
-            TOUCHFORMS_API_PASSWORD = "123"
-        3. Start touchforms
+
+        1. formplayer/config/application.properties:
+
+            - Update these entries:
+                commcarehq.host=http://localhost:8082
+                commcarehq.formplayerAuthKey=abc
+                touchforms.username=touchforms_user
+                touchforms.password=123
+
+            - Update couch.* and datasource.hq.* to point to the respective
+              test databases
+
+            - Make sure your local directory referenced by sqlite.dataDir is
+              completely empty
+
+        2. Start formplayer
+
+        3. Django localsettings.py:
+            FORMPLAYER_INTERNAL_AUTH_KEY = "abc"
     """
     users = None
     apps = None
     keywords = None
     groups = None
 
-    # Always start the test live server on port 8081
-    port = 8081
+    # Always start the test live server on port 8082
+    port = 8082
 
     def create_domain(self, domain):
         domain_obj = Domain(name=domain)
@@ -307,6 +323,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.backend_mapping.delete()
         self.backend.delete()
         self.teardown_subscription()
+        clear_plan_version_cache()
 
 
 @unit_testing_only

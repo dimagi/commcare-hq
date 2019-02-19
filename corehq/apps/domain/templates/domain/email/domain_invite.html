@@ -1,12 +1,44 @@
 {% extends 'registration/email/confirm_account.html' %}
 {% load i18n %}
 
-{% block content %}
-    <p>{% blocktrans %}Hey there,{% endblocktrans %}</p>
-    <p>{% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}</p>
-    <p>{% blocktrans %}To accept this invitation click <a href="{{ url }}">this link</a>. If you are unable to click the link, copy and paste the following url into your browser. {{url}}{% endblocktrans %}</p>
-    <p>{% blocktrans %}CommCareHQ is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}</p>
-    <p>{% blocktrans %}If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.{% endblocktrans %}</p>
-    <p>{% blocktrans %}Thanks for using our site!{% endblocktrans %}</p>
-    <p>{% blocktrans %}-The CommCareHQ team{% endblocktrans %}</p>
+{% block preview_text %}
+  {% blocktrans %}
+    {{ inviter }} has invited you to join the {{ domain }} project at CommCare HQ!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You're invited to join {{ domain }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Accept Invitation
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    {{ inviter }} has invited you to join the {{ domain }} project on CommCare HQ.
+    This invitation expires in {{ days }} day(s).
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    CommCareHQ is a data management tool used by over 500 organizations
+    to help frontline workers around the world.
+    <a href="https://dimagi.com/commcare/" style="color: #bcdeff;">Learn more about CommCare</a>.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received an invitation request from
+    {{ inviter }} from the project "{{ domain }}"
+  {% endblocktrans %}
 {% endblock %}

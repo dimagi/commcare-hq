@@ -8,6 +8,7 @@ from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
     XFORMS_SESSION_IVR
+from corehq.apps.smsforms.tasks import session_is_stale, handle_due_survey_action
 from mock import patch, Mock
 from six.moves import range
 
@@ -244,6 +245,33 @@ class SQLSessionTestCase(TestCase):
         self.assertIsNone(session.end_time)
         self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
         self.assertFalse(session.current_action_is_a_reminder)
+
+    @patch('corehq.apps.smsforms.models.utcnow')
+    @patch('corehq.apps.smsforms.tasks.utcnow')
+    def test_session_is_stale(self, utcnow_mock_1, utcnow_mock_2):
+        utcnow_mock_2.return_value = datetime(2018, 1, 1, 0, 0)
+        session = SQLXFormsSession.create_session_object(
+            'test',
+            Mock(get_id='contact_id'),
+            '+9990001',
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
+            expire_after=24 * 60,
+            reminder_intervals=[30, 60],
+            submit_partially_completed_forms=True,
+        )
+        session.save()
+        self.addCleanup(session.delete)
+
+        utcnow_mock_1.return_value = datetime(2018, 1, 14, 0, 0)
+        self.assertFalse(session_is_stale(session))
+
+        utcnow_mock_1.return_value = datetime(2018, 1, 16, 0, 0)
+        self.assertTrue(session_is_stale(session))
+
+        handle_due_survey_action('test', 'contact_id', session.session_id)
+        session = SQLXFormsSession.by_session_id(session.session_id)
+        self.assertFalse(session.session_is_open)
 
 
 def _make_session(**kwargs):

@@ -2,9 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
-import csv
+import csv342 as csv
 
 from corehq.apps.data_analytics.models import MALTRow
+from io import open
 
 
 class Command(BaseCommand):
@@ -23,7 +24,7 @@ class Command(BaseCommand):
 
     def handle(self, file_paths, **options):
         for arg in file_paths:
-            with open(arg, 'r') as file:
+            with open(arg, 'r', encoding='utf-8') as file:
                 rows = []
                 reader = csv.reader(file)
                 header_row = True

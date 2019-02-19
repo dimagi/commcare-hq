@@ -141,7 +141,7 @@ class TestIndicatorsFromApp(SimpleTestCase, TestFileMixin):
             ]/{}"/>
             """.format(instance_name, indicator)
 
-        form_template = self.get_xml('form_template')
+        form_template = self.get_xml('form_template').decode('utf-8')
         instance = '<instance id="{}" src="jr://fixture/indicators:call-center" />'.format(instance_name)
         form.source = form_template.format(
             instance=instance,

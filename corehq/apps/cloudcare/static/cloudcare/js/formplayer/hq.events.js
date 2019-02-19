@@ -5,14 +5,14 @@
  *
  * This is framework for allowing messages from HQ
  */
-FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
+FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
 
-    Events.Receiver = function(allowedHost) {
+    Events.Receiver = function (allowedHost) {
         this.allowedHost = allowedHost;
         return receiver.bind(this);
     };
 
-    var receiver = function(event) {
+    var receiver = function (event) {
         // For Chrome, the origin property is in the event.originalEvent object
         var origin = event.origin || event.originalEvent.origin,
             data = event.data,

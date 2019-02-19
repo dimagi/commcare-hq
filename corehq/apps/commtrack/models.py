@@ -408,12 +408,11 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def close_supply_point_case(location):
-    supply_point_id = location.supply_point_id
+def close_supply_point_case(domain, supply_point_id):
     if supply_point_id:
         close_case(
             supply_point_id,
-            location.domain,
+            domain,
             const.COMMTRACK_USERNAME,
             __name__ + ".close_supply_point_case",
         )
@@ -444,10 +443,10 @@ def sync_supply_point(location, is_deletion=False):
         return None
 
     if location.location_type.administrative or is_deletion:
-        close_supply_point_case(location)
+        close_supply_point_case(location.domain, location.supply_point_id)
         location.supply_point_id = None
     elif location.is_archived:
-        close_supply_point_case(location)
+        close_supply_point_case(location.domain, location.supply_point_id)
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
         location.supply_point_id = updated_supply_point.case_id

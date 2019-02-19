@@ -1,8 +1,10 @@
-hqDefine('users/js/roles', function () {
+hqDefine('users/js/roles',[
+    'knockout',
+], function (ko) {
     var RolesViewModel = function (o) {
         'use strict';
-        var self = this,
-            root = this;
+        var self, root;
+        self = root = {};
 
         var UserRole = {
             wrap: function (data) {
@@ -27,6 +29,17 @@ hqDefine('users/js/roles', function () {
                             path: app._id,
                             name: app.name,
                             value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
+                        };
+                    }),
+                };
+
+                data.manageAppReleasePermissions = {
+                    all: data.permissions.manage_releases,
+                    specific: ko.utils.arrayMap(root.appsList, function (app) {
+                        return {
+                            path: app._id,
+                            name: app.name,
+                            value: data.permissions.manage_releases_list.indexOf(app._id) !== -1,
                         };
                     }),
                 };
@@ -63,6 +76,12 @@ hqDefine('users/js/roles', function () {
                 }), function (app) {
                     return app.path;
                 });
+                data.permissions.manage_releases = data.manageAppReleasePermissions.all;
+                data.permissions.manage_releases_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageAppReleasePermissions.specific, function (app) {
+                    return app.value;
+                }), function (app) {
+                    return app.path;
+                });
                 return data;
             },
         };
@@ -70,6 +89,7 @@ hqDefine('users/js/roles', function () {
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.webAppsList = o.webAppsList;
+        self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {
@@ -124,8 +144,12 @@ hqDefine('users/js/roles', function () {
         self.setRoleBeingDeleted = function (role) {
             if (!role._id || !role.hasUsersAssigned) {
                 var title = gettext("Delete Role: ") + role.name();
-                var modalConfirmation = gettext("Are you sure you want to delete this role?") + role.name();
+                var context = {role: role.name()};
+                var modalConfirmation = _.template(gettext(
+                    "Are you sure you want to delete the role <%= role %>?"
+                ))(context);
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
+
                 roleCopy.modalTitle = title;
                 roleCopy.modalConfirmation = modalConfirmation;
                 self.roleBeingDeleted(roleCopy);
@@ -165,12 +189,14 @@ hqDefine('users/js/roles', function () {
                 };
             },
         };
+
+        return self;
     };
 
     return {
         initUserRoles: function ($element, o) {
             $element.each(function () {
-                $element.koApplyBindings(new RolesViewModel(o));
+                $element.koApplyBindings(RolesViewModel(o));
             });
         },
     };

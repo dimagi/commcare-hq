@@ -16,5 +16,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('update_tables4.sql'),
-        migrator.get_migration('create_functions.sql'),
     ]

@@ -8,8 +8,8 @@ from .utils import require_elasticsearch
 
 class RequireElasticsearchTest(SimpleTestCase):
 
+    @expectedFailure
     def test_fail_on_assert_errors(self):
-        @expectedFailure
         @require_elasticsearch
         def fail_hard():
             self.fail('This should fail')

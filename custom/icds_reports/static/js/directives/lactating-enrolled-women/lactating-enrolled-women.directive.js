@@ -8,8 +8,8 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     var vm = this;
     vm.label = "Lactating Mothers enrolled for Anganwadi Services";
     vm.steps = {
-        'map': {route: '/lactating_enrolled_women/map', label: 'Map View'},
-        'chart': {route: '/lactating_enrolled_women/chart', label: 'Chart View'},
+        'map': {route: '/demographics/lactating_enrolled_women/map', label: 'Map View'},
+        'chart': {route: '/demographics/lactating_enrolled_women/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
@@ -17,7 +17,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of lactating women who are enrolled for Anganwadi Services',
+        info: 'Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -55,7 +55,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of lactating women who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

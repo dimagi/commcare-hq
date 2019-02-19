@@ -28,6 +28,10 @@ class LossAndAdjustment(KeywordHandler):
         )
 
     def handle(self):
+        sql_location = self.user.sql_location
+        if not sql_location or sql_location.location_type.administrative:
+            return True
+
         keyword, content = self.msg.text.split(' ', 1)
 
         parsed_report = parse_report(content.replace('+', ''))

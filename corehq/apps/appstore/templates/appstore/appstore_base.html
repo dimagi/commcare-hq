@@ -131,7 +131,6 @@
 
         .app-pic {
             width: 12.5em;
-{#            height: 12.5em;#}
             margin-right: .5em;
         }
 
@@ -168,12 +167,7 @@
     </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
-        <script src="{% static 'appstore/js/appstore_base.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'appstore/js/appstore_base' %}
 
 {% block page_navigation %}
     {% url "appstore" as search_url %}
@@ -261,7 +255,7 @@
                         {% if app.is_approved %}
                             <a class="btn btn-danger" href="{% url "approve_appstore_app" app.get_id %}?approve=false">{% trans "Unapprove" %}</a>
                         {% else %}
-                            <a class="btn btn-success" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
+                            <a class="btn btn-primary" href="{% url "approve_appstore_app" app.get_id %}?approve=true">{% trans "Approve" %}</a>
                         {% endif %}
                     {% endif %}
                 </div>

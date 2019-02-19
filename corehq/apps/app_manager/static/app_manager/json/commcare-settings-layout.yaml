@@ -5,7 +5,6 @@
     # Application
     - hq.case_sharing  # Case Sharing
     - hq.cloudcare_enabled  # CloudCare
-    - hq.anonymous_cloudcare_enabled
     - hq.use_custom_suite
     - hq.custom_suite
     - hq.custom_base_url
@@ -80,6 +79,7 @@
     - hq.secure_submissions
     - hq.translation_strategy
     - hq.mobile_ucr_restore_version
+    - hq.location_fixture_restore
 
 - title: 'Disabled'
   id: app-settings-disabled

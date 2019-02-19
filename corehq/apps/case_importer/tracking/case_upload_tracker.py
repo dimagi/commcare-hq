@@ -8,6 +8,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
     CaseUploadFormRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from memoized import memoized
+from io import open
 
 
 class CaseUpload(object):
@@ -16,9 +17,9 @@ class CaseUpload(object):
         self.upload_id = upload_id
 
     @classmethod
-    def create(cls, file_object, filename):
-        upload_id = transient_file_store.write_file(file_object, filename).identifier
-        return cls(upload_id)
+    def create(cls, file_object, filename, domain):
+        meta = transient_file_store.write_file(file_object, filename, domain)
+        return cls(meta.identifier)
 
     @classmethod
     def get(cls, upload_id):
@@ -50,8 +51,8 @@ class CaseUpload(object):
         from corehq.apps.case_importer.tasks import bulk_import_async
         task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
-        with open(self.get_tempfile()) as f:
-            case_upload_file_meta = persistent_file_store.write_file(f, original_filename)
+        with open(self.get_tempfile(), 'rb') as f:
+            case_upload_file_meta = persistent_file_store.write_file(f, original_filename, domain)
 
         CaseUploadRecord(
             domain=domain,

@@ -6,7 +6,7 @@ hqDefine("fixtures/js/view-table", [
     "reports/js/config.dataTables.bootstrap",
     "reports/js/filters/main",
     "datatables.fixedColumns",
-], function(
+], function (
     $,
     django,
     initialPageData,
@@ -25,7 +25,7 @@ hqDefine("fixtures/js/view-table", [
 
     filters.init();
 
-    $(function() {
+    $(function () {
         $('.header-popover').popover({
             trigger: 'hover',
             placement: 'bottom',

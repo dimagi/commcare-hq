@@ -17,7 +17,7 @@ class CaseListFilterUtils(EmwfUtils):
     @memoized
     def static_options(self):
         options = super(CaseListFilterUtils, self).static_options
-        # replace [All mobile workers] with case-list-specific options
+        # replace [Active Mobile Workers] and [Deactivated Mobile Workers] with case-list-specific options
         assert options[0][0] == "t__0"
         return [
             ("all_data", _("[All Data]")),
@@ -33,9 +33,12 @@ class CaseListFilterUtils(EmwfUtils):
 
 @location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
+
+    label = _("Case Owner(s)")
     slug = 'case_list_filter'
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[Project Data]"))]
+    placeholder = _("Add case owners to filter this report.")
 
     @property
     @memoized
@@ -49,6 +52,11 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
     @staticmethod
     def show_project_data(mobile_user_and_group_slugs):
         return 'project_data' in mobile_user_and_group_slugs
+
+    @staticmethod
+    def show_deactivated_data(mobile_user_and_group_slugs):
+        from corehq.apps.reports.models import HQUserType
+        return "t__{}".format(HQUserType.DEACTIVATED) in mobile_user_and_group_slugs
 
     @staticmethod
     def selected_sharing_group_ids(mobile_user_and_group_slugs):

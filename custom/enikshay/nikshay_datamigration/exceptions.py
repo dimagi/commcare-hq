@@ -1,2 +1,0 @@
-class MatchingNikshayIdCaseNotMigrated(Exception):
-    pass

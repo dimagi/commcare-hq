@@ -49,6 +49,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.products.models import Product
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from testapps.test_pillowtop.utils import process_pillow_changes
+from io import open
 
 
 class XMLTest(TestCase):
@@ -525,7 +526,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
             case_id=self.sp.case_id,
             user_id='jack',
             update={'test': '1'}
-        ).as_string()
+        ).as_string().decode('utf-8')
         instance_id = self.submit_xml_form(
             ''.join([case_block] + submissions),
             timestamp=datetime.utcnow() + timedelta(-30)

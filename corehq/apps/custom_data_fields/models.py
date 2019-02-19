@@ -6,6 +6,7 @@ from dimagi.ext.couchdbkit import (Document, StringProperty,
 from dimagi.ext.jsonobject import JsonObject
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
+from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
 from .dbaccessors import get_by_domain_and_type
 import six
@@ -51,7 +52,7 @@ class CustomDataField(JsonObject):
     index_in_fixture = BooleanProperty(default=False)
 
 
-class CustomDataFieldsDefinition(Document):
+class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
     """
     Per-project user-defined fields such as custom user data.
     """
@@ -78,6 +79,10 @@ class CustomDataFieldsDefinition(Document):
             new = cls(domain=domain, field_type=field_type)
             new.save()
             return new
+
+    def clear_caches(self):
+        super(CustomDataFieldsDefinition, self).clear_caches()
+        get_by_domain_and_type.clear(self.domain, self.field_type)
 
     def get_validator(self, data_field_class):
         """

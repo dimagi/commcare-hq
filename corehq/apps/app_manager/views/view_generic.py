@@ -31,6 +31,7 @@ from corehq.apps.hqmedia.views import (
     ProcessImageFileUploadView,
     ProcessAudioFileUploadView,
 )
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, is_linked_domain
 from corehq.apps.app_manager.util import (get_commcare_versions)
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -130,15 +131,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             "view_app", args=[domain, app.copy_of]
         ))
 
-    # grandfather in people who set commcare sense earlier
-    if app and 'use_commcare_sense' in app:
-        if app['use_commcare_sense']:
-            if 'features' not in app.profile:
-                app.profile['features'] = {}
-            app.profile['features']['sense'] = 'true'
-        del app['use_commcare_sense']
-        app.save()
-
     context.update({
         'module': module,
         'form': form,
@@ -156,7 +148,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     if form:
         template, form_context = get_form_view_context_and_template(
-            request, domain, form, context['langs']
+            request, domain, form, context['langs'], current_lang=lang
         )
         context.update(form_context)
     elif module:
@@ -230,11 +222,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         uploaders = {
             'icon': MultimediaImageUploadController(
                 "hqimage",
-                reverse(ProcessImageFileUploadView.name,
+                reverse(ProcessImageFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
             'audio': MultimediaAudioUploadController(
-                "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                "hqaudio", reverse(ProcessAudioFileUploadView.urlname,
                         args=[app.domain, app.get_id])
             ),
         }
@@ -262,7 +254,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     # Pass form for Copy Application to template
-    domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
+    domain_names = [
+        d.name for d in Domain.active_for_user(request.couch_user)
+        if not (is_linked_domain(request.domain)
+                and get_domain_master_link(request.domain).master_domain == d.name)
+    ]
     domain_names.sort()
     if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
@@ -277,9 +273,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
-    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
 
-    if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
+    if (app and app.doc_type in ('Application', 'LinkedApplication')
+            and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER)):
         uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
@@ -287,7 +283,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             MultimediaLogoUploadController(
                 slug,
                 reverse(
-                    ProcessLogoFileUploadView.name,
+                    ProcessLogoFileUploadView.urlname,
                     args=[domain, app_id, slug],
                 )
             )
@@ -319,6 +315,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         ),
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
+
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})

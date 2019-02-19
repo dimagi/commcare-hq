@@ -1,3 +1,0 @@
-distribute>=0.7
-matplotlib==1.3.1
-git+git://github.com/cgoldberg/multi-mechanize.git@f624aaa6f7d0bce814e72c2220e60d8388e7c1ac

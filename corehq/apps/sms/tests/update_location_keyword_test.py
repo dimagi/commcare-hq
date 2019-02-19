@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.testcases import TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.sms.api import incoming
@@ -10,6 +11,7 @@ from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
+from corehq.util.test_utils import flag_enabled
 import corehq.apps.sms.messages as messages
 
 
@@ -23,6 +25,7 @@ def create_mobile_worker(domain, username, password, phone_number, save_vn=True)
     return user
 
 
+@flag_enabled('ALLOW_LOCATION_UPDATE_OVER_SMS')
 class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
 
     def _get_last_outbound_message(self):
@@ -89,5 +92,6 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
         cls.domain_obj.delete()
 
         cls.teardown_subscription()
+        clear_plan_version_cache()
 
         super(UpdateLocationKeywordTest, cls).tearDownClass()

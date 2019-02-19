@@ -11,7 +11,7 @@ from django.views.generic import TemplateView, View
 from tastypie.http import HttpBadRequest
 from corehq.apps.crud.views import BaseCRUDFormView
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import DomainViewMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.indicators.admin.crud import IndicatorCRUDFormRequestManager
 from corehq.apps.indicators.admin.forms import BulkCopyIndicatorsForm
@@ -51,7 +51,6 @@ def default_admin(request, domain, template="reports/base_template.html", **kwar
 
 class IndicatorAdminCRUDFormView(BaseCRUDFormView):
     base_loc = "corehq.apps.indicators.admin.forms"
-    template_name = "indicators/forms/crud.add_indicator.html"
     form_request_manager = IndicatorCRUDFormRequestManager
 
     @method_decorator(require_edit_indicators)

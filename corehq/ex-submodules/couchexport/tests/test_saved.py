@@ -16,20 +16,20 @@ class DailySavedExportSavingTest(TestCase):
 
     def test_file_save_and_load(self):
         payload = 'something small and simple'
-        export = ExportInstance(daily_saved_export=True)
+        export = ExportInstance(daily_saved_export=True, domain="test")
         export.save()
         export.set_payload(payload)
         self.assertEqual(payload, export.get_payload())
 
     def test_save_basic_export_to_blobdb(self):
-        export = ExportInstance(daily_saved_export=True)
+        export = ExportInstance(daily_saved_export=True, domain="test")
         export.save()
         export.set_payload("content")
         self.assertTrue(export.has_file())
         self.assertIn(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, export.external_blobs)
         self.assertEqual(export.file_size, 7)
         with export.get_payload(stream=True) as fh:
-            self.assertEqual(fh.read(), "content")
+            self.assertEqual(fh.read(), b"content")
 
 
 class SavedBasicExportTest(TestCase):
@@ -86,7 +86,7 @@ class SavedBasicExportTest(TestCase):
         self.assertIn(name, saved_export.external_blobs)
         self.assertEqual(saved_export.size, 7)
         with saved_export.get_payload(stream=True) as fh:
-            self.assertEqual(fh.read(), "content")
+            self.assertEqual(fh.read(), b"content")
 
 
 def _mk_config(name='some export name', index='dummy_index'):

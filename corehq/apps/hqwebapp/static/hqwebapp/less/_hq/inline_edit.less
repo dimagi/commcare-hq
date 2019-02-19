@@ -1,0 +1,53 @@
+.ko-inline-edit-with-help {
+    .hq-help {
+        vertical-align: middle;
+    }
+}
+
+.ko-inline-edit {
+    &.inline {
+        display: inline-block;
+    }
+
+    .hq-help {
+        margin: 3px 5px 0 5px;
+    }
+
+    .read-only {
+        padding: 8px;
+        .clearfix();
+
+        &:hover {
+            cursor: pointer;
+            background-color: @cc-bg;
+            border-radius: 4px;
+        }
+
+        i {
+            color: @cc-neutral-hi;
+            display: inline-block;
+            margin-left: 5px;
+            margin-top: 2px;
+        }
+
+        .text {
+            white-space: pre-wrap;
+        }
+    }
+
+    .read-write {
+        .form-group {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .langcode-container.has-lang {
+            input, textarea {
+                padding-right: 45px;
+            }
+        }
+    }
+}
+
+table .ko-inline-edit .read-only:hover {
+    background-color: @cc-neutral-hi;
+}

@@ -141,6 +141,10 @@ nvd3#sectorChart > div.title.h4 {
         width: 100% !important;
     }
 
+    .dataTable td {
+        white-space: normal !important;
+    }
+
     .row {
         width: 100%;
     }
@@ -284,7 +288,19 @@ nvd3#sectorChart > div.title.h4 {
 
 .report-content {
     color: #ffffff !important;
+}
+
+.report-content-without-message {
     padding: 20px 20px 80px;
+}
+
+.report-content-with-message {
+    padding: 20px 20px 160px;
+}
+
+.ls-dashboard-report-content {
+    color: #ffffff !important;
+    padding: 20px;
 }
 
 .no-margin {
@@ -361,7 +377,7 @@ body {
 
 .dot-menu-item {
     display: inline-block;
-    width: 15%;
+    width: 14%;
     margin: 0 auto;
     text-align: center;
     vertical-align: text-top;
@@ -834,4 +850,21 @@ hr {
 
 .issnip-spinner-container span {
     margin-left: 5px;
+}
+
+.system-usage-message{
+    font-size: 13px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 50px;
+}
+
+#pregnantDetailsTable {
+    margin: 0 auto;
+    min-width: 50%;
+    width: auto;
+}
+
+.pregnantDetailsColumn {
+    min-width: 150px;
 }

@@ -14,11 +14,16 @@ hqDefine('app_manager/js/case_config_utils', function () {
             if (!excludeTrigger) {
                 filter.push('trigger');
             }
+            var allowAttachments = hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES');
             for (i = 0; i < questions.length; i += 1) {
                 q = questions[i];
                 if (filter[0] === "all" || filter.indexOf(q.tag) !== -1) {
-                    if ((includeRepeat || !q.repeat) && (!excludeTrigger || q.tag !== "trigger")) {
-                        options.push(q);
+                    if (includeRepeat || !q.repeat) {
+                        if (!excludeTrigger || q.tag !== "trigger") {
+                            if (allowAttachments || q.tag !== "upload") {
+                                options.push(q);
+                            }
+                        }
                     }
                 }
             }
@@ -43,7 +48,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
             return options;
         },
-        refreshQuestions: function(questions_observable, url, formUniqueId, event){
+        refreshQuestions: function (questions_observable, url, formUniqueId, event) {
             var $el = $(event.currentTarget);
             $el.find('i').addClass('fa-spin');
             $.get({
@@ -51,13 +56,11 @@ hqDefine('app_manager/js/case_config_utils', function () {
                 data: {
                     form_unique_id: formUniqueId,
                 },
-                success: function(data) {
-                    $el.addClass('btn-success').removeClass('btn-danger');
+                success: function (data) {
                     questions_observable(data);
                     $el.find('i').removeClass('fa-spin');
                 },
-                error: function() {
-                    $el.removeClass('btn-success').addClass('btn-danger');
+                error: function () {
                     $el.find('i').removeClass('fa-spin');
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
                                + "your form properties. Please refresh the page and try again", "danger"));

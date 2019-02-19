@@ -163,3 +163,7 @@ class PracticeUserException(AppManagerException):
 
 class AppLinkError(AppManagerException):
     pass
+
+
+class SavedAppBuildException(AppManagerException):
+    pass

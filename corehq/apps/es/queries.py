@@ -12,6 +12,7 @@ are available, and put 'em here if you end up using any of 'em.
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from .filters import range_filter, date_range
 import re
 
 MUST = "must"
@@ -152,3 +153,7 @@ def regexp(field, regex):
             }
         }
     }
+
+
+range_query = range_filter
+date_range = date_range

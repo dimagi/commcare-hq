@@ -40,7 +40,7 @@ class FluffPillowProcessor(PillowProcessor):
         assert self.doc_type is not None
         assert self.doc_type not in self.deleted_types
 
-    def process_change(self, pillow_instance, change):
+    def process_change(self, change):
         if self.should_process_change(change):
             doc_dict = self.change_transform(change.get_document())
             if doc_dict:
@@ -133,7 +133,7 @@ class FluffPillow(ConstructedPillow):
         self.domains = domains or processor.domains
         self.doc_type = doc_type or processor.doc_type
 
-        change_feed = KafkaChangeFeed(topics=[self.kafka_topic], group_id=indicator_name)
+        change_feed = KafkaChangeFeed(topics=[self.kafka_topic], client_id=indicator_name)
 
         name = '{}Pillow'.format(indicator_name)
         checkpoint = PillowCheckpoint('fluff.{}.{}'.format(name, get_machine_id()), change_feed.sequence_format)

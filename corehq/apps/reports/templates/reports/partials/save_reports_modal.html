@@ -107,12 +107,7 @@
                 <div class="modal-footer">
                     <a href="#" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
                     <div class="btn-group"
-                         onclick="
-                            hqImport('analytix/js/google').track.event('Scheduled Reports', 'Create a saved report', '-');
-                            {% if report.spec.report_meta.created_by_builder %}
-                            hqImport('analytix/js/google').track.event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
-                            {% endif %}
-                    ">
+                         data-bind="click: $root.trackConfigBeingEdited({% if report.spec.report_meta.created_by_builder %}'{{ report.spec.report_meta.builder_report_type }}'{% endif %})">
                         <span
                             id="modal-save-button"
                             data-bind="

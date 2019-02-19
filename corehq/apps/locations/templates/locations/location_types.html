@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/location_types.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'locations/js/location_types' %}
 
 {% block page_content %}
     {% initial_page_data 'location_types' location_types %}
@@ -31,9 +29,9 @@
             <div class="col-sm-12">
                 <div class="form-group">
                     <button type="submit" class="btn btn-default pull-right" disabled>
-                        {% trans "Save Organization Levels" %}
+                        {% trans "Save" %}
                     </button>
-                    <button type="button" class="btn btn-default" data-bind="click: new_loctype">
+                    <button type="button" class="btn btn-primary" data-bind="click: new_loctype">
                         <i class="fa fa-plus"></i> {% trans "New Organization Level" %}
                     </button>
                     <hr />

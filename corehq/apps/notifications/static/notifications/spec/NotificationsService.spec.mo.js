@@ -1,4 +1,4 @@
-describe('NotificationsService Unit Tests', function() {
+describe('NotificationsService Unit Tests', function () {
     var fakeRMIUrl = '/fake/rmi',
         viewModel,
         FakePromise = function () {

@@ -1,5 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
+from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
@@ -20,7 +20,7 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
-@task
+@task(serializer='pickle')
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
@@ -108,13 +108,15 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.save()
 
 
-@task
+@task(serializer='pickle')
 def build_application_zip(include_multimedia_files, include_index_files, app,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
     from corehq.apps.hqmedia.views import iter_app_files
 
     DownloadBase.set_progress(build_application_zip, 0, 100)
+    initial_progress = 10   # early on indicate something is happening
+    file_progress = 50.0    # arbitrarily say building files takes half the total time
 
     errors = []
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
@@ -133,24 +135,32 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     else:
         _, fpath = tempfile.mkstemp()
 
+    DownloadBase.set_progress(build_application_zip, initial_progress, 100)
+
     if not (os.path.isfile(fpath) and use_transfer):  # Don't rebuild the file if it is already there
-        files, errors = iter_app_files(
+        files, errors, file_count = iter_app_files(
             app, include_multimedia_files, include_index_files, build_profile_id,
             download_targeted_version=download_targeted_version,
         )
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
+                progress = initial_progress
                 for path, data in files:
                     # don't compress multimedia files
                     extension = os.path.splitext(path)[1]
                     file_compression = zipfile.ZIP_STORED if extension in MULTIMEDIA_EXTENSIONS else compression
                     z.writestr(path, data, file_compression)
+                    progress += file_progress / file_count
+                    DownloadBase.set_progress(build_application_zip, progress, 100)
+    else:
+        DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
-    common_kwargs = dict(
-        mimetype='application/zip' if compress_zip else 'application/x-zip-compressed',
-        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
-        download_id=download_id,
-    )
+    common_kwargs = {
+        'mimetype': 'application/zip' if compress_zip else 'application/x-zip-compressed',
+        'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
+        'download_id': download_id,
+        'expiry': (1 * 60 * 60),
+    }
     if use_transfer:
         expose_file_download(
             fpath,
@@ -159,8 +169,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
     else:
         expose_cached_download(
-            FileWrapper(open(fpath)),
-            expiry=(1 * 60 * 60),
+            FileWrapper(open(fpath, 'rb')),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs
         )

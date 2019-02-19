@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import uuid
+from lxml import etree
 
 import redis
 from couchdbkit.exceptions import ResourceNotFound
@@ -14,6 +15,7 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
@@ -21,6 +23,7 @@ from couchforms.models import (
     XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
+import six
 
 
 class FormProcessorCouch(object):
@@ -80,6 +83,27 @@ class FormProcessorCouch(object):
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
+
+    @classmethod
+    def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):
+        from corehq.form_processor.parsers.form import apply_deprecation
+        new_form = XFormInstance.wrap(existing_form.to_json())
+
+        for question, response in six.iteritems(value_responses_map):
+            data = new_form.form_data
+            i = XFormQuestionValueIterator(question)
+            for (qid, repeat_index) in i:
+                data = data[qid]
+                if repeat_index is not None:
+                    data = data[repeat_index]
+            data[i.last()] = response
+
+        new_xml = etree.tostring(xml)
+        new_form._deferred_blobs = None     # will be re-populated by apply_deprecation
+        new_form.external_blobs.clear()     # will be re-populated by apply_deprecation
+        new_form.deferred_put_attachment(new_xml, "form.xml", content_type="text/xml")
+        existing_form, new_form = apply_deprecation(existing_form, new_form)
+        return (existing_form, new_form)
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):

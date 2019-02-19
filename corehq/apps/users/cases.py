@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import numbers
+
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
@@ -20,6 +23,9 @@ def get_wrapped_owner(owner_id, support_deleted=False):
     if the id isn't a known owner type.
     """
     if not owner_id:
+        return None
+
+    if isinstance(owner_id, numbers.Number):
         return None
 
     def _get_class(doc_type):

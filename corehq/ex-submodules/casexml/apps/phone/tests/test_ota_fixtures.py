@@ -51,7 +51,7 @@ class OtaFixtureTest(TestCase):
             item_list[0].delete()
             item_list[1].delete()
 
-        get_blob_db().delete(DOMAIN, FIXTURE_BUCKET)
+        get_blob_db().delete(key=FIXTURE_BUCKET + "/" + DOMAIN)
         cls.domain.delete()
         super(OtaFixtureTest, cls).tearDownClass()
 
@@ -76,22 +76,6 @@ class OtaFixtureTest(TestCase):
 
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
-
-    def test_fixtures_by_id(self):
-        fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user)
-        self._check_fixture([fixture_xml])
-
-        fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.restore_user)
-        self._check_fixture([fixture_xml], has_groups=False, item_lists=[SA_PROVINCES])
-
-        fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.restore_user)
-        self._check_fixture([fixture_xml], has_groups=False, item_lists=[FR_PROVINCES])
-
-        fixture_xml = generator.get_fixture_by_id('user-locations', self.restore_user)
-        self.assertIsNone(fixture_xml)
-
-        fixture_xml = generator.get_fixture_by_id('bad ID', self.restore_user)
-        self.assertIsNone(fixture_xml)
 
 
 @use_sql_backend

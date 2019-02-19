@@ -7,10 +7,11 @@ from contextlib import contextmanager, closing
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 
-from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+from corehq.apps.domain.decorators import track_domain_request
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.reports.util import DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
+from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -19,7 +20,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.tasks import export_ucr_async
 
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
@@ -53,7 +54,6 @@ from corehq.apps.userreports.reports.util import (
     ReportExport,
     has_location_filter,
 )
-from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
@@ -63,9 +63,7 @@ from corehq.apps.userreports.util import (
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from corehq.util.view_utils import reverse
-from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.couch.pagination import DatatablesParams
 from memoized import memoized
 
 from dimagi.utils.web import json_request
@@ -148,6 +146,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
@@ -163,8 +162,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def section_url(self):
-        # todo what should the parent section url be?
-        return "#"
+        return reverse('reports_home', args=(self.domain, ))
 
     @property
     def is_static(self):
@@ -192,7 +190,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     def has_viable_configuration(self):
         try:
             self.spec
-        except DocumentNotFound:
+        except (DocumentNotFound, BadSpecError):
             return False
         else:
             return True
@@ -333,7 +331,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
-            'report_filter_form_action_css_class': DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER,
+            'report_filter_form_action_css_class': CSS_ACTION_CLASS,
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
@@ -441,11 +439,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         }
         if total_row is not None:
             json_response["total_row"] = total_row
-        if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            compare_ucr_dbs.delay(
-                self.domain, self.report_config_id, self.filter_values,
-                sort_column, sort_order, params
-            )
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -536,7 +529,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
             except UserReportsError as e:
                 return self.render_json_response({'error': six.text_type(e)})
             return HttpResponse(json.dumps({
-                'report': temp.getvalue(),
+                'report': temp.getvalue().decode('utf-8'),
             }), content_type='application/json')
 
     @property
@@ -602,7 +595,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         report_config_id = subreport_slug
         try:
             report_class = self._report_class(domain, report_config_id)
-        except BadSpecError:
+        except (BadSpecError, DocumentNotFound):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
@@ -627,8 +620,7 @@ class DownloadUCRStatusView(BaseDomainView):
 
     @property
     def section_url(self):
-        # todo what should the parent section url be?
-        return "#"
+        return reverse('reports_home', args=(self.domain, ))
 
     def get(self, request, *args, **kwargs):
         if _has_permission(self.domain, request.couch_user, self.report_config_id):

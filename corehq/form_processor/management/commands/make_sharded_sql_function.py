@@ -5,6 +5,7 @@ import os
 from django.core.management.base import LabelCommand
 from django.template import Engine
 from django.conf import settings
+from io import open
 
 SQL_ACCESSOR_DIR = os.path.join(settings.FILEPATH, 'corehq', 'sql_accessors', 'sql_templates')
 
@@ -25,11 +26,11 @@ class Command(LabelCommand):
         self._create_accessor_function(sql_function_name, SQL_PROXY_ACCESSOR_DIR)
 
     def _create_accessor_function(self, sql_function_name, accessor_dir):
-        with open(os.path.join(accessor_dir, TEMPLATE_NAME)) as f:
+        with open(os.path.join(accessor_dir, TEMPLATE_NAME), encoding='utf-8') as f:
             template_string = f.read()
 
         template = Engine().from_string(template_string)
         rendered_template = template.render({'sql_function_name': sql_function_name})
 
-        with open(os.path.join(accessor_dir, '{}.sql'.format(sql_function_name)), 'w+') as f:
+        with open(os.path.join(accessor_dir, '{}.sql'.format(sql_function_name)), 'w+', encoding='utf-8') as f:
             f.write(rendered_template)

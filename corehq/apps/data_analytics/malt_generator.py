@@ -11,6 +11,8 @@ from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
 from corehq.apps.domain.models import Domain
 from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
+from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
@@ -37,21 +39,23 @@ class MALTTableGenerator(object):
     def build_table(self):
 
         for domain in Domain.get_all():
-            malt_rows_to_save = []
             logger.info("Building MALT for {}".format(domain.name))
-            all_users_by_id = {user._id: user for user in domain.all_users()}
 
             for monthspan in self.monthspan_list:
-                try:
-                    malt_rows_to_save.extend(self._get_malt_row_dicts(domain.name, monthspan, all_users_by_id))
-                except Exception as ex:
-                    logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
-                                 (name=domain.name, ex=str(ex)), exc_info=True)
-            self._save_to_db(malt_rows_to_save, domain._id)
+                all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
+                for users in chunked(all_users, 1000):
+                    users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
+                    try:
+                        malt_rows_to_save = self._get_malt_row_dicts(domain.name, monthspan, users_by_id)
+                    except Exception as ex:
+                        logger.error("Failed to get rows for domain {name}. Exception is {ex}".format
+                                    (name=domain.name, ex=str(ex)), exc_info=True)
+                    if malt_rows_to_save:
+                        self._save_to_db(malt_rows_to_save, domain._id)
 
-    def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
+    def _get_malt_row_dicts(self, domain_name, monthspan, users_by_id):
         malt_row_dicts = []
-        for users in chunked(list(all_users_by_id), 1000):
+        for users in chunked(list(users_by_id), 1000):
             apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
             for app_row in apps_submitted_for:
                 app_id = app_row.app_id
@@ -61,7 +65,7 @@ class MALTTableGenerator(object):
                     user_id, username, user_type, email = self._user_data(
                         app_row.user_id,
                         app_row.username,
-                        all_users_by_id
+                        users_by_id
                     )
                 except Exception as ex:
                     logger.error("Failed to get rows for user {id}, app {app_id}. Exception is {ex}".format
@@ -145,9 +149,9 @@ class MALTTableGenerator(object):
                            app.is_deleted())
 
     @classmethod
-    def _user_data(cls, user_id, username, all_users_by_id):
-        if user_id in all_users_by_id:
-            user = all_users_by_id[user_id]
+    def _user_data(cls, user_id, username, users_by_id):
+        if user_id in users_by_id:
+            user = users_by_id[user_id]
             return (user._id, user.username, user.doc_type, user.email)
         elif user_id == DEMO_USER_ID:
             return (user_id, username, 'DemoUser', '')

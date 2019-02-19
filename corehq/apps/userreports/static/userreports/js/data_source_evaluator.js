@@ -10,7 +10,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
         self.rows = ko.observableArray();
         self.loading = ko.observable(false);
 
-        self.evaluateDataSource = function() {
+        self.evaluateDataSource = function () {
             self.uiFeedback("");
             if (!self.documentsId()) {
                 self.uiFeedback("Please enter a document ID.");
@@ -25,9 +25,9 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                     },
                     success: function (data) {
                         var rows = [];
-                        data.rows.forEach(function(row) {
+                        data.rows.forEach(function (row) {
                             var tableRow = [];
-                            data.columns.forEach(function(column) {
+                            data.columns.forEach(function (column) {
                                 tableRow.push(row[column]);
                             });
                             rows.push(tableRow);

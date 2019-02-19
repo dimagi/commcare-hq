@@ -1,40 +1,43 @@
 # coding=utf-8
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
+
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
+from couchdbkit import ResourceNotFound
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
-
-from couchdbkit import ResourceNotFound
-from corehq.apps.es.aggregations import DateHistogram
-from corehq.apps.hqwebapp.decorators import use_nvd3
-from couchexport.export import SCALAR_NEVER_WAS
-
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.es import filters
-from dimagi.utils.dates import safe_strftime
+from django.utils.translation import (ugettext as _, ugettext_lazy,
+    ugettext_noop)
 from memoized import memoized
-from dimagi.utils.parsing import string_to_utc_datetime
-from phonelog.models import UserErrorEntry
+from six.moves import range
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
-from corehq.apps.es import UserES
+from corehq.apps.app_manager.dbaccessors import (get_app,
+    get_brief_apps_in_domain)
+from corehq.apps.es import UserES, filters
+from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.hqwebapp.decorators import use_nvd3
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
+from corehq.apps.reports.filters.select import SelectApplicationFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.generic import (GenericTabularReport, GetParamsMixin,
+    PaginatedReportMixin)
+from corehq.apps.reports.standard import (ProjectReport,
+    ProjectReportParametersMixin)
+from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
-
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.filters.select import SelectApplicationFilter
-from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
-from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.util import format_datatables_data
 from corehq.util.quickcache import quickcache
-from six.moves import range
+from corehq.warehouse.models.facts import ApplicationStatusFact
+from couchexport.export import SCALAR_NEVER_WAS
+from dimagi.utils.dates import safe_strftime
+from dimagi.utils.parsing import string_to_utc_datetime
+from django.urls import reverse
+from phonelog.models import UserErrorEntry
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -58,26 +61,36 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     primary_sort_prop = None
 
     @property
+    def warehouse(self):
+        return toggles.WAREHOUSE_APP_STATUS.enabled(self.domain)
+
+    @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Username"), prop_name='username.exact'),
+            DataTablesColumn(_("Username"),
+                             prop_name='username.exact',
+                             sql_col='user_dim__username'),
             DataTablesColumn(_("Last Submission"),
                              prop_name='reporting_metadata.last_submissions.submission_date',
-                             alt_prop_name='reporting_metadata.last_submission_for_user.submission_date'),
+                             alt_prop_name='reporting_metadata.last_submission_for_user.submission_date',
+                             sql_col='last_form_submission_date'),
             DataTablesColumn(_("Last Sync"),
                              prop_name='reporting_metadata.last_syncs.sync_date',
-                             alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
+                             alt_prop_name='reporting_metadata.last_sync_for_user.sync_date',
+                             sql_col='last_sync_log_date'),
             DataTablesColumn(_("Application"),
                              help_text=_("The name of the application from the user's last request."),
                              sortable=False),
             DataTablesColumn(_("Application Version"),
                              help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
-                             alt_prop_name='reporting_metadata.last_build_for_user.build_version'),
+                             alt_prop_name='reporting_metadata.last_build_for_user.build_version',
+                             sql_col='last_form_app_build_version'),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
-                             alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version'),
+                             alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
+                             sql_col='last_form_app_commcare_version'),
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
@@ -181,10 +194,19 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
-            user_query = user_query.nested(
-                self.sort_base,
-                filters.term(self.sort_filter, self.selected_app_id)
-            )
+            # adding nested filter for reporting_metadata.last_submissions.app_id
+            # and reporting_metadata.last_syncs.app_id when app is selected
+            last_submission_filter = filters.nested('reporting_metadata.last_submissions',
+                                                    filters.term('reporting_metadata.last_submissions.app_id',
+                                                                 self.selected_app_id)
+                                                    )
+            last_sync_filter = filters.nested('reporting_metadata.last_syncs',
+                                              filters.term("reporting_metadata.last_syncs.app_id",
+                                                           self.selected_app_id)
+                                              )
+            user_query = user_query.OR(last_submission_filter,
+                                       last_sync_filter
+                                       )
         return user_query
 
     def process_rows(self, users, fmt_for_export=False):
@@ -234,6 +256,47 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             ])
         return rows
 
+    def process_users(self, users, fmt_for_export=False):
+        rows = []
+        first = self.pagination.start
+        last = first + self.pagination.count
+        for user in users[first:last]:
+            rows.append([
+                user_display_string(user.user_dim.username,
+                                    user.user_dim.first_name,
+                                    user.user_dim.last_name),
+                _fmt_date(user.last_form_submission_date, fmt_for_export),
+                _fmt_date(user.last_sync_log_date, fmt_for_export),
+                getattr(user.app_dim, 'name', '---'),
+                user.last_form_app_build_version,
+                user.last_form_app_commcare_version
+            ])
+        return rows
+
+    def get_sql_sort(self):
+        res = None
+        #the NUMBER of cols sorting
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+                col = self.headers.header[col_id]
+                if col.sql_col is not None:
+                    res = col.sql_col
+                    if sort_dir not in ('desc', 'asc'):
+                        raise BadRequestError(
+                            ('unexcpected sort direction: {}. '
+                             'sort direction must be asc or desc'.format(sort_dir))
+                        )
+                    if sort_dir == 'desc':
+                        res = '-{}'.format(res)
+                    break
+        if res is None:
+            res = '-last_form_submission_date'
+        return res
+
     @property
     def total_records(self):
         if self._total_records:
@@ -243,9 +306,29 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def rows(self):
-        users = self.user_query().run()
-        self._total_records = users.total
-        return self.process_rows(users.hits)
+        if self.warehouse:
+            mobile_user_and_group_slugs = set(
+                # Cater for old ReportConfigs
+                self.request.GET.getlist('location_restricted_mobile_worker') +
+                self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+            )
+            users = ExpandedMobileWorkerFilter.user_es_query(
+                self.domain,
+                mobile_user_and_group_slugs,
+                self.request.couch_user,
+            ).values_list('_id', flat=True)
+            sort_clause = self.get_sql_sort()
+            rows = ApplicationStatusFact.objects.filter(
+                user_dim__user_id__in=users
+            ).order_by(sort_clause).select_related('user_dim', 'app_dim')
+            if self.selected_app_id:
+                rows = rows.filter(app_dim__application_id=self.selected_app_id)
+            self._total_records = rows.count()
+            return self.process_users(rows)
+        else:
+            users = self.user_query().run()
+            self._total_records = users.total
+            return self.process_rows(users.hits)
 
     @property
     def get_all_rows(self):
@@ -286,32 +369,6 @@ def _choose_latest_version(*app_versions):
     usable_versions = [_f for _f in app_versions if _f]
     if usable_versions:
         return sorted(usable_versions, key=lambda v: v.build_version)[-1]
-
-
-class SyncHistoryReport(DeploymentsReport):
-    # To be removed. Link deactivated on 6th Dec 2017.
-    name = ugettext_noop("User Sync History")
-    slug = "sync_history"
-    is_deprecated = True
-    deprecation_email_message = ugettext_lazy(
-        "The Sync History report has been deprecated. You can use the Application Status report to identify "
-        "the last time a user synced. This saved email will stop working within the next two months. "
-        "Please update your saved reports email settings if needed.")
-    deprecation_message = ugettext_lazy(
-        "The Sync History report has been deprecated. "
-        "You can use the Application Status report to identify the last time a user synced."
-    )
-
-    @property
-    def deprecate_response(self):
-        from django.contrib import messages
-        messages.warning(
-            self.request,
-            self.deprecation_message
-        )
-        return HttpResponseRedirect(
-            reverse(ApplicationStatusReport.dispatcher.name(), args=[],
-                    kwargs={'domain': self.domain, 'report_slug': ApplicationStatusReport.slug}))
 
 
 def _get_sort_key(date):
@@ -461,7 +518,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     ]
     exportable = False
     emailable = False
-    js_scripts = ['reports/js/aggregate_user_status.js']
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):

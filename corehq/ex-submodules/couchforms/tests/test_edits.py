@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 from mock import patch
-from couchdbkit import RequestFailed
+from requests.exceptions import HTTPError
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -18,8 +18,10 @@ from couchforms.models import UnfinishedSubmissionStub
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin, softer_assert
+from io import open
 
 
+@softer_assert()
 class EditFormTest(TestCase, TestFileMixin):
     ID = '7H46J37FGH3'
     domain = 'test-form-edits'
@@ -72,10 +74,10 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertTrue(xform.edited_on > deprecated_xform.received_on)
 
         self.assertEqual(
-            deprecated_xform.get_xml(),
-            original_xml
+            deprecated_xform.get_xml().decode('utf-8'),
+            original_xml.decode('utf-8')
         )
-        self.assertEqual(xform.get_xml(), edit_xml)
+        self.assertEqual(xform.get_xml().decode('utf-8'), edit_xml.decode('utf-8'))
 
     def test_edit_form_with_attachments(self):
         attachment_source = './corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'
@@ -111,7 +113,7 @@ class EditFormTest(TestCase, TestFileMixin):
         )
         form = self.formdb.get_form(form_id)
         self.assertIn('fruity_file', form.attachments)
-        self.assertIn(original_xml, form.get_xml())
+        self.assertIn(original_xml, form.get_xml().decode('utf-8'))
 
         # edit form
         edit_xml = _get_xml('2016-04-01T12:04:16Z', form_id)
@@ -123,7 +125,7 @@ class EditFormTest(TestCase, TestFileMixin):
         self.assertIsNotNone(form.edited_on)
         self.assertIsNotNone(form.deprecated_form_id)
         self.assertIn('fruity_file', form.attachments)
-        self.assertIn(edit_xml, form.get_xml())
+        self.assertIn(edit_xml, form.get_xml().decode('utf-8'))
 
     def test_edit_an_error(self):
         form_id = uuid.uuid4().hex
@@ -134,12 +136,12 @@ class EditFormTest(TestCase, TestFileMixin):
             owner_id='some-owner',
         )
 
-        form, _ = submit_case_blocks(case_block.as_string(), domain=self.domain, form_id=form_id)
+        form, _ = submit_case_blocks(case_block.as_string().decode('utf-8'), domain=self.domain, form_id=form_id)
         self.assertTrue(form.is_error)
         self.assertTrue('IllegalCaseId' in form.problem)
 
         case_block.case_id = uuid.uuid4().hex
-        form, _ = submit_case_blocks(case_block.as_string(), domain=self.domain, form_id=form_id)
+        form, _ = submit_case_blocks(case_block.as_string().decode('utf-8'), domain=self.domain, form_id=form_id)
         self.assertFalse(form.is_error)
         self.assertEqual(None, getattr(form, 'problem', None))
 
@@ -164,15 +166,14 @@ class EditFormTest(TestCase, TestFileMixin):
             0
         )
 
-        with patch.object(self.interface.processor, 'save_processed_models', side_effect=RequestFailed):
-            with self.assertRaises(RequestFailed):
+        with patch.object(self.interface.processor, 'save_processed_models', side_effect=HTTPError):
+            with self.assertRaises(HTTPError):
                 submit_form_locally(edit_xml, self.domain)
-
-        # it didn't go through, so make sure there are no edits still
-        self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
 
         xform = self.formdb.get_form(self.ID)
         self.assertIsNotNone(xform)
+        # it didn't go through, so make sure there are no edits still
+        self.assertIsNone(getattr(xform, 'deprecated_form_id', None))
         self.assertEqual(UnfinishedSubmissionStub.objects.filter(xform_id=self.ID).count(), 0)
 
     def test_case_management(self):
@@ -187,7 +188,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'original value'
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # validate some assumptions
@@ -210,7 +211,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'edited value'
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         xform, _ = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         case = self.casedb.get_case(case_id)
@@ -231,7 +232,7 @@ class EditFormTest(TestCase, TestFileMixin):
             create=True,
             case_id=case_id,
             case_type='person',
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         # submit an edit form with a bad case update (for example a bad ID)
@@ -239,7 +240,7 @@ class EditFormTest(TestCase, TestFileMixin):
             create=True,
             case_id='',
             case_type='person',
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         xform = self.formdb.get_form(form_id)
@@ -258,7 +259,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case_id,
             case_type='person',
             owner_id=owner_id,
-        ).as_string()
+        ).as_string().decode('utf-8')
         create_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -279,7 +280,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'first value',
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -300,7 +301,7 @@ class EditFormTest(TestCase, TestFileMixin):
             update={
                 'property': 'final value',
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         second_edit_form_id = submit_case_blocks(case_block, domain=self.domain)[0].form_id
 
         # validate that worked
@@ -323,7 +324,7 @@ class EditFormTest(TestCase, TestFileMixin):
                 'property': 'edited value',
                 'added_property': 'added value',
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         submit_case_blocks(case_block, domain=self.domain, form_id=edit_form_id)
 
         # ensure that the middle edit stays in the right place and is applied
@@ -339,7 +340,6 @@ class EditFormTest(TestCase, TestFileMixin):
                 [a.xform_id for a in case.actions]
             )
 
-    @softer_assert()
     def test_edit_different_xmlns(self):
         form_id = uuid.uuid4().hex
         case1_id = uuid.uuid4().hex
@@ -352,7 +352,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case1_id,
             case_type='person',
             owner_id='owner1',
-        ).as_string()
+        ).as_string().decode('utf-8')
         xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns1, form_id=form_id)
 
         self.assertTrue(xform.is_normal)
@@ -363,7 +363,7 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id=case2_id,
             case_type='goat',
             owner_id='owner1',
-        ).as_string()
+        ).as_string().decode('utf-8')
         # submit new form with same form ID but different XMLNS
         xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns2, form_id=form_id)
 

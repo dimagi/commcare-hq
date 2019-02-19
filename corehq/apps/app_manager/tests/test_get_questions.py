@@ -8,15 +8,18 @@ from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.app_manager.models import Application, Module
+from six.moves import filter
 
 QUESTIONS = [
     {
         'tag': 'input',
         'repeat': None,
         'group': None,
+        'constraintMsg_ref': 'question1-constraintMsg',
         'value': '/data/question1',
         'hashtagValue': '#form/question1',
         'label': 'label en ____ label en',
+        'label_ref': 'question1-label',
         'translations': {
             'en': 'label en ____ label en',
             'es': 'label es ____\n____\n____',
@@ -32,6 +35,7 @@ QUESTIONS = [
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -40,6 +44,7 @@ QUESTIONS = [
         'value': '/data/question2',
         'hashtagValue': '#form/question2',
         'label': 'label en ____ label en',
+        'label_ref': 'question2-label',
         'translations': {'en': 'label en ____ label en'},
         'type': 'Text',
         'required': False,
@@ -47,6 +52,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': "This is a comment",
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -55,6 +61,7 @@ QUESTIONS = [
         'value': '/data/question3',
         'hashtagValue': '#form/question3',
         'label': 'no references here!',
+        'label_ref': 'question3-label',
         'translations': {'en': 'no references here!'},
         'type': 'Text',
         'required': False,
@@ -62,6 +69,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'trigger',
@@ -70,6 +78,7 @@ QUESTIONS = [
         'value': '/data/hi',
         'hashtagValue': '#form/hi',
         'label': 'woo',
+        'label_ref': 'hi-label',
         'translations': {'en': 'woo'},
         'type': 'Trigger',
         'required': False,
@@ -77,6 +86,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -85,6 +95,7 @@ QUESTIONS = [
         'value': '/data/question15/question16',
         'hashtagValue': '#form/question15/question16',
         'label': None,
+        'label_ref': 'question16-label',
         'translations': {},
         'type': 'Text',
         'required': False,
@@ -92,6 +103,7 @@ QUESTIONS = [
         'constraint': '1',
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'select1',
@@ -101,12 +113,14 @@ QUESTIONS = [
             {
                 'value': 'item22',
                 'label': None,
+                'label_ref': 'question21-item22-label',
                 'translations': {},
             }
         ],
         'value': '/data/question15/question21',
         'hashtagValue': '#form/question15/question21',
         'label': None,
+        'label_ref': 'question21-label',
         'translations': {},
         'type': 'Select',
         'required': False,
@@ -114,6 +128,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -122,6 +137,7 @@ QUESTIONS = [
         'value': '/data/question15/question25',
         'hashtagValue': '#form/question15/question25',
         'label': None,
+        'label_ref': 'question25-label',
         'translations': {},
         'type': 'Int',
         'required': False,
@@ -129,6 +145,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -137,6 +154,7 @@ QUESTIONS = [
         'value': '/data/thing',
         'hashtagValue': '#form/thing',
         'label': None,
+        'label_ref': 'thing-label',
         'translations': {},
         'type': 'Text',
         'required': False,
@@ -144,6 +162,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'hidden',
@@ -158,6 +177,7 @@ QUESTIONS = [
         'calculate': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
 ]
 
@@ -180,14 +200,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             module.id,
             name="Form",
             lang='en',
-            attachment=self.get_xml('case_in_form')
+            attachment=self.get_xml('case_in_form').decode('utf-8')
         )
 
         form_with_repeats = self.app.new_form(
             module.id,
             name="Form with repeats",
             lang='en',
-            attachment=self.get_xml('form_with_repeats')
+            attachment=self.get_xml('form_with_repeats').decode('utf-8')
         )
 
         self.form_unique_id = form.unique_id
@@ -226,16 +246,16 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             include_groups=True,
         )
 
-        repeat_name_count = filter(
+        repeat_name_count = list(filter(
             lambda question: question['value'] == '/data/repeat_name_count',
             questions,
-        )[0]
+        ))[0]
         self.assertIsNone(repeat_name_count['repeat'])
 
-        repeat_question = filter(
+        repeat_question = list(filter(
             lambda question: question['value'] == '/data/repeat_name/question5',
             questions,
-        )[0]
+        ))[0]
         self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
 
     def test_blank_form(self):

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
 import json
-from exceptions import NotImplementedError
 
 from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
@@ -110,7 +109,10 @@ class NamedExpressionSpec(JsonObject):
         self._context = context
 
     def _context_cache_key(self, item):
-        item_hash = hashlib.md5(json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)).hexdigest()
+        json_item = json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)
+        if six.PY3:
+            json_item = json_item.encode('utf-8')
+        item_hash = hashlib.md5(json_item).hexdigest()
         return 'named_expression-{}-{}'.format(self.name, item_hash)
 
     def __call__(self, item, context=None):
@@ -151,7 +153,7 @@ class ConditionalExpressionSpec(JsonObject):
             false=add_tabbed_text(str(self._false_expression)))
 
 
-class ArrayIndexExpressionSpec(JsonObject):
+class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
     index_expression = DefaultProperty(required=True)

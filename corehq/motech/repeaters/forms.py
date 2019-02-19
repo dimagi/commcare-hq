@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.users.forms import SupplyPointSelectWidget
+from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -45,7 +45,12 @@ class GenericRepeaterForm(forms.Form):
     password = forms.CharField(
         required=False,
         label='Password',
-        widget=forms.PasswordInput()
+        widget=forms.PasswordInput(render_value=True)
+    )
+    skip_cert_verify = forms.BooleanField(
+        label=_('Skip SSL certificate verification'),
+        required=False,
+        help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
     )
 
     def __init__(self, *args, **kwargs):
@@ -103,7 +108,8 @@ class GenericRepeaterForm(forms.Form):
             self.special_crispy_fields["test_link"],
             self.special_crispy_fields["auth_type"],
             "username",
-            "password"
+            "password",
+            self.special_crispy_fields["skip_cert_verify"],
         ])
         return form_fields
 
@@ -119,7 +125,7 @@ class GenericRepeaterForm(forms.Form):
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
-                        css_class='btn btn-info disabled',
+                        css_class='btn btn-default disabled',
                     ),
                     crispy.Div(
                         css_id='test-forward-result',
@@ -130,6 +136,7 @@ class GenericRepeaterForm(forms.Form):
                 css_class='form-group'
             ),
             "auth_type": twbscrispy.PrependedText('auth_type', ''),
+            "skip_cert_verify": twbscrispy.PrependedText('skip_cert_verify', ''),
         }
 
     def clean(self):
@@ -209,36 +216,48 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
             'Leave empty if this is the only OpenMRS Forwarder'
         )
     )
+    atom_feed_enabled = forms.BooleanField(
+        label=_('Atom feed enabled'),
+        required=False,
+        help_text=_('Poll Atom feed for changes made in OpenMRS/Bahmni'),
+    )
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id',
+                                                                 select2_version='v4')
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['location_id'] + fields
+        return ['location_id', 'atom_feed_enabled'] + fields
+
+    def clean(self):
+        cleaned_data = super(OpenmrsRepeaterForm, self).clean()
+        white_listed_case_types = cleaned_data.get('white_listed_case_types', [])
+        atom_feed_enabled = cleaned_data.get('atom_feed_enabled', False)
+        location_id = cleaned_data.get('location_id', None)
+        if atom_feed_enabled:
+            if len(white_listed_case_types) != 1:
+                raise ValidationError(_(
+                    'Specify a single case type so that CommCare can add cases using the Atom feed for patients '
+                    'created in OpenMRS/Bahmni.'
+                ))
+            if not location_id:
+                raise ValidationError(_(
+                    'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
+                ))
+        return cleaned_data
 
 
-class SOAPCaseRepeaterForm(CaseRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
+class Dhis2RepeaterForm(FormRepeaterForm):
+
+    def __init__(self, *args, **kwargs):
+        super(Dhis2RepeaterForm, self).__init__(*args, **kwargs)
+        # self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
 
     def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
-
-
-class SOAPLocationRepeaterForm(GenericRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
+        fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields
 
 
 class EmailBulkPayload(forms.Form):

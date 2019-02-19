@@ -17,7 +17,10 @@ POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 
 
 class Command(BaseCommand):
-    help = 'Super preindex management command to do our bidding'
+    help = """
+    Command that syncs design docs to couch using sync_prepare_couchdb_multi and
+    finds and creates new ES index mappings using ptop_preindex
+    """
 
     def add_arguments(self, parser):
         parser.add_argument(

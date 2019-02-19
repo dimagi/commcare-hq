@@ -14,8 +14,10 @@
         "airskenya",
         "airs-testing",
         "vectorlink-benin",
+        "vectorlink-ethiopia",
         "vectorlink-uganda"
     ],
+    "server_environment": ["production"],
     "config": {
         "engine_id": "default",
         "base_item_expression": {
@@ -98,18 +100,14 @@
         },
         "configured_indicators": [
             {
-                "column_id": "timeEnd",
+                "column_id": "received_on",
                 "datatype": "datetime",
-                "display_name": "timeEnd",
+                "display_name": "received_on",
                 "expression": {
                     "expression": {
                         "datatype": null,
-                        "property_path": [
-                            "form",
-                            "meta",
-                            "timeEnd"
-                        ],
-                        "type": "property_path"
+                        "property_name": "received_on",
+                        "type": "property_name"
                     },
                     "type": "root_doc"
                 },
@@ -281,15 +279,9 @@
                 "datatype": "string",
                 "display_name": "form_name",
                 "expression": {
-                    "expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "@name"
-                        ],
-                        "type": "property_path"
-                    },
-                    "type": "root_doc"
+                    "datatype": null,
+                    "property_name": "form_name",
+                    "type": "property_name"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

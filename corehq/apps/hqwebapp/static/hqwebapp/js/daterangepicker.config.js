@@ -1,4 +1,15 @@
-(function () {
+hqDefine("hqwebapp/js/daterangepicker.config", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'moment/moment',
+    'bootstrap-daterangepicker/daterangepicker',
+], function (
+    $,
+    _,
+    initialPageData,
+    moment
+) {
     'use strict';
 
     var getLocalDate = function (date) {
@@ -14,7 +25,7 @@
     $.fn.getDateRangeSeparator = function () {
         return ' to ';
     };
-    $.fn.createDateRangePicker = function(
+    $.fn.createDateRangePicker = function (
         range_labels, separator, startdate, enddate
     ) {
         var ranges = {};
@@ -48,15 +59,14 @@
         $(this).daterangepicker(config);
 
         // UCRs
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-        if (initial_page_data('daterangepicker-show-clear')) {
+        if (initialPageData.get('daterangepicker-show-clear')) {
             // Change 'Cancel' button text to 'Clear'
             var $el = $(this);
             config.locale.cancelLabel = gettext('Clear');
             $el.daterangepicker(config);
 
             // Add clearing functionality
-            $el.on('cancel.daterangepicker', function() {
+            $el.on('cancel.daterangepicker', function () {
                 $el.val(gettext("Show All Dates"));
 
                 // Clear startdate and enddate filters
@@ -70,7 +80,7 @@
             });
         }
 
-        if (! hasStartAndEndDate){
+        if (! hasStartAndEndDate) {
             $(this).val("");
         }
     };
@@ -84,4 +94,4 @@
             this.getDateRangeSeparator()
         );
     };
-})();
+});

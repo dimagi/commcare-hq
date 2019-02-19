@@ -3,9 +3,7 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static "domain/js/commtrack_settings.js" %}"></script>
-{% endblock %}
+{% requirejs_main "domain/js/commtrack_settings" %}
 
 {% block page_content %}
     {% crispy form %}

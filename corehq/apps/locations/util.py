@@ -11,18 +11,18 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
     LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product
-from corehq.blobs import get_blob_db
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
 from memoized import memoized
 from soil import DownloadBase
 from soil.util import expose_blob_download
+from io import open
 
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
@@ -39,25 +39,14 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     only_administrative - if False get all locations
                           if True get only administrative locations
     """
-    from .permissions import (user_can_edit_location, user_can_view_location,
-        user_can_access_location_id)
-
-    def loc_to_json(loc, project):
-        ret = {
+    def loc_to_json(loc):
+        return {
             'name': loc.name,
             'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
             'can_edit': True
         }
-        if user:
-            if user.has_permission(domain, 'access_all_locations'):
-                ret['can_edit'] = user_can_edit_location(user, loc, project)
-            else:
-                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
-        return ret
-
-    project = Domain.get_by_name(domain)
 
     locations = SQLLocation.root_locations(
         domain, include_archive_ancestors=include_archived
@@ -66,10 +55,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
     if only_administrative:
         locations = locations.filter(location_type__administrative=True)
 
-    loc_json = [
-        loc_to_json(loc, project) for loc in locations
-        if user is None or user_can_view_location(user, loc, project)
-    ]
+    loc_json = [loc_to_json(loc) for loc in locations]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
@@ -95,10 +81,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
                 break
-            this_loc['children'] = [
-                loc_to_json(loc, project) for loc in children
-                if user is None or user_can_view_location(user, loc, project)
-            ]
+            this_loc['children'] = [loc_to_json(loc) for loc in children]
             parent = this_loc
 
     return loc_json
@@ -119,10 +102,9 @@ def parent_child(domain):
                       data=six.iteritems(dict(location_hierarchy_config(domain))))
 
 
-@quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
-    from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
     return CustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
@@ -131,13 +113,14 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, async_task=None):
+    def __init__(self, domain, include_consumption=False, headers_only=False, async_task=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
+        self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
-        self.location_types = self.domain_obj.location_types
+        self.location_types = LocationType.objects.by_domain(domain)
         self.async_task = async_task
         self._location_count = None
         self._locations_exported = 0
@@ -222,24 +205,28 @@ class LocationExporter(object):
 
     def _write_locations(self, writer, location_type):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
-        query = SQLLocation.active_objects.filter(
-            domain=self.domain,
-            location_type=location_type
-        )
+        if self.headers_only:
+            query = SQLLocation.objects.none()
+        else:
+            query = SQLLocation.active_objects.filter(
+                domain=self.domain,
+                location_type=location_type
+            )
 
         def _row_generator(include_consumption=include_consumption):
             for loc in query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
-                row = [
-                    loc.location_id,
-                    loc.site_code,
-                    loc.name,
-                    loc.parent.site_code if loc.parent else '',
-                    loc.latitude or '',
-                    loc.longitude or '',
-                    loc.external_id,
-                    '',  # do delete
-                ]
+                row_data = {
+                    'location_id': loc.location_id,
+                    'site_code': loc.site_code,
+                    'name': loc.name,
+                    'parent_code': loc.parent.site_code if loc.parent else '',
+                    'external_id': loc.external_id,
+                    'latitude': loc.latitude or '',
+                    'longitude': loc.longitude or '',
+                    'do_delete': '',
+                }
+                row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
                 for field in self.data_model.fields:
                     row.append(model_data.get(field.slug, ''))
 
@@ -281,8 +268,9 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption=False, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, async_task=task)
+def dump_locations(domain, download_id, include_consumption, headers_only, task=None):
+    exporter = LocationExporter(domain, include_consumption=include_consumption,
+                                headers_only=headers_only, async_task=task)
 
     fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()
@@ -292,11 +280,20 @@ def dump_locations(domain, download_id, include_consumption=False, task=None):
 
     with open(path, 'rb') as file_:
         db = get_blob_db()
-        db.put(file_, download_id, timeout=60 * 60)
+        expiry_mins = 60
+        db.put(
+            file_,
+            domain=domain,
+            parent_id=domain,
+            type_code=CODES.tempfile,
+            key=download_id,
+            timeout=expiry_mins,
+        )
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
         expose_blob_download(
             download_id,
+            expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
             content_disposition=safe_filename_header('{}_locations'.format(domain), file_format.extension),
             download_id=download_id,

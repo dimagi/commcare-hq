@@ -2,11 +2,12 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management import BaseCommand
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from io import open
 
 
 class Command(BaseCommand):
@@ -17,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, infile, outfile, *args, **options):
         self.case_accessor = CaseAccessors('icds-cas')
-        with open(infile, 'r') as old, open(outfile, 'w') as new:
+        with open(infile, 'r', encoding='utf-8') as old, open(outfile, 'w', encoding='utf-8') as new:
             reader = csv.reader(old)
             writer = csv.writer(new)
             headers = next(reader)

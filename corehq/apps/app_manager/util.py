@@ -1,26 +1,34 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
-from couchdbkit import ResourceNotFound
+
 import json
 import os
 import uuid
 import re
 import logging
-
 import yaml
-from django.urls import reverse
+import six
+from collections import namedtuple, OrderedDict
+from copy import deepcopy, copy
+from io import open
+
+
+from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
+from memoized import memoized
+
+from django.urls import reverse
 from django.core.cache import cache
+from django.http import Http404
 from django.utils.translation import ugettext as _
+from django.db.models import Max
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_app
 )
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
-from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
+from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
 from corehq.util.soft_assert import soft_assert
@@ -29,21 +37,16 @@ from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
     USERCASE_TYPE,
     USERCASE_ID,
-    USERCASE_PREFIX)
+    USERCASE_PREFIX,
+)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
-import six
 
 
 logger = logging.getLogger(__name__)
-
-CASE_XPATH_PATTERN_MATCHES = [
-    DOT_INTERPOLATE_PATTERN
-]
 
 CASE_XPATH_SUBSTRING_MATCHES = [
     "instance('casedb')",
@@ -52,9 +55,6 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#parent",
     "#host",
 ]
-
-
-USER_CASE_XPATH_PATTERN_MATCHES = []
 
 USER_CASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
@@ -98,21 +98,21 @@ def xpath_references_case(xpath):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
     # case, see xpath_references_user_case()
+    # Assumes xpath has already been dot interpolated as needed.
     for substring in USER_CASE_XPATH_SUBSTRING_MATCHES:
         xpath = xpath.replace(substring, '')
 
     return _check_xpath_for_matches(
         xpath,
         substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=CASE_XPATH_PATTERN_MATCHES
     )
 
 
 def xpath_references_user_case(xpath):
+    # Assumes xpath has already been dot interpolated as needed.
     return _check_xpath_for_matches(
         xpath,
         substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
     )
 
 
@@ -123,10 +123,14 @@ def split_path(path):
     return path, name
 
 
+def first_elem(elem_list):
+    return elem_list[0] if elem_list else None
+
+
 def save_xform(app, form, xml):
 
     def change_xmlns(xform, old_xmlns, new_xmlns):
-        data = xform.data_node.render()
+        data = xform.data_node.render().decode('utf-8')
         data = data.replace(old_xmlns, new_xmlns, 1)
         xform.instance_node.remove(xform.data_node.xml)
         xform.instance_node.append(parse_xml(data))
@@ -157,7 +161,7 @@ def save_xform(app, form, xml):
                 # or form is being updated with source copied from other form
                 xml = change_xmlns(xform, tag_xmlns, new_xmlns)
 
-    form.source = xml
+    form.source = xml.decode('utf-8')
 
     if form.is_registration_form():
         # For registration forms, assume that the first question is the
@@ -212,8 +216,8 @@ def module_case_hierarchy_has_circular_reference(module):
 
 
 def is_usercase_in_use(domain_name):
-    domain = Domain.get_by_name(domain_name) if domain_name else None
-    return domain and domain.usercase_enabled
+    domain_obj = Domain.get_by_name(domain_name) if domain_name else None
+    return domain_obj and domain_obj.usercase_enabled
 
 
 def get_settings_values(app):
@@ -234,7 +238,7 @@ def get_settings_values(app):
     # convert int to string
     hq_settings['mobile_ucr_restore_version'] = str(hq_settings.get('mobile_ucr_restore_version', '1.0'))
 
-    domain = Domain.get_by_name(app.domain)
+    domain_obj = Domain.get_by_name(app.domain)
     return {
         'properties': profile.get('properties', {}),
         'features': profile.get('features', {}),
@@ -243,7 +247,7 @@ def get_settings_values(app):
             'doc_type': app.get_doc_type(),
             '_id': app.get_id,
             'domain': app.domain,
-            'commtrack_enabled': domain.commtrack_enabled,
+            'commtrack_enabled': domain_obj.commtrack_enabled,
         }
     }
 
@@ -281,23 +285,10 @@ def get_correct_app_class(doc):
         raise DocTypeError(doc['doc_type'])
 
 
-def all_apps_by_domain(domain):
-    from corehq.apps.app_manager.models import ApplicationBase
-    rows = ApplicationBase.get_db().view(
-        'app_manager/applications',
-        startkey=[domain, None],
-        endkey=[domain, None, {}],
-        include_docs=True,
-    ).all()
-    for row in rows:
-        doc = row['doc']
-        yield get_correct_app_class(doc).wrap(doc)
-
-
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
-        with open('submodules/langcodes/langs.json') as langs_file:
+        with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
             mapping = dict([(l["two"], l["names"]) for l in lang_data])
         mapping["default"] = ["Default Language"]
@@ -337,10 +328,12 @@ def get_commcare_versions(request_user):
 
 
 def get_commcare_builds(request_user):
+    can_view_superuser_builds = (request_user.is_superuser
+                                 or toggles.IS_CONTRACTOR.enabled(request_user.username))
     return [
         i.build
         for i in CommCareBuildConfig.fetch().menu
-        if request_user.is_superuser or not i.superuser_only
+        if can_view_superuser_builds or not i.superuser_only
     ]
 
 
@@ -355,12 +348,12 @@ def advanced_actions_use_usercase(actions):
 
 def enable_usercase(domain_name):
     with CriticalSection(['enable_usercase_' + domain_name]):
-        domain = Domain.get_by_name(domain_name, strict=True)
-        if not domain:  # copying domains passes in an id before name is saved
-            domain = Domain.get(domain_name)
-        if not domain.usercase_enabled:
-            domain.usercase_enabled = True
-            domain.save()
+        domain_obj = Domain.get_by_name(domain_name, strict=True)
+        if not domain_obj:  # copying domains passes in an id before name is saved
+            domain_obj = Domain.get(domain_name)
+        if not domain_obj.usercase_enabled:
+            domain_obj.usercase_enabled = True
+            domain_obj.save()
             create_user_cases.delay(domain_name)
 
 
@@ -456,7 +449,7 @@ def _app_callout_templates():
         'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
     )
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             data = yaml.load(f)
     else:
         logger.info("not found: %s", path)
@@ -528,6 +521,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
             'short_comment': module.short_comment,
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
+            'module_filter': module.module_filter,
         }
 
         form_list = module.get_forms()
@@ -539,6 +533,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
                 'name': form.name,
                 'short_comment': form.short_comment,
                 'action_type': form.get_action_type(),
+                'form_filter': form.form_filter,
             }
             try:
                 questions = form.get_questions(
@@ -667,8 +662,13 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    from corehq.apps.app_manager.models import Application
-    app = Application.get(xform.build_id)
+    try:
+        app = get_app(xform.domain, xform.build_id)
+    except Http404:
+        return None
+    if app.is_remote_app():
+        return None
+
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
     except KeyError:
@@ -679,3 +679,32 @@ def get_form_source_download_url(xform):
         xform.build_id,
         app.get_form_filename(module=form.get_module(), form=form),
     ])
+
+
+@quickcache(['domain', 'profile_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_build_for_profile(domain, profile_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    latest_enabled_build = (LatestEnabledBuildProfiles.objects.
+                            filter(build_profile_id=profile_id)
+                            .order_by('-version')
+                            .first())
+    if latest_enabled_build:
+        return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['build_id', 'version'], timeout=24 * 60 * 60)
+def get_enabled_build_profiles_for_version(build_id, version):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    return list(LatestEnabledBuildProfiles.objects.filter(
+        build_id=build_id, version=version).values_list('build_profile_id', flat=True))
+
+
+def get_latest_enabled_versions_per_profile(app_id):
+    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
+    # a dict with each profile id mapped to its latest enabled version number, if present
+    return {
+        build_profile['build_profile_id']: build_profile['version__max']
+        for build_profile in
+        LatestEnabledBuildProfiles.objects.filter(app_id=app_id).values('build_profile_id').annotate(
+            Max('version'))
+    }

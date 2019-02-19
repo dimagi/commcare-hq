@@ -12,14 +12,12 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
     'In order to view this data using the Report Builder you will have to delete this report '
     'and then build it again. Click below to delete it.'
 )
+DATA_SOURCE_MISSING_APP_ERROR_MESSAGE = _(
+    "Report builder data source doesn't reference an application. "
+    "It is likely this report has been customized and it is no longer editable. "
+)
 
 UCR_SQL_BACKEND = "SQL"
-UCR_ES_BACKEND = "ES"
-UCR_LABORATORY_BACKEND = "LABORATORY"
-UCR_ES_PRIMARY = "LAB_ES_PRIMARY"
-
-UCR_BACKENDS = [UCR_SQL_BACKEND, UCR_ES_BACKEND]
-UCR_SUPPORT_BOTH_BACKENDS = (UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY)
 
 DEFAULT_MAXIMUM_EXPANSION = 10
 
@@ -54,3 +52,19 @@ XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'
 
 NAMED_EXPRESSION_PREFIX = 'NamedExpression'
 NAMED_FILTER_PREFIX = 'NamedFilter'
+
+
+DATA_SOURCE_TYPE_STANDARD = 'standard'
+DATA_SOURCE_TYPE_AGGREGATE = 'aggregate'
+
+
+AGGGREGATION_TYPE_AVG = 'avg'
+AGGGREGATION_TYPE_COUNT_UNIQUE = 'count_unique'
+AGGGREGATION_TYPE_COUNT = 'count'
+AGGGREGATION_TYPE_MIN = 'min'
+AGGGREGATION_TYPE_MAX = 'max'
+AGGGREGATION_TYPE_MONTH = 'month'
+AGGGREGATION_TYPE_SUM = 'sum'
+AGGGREGATION_TYPE_SIMPLE = 'simple'
+AGGGREGATION_TYPE_YEAR = 'year'
+AGGGREGATION_TYPE_NONZERO_SUM = 'nonzero_sum'

@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
     get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
@@ -11,7 +12,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestPrevalenceOfUndernutrition(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -52,23 +52,68 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertDictEqual(
             data['data'],
             {
+                'st4': {
+                    'severely_underweight': 0,
+                    'normal': 0,
+                    'original_name': ['st4'],
+                    'weighed': 0,
+                    'moderately_underweight': 0,
+                    'total': 2,
+                    'fillKey': '0%-20%'
+                },
+                'st5': {
+                    'severely_underweight': 0,
+                    'normal': 0,
+                    'original_name': ['st5'],
+                    'weighed': 0,
+                    'moderately_underweight': 0,
+                    'total': 3,
+                    'fillKey': '0%-20%'
+                },
+                'st6': {
+                    'severely_underweight': 0,
+                    'normal': 0,
+                    'original_name': ['st6'],
+                    'weighed': 0,
+                    'moderately_underweight': 0,
+                    'total': 4,
+                    'fillKey': '0%-20%'
+                },
+                'st7': {
+                    'severely_underweight': 0,
+                    'normal': 0,
+                    'original_name': ['st7'],
+                    'weighed': 0,
+                    'moderately_underweight': 0,
+                    'total': 5,
+                    'fillKey': '0%-20%'
+                },
                 'st1': {
-                    'weighed': 1585,
                     'severely_underweight': 40,
-                    'moderately_underweight': 320,
-                    'fillKey': '20%-35%',
-                    'original_name': ["st1"],
                     'normal': 1225,
-                    'total': 2375
+                    'original_name': ['st1'],
+                    'weighed': 1585,
+                    'moderately_underweight': 320,
+                    'total': 2375,
+                    'fillKey': '20%-35%'
                 },
                 'st2': {
-                    'weighed': 1895,
                     'severely_underweight': 60,
-                    'moderately_underweight': 330,
-                    'original_name': ["st2"],
-                    'fillKey': '20%-35%',
                     'normal': 1505,
-                    'total': 2570
+                    'original_name': ['st2'],
+                    'weighed': 1895,
+                    'moderately_underweight': 330,
+                    'total': 2570,
+                    'fillKey': '20%-35%'
+                },
+                'st3': {
+                    'severely_underweight': 0,
+                    'normal': 0,
+                    'original_name': ['st3'],
+                    'weighed': 0,
+                    'moderately_underweight': 0,
+                    'total': 1,
+                    'fillKey': '0%-20%'
                 }
             }
         )
@@ -81,13 +126,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            'Percentage of children between 0 - 5 years enrolled for Anganwadi Services'
-            ' with weight-for-age less than -2 standard deviations'
-            ' of the WHO Child Growth Standards median.'
-            ' <br/><br/>Children who are moderately or severely underweight'
-            ' have a higher risk of mortality'
-        )
+        expected = underweight_children_help_text(age_label="0 - 5 years", html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -98,7 +137,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 21.64670434399008)
+        self.assertEquals(data['rightLegend']['average'], '21.55')
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -112,7 +151,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
-                {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,465'},
+                {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,480'},
                 {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.87%'},
                 {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.68%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '78.45%'}
@@ -194,7 +233,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 22.743014091234773)
+        self.assertEquals(data['rightLegend']['average'], '22.71')
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_undernutrition_data_chart(
@@ -227,14 +266,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 20.58047493403694
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 22.71293375394322
-                },
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
 
@@ -249,14 +285,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 20.58047493403694
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 22.71293375394322
-                },
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -307,7 +340,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "y": 0.7844827586206896,
                         "x": 1493596800000,
                         "weighed": 3480,
-                        "unweighed": 1465
+                        "unweighed": 1480
                     }
                 ],
                 "key": "% Normal"
@@ -351,7 +384,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "y": 0.1867816091954023,
                         "x": 1493596800000,
                         "weighed": 3480,
-                        "unweighed": 1465
+                        "unweighed": 1480
                     }
                 ],
                 "key": "% Moderately Underweight (-2 SD)"
@@ -395,7 +428,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "y": 0.028735632183908046,
                         "x": 1493596800000,
                         "weighed": 3480,
-                        "unweighed": 1465
+                        "unweighed": 1480
                     }
                 ],
                 "key": "% Severely Underweight (-3 SD) "
@@ -413,14 +446,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 20.58047493403694
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 22.71293375394322
-                },
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
+                {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
 
@@ -452,10 +484,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age"
-            " less than -2 standard deviations of the WHO Child Growth Standards median."
-            " <br/><br/>Children who are moderately "
-            "or severely underweight have a higher risk of mortality"
+            underweight_children_help_text(age_label="0-5 years", html=True)
         )
 
     def test_sector_data_tooltips_data(self):

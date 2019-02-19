@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from datetime import datetime
 
 import pytz
@@ -13,6 +13,7 @@ from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.log import with_progress_bar
+from io import open
 
 
 class Command(BaseCommand):
@@ -74,7 +75,7 @@ class Command(BaseCommand):
             data_source_id[-8:],
             datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
         )
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             headers = ['doc_id', 'column_name', 'inserted_at', 'server_modified_on',
                        'stored_value', 'desired_value', 'message']
             writer = csv.DictWriter(f, headers)

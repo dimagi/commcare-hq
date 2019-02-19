@@ -48,6 +48,6 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.CouchToDjangoETLMixin),
+            bases=(models.Model, corehq.warehouse.models.shared.WarehouseTable, corehq.warehouse.etl.HQToWarehouseETLMixin),
         ),
     ]

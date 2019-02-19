@@ -33,8 +33,11 @@ def _load_reports(report_module):
     if not report_module._loaded:
         # load reports in bulk to avoid hitting the database for each one
         try:
-            for i, report in enumerate(report_module.reports):
-                report_module.report_configs[i]._report = report
+            all_report_configs = report_module.reports
+            # generate id mapping to not rely on reports to be returned in the same order
+            id_mappings = {report_config._id: report_config for report_config in all_report_configs}
+            for report_config in report_module.report_configs:
+                report_config._report = id_mappings[report_config.report_id]
             report_module._loaded = True
         except ReportConfigurationNotFoundError:
             pass
@@ -461,7 +464,7 @@ def get_uuids_by_instance_id(domain):
     apps = get_apps_in_domain(domain)
     config_ids = defaultdict(list)
     for app in apps:
-        if app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_2:
+        if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
             for module in app.modules:
                 if module.module_type == 'report':
                     for report_config in module.report_configs:

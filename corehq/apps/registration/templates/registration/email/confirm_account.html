@@ -1,55 +1,50 @@
-{% extends "registration/email/fancy_email.html" %}
-
+{% extends "registration/email/_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
-
 {% block preview_text %}
-    {% blocktrans %}
-        Dear {{ full_name }}, please activate your CommCare HQ Account!
-    {% endblocktrans %}
+  {% blocktrans %}
+    Almost there, {{ full_name }}--please activate your CommCare HQ Account!
+  {% endblocktrans %}
 {% endblock %}
 
-{% block content %}
-    <p>
-        {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
-    </p>
+{% block cta_headline %}
+  {% blocktrans %}
+    You are almost in, {{ first_name }}!
+  {% endblocktrans %}
+{% endblock %}
 
-    <p>
-        {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
-        {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
-        {% if is_mobile_experience %}
-            {% blocktrans %}
-                CommCare HQ is a powerful tool, and is not optimized for a mobile device.
-                For the best experience, please activate CommCare from a laptop or desktop browser.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
-    <p style="text-align: center;">
-        <a class="btn"
-            href="{{ registration_link }}"
-            style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-            {% trans "Activate CommCare" %}
-        </a>
-    </p>
-    <p>
-        {% blocktrans %}
-        Once you do this, our team will be in touch with some helpful tips for getting started!
-        {% endblocktrans %}
-    </p>
-    <p>
-        {% blocktrans %}
-        Cheers,<br />
-        The CommCare Team
-        {% endblocktrans %}
-    </p>
+{% block cta_url %}{{ registration_link }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Activate My Account
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    Thanks for signing up for CommCare. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% if request.user_agent.is_mobile %}
+    {% blocktrans %}
+      Please make sure to activate your account from your desktop computer,
+      as App Building is not optimized for mobile devices.
+    {% endblocktrans %}
+  {% else %}
+    {% blocktrans %}
+      Simply activate your account to start collecting better data
+      anywhere in the world.
+    {% endblocktrans %}
+  {% endif %}
 {% endblock %}
 
 {% block reason_for_email %}
-        {% blocktrans %}
-        You received this message because we received a New User request
-        <br /> on <a href="http://www.commcarehq.org/"
-                     style="color: #685c53; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">
-            CommCare HQ</a> with your email address.
-        {% endblocktrans %}
+  {% blocktrans %}
+     You received this message because we received a new user request
+  {% endblocktrans %}
 {% endblock %}

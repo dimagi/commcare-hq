@@ -10,7 +10,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
     Views.PhoneNavigation = Marionette.ItemView.extend({
         className: 'formplayer-phone-navigation',
         template: '#formplayer-phone-navigation-template',
-        initialize: function(options) {
+        initialize: function (options) {
             this.appId = options.appId;
         },
     });

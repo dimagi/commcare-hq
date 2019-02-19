@@ -3,15 +3,13 @@
 {% load compress %}
 {% load i18n %}
 {% load crispy_forms_tags %}
-{% block stylesheets %}
-<link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"
-/>{% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-        <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
-        <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/mode-json.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+        <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'repeaters/js/repeat_record_report.js' %}"></script>
     {% endcompress %}
 {% endblock js %}
@@ -24,7 +22,7 @@
 
 {% block modals %}{{ block.super }}
     <!-- "View Payload" Modal -->
-    <div class="modal fade" id="view-record-payload-modal" tabindex="-1" role="dialog">
+    <div class="modal fade full-screen-modal" id="view-record-payload-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">

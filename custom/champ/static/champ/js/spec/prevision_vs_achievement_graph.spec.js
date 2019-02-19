@@ -1,4 +1,3 @@
-/* global PrecisionVsAchievementsGraphModel*/
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -12,7 +11,7 @@ describe('PrecisionVsAchievementsGraphModel', function() {
     pageData.registerUrl('group_filter', 'group_filter');
 
     beforeEach(function() {
-        viewModel = new PrecisionVsAchievementsGraphModel();
+        viewModel = hqImport("champ/js/knockout/prevision_vs_achievement_graph").model();
 
         districts = [
             ALL_OPTION,

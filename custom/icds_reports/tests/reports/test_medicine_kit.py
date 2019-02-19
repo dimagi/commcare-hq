@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_medicine_kit_help_text
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_map, get_medicine_kit_data_chart, \
     get_medicine_kit_sector_data
 from django.test import TestCase
@@ -11,7 +12,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestMedicineKit(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_medicine_kit_data_map(
@@ -55,18 +55,13 @@ class TestMedicineKit(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 9,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "25%-75%"
-                },
-                "st2": {
-                    "in_month": 11,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "75%-100%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+                'st1': {'in_month': 9, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'},
+                'st2': {'in_month': 11, 'original_name': ['st2'], 'all': 13, 'fillKey': '75%-100%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -79,9 +74,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of AWCs that reported having a Medicine Kit"
-        )
+        expected = awcs_reported_medicine_kit_help_text()
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -93,7 +86,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 68.77828054298642)
+        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_medicine_kit_data_map(
@@ -190,7 +183,7 @@ class TestMedicineKit(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 53.47222222222222)
+        self.assertEquals(data['rightLegend']['average'], 52.94117647058823)
 
     def test_chart_data_keys(self):
         data = get_medicine_kit_data_chart(
@@ -263,14 +256,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': 'st2', 'percent': 84.61538461538461},
+                {'loc_name': 'st1', 'percent': 52.94117647058823},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -286,14 +276,11 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -320,14 +307,13 @@ class TestMedicineKit(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 52.94117647058823
-                }
+                {'loc_name': 'st2', 'percent': 84.61538461538461},
+                {'loc_name': 'st1', 'percent': 52.94117647058823},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -346,7 +332,7 @@ class TestMedicineKit(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a Medicine Kit",
+                "info": awcs_reported_medicine_kit_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 2,

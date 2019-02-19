@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from dimagi.utils.web import get_url_base
+from io import open
 
 
 DROPBOX_CSRF_TOKEN = 'dropbox-auth-csrf-token'

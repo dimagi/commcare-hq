@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date
+
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 
 
@@ -28,7 +30,10 @@ class TestPNCForms(BaseFormsTest):
                 "other_milk_to_child": None,
                 "tea_other": 0,
                 "eating": 0,
-                "not_breastfeeding": None
+                "not_breastfeeding": None,
+                "unscheduled_visit": 0,
+                "days_visit_late": 28,
+                "next_visit": date(2017, 6, 17)
             }])
 
     def test_pnc_form(self):
@@ -52,5 +57,8 @@ class TestPNCForms(BaseFormsTest):
                 "other_milk_to_child": 0,
                 "tea_other": None,
                 "eating": None,
-                "not_breastfeeding": None
+                "not_breastfeeding": None,
+                "unscheduled_visit": 0,
+                "days_visit_late": 2,
+                "next_visit": date(2017, 8, 23)
             }])

@@ -10,7 +10,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestImmunizationCoverage(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_immunization_coverage_data_map(
@@ -54,18 +53,13 @@ class TestImmunizationCoverage(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 573,
-                    "children": 85,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-20%"
-                },
-                "st2": {
-                    "all": 620,
-                    "children": 45,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-20%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 1, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 570, 'original_name': ['st1'], 'children': 83, 'fillKey': '0%-20%'},
+                'st2': {'all': 620, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -79,8 +73,9 @@ class TestImmunizationCoverage(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children 1 year+ who have received complete immunization as per "
-            "National Immunization Schedule of India required by age 1."
+            "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+            "the percentage of children who have received the complete immunization as per the National "
+            "Immunization Schedule of India that is required by age 1."
             "<br/><br/>"
             "This includes the following immunizations:<br/>"
             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -97,7 +92,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 11.046135224905703)
+        self.assertEquals(data['rightLegend']['average'], 10.747271200671705)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -113,20 +108,20 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,193"
+                    'value': "1,191"
                 },
                 {
                     'indicator': (
                         'Total number of children who have recieved '
                         'complete immunizations required by age 1:'
                     ),
-                    'value': "130"
+                    'value': "128"
                 },
                 {
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.90%'
+                    'value': '10.75%'
                 }
             ]
         )
@@ -187,9 +182,9 @@ class TestImmunizationCoverage(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'all': 573,
+                    'all': 570,
                     'original_name': ['b1', 'b2'],
-                    'children': 85,
+                    'children': 83,
                     'fillKey': '0%-20%'
                 }
             }
@@ -206,7 +201,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 14.909190638712824)
+        self.assertEquals(data['rightLegend']['average'], 14.56140350877193)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -221,24 +216,18 @@ class TestImmunizationCoverage(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.834205933682373
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.834205933682373
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -259,30 +248,29 @@ class TestImmunizationCoverage(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.10765349032800672,
+                                "y": 0.10477001703577513,
                                 "x": 1491004800000,
-                                "all": 1189,
-                                "in_month": 128
+                                "all": 1174,
+                                "in_month": 123
                             },
                             {
-                                "y": 0.10896898575020955,
+                                "y": 0.10747271200671704,
                                 "x": 1493596800000,
-                                "all": 1193,
-                                "in_month": 130
+                                "all": 1191,
+                                "in_month": 128
                             }
                         ],
                         "key": "% Children received complete immunizations by 1 year"
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 14.834205933682373
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 7.258064516129032
-                    }
+                    {'loc_name': 'st1', 'percent': 14.56140350877193},
+                    {'loc_name': 'st2', 'percent': 7.258064516129032},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )
@@ -302,8 +290,9 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children 1 year+ who have received complete immunization as per "
-                        "National Immunization Schedule of India required by age 1."
+                "info": "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                        "the percentage of children who have received the complete immunization as per the "
+                        "National Immunization Schedule of India that is required by age 1."
                         "<br/><br/>"
                         "This includes the following immunizations:<br/>"
                         "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -314,7 +303,7 @@ class TestImmunizationCoverage(TestCase):
                         "children": 3
                     },
                     "s1": {
-                        "all": 100,
+                        "all": 99,
                         "children": 31
                     }
                 },
@@ -326,7 +315,7 @@ class TestImmunizationCoverage(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.31
+                                0.31313131313131315
                             ],
                             [
                                 "s2",

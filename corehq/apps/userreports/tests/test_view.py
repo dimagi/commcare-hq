@@ -13,7 +13,6 @@ from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -102,8 +101,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         data_source_config.save()
         self.addCleanup(data_source_config.delete)
         tasks.rebuild_indicators(data_source_config._id)
-        adapter = get_indicator_adapter(data_source_config)
-        adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -162,7 +159,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         cls.case = cls._new_case({'fruit': 'apple', 'num1': 4, 'num2': 6})
         cls.case.save()
 
-    @run_with_all_ucr_backends
     def test_export_table(self):
         """
         Test the output of ConfigurableReportView.export_table()
@@ -180,7 +176,6 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
-    @run_with_all_ucr_backends
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs

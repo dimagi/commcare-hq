@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import datetime
 import re
 import time
@@ -14,6 +14,7 @@ from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
 from six.moves import input
 from six.moves import filter
+from io import open
 
 
 class Command(BaseCommand):
@@ -117,7 +118,7 @@ class Command(BaseCommand):
             action,
             repeater.__class__.__name__,
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(('record_id', 'payload_id', 'state', 'message'))
 

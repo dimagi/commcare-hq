@@ -84,7 +84,7 @@ class _RestoreCache(_CacheAccessor):
             _get_domain_freshness_token(domain),
             _get_user_freshness_token(domain, user_id),
         ]])
-        return hashlib.md5(hashable_key).hexdigest()
+        return hashlib.md5(hashable_key.encode('utf-8')).hexdigest()
 
 
 class RestorePayloadPathCache(_RestoreCache):

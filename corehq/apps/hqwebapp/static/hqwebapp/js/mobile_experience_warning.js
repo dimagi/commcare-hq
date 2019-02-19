@@ -1,39 +1,50 @@
-hqDefine('hqwebapp/js/mobile_experience_warning', function() {
-    $(function() {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            cookieName = "has-seen-mobile-experience-warning";
+hqDefine('hqwebapp/js/mobile_experience_warning', [
+    "jquery",
+    "hqwebapp/js/initial_page_data",
+    "analytix/js/kissmetrix",
+    "jquery.cookie/jquery.cookie",
+], function (
+    $,
+    initialPageData,
+    kissmetrix
+) {
+    $(function () {
 
-        if (initialPageData("is_mobile_experience") && !$.cookie(cookieName)) {
-            var toggles = hqImport('hqwebapp/js/toggles');
-            if (!toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER') ||
-                    !toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST')) {
-                return;
-            }
-            $.cookie(cookieName, true);
-
-            $('.full-screen-no-background-modal').css('width', $(window).innerWidth() + 'px');
-
-            var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-                url = initialPageData.reverse('send_mobile_reminder'),
+        if (initialPageData.get('show_mobile_ux_warning')) {
+            var reminderUrl = initialPageData.reverse('send_mobile_reminder'),
                 $modal = $("#mobile-experience-modal"),
-                $videoModal = $("#mobile-experience-video-modal"),
-                kissmetrix = hqImport('analytix/js/kissmetrix');
+                $videoModal = $("#mobile-experience-video-modal");
 
-            var sendReminder = function() {
+            var setCookie = function () {
+                $.cookie(initialPageData.get('mobile_ux_cookie_name'), true, {
+                    path: '/',
+                });
+            };
+
+            $modal.find('.close').click(function (e) {
+                e.preventDefault();
+                $modal.removeClass('modal-force-show');
+                setCookie();
+            });
+
+            var sendReminder = function (e) {
                 $.ajax({
                     dataType: 'json',
-                    url: url,
+                    url: reminderUrl,
                     type: 'post',
                 });
-                $modal.modal('toggle');
+                e.preventDefault();
                 $videoModal.modal();
+                $videoModal.on('shown.bs.modal', function () {
+                    $modal.removeClass('modal-force-show');
+                });
                 kissmetrix.track.event('Clicked mobile experience reminder');
+                setCookie();
             };
 
             $("#send-mobile-reminder-button").click(sendReminder);
-            $modal.modal();
             kissmetrix.track.event('Saw mobile experience warning');
         }
-    });
 
+    });
 });

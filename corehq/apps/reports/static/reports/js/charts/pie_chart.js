@@ -1,5 +1,5 @@
-hqDefine("reports/js/charts/pie_chart", function() {
-    var init = function(data) {
+hqDefine("reports/js/charts/pie_chart", function () {
+    var init = function (data) {
         nv.addGraph(function () {
             var chartConfig = data.configDict,
                 chartData = data.chartData,

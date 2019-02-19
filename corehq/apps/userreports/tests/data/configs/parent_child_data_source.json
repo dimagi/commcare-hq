@@ -1,5 +1,4 @@
 {
-    "backend_id": "SQL", 
     "base_item_expression": {}, 
     "configured_filter": {
         "type": "boolean_expression",

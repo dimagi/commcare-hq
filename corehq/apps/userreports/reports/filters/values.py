@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
-from collections import namedtuple
+import sqlalchemy
 
 from django.urls import reverse
 from memoized import memoized
@@ -17,12 +17,9 @@ from sqlagg.filters import (
     LTFilter,
     NOTEQFilter,
     NOTNULLFilter,
-    get_column,
     ANDFilter,
     ORFilter)
-from sqlalchemy import bindparam
 
-from corehq.apps.es import filters
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
@@ -53,9 +50,6 @@ class FilterValue(object):
         raise NotImplementedError()
 
     def to_sql_values(self):
-        raise NotImplementedError()
-
-    def to_es_filter(self):
         raise NotImplementedError()
 
 
@@ -109,17 +103,9 @@ class DateFilterValue(FilterValue):
 
     def _offset_enddate(self, enddate):
         # offset enddate for SQL query
-        # if it is datetime.date object it should not be offset
-        # if it is datetime.datetime object it should be offset to last microsecond of the day
-        if enddate and type(enddate) is datetime.datetime:
-            enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
+        if enddate:
+            enddate = datetime.datetime.combine(enddate, datetime.datetime.max.time())
         return enddate
-
-    def to_es_filter(self):
-        if self.value is None:
-            return None
-
-        return filters.date_range(self.filter['field'], lt=self.value.startdate, gt=self.value.enddate)
 
 
 class QuarterFilterValue(FilterValue):
@@ -147,20 +133,19 @@ class QuarterFilterValue(FilterValue):
 
 class IsDistinctFromFilter(BasicFilter):
 
-    def build_expression(self, table):
-        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
+    def build_expression(self):
+        return sqlalchemy.column(self.column_name).is_distinct_from(sqlalchemy.bindparam(self.parameter))
 
 
 class NumericFilterValue(FilterValue):
-    DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
-        '=': DBSpecificFilter(EQFilter, filters.term),
-        '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
-        'distinct from': DBSpecificFilter(IsDistinctFromFilter, filters.not_term),
-        '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
-        '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
-        '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),
-        '<': DBSpecificFilter(LTFilter, lambda field, val: filters.range_filter(field, lt=val)),
+        '=': EQFilter,
+        '!=': NOTEQFilter,
+        'distinct from': IsDistinctFromFilter,
+        '>=': GTEFilter,
+        '>': GTFilter,
+        '<=': LTEFilter,
+        '<': LTFilter,
     }
 
     def __init__(self, filter, value):
@@ -174,7 +159,7 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        filter_class = self.operators_to_filters[self.value['operator']].sql
+        filter_class = self.operators_to_filters[self.value['operator']]
         return filter_class(self.filter['field'], self.filter['slug'])
 
     def to_sql_values(self):
@@ -183,13 +168,6 @@ class NumericFilterValue(FilterValue):
         return {
             self.filter['slug']: self.value["operand"],
         }
-
-    def to_es_filter(self):
-        if self.value is None:
-            return None
-
-        filter_class = self.operators_to_filters[self.value['operator']].es
-        return filter_class(self.filter['field'], self.value['operand'])
 
 
 class BasicBetweenFilter(BasicFilter):
@@ -201,10 +179,10 @@ class BasicBetweenFilter(BasicFilter):
     PreFilterValue.value['operator'] and instantiate either filter the
     same way.
     """
-    def build_expression(self, table):
+    def build_expression(self):
         assert len(self.parameter) == 2
-        return get_column(table, self.column_name).between(
-            bindparam(self.parameter[0]), bindparam(self.parameter[1])
+        return sqlalchemy.column(self.column_name).between(
+            sqlalchemy.bindparam(self.parameter[0]), sqlalchemy.bindparam(self.parameter[1])
         )
 
 
@@ -275,7 +253,7 @@ class PreFilterValue(FilterValue):
                 get_INFilter_bindparams(self.filter['slug'], self.value['operand'])
             )
         else:
-            return self._scalar_filter.sql(self.filter['field'], self.filter['slug'])
+            return self._scalar_filter(self.filter['field'], self.filter['slug'])
 
     def to_sql_values(self):
         if self._is_dyn_date():
@@ -294,19 +272,6 @@ class PreFilterValue(FilterValue):
             }
         else:
             return {self.filter['slug']: self.value['operand']}
-
-    def to_es_filter(self):
-        # TODO: support the array and null operators defined at top of class
-        if self._is_dyn_date():
-            start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
-            return filters.date_range(self.filter['field'], gt=start_date, lt=end_date)
-        elif self._is_null():
-            return filters.missing(self.filter['field'])
-        elif self._is_list():
-            terms = [v.value for v in self.value['operand']]
-            return filters.term(self.filter['field'], terms)
-        else:
-            return self._scalar_filter.es(self.filter['field'], self.value['operand'])
 
 
 class ChoiceListFilterValue(FilterValue):
@@ -375,14 +340,6 @@ class ChoiceListFilterValue(FilterValue):
             values.update(self._ancestor_filter.sql_value())
         return values
 
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        if self.is_null:
-            return filters.missing(self.filter['field'])
-        terms = [v.value for v in self.value]
-        return filters.term(self.filter['field'], terms)
-
 
 class MultiFieldChoiceListFilterValue(ChoiceListFilterValue):
     ALLOWED_TYPES = ('multi_field_dynamic_choice_list', )
@@ -398,16 +355,6 @@ class MultiFieldChoiceListFilterValue(ChoiceListFilterValue):
                 get_INFilter_bindparams(self.filter['slug'], self.value)
             ) for field in self.filter.get('fields')
         ])
-
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        if self.is_null:
-            return filters.OR(*[filters.missing(field) for field in self.filter['fields']])
-        terms = [v.value for v in self.value]
-        return filters.OR(
-            *[filters.term(self.filter['field'], terms)]
-        )
 
 
 class LocationDrilldownFilterValue(FilterValue):
@@ -457,11 +404,6 @@ class LocationDrilldownFilterValue(FilterValue):
         if self._ancestor_filter:
             values.update(self._ancestor_filter.sql_value())
         return values
-
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        return filters.term(self.filter['field'], self.value)
 
 
 class AncestorSQLParams(object):

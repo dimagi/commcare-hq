@@ -1,10 +1,10 @@
-{% extends login_template %}
+{% extends "hqwebapp/base_page.html"  %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
-{% block login-content %}
+{% block page_content %}
 <div class="row">
     <div class="col-sm-4">
         <h2>{% trans "My Projects" %}</h2>
@@ -18,7 +18,7 @@
             <ul class="list-unstyled">
             {% for invitation in open_invitations %}
                 <li style="padding-bottom: 6px;">
-                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-success btn-xs">
+                    <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-primary btn-xs">
                         Accept
                     </a>
                     {{  invitation.domain }}

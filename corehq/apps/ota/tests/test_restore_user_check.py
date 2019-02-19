@@ -12,7 +12,7 @@ from corehq.util import reverse
 
 
 def _get_auth_header(username, password):
-    return 'Basic ' + base64.b64encode('{}:{}'.format(username, password))
+    return 'Basic ' + base64.b64encode('{}:{}'.format(username, password).encode('utf-8')).decode('utf-8')
 
 
 class UserCheckSyncTests(TestCase):

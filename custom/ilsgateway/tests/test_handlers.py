@@ -32,7 +32,7 @@ from custom.ilsgateway.tanzania.reminders import (
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
-from custom.logistics.tests.utils import bootstrap_user
+from custom.ilsgateway.tests.utils import bootstrap_user
 from custom.zipline.models import EmergencyOrder
 import six
 

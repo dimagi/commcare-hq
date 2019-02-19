@@ -35,7 +35,7 @@
 </div>
 
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     $.getScript("{% static 'care_pathways/ko/report_filter.drilldown_options.js' %}", function () {
        $('#{{ css_id }}').drilldownOptionFilter({
            selected: {{ selected|JSON }},

@@ -21,7 +21,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -37,7 +37,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
@@ -54,23 +54,68 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "severe": 2,
-                    "moderate": 3,
-                    "normal": 2,
-                    "total_measured": 7,
-                    "total": 449,
-                    'original_name': ["st1"],
-                    "fillKey": "38%-100%"
+                'st4': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st4'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
                 },
-                "st2": {
-                    "severe": 9,
-                    "moderate": 5,
-                    "normal": 11,
-                    "total_measured": 25,
-                    "total": 490,
-                    'original_name': ["st2"],
-                    "fillKey": "38%-100%"
+                'st5': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st5'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
+                },
+                'st6': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st6'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
+                },
+                'st7': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st7'],
+                    'severe': 0,
+                    'total': 1,
+                    'fillKey': '0%-25%'
+                },
+                'st1': {
+                    'moderate': 3,
+                    'normal': 2,
+                    'total_measured': 7,
+                    'original_name': ['st1'],
+                    'severe': 2,
+                    'total': 454,
+                    'fillKey': '38%-100%'
+                },
+                'st2': {
+                    'moderate': 5,
+                    'normal': 11,
+                    'total_measured': 25,
+                    'original_name': ['st2'],
+                    'severe': 9,
+                    'total': 497,
+                    'fillKey': '38%-100%'
+                },
+                'st3': {
+                    'moderate': 0,
+                    'normal': 0,
+                    'total_measured': 0,
+                    'original_name': ['st3'],
+                    'severe': 0,
+                    'total': 0,
+                    'fillKey': '0%-25%'
                 }
             }
         )
@@ -85,13 +130,13 @@ class TestPrevalenceOfStunting(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with "
-            "height-for-age below -2Z standard deviations of "
-            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-            "is a sign of chronic undernutrition and has long "
-            "lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between 0 - 5 years who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+            "on the growth of a child"
         )
-        self.assertEquals(data['rightLegend']['info'], expected)
+        self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
         data = get_prevalence_of_stunting_data_map(
@@ -102,7 +147,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "63.71")
+        self.assertEqual(data['rightLegend']['average'], "59.38")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_stunting_data_map(
@@ -116,13 +161,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
-                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '952'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
                  'value': '32'},
-                {'indicator': 'Number of Children (6 - 60 months) unmeasured:', 'value': '907'},
-                {'indicator': '% children (6 - 60 months) with severely stunted growth:', 'value': '34.38%'},
-                {'indicator': '% children (6 - 60 months) with moderate stunted growth:', 'value': '25.00%'},
-                {'indicator': '% children (6 - 60 months) with normal stunted growth:', 'value': '40.62%'}
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '920'},
+                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '34.38%'},
+                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '25.00%'},
+                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '40.62%'}
             ]
         )
 
@@ -154,7 +199,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['slug'], 'severe')
+        self.assertEqual(data['slug'], 'severe')
 
     def test_map_data_label(self):
         data = get_prevalence_of_stunting_data_map(
@@ -165,7 +210,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percent of Children Stunted (6 - 60 months)')
+        self.assertEqual(data['label'], 'Percent of Children Stunted (0 - 5 years)')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_prevalence_of_stunting_data_map(
@@ -187,7 +232,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'normal': 2,
                     'original_name': ['b1', 'b2'],
                     'severe': 2,
-                    'total': 449,
+                    'total': 454,
                     'fillKey': '38%-100%'
                 }
             }
@@ -204,7 +249,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "75.00")
+        self.assertEqual(data['rightLegend']['average'], "71.43")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -215,7 +260,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data), 5)
+        self.assertEqual(len(data), 5)
 
     def test_chart_data_location_type(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -226,7 +271,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['location_type'], 'State')
+        self.assertEqual(data['location_type'], 'State')
 
     def test_chart_data_bottom_five(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -240,14 +285,11 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 56.0},
+                {'loc_name': 'st1', 'percent': 71.42857142857143}
             ]
         )
 
@@ -263,14 +305,11 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0}
             ]
         )
 
@@ -283,7 +322,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data['chart_data']), 3)
+        self.assertEqual(len(data['chart_data']), 3)
 
     def test_chart_data_pink(self):
         data = get_prevalence_of_stunting_data_chart(
@@ -314,15 +353,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.18181818181818182,
+                        "y": 0.3076923076923077,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.40625,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -359,15 +398,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.36363636363636365,
+                        "y": 0.3076923076923077,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.25,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -404,15 +443,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.45454545454545453,
+                        "y": 0.38461538461538464,
                         "x": 1491004800000,
-                        "all": 964,
-                        "measured": 11
+                        "all": 981,
+                        "measured": 13
                     },
                     {
                         "y": 0.34375,
                         "x": 1493596800000,
-                        "all": 939,
+                        "all": 952,
                         "measured": 32
                     }
                 ],
@@ -432,14 +471,13 @@ class TestPrevalenceOfStunting(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 56.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 71.42857142857143
-                },
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 56.0},
+                {'loc_name': 'st1', 'percent': 71.42857142857143}
             ]
         )
 
@@ -456,7 +494,7 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data), 3)
+        self.assertEqual(len(data), 3)
 
     def test_sector_data_info(self):
         data = get_prevalence_of_stunting_sector_data(
@@ -471,12 +509,13 @@ class TestPrevalenceOfStunting(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(
+        self.assertEqual(
             data['info'],
-            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with height-for-age below"
-            " -2Z standard deviations of the WHO Child Growth Standards median."
-            "<br/><br/>Stunting is a sign of chronic undernutrition "
-            "and has long lasting harmful consequences on the growth of a child"
+            "Of the children enrolled for Anganwadi services, whose height was measured, the percentage of "
+            "children between  (0 - 5 years) who were moderately/severely stunted in the current month. "
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+            "consequences on the growth of a child"
         )
 
     def test_sector_data_tooltips_data(self):
@@ -496,14 +535,14 @@ class TestPrevalenceOfStunting(TestCase):
             data['tooltips_data'],
             {
                 "s2": {
-                    "total": 150,
+                    "total": 153,
                     "severe": 0,
                     "moderate": 2,
                     "total_measured": 4,
                     "normal": 2
                 },
                 "s1": {
-                    "total": 70,
+                    "total": 71,
                     "severe": 0,
                     "moderate": 0,
                     "total_measured": 0,

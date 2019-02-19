@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('form_uuid', models.CharField(max_length=255)),
-                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field=b'case_uuid', db_column=b'case_uuid', db_index=False, on_delete=models.CASCADE)),
+                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False, on_delete=models.CASCADE)),
             ],
             options={
             },

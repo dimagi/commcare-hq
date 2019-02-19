@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_data_chart, \
     get_awcs_covered_sector_data
 from django.test import TestCase
@@ -13,7 +14,6 @@ class TestAWCSCovered(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-
             get_awcs_covered_data_map(
                 'icds-cas',
                 config={
@@ -25,11 +25,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
-                        'Number of AWCs launched: 19 <br />'
-                        'Number of States launched: 2'
+                        "{}<br /><br />"
+                        'Number of AWCs launched: 21 <br />'
+                        'Number of States launched: 3'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -38,23 +36,67 @@ class TestAWCSCovered(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    "st1": {
-                        "districts": 1,
-                        "blocks": 2,
-                        "awcs": 8,
-                        "states": 1,
-                        "supervisors": 4,
-                        'original_name': ["st1"],
-                        "fillKey": "Launched"
+                    'st4': {
+                        'districts': 0,
+                        'blocks': 0,
+                        'awcs': 0,
+                        'original_name': ['st4'],
+                        'states': 0,
+                        'supervisors': 0,
+                        'fillKey': 'Not launched'},
+                    'st5': {
+                        'districts': 0,
+                        'blocks': 0,
+                        'awcs': 0,
+                        'original_name': ['st5'],
+                        'states': 0,
+                        'supervisors': 0,
+                        'fillKey': 'Not launched'
                     },
-                    "st2": {
-                        "districts": 2,
-                        "blocks": 2,
-                        "awcs": 11,
-                        "states": 1,
-                        "supervisors": 4,
-                        'original_name': ["st2"],
-                        "fillKey": "Launched"
+                    'st6': {
+                        'districts': 0,
+                        'blocks': 0,
+                        'awcs': 0,
+                        'original_name': ['st6'],
+                        'states': 0,
+                        'supervisors': 0,
+                        'fillKey': 'Not launched'
+                    },
+                    'st7': {
+                        'districts': 1,
+                        'blocks': 1,
+                        'awcs': 1,
+                        'original_name': ['st7'],
+                        'states': 1,
+                        'supervisors': 1,
+                        'fillKey': 'Launched'
+                    },
+                    'st1': {
+                        'districts': 1,
+                        'blocks': 2,
+                        'awcs': 9,
+                        'original_name': ['st1'],
+                        'states': 1,
+                        'supervisors': 4,
+                        'fillKey': 'Launched'
+                    },
+                    'st2': {
+                        'districts': 2,
+                        'blocks': 2,
+                        'awcs': 11,
+                        'original_name': ['st2'],
+                        'states': 1,
+                        'supervisors': 4,
+                        'fillKey': 'Launched'
+                    },
+                    'st3': {
+                        'districts': 0,
+                        'blocks': 0,
+                        'awcs': 0,
+                        'original_name': ['st3'],
+                        'states': 0,
+                        'supervisors': 0,
+                        'fillKey': 'Not launched'
                     }
                 },
                 "slug": "awc_covered",
@@ -77,11 +119,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
-                        "Total AWCs that have launched ICDS-CAS. "
-                        "AWCs are considered launched after submitting at least "
-                        "one Household Registration form. <br /><br />"
-                        'Number of AWCs launched: 8 <br />'
-                        'Number of Blocks launched: 2'
+                        "{}<br /><br />"
+                        'Number of AWCs launched: 9 <br />'
+                        'Number of Blocks launched: 2'.format(awcs_launched_help_text())
                     )
                 },
                 "fills": {
@@ -93,7 +133,7 @@ class TestAWCSCovered(TestCase):
                     'block_map': {
                         'states': 1,
                         'blocks': 2,
-                        'awcs': 8,
+                        'awcs': 9,
                         'original_name': ['b1', 'b2'],
                         'districts': 1,
                         'supervisors': 4,
@@ -118,24 +158,18 @@ class TestAWCSCovered(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "value": 11
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 8
-                    }
+                    {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "value": 11
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 8
-                    }
+                    {'loc_name': 'st2', 'value': 11.0},
+                    {'loc_name': 'st1', 'value': 9.0},
+                    {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -154,12 +188,12 @@ class TestAWCSCovered(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 21.0,
                                 "x": 1491004800000,
                                 "all": 0
                             },
                             {
-                                "y": 19.0,
+                                "y": 21.0,
                                 "x": 1493596800000,
                                 "all": 0
                             }
@@ -168,14 +202,13 @@ class TestAWCSCovered(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "value": 11
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 8
-                    }
+                    {'loc_name': 'st2', 'value': 11.0},
+                    {'loc_name': 'st1', 'value': 9.0},
+                    {'loc_name': 'st7', 'value': 1.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )
@@ -196,11 +229,9 @@ class TestAWCSCovered(TestCase):
             ),
             {
                 "info": (
-                    "Total AWCs that have launched ICDS-CAS. "
-                    "AWCs are considered launched after submitting at least "
-                    "one Household Registration form. <br /><br />"
-                    "Number of AWCs launched: 3 <br />"
-                    "Number of Supervisors launched: 2"
+                    "{}<br /><br />"
+                    "Number of AWCs launched: 4 <br />"
+                    "Number of Supervisors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
                     "s2": {
@@ -208,7 +239,7 @@ class TestAWCSCovered(TestCase):
                         "states": 1,
                         "supervisors": 1,
                         "blocks": 1,
-                        "awcs": 1
+                        "awcs": 2
                     }, 
                     "s1": {
                         "districts": 1,
@@ -230,7 +261,7 @@ class TestAWCSCovered(TestCase):
                             ],
                             [
                                 "s2",
-                                1
+                                2
                             ]
                         ],
                         "key": ""

@@ -11,7 +11,7 @@ hqDefine('hqadmin/js/system_info', [
     initialPageData,
     alertUser
 ) {
-    function format_date(datestring) {
+    function formatDate(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object
         var date = new Date(datestring * 1000);
         // hours part from the timestamp
@@ -35,7 +35,7 @@ hqDefine('hqadmin/js/system_info', [
 
     }
 
-    function number_fix(num) {
+    function numberFix(num) {
         if (num !== null) {
             if (num.toFixed) {
                 return num.toFixed(2);
@@ -47,8 +47,8 @@ hqDefine('hqadmin/js/system_info', [
         }
     }
 
-    function RefreshableViewModel(url, model, interval, sort_by) {
-        var self = this;
+    function refreshableViewModel(url, model, interval, sortBy) {
+        var self = {};
         self.error = ko.observable();
         self.models = ko.observableArray();
         self.autoRefresh = ko.observable(false);
@@ -79,8 +79,8 @@ hqDefine('hqadmin/js/system_info', [
                 var objects = _(data).map(function (item) {
                     return new model(item);
                 });
-                if (sort_by) {
-                    objects = _(objects).sortBy(function (x) { return x[sort_by]; });
+                if (sortBy) {
+                    objects = _(objects).sortBy(function (x) { return x[sortBy]; });
                 }
                 self.models(objects);
                 if (self.autoRefresh()) {
@@ -100,108 +100,115 @@ hqDefine('hqadmin/js/system_info', [
                     self.autoRefresh(false);
                     self.timer = null;
                 })
-                .always(function (){
+                .always(function () {
                     self.loading(false);
                 });
         };
+
+        return self;
     }
 
-    function ActiveTaskModel(data) {
-
-        this.pid = ko.observable(data.pid);
-        this.type = ko.observable(data.type);
-        this.database = ko.observable(data.database);
-        this.progress = ko.observable(data.progress + "%");
-        this.design_document = ko.observable(data.design_document);
-        this.started_on = ko.observable(format_date(data.started_on));
-        this.updated_on = ko.observable(format_date(data.updated_on));
-        this.total_changes = ko.observable(data.total_changes);
-        this.changes_done = ko.observable(data.changes_done);
-        this.progress_contribution = ko.observable(data.progress_contribution);
+    function activeTaskModel(data) {
+        var self = {};
+        self.pid = ko.observable(data.pid);
+        self.type = ko.observable(data.type);
+        self.database = ko.observable(data.database);
+        self.progress = ko.observable(data.progress + "%");
+        self.designDocument = ko.observable(data.design_document);
+        self.startedOn = ko.observable(formatDate(data.started_on));
+        self.updatedOn = ko.observable(formatDate(data.updated_on));
+        self.totalChanges = ko.observable(data.total_changes);
+        self.changesDone = ko.observable(data.changes_done);
+        self.progressContribution = ko.observable(data.progress_contribution);
+        return self;
     }
 
-    function DesignDocModel(data) {
-        var self = this;
-        self.design_document = ko.observable(data.design_document);
-        self.details_id = self.design_document() + '_details';
+    function designDocModel(data) {
+        var self = {};
+        self.designDocument = ko.observable(data.design_document);
+        self.detailsId = self.design_document() + '_details';
         var tasks = _(data.tasks).map(function (task) {
-            return new ActiveTaskModel(task);
+            return activeTaskModel(task);
         });
         self.tasks = ko.observableArray(tasks);
 
         self.showDetails = function () {
-            $('#' + self.details_id).toggle();
+            $('#' + self.detailsId).toggle();
         };
+        return self;
     }
 
-    function CeleryTaskModel(data) {
-        var self = this;
+    function celeryTaskModel(data) {
+        var self = {};
         this.name = ko.observable(data.name);
         this.uuid = ko.observable(data.uuid);
         this.state = ko.observable(data.state);
-        this.received = ko.observable(format_date(data.received));
-        this.started = ko.observable(format_date(data.started));
-        this.timestamp = ko.observable(format_date(data.timestamp));
-        this.succeeded = ko.observable(format_date(data.succeeded));
+        this.received = ko.observable(formatDate(data.received));
+        this.started = ko.observable(formatDate(data.started));
+        this.timestamp = ko.observable(formatDate(data.timestamp));
+        this.succeeded = ko.observable(formatDate(data.succeeded));
         this.retries = ko.observable(data.retries);
         this.args = ko.observable(data.args);
         this.kwargs = ko.observable(data.kwargs);
-        this.runtime = ko.observable(number_fix(data.runtime));
+        this.runtime = ko.observable(numberFix(data.runtime));
 
         this.toggleArgs = function () {
             $('#' + self.uuid()).toggle();
         };
+        return self;
     }
 
-    function PillowOperationViewModel(pillow_model, operation) {
-        var self = this;
-        self.pillow_model = pillow_model;
+    function pillowOperationViewModel(pillowModel, operation) {
+        var self = {};
+        self.pillowModel = pillowModel;
         self.operation = operation;
-        self.title = operation + ' for ' + pillow_model.name();
+        self.title = operation + ' for ' + pillowModel.name();
 
         self.go = function () {
-            self.pillow_model.perform_operation(operation);
+            self.pillowModel.performOperation(operation);
         };
+        return self;
     }
 
-    function PillowProgress(name, db_offset, seq) {
-        var self = this;
+    function pillowProgress(name, dbOffset, seq) {
+        var self = {};
         self.name = name;
-        self.db_offset = db_offset;
+        self.dbOffset = dbOffset;
         self.seq = seq;
 
-        self.changes_behind = function () {
-            return self.db_offset - self.seq;
+        self.changesBehind = function () {
+            return self.dbOffset - self.seq;
         };
 
-        self.width = function() {
-            return (self.seq * 100) / self.db_offset;
+        self.width = function () {
+            return (self.seq * 100) / self.dbOffset;
         };
 
-        self.status = function() {
-            if (self.changes_behind() < 500) {
+        self.status = function () {
+            if (self.changesBehind() < 500) {
                 return 'progress-bar-success';
-            } else if (self.changes_behind() < 1000) {
+            } else if (self.changesBehind() < 1000) {
                 return ''; // will be a blue, but not quite info
-            } else if (self.changes_behind() < 5000) {
+            } else if (self.changesBehind() < 5000) {
                 return 'progress-bar-warning';
             } else {
                 return 'progress-bar-danger';
             }
         };
+        return self;
     }
 
-    function PillowModel(pillow) {
-        var self = this;
+    function pillowModel(pillow) {
+        var self = {};
         self.name = ko.observable();
         self.seq_format = ko.observable();
         self.seq = ko.observable();
         self.offsets = ko.observable();
-        self.time_since_last = ko.observable();
-        self.show_supervisor_info = ko.observable();
-        self.supervisor_state = ko.observable();
-        self.supervisor_message = ko.observable();
-        self.operation_in_progress = ko.observable(false);
+        self.timeSinceLast = ko.observable();
+        self.showSupervisorInfo = ko.observable();
+        self.supervisorState = ko.observable();
+        self.supervisorMessage = ko.observable();
+        self.operationInProgress = ko.observable(false);
         self.progress = ko.observableArray();
 
         self.update = function (data) {
@@ -209,44 +216,44 @@ hqDefine('hqadmin/js/system_info', [
             self.seq_format(data.seq_format);
             self.seq(data.seq);
             self.offsets(data.offsets);
-            self.time_since_last(data.time_since_last);
-            self.show_supervisor_info(!!data.supervisor_state);
-            self.supervisor_state(data.supervisor_state||'(unavailable)');
-            self.supervisor_message(data.supervisor_message);
+            self.timeSinceLast(data.timeSinceLast);
+            self.showSupervisorInfo(!!data.supervisorState);
+            self.supervisorState(data.supervisorState || '(unavailable)');
+            self.supervisorMessage(data.supervisorMessage);
 
             self.progress([]);
             if (self.seq_format() === 'json') {
-                _.each(self.offsets(), function(db_offset, key) {
+                _.each(self.offsets(), function (dbOffset, key) {
                     var value;
                     if (self.seq() === null || !self.seq().hasOwnProperty(key)) {
                         value = 0;
                     } else {
                         value = self.seq()[key];
                     }
-                    self.progress.push(new PillowProgress(key, db_offset, value));
+                    self.progress.push(pillowProgress(key, dbOffset, value));
                 });
             } else {
                 var key = _.keys(self.offsets())[0];
-                self.progress.push(new PillowProgress(key, self.offsets()[key], self.seq()));
+                self.progress.push(pillowProgress(key, self.offsets()[key], self.seq()));
             }
         };
 
         self.update(pillow);
 
-        self.process_running = ko.computed(function () {
-            return self.supervisor_state() === 'RUNNING';
+        self.processRunning = ko.computed(function () {
+            return self.supervisorState() === 'RUNNING';
         });
 
-        self.start_stop_text = ko.computed(function () {
-            return self.process_running() ? gettext("Stop") : gettext("Start");
+        self.startStopText = ko.computed(function () {
+            return self.processRunning() ? gettext("Stop") : gettext("Start");
         });
 
-        self.disabled = ko.computed(function() {
-            return self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED');
+        self.disabled = ko.computed(function () {
+            return self.operationInProgress() || (self.supervisorState() !== 'RUNNING' && self.supervisorState() !== 'STOPPED');
         });
 
-        self.supervisor_state_css = ko.computed(function() {
-            switch (self.supervisor_state()) {
+        self.supervisorStateCss = ko.computed(function () {
+            switch (self.supervisorState()) {
                 case ('(unavailable)'):
                     return '';
                 case ('RUNNING'):
@@ -258,7 +265,7 @@ hqDefine('hqadmin/js/system_info', [
             }
         });
 
-        self.checkpoint_status_css = ko.computed(function() {
+        self.checkpointStatusCss = ko.computed(function () {
             var hours = pillow.hours_since_last;
             switch (true) {
                 case (hours <= 1):
@@ -272,23 +279,23 @@ hqDefine('hqadmin/js/system_info', [
             }
         });
 
-        self.overall_status = ko.computed(function() {
-            var status_combined = self.checkpoint_status_css() + self.supervisor_state_css();
-            if (status_combined.indexOf('important') !== -1) {
+        self.overallStatus = ko.computed(function () {
+            var statusCombined = self.checkpointStatusCss() + self.supervisorStateCss();
+            if (statusCombined.indexOf('important') !== -1) {
                 return 'error';
-            } else if (status_combined.indexOf('warning') !== -1) {
+            } else if (statusCombined.indexOf('warning') !== -1) {
                 return 'warning';
-            } else if (status_combined.indexOf('info') !== -1) {
+            } else if (statusCombined.indexOf('info') !== -1) {
                 return 'info';
-            } else if (status_combined.indexOf('success') !== -1) {
+            } else if (statusCombined.indexOf('success') !== -1) {
                 return 'success';
             }
         });
 
-        self.show_pillow_dialog = function (operation) {
+        self.showPillowDialog = function (operation) {
             var element = $('#pillow_operation_modal').get(0);
             ko.cleanNode(element);
-            $(element).koApplyBindings(new PillowOperationViewModel(self, operation));
+            $(element).koApplyBindings(pillowOperationViewModel(self, operation));
             $('#pillow_operation_modal').modal({
                 backdrop: 'static',
                 keyboard: false,
@@ -296,25 +303,25 @@ hqDefine('hqadmin/js/system_info', [
             });
         };
 
-        self.reset_checkpoint = function () {
-            self.show_pillow_dialog('reset_checkpoint');
+        self.resetCheckpoint = function () {
+            self.showPillowDialog('reset_checkpoint');
         };
 
-        self.start_stop = function () {
-            self.show_pillow_dialog(self.process_running() ? 'stop' : 'start');
+        self.startStop = function () {
+            self.showPillowDialog(self.processRunning() ? 'stop' : 'start');
         };
 
         self.refresh = function () {
-            self.perform_operation('refresh');
+            self.performOperation('refresh');
         };
 
-        self.perform_operation = function(operation) {
-            self.operation_in_progress(true);
+        self.performOperation = function (operation) {
+            self.operationInProgress(true);
             $.post(initialPageData.reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
                 'operation': operation,
-            }, function( data ) {
-                self.operation_in_progress(false);
+            }, function (data) {
+                self.operationInProgress(false);
                 self.update(data);
 
                 if (!data.success) {
@@ -327,31 +334,33 @@ hqDefine('hqadmin/js/system_info', [
                     try {
                         err = JSON.parse(jqxhr.responseText).error;
                     } catch (e) {}
-                    self.operation_in_progress(false);
-                    self.supervisor_state('(unavailable)');
-                    self.supervisor_message(err);
-                }).always(function() {
+                    self.operationInProgress(false);
+                    self.supervisorState('(unavailable)');
+                    self.supervisorMessage(err);
+                }).always(function () {
                     $('#pillow_operation_modal').modal('hide');
-                    $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
+                    $("#" + self.name() + " td").fadeTo("fast" , 0.5).fadeTo("fast" , 1);
                 });
         };
+
+        return self;
     }
 
     $(function () {
-        var celery_update = initialPageData.get("celery_update"),
-            couch_update = initialPageData.get("couch_update"),
-            system_ajax_url = initialPageData.reverse("system_ajax");
-        var celeryViewModel = new RefreshableViewModel(system_ajax_url + "?api=flower_poll", CeleryTaskModel, celery_update);
+        var celeryUpdate = initialPageData.get("celery_update"),
+            couchUpdate = initialPageData.get("couch_update"),
+            systemAjaxUrl = initialPageData.reverse("system_ajax");
+        var celeryViewModel = refreshableViewModel(systemAjaxUrl + "?api=flower_poll", celeryTaskModel, celeryUpdate);
         var couchViewModel;
         if (initialPageData.get("is_bigcouch")) {
-            couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", DesignDocModel, couch_update, 'design_document');
+            couchViewModel = refreshableViewModel(systemAjaxUrl + "?api=_active_tasks", designDocModel, couchUpdate, 'designDocument');
         } else {
-            couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", ActiveTaskModel, couch_update);
+            couchViewModel = refreshableViewModel(systemAjaxUrl + "?api=_active_tasks", activeTaskModel, couchUpdate);
         }
-        var pillowtopViewModel = new RefreshableViewModel(system_ajax_url + "?api=pillowtop", PillowModel, couch_update, 'name');
+        var pillowtopViewModel = refreshableViewModel(systemAjaxUrl + "?api=pillowtop", pillowModel, couchUpdate, 'name');
 
-        var AutoRefreshModel = function () {
-            var self = this;
+        var autoRefreshModel = function () {
+            var self = {};
             self.refreshStatus = ko.observable(false);
             self.refreshStatusText = ko.observable('off');
             self.models = [];
@@ -373,9 +382,11 @@ hqDefine('hqadmin/js/system_info', [
                     model.refresh();
                 });
             };
+
+            return self;
         };
 
-        var autoRefresh = new AutoRefreshModel();
+        var autoRefresh = autoRefreshModel();
         $("#celeryblock").koApplyBindings(celeryViewModel);
         $("#couchblock").koApplyBindings(couchViewModel);
         $('#pillowtop-status').koApplyBindings(pillowtopViewModel);

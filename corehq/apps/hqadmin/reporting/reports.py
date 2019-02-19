@@ -160,7 +160,7 @@ def get_mobile_users(domains):
         .show_inactive()
         .mobile_users()
         .domain(domains)
-        .get_ids()
+        .scroll_ids()
     )
 
 

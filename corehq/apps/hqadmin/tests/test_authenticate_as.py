@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 from ..forms import AuthenticateAsForm
-from ..views import AuthenticateAs
+from ..views.users import AuthenticateAs
 
 
 class AuthenticateAsFormTest(TestCase):

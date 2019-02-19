@@ -3,6 +3,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
 
+from custom.icds_reports.messages import percent_children_enrolled_help_text, \
+    percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
+    percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.reports.demographics_data import get_demographics_data
 
 
@@ -35,7 +38,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "red",
@@ -58,16 +61,16 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
-            "all": 1582,
+            "redirect": "demographics/adhaar",
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.423363522218837,
-            "value": 341,
+            "percent": 10.049606069448492,
+            "value": 346,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "month",
-            "help_text": "Percentage of ICDS beneficiaries"
-                         " whose Aadhaar identification has been captured"
+            "help_text": "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification "
+                         "has been captured. "
         }
         self.assertDictEqual(expected, data['records'][0][1])
 
@@ -82,16 +85,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
-            "all": 1287,
+            "redirect": "demographics/enrolled_children",
+            "all": 1288,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "month",
-            "help_text": "Percentage of children registered"
-                         " between 0-6 years old who are enrolled for Anganwadi Services"
+            "help_text": percent_children_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][0])
 
@@ -106,7 +108,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "red",
@@ -114,8 +116,7 @@ class TestDemographics(TestCase):
             "value": 155,
             "label": "Percent pregnant women enrolled for Anganwadi Services",
             "frequency": "month",
-            "help_text": "Percentage of pregnant women "
-                         "registered who are enrolled for Anganwadi Services"
+            "help_text": percent_pregnant_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][1])
 
@@ -130,16 +131,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            'redirect': 'lactating_enrolled_women',
-            "all": 166,
+            'redirect': 'demographics/lactating_enrolled_women',
+            "all": 167,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "month",
-            "help_text": "Percentage of lactating women "
-                         "registered who are enrolled for Anganwadi Services"
+            "help_text": percent_lactating_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][0])
 
@@ -154,7 +154,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "red",
@@ -162,8 +162,7 @@ class TestDemographics(TestCase):
             "value": 34,
             "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
             "frequency": "month",
-            "help_text": "Percentage of adolescent girls registered"
-                         " between 11-14 years old who are enrolled for Anganwadi Services"
+            "help_text": percent_adolescent_girls_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][1])
 
@@ -194,7 +193,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "green",
@@ -217,16 +216,17 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
-            "all": 1582,
+            "redirect": "demographics/adhaar",
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 341,
+            "value": 346,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (
-                "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has been "
+                "captured. "
             )
         }
         self.assertDictEqual(expected, data['records'][0][1])
@@ -242,18 +242,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
-            "all": 1287,
+            "redirect": "demographics/enrolled_children",
+            "all": 1288,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of children registered between 0-6 years old who "
-                "are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_children_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][0])
 
@@ -268,7 +265,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "green",
@@ -276,9 +273,7 @@ class TestDemographics(TestCase):
             "value": 155,
             "label": "Percent pregnant women enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_pregnant_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][1])
 
@@ -293,17 +288,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "lactating_enrolled_women",
-            "all": 166,
+            "redirect": "demographics/lactating_enrolled_women",
+            "all": 167,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of lactating women registered who are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_lactating_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][0])
 
@@ -318,7 +311,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "green",
@@ -326,10 +319,7 @@ class TestDemographics(TestCase):
             "value": 34,
             "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of adolescent girls registered between 11-14 years old who "
-                "are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_adolescent_girls_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][1])
 
@@ -360,7 +350,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "registered_household",
+            "redirect": "demographics/registered_household",
             "all": None,
             "format": "number",
             "color": "green",
@@ -383,16 +373,17 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adhaar",
-            "all": 1582,
+            "redirect": "demographics/adhaar",
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 341,
+            "value": 346,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (
-                "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                "Of the total number of ICDS beneficiaries, the percentage whose Adhaar identification has "
+                "been captured. "
             )
         }
         self.assertDictEqual(expected, data['records'][0][1])
@@ -408,18 +399,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_children",
-            "all": 1287,
+            "redirect": "demographics/enrolled_children",
+            "all": 1288,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 1287,
+            "value": 1288,
             "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of children registered between 0-6 years old who "
-                "are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_children_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][0])
 
@@ -434,7 +422,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "enrolled_women",
+            "redirect": "demographics/enrolled_women",
             "all": 155,
             "format": "percent_and_div",
             "color": "green",
@@ -442,9 +430,7 @@ class TestDemographics(TestCase):
             "value": 155,
             "label": "Percent pregnant women enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_pregnant_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][1][1])
 
@@ -459,17 +445,15 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "lactating_enrolled_women",
-            "all": 166,
+            "redirect": "demographics/lactating_enrolled_women",
+            "all": 167,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 166,
+            "value": 167,
             "label": "Percent lactating women enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of lactating women registered who are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_lactating_women_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][0])
 
@@ -484,7 +468,7 @@ class TestDemographics(TestCase):
             }
         )
         expected = {
-            "redirect": "adolescent_girls",
+            "redirect": "demographics/adolescent_girls",
             "all": 34,
             "format": "percent_and_div",
             "color": "green",
@@ -492,9 +476,6 @@ class TestDemographics(TestCase):
             "value": 34,
             "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
             "frequency": "day",
-            "help_text": (
-                "Percentage of adolescent girls registered between 11-14 years old who "
-                "are enrolled for Anganwadi Services"
-            )
+            "help_text": percent_adolescent_girls_enrolled_help_text()
         }
         self.assertDictEqual(expected, data['records'][2][1])

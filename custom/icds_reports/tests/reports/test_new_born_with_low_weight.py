@@ -7,6 +7,8 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
 
+from custom.icds_reports.messages import new_born_with_low_weight_help_text
+
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
@@ -53,20 +55,13 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 3,
-                    "low_birth": 2,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%",
-                    "all": 4
-                },
-                "st2": {
-                    "in_month": 1,
-                    "low_birth": 0,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-20%",
-                    "all": 3
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
+                'st1': {'in_month': 3, 'original_name': ['st1'], 'low_birth': 2, 'all': 4, 'fillKey': '60%-100%'},
+                'st2': {'in_month': 1, 'original_name': ['st2'], 'low_birth': 0, 'all': 3, 'fillKey': '0%-20%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -80,10 +75,7 @@ class TestNewBornWithLowWeight(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
-            "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life"
+            new_born_with_low_weight_help_text(html=True)
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -96,7 +88,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 33.333333333333336)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -112,8 +104,10 @@ class TestNewBornWithLowWeight(TestCase):
             [
                 {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
                 {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
+                {'indicator': 'Total Number of children born and weight in given month:', 'value': '4'},
                 {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
-                {'indicator': '% Unweighted:', 'value': '57.14%'}
+                {'indicator': '% of children with weight in normal:', 'value': '50.00%'},
+                {'indicator': '% Unweighted:', 'value': '42.86%'},
             ]
         )
 
@@ -193,7 +187,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 75.0)
+        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
 
     def test_chart_data_keys_length(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -229,14 +223,11 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st1', 'percent': 66.66666666666667}
             ]
         )
 
@@ -252,14 +243,11 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 0.0}
             ]
         )
 
@@ -332,14 +320,13 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 0.0
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 66.66666666666667
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st2', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
+                {'loc_name': 'st1', 'percent': 66.66666666666667}
             ]
         )
     
@@ -373,10 +360,7 @@ class TestNewBornWithLowWeight(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of newborns with born with birth weight less than 2500 grams."
-            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal"
-            " and neonatal mortality and morbidity, inhibited growth and cognitive development,"
-            " and chronic diseases later in life",
+            new_born_with_low_weight_help_text(html=True)
         )
 
     def test_sector_data_tooltips_data(self):

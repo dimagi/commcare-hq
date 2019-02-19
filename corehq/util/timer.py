@@ -2,7 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import time
+import uuid
 
+from functools import wraps
 from memoized import memoized
 import itertools
 
@@ -17,6 +19,7 @@ class NestableTimer(object):
         self.subs = []
         self.root = self if is_root else None
         self.parent = None
+        self.uuid = uuid.uuid4()
 
     def init(self, root, parent):
         self.root = root
@@ -119,11 +122,13 @@ class TimingContext(object):
     def is_finished(self):
         return not self.stack
 
+    def is_started(self):
+        return self.peek().beginning is not None
+
     def start(self):
-        timer = self.peek()
-        if timer.beginning is not None:
+        if self.is_started():
             raise TimerError("timer already started")
-        timer.start()
+        self.peek().start()
 
     def stop(self, name=None):
         if name is None:
@@ -175,3 +180,20 @@ class TimingContext(object):
 
 class TimerError(Exception):
     pass
+
+
+def time_method():
+    """Decorator to get timing information on a class method
+
+    The class must have a TimingContext instance as self.timing_context
+    """
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(self, *args, **kwargs):
+            if self.timing_context.is_started():
+                with self.timing_context(fn.__name__):
+                    return fn(self, *args, **kwargs)
+            else:
+                return fn(self, *args, **kwargs)
+        return _inner
+    return decorator

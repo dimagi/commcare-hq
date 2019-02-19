@@ -1,9 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -1181,6 +1184,28 @@
         "type": "expression",
         "is_primary_key": false,
         "is_nullable": true,
+        "column_id": "mother_phone_number",
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "contact_phone_number"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "mother_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
         "column_id": "bf_at_birth",
         "expression": {
           "datatype": null,
@@ -1203,76 +1228,94 @@
           "property_name": "child_immun_one_year_date"
         }
       },
-	  {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "migration_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "migrated"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		}, 
-		"type": "expression", 
-		"column_id": "is_migrated",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-	 {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "not_eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "registered_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "not_registered"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		},
-		"type": "expression", 
-		"column_id": "is_availing",
-		"is_nullable": true,
-		"datatype": "integer"
-	 }
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "migration_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "migrated"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_migrated",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "not_eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "registered_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "not_registered"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_availing",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "column_id": "aadhar_date",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "constant",
+          "constant": null
+        }
+      },
+      {
+        "column_id": "mother_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "mother_id"
+        }
+      }
     ],
     "named_expressions": {
       "parent_id": {
@@ -1558,6 +1601,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
@@ -1575,12 +1627,6 @@
         "column_ids": [
           "supervisor_id",
           "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "modified_on"
         ]
       }
     ],

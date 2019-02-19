@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import exclusive_breastfeeding_help_text
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_map, \
     get_exclusive_breastfeeding_data_chart, get_exclusive_breastfeeding_sector_data
 from django.test import TestCase
@@ -10,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestExclusiveBreastfeeding(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_exclusive_breastfeeding_data_map(
@@ -54,18 +54,13 @@ class TestExclusiveBreastfeeding(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 26,
-                    "children": 17,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%"
-                },
-                "st2": {
-                    "all": 24,
-                    "children": 11,
-                    'original_name': ["st2"],
-                    "fillKey": "20%-60%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 26, 'original_name': ['st1'], 'children': 17, 'fillKey': '60%-100%'},
+                'st2': {'all': 24, 'original_name': ['st2'], 'children': 11, 'fillKey': '20%-60%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -78,13 +73,7 @@ class TestExclusiveBreastfeeding(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of infants 0-6 months of age who are fed exclusively "
-            "with breast milk. <br/><br/>An infant is exclusively breastfed "
-            "if they recieve only breastmilk with "
-            "no additional food, liquids (even water) "
-            "ensuring optimal nutrition and growth between 0 - 6 months"
-        )
+        expected = exclusive_breastfeeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -96,7 +85,7 @@ class TestExclusiveBreastfeeding(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 55.608974358974365)
+        self.assertEquals(data['rightLegend']['average'], 56.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_exclusive_breastfeeding_data_map(
@@ -202,7 +191,7 @@ class TestExclusiveBreastfeeding(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 68.78787878787878)
+        self.assertEquals(data['rightLegend']['average'], 65.38461538461539)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -217,24 +206,18 @@ class TestExclusiveBreastfeeding(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': 'st1', 'percent': 65.38461538461539},
+                    {'loc_name': 'st2', 'percent': 45.833333333333336},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -271,14 +254,13 @@ class TestExclusiveBreastfeeding(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 65.38461538461539
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 45.833333333333336
-                    }
+                    {'loc_name': 'st1', 'percent': 65.38461538461539},
+                    {'loc_name': 'st2', 'percent': 45.833333333333336},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )
@@ -298,10 +280,7 @@ class TestExclusiveBreastfeeding(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "<br/><br/>An infant is exclusively breastfed if they recieve only breastmilk with"
-                        " no additional food, liquids (even water) ensuring"
-                        " optimal nutrition and growth between 0 - 6 months",
+                "info": exclusive_breastfeeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "all": 13,

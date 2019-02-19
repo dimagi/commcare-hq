@@ -2,8 +2,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans 'Multimedia Map' %}{% endblock title %}
-
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
         .media-totals-list {
@@ -24,34 +22,16 @@
             color: #ff8400;
         }
         .media-status-icon .media-status-ok {
-            color: #47b700;
+            color: #4aba32;
         }
     </style>
 {% endblock %}
 
 {% block js %} {{ block.super }}
     <!-- todo add the media player back in -->
-    <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-{% endblock %}
-
-{% block page_name %}
-    {% trans 'Multimedia Reference Checker' %}
-{% endblock %}
-
-{% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url "view_app" domain app.get_id %}"><strong>{% trans 'Application' %} "{{ app.name }}"</strong></a>
-        </li>
-        <li class="active">
-            <a href="{% url "hqmedia_references" domain app.get_id %}">
-                {% trans 'Multimedia Reference Checker' %}
-            </a>
-        </li>
-    </ol>
 {% endblock %}
 
 {% block page_content %}
@@ -62,6 +42,8 @@
 {% initial_page_data 'totals' totals %}
 {% initial_page_data 'uploaders' uploaders_js %}
 
+<p class="lead">{{ current_page.page_name }}</p>
+
 <div id="multimedia-reference-checker">
 
     <div class="row">
@@ -69,18 +51,14 @@
             {% if totals|length %}
                 <p>
                     {% blocktrans %}
-                        You can manage multimedia by uploading files <strong>individually</strong> below.
+                        You can manage multimedia by uploading files individually below.
                     {% endblocktrans %}
-                    {% blocktrans %}
-                        Alternatively, you can upload files in <strong>bulk</strong> using
-                    {% endblocktrans %}
-                    <a href="{% url "hqmedia_bulk_upload" domain app.get_id %}">
-                        {% trans 'Multimedia Bulk Upload' %}.
-                    </a>
                 </p>
-                <p>
-                    <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
-                </p>
+                {% if multimedia_state.has_form_errors or multimedia_state.has_missing_refs %}
+                    <p>
+                        <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
+                    </p>
+                {% endif %}
             {% else %}
                 <div class="alert alert-info">
                     {% blocktrans %}This application references no multimedia.{% endblocktrans %}
@@ -90,14 +68,7 @@
         <div class="col-sm-5">
             {% if totals|length %}
             <div class="well">
-                <p>
-                    <a class="btn btn-primary"
-                        href="#multimedia-zip-modal"
-                        data-toggle="modal"
-                        onclick="hqImport('app_manager/js/download_async_modal').downloadApplicationZip()">
-                        <i class="fa fa-download"></i> {% trans 'Download ZIP' %}
-                    </a>
-                </p>
+                {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
                 <ul class="media-totals-list" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
@@ -172,13 +143,7 @@
         {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endfor %}
 
-    <div id="jquery_jplayer"></div>
     {% endif %}
 </div>
 
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}

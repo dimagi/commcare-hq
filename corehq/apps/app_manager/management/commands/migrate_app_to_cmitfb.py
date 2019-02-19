@@ -21,7 +21,6 @@ import six
 
 
 logger = logging.getLogger('app_migration')
-logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
@@ -51,6 +50,7 @@ class Command(BaseCommand):
                  'which only ever passes a single app id.')
 
     def handle(self, **options):
+        logger.setLevel('DEBUG')
         app_ids_by_domain = defaultdict(set)
         self.force = options["force"]
         self.dry = "DRY RUN " if options["dry_run"] else ""

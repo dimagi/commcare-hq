@@ -20,6 +20,8 @@ def open_xls_workbook(filename):
             raise SpreadsheetFileEncrypted(six.text_type(e))
         else:
             raise SpreadsheetFileInvalidError(six.text_type(e))
+    except xlrd.compdoc.CompDocError as e:
+        raise SpreadsheetFileInvalidError(six.text_type(e))
     except IOError as e:
         raise SpreadsheetFileNotFound(six.text_type(e))
 

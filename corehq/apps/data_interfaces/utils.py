@@ -7,6 +7,7 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 from soil import DownloadBase
+import six
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
@@ -65,11 +66,11 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:
-            response['errors'].append(_("XFORM {form_id} does not belong to domain {domain}").format(
+            response['errors'].append(_("XForm {form_id} does not belong to domain {domain}").format(
                 form_id=xform.form_id, domain=domain))
             continue
 
-        xform_string = _("XFORM {form_id} for domain {domain} by user '{username}'").format(
+        xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
             form_id=xform.form_id,
             domain=xform.domain,
             username=username)
@@ -101,3 +102,10 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         success_msg=archive_or_restore.success_text,
         count=success_count))
     return {"messages": response}
+
+
+def property_references_parent(case_property):
+    return isinstance(case_property, six.string_types) and (
+        case_property.startswith("parent/") or
+        case_property.startswith("host/")
+    )

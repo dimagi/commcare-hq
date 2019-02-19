@@ -3,15 +3,13 @@ from __future__ import unicode_literals
 import uuid
 
 from sqlagg import SumWhen
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
-from corehq.apps.userreports.const import (
-    DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
-)
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -26,7 +24,6 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.tests.util import delete_all_cases
 from six.moves import range
 
 
@@ -38,7 +35,7 @@ class TestFieldColumn(SimpleTestCase):
             "field": "doc_id",
             "alias": "the_right_answer",
             "type": "field",
-        })
+        }, is_static=False)
         self.assertTrue(isinstance(field, FieldColumn))
         self.assertEqual('the_right_answer', field.column_id)
 
@@ -47,7 +44,7 @@ class TestFieldColumn(SimpleTestCase):
             "aggregation": "simple",
             "field": "doc_id",
             "type": "field",
-        })
+        }, is_static=False)
         self.assertEqual('doc_id', field.column_id)
 
     def testBadAggregation(self):
@@ -56,7 +53,7 @@ class TestFieldColumn(SimpleTestCase):
                 "aggregation": "simple_",
                 "field": "doc_id",
                 "type": "field",
-            })
+            }, is_static=False)
 
     def testGoodFormat(self):
         for format in [
@@ -69,7 +66,7 @@ class TestFieldColumn(SimpleTestCase):
                     "field": "doc_id",
                     "format": format,
                     "type": "field",
-                })
+                }, is_static=False)
             ))
 
     def testBadFormat(self):
@@ -79,10 +76,9 @@ class TestFieldColumn(SimpleTestCase):
                 "field": "doc_id",
                 "format": "default_",
                 "type": "field",
-            })
+            }, is_static=False)
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class ChoiceListColumnDbTest(TestCase):
 
     def test_column_uniqueness_when_truncated(self):
@@ -118,18 +114,50 @@ class ChoiceListColumnDbTest(TestCase):
             'doc_type': 'CommCareCase',
             'long_column': 'duplicate_choice_1(s)',
         })
-        adapter.refresh_table()
         # and query it back
         q = adapter.get_query_object()
         self.assertEqual(1, q.count())
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class ChoiceListColumnDbTestES(ChoiceListColumnDbTest):
-    pass
+class ArrayTypeColumnDbTest(TestCase):
+
+    def test_array_type_column(self):
+        problem_spec = {
+            "column_id": "referral_health_problem",
+            "datatype": "array",
+            "type": "expression",
+            "expression": {
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "referral_health_problem",
+                }
+            },
+        }
+        data_source_config = DataSourceConfiguration(
+            domain='test',
+            display_name='foo',
+            referenced_doc_type='CommCareCase',
+            table_id=uuid.uuid4().hex,
+            configured_filter={},
+            configured_indicators=[problem_spec],
+        )
+        adapter = get_indicator_adapter(data_source_config)
+        adapter.rebuild_table()
+        self.addCleanup(adapter.drop_table)
+        # ensure we can save data to the table.
+        adapter.save({
+            '_id': uuid.uuid4().hex,
+            'domain': 'test',
+            'doc_type': 'CommCareCase',
+            'referral_health_problem': 'bleeding convulsions',
+        })
+        # and query it back
+        qs = adapter.get_query_object()
+        self.assertEqual(1, qs.count())
+        self.assertEqual(qs.first().referral_health_problem, ['bleeding', 'convulsions'])
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class TestExpandedColumn(TestCase):
     domain = 'foo'
     case_type = 'person'
@@ -165,8 +193,6 @@ class TestExpandedColumn(TestCase):
 
         if build_data_source:
             tasks.rebuild_indicators(self.data_source_config._id)
-            adapter = get_indicator_adapter(self.data_source_config)
-            adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -277,7 +303,7 @@ class TestExpandedColumn(TestCase):
             display="Lab Result",
             format="default",
             description="foo"
-        ))
+        ), is_static=False)
         cols = expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
@@ -311,12 +337,7 @@ class TestExpandedColumn(TestCase):
 
         expected_rows = [get_expected_row(v, set(submitted_vals)) for v in submitted_vals]
         data = data_source.get_data()
-        self.assertEqual(sorted(expected_rows), sorted(data))
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class TestExpandedColumnES(TestExpandedColumn):
-    pass
+        self.assertItemsEqual(expected_rows, data)
 
 
 class TestAggregateDateColumn(SimpleTestCase):
@@ -329,25 +350,25 @@ class TestAggregateDateColumn(SimpleTestCase):
         }
 
     def test_wrap(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertTrue(isinstance(wrapped, AggregateDateColumn))
         self.assertEqual('a_date', wrapped.column_id)
 
     def test_group_by(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual(['a_date_year', 'a_date_month'], wrapped.get_query_column_ids())
 
     def test_format(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('2015-03', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
     def test_custom_format(self):
         self._spec.update({'format': '%b %Y'})
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('Mar 2015', wrapped.get_format_fn()({'year': 2015, 'month': 3}))
 
     def test_format_missing(self):
-        wrapped = ReportColumnFactory.from_spec(self._spec)
+        wrapped = ReportColumnFactory.from_spec(self._spec, is_static=False)
         self.assertEqual('Unknown Date', wrapped.get_format_fn()({'year': None, 'month': None}))
 
 
@@ -367,7 +388,7 @@ class TestPercentageColumn(SimpleTestCase):
                 "field": "is_pregnant",
                 "type": "field",
             },
-        })
+        }, is_static=False)
         self.assertTrue(isinstance(wrapped, PercentageColumn))
         self.assertEqual('pct', wrapped.column_id)
         self.assertEqual('has_danger_signs', wrapped.numerator.field)
@@ -384,19 +405,19 @@ class TestPercentageColumn(SimpleTestCase):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
-            })
+            }, is_static=False)
         with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'numerator': field_spec,
-            })
+            }, is_static=False)
         with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec({
                 'type': 'percent',
                 'column_id': 'pct',
                 'denominator': field_spec,
-            })
+            }, is_static=False)
 
     def test_wrong_field_type(self):
         # can't put a percent in another percent
@@ -411,37 +432,37 @@ class TestPercentageColumn(SimpleTestCase):
                 'column_id': 'pct',
                 'numerator': field_spec,
                 'denominator': field_spec,
-            })
+            }, is_static=False)
 
     def test_format_pct(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('33%', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_pct_denom_0(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         for empty_value in [0, 0.0, None, '']:
             self.assertEqual('--', wrapped.get_format_fn()({'num': 1, 'denom': empty_value}))
 
     def test_format_fraction(self):
         spec = self._test_spec()
         spec['format'] = 'fraction'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('1/3', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_both(self):
         spec = self._test_spec()
         spec['format'] = 'both'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual('33% (1/3)', wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_pct_non_numeric(self):
         spec = self._test_spec()
         spec['format'] = 'percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         for unexpected_value in ['hello', object()]:
             self.assertEqual('?', wrapped.get_format_fn()({'num': 1, 'denom': unexpected_value}),
                              'non-numeric value failed for denominator {}'. format(unexpected_value))
@@ -450,13 +471,13 @@ class TestPercentageColumn(SimpleTestCase):
     def test_format_numeric_pct(self):
         spec = self._test_spec()
         spec['format'] = 'numeric_percent'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual(33, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
 
     def test_format_float(self):
         spec = self._test_spec()
         spec['format'] = 'decimal'
-        wrapped = ReportColumnFactory.from_spec(spec)
+        wrapped = ReportColumnFactory.from_spec(spec, is_static=False)
         self.assertEqual(.333, wrapped.get_format_fn()({'num': 1, 'denom': 3}))
         self.assertEqual(.25, wrapped.get_format_fn()({'num': 1, 'denom': 4}))
 

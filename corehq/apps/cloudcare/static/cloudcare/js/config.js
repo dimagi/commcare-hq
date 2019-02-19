@@ -1,4 +1,4 @@
-hqDefine("cloudcare/js/config", function() {
+hqDefine("cloudcare/js/config", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var makeDB = function (list) {
@@ -34,7 +34,7 @@ hqDefine("cloudcare/js/config", function() {
             self.app_groups = ko.observableArray();
             self._lock = ko.observable(false);
         };
-        ApplicationAccess.wrap = function(o) {
+        ApplicationAccess.wrap = function (o) {
             var self = new ApplicationAccess();
             self.restrict(o.restrict);
             for (var i = 0; i < o.app_groups.length; i++) {

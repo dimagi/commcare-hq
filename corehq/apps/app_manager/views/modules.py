@@ -11,17 +11,21 @@ from lxml import etree
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.urls import reverse
+from django.views import View
 from django.views.decorators.http import require_GET
 from django.contrib import messages
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
-    get_per_type_defaults
+
+from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.decorators import track_domain_request, LoginAndDomainMixin
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
@@ -138,7 +142,8 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
-        }
+        },
+        'legacy_select2': True,
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
@@ -146,7 +151,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
         print_uploader = MultimediaHTMLUploadController(
             slug,
             reverse(
-                ProcessDetailPrintTemplateUploadView.name,
+                ProcessDetailPrintTemplateUploadView.urlname,
                 args=[app.domain, app.id, module.unique_id],
             )
         )
@@ -206,6 +211,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'shadow_module_options': {
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
@@ -257,7 +263,7 @@ def _get_report_module_context(app, module):
             'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
-            'mobileUcrVersion': app.mobile_ucr_restore_version,
+            'mobileUcrV1': app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
@@ -266,6 +272,7 @@ def _get_report_module_context(app, module):
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
         'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
+        'legacy_select2': True,
     }
     return context
 
@@ -281,12 +288,7 @@ def _setup_case_property_builder(app):
     defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
-    per_type_defaults = None
-    if is_usercase_in_use(app.domain):
-        per_type_defaults = get_per_type_defaults(app.domain, [USERCASE_TYPE])
-    builder = ParentCasePropertyBuilder(app, defaults=defaults,
-                                        per_type_defaults=per_type_defaults)
-    return builder
+    return ParentCasePropertyBuilder.for_app(app, defaults=defaults)
 
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
@@ -385,7 +387,7 @@ def _case_list_form_not_allowed_reasons(module):
     if not module.all_forms_require_a_case():
         reasons.append(_("all forms in this case list must update a case, "
                          "which means that registration forms must go in a different case list"))
-    if isinstance(module, Module):
+    if hasattr(module, 'parent_select'):
         app = module.get_app()
         if (not app.build_version or app.build_version < LooseVersion('2.23')) and module.parent_select.active:
             reasons.append(_("'Parent Selection' is configured"))
@@ -394,6 +396,7 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
@@ -427,6 +430,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "custom_icon_form": None,
         "custom_icon_text_body": None,
         "custom_icon_xpath": None,
+        "use_default_image_for_all": None,
+        "use_default_audio_for_all": None,
     }
 
     if attr not in attributes:
@@ -564,10 +569,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             module[SLUG].label[lang] = request.POST[label]
 
     if should_edit("root_module_id"):
+        old_root = module['root_module_id']
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
+        if not old_root and module['root_module_id']:
+            track_workflow(request.couch_user.username, "User associated module with a parent")
+        elif old_root and not module['root_module_id']:
+            track_workflow(request.couch_user.username, "User orphaned a child module")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -1058,6 +1068,15 @@ def view_module_legacy(request, domain, app_id, module_id):
     """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id)
+
+
+class ExistingCaseTypesView(LoginAndDomainMixin, View):
+    urlname = 'existing_case_types'
+
+    def get(self, request, domain):
+        return JsonResponse({
+            'existing_case_types': list(get_case_types_for_domain_es(domain))
+        })
 
 
 FN = 'fn'

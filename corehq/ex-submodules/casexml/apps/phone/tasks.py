@@ -15,9 +15,10 @@ from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
 ASYNC_RESTORE_SENT = "SENT"
+SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
-@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="1"),
                queue='background_queue')
 def update_cleanliness_flags():
     """
@@ -26,7 +27,7 @@ def update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=False)
 
 
-@periodic_task(run_every=crontab(hour="4", minute="0", day_of_month="5"),
+@periodic_task(serializer='pickle', run_every=crontab(hour="4", minute="0", day_of_month="5"),
                queue='background_queue')
 def force_update_cleanliness_flags():
     """
@@ -38,9 +39,11 @@ def force_update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=True)
 
 
-@task(queue=ASYNC_RESTORE_QUEUE)
-def get_async_restore_payload(restore_config):
-    """Process an async restore
+@task(serializer='pickle', queue=ASYNC_RESTORE_QUEUE)
+def get_async_restore_payload(restore_config, domain=None, username=None):
+    """
+    Process an async restore
+    domain and username: added for displaying restore request details on flower
     """
     response = restore_config.generate_payload(async_task=current_task)
 
@@ -72,17 +75,16 @@ def update_celery_state(sender=None, body=None, **kwargs):
     backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def prune_synclogs():
     """
-    Drops all partition tables containing data that's older than 91 days (13 weeks)
+    Drops all partition tables containing data that's older than 63 days (7 weeks)
     """
-    SYNCLOG_RETENTION_DAYS = 13 * 7  # 91 days
     oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
+    while oldest_synclog and (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
         year, week, _ = oldest_synclog.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,

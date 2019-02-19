@@ -32,3 +32,23 @@ class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
             app.create_suite(),
             "./menu"
         )
+
+    def test_training_module_put_in_root(self):
+        app = Application.new_app('domain', 'Untitled Application')
+        training_module = app.add_module(Module.new_training_module('training module', None))
+        training_module.put_in_root = True
+        app.new_form(training_module.id, "Untitled Form", None)
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+                <menu id="training-root">
+                    <text>
+                        <locale id="training.root.title"/>
+                    </text>
+                    <command id="m0-f0"/>
+                </menu>
+            </partial>
+            """,
+            app.create_suite(),
+            "./menu"
+        )

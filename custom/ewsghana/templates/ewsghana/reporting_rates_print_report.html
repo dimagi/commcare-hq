@@ -4,17 +4,9 @@
 {% load i18n %}
 {% if show_time_notice %}{% endif %}
 
-{% block js %}
-    {% javascript_libraries underscore=True %}
-    <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-    <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
-    {{ block.super }}
-{% endblock %}
-
 {% block js-inline %}
     {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             if (!document.hidden) {
                 setTimeout(function() {
@@ -37,8 +29,6 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link href="{% static 'nvd3/src/nv.d3.css' %}" rel="stylesheet">
-    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
     <link href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet"/>
     <style>
         #report_table_non_reporting tbody {

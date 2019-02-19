@@ -1,0 +1,218 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "report_id": "static-hew_performance_focal_person",
+  "data_source_table": "static-hew_performance_indicators",
+  "config": {
+    "description": "HEW performance report for Focal Person",
+    "title": "HEW performance report (Focal Person)",
+    "aggregation_columns": [
+      "health_center",
+      "health_post",
+      "received_on",
+      "hew_name"
+    ],
+    "filters": [
+      {
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "slug": "health_location",
+        "field": "health_post_id",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "display": "Location"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "received_on",
+        "field": "received_on",
+        "type": "date",
+        "display": "Submitted date"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "slug": "hew_name",
+        "field": "hew_name",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "display": "HEW name"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "slug": "health_post",
+        "field": "health_post",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "display": "Health post"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "User location type",
+        "field": "user_location_type",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "user_location_type"
+      },
+      {
+        "display": "Test or Real",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Test",
+            "value": "Test"
+          },
+          {
+            "display": "Real",
+            "value": "Real"
+          }
+        ],
+        "field": "test_or_real",
+        "type": "choice_list",
+        "slug": "test_or_real"
+      }
+    ],
+    "columns": [
+      {
+        "field": "received_on",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "received_on",
+        "visible": true,
+        "display": "Submitted date",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "hew_name",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "hew_name",
+        "visible": true,
+        "display": "HEW name",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "health_post",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post",
+        "visible": true,
+        "display": "Health Post",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "health_center",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_center",
+        "visible": true,
+        "display": "Health Center",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "anc_visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "anc_visit_count",
+        "visible": true,
+        "display": "ANC visits",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "pnc_visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "pnc_visit_count",
+        "visible": true,
+        "display": "PNC visits",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "visit_count",
+        "visible": true,
+        "display": "All visits",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      }
+    ]
+  }
+}

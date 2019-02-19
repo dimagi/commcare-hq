@@ -1,124 +1,119 @@
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 {% load crispy_forms_tags %}
 
-<script type="text/ng-template" id="step2.tpl">
-    <h2>{% trans "Step 2. Connect Outgoing SMS" %}</h2>
-    <div ng-controller="TelerivetSetupController" ng-cloak>
-        <ol>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        Go to the Telerivet website and generate an API key if you have not already done so.
-                        <a href="#/step2" ng-hide="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Show Me How</a>
-                        <a href="#/step2" ng-show="showApiKeyGeneration" ng-click="toggleApiKeyGeneration();">Hide Instructions</a>
-                        {% endblocktrans %}
-                    </p>
-                    <p ng-show="showApiKeyGeneration">
-                        <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/generate_api_key.png' %}" />
-                    </p>
-                </div>
-            </li>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        On that same page in the Telerivet website, make note of your API Key, Project ID, and Phone ID, and enter them below.
-                        <a href="#/step2" ng-hide="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Show Me How</a>
-                        <a href="#/step2" ng-show="showApiInfoLocation" ng-click="toggleApiInfoLocation();">Hide Instructions</a>
-                        {% endblocktrans %}
-                    </p>
-                    <p class="help-block" ng-show="showApiInfoLocation">
-                        {% blocktrans %}
-                        <i class="fa fa-info-circle" /> You may need to click "Show" to view your API Key.
-                        {% endblocktrans %}
-                    </p>
-                    <p ng-show="showApiInfoLocation">
-                        <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/api_settings.png' %}" />
-                    </p>
-                </div>
-                <div class="row">
-                    {% crispy outgoing_sms_form %}
-                </div>
-            </li>
-            <li>
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        Enter the phone number of a different phone below and click Send to send a test SMS from CommCareHQ.
-                        {% endblocktrans %}
-                    </p>
-                    <p class="help-block">
-                        {% blocktrans %}
-                        <i class="fa fa-info-circle" />
-                        This phone number should be different from the Telerivet Android phone number.
-                        Please enter in international format, starting with the country code, digits only.
-                        {% endblocktrans %}
-                    </p>
-                    <div class="row">
-                        {% crispy test_sms_form %}
-                    </div>
-                </div>
-            </li>
-            <li ng-show="testSMSSent">
-                <div>
-                    <p>
-                        {% blocktrans %}
-                        Did you receive the test SMS?
-                        {% endblocktrans %}
-                    </p>
-                    <div class="form-actions">
-                        <button class="btn btn-danger col-sm-2" ng-click="showOutboundTroubleshoot = true;">
-                            {% trans "No, Troubleshoot" %}
-                        </button>
-                        <a class="btn btn-primary col-sm-2" href="#/step3">
-                            {% trans "Yes, Continue" %} &raquo;
-                        </a>
-                    </div>
-                </div>
-                <div ng-show="showOutboundTroubleshoot">
-                    <h3>{% trans "Troubleshoot Outbound SMS" %}</h3>
-                    <p>
-                        Look at the guidelines below for possible points of failure. At any point,
-                        you can click the Send button again to test resending the SMS with any updated
-                        information.
-                    </p>
-                    <ul>
-                        <li>
-                            {% blocktrans %}
-                            Double-check your configuration in step 2.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Double-check the phone number of your test phone number entered in step 3 and
-                            ensure that it is in international format, starting with the country code.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            Check the messages page in your Telerivet account to see if the message shows up there. If
-                            it does, there might be an error message giving you more detail.
-                            {% endblocktrans %}
-                        </li>
-                        <li>
-                            {% blocktrans %}
-                            If none of the above works, test sending an SMS from the Android phone to your test phone
-                            directly. If that succeeds, then it means something is likely incorect with the configuration.
-                            If you do not receive the direct SMS message, then you may need to follow up with the carrier
-                            used by the Android phone to understand why it cannot send SMS.
-                            {% endblocktrans %}
-                        </li>
-                    </ul>
-                </div>
-            </li>
-        </ol>
-    </div>
-</script>
+<h2>{% trans "Step 2. Connect Outgoing SMS" %}</h2>
+<ol>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                Go to the Telerivet website and generate an API key if you have not already done so.
+                <a data-bind="visible: !showApiKeyGeneration(), click: function() { showApiKeyGeneration(true); }">Show Me How</a>
+                <a data-bind="visible: showApiKeyGeneration(), click: function() { showApiKeyGeneration(false); }">Hide Instructions</a>
+                {% endblocktrans %}
+            </p>
+            <p data-bind="visible: showApiKeyGeneration()">
+                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/generate_api_key.png' %}" />
+            </p>
+        </div>
+    </li>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                On that same page in the Telerivet website, make note of your API Key, Project ID, and Phone ID, and enter them below.
+                <a data-bind="visible: !showApiInfoLocation(), click: function() { showApiInfoLocation(true); }">Show Me How</a>
+                <a data-bind="visible: showApiInfoLocation(), click: function() { showApiInfoLocation(false); }">Hide Instructions</a>
+                {% endblocktrans %}
+            </p>
+            <p class="help-block" data-bind="visible: showApiInfoLocation()">
+                {% blocktrans %}
+                <i class="fa fa-info-circle"></i> You may need to click "Show" to view your API Key.
+                {% endblocktrans %}
+            </p>
+            <p data-bind="visible: showApiInfoLocation()">
+                <img class="img-responsive img-thumbnail" src="{% static 'telerivet/img/api_settings.png' %}" />
+            </p>
+        </div>
+        <div class="row">
+            {% crispy outgoing_sms_form %}
+        </div>
+    </li>
+    <li>
+        <div>
+            <p>
+                {% blocktrans %}
+                Enter the phone number of a different phone below and click Send to send a test SMS from CommCareHQ.
+                {% endblocktrans %}
+            </p>
+            <p class="help-block">
+                {% blocktrans %}
+                <i class="fa fa-info-circle"></i>
+                This phone number should be different from the Telerivet Android phone number.
+                Please enter in international format, starting with the country code, digits only.
+                {% endblocktrans %}
+            </p>
+            <div class="row">
+                {% crispy test_sms_form %}
+            </div>
+        </div>
+    </li>
+    <li data-bind="visible: testSMSSent">
+        <div>
+            <p>
+                {% blocktrans %}
+                Did you receive the test SMS?
+                {% endblocktrans %}
+            </p>
+            <div class="form-actions">
+                <button class="btn btn-danger col-sm-2" data-bind="click: function() { showOutboundTroubleshoot(true); }">
+                    {% trans "No, Troubleshoot" %}
+                </button>
+                <button class="btn btn-primary" data-bind="click: nextStep">
+                    {% trans "Yes, Continue" %} &raquo;
+                </button>
+            </div>
+        </div>
+        <div data-bind="visible: showOutboundTroubleshoot">
+            <h3>{% trans "Troubleshoot Outbound SMS" %}</h3>
+            <p>
+                Look at the guidelines below for possible points of failure. At any point,
+                you can click the Send button again to test resending the SMS with any updated
+                information.
+            </p>
+            <ul>
+                <li>
+                    {% blocktrans %}
+                    Double-check your configuration in step 2.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Double-check the phone number of your test phone number entered in step 3 and
+                    ensure that it is in international format, starting with the country code.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Ensure that the Android phone is powered on, connected to wifi, and in a good cell reception area.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    Check the messages page in your Telerivet account to see if the message shows up there. If
+                    it does, there might be an error message giving you more detail.
+                    {% endblocktrans %}
+                </li>
+                <li>
+                    {% blocktrans %}
+                    If none of the above works, test sending an SMS from the Android phone to your test phone
+                    directly. If that succeeds, then it means something is likely incorect with the configuration.
+                    If you do not receive the direct SMS message, then you may need to follow up with the carrier
+                    used by the Android phone to understand why it cannot send SMS.
+                    {% endblocktrans %}
+                </li>
+            </ul>
+        </div>
+    </li>
+</ol>

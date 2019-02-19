@@ -13,7 +13,8 @@ from pillowtop.pillow.interface import PillowBase
 
 
 class process_pillow_changes(ContextDecorator):
-    def __init__(self, pillow_name_or_instance):
+    def __init__(self, pillow_name_or_instance, pillow_kwargs={}):
+        self._pillow_kwargs = pillow_kwargs
         self.pillow_name_or_instance = pillow_name_or_instance
         if isinstance(pillow_name_or_instance, PillowBase):
             self._pillow = pillow_name_or_instance
@@ -24,7 +25,8 @@ class process_pillow_changes(ContextDecorator):
     def pillow(self):
         if not self._pillow:
             with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
-                self._pillow = get_pillow_by_name(self.pillow_name_or_instance, instantiate=True)
+                self._pillow = get_pillow_by_name(
+                    self.pillow_name_or_instance, instantiate=True, **self._pillow_kwargs)
         return self._pillow
 
     def __enter__(self):
@@ -50,7 +52,7 @@ class capture_kafka_changes_context(object):
         self.topics = topics
         self.change_feed = KafkaChangeFeed(
             topics=topics,
-            group_id='test-{}'.format(uuid.uuid4().hex),
+            client_id='test-{}'.format(uuid.uuid4().hex),
         )
         self.changes = None
 

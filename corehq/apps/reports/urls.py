@@ -35,11 +35,10 @@ from .views import (
     MySavedReportsView,
     ScheduledReportsView,
     ReportNotificationUnsubscribeView,
-    default,
-    old_saved_reports,
     case_forms,
     case_property_changes,
     case_property_names,
+    download_case_history,
     case_xml,
     edit_case_view,
     rebuild_case_view,
@@ -52,6 +51,7 @@ from .views import (
     restore_edit,
     form_multimedia_export,
     archive_form,
+    edit_form,
     resave_form_view,
     unarchive_form,
     project_health_user_details,
@@ -65,10 +65,6 @@ from .views import (
     delete_scheduled_report,
     send_test_scheduled_report,
     view_scheduled_report,
-    export_all_form_metadata,
-    export_all_form_metadata_async,
-    download_cases,
-    download_cases_internal,
 )
 
 
@@ -91,9 +87,9 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', default, name="reports_home"),
+    url(r'^$', MySavedReportsView.as_view(), name="reports_home"),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
-    url(r'^saved_reports', old_saved_reports, name='old_saved_reports'),
+    url(r'^saved_reports', MySavedReportsView.as_view(), name="old_saved_reports"),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDataView.as_view(), name=CaseDataView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', case_forms, name="single_case_forms"),
@@ -101,11 +97,13 @@ urlpatterns = [
         CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', case_xml, name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/properties/$', case_property_names, name="case_property_names"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/history/$', download_case_history, name="download_case_history"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/edit/$', edit_case_view, name="edit_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/rebuild/$', rebuild_case_view, name="rebuild_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/resave/$', resave_case_view, name="resave_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/close/$', close_case_view, name="close_case"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/$', undo_close_case_view, name="undo_close_case"),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/undo-close/(?P<xform_id>[\w\-:]+)/$',
+        undo_close_case_view, name="undo_close_case"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),
@@ -119,6 +117,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
@@ -169,11 +168,10 @@ urlpatterns = [
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
 
+    # V2 Reports
+    url(r'^v2/', include('corehq.apps.reports.v2.urls')),
+
     # Internal Use
-    url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),
-    url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
-    url(r'^download/cases/$', download_cases, name='download_cases'),
-    url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
         name=ReprocessXFormErrorView.urlname),
 

@@ -33,4 +33,4 @@ class TelerivetLogCallTestCase(util.LogCallTestCase):
 
     def check_response(self, response):
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '')
+        self.assertEqual(response.content.decode('utf-8'), '')

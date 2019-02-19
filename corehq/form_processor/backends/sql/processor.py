@@ -5,24 +5,24 @@ import logging
 import uuid
 
 import redis
-from PIL import Image
 from contextlib2 import ExitStack
 from django.db import transaction
+from lxml import etree
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 )
-from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.change_publishers import (
-    publish_form_saved, publish_case_saved, publish_ledger_v2_saved,
-    republish_all_changes_for_form)
-from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
+    publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
+from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
+    XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
-from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -32,38 +32,11 @@ class FormProcessorSQL(object):
 
     @classmethod
     def store_attachments(cls, xform, attachments):
-        xform_attachments = []
-        for attachment in attachments:
-            xform_attachment = XFormAttachmentSQL(
-                name=attachment.name,
-                attachment_id=uuid.uuid4(),
-                content_type=attachment.content_type,
-            )
-            xform_attachment.write_content(attachment.content)
-            if xform_attachment.is_image:
-                try:
-                    img_size = Image.open(attachment.content_as_file()).size
-                    xform_attachment.properties = dict(width=img_size[0], height=img_size[1])
-                except IOError:
-                    xform_attachment.content_type = 'application/octet-stream'
-            xform_attachments.append(xform_attachment)
-
-        xform.unsaved_attachments = xform_attachments
+        xform.attachments_list = attachments
 
     @classmethod
     def copy_attachments(cls, from_form, to_form):
-        to_form.unsaved_attachments = to_form.unsaved_attachments or []
-        for name, att in from_form.attachments.items():
-            to_form.unsaved_attachments.append(XFormAttachmentSQL(
-                name=att.name,
-                attachment_id=uuid.uuid4(),
-                content_type=att.content_type,
-                content_length=att.content_length,
-                properties=att.properties,
-                blob_id=att.blob_id,
-                blob_bucket=att.blobdb_bucket(),
-                md5=att.md5,
-            ))
+        to_form.copy_attachments(from_form)
 
     @classmethod
     def copy_form_operations(cls, from_form, to_form):
@@ -100,6 +73,25 @@ class FormProcessorSQL(object):
         publish_case_saved(case)
 
     @classmethod
+    def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):
+        from corehq.form_processor.parsers.form import apply_deprecation
+
+        new_xml = etree.tostring(xml)
+        form_json = convert_xform_to_json(new_xml)
+        new_form = cls.new_xform(form_json)
+        new_form.user_id = user_id
+        new_form.domain = existing_form.domain
+        new_form.app_id = existing_form.app_id
+        cls.store_attachments(new_form, [Attachment(
+            name=ATTACHMENT_NAME,
+            raw_content=new_xml,
+            content_type='text/xml',
+        )])
+
+        existing_form, new_form = apply_deprecation(existing_form, new_form)
+        return (existing_form, new_form)
+
+    @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
         db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
@@ -130,21 +122,23 @@ class FormProcessorSQL(object):
                 ledgers_to_save = stock_result.models_to_save
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
+        if cases:
+            sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
+                processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
+            if sort_submissions:
+                for case in cases:
+                    if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                        CaseAccessorSQL.save_case(case)
+
         if publish_to_kafka:
-            cls._publish_changes(processed_forms, cases, stock_result)
+            try:
+                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
+            except Exception as e:
+                raise KafkaPublishingError(e)
 
     @staticmethod
-    def _publish_changes(processed_forms, cases, stock_result):
-        # todo: form deprecations?
+    def publish_changes_to_kafka(processed_forms, cases, stock_result):
         publish_form_saved(processed_forms.submitted)
-        if processed_forms.submitted.is_duplicate:
-            # for duplicate forms, also publish changes for the original form since the fact that
-            # we're getting a duplicate indicates that we may not have fully processed/published it
-            # the first time
-            republish_all_changes_for_form(
-                processed_forms.submitted.domain, processed_forms.submitted.orig_id
-            )
-
         cases = cases or []
         for case in cases:
             publish_case_saved(case)
@@ -156,7 +150,8 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        default_user_id = new_xform.user_id or 'unknown'
+        user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
         operation = XFormOperationSQL(
             user_id=user_id,
             date=new_xform.edited_on,
@@ -175,11 +170,8 @@ class FormProcessorSQL(object):
     @classmethod
     def assign_new_id(cls, xform):
         from corehq.sql_db.util import new_id_in_same_dbalias
-        if xform.is_saved():
-            # avoid moving to a separate sharded db
-            xform.form_id = new_id_in_same_dbalias(xform.form_id)
-        else:
-            xform.form_id = six.text_type(uuid.uuid4())
+        # avoid moving to a separate sharded db
+        xform.form_id = new_id_in_same_dbalias(xform.form_id)
         return xform
 
     @classmethod
@@ -289,7 +281,9 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):
-        transactions = get_case_transactions(case.case_id, updated_xforms=updated_xforms)
+        transactions = CaseAccessorSQL.get_case_transactions_by_case_id(
+            case,
+            updated_xforms=updated_xforms)
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
@@ -327,43 +321,3 @@ class FormProcessorSQL(object):
     @staticmethod
     def case_exists(case_id):
         return CaseAccessorSQL.case_exists(case_id)
-
-
-def get_case_transactions(case_id, updated_xforms=None):
-    """
-    This fetches all the transactions required to rebuild the case along
-    with all the forms for those transactions.
-
-    For any forms that have been updated it replaces the old form
-    with the new one.
-
-    :param case_id: ID of case to rebuild
-    :param updated_xforms: list of forms that have been changed.
-    :return: list of ``CaseTransaction`` objects with their associated forms attached.
-    """
-    transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case_id)
-    form_ids = {tx.form_id for tx in transactions}
-    updated_xforms_map = {
-        xform.form_id: xform for xform in updated_xforms if not xform.is_deprecated
-    } if updated_xforms else {}
-
-    form_ids_to_fetch = list(form_ids - set(updated_xforms_map.keys()))
-    xform_map = {form.form_id: form for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)}
-
-    def get_form(form_id):
-        if form_id in updated_xforms_map:
-            return updated_xforms_map[form_id]
-
-        try:
-            return xform_map[form_id]
-        except KeyError:
-            raise XFormNotFound
-
-    for transaction in transactions:
-        if transaction.form_id:
-            try:
-                transaction.cached_form = get_form(transaction.form_id)
-            except XFormNotFound:
-                logging.error('Form not found during rebuild: %s', transaction.form_id)
-
-    return transactions

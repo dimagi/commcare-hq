@@ -5,8 +5,8 @@ import logging
 from corehq.apps.api.resources.auth import AdminAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.serializers import XFormInstanceSerializer
-from corehq.apps.data_analytics.models import MALTRow
-from corehq.apps.domain.models import Domain
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
+from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
 from corehq.apps.es.domains import DomainES
@@ -47,8 +47,8 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     def dehydrate_billing_properties(self, bundle):
-        domain = _get_domain(bundle)
-        subscription = Subscription.get_active_subscription_by_domain(domain.name)
+        domain_obj = _get_domain(bundle)
+        subscription = Subscription.get_active_subscription_by_domain(domain_obj.name)
         return {
             "date_start": (subscription.date_start
                            if subscription is not None else None),
@@ -59,29 +59,47 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         }
 
     def dehydrate_calculated_properties(self, bundle):
-        domain = _get_domain(bundle)
+        domain_obj = _get_domain(bundle)
         try:
             es_data = (DomainES()
-                       .in_domains([domain.name])
+                       .in_domains([domain_obj.name])
                        .size(1)
                        .run()
                        .hits[0])
-            return {
+            base_properties = {
                 prop_name: es_data[prop_name]
                 for prop_name in es_data if prop_name[:3] == 'cp_'
             }
+            try:
+                audit_record = DomainAuditRecordEntry.objects.get(domain=domain_obj.name)
+            except DomainAuditRecordEntry.DoesNotExist:
+                audit_record = None
+            extra_properties = [
+                "cp_n_downloads_custom_exports",
+                "cp_n_viewed_ucr_reports",
+                "cp_n_viewed_non_ucr_reports",
+                "cp_n_reports_created",
+                "cp_n_reports_edited",
+                "cp_n_saved_scheduled_reports",
+                "cp_n_click_app_deploy",
+                "cp_n_form_builder_entered",
+                "cp_n_saved_app_changes",
+            ]
+            for prop in extra_properties:
+                base_properties.update({prop: getattr(audit_record, prop, 0)})
+            return base_properties
         except IndexError:
-            logging.exception('Problem getting calculated properties for {}'.format(domain.name))
+            logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))
             return {}
 
     def dehydrate_domain_properties(self, bundle):
         return _get_domain(bundle)._doc
 
     def obj_get(self, bundle, **kwargs):
-        domain = Domain.get_by_name(kwargs.get('domain'))
-        if domain is None:
+        domain_obj = Domain.get_by_name(kwargs.get('domain'))
+        if domain_obj is None:
             raise NotFound
-        return domain
+        return domain_obj
 
     def obj_get_list(self, bundle, **kwargs):
         if kwargs.get('domain'):
@@ -120,6 +138,31 @@ class MaltResource(ModelResource):
         fields = ['id', 'month', 'user_id', 'username', 'email', 'user_type',
                   'domain_name', 'num_of_forms', 'app_id', 'device_id',
                   'is_app_deleted', 'wam', 'pam', 'use_threshold', 'experienced_threshold']
+        include_resource_uri = False
+        filtering = {
+            'month': ['gt', 'gte', 'lt', 'lte'],
+            'domain_name': ['exact']
+        }
+
+
+class GIRResource(ModelResource):
+
+    class Meta(CustomResourceMeta):
+        authentication = AdminAuthentication()
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        queryset = GIRRow.objects.all().order_by('pk')
+        resource_name = 'gir_tables'
+        fields = [
+            'id', 'month', 'domain_name', 'country', 'sector', 'subsector', 'bu',
+            'self_service', 'test_domain', 'start_date', 'device_id', 'pam',
+            'wams_current', 'active_users', 'using_and_performing', 'not_performing',
+            'inactive_experienced', 'inactive_not_experienced', 'not_experienced',
+            'not_performing_not_experienced', 'active_ever', 'possibly_exp', 'ever_exp',
+            'exp_and_active_ever', 'active_in_span', 'eligible_forms', 'performance_threshold',
+            'experienced_threshold',
+
+        ]
         include_resource_uri = False
         filtering = {
             'month': ['gt', 'gte', 'lt', 'lte'],

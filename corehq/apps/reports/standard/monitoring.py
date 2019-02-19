@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import datetime
 import math
 from collections import defaultdict, namedtuple
@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xm
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
@@ -937,7 +938,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1075,7 +1076,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
+                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1404,8 +1405,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
-            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes cases created by the user "
+                            "and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
         ))

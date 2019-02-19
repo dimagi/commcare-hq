@@ -2,10 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mimetypes
 
-from corehq.form_processor.abstract_models import CaseAttachmentMixin
+from corehq.form_processor.abstract_models import IsImageMixin
 from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
-
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 import six
 
@@ -15,7 +13,8 @@ Shared models live here to avoid cyclical import issues
 """
 
 
-class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
+@six.python_2_unicode_compatible
+class CommCareCaseIndex(LooselyEqualDocumentSchema):
     """
     In CaseXML v2 we support indices, which link a case to other cases.
     """
@@ -47,7 +46,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
                    referenced_id=index.referenced_id,
                    relationship=index.relationship,)
 
-    def __unicode__(self):
+    def __str__(self):
         return (
             "CommCareCaseIndex("
             "identifier='{index.identifier}', "
@@ -64,7 +63,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
         return str(self)
 
 
-class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, UnicodeMixIn):
+class CommCareCaseAttachment(LooselyEqualDocumentSchema, IsImageMixin):
     identifier = StringProperty()
     attachment_src = StringProperty()
     attachment_from = StringProperty()
@@ -79,9 +78,19 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, Un
     def content_type(self):
         return self.server_mime
 
+    @property
+    def is_present(self):
+        """
+        Helper method to see if this is a delete vs. update
+
+        NOTE this is related to but reversed logic from
+        `casexml.apps.case.xml.parser.CaseAttachment.is_delete`.
+        """
+        return self.attachment_src or self.attachment_from
+
     @classmethod
     def from_case_index_update(cls, attachment):
-        if attachment.attachment_src:
+        if attachment.attachment_src or attachment.attachment_from:
             guessed = mimetypes.guess_type(attachment.attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 mime_type = guessed[0]

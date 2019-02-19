@@ -1,40 +1,53 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import six.moves.urllib.parse
-import warnings
 
+import warnings
+from datetime import datetime, timedelta
+
+import six
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+from couchdbkit.exceptions import ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
+from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import Timeout, ConnectionError
-from couchdbkit.exceptions import ResourceNotFound
 
+from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, \
-    FormRepeaterJsonPayloadGenerator, CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator, \
-    ShortFormRepeaterJsonPayloadGenerator, AppStructureGenerator, UserPayloadGenerator, LocationPayloadGenerator
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.quickcache import quickcache
-from dimagi.ext.couchdbkit import *
-from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from couchforms.const import DEVICE_LOG_XMLNS
-from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.post import simple_post, perform_SOAP_operation
-
-from .dbaccessors import (
-    get_pending_repeat_record_count,
-    get_failure_repeat_record_count,
-    get_success_repeat_record_count,
-    get_cancelled_repeat_record_count
+from corehq.motech.const import ALGO_AES
+from corehq.motech.repeaters.repeater_generators import (
+    FormRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    AppStructureGenerator,
+    UserPayloadGenerator,
+    LocationPayloadGenerator,
 )
+from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT, REPEATER_SUCCESS_COUNT
+from corehq.util.quickcache import quickcache
+from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    Document,
+    DocumentSchema,
+    IntegerProperty,
+    ListProperty,
+    StringListProperty,
+    StringProperty,
+)
+from dimagi.utils.parsing import json_format_datetime
+from dimagi.utils.post import simple_post
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
@@ -44,9 +57,14 @@ from .const import (
     RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
 )
+from .dbaccessors import (
+    get_pending_repeat_record_count,
+    get_failure_repeat_record_count,
+    get_success_repeat_record_count,
+    get_cancelled_repeat_record_count
+)
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
-import six
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -75,7 +93,7 @@ DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 
 
-class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
@@ -89,6 +107,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
+    skip_cert_verify = BooleanProperty(default=False)
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -230,6 +249,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.paused = False
         self.save()
 
     def pause(self):
@@ -253,20 +273,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.generator.get_headers()
 
+    @property
+    def plaintext_password(self):
+        if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
+            ciphertext = self.password.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.password
+
     def get_auth(self):
         if self.auth_type == BASIC_AUTH:
-            return HTTPBasicAuth(self.username, self.password)
+            return HTTPBasicAuth(self.username, self.plaintext_password)
         elif self.auth_type == DIGEST_AUTH:
-            return HTTPDigestAuth(self.username, self.password)
+            return HTTPDigestAuth(self.username, self.plaintext_password)
         return None
 
     @property
     def verify(self):
-        # overwrite to skip certificate verification when sending request
-        # to https urls
-        return True
+        return not self.skip_cert_verify
 
-    def send_request(self, repeat_record, payload, verify=None):
+    def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
@@ -312,6 +337,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return self.__class__.__name__
 
 
+@six.python_2_unicode_compatible
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -363,10 +389,11 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding forms to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -411,7 +438,7 @@ class CaseRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding cases to: %s" % self.url
 
 
@@ -438,13 +465,7 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-class SOAPRepeaterMixin(Repeater):
-    operation = StringProperty()
-
-    def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
-
-
+@six.python_2_unicode_compatible
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -470,7 +491,7 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding short form to: %s" % self.url
 
 
@@ -483,6 +504,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+@six.python_2_unicode_compatible
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
@@ -492,10 +514,11 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding users to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
@@ -505,7 +528,7 @@ class LocationRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding locations to: %s" % self.url
 
 

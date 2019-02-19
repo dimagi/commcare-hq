@@ -11,21 +11,11 @@
     <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
-    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
-    <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
-    <script src="{% static "reports/js/case_details.js" %}"></script>
-    <script src="{% static "case/js/case_property_modal.js" %}"></script>
-    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
-    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'reports/js/case_details' %}
 
 {% block page_content %}
 
-
+{% initial_page_data 'context_case_id' case.case_id %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
 {% initial_page_data 'timezone_offset' timezone_offset %}
 {% initial_page_data 'xform_api_url' xform_api_url %}
@@ -33,6 +23,7 @@
 {% registerurl "case_form_data" case.domain case.case_id '---' %}
 {% registerurl "case_property_names" case.domain case.case_id %}
 {% registerurl "edit_case" case.domain case.case_id %}
+{% registerurl "edit_form" case.domain '---' %}
 {% registerurl "case_property_changes" case.domain case.case_id '---' %}
 
 {# This is used in case/partials/repeat_records.html #}
@@ -48,8 +39,8 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <ul class="nav nav-tabs" style="margin-bottom: 10px;">
-                    <li class="active">
+                <ul class="nav nav-tabs sticky-tabs" style="margin-bottom: 10px;">
+                    <li>
                         <a href="#properties" data-toggle="tab">
                             {% trans "Case Properties" %}
                         </a>
@@ -70,7 +61,7 @@
                 </ul>
 
                 <div class="tab-content">
-                    <div class="tab-pane active" id="properties">
+                    <div class="tab-pane" id="properties">
                         <div class="row-fluid">
                             {% if dynamic_properties %}
                                 {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
@@ -214,111 +205,20 @@
 
     {% include "case/partials/case_property_modal.html" %}
 
-    {% if show_properties_edit %}
-    <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
-    <div id="edit-dynamic-properties" class="hide modal fade" tabindex="-1" data-bind="
-        css: {
-            'full-screen-modal': isFullScreenModal(),
-            'hide': false,
-        },
-        event: { 'hidden.bs.modal': init }"
-    >
-        <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
-            <div class="modal-content">
-                <div class="modal-header with-controls">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <div class="form-inline pull-right" data-bind="visible: !showSpinner()">
-                        <div class="input-group input-group-sm">
-                            <input type="text" class="form-control" placeholder="{% trans "Search" %}"
-                                   data-bind="value: query, valueUpdate: 'afterkeydown'" />
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" data-bind="click: initQuery">
-                                    <i class="fa fa-times"></i>
-                                </button>
-                            </span>
-                        </div>
-                    </div>
-                    <h4 class="modal-title">
-                        {% trans "Data Corrections" %}
-                    </h4>
-                </div>
-                <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
-                    <div class='alert alert-danger' data-bind="visible: showError">
-                        {% blocktrans %}
-                            Something unexpected happened.
-                            Please refresh the page and try again, or report an issue if the problem persists.
-                        {% endblocktrans %}
-                    </div>
-                    <div class='alert alert-danger' data-bind="visible: showRetry">
-                        {% blocktrans %}
-                            Something unexpected happened.
-                            Please try again, or report an issue if the problem persists.
-                        {% endblocktrans %}
-                    </div>
-                    <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
-                    <div data-bind="visible: !showSpinner()">
-                        <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
-                        <div class="container-fluid">
-                            <!-- ko foreach: visibleColumns -->
-                                <div data-bind="attr: { 'class': $root.columnClass }">
-                                    <!-- ko foreach: $data -->
-                                        <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
-                                            <label class="col-sm-6 control-label">
-                                                <i class="fa fa-pencil-square" data-bind="visible: dirty()"></i>
-                                                <span data-bind="text: name"></span>
-                                            </label>
-                                            <div class="col-sm-6">
-                                                <input type="text" class="form-control"
-                                                       data-bind="value: value,
-                                                                  attr: { 'data-name': name },
-                                                                  event: { change: function() { this.dirty(true); } }" />
-                                            </div>
-                                        </div>
-                                    <!-- /ko -->
-                                </div>
-                            <!-- /ko -->
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer with-controls">
-                    <ul class="pagination pull-left" data-bind="visible: showPagination">
-                        <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                        <!-- ko foreach: visiblePages -->
-                            <li data-bind="css: { active: $parent.currentPage() == $data }">
-                                <a href="#" data-bind="click: function() { $parent.currentPage($data); }, text: $data"></a>
-                            </li>
-                        <!-- /ko -->
-                        <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
-                    </ul>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                    <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
-                        <span data-bind="visible: !showRetry()">
-                            {% trans "Save" %}
-                        </span>
-                        <span data-bind="visible: showRetry()">
-                            {% trans "Try Again" %}
-                        </span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     {% if can_edit_data %}
-    {# Only show section if it's going to contain at least one button #}
-    {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
-        {% if show_properties_edit %}
-            <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
-                <i class="fa fa-edit"></i>
-                {% trans 'Data Corrections' %}
-            </button>
-        {% endif %}
-        {% if show_case_rebuild %}
+            <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
+                <i class="fa fa-cloud-download"></i>
+                {% trans 'Download Case History' %}
+            </a>
+            {% if show_properties_edit %}
+                <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                    <i class="fa fa-shower"></i>
+                    {% trans 'Clean Case Data' %}
+                </button>
+            {% endif %}
+        {% if show_case_rebuild and not is_usercase %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
                 <button type="submit" class="btn btn-default disable-on-submit" >
                     <i class="fa fa-save"></i>
@@ -343,6 +243,11 @@
         </div>
     </div>
     {% endif %}
-    {% endif %}
 </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if show_properties_edit %}
+        {% include 'reports/partials/data_corrections_modal.html' %}
+    {% endif %}
 {% endblock %}

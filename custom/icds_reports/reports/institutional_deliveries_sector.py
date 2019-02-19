@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import institutional_deliveries_help_text
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
@@ -73,12 +74,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Percentage of pregnant women who delivered in a public or private medical facility "
-            "in the last month. "
-            "<br/><br/>"
-            "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
-        )),
+        "info": institutional_deliveries_help_text(html=True),
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -129,12 +125,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
         "fills": fills,
         "rightLegend": {
             "average": average,
-            "info": _((
-                "Percentage of pregnant women who delivered in a public or private medical facility "
-                "in the last month. "
-                "<br/><br/>"
-                "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
-            )),
+            "info": institutional_deliveries_help_text(html=True),
             "extended_info": [
                 {
                     'indicator': 'Total number of pregnant women who delivered in the last month:',

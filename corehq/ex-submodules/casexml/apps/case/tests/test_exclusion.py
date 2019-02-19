@@ -7,11 +7,11 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
+from io import open
 
 TEST_DOMAIN = 'test-domain'
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseExclusionTest(TestCase):
     """
     Tests the exclusion of device logs from case processing

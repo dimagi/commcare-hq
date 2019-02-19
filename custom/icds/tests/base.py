@@ -50,7 +50,7 @@ class BaseICDSTest(TestCase):
             update=update,
             **kwargs
         )
-        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
+        case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()).decode('utf-8'), cls.domain)[1][0]
         cls.created_case_ids.append(case.case_id)
         return case
 
@@ -60,6 +60,18 @@ class BaseICDSTest(TestCase):
             'person',
             update={'language_code': 'en'},
             case_name="Sam",
+            owner_id=owner_id,
+        )
+        cls.migrated_mother_person_case = cls.create_case(
+            'person',
+            update={'migration_status': 'migrated', 'language_code': 'en'},
+            case_name="Eva",
+            owner_id=owner_id,
+        )
+        cls.opted_out_mother_person_case = cls.create_case(
+            'person',
+            update={'registered_status': 'not_registered', 'language_code': 'en'},
+            case_name="Kara",
             owner_id=owner_id,
         )
         cls.child_person_case = cls.create_case(
@@ -89,6 +101,22 @@ class BaseICDSTest(TestCase):
             'ccs_record',
             parent_case_id=cls.mother_person_case.case_id,
             parent_case_type=cls.mother_person_case.type,
+            parent_identifier='parent',
+            parent_relationship='child',
+            owner_id=owner_id,
+        )
+        cls.migrated_mother_ccs_record_case = cls.create_case(
+            'ccs_record',
+            parent_case_id=cls.migrated_mother_person_case.case_id,
+            parent_case_type=cls.migrated_mother_person_case.type,
+            parent_identifier='parent',
+            parent_relationship='child',
+            owner_id=owner_id,
+        )
+        cls.opted_out_mother_ccs_record_case = cls.create_case(
+            'ccs_record',
+            parent_case_id=cls.opted_out_mother_person_case.case_id,
+            parent_case_type=cls.opted_out_mother_person_case.type,
             parent_identifier='parent',
             parent_relationship='child',
             owner_id=owner_id,

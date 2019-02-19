@@ -4,7 +4,7 @@
 {% block init_filter %}{% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
-    <script type="text/javascript">
+    <script>
         $(function () {
             var separator = '{{ separator }}';
             var report_labels = JSON.parse('{{ report_labels_json|safe }}');

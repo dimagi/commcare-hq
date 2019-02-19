@@ -1,0 +1,166 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "report_id": "static-hew_performance_by_submission_date_all_forms",
+  "data_source_table": "static-hew_performance_indicators",
+  "config": {
+    "description": "All forms",
+    "title": "HEW performance report by submission date (all forms)",
+    "configured_charts": [
+      {
+        "y_axis_columns": [
+          {
+            "display": "All forms",
+            "column_id": "visit_count"
+          }
+        ],
+        "x_axis_column": "received_on_ethiopian",
+        "title": "Performance – by Submission Date",
+        "display_params": {},
+        "is_stacked": false,
+        "aggregation_column": null,
+        "chart_id": "Chart",
+        "type": "multibar"
+      }
+    ],
+    "aggregation_columns": [
+      "received_on_ethiopian"
+    ],
+    "filters": [
+      {
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "Location",
+        "field": "health_post_id",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "health_location"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Submitted date",
+        "field": "received_on",
+        "type": "date",
+        "slug": "received_on"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Select date",
+        "field": "received_on",
+        "type": "date",
+        "slug": "date_selector"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "HEW name",
+        "field": "hew_name",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "hew_name"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "Health post",
+        "field": "health_post",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "health_post"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "User location type",
+        "field": "user_location_type",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "user_location_type"
+      },
+      {
+        "display": "Test or Real",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Test",
+            "value": "Test"
+          },
+          {
+            "display": "Real",
+            "value": "Real"
+          }
+        ],
+        "field": "test_or_real",
+        "type": "choice_list",
+        "slug": "test_or_real"
+      }
+    ],
+    "columns": [
+      {
+        "field": "received_on_ethiopian",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "received_on_ethiopian",
+        "visible": true,
+        "display": "Submitted date",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "visit_count",
+        "visible": true,
+        "display": "All forms",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      }
+    ]
+  }
+}

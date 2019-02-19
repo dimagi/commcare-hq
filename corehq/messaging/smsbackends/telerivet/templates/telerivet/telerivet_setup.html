@@ -1,29 +1,35 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
-{% load djangular_tags %}
 {% load crispy_forms_tags %}
 
-
-{% block js %}{{ block.super }}
-    <script src="{% static "telerivet/js/telerivet_setup.js" %}"></script>
-{% endblock %}
-
+{% requirejs_main 'telerivet/js/telerivet_setup' %}
 
 {% block page_content %}
-{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+
 {% initial_page_data 'form_name' finalize_gateway_form.name.value %}
 {% initial_page_data 'form_set_as_default' finalize_gateway_form.set_as_default.value %}
 {% initial_page_data 'gateway_list_url' gateway_list_url %}
 {% initial_page_data 'request_token' request_token %}
-<div ng-app="telerivetSetupApp">
-    {% include "telerivet/partials/start.html" %}
-    {% include "telerivet/partials/step1.html" %}
-    {% include "telerivet/partials/step2.html" %}
-    {% include "telerivet/partials/step3.html" %}
-    {% include "telerivet/partials/finish.html" %}
-    <div>
-        <div ng-view></div>
+{% registerurl 'get_last_inbound_sms' domain %}
+{% registerurl 'send_sample_sms' domain %}
+{% registerurl 'create_backend' domain %}
+
+<div id="telerivet-setup" class="ko-template">
+    <div data-bind="visible: start">
+        {% include "telerivet/partials/start.html" %}
+    </div>
+    <div data-bind="visible: step1">
+        {% include "telerivet/partials/step1.html" %}
+    </div>
+    <div data-bind="visible: step2">
+        {% include "telerivet/partials/step2.html" %}
+    </div>
+    <div data-bind="visible: step3">
+        {% include "telerivet/partials/step3.html" %}
+    </div>
+    <div data-bind="visible: finish">
+        {% include "telerivet/partials/finish.html" %}
     </div>
 </div>
 {% endblock %}

@@ -9,6 +9,8 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 import doctest
 import corehq.apps.app_manager.app_schemas.case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import _CaseTypeEquivalence, \
+    _CaseRelationshipManager, _CaseTypeRef
 
 
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
@@ -135,7 +137,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
     def _add_scheduler_to_form(self, form, module, form_abreviation):
         # (this mimics the behavior in app_manager.views.schedules.edit_visit_schedule()
         # A Form.source is required to retreive scheduler properties
-        form.source = self.get_xml('very_simple_form')
+        form.source = self.get_xml('very_simple_form').decode('utf-8')
         phase, _ = module.get_or_create_schedule_phase(anchor='date-opened')
         form.schedule_form_id = form_abreviation
         form.schedule = FormSchedule(
@@ -146,6 +148,24 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             ]
         )
         phase.add_form(form)
+
+
+class TestCycle(SimpleTestCase):
+    def test_cycle(self):
+        all_possible_equivalences = _CaseRelationshipManager(parent_type_map={
+            'ccs_record': {'parent': ['person']},
+            'person': {'parent': ['ccs_record', 'person']},
+        })._all_possible_equivalences
+        self.assertEqual(all_possible_equivalences, {
+            _CaseTypeEquivalence('ccs_record', _CaseTypeRef('ccs_record', ('parent', 'parent'))),
+            _CaseTypeEquivalence('ccs_record', _CaseTypeRef('ccs_record', ())),
+            _CaseTypeEquivalence('ccs_record', _CaseTypeRef('person', ('parent', 'parent'))),
+            _CaseTypeEquivalence('ccs_record', _CaseTypeRef('person', ('parent',))),
+            _CaseTypeEquivalence('person', _CaseTypeRef('ccs_record', ('parent',))),
+            _CaseTypeEquivalence('person', _CaseTypeRef('person', ('parent', 'parent'))),
+            _CaseTypeEquivalence('person', _CaseTypeRef('person', ('parent',))),
+            _CaseTypeEquivalence('person', _CaseTypeRef('person', ())),
+        })
 
 
 class DocTests(SimpleTestCase):

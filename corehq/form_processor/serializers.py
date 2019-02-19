@@ -4,9 +4,10 @@ from jsonfield import JSONField
 from rest_framework import serializers
 
 from corehq.apps.commtrack.models import StockState
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
-    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
+    XFormInstanceSQL, XFormOperationSQL,
     LedgerValue, CaseAttachmentSQL)
 import six
 
@@ -33,10 +34,10 @@ class XFormOperationSQLSerializer(serializers.ModelSerializer):
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
-    id = serializers.UUIDField(source="attachment_id")
+    id = serializers.CharField(source="key")
 
     class Meta(object):
-        model = XFormAttachmentSQL
+        model = BlobMeta
         fields = ('id', 'content_type', 'content_length')
 
 
@@ -101,14 +102,14 @@ class CommCareCaseIndexSQLSerializer(serializers.ModelSerializer):
 
 class CaseTransactionActionSerializer(serializers.ModelSerializer):
     xform_id = serializers.CharField(source='form_id')
-    date = serializers.DateTimeField(source='server_date')
+    date = serializers.DateTimeField(source='client_date')
 
     class Meta(object):
         model = CaseTransaction
         fields = ('xform_id', 'server_date', 'date', 'sync_log_id')
 
 
-class CaseTransactionactionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
+class CaseTransactionActionRawDocSerializer(JsonFieldSerializerMixin, CaseTransactionActionSerializer):
     type = serializers.CharField(source='readable_type')
 
     class Meta(object):
@@ -118,7 +119,8 @@ class CaseTransactionactionRawDocSerializer(JsonFieldSerializerMixin, CaseTransa
 
 class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
-    transactions = CaseTransactionactionRawDocSerializer(many=True, read_only=True, source='non_revoked_transactions')
+    transactions = CaseTransactionActionRawDocSerializer(
+        many=True, read_only=True, source='non_revoked_transactions')
 
     class Meta(object):
         model = CommCareCaseSQL

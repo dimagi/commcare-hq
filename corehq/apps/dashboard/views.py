@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.translation import ugettext_noop, ugettext as _
-from djangular.views.mixins import allow_remote_invocation
 
 import math
 
@@ -19,14 +18,15 @@ from corehq.apps.dashboard.models import (
     Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
-    DefaultProjectSettingsView
+from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
-from corehq.apps.hqwebapp.decorators import use_angular_js
+from corehq.util.context_processors import commcare_hq_names
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 
@@ -131,12 +131,17 @@ def _get_default_tiles(request):
             return False
         user = request.couch_user
         return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.project)
+            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
         )
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
-    can_view_exchange = lambda request: can_edit_apps(request) and not settings.ENTERPRISE_MODE
+    def can_view_exchange(request):
+        return (
+            can_edit_apps(request)
+            and not settings.ENTERPRISE_MODE
+            and not get_domain_master_link(request.domain)  # this isn't a linked domain
+        )
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
@@ -151,6 +156,12 @@ def _get_default_tiles(request):
     )
 
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
+    apps_link = lambda urlname, req: (
+        '' if domain_has_apps(request.domain)
+        else reverse(urlname, args=[request.domain])
+    )
+
+    commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
 
     return [
         Tile(
@@ -161,6 +172,7 @@ def _get_default_tiles(request):
             paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
         ),
         Tile(
@@ -175,12 +187,12 @@ def _get_default_tiles(request):
         ),
         Tile(
             request,
-            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
+            title=_('{cc_name} Supply Setup').format(cc_name=commcare_name),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=commcare_name),
         ),
         Tile(
             request,

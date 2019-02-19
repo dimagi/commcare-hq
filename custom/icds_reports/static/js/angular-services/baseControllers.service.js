@@ -3,7 +3,7 @@
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
         BaseController: function($scope, $routeParams, $location, locationsService, userLocationId,
-            storageService, haveAccessToAllLocations) {
+            storageService, haveAccessToAllLocations, haveAccessToFeatures) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
@@ -20,6 +20,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.all_locations = [];
             vm.location_type = null;
             vm.loaded = false;
+
+            vm.haveAccessToFeatures = haveAccessToFeatures;
             vm.message = storageService.getKey('message') || false;
 
             $scope.$watch(function() {
@@ -191,7 +193,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                                 var day = _.find(vm.chartData[0].values, function(num) {
                                     return num['x'] === d.value;
                                 });
-                                return vm.getTooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
+                                return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                             });
                             return chart;
                         },
@@ -213,9 +215,6 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
                 }
                 return template;
-            };
-            vm.showAllLocations = function() {
-                return vm.all_locations.length < 10;
             };
         },
     };

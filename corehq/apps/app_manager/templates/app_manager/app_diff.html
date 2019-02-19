@@ -1,7 +1,7 @@
 {% extends "app_manager/source_files.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
-
+{% requirejs_main 'app_manager/js/source_files' %}
 {% block stylesheets %}{{ block.super }}
     {% compress css %}
         <link type="text/css" rel="stylesheet" href="{% static 'app_manager/css/diff.css' %}"/>

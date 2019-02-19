@@ -7,23 +7,17 @@ from corehq.tabs.utils import dropdown_dict
 
 from memoized import memoized
 
-from corehq.apps.styleguide.examples.controls_demo.views import (
-    DefaultControlsDemoFormsView,
-    SelectControlDemoView,
-)
 from corehq.apps.styleguide.examples.simple_crispy_form.views import (
     DefaultSimpleCrispyFormSectionView,
     SimpleCrispyFormView,
 )
 from corehq.apps.styleguide.views import (
     MainStyleGuideView,
-    FormsStyleGuideView,
+    MoleculesStyleGuideView,
 )
 from corehq.apps.styleguide.views.docs import (
     FormsSimpleCrispyFormExampleView,
     ViewsSimpleCrispyFormExampleView,
-    SelectControlFormExampleView,
-    SelectControlViewExampleView,
 )
 
 
@@ -63,44 +57,8 @@ class SimpleCrispyFormSGExample(BaseSGTab):
             ]),
             (_("Style Guide"), [
                 {
-                    'title': _("Back to Form Anatomy"),
-                    'url': '%s#anatomy' % reverse(FormsStyleGuideView.urlname),
-                },
-            ]),
-        ]
-
-
-class ControlsDemoSGExample(BaseSGTab):
-    title = ugettext_noop("Form Controls")
-    view = DefaultControlsDemoFormsView.urlname
-
-    url_prefix_formats = ('/styleguide/docs/controls_demo/',)
-
-    @property
-    @memoized
-    def sidebar_items(self):
-        return [
-            (_("Live Examples"), [
-                {
-                    'title': SelectControlDemoView.page_title,
-                    'url': reverse(SelectControlDemoView.urlname),
-                },
-            ]),
-            (_("Documentation"), [
-                {
-                    'title': SelectControlFormExampleView.page_title,
-                    'url': reverse(FormsSimpleCrispyFormExampleView.urlname),
-                },
-                {
-                    'title': SelectControlViewExampleView.page_title,
-                    'url': reverse(ViewsSimpleCrispyFormExampleView.urlname),
-                },
-            ]),
-            (_("Style Guide"), [
-                {
-                    'title': _("Back to Form Controls"),
-                    'url': '%s#form-controls' % reverse(
-                        FormsStyleGuideView.urlname),
+                    'title': _("Back to Forms"),
+                    'url': '%s#molecules-forms' % reverse(MoleculesStyleGuideView.urlname),
                 },
             ]),
         ]
@@ -119,10 +77,6 @@ class SGExampleTab(BaseSGTab):
             dropdown_dict(
                 _("Simple Crispy Form"),
                 url=reverse(DefaultSimpleCrispyFormSectionView.urlname)
-            ),
-            dropdown_dict(
-                _("Form Controls"),
-                url=reverse(DefaultControlsDemoFormsView.urlname)
             ),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(

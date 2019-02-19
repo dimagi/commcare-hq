@@ -64,7 +64,7 @@
 
                             </div>
                         {% else %}
-                            <p class="muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
+                            <p class="text-muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
                         {% endif %}
                     </td>
                 </tr>
@@ -74,7 +74,7 @@
     </div>
     <p>
         {% if web_user and not restrict_domain_creation or request.user.is_superuser %}
-            <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
+            <a class="btn btn-primary" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
         {% endif %}
     </p>
 {% endblock %}

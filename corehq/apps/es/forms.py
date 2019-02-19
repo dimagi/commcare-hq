@@ -29,6 +29,7 @@ class FormES(HQESQuery):
             user_type,
             user_ids_handle_unknown,
             j2me_submissions,
+            updating_cases,
         ] + super(FormES, self).builtin_filters
 
     def user_aggregation(self):
@@ -100,3 +101,9 @@ def j2me_submissions(gt=None, gte=None, lt=None, lte=None):
         filters.regexp("form.meta.appVersion", "v2+.[0-9]+.*"),
         submitted(gt, gte, lt, lte)
     )
+
+
+def updating_cases(case_ids):
+    """return only those forms that have case blocks that touch the cases listed in `case_ids`
+    """
+    return filters.term("__retrieved_case_ids", case_ids)

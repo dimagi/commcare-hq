@@ -2,37 +2,48 @@ from __future__ import absolute_import, division
 from __future__ import unicode_literals
 import json
 import os
+import time
 import zipfile
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from functools import wraps
 
 import operator
 
+import pytz
 import qrcode
 from base64 import b64encode
-from six.moves import cStringIO
+from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
+from openpyxl import Workbook
 from xhtml2pdf import pisa
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import StaticReportConfiguration
+from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
-from dimagi.utils.couch import get_redis_client
+from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
-from django.db.models import Case, When, Q, F, IntegerField
+from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
+from io import open
+from pillowtop.models import KafkaCheckpoint
+
 
 OPERATORS = {
     "==": operator.eq,
@@ -50,9 +61,12 @@ BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
-DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DEFAULT_VALUE = DATA_NOT_ENTERED
+DATA_NOT_VALID = "Data Not Valid"
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
@@ -67,13 +81,13 @@ class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
         report_config = ConfigurableReportDataSource.from_spec(
-            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
+            self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain), domain)
         )
         report_config.set_filter_values(filters)
         self.report_config = report_config
 
-    def _get_static_report_configuration_without_owner_transform(self, report_id):
-        static_report_configuration = StaticReportConfiguration.by_id(report_id)
+    def _get_static_report_configuration_without_owner_transform(self, report_id, domain):
+        static_report_configuration = StaticReportConfiguration.by_id(report_id, domain)
         for report_column in static_report_configuration.report_columns:
             transform = report_column.transform
             if transform.get('type') == 'custom' and transform.get('custom_type') == 'owner_display':
@@ -105,7 +119,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
@@ -275,6 +289,27 @@ def get_age_filter(age_value):
         return {'age_tranche': age_value}
 
 
+def get_age_filter_in_months(age_value):
+    """
+        When age_value = 6 it means first range is chosen 0-6 months.
+        For that range we want to include 0 and 6 in results.
+    """
+    if age_value == '6':
+        return {'age_in_months__range': ['0', '6']}
+    elif age_value == '12':
+        return {'age_in_months__range': ['7', '12']}
+    elif age_value == '24':
+        return {'age_in_months__range': ['13', '24']}
+    elif age_value == '36':
+        return {'age_in_months__range': ['25', '36']}
+    elif age_value == '48':
+        return {'age_in_months__range': ['37', '48']}
+    elif age_value == '60':
+        return {'age_in_months__range': ['49', '60']}
+    elif age_value == '72':
+        return {'age_in_months__range': ['61', '72']}
+
+
 def match_age(age):
     if 0 <= age <= 1:
         return '0-1 month'
@@ -327,10 +362,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -338,6 +373,81 @@ def get_status(value, second_part='', normal_value='', exportable=False):
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
     return status if not exportable else status['value']
+
+
+def is_anemic(value):
+    if value['anemic_severe']:
+        return 'Y'
+    elif value['anemic_moderate']:
+        return 'Y'
+    elif value['anemic_normal']:
+        return 'N'
+    else:
+        return DATA_NOT_ENTERED
+
+
+def get_anemic_status(value):
+    if value['anemic_severe']:
+        return 'Severe'
+    elif value['anemic_moderate']:
+        return 'Moderate'
+    elif value['anemic_normal']:
+        return 'Normal'
+    else:
+        return DATA_NOT_ENTERED
+
+
+def get_symptoms(value):
+    if value['bleeding']:
+        return 'Bleeding'
+    elif value['swelling']:
+        return 'Face, hand or genital swelling'
+    elif value['blurred_vision']:
+        return 'Blurred vision / headache'
+    elif value['convulsions']:
+        return 'Convulsions / unconsciousness'
+    elif value['rupture']:
+        return 'Water ruptured without labor pains'
+    else:
+        return 'None'
+
+
+def get_counseling(value):
+    counseling = []
+    if value['eating_extra']:
+        counseling.append('Eating Extra')
+    if value['resting']:
+        counseling.append('Taking Rest')
+    if value['immediate_breastfeeding']:
+        counseling.append('Counsel on Immediate Breastfeeding')
+    if counseling:
+        return ', '.join(counseling)
+    else:
+        return 'None'
+
+
+def get_tt_dates(value):
+    tt_dates = []
+    # ignore 1970-01-01 as that is default date for ledger dates
+    default = date(1970, 1, 1)
+    if value['tt_1'] and value['tt_1'] != default:
+        tt_dates.append(str(value['tt_1']))
+    if value['tt_2'] and value['tt_2'] != default:
+        tt_dates.append(str(value['tt_2']))
+    if tt_dates:
+        return '; '.join(tt_dates)
+    else:
+        return 'None'
+
+
+def get_delivery_nature(value):
+    delivery_natures = {
+        1: 'Vaginal',
+        2: 'Caesarean',
+        3: 'Instrumental',
+        0: DATA_NOT_ENTERED,
+    }
+    return delivery_natures.get(value['delivery_nature'], DATA_NOT_ENTERED)
 
 
 def current_age(dob, selected_date):
@@ -381,7 +491,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
     valid_total = 0
     in_month_total = 0
     total = 0
-    values_to_calculate_average = []
+    values_to_calculate_average = {'numerator': 0, 'denominator': 0}
 
     for row in data:
         valid = row[denom_prop] or 0
@@ -389,8 +499,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
 
-        value = in_month * 100 / (row[denom_prop] or 1)
-        values_to_calculate_average.append(value)
+        values_to_calculate_average['numerator'] += in_month if in_month else 0
+        values_to_calculate_average['denominator'] += row[denom_prop] if row[denom_prop] else 0
 
         valid_total += valid
         in_month_total += in_month
@@ -412,7 +522,10 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         elif value >= fill_key_bigger:
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
-    average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
+    average = (
+        (values_to_calculate_average['numerator'] * 100) /
+        float(values_to_calculate_average['denominator'] or 1)
+    )
     return data_for_map, valid_total, in_month_total, average, total
 
 
@@ -432,13 +545,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     }
 
     age_intervals = {
-        '6': '0-6 months',
-        '12': '6-12 months',
-        '24': '12-24 months',
-        '36': '24-36 months',
-        '48': '36-48 months',
-        '60': '48-60 months',
-        '72': '60-72 months'
+        '6': '0-6 months (0-180 days)',
+        '12': '6-12 months (181-365 days)',
+        '24': '12-24 months (366-730 days)',
+        '36': '24-36 months (731-1095 days)',
+        '48': '36-48 months (1096-1460 days)',
+        '60': '48-60 months (1461-1825 days)',
+        '72': '60-72 months (1826-2190 days)'
     }
 
     gender = config.get('gender')
@@ -463,22 +576,42 @@ def chosen_filters_to_labels(config, default_interval=''):
 
 def zip_folder(pdf_files):
     zip_hash = uuid.uuid4().hex
-    client = get_redis_client()
-    in_memory = cStringIO()
+    icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
+    in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    for pdf_file in pdf_files:
-        file = client.get(pdf_file['uuid'])
-        zip_file.writestr('ICDS_CAS_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
+
+    for pdf_file in files_to_zip:
+        zip_file.writestr(
+            'ICDS_CAS_monthly_register_{}.pdf'.format(pdf_files[pdf_file.blob_id]),
+            pdf_file.get_file_from_blobdb().read()
+        )
     zip_file.close()
-    client.set(zip_hash, in_memory.getvalue())
-    client.expire(zip_hash, 24 * 60 * 60)
+
+    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+    # we read this to save file in blobdb
+    in_memory.seek(0)
+    icds_file.store_file_in_blobdb(in_memory, expired=60 * 60 * 24)
+    icds_file.save()
     return zip_hash
 
 
-def create_pdf_file(pdf_hash, pdf_context):
+def create_excel_file(excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
+def create_pdf_file(pdf_context):
+    pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    resultFile = cStringIO()
-    client = get_redis_client()
+    resultFile = BytesIO()
+    icds_file = IcdsFile(blob_id=pdf_hash, data_type='issnip_monthly')
     try:
         pdf_page = template.render(pdf_context)
     except Exception as ex:
@@ -487,9 +620,12 @@ def create_pdf_file(pdf_hash, pdf_context):
         pdf_page,
         dest=resultFile,
         show_error_as_pdf=True)
-    client.set(pdf_hash, resultFile.getvalue())
-    client.expire(pdf_hash, 24 * 60 * 60)
-    resultFile.close()
+    # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
+    # we read this to save file in blobdb
+    resultFile.seek(0)
+
+    icds_file.store_file_in_blobdb(resultFile, expired=60 * 60 * 24)
+    icds_file.save()
     return pdf_hash
 
 
@@ -503,7 +639,7 @@ def generate_qrcode(data):
     qr.add_data(data)
     qr.make(fit=True)
     image = qr.make_image()
-    output = cStringIO()
+    output = BytesIO()
     image.save(output, "PNG")
     qr_content = b64encode(output.getvalue())
     return qr_content
@@ -544,3 +680,300 @@ def person_has_aadhaar_column(beta):
 
 def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
+
+
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_normal'
+
+
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2'
+
+
+def hfa_recorded_in_month_column(beta):
+    return 'zscore_grading_hfa_recorded_in_month'
+
+
+def wfh_recorded_in_month_column(beta):
+    return 'zscore_grading_wfh_recorded_in_month'
+
+
+def default_age_interval(beta):
+    return '0 - 5 years'
+
+
+def get_age_filters(beta):
+    return [
+        NOT(EQ('age_tranche', 'age_72'))
+    ]
+
+
+def get_age_condition(beta):
+    return "age_tranche != :age_72"
+
+
+def track_time(func):
+    """A decorator to track the duration an aggregation script takes to execute"""
+    from custom.icds_reports.models import AggregateSQLProfile
+
+    def get_async_indicator_time():
+        return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
+            .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
+
+    def get_sync_datasource_time():
+        return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
+            .exclude(doc_modification_time__isnull=True)\
+            .aggregate(Min('doc_modification_time'))['doc_modification_time__min']
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+
+        sync_latest_ds_update = get_sync_datasource_time()
+        async_latest_ds_update = get_async_indicator_time()
+
+        if sync_latest_ds_update and async_latest_ds_update:
+            last_included_doc_time = min(sync_latest_ds_update, async_latest_ds_update)
+        else:
+            last_included_doc_time = sync_latest_ds_update or async_latest_ds_update
+
+        AggregateSQLProfile.objects.create(
+            name=func.__name__,
+            duration=int(end - start),
+            last_included_doc_time=last_included_doc_time
+        )
+        return result
+
+    return wrapper
+
+
+def percent_num(x, y):
+    return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
+
+
+def format_decimal(num):
+    return "%.2f" % num
+
+
+def percent_or_not_entered(x, y):
+    return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
+
+
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''
+
+
+def india_now():
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(india_timezone)
+    return india_now.strftime("%H:%M:%S %d %B %Y")
+
+
+def day_suffix(day):
+    return 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
+
+
+def custom_strftime(format_to_use, date_to_format):
+    # adds {S} option to strftime that formats day as 1st, 3rd, 11th etc.
+    return date_to_format.strftime(format_to_use).replace(
+        '{S}', str(date_to_format.day) + day_suffix(date_to_format.day)
+    )
+
+
+def create_aww_performance_excel_file(excel_data, data_type, month, state, district, block):
+    export_info = excel_data[1][1]
+    excel_data = [line[3:] for line in excel_data[0][1]]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "AWW Performance Report"
+    worksheet.sheet_view.showGridLines = False
+    # sheet title
+    worksheet.merge_cells('B2:J2')
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "AWW Performance Report for the month of {}".format(month)
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    # sheet header
+    for cell in {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "J3"}:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+    worksheet.merge_cells('B3:C3')
+    worksheet['B3'].value = "State: {}".format(state)
+    worksheet['D3'].value = "District: {}".format(district)
+    worksheet.merge_cells('E3:F3')
+    worksheet['E3'].value = "Block: {}".format(block)
+    worksheet.merge_cells('H3:I3')
+    worksheet['H3'].value = "Date when downloaded:"
+    worksheet['H3'].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet['J3'].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet['J3'].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 5
+    table_header = {
+        'B': "S.No",
+        'C': "Supervisor",
+        'D': "AWC",
+        'E': "AWW Name",
+        'F': "AWW Contact Number",
+        'G': "Home Visits Conducted",
+        'H': "Number of Days AWC was Open",
+        'I': "Weighing Efficiency",
+        'J': "Eligible for Incentive",
+    }
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        columns = ["B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {
+        'A': 4,
+        'B': 7,
+        'C': max(15, len(state) * 4 // 3),
+        'D': 13 + (len(district) * 4 // 3),
+        'E': 12,
+        'F': max(13, len(block) * 4 // 3),
+        'G': 15,
+        'H': 11,
+        'I': 14,
+        'J': 14,
+    }
+    for column in ["C", "E", "G"]:
+        if widths[column] > 25:
+            worksheet.row_dimensions[3].height = max(
+                16 * ((widths[column] // 25) + 1),
+                worksheet.row_dimensions[3].height
+            )
+            widths[column] = 25
+    columns = ["C", "D", "E", "F", "G", "H", "I", "J"]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    worksheet2['A1'].value = export_info[0][0]
+    worksheet2['B1'].value = export_info[0][1]
+    worksheet2['A2'].value = export_info[1][0]
+    worksheet2['B2'].value = export_info[1][1]
+    worksheet2['A3'].value = export_info[2][0]
+    worksheet2['B3'].value = export_info[2][1]
+    worksheet2['A4'].value = export_info[3][0]
+    worksheet2['B4'].value = export_info[3][1]
+    worksheet2['A4'].value = export_info[4][0]
+    worksheet2['B4'].value = export_info[4][1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
+def create_excel_file_in_openpyxl(excel_data, data_type):
+    workbook = Workbook()
+    first_worksheet = True
+    for worksheet_data in excel_data:
+        if first_worksheet:
+            worksheet = workbook.active
+            worksheet.title = worksheet_data[0]
+            first_worksheet = False
+        else:
+            worksheet = workbook.create_sheet(worksheet_data[0])
+        for row_number, row_data in enumerate(worksheet_data[1], start=1):
+            for column_number, cell_data in enumerate(row_data, start=1):
+                worksheet.cell(row=row_number, column=column_number).value = cell_data
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash

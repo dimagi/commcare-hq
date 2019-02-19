@@ -1,15 +1,19 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from datetime import date
+from datetime import date, datetime
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
 
-from custom.icds_reports.sqldata import ChildrenExport, PregnantWomenExport, ExportableMixin, DemographicsExport, \
-    SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
+from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
+from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 
 
 class TestExportData(TestCase):
@@ -18,10 +22,9 @@ class TestExportData(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportData, cls).setUpClass()
-        cls.india_now_mock = mock.patch.object(
-            ExportableMixin,
-            'india_now',
-            new_callable=mock.PropertyMock(return_value='16:21:11 15 November 2017')
+        cls.india_now_mock = mock.patch(
+            'custom.icds_reports.utils.mixins.india_now',
+            new=mock.Mock(return_value='16:21:11 15 November 2017')
         )
         cls.india_now_mock.start()
 
@@ -67,7 +70,7 @@ class TestExportData(TestCase):
                 'domain': 'icds-cas'
             },
         ).get_excel_data('b1')[0][1]
-        self.assertEqual(len(data), 11)
+        self.assertEqual(len(data), 36)
 
     def test_children_export_headers(self):
         data = ChildrenExport(
@@ -115,19 +118,19 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
                 "74.20 %",
-                "0.00 %",
+                '7.69 %',
                 "38.46 %",
-                '53.85 %',
+                "53.85 %",
                 "38.46 %",
                 "46.15 %",
                 "15.38 %",
-                "66.67 %",
-                "14.77%",
+                '66.67 %',
+                '14.46%',
                 "37.50 %",
                 "50.00 %",
                 "65.62 %",
@@ -149,19 +152,19 @@ class TestExportData(TestCase):
             [
                 'st1',
                 '67.39 %',
-                '1.42 %',
+                '1.40 %',
                 317,
                 '2.60 %',
                 '23.21 %',
                 '74.20 %',
-                '0.00 %',
+                '7.69 %',
                 '38.46 %',
                 '53.85 %',
                 '38.46 %',
                 '46.15 %',
                 '15.38 %',
                 "66.67 %",
-                '14.77%',
+                '14.46%',
                 '37.50 %',
                 '50.00 %',
                 '65.62 %',
@@ -183,19 +186,19 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
                 "74.20 %",
-                "0.00 %",
+                "7.69 %",
                 "38.46 %",
                 '53.85 %',
                 "38.46 %",
                 "46.15 %",
                 "15.38 %",
                 "66.67 %",
-                "14.77%",
+                "14.46%",
                 "37.50 %",
                 "50.00 %",
                 "65.62 %",
@@ -217,19 +220,19 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
                 "74.20 %",
-                "0.00 %",
+                "7.69 %",
                 "38.46 %",
-                '53.85 %',
-                "38.46 %",
+                "53.85 %",
+                '38.46 %',
                 "46.15 %",
                 "15.38 %",
                 "66.67 %",
-                "14.77%",
+                "14.46%",
                 "37.50 %",
                 "50.00 %",
                 "65.62 %",
@@ -251,19 +254,19 @@ class TestExportData(TestCase):
             [
                 "st1",
                 "67.39 %",
-                "1.42 %",
+                "1.40 %",
                 317,
                 "2.60 %",
                 "23.21 %",
                 "74.20 %",
-                "0.00 %",
+                "7.69 %",
                 "38.46 %",
-                '53.85 %',
-                "38.46 %",
+                "53.85 %",
+                '38.46 %',
                 "46.15 %",
                 "15.38 %",
                 "66.67 %",
-                "14.77%",
+                "14.46%",
                 "37.50 %",
                 "50.00 %",
                 "65.62 %",
@@ -285,19 +288,19 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
                 "78.69 %",
-                "3.45 %",
-                "13.79 %",
-                '62.07 %',
-                "36.67 %",
-                "20.00 %",
-                "43.33 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
                 "0.00 %",
-                "7.19%",
+                "7.07%",
                 "42.86 %",
                 "25.00 %",
                 "60.00 %",
@@ -319,19 +322,19 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
                 "78.69 %",
-                "3.45 %",
-                "13.79 %",
-                '62.07 %',
-                "36.67 %",
-                "20.00 %",
-                "43.33 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
                 "0.00 %",
-                "7.19%",
+                "7.07%",
                 "42.86 %",
                 "25.00 %",
                 "60.00 %",
@@ -353,19 +356,19 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
                 "78.69 %",
-                "3.45 %",
-                "13.79 %",
-                '62.07 %',
-                "36.67 %",
-                "20.00 %",
-                "43.33 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
                 "0.00 %",
-                "7.19%",
+                "7.07%",
                 "42.86 %",
                 "25.00 %",
                 "60.00 %",
@@ -387,19 +390,19 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
                 "78.69 %",
-                "3.45 %",
-                "13.79 %",
-                '62.07 %',
-                "36.67 %",
-                "20.00 %",
-                "43.33 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
                 "0.00 %",
-                "7.19%",
+                "7.07%",
                 "42.86 %",
                 "25.00 %",
                 "60.00 %",
@@ -421,19 +424,19 @@ class TestExportData(TestCase):
             [
                 "st2",
                 "70.45 %",
-                "3.04 %",
+                "2.99 %",
                 307,
                 "2.46 %",
                 "18.85 %",
                 "78.69 %",
-                "3.45 %",
-                "13.79 %",
-                '62.07 %',
-                "36.67 %",
-                "20.00 %",
-                "43.33 %",
+                "4.35 %",
+                "17.39 %",
+                '78.26 %',
+                "34.38 %",
+                "18.75 %",
+                "46.88 %",
                 "0.00 %",
-                "7.19%",
+                "7.07%",
                 "42.86 %",
                 "25.00 %",
                 "60.00 %",
@@ -619,6 +622,381 @@ class TestExportData(TestCase):
                             "87.05 %",
                             "86.33 %",
                             "57.97 %"
+                        ], 
+                        [
+                            'st3',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st4',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st4',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st5',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st5',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st5',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st6',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            0,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st6',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st6',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st6',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st7',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st7',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st7',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st7',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
+                        ],
+                        [
+                            'st7',
+                            2,
+                            0,
+                            1,
+                            '0.00%',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %',
+                            '0.00 %'
                         ]
                     ]
                 ],
@@ -643,259 +1021,7 @@ class TestExportData(TestCase):
             DemographicsExport(
                 config={
                     'domain': 'icds-cas'
-                }
-            ).get_excel_data('b1'),
-            [
-                [
-                    "Demographics",
-                    [
-                        [
-                            "State",
-                            "Number of households",
-                            "Total number of beneficiaries (under 6 years old and women between"
-                            " 11 and 49 years old, alive and seeking services) who have an aadhaar ID",
-                            "Total number of beneficiaries (under 6 years old and women between "
-                            "11 and 49 years old, alive and seeking services)",
-                            "Percent Aadhaar-seeded beneficaries",
-                            "Number of pregnant women",
-                            "Number of pregnant women enrolled for services",
-                            "Number of lactating women",
-                            "Number of lactating women enrolled for services",
-                            "Number of children 0-6 years old",
-                            "Number of children 0-6 years old enrolled for services",
-                            "Number of children 0-6 months old enrolled for services",
-                            "Number of children 6 months to 3 years old enrolled for services",
-                            "Number of children 3 to 6 years old enrolled for services",
-                            "Number of adolescent girls 11 to 14 years old",
-                            "Number of adolescent girls 15 to 18 years old",
-                            "Number of adolescent girls 11 to 14 years old that are enrolled for services",
-                            "Number of adolescent girls 15 to 18 years old that are enrolled for services"
-                        ],
-                        [
-                            "st1",
-                            7266,
-                            365,
-                            1493,
-                            "24.45 %",
-                            120,
-                            120,
-                            171,
-                            171,
-                            1227,
-                            1227,
-                            56,
-                            244,
-                            927,
-                            36,
-                            12,
-                            36,
-                            12
-                        ],
-                        [
-                            "st1",
-                            7266,
-                            365,
-                            1493,
-                            "24.45 %",
-                            120,
-                            120,
-                            171,
-                            171,
-                            1227,
-                            1227,
-                            56,
-                            244,
-                            927,
-                            36,
-                            12,
-                            36,
-                            12
-                        ],
-                        [
-                            "st1",
-                            7266,
-                            365,
-                            1493,
-                            "24.45 %",
-                            120,
-                            120,
-                            171,
-                            171,
-                            1227,
-                            1227,
-                            56,
-                            244,
-                            927,
-                            36,
-                            12,
-                            36,
-                            12
-                        ],
-                        [
-                            "st1",
-                            7266,
-                            365,
-                            1493,
-                            "24.45 %",
-                            120,
-                            120,
-                            171,
-                            171,
-                            1227,
-                            1227,
-                            56,
-                            244,
-                            927,
-                            36,
-                            12,
-                            36,
-                            12
-                        ],
-                        [
-                            "st1",
-                            7266,
-                            365,
-                            1493,
-                            "24.45 %",
-                            120,
-                            120,
-                            171,
-                            171,
-                            1227,
-                            1227,
-                            56,
-                            244,
-                            927,
-                            36,
-                            12,
-                            36,
-                            12
-                        ],
-                        [
-                            "st2",
-                            6662,
-                            269,
-                            1590,
-                            "16.92 %",
-                            139,
-                            139,
-                            154,
-                            154,
-                            1322,
-                            1322,
-                            52,
-                            301,
-                            969,
-                            36,
-                            20,
-                            36,
-                            20
-                        ],
-                        [
-                            "st2",
-                            6662,
-                            269,
-                            1590,
-                            "16.92 %",
-                            139,
-                            139,
-                            154,
-                            154,
-                            1322,
-                            1322,
-                            52,
-                            301,
-                            969,
-                            36,
-                            20,
-                            36,
-                            20
-                        ],
-                        [
-                            "st2",
-                            6662,
-                            269,
-                            1590,
-                            "16.92 %",
-                            139,
-                            139,
-                            154,
-                            154,
-                            1322,
-                            1322,
-                            52,
-                            301,
-                            969,
-                            36,
-                            20,
-                            36,
-                            20
-                        ],
-                        [
-                            "st2",
-                            6662,
-                            269,
-                            1590,
-                            "16.92 %",
-                            139,
-                            139,
-                            154,
-                            154,
-                            1322,
-                            1322,
-                            52,
-                            301,
-                            969,
-                            36,
-                            20,
-                            36,
-                            20
-                        ],
-                        [
-                            "st2",
-                            6662,
-                            269,
-                            1590,
-                            "16.92 %",
-                            139,
-                            139,
-                            154,
-                            154,
-                            1322,
-                            1322,
-                            52,
-                            301,
-                            969,
-                            36,
-                            20,
-                            36,
-                            20
-                        ]
-                    ]
-                ],
-                [
-                    "Export Info",
-                    [
-                        [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
-                        ],
-                        [
-                            "Block",
-                            "b1"
-                        ]
-                    ]
-                ]
-            ]
-        )
-
-    def test_demographics_export_flags_being_passed(self):
-        self.assertListEqual(
-            DemographicsExport(
-                config={
-                    'domain': 'icds-cas'
                 },
-                beta=True
             ).get_excel_data('st1'),
             [
                 [
@@ -903,10 +1029,10 @@ class TestExportData(TestCase):
                     [
                         [
                             'State', 'Number of households',
-                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
-                            'old, alive and seeking services) who have an aadhaar ID',
-                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
-                            'old, alive and seeking services)',
+                            'Total number of beneficiaries (Children under 6 years old,  pregnant women and '
+                            'lactating women, alive and seeking services) who have an Aadhaar ID',
+                            'Total number of beneficiaries (Children under 6 years old, pregnant women and '
+                            'lactating women, alive and seeking services)',
                             'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
                             'Number of pregnant women enrolled for services', 'Number of lactating women',
                             'Number of lactating women enrolled for services',
@@ -923,9 +1049,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -943,9 +1069,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -963,9 +1089,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -983,9 +1109,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -1003,9 +1129,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -1023,9 +1149,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1043,9 +1169,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1063,9 +1189,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1083,9 +1209,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1103,9 +1229,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1119,6 +1245,506 @@ class TestExportData(TestCase):
                             20,
                             36,
                             20
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st3',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Da'
+                            'ta '
+                            'Not'
+                            ' En'
+                            't'
+                            'ered', 0, 0, 0, 0],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Da'
+                            'ta '
+                            'Not'
+                            ' En'
+                            't'
+                            'ered', 0, 0, 0, 0],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Da'
+                            'ta '
+                            'Not'
+                            ' En'
+                            't'
+                            'ered', 0, 0, 0, 0],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Da'
+                            'ta '
+                            'Not'
+                            ' En'
+                            't'
+                            'ered', 0, 0, 0, 0],
+                        [
+                            'st4',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Da'
+                            'ta '
+                            'Not'
+                            ' En'
+                            't'
+                            'ered', 0, 0, 0, 0],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st5',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            0,
+                            '0.00 %',
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st6',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st7',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st7',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st7',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st7',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        [
+                            'st7',
+                            0,
+                            0,
+                            3,
+                            '0.00 %',
+                            0,
+                            0,
+                            2,
+                            2,
+                            1,
+                            1,
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            1,
+                            0,
+                            0,
+                            0,
+                            0
                         ]
                     ]
                 ],
@@ -1142,193 +1768,159 @@ class TestExportData(TestCase):
         self.assertListEqual(
             SystemUsageExport(
                 config={
-                    'domain': 'icds-cas'
+                    'domain': 'icds-cas',
+                    'month': datetime(2017, 5, 1)
                 }
             ).get_excel_data('b1'),
             [
-                [
-                    "System Usage",
+                ['System Usage', [
                     [
-                        [
-                            "State",
-                            "Number of days AWC was open in the given month",
-                            "Number of launched AWCs (ever submitted at least one HH reg form)",
-                            "Number of household registration forms",
-                            "Number of add pregnancy forms",
-                            "Number of birth preparedness forms",
-                            "Number of delivery forms",
-                            "Number of PNC forms",
-                            "Number of exclusive breastfeeding forms",
-                            "Number of complementary feeding forms",
-                            "Number of growth monitoring forms",
-                            "Number of take home rations forms",
-                            "Number of due list forms"
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ]
-                    ]
-                ],
-                [
-                    "Export Info",
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 9, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Data Not Entered', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]]
+            ]
+        )
+
+    def test_system_usage_export_for_awc_level(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': datetime(2017, 5, 1)
+                },
+                loc_level=5,
+            ).get_excel_data('b1'),
+            [
+                ['System Usage', [
                     [
-                        [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
-                        ],
-                        [
-                            "Block",
-                            "b1"
-                        ]
+                        'State',
+                        'District',
+                        'Block',
+                        'Supervisor',
+                        'AWC',
+                        'AWW Phone Number',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a1', '91555555',
+                        18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
+                        11, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a25', 'Data Not Entered',
+                        13, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
+                        12, 'Data Not Entered', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                        16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
+                        14, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
+                        18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
+                        8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
+                        17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
+                        10, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a26', 'Data Not Entered',
+                        12, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
+                        4, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
+                        7, 'Data Not Entered', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
+                        19, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ]
-                ]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]],
             ]
         )
 
@@ -1430,6 +2022,205 @@ class TestExportData(TestCase):
                             "83.33 %",
                             "77.78 %",
                             "27.78 %"
+                        ],
+                        [
+                            'st3',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st3',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st3',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st3',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st3',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st4',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st4',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st4',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        ['st4',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st4',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st5',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st5',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st5',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st5',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st5',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st6',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st6',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st6',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st6',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st6',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st7',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st7',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st7',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st7',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
+                        ],
+                        [
+                            'st7',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered',
+                            'Data Not Entered'
                         ]
                     ]
                 ],
@@ -1467,6 +2258,12 @@ class TestExportData(TestCase):
                     "Child Beneficiary",
                     [
                         [
+                            "AWC Name",
+                            "AWC Site Code",
+                            "Supervisor Name",
+                            "Block Name",
+                            "AWW Phone Number",
+                            "Mother Phone Number",
                             "Child Name",
                             "Date of Birth",
                             "Current Age (as of 2017-05-01)",
@@ -1481,6 +2278,12 @@ class TestExportData(TestCase):
                             "Days attended PSE (as of 2017-05-01)"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1783",
                             "2013-06-06",
                             "3 years 11 months ",
@@ -1495,6 +2298,12 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1788",
                             "2012-12-03",
                             "4 years 5 months ",
@@ -1509,6 +2318,12 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1790",
                             "2012-12-15",
                             "4 years 5 months ",
@@ -1523,6 +2338,12 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1795",
                             "2014-01-20",
                             "3 years 4 months ",
@@ -1537,6 +2358,12 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1797",
                             "2012-05-12",
                             "5 years ",
@@ -1551,6 +2378,12 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1814",
                             "2017-01-28",
                             "4 months ",
@@ -1565,6 +2398,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1832",
                             "2015-09-14",
                             "1 year 8 months ",
@@ -1579,6 +2418,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 1876",
                             "2016-01-11",
                             "1 year 4 months ",
@@ -1593,6 +2438,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2027",
                             "2016-12-15",
                             "5 months ",
@@ -1607,6 +2458,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2054",
                             "2016-05-26",
                             "1 year ",
@@ -1621,6 +2478,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2056",
                             "2014-11-29",
                             "2 years 6 months ",
@@ -1635,6 +2498,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2060",
                             "2015-10-10",
                             "1 year 7 months ",
@@ -1649,6 +2518,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2073",
                             "2015-08-10",
                             "1 year 9 months ",
@@ -1663,6 +2538,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2094",
                             "2014-12-04",
                             "2 years 5 months ",
@@ -1677,6 +2558,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2117",
                             "2015-11-18",
                             "1 year 6 months ",
@@ -1691,6 +2578,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2134",
                             "2015-12-12",
                             "1 year 5 months ",
@@ -1705,6 +2598,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2141",
                             "2015-03-05",
                             "2 years 2 months ",
@@ -1719,6 +2618,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2171",
                             "2016-08-27",
                             "9 months ",
@@ -1733,6 +2638,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2173",
                             "2015-05-24",
                             "2 years ",
@@ -1747,6 +2658,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2182",
                             "2014-12-12",
                             "2 years 5 months ",
@@ -1761,6 +2678,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2188",
                             "2014-08-16",
                             "2 years 9 months ",
@@ -1775,6 +2698,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2192",
                             "2015-10-07",
                             "1 year 7 months ",
@@ -1789,6 +2718,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2207",
                             "2016-01-21",
                             "1 year 4 months ",
@@ -1803,6 +2738,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2210",
                             "2015-05-18",
                             "2 years ",
@@ -1817,6 +2758,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2241",
                             "2012-10-14",
                             "4 years 7 months ",
@@ -1831,6 +2778,12 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2250",
                             "2014-06-10",
                             "2 years 11 months ",
@@ -1845,6 +2798,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2254",
                             "2013-01-28",
                             "4 years 4 months ",
@@ -1859,6 +2818,12 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2263",
                             "2016-09-08",
                             "8 months ",
@@ -1873,6 +2838,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2265",
                             "2014-02-16",
                             "3 years 3 months ",
@@ -1887,6 +2858,12 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2266",
                             "2014-03-13",
                             "3 years 2 months ",
@@ -1901,6 +2878,12 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2267",
                             "2012-12-25",
                             "4 years 5 months ",
@@ -1915,6 +2898,12 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2271",
                             "2013-05-13",
                             "4 years ",
@@ -1929,6 +2918,12 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2276",
                             "2012-07-22",
                             "4 years 10 months ",
@@ -1943,6 +2938,12 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2330",
                             "2013-06-29",
                             "3 years 11 months ",
@@ -1957,6 +2958,12 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2331",
                             "2013-05-09",
                             "4 years ",
@@ -1971,6 +2978,12 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2333",
                             "2014-06-05",
                             "2 years 11 months ",
@@ -1985,6 +2998,12 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2335",
                             "2013-10-14",
                             "3 years 7 months ",
@@ -1999,6 +3018,12 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2337",
                             "2013-12-04",
                             "3 years 5 months ",
@@ -2013,6 +3038,12 @@ class TestExportData(TestCase):
                             26
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2338",
                             "2013-07-03",
                             "3 years 10 months ",
@@ -2027,6 +3058,12 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2339",
                             "2013-11-29",
                             "3 years 6 months ",
@@ -2041,6 +3078,12 @@ class TestExportData(TestCase):
                             27
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2340",
                             "2013-07-25",
                             "3 years 10 months ",
@@ -2055,6 +3098,12 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2341",
                             "2012-08-07",
                             "4 years 9 months ",
@@ -2069,6 +3118,12 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2342",
                             "2013-09-24",
                             "3 years 8 months ",
@@ -2083,6 +3138,12 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2344",
                             "2013-03-09",
                             "4 years 2 months ",
@@ -2097,6 +3158,12 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             "Name 2346",
                             "2014-01-20",
                             "3 years 4 months ",

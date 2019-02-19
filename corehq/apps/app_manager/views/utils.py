@@ -11,19 +11,19 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.es import FormES
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
-from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.util import get_static_report_mapping
-from corehq.util.couch import DocumentNotFound
 import six
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -179,7 +179,7 @@ def overwrite_app(app, master_build, report_map=None):
                     try:
                         config.report_id = report_map[config.report_id]
                     except KeyError:
-                        raise AppEditingError('Dynamic UCR used in linked app')
+                        raise AppEditingError(config.report_id)
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
 
@@ -289,6 +289,26 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
+def update_linked_app_and_notify(domain, app_id, user_id, email):
+    app = get_current_app(domain, app_id)
+    subject = _("Update Status for linked app %s") % app.name
+    try:
+        update_linked_app(app, user_id)
+    except AppLinkError as e:
+        message = six.text_type(e)
+    except Exception:
+        # Send an email but then crash the process
+        # so we know what the error was
+        send_html_email_async.delay(subject, email, _(
+            "Something went wrong updating your linked app. "
+            "Our team has been notified and will monitor the situation. "
+            "Please try again, and if the problem persists report it as an issue."))
+        raise
+    else:
+        message = _("Your linked application was successfully updated to the latest version.")
+    send_html_email_async.delay(subject, email, message)
+
+
 def update_linked_app(app, user_id):
     if not app.domain_link:
         raise AppLinkError(_(
@@ -320,19 +340,17 @@ def update_linked_app(app, user_id):
                 'Unable to pull latest master from remote CommCare HQ. Please try again later.'
             ))
 
-        try:
-            report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
-        except (BadSpecError, DocumentNotFound) as e:
-            raise AppLinkError(_('This linked application uses mobile UCRs '
-                                 'which are available in this domain: %(message)s') % {'message': e})
+        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'])
 
         try:
             app = overwrite_app(app, latest_master_build, report_map)
-        except AppEditingError:
-            raise AppLinkError(_('This linked application uses dynamic mobile UCRs '
-                                 'which are currently not supported. For this application '
-                                 'to function correctly, you will need to remove those modules '
-                                 'or revert to a previous version that did not include them.'))
+        except AppEditingError as e:
+            raise AppLinkError(
+                _(
+                    'This application uses mobile UCRs '
+                    'which are not available in the linked domain: {ucr_id}'
+                ).format(ucr_id=str(e))
+            )
 
     if app.master_is_remote:
         try:
@@ -344,7 +362,14 @@ def update_linked_app(app, user_id):
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))
 
+    # reapply linked application specific data
+    app.reapply_overrides()
+
 
 def clear_xmlns_app_id_cache(domain):
     from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
     get_all_xmlns_app_id_pairs_submitted_to_in_domain.clear(domain)
+
+
+def form_has_submissions(domain, app_id, xmlns):
+    return FormES().domain(domain).app([app_id]).xmlns([xmlns]).count() != 0

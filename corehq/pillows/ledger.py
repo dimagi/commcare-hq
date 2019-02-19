@@ -69,7 +69,7 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', 
         doc_prep_fn=_prepare_ledger_for_es
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.LEDGER], group_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
+        topics=[topics.LEDGER], client_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -114,7 +114,7 @@ class LedgerV1ReindexerFactory(ReindexerFactory):
     def build(self):
         from corehq.apps.commtrack.models import StockState
         return ElasticPillowReindexer(
-            pillow=get_ledger_to_elasticsearch_pillow(),
+            pillow_or_processor=get_ledger_to_elasticsearch_pillow(),
             change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
             elasticsearch=get_es_new(),
             index_info=LEDGER_INDEX_INFO,

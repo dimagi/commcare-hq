@@ -1,10 +1,10 @@
-hqDefine('reports_core/js/base_template_new', function() {
+hqDefine('reports_core/js/base_template_new', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var baseUrl = initialPageData.get('url');
     function getReportUrl() {
         return baseUrl;
     }
-    $(function() {
+    $(function () {
         var charts = hqImport('reports_core/js/charts');
         var chartSpecs = initialPageData.get('charts');
         var updateCharts = function (data) {
@@ -49,8 +49,8 @@ hqDefine('reports_core/js/base_template_new', function() {
             $('#report-error').removeClass('hide');
         };
 
-        var successCallback = function(data) {
-            if(data.error) {
+        var successCallback = function (data) {
+            if (data.error) {
                 $('#error-message').html(data.error);
                 $('#report-error').removeClass('hide');
             } else {
@@ -75,7 +75,7 @@ hqDefine('reports_core/js/base_template_new', function() {
             customSort: initialPageData.get('custom_sort'),
             ajaxSource: getReportUrl(),
             ajaxMethod: initialPageData.get('ajax_method'),
-            ajaxParams: function() {
+            ajaxParams: function () {
                 return $('#paramSelectorForm').serializeArray();
             },
             fixColumns: initialPageData.get('left_col_is_fixed'),
@@ -84,7 +84,7 @@ hqDefine('reports_core/js/base_template_new', function() {
             successCallbacks: [successCallback, updateCharts, updateMap, paginationNotice],
             errorCallbacks: [errorCallback],
         });
-        $('#paramSelectorForm').submit(function(event) {
+        $('#paramSelectorForm').submit(function (event) {
             $('#reportHint').remove();
             $('#reportContent').removeClass('hide');
             event.preventDefault();
@@ -94,7 +94,7 @@ hqDefine('reports_core/js/base_template_new', function() {
         // we can enable the submit button
         $("#apply-filters").prop('disabled', false);
 
-        $(function() {
+        $(function () {
             $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom',
@@ -103,7 +103,7 @@ hqDefine('reports_core/js/base_template_new', function() {
         });
 
         // filter init
-        $(function() {
+        $(function () {
             hqImport("reports/js/filters/main").init();
             hqImport("reports/js/charts/main").init();
         });

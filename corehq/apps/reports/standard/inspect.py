@@ -1,14 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import functools
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
+from corehq.apps.es.filters import match_all
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
-from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports import util
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
@@ -22,6 +21,7 @@ from corehq.apps.reports.generic import (GenericTabularReport,
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.toggles import SUPPORT
 from memoized import memoized
 
@@ -68,6 +68,10 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                                        mobile_user_and_group_slugs,
                                        self.request.couch_user)
                     .values_list('_id', flat=True))
+
+        if HQUserType.UNKNOWN in EMWF.selected_user_types(mobile_user_and_group_slugs):
+            user_ids.append(SYSTEM_USER_ID)
+
         return form_es.user_id(user_ids)
 
     @staticmethod
@@ -89,7 +93,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted))
-                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+                 .filter(self._get_users_filter(mobile_user_and_group_slugs)
+                         if not EMWF.no_filters_selected(mobile_user_and_group_slugs)
+                         else match_all()))  # If no filters are selected, return all results
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
@@ -101,7 +107,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
             for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
                 query = query.NOT(form_es.xmlns(xmlns))
-
         return query
 
     @property
@@ -143,10 +148,28 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
         else:
             return True
 
+    @classmethod
+    def get_subpages(cls):
+        def _get_form_name(request=None, **context):
+            if 'instance' in context:
+                try:
+                    return mark_safe(context['instance'].form_data['@name'])
+                except KeyError:
+                    pass
+            return _('View Form')
+
+        from corehq.apps.reports.views import FormDataView
+        return [
+            {
+                'title': _get_form_name,
+                'urlname': FormDataView.urlname,
+            },
+        ]
+
     @property
     def headers(self):
         h = [
-            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("View Form"), css_class="view-form-link"),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(
                 _("Submission Time") if self.by_submission_time

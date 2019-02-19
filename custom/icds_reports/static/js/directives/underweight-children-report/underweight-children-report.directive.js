@@ -24,15 +24,17 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.steps = {
-        'map': {route: '/underweight_children/map', label: 'Map View'},
-        'chart': {route: '/underweight_children/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/underweight_children/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/underweight_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
     };
     vm.filters = [];
     vm.rightLegend = {
-        info: 'Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.',
+        info: 'Of the total children enrolled for Anganwadi services and weighed, the percentage of children between 0-5 years who were moderately/severely underweight in the current month. \n' +
+        '\n' +
+        'Children who are moderately or severely underweight have a higher risk of mortality. ',
     };
 
     vm.chosenFilters = function() {
@@ -99,8 +101,9 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
-        + 'Children who are moderately or severely underweight have a higher risk of mortality.',
+        'captionContent': ' Of the total children enrolled for Anganwadi services and weighed, the percentage of children between ' + vm.chosenFilters() + ' who were moderately/severely underweight in the current month. \n' +
+        '\n' +
+        'Children who are moderately or severely underweight have a higher risk of mortality. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

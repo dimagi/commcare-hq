@@ -7,12 +7,13 @@ from django.test import SimpleTestCase
 
 from django.conf import settings
 from django.template.loaders.app_directories import get_app_template_dirs
+from io import open
 
 B3_BASE = 'hqwebapp/base.html'
 
-COMPRESS_JS = b' compress js '
-COMPRESS_CSS = b' compress css '
-ENDCOMPRESS = b' endcompress '
+COMPRESS_JS = ' compress js '
+COMPRESS_CSS = ' compress css '
+ENDCOMPRESS = ' endcompress '
 
 DISALLOWED_TAGS = [
     ('{% if', 'You cannot use "if" tags in a compress block'),
@@ -35,8 +36,6 @@ class TestDjangoCompressOffline(SimpleTestCase):
 
     @attr("slow")
     def test_compress_offline(self):
-        in_compress_block = False
-
         template_dir_list = []
         for template_dir in get_app_template_dirs('templates'):
             if settings.BASE_DIR in template_dir:

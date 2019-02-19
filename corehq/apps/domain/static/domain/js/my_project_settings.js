@@ -1,24 +1,44 @@
-hqDefine("domain/js/my_project_settings", function() {
+hqDefine("domain/js/my_project_settings", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    initialPageData
+) {
     var HQTimezoneHandler = function (o) {
-        'use strict';
-        var self = this;
-        self.override_tz = ko.observable(o.override);
-        self.form_is_ready = ko.observable(false);
+        var self = {};
 
-        self.updateForm = function() {
-            self.form_is_ready(true);
+        self.override_tz = ko.observable(o.override);
+        self.no_domain_membership = ko.observable(o.no_domain_membership);
+        self.disableUpdateSettings = ko.observable(true);
+
+        self.updateForm = function () {
+            if ($('#override_global_tz')[0].checked) {
+                self.disableUpdateSettings(self.no_domain_membership());
+            } else {
+                self.disableUpdateSettings(true);
+            }
         };
+
+        return self;
     };
 
-    $(function() {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
-        $('#my-project-settings-form').koApplyBindings(new HQTimezoneHandler({
-            override: initial_page_data('override_global_tz'),
+    $(function () {
+        $('#my-project-settings-form').koApplyBindings(HQTimezoneHandler({
+            override: initialPageData.get('override_global_tz'),
+            no_domain_membership: initialPageData.get('no_domain_membership'),
         }));
 
         var $globalTimezone = $('#id_global_timezone'),
             $userTimezone = $('#id_user_timezone'),
             $overrideGlobalTimezone = $('#id_override_global_tz');
+
+        $overrideGlobalTimezone.click(function () {
+            $userTimezone.val($globalTimezone.val());
+            $userTimezone.change();
+        });
 
         var $matchMessage = $('<span class="help-block" />');
         $userTimezone.parent().append($matchMessage);
@@ -31,16 +51,11 @@ hqDefine("domain/js/my_project_settings", function() {
         });
         $userTimezone.after($matchTzButton);
 
-        compare_global_user_timezones();
-        $userTimezone.change(compare_global_user_timezones);
+        compareGlobalUserTimezones();
+        $userTimezone.change(compareGlobalUserTimezones);
 
-        $('#update-proj-settings').click(function () {
-            if ($(this).hasClass('disabled'))
-                return false;
-        });
-
-        function compare_global_user_timezones() {
-            if($globalTimezone.val() === $userTimezone.val()) {
+        function compareGlobalUserTimezones() {
+            if ($globalTimezone.val() === $userTimezone.val()) {
                 $userTimezone.parent().parent().addClass('has-success').removeClass('has-warning');
                 $matchMessage.html(gettext('This matches the global setting: ') + '<strong>' + $globalTimezone.val() + '</strong>');
             } else {
@@ -49,10 +64,10 @@ hqDefine("domain/js/my_project_settings", function() {
             }
         }
 
-        if (initial_page_data('no_domain_membership')) {
-            var err_txt = "You may not override this project space's timezone because you only have access to this project space through an Organization. " +
-                    "You must be added to the project space as a member in order to override your timezone.";
-            $overrideGlobalTimezone.parent().html(err_txt);
+        if (initialPageData.get('no_domain_membership')) {
+            var error = gettext("You may not override this project space's timezone because you only have access to this project space through an Organization. " +
+                    "You must be added to the project space as a member in order to override your timezone.");
+            $overrideGlobalTimezone.parent().html(error);
         }
     });
 });

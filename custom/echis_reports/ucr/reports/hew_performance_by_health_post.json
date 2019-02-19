@@ -1,0 +1,176 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "report_id": "static-hew_performance_by_health_post",
+  "data_source_table": "static-hew_performance_indicators",
+  "config": {
+    "title": "HEW performance report by Health Post",
+    "description": "By HP",
+    "configured_charts": [
+      {
+        "y_axis_columns": [
+          {
+            "display": "ANC forms",
+            "column_id": "anc_visit_count"
+          },
+          {
+            "display": "PNC forms",
+            "column_id": "pnc_visit_count"
+          }
+        ],
+        "x_axis_column": "health_post",
+        "title": "Performance – by Health Post",
+        "display_params": {},
+        "is_stacked": false,
+        "aggregation_column": null,
+        "chart_id": "Chart",
+        "type": "multibar"
+      }
+    ],
+    "aggregation_columns": [
+      "health_post"
+    ],
+    "filters": [
+      {
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "Location",
+        "field": "health_post_id",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "health_location"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Submitted date",
+        "field": "received_on",
+        "type": "date",
+        "slug": "received_on"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "HEW name",
+        "field": "hew_name",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "hew_name"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "Health post",
+        "field": "health_post",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "health_post"
+      },
+      {
+        "required": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": false,
+          "type": "string",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "display": "User location type",
+        "field": "user_location_type",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "slug": "user_location_type"
+      },
+      {
+        "display": "Test or Real",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Test",
+            "value": "Test"
+          },
+          {
+            "display": "Real",
+            "value": "Real"
+          }
+        ],
+        "field": "test_or_real",
+        "type": "choice_list",
+        "slug": "test_or_real"
+      }
+    ],
+    "columns": [
+      {
+        "field": "health_post",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post",
+        "visible": true,
+        "display": "Health Post",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "anc_visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "anc_visit_count",
+        "visible": true,
+        "display": "ANC forms",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "pnc_visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "pnc_visit_count",
+        "visible": true,
+        "display": "PNC forms",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      }
+    ]
+  }
+}

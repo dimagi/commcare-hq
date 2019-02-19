@@ -2,16 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import print_function
 from collections import defaultdict, deque, namedtuple
-import functools
-from itertools import chain, groupby
-from operator import attrgetter
+from itertools import chain
 import logging
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
-from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
-from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_case_sharing_apps_in_domain
+from corehq.apps.app_manager.util import is_usercase_in_use
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
@@ -73,18 +70,19 @@ class _CaseRelationshipManager(object):
     You can then ask "what are the different ways a `patient` can be referred to?":
 
     >>> expansions = case_relationship_manager.expand_case_type('patient')
-    >>> for case_type_ref in sorted(expansions):
-    ...     print(case_type_ref)
-    _CaseTypeRef(case_type=u'patient', relationship_path=())
-    _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))
+    >>> expansions == {
+    ...     _CaseTypeRef(case_type='patient', relationship_path=()),
+    ...     _CaseTypeRef(case_type='referral', relationship_path=('parent',))
+    ... }
+    True
 
     This is read "`patient` and `referral`'s parent are the two ways to refer to `patient`".
 
 
     You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
 
-    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
-    set([u'patient'])
+    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',))) == {'patient'}
+    True
 
     This is read "a `referral`'s parent can only be a `patient`".
 
@@ -127,26 +125,39 @@ class _CaseRelationshipManager(object):
 
         """
         all_possible_equivalences = set()
-        equivalence_queue = deque(_CaseTypeEquivalence(case_type, _CaseTypeRef(case_type, ()))
-                                  for case_type in self.parent_type_map)
+
+        class TmpEquivalence(namedtuple('TmpEquivalence',
+                                        ['case_type', 'expansion', 'visited_case_types'])):
+            """same as a _CaseTypeEquivalence but with a memory of the case types visited"""
+
+        equivalence_queue = deque(
+            TmpEquivalence(case_type, _CaseTypeRef(case_type, ()), visited_case_types=frozenset())
+            for case_type in self.parent_type_map
+        )
+
         while True:
             try:
-                equivalence = equivalence_queue.popleft()
+                eq = equivalence_queue.popleft()
             except IndexError:
                 break
-            all_possible_equivalences.add(equivalence)
-            parent, (child, relationship_path) = equivalence
-            for relationship, grandparents in self.parent_type_map[parent].items():
-                for grandparent in grandparents:
-                    new_equivalence = _CaseTypeEquivalence(
-                        case_type=grandparent,
-                        expansion=_CaseTypeRef(child, relationship_path + (relationship,))
+            all_possible_equivalences.add(eq)
+            for relationship, parents in self.parent_type_map[eq.case_type].items():
+                for parent in parents:
+                    if parent in eq.visited_case_types:
+                        continue
+                    new_equivalence = TmpEquivalence(
+                        case_type=parent,
+                        expansion=_CaseTypeRef(
+                            eq.expansion.case_type,
+                            eq.expansion.relationship_path + (relationship,)
+                        ),
+                        visited_case_types=eq.visited_case_types | {parent}
                     )
-                    cycle_found = (grandparent == child)
                     already_visited = (new_equivalence in all_possible_equivalences)
-                    if not cycle_found and not already_visited:
+                    if not already_visited:
                         equivalence_queue.append(new_equivalence)
-        return all_possible_equivalences
+        return {_CaseTypeEquivalence(case_type=eq.case_type, expansion=eq.expansion)
+                for eq in all_possible_equivalences}
 
     @property
     @memoized
@@ -259,45 +270,48 @@ class ParentCasePropertyBuilder(object):
     Full functionality is documented in the individual methods.
 
     """
-    def __init__(self, app, defaults=(), per_type_defaults=None, include_parent_properties=True):
-        self.app = app
+    def __init__(self, domain, apps, defaults=(), include_parent_properties=True,
+                 exclude_invalid_properties=False):
+        self.domain = domain
+        self.apps = apps
         self.defaults = defaults
-        self.per_type_defaults = per_type_defaults or {}
         self.include_parent_properties = include_parent_properties
+        self.exclude_invalid_properties = exclude_invalid_properties
 
-    def _get_relevant_apps(self):
-        apps = [self.app]
-        if self.app.case_sharing:
-            apps.extend(self._get_other_case_sharing_apps_in_domain())
-        return apps
+    @classmethod
+    def for_app(cls, app, defaults=(), include_parent_properties=True,
+                exclude_invalid_properties=False):
+        apps = [app]
+        if app.case_sharing:
+            apps.extend(get_case_sharing_apps_in_domain(app.domain, app.id))
+        return cls(app.domain,
+                   apps,
+                   defaults=defaults,
+                   include_parent_properties=include_parent_properties,
+                   exclude_invalid_properties=exclude_invalid_properties)
+
+    @classmethod
+    def for_domain(cls, domain, include_parent_properties=True):
+        apps = get_apps_in_domain(domain, include_remote=False)
+        return cls(domain,
+                   apps,
+                   defaults=('name',),
+                   include_parent_properties=include_parent_properties,
+                   exclude_invalid_properties=False)
 
     @memoized
     def _get_relevant_forms(self):
         forms = []
-        for app in self._get_relevant_apps():
+        for app in self.apps:
             forms.extend(_get_forms(app))
         return forms
 
-    @memoized
     def _get_all_case_updates(self):
         all_case_updates = defaultdict(set)
         for form in self._get_relevant_forms():
             for case_type, case_properties in form.get_all_case_updates().items():
                 all_case_updates[case_type].update(case_properties)
         return all_case_updates
-
-    @memoized
-    def _get_data_dictionary_properties_by_case_type(self):
-        return {
-            case_type: {prop.name for prop in props} for case_type, props in groupby(
-                CaseProperty.objects
-                .filter(case_type__domain=self.app.domain, deprecated=False)
-                .select_related("case_type")
-                .order_by('case_type__name'),
-                key=attrgetter('case_type.name')
-
-            )
-        }
 
     def get_case_relationships_for_case_type(self, case_type):
         """
@@ -343,10 +357,6 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
-    def _get_other_case_sharing_apps_in_domain(self):
-        return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
-
-    @memoized
     def get_properties(self, case_type):
         """
         Get all possible properties of case_type
@@ -369,7 +379,8 @@ class ParentCasePropertyBuilder(object):
         - the app given
         - all other case sharing apps if app.case_sharing
         - the Data Dictionary case properties if toggles.DATA_DICTIONARY
-        - the `defaults` and `per_type_defaults` passed in to the class
+        - the `defaults` passed in to the class
+        - the `per_type_defaults` for usercases and call center cases, if applicable
 
         Notably, it propagates parent/<property> on a child up to the <property> on the parent,
         and, only if `include_parent_properties` was not passed in as False to the class,
@@ -380,17 +391,30 @@ class ParentCasePropertyBuilder(object):
 
         :return: {<case_type>: set([<property>])} for all case types found
         """
+        from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
         case_properties_by_case_type = defaultdict(set)
 
         _zip_update(case_properties_by_case_type, self._get_all_case_updates())
 
-        _zip_update(case_properties_by_case_type, self.per_type_defaults)
+        _zip_update(case_properties_by_case_type, get_per_type_defaults(self.domain))
 
-        if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            _zip_update(case_properties_by_case_type, self._get_data_dictionary_properties_by_case_type())
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            _zip_update(case_properties_by_case_type, get_data_dict_props_by_case_type(self.domain))
 
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
+
+        if self.exclude_invalid_properties:
+            from corehq.apps.app_manager.helpers.validators import validate_property
+            for case_type, case_properties in case_properties_by_case_type.items():
+                to_remove = []
+                for prop in case_properties:
+                    try:
+                        validate_property(prop)
+                    except ValueError:
+                        to_remove.append(prop)
+                for prop in to_remove:
+                    case_properties_by_case_type[case_type].remove(prop)
 
         # this is where all the sweet, sweet child-parent property propagation happens
         return _propagate_and_normalize_case_properties(
@@ -399,13 +423,10 @@ class ParentCasePropertyBuilder(object):
             include_parent_properties=self.include_parent_properties
         )
 
-    def get_parent_type_map(self, case_types, if_multiple_parents_arbitrarily_pick_one=False):
+    def get_parent_type_map(self, case_types):
         """
         :param case_types: Case types to filter on. Setting to None will include all.
                todo: including all should be the default behavior since it isn't more work.
-        :param if_multiple_parents_arbitrarily_pick_one: whether to include a list of parent types
-               or arbitrarily pick one. todo: remove this argument
-               since True behavior is of dubious utility and correctness.
         :return: {<case_type>: {<relationship>: [<parent_type>], ...}, ...}
                  if allow_multiple_parents; otherwise
                  {<case_type>: {<relationship>: <parent_type>, ...}, ...}
@@ -421,15 +442,7 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if if_multiple_parents_arbitrarily_pick_one:
-                    if len(types) > 1:
-                        logger.error(
-                            "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
-                            case_type, self.app.id, relationship, types
-                        )
-                    parent_map[case_type][relationship] = types[0]
-                else:
-                    parent_map[case_type][relationship] = types
+                parent_map[case_type][relationship] = types
 
         if case_types is not None:
             return {case_type: rel_map for case_type, rel_map in parent_map.items()
@@ -454,28 +467,32 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
-    builder = ParentCasePropertyBuilder(app)
-    return builder.get_parent_type_map(
-        app.get_case_types(),
-        if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
+def get_parent_type_map(app):
+    builder = ParentCasePropertyBuilder.for_app(app)
+    return builder.get_parent_type_map(app.get_case_types())
 
 
-def get_case_properties(app, case_types, defaults=(), include_parent_properties=True):
-    per_type_defaults = get_per_type_defaults(app.domain, case_types)
-    builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults,
-                                        include_parent_properties=include_parent_properties)
+def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,
+                        exclude_invalid_properties=False):
+    builder = ParentCasePropertyBuilder.for_app(
+        app,
+        defaults=defaults,
+        include_parent_properties=include_parent_properties,
+        exclude_invalid_properties=exclude_invalid_properties
+    )
     return builder.get_case_property_map(case_types)
 
 
+@quickcache(vary_on=['app.get_id'])
 def get_all_case_properties(app):
-    return get_case_properties(app, app.get_case_types(), defaults=('name',))
+    return get_case_properties(app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=True)
 
 
 def get_all_case_properties_for_case_type(domain, case_type):
-    return all_case_properties_by_domain(domain, [case_type]).get(case_type, [])
+    return all_case_properties_by_domain(domain).get(case_type, [])
 
 
+@quickcache(vary_on=['app.get_id'])
 def get_usercase_properties(app):
     if is_usercase_in_use(app.domain):
         # TODO: add name here once it is fixed to concatenate first and last in form builder
@@ -486,58 +503,30 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
-def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
-    result = {}
-    for app in all_apps_by_domain(domain):
-        if app.is_remote_app():
-            continue
-
-        if case_types is None:
-            case_types = app.get_case_types()
-
-        property_map = get_case_properties(app, case_types,
-            defaults=('name',), include_parent_properties=include_parent_properties)
-
-        for case_type, properties in six.iteritems(property_map):
-            if case_type in result:
-                result[case_type].extend(properties)
-            else:
-                result[case_type] = properties
-
-    cleaned_result = {}
-    for case_type, properties in six.iteritems(result):
-        properties = list(set(properties))
-        properties.sort()
-        cleaned_result[case_type] = properties
-
-    return cleaned_result
+def all_case_properties_by_domain(domain, include_parent_properties=True):
+    builder = ParentCasePropertyBuilder.for_domain(
+        domain, include_parent_properties=include_parent_properties)
+    return {
+        case_type: sorted(properties)
+        for case_type, properties in builder.get_properties_by_case_type().items()
+    }
 
 
-def get_per_type_defaults(domain, case_types=None):
+def get_per_type_defaults(domain):
+    """Get default properties for callcenter and usercases"""
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
+    if is_usercase_in_use(domain):
         per_type_defaults = {
             USERCASE_TYPE: _get_usercase_default_properties(domain)
         }
 
     callcenter_case_type = get_call_center_case_type_if_enabled(domain)
-    if callcenter_case_type and (not case_types or callcenter_case_type in case_types):
+    if callcenter_case_type:
         per_type_defaults[callcenter_case_type] = _get_usercase_default_properties(domain)
 
     return per_type_defaults
-
-
-def get_shared_case_types(app):
-    shared_case_types = set()
-
-    if app.case_sharing:
-        apps = get_case_sharing_apps_in_domain(app.domain, app.id)
-        for app in apps:
-            shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
-
-    return shared_case_types
 
 
 @quickcache(['domain'])

@@ -1,10 +1,12 @@
 *.pyc
+*.pyo
 *~
 *.swp
 *.swo
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py
+/scripts/_vendor
 !localsettings.example.py
 .settings/
 .project
@@ -18,7 +20,7 @@ submissions/
 /bower_components
 bad/
 *.log*
-CommCare.ja*
+/CommCare.ja*
 startover.sh
 celery.db
 tmp.sh

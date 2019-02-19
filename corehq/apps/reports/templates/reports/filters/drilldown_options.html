@@ -5,7 +5,13 @@
 {% if is_empty %}
 <div class="alert alert-info">{{ empty_text }}</div>
 {% else %}
-<div id="{{ css_id }}" class="well well-sm">
+<div id="{{ css_id }}" class="well well-sm report-filter-drilldown-options"
+     data-drilldown-map='{% html_attr option_map %}'
+     data-controls='{% html_attr controls %}'
+     data-selected='{{ selected|JSON }}'
+     data-notifications='{% html_attr notifications %}'
+     data-is-empty='{{ is_empty|JSON }}'
+     data-css-id='{{ css_id }}'>
     <div data-bind="foreach: controls">
         <div class="form-group"
              data-bind="visible: is_visible">
@@ -32,18 +38,4 @@
     <div class="alert alert-info" data-bind="fadeVisible: notification.is_visible, html: notification.message"></div>
  </div>
  {% endif %}
-{% endblock %}
-{% block filter_js %}
-{% if not is_empty %}
-<script>
-    $.getScript("{% static 'reports/js/filters/drilldown_options.js' %}", function () {
-       $('#{{ css_id }}').drilldownOptionFilter({
-           drilldown_map: {{ option_map|JSON }},
-           controls: {{ controls|JSON }},
-           selected: {{ selected|JSON }},
-           notifications: {{ notifications|JSON }},
-       });
-    });
-</script>
-{% endif %}
 {% endblock %}

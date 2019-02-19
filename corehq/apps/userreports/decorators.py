@@ -8,21 +8,19 @@ from django.conf import settings
 
 from sqlagg import (
     ColumnNotFoundException,
-    TableNotFoundException,
 )
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.userreports.exceptions import (
     InvalidQueryColumn,
-    TableNotFoundWarning,
     UserReportsError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.util.soft_assert import soft_assert
 import six
 
 _soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
-    exponential_backoff=False,
+    exponential_backoff=True,
 )
 
 
@@ -36,11 +34,12 @@ def catch_and_raise_exceptions(func):
             ProgrammingError,
             InvalidQueryColumn,
         ) as e:
+            error = translate_programming_error(e)
+            if isinstance(error, TableNotFoundWarning):
+                raise error
             if not settings.UNIT_TESTING:
                 _soft_assert(False, six.text_type(e))
             raise UserReportsError(six.text_type(e))
-        except TableNotFoundException:
-            raise TableNotFoundWarning
     return _inner
 
 
@@ -61,7 +60,7 @@ def ucr_context_cache(vary_on=()):
             context = callargs['context']
             prefix = '{}.{}'.format(
                 fn.__name__[:40] + (fn.__name__[40:] and '..'),
-                hashlib.md5(inspect.getsource(fn)).hexdigest()[-8:]
+                hashlib.md5(inspect.getsource(fn).encode('utf-8')).hexdigest()[-8:]
             )
             cache_key = (prefix,) + tuple(callargs[arg_name] for arg_name in vary_on)
             if context.exists_in_cache(cache_key):

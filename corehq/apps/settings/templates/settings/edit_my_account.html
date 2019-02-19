@@ -7,8 +7,6 @@
 
 {% block stylesheets %}
     <style>
-
-
         #phone-numbers-list form {
             display: inline;
             padding-left: .1em;
@@ -16,14 +14,11 @@
     </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'settings/js/edit_my_account.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'settings/js/edit_my_account' %}
 
-b3
 {% block modals %}{{ block.super }}
 {% if user_type == 'web' %}
-    {% include 'users/partial/basic_info_modals.html' %}
+    {% include 'users/partials/basic_info_modals.html' %}
 {% endif %}
 {% endblock %}
 
@@ -32,6 +27,6 @@ b3
 
     {% crispy form form.new_helper %}
     {% if user_type == 'web' %}
-        {% include 'users/partial/manage_my_numbers.html' %}
+        {% include 'users/partials/manage_my_numbers.html' %}
     {% endif %}
 {% endblock %}

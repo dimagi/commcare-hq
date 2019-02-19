@@ -23,13 +23,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.regions.breadcrumb.empty();
             FormplayerFrontend.Apps.Controller.listApps();
         },
-        singleApp: function(appId) {
+        singleApp: function (appId) {
             var user = FormplayerFrontend.request('currentUser');
             FormplayerFrontend.regions.breadcrumb.empty();
             user.previewAppId = appId;
             FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
-        landingPageApp: function(appId) {
+        landingPageApp: function (appId) {
             FormplayerFrontend.Apps.Controller.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
@@ -49,7 +49,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
             }
         },
-        listUsers: function(page, query) {
+        listUsers: function (page, query) {
             FormplayerFrontend.trigger("clearForm");
             page = parseInt(page);
             if (_.isNaN(page)) {
@@ -57,19 +57,19 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             }
             FormplayerFrontend.Users.Controller.listUsers(page, query);
         },
-        listSettings: function() {
+        listSettings: function () {
             FormplayerFrontend.Apps.Controller.listSettings();
         },
         showDetail: function (caseId, detailTabIndex, isPersistent) {
             FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
         },
-        listSessions: function() {
+        listSessions: function () {
             SessionNavigate.SessionList.Controller.listSessions();
         },
-        getSession: function(sessionId) {
+        getSession: function (sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
         },
-        localInstall: function(path) {
+        localInstall: function (path) {
             FormplayerFrontend.trigger("localInstall", path);
         },
         /**
@@ -126,12 +126,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.selectApp(appId, true);
     });
 
-    FormplayerFrontend.on('app:singleApp', function(appId) {
+    FormplayerFrontend.on('app:singleApp', function (appId) {
         FormplayerFrontend.navigate("/single_app/" + appId);
         API.singleApp(appId);
     });
 
-    FormplayerFrontend.on('app:landingPageApp', function(appId) {
+    FormplayerFrontend.on('app:landingPageApp', function (appId) {
         FormplayerFrontend.navigate("/home/" + appId);
         API.landingPageApp(appId);
     });
@@ -176,12 +176,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
-    FormplayerFrontend.on('restore_as:list', function() {
+    FormplayerFrontend.on('restore_as:list', function () {
         FormplayerFrontend.navigate("/restore_as");
         API.listUsers();
     });
 
-    FormplayerFrontend.on('settings:list', function() {
+    FormplayerFrontend.on('settings:list', function () {
         FormplayerFrontend.navigate("/settings");
         API.listSettings();
     });

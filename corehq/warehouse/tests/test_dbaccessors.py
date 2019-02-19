@@ -18,7 +18,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
-    get_synclog_ids_by_date,
+    get_synclogs_by_date,
     get_application_ids_by_last_modified
 )
 
@@ -74,7 +74,6 @@ class TestDbAccessors(TestCase):
         cls.deleted_app.delete()
         cls.linked_app.delete()
         cls.domain_obj.delete()
-        cls.synclog.delete()
         super(TestDbAccessors, cls).tearDownClass()
 
     def test_get_group_ids_by_last_modified(self):
@@ -100,18 +99,18 @@ class TestDbAccessors(TestCase):
             {self.g2._id},
         )
 
-    def test_get_synclog_ids_by_date(self):
+    def test_get_synclogs_by_date(self):
         start = self.synclog.date
         end = datetime.utcnow() + timedelta(days=3)
         self.assertEqual(
-            set(get_synclog_ids_by_date(start, end)),
+            {s.synclog_id.hex for s in get_synclogs_by_date(start, end)},
             set(),
         )
 
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
         self.assertEqual(
-            set(get_synclog_ids_by_date(start, end)),
+            {s.synclog_id.hex for s in get_synclogs_by_date(start, end)},
             {self.synclog._id},
         )
 

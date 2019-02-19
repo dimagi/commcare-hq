@@ -25,13 +25,12 @@ from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.indicators import ComputedDocumentMixin
-from dimagi.utils.mixins import UnicodeMixIn
 from jsonobject.base import DefaultProperty
 from jsonobject.exceptions import WrappingAttributeError
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 
-from corehq.blobs.mixin import DeferredBlobMixin
+from corehq.blobs.mixin import DeferredBlobMixin, CODES
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
@@ -114,7 +113,8 @@ class XFormOperation(DocumentSchema):
     operation = StringProperty()  # e.g. "archived", "unarchived"
 
 
-class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
+@six.python_2_unicode_compatible
+class XFormInstance(DeferredBlobMixin, SafeSaveDocument,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
     """An XForms instance."""
@@ -137,6 +137,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     date_header = DefaultProperty()
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
+    _blobdb_type_code = CODES.form_xml
 
     class Meta(object):
         app_label = 'couchforms'
@@ -242,7 +243,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def app_version(self):
         return None
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 
     def save(self, **kwargs):
@@ -278,7 +279,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     def get_xml(self):
         try:
-            return self.fetch_attachment(ATTACHMENT_NAME)
+            return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
         except ResourceNotFound:
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             try:
@@ -287,7 +288,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 return None
 
     def get_attachment(self, attachment_name):
-        return self.fetch_attachment(attachment_name)
+        return self.fetch_attachment(attachment_name, return_bytes=True)
 
     def get_xml_element(self):
         xml_string = self.get_xml()
@@ -315,6 +316,13 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             self.put_attachment(decoded_payload, ATTACHMENT_NAME)
             return element
 
+    def put_attachment(self, content, name, **kw):
+        if kw.get("type_code") is None:
+            kw["type_code"] = (
+                CODES.form_xml if name == ATTACHMENT_NAME else CODES.form_attachment
+            )
+        return super(XFormInstance, self).put_attachment(content, name, **kw)
+
     @property
     def attachments(self):
         """
@@ -336,29 +344,55 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):
-        return hashlib.md5(self.get_xml().encode('utf-8')).hexdigest()
+        return hashlib.md5(self.get_xml()).hexdigest()
 
     def archive(self, user_id=None):
         if self.is_archived:
             return
-        self.doc_type = "XFormArchived"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='archive',
-        ))
-        self.save()
-        xform_archived.send(sender="couchforms", xform=self)
+        # If this archive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=True) as archive_stub:
+            self.doc_type = "XFormArchived"
+
+            self.history.append(XFormOperation(
+                user=user_id,
+                operation='archive',
+            ))
+            self.save()
+            archive_stub.archive_history_updated()
+            xform_archived.send(sender="couchforms", xform=self)
 
     def unarchive(self, user_id=None):
         if not self.is_archived:
             return
-        self.doc_type = "XFormInstance"
-        self.history.append(XFormOperation(
-            user=user_id,
-            operation='unarchive',
-        ))
-        XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
-        xform_unarchived.send(sender="couchforms", xform=self)
+        # If this unarchive was initiated by a user, delete all other stubs for this action so that this action
+        # isn't overridden
+        from couchforms.models import UnfinishedArchiveStub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        with unfinished_archive(instance=self, user_id=user_id, archive=False) as archive_stub:
+            self.doc_type = "XFormInstance"
+            self.history.append(XFormOperation(
+                user=user_id,
+                operation='unarchive',
+            ))
+            XFormInstance.save(self)  # subclasses explicitly set the doc type so force regular save
+            archive_stub.archive_history_updated()
+            xform_unarchived.send(sender="couchforms", xform=self)
+
+    def publish_archive_action_to_kafka(self, user_id, archive):
+        from couchforms.models import UnfinishedArchiveStub
+        from corehq.form_processor.submission_process_tracker import unfinished_archive
+        # Delete the original stub
+        UnfinishedArchiveStub.objects.filter(xform_id=self.form_id).all().delete()
+        with unfinished_archive(instance=self, user_id=user_id, archive=archive):
+            if archive:
+                xform_archived.send(sender="couchforms", xform=self)
+            else:
+                xform_unarchived.send(sender="couchforms", xform=self)
 
 
 class XFormError(XFormInstance):
@@ -447,6 +481,7 @@ class XFormArchived(XFormError):
         return True
 
 
+@six.python_2_unicode_compatible
 class SubmissionErrorLog(XFormError):
     """
     When a hard submission error (typically bad XML) is received we save it
@@ -454,11 +489,11 @@ class SubmissionErrorLog(XFormError):
     """
     md5 = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "Doc id: %s, Error %s" % (self.get_id, self.problem)
 
     def get_xml(self):
-        return self.fetch_attachment(ATTACHMENT_NAME)
+        return self.fetch_attachment(ATTACHMENT_NAME, return_bytes=True)
 
     def save(self, *args, **kwargs):
         # we have to override this because XFormError does too
@@ -490,6 +525,7 @@ class DefaultAuthContext(DocumentSchema):
         return True
 
 
+@six.python_2_unicode_compatible
 class UnfinishedSubmissionStub(models.Model):
     xform_id = models.CharField(max_length=200)
     timestamp = models.DateTimeField(db_index=True)
@@ -498,12 +534,36 @@ class UnfinishedSubmissionStub(models.Model):
     date_queued = models.DateTimeField(null=True, db_index=True)
     attempts = models.IntegerField(default=0)
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"
             "saved={s.saved},"
+            "domain={s.domain})"
+        ).format(s=self)
+
+    class Meta(object):
+        app_label = 'couchforms'
+
+
+@six.python_2_unicode_compatible
+class UnfinishedArchiveStub(models.Model):
+    xform_id = models.CharField(max_length=200)
+    user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
+    timestamp = models.DateTimeField(db_index=True)
+    archive = models.BooleanField(default=False)
+    history_updated = models.BooleanField(default=False)
+    domain = models.CharField(max_length=256)
+
+    def __str__(self):
+        return six.text_type(
+            "UnfinishedArchiveStub("
+            "xform_id={s.xform_id},"
+            "user_id={s.user_id},"
+            "timestamp={s.timestamp},"
+            "archive={s.archive},"
+            "history_updated={s.history_updated},"
             "domain={s.domain})"
         ).format(s=self)
 

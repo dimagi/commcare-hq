@@ -12,14 +12,14 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
 import json
 import couchexport
-from corehq.blobs.mixin import BlobMixin
+from corehq.apps.domain import UNKNOWN_DOMAIN
+from corehq.blobs.mixin import BlobMixin, CODES
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
     get_schema_index_view_keys, force_tag_to_list
 from memoized import memoized
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
@@ -114,7 +114,8 @@ class Format(object):
         return cls(format, **cls.FORMAT_DICT[format])
 
 
-class ExportSchema(Document, UnicodeMixIn):
+@six.python_2_unicode_compatible
+class ExportSchema(Document):
     """
     An export schema that can store intermittent contents of the export so
     that the entire doc list doesn't have to be used to generate the export
@@ -123,7 +124,7 @@ class ExportSchema(Document, UnicodeMixIn):
     schema = DictProperty()
     timestamp = TimeStampProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (json.dumps(self.index), self.timestamp)
 
     @classmethod
@@ -547,7 +548,7 @@ class DefaultExportSchema(BaseSavedExportSchema):
             def _human_readable_key(tag, prev_export_id, format, max_column_size):
                 return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
             return hashlib.md5(_human_readable_key(tag, prev_export_id,
-                format, max_column_size)).hexdigest()
+                format, max_column_size).encode('utf-8')).hexdigest()
 
         # check cache, only supported for filterless queries, currently
         cache_key = _build_cache_key(export_tag, previous_export_id, format, max_column_size)
@@ -593,7 +594,8 @@ class DefaultExportSchema(BaseSavedExportSchema):
         return None
 
 
-class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
+@six.python_2_unicode_compatible
+class SavedExportSchema(BaseSavedExportSchema):
     """
     Lets you save an export format with a schema and list of columns
     and display names.
@@ -619,7 +621,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     # ID of  the new style export that it was converted to
     converted_saved_export_id = StringProperty()
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.name, self.index)
 
     def transform(self, doc):
@@ -953,6 +955,7 @@ class SavedBasicExport(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
     is_safe = BooleanProperty(default=False)
+    _blobdb_type_code = CODES.basic_export
 
     @property
     def size(self):
@@ -969,7 +972,10 @@ class SavedBasicExport(BlobMixin, Document):
         return hashlib.md5(six.text_type(self.configuration.filename).encode('utf-8')).hexdigest()
 
     def set_payload(self, payload):
-        self.put_attachment(payload, self.get_attachment_name())
+        # According to @esoergel this code is slated for removal in the near
+        # future, so I didn't think it was worth it to try to pass the domain
+        # in here.
+        self.put_attachment(payload, self.get_attachment_name(), domain=UNKNOWN_DOMAIN)
 
     def get_payload(self, stream=False):
         return self.fetch_attachment(self.get_attachment_name(), stream=stream)

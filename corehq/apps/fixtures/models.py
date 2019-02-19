@@ -332,10 +332,12 @@ class FixtureDataItem(Document):
             group_ids = self.get_groups(wrap=False)
         else:
             group_ids = set()
-        users_in_groups = [group.get_users(only_commcare=True) for group in Group.view('_all_docs',
-            keys=list(group_ids),
-            include_docs=True
-        )]
+        users_in_groups = [
+            group.get_users(only_commcare=True)
+            for group in Group.view(
+                '_all_docs',
+                keys=list(group_ids),
+                include_docs=True)]
         if wrap:
             return set(CommCareUser.view('_all_docs', keys=list(user_ids), include_docs=True)).union(*users_in_groups)
         else:

@@ -15,14 +15,6 @@
     </style>
 {% endblock %}
 
-{% block js-inline %}
-    <script type="text/javascript">
-        $("#render_to_pdf").click(function() {
-           $.get("{{ report.slug }}/to_pdf")
-        })
-    </script>
-{% endblock %}
-
 {% block page_breadcrumbs %}
      <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>

@@ -25,6 +25,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 import six
+from io import open
 
 
 ONE_HOUR = 60 * 60
@@ -63,8 +64,8 @@ class Command(BaseCommand):
         unique_id_to_xmlns_map = {}
         app_to_unique_ids_map = defaultdict(set)
 
-        with open(log_path, "w") as log_file:
-            with open(prev_log_path, "r") as prev_log_file:
+        with open(log_path, "w", encoding='utf-8') as log_file:
+            with open(prev_log_path, "r", encoding='utf-8') as prev_log_file:
                 self.rebuild_maps(prev_log_file, log_file, unique_id_to_xmlns_map, app_to_unique_ids_map)
             self.fix_xforms(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
             self.fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run)
@@ -198,7 +199,7 @@ def set_xmlns_on_submission(xform_instance, xmlns, xform_db, log_file, dry_run):
     """
     Set the xmlns on an XFormInstance, and the save the document.
     """
-    old_xml = xform_instance.get_xml()
+    old_xml = xform_instance.get_xml().decode('utf-8')
     assert old_xml.count('xmlns="undefined"') == 1
     new_xml = old_xml.replace('xmlns="undefined"', 'xmlns="{}"'.format(xmlns))
     if not dry_run:
@@ -231,11 +232,11 @@ def set_xmlns_on_form(form_id, xmlns, app_build, log_file, dry_run):
         xml = form_in_build.source
         wrapped_xml = XForm(xml)
 
-        data = wrapped_xml.data_node.render()
+        data = wrapped_xml.data_node.render().decode('utf-8')
         data = data.replace("undefined", xmlns, 1)
         wrapped_xml.instance_node.remove(wrapped_xml.data_node.xml)
         wrapped_xml.instance_node.append(parse_xml(data))
-        new_xml = wrapped_xml.render()
+        new_xml = wrapped_xml.render().decode('utf-8')
 
         form_in_build.source = new_xml
         form_in_build.form_migrated_from_undefined_xmlns = datetime.utcnow()

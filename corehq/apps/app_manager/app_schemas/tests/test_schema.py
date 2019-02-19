@@ -18,7 +18,6 @@ from corehq.util.test_utils import flag_enabled
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.app_schemas.case_properties.is_usercase_in_use', MagicMock(return_value=False))
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_per_type_defaults', MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
 class SchemaTest(SimpleTestCase):
     def setUp(self):

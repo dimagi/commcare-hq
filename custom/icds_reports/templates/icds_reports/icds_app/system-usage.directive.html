@@ -1,5 +1,5 @@
 {% load i18n %}
-<div>
+<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
@@ -16,7 +16,10 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content" cg-busy="$ctrl.myPromise">
+    <div class="
+        {$ $ctrl.label === 'Program Summary' ? 'report-content' : '' $}
+        {$ $ctrl.showSystemUsageMessage ? 'report-content-with-message' : 'report-content-without-message' $}
+    ">
         <kpi data="$ctrl.data"></kpi>
     </div>
     <div class="row fixed-dots">
@@ -24,6 +27,11 @@
             <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
                 <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
             </div>
+        </div>
+        <div class="system-usage-message" ng-if="$ctrl.showSystemUsageMessage">
+            <i style="float: right;" ng-click="$ctrl.closeSystemUsageMessage()" class="fa fa-close pointer"></i>
+            <span>The information in the report is based on the self-reported data entered by
+                the Anganwadi Worker in ICDS-CAS mobile application and is subject to timely data syncs.</span>
         </div>
     </div>
 </div>

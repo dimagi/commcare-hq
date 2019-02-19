@@ -119,7 +119,6 @@ DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
 SHARED_DRIVE_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sharedfiles")
 
-CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
@@ -236,6 +235,18 @@ redis_cache = {
     'LOCATION': 'redis://127.0.0.1:6379/0',
     'OPTIONS': {},
 }
+# example redis cluster setting
+redis_cluster_cache = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': 'redis://127.0.0.1:6379/0',
+    'OPTIONS': {
+        'REDIS_CLIENT_CLASS': 'rediscluster.RedisCluster',
+        'CONNECTION_POOL_CLASS': 'rediscluster.connection.ClusterConnectionPool',
+        'CONNECTION_POOL_KWARGS': {
+            'skip_full_coverage_check': True
+        }
+    }
+}
 CACHES = {
     'default': redis_cache,
     'redis': redis_cache,
@@ -244,11 +255,6 @@ CACHES = {
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-
-# our production logstash aggregation
-LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_AUDITCARE_PORT = 10999
-LOGSTASH_HOST = 'localhost'
 
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],

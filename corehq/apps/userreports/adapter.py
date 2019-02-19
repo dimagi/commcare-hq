@@ -20,9 +20,6 @@ class IndicatorAdapter(object):
     def drop_table(self):
         raise NotImplementedError
 
-    def refresh_table(self):
-        raise NotImplementedError
-
     @unit_testing_only
     def clear_table(self):
         raise NotImplementedError
@@ -75,15 +72,21 @@ class IndicatorAdapter(object):
         Saves the document. Should bubble up known errors.
         """
         indicator_rows = self.get_all_values(doc, eval_context)
-        self._save_rows(indicator_rows, doc)
+        self.save_rows(indicator_rows)
+
+    def bulk_save(self, docs):
+        """
+        Evalutes UCR rows for given docs and saves the result in bulk.
+        """
+        raise NotImplementedError
 
     def get_all_values(self, doc, eval_context=None):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def _save_rows(self, rows, doc):
-        "Saves rows to a data source"
-        raise NotImplementedError
+    def bulk_delete(self, doc_ids):
+        for _id in doc_ids:
+            self.delete({'_id': _id})
 
     def delete(self, doc):
         raise NotImplementedError

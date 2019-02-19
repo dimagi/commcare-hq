@@ -16,6 +16,8 @@ from django.contrib import messages
 from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.app_schemas.casedb_schema import get_casedb_schema
 from corehq.apps.app_manager.app_schemas.session_schema import get_session_schema
+from corehq.apps.app_manager.views.forms import FormHasSubmissionsView
+from corehq.apps.domain.decorators import track_domain_request
 
 from dimagi.utils.logging import notify_exception
 
@@ -25,7 +27,7 @@ from corehq.apps.app_manager.views.notifications import get_facility_for_form, n
 from corehq.apps.app_manager.exceptions import AppManagerException, \
     FormNotFoundException
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail
+from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
@@ -46,7 +48,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
@@ -56,6 +58,7 @@ logger = logging.getLogger(__name__)
 
 
 @require_can_edit_apps
+@track_domain_request(calculated_prop='cp_n_form_builder_entered')
 def form_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
 
@@ -95,6 +98,13 @@ def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
 
 
 def _get_form_designer_view(request, domain, app, module, form):
+    if app and app.copy_of:
+        messages.warning(request, _(
+            "You tried to edit a form that was from a previous release, so "
+            "we have directed you to the latest version of your application."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
+
     if form.no_vellum:
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
@@ -116,7 +126,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context.update(locals())
 
     vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
-    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form)
+    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
@@ -133,11 +143,9 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
+        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
-    context['current_app_version_url'] = reverse(
-        'current_app_version', args=[domain, app.id]
-    )
 
     if request.user.is_superuser:
         context.update({'notification_options': _get_notification_options(request, domain, app, form)})
@@ -174,11 +182,11 @@ def get_form_data_schema(request, domain, form_unique_id):
         if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
     except AppManagerException as e:
-        notify_exception(request, message=e.message)
-        return HttpResponseBadRequest(_(
-            "There is an error in the case management of your application. "
-            "Please fix the error to see case properties in this tree"
-        ))
+        notify_exception(request, message=str(e))
+        return HttpResponseBadRequest(
+            str(e) or _("There is an error in the case management of your application. "
+            "Please fix the error to see case properties in this tree")
+        )
     except Exception as e:
         notify_exception(request, message=e.message)
         return HttpResponseBadRequest("schema error, see log for details")
@@ -210,6 +218,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
+            'showOnlyCurrentLang': (app.smart_lang_display and (len(app.langs) > 2)),
         },
         'uploader': {
             'uploadUrls': {
@@ -224,7 +233,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
     }
 
 
-def _get_vellum_core_context(request, domain, app, module, form):
+def _get_vellum_core_context(request, domain, app, module, form, lang):
     """
     Returns the core context that will be passed into vellum when it is
     initialized.
@@ -235,13 +244,16 @@ def _get_vellum_core_context(request, domain, app, module, form):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': trans(form.name, app.langs),
+        'formName': translate(form.name, lang, app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
                                  'xform']),
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
+        'hasSubmissions': form_has_submissions(domain, app.id, form.get_unique_id()),
+        'hasSubmissionsUrl': reverse(FormHasSubmissionsView.urlname,
+                                     args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
             "meta/deviceID",
             "meta/instanceID",

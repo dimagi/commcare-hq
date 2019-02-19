@@ -13,7 +13,7 @@ from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
+
 class CaseFromXFormTest(TestCase):
 
     def setUp(self):

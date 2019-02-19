@@ -5,8 +5,10 @@ import os
 from collections import namedtuple
 from copy import deepcopy
 
+import settings
 from corehq.apps.callcenter.utils import get_call_center_domains
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from io import open
 
 MODULE_PATH = os.path.dirname(__file__)
 DATA_SOURCES_PATH = os.path.join(MODULE_PATH, 'data_sources')
@@ -23,13 +25,26 @@ CallCenterReportDataSources = namedtuple('CallCenterReportDataSources', 'forms, 
 
 
 def call_center_data_source_configuration_provider():
-    data_source_paths = [FORM_DATA_SOURCE_PATH, CASE_DATA_SOURCE_PATH, CASE_ACTION_DATA_SOURCE_PATH]
-    domains = [domain.name for domain in get_call_center_domains() if domain.use_fixtures]
-    for data_source_path in data_source_paths:
+    domains = [domain for domain in get_call_center_domains() if domain.use_fixtures]
+    if not domains:
+        return
+
+    def _get_ds(ds_domains, data_source_path):
         data_source_json = _get_json(data_source_path)
+        data_source_json['domains'] = ds_domains
+        data_source_json['server_environment'] = [settings.SERVER_ENVIRONMENT]
         ds_conf = StaticDataSourceConfiguration.wrap(deepcopy(data_source_json))
-        ds_conf.domains = domains
-        yield ds_conf, data_source_path
+        return ds_conf, data_source_path
+
+    form_ds_domains = [domain.name for domain in domains if domain.form_datasource_enabled]
+    case_ds_domains = [domain.name for domain in domains if domain.case_datasource_enabled]
+    case_actions_ds_domains = [domain.name for domain in domains if domain.case_actions_datasource_enabled]
+    if form_ds_domains:
+        yield _get_ds(form_ds_domains, FORM_DATA_SOURCE_PATH)
+    if case_ds_domains:
+        yield _get_ds(case_ds_domains, CASE_DATA_SOURCE_PATH)
+    if case_actions_ds_domains:
+        yield _get_ds(case_actions_ds_domains, CASE_ACTION_DATA_SOURCE_PATH)
 
 
 def get_data_source_templates():
@@ -67,5 +82,5 @@ def _make_data_source_for_domain(data_source_json, domain_name):
 
 
 def _get_json(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         return json.load(f)

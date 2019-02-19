@@ -1,9 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -129,6 +132,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
+        "create_index": false,
         "column_id": "state_id",
         "expression": {
           "location_id": {
@@ -162,7 +166,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "closed_on",
-        "create_index": true,
+        "create_index": false,
         "type": "raw",
         "property_name": "closed_on"
       },
@@ -183,7 +187,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "dob",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "dob"
@@ -194,7 +198,7 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "age_at_reg",
-        "create_index": true,
+        "create_index": false,
         "is_nullable": true,
         "type": "raw",
         "property_name": "age_at_reg"
@@ -2380,9 +2384,31 @@
             "constant": null
           }
         }
+      },
+      {
+        "column_id": "household_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "parent_id"
+        }
+      },
+      {
+        "column_id": "phone_number",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "phone_number"
+        }
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "parent_id": {
+        "type": "icds_parent_id"
+      }
+    },
     "named_filters": {
       "referral_reached": {
         "operator": "eq",
@@ -2405,40 +2431,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",
@@ -2485,40 +2479,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",
@@ -2538,40 +2500,8 @@
               "type": "related_doc",
               "related_doc_type": "CommCareCase",
               "doc_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "referenced_id"
-                },
-                "type": "nested",
-                "argument_expression": {
-                  "array_expression": {
-                    "filter_expression": {
-                      "operator": "eq",
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "identifier"
-                      },
-                      "type": "boolean_expression",
-                      "property_value": "parent"
-                    },
-                    "type": "filter_items",
-                    "items_expression": {
-                      "expression": {
-                        "datatype": "array",
-                        "type": "property_name",
-                        "property_name": "indices"
-                      },
-                      "type": "root_doc"
-                    }
-                  },
-                  "type": "array_index",
-                  "index_expression": {
-                    "constant": 0,
-                    "type": "constant"
-                  }
-                }
+                "type": "named",
+                "name": "parent_id"
               }
             },
             "type": "boolean_expression",
@@ -2588,40 +2518,8 @@
               "type": "related_doc",
               "related_doc_type": "CommCareCase",
               "doc_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "referenced_id"
-                },
-                "type": "nested",
-                "argument_expression": {
-                  "array_expression": {
-                    "filter_expression": {
-                      "operator": "eq",
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "identifier"
-                      },
-                      "type": "boolean_expression",
-                      "property_value": "parent"
-                    },
-                    "type": "filter_items",
-                    "items_expression": {
-                      "expression": {
-                        "datatype": "array",
-                        "type": "property_name",
-                        "property_name": "indices"
-                      },
-                      "type": "root_doc"
-                    }
-                  },
-                  "type": "array_index",
-                  "index_expression": {
-                    "constant": 0,
-                    "type": "constant"
-                  }
-                }
+                "type": "named",
+                "name": "parent_id"
               }
             },
             "type": "boolean_expression",
@@ -2705,40 +2603,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",
@@ -2756,6 +2622,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "3"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
@@ -2765,20 +2640,8 @@
       },
       {
         "column_ids": [
-          "district_id",
-          "dob"
-        ]
-      },
-      {
-        "column_ids": [
           "supervisor_id",
           "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "owner_id"
         ]
       },
       {
@@ -2797,12 +2660,6 @@
         "column_ids": [
           "awc_id",
           "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "owner_id"
         ]
       },
       {

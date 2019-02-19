@@ -71,13 +71,13 @@ Add the following to localsettings.py
 """
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from os.path import join
-from unittest import TestCase
 from io import BytesIO
 
 from django.conf import settings
+from django.test import TestCase
 
-from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB
+from corehq.blobs.s3db import S3BlobDB
+from corehq.blobs.tests.util import new_meta, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
 from corehq.util.test_utils import trap_extra_setup
 
@@ -96,7 +96,12 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
         cls.db.close()
         super(TestS3BlobDB, cls).tearDownClass()
 
-    def test_bucket_path(self):
-        bucket = join("doctype", "8cd98f0")
-        self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
-        self.assertEqual(self.db.get_path(bucket=bucket), bucket)
+    def test_put_from_other_s3_db(self):
+        # cleanup will be done by self.db
+        db2 = S3BlobDB(settings.S3_BLOB_DB_SETTINGS)
+        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        with self.db.get(meta.key) as blob:
+            meta2 = db2.put(blob, meta=new_meta())
+        self.assertEqual(meta2.content_length, meta.content_length)
+        with db2.get(meta2.key) as blob2:
+            self.assertEqual(blob2.read(), b"content")

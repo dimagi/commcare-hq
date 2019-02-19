@@ -1,8 +1,15 @@
-hqDefine('locations/js/locations', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    var LocationModels = hqImport('locations/js/location_tree');
-
-    $(function() {
+hqDefine('locations/js/locations', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'locations/js/utils',
+    'locations/js/location_tree',
+], function (
+    $,
+    initialPageData,
+    locationUtils,
+    locationModels
+) {
+    $(function () {
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
@@ -13,14 +20,14 @@ hqDefine('locations/js/locations', function() {
             can_edit_root: can_edit_root,
         };
 
-        var tree_model = new LocationModels.LocationTreeViewModel(hierarchy, options);
+        var treeModel = locationModels.locationTreeViewModel(hierarchy, options);
 
-        $('#location_tree').koApplyBindings(tree_model);
-        tree_model.load(locs);
+        $('#location_tree').koApplyBindings(treeModel);
+        treeModel.load(locs);
 
-        var model = new LocationModels.LocationSearchViewModel(tree_model, options);
+        var model = locationModels.locationSearchViewModel(treeModel, options);
         $('#location_search').koApplyBindings(model);
 
-        hqImport('locations/js/utils').enableLocationSearchSelect();
+        locationUtils.enableLocationSearchSelect();
     });
 });

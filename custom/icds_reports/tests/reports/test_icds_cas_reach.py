@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
 
+from custom.icds_reports.messages import awcs_launched_help_text
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 
 
@@ -21,70 +22,65 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
-                            "all": 50,
-                            "format": "div",
-                            "color": "red",
-                            "percent": 0.0,
-                            "value": 19,
-                            "label": "AWCs Launched",
-                            "frequency": "month",
-                            "help_text": (
-                                "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                "after submitting at least one Household Registration form. "
-                            )
-                        },
+                            'redirect': 'icds_cas_reach/awcs_covered',
+                            'all': 51,
+                            'format': 'div',
+                            'color': 'red',
+                            'percent': 0,
+                            'value': 21,
+                            'label': 'AWCs Launched',
+                            'frequency': 'month',
+                            'help_text': awcs_launched_help_text()
+                        }, 
                         {
-                            "all": 50,
-                            "format": "div",
-                            "color": "green",
-                            "percent": 127.27272727272728,
-                            "value": 50,
-                            "label": "Number of AWCs open for at least one day in month",
-                            "frequency": "day",
-                            "help_text": (
-                                "Total Number of AWCs open for at least one day in month"
-                            )
+                            'all': 51, 
+                            'format': 'div', 
+                            'color': 'green', 
+                            'percent': 127.27272727272728, 
+                            'value': 50, 'label': 
+                            'Number of AWCs open for at least one day in month', 
+                            'frequency': 'month', 
+                            'help_text': 'Total Number of AWCs open for at least one day in month'
                         }
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 8,
-                            "label": "Sectors covered",
-                            "frequency": "month",
-                            "help_text": "Total Sectors that have launched ICDS CAS"
-                        },
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 9,
+                            'label': 'Sectors covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Sectors that have launched ICDS CAS'
+                        }, 
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 4,
-                            "label": "Blocks covered",
-                            "frequency": "month",
-                            "help_text": "Total Blocks that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 5,
+                            'label': 'Blocks covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Blocks that have launched ICDS CAS'
                         }
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 3,
-                            "label": "Districts covered",
-                            "frequency": "month",
-                            "help_text": "Total Districts that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 4,
+                            'label': 'Districts covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Districts that have launched ICDS CAS'
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 2,
-                            "label": "States/UTs covered",
-                            "frequency": "month",
-                            "help_text": "Total States that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 3,
+                            'label': 'States/UTs covered',
+                            'frequency': 'month',
+                            'help_text': 'Total States that have launched ICDS CAS'
                         }
                     ]
                 ]
@@ -106,68 +102,67 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
-                            "color": "red",
-                            "all": 50,
-                            "frequency": "month",
-                            "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                         "after submitting at least one Household Registration form. ",
-                            "percent": 0.0,
-                            "value": 19,
-                            "label": "AWCs Launched"
+                            'redirect': 'icds_cas_reach/awcs_covered',
+                            'all': 51,
+                            'format': 'div',
+                            'color': 'red',
+                            'percent': 0,
+                            'value': 21,
+                            'label': 'AWCs Launched',
+                            'frequency': 'month',
+                            'help_text': awcs_launched_help_text()
                         },
                         {
-                            "redirect": "awc_daily_status",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "day",
-                            "format": "div",
-                            "help_text": "Total Number of Angwanwadi Centers that"
-                                         " were open yesterday by the AWW or the AWW helper",
-                            "percent": "Data in the previous reporting period was 0",
-                            "value": 0,
-                            "label": "Number of AWCs Open yesterday"
+                            'redirect': 'icds_cas_reach/awc_daily_status',
+                            'all': 51,
+                            'format': 'div',
+                            'color': 'green',
+                            'percent': 'Data in the previous reporting period was 0',
+                            'value': 0,
+                            'label': 'Number of AWCs Open yesterday',
+                            'frequency': 'day',
+                            'help_text': 'Total Number of Angwanwadi Centers that '
+                                         'were open yesterday by the AWW or the AWW helper'
                         }
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 8,
-                            "label": "Sectors covered",
-                            "frequency": "month",
-                            "help_text": "Total Sectors that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 9,
+                            'label': 'Sectors covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Sectors that have launched ICDS CAS'
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 4,
-                            "label": "Blocks covered",
-                            "frequency": "month",
-                            "help_text": "Total Blocks that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 5,
+                            'label': 'Blocks covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Blocks that have launched ICDS CAS'
                         }
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 3,
-                            "label": "Districts covered",
-                            "frequency": "month",
-                            "help_text": "Total Districts that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 4,
+                            'label': 'Districts covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Districts that have launched ICDS CAS'
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 2,
-                            "label": "States/UTs covered",
-                            "frequency": "month",
-                            "help_text": "Total States that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 3,
+                            'label': 'States/UTs covered',
+                            'frequency': 'month',
+                            'help_text': 'Total States that have launched ICDS CAS'
                         }
                     ]
                 ]
@@ -189,68 +184,67 @@ class TestICDSCASReach(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "awcs_covered",
-                            "color": "red",
-                            "all": 50,
-                            "frequency": "month",
-                            "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                         "after submitting at least one Household Registration form. ",
-                            "percent": 0.0,
-                            "value": 19,
-                            "label": "AWCs Launched"
+                            'redirect': 'icds_cas_reach/awcs_covered',
+                            'all': 51,
+                            'format': 'div',
+                            'color': 'red',
+                            'percent': 0,
+                            'value': 21,
+                            'label': 'AWCs Launched',
+                            'frequency': 'month',
+                            'help_text': awcs_launched_help_text()
                         },
                         {
-                            "redirect": "awc_daily_status",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "day",
-                            "format": "div",
-                            "help_text": "Total Number of Angwanwadi Centers that"
-                                         " were open yesterday by the AWW or the AWW helper",
-                            "percent": "Data in the previous reporting period was 0",
-                            "value": 0,
-                            "label": "Number of AWCs Open yesterday"
+                            'redirect': 'icds_cas_reach/awc_daily_status',
+                            'all': 51,
+                            'format': 'div',
+                            'color': 'green',
+                            'percent': 'Data in the previous reporting period was 0',
+                            'value': 0,
+                            'label': 'Number of AWCs Open yesterday',
+                            'frequency': 'day',
+                            'help_text': 'Total Number of Angwanwadi Centers that '
+                                         'were open yesterday by the AWW or the AWW helper'
                         }
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 8,
-                            "label": "Sectors covered",
-                            "frequency": "month",
-                            "help_text": "Total Sectors that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 9,
+                            'label': 'Sectors covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Sectors that have launched ICDS CAS'
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 4,
-                            "label": "Blocks covered",
-                            "frequency": "month",
-                            "help_text": "Total Blocks that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 5,
+                            'label': 'Blocks covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Blocks that have launched ICDS CAS'
                         }
-                    ],
+                    ], 
                     [
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 3,
-                            "label": "Districts covered",
-                            "frequency": "month",
-                            "help_text": "Total Districts that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 4,
+                            'label': 'Districts covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Districts that have launched ICDS CAS'
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "percent": None,
-                            "value": 2,
-                            "label": "States/UTs covered",
-                            "frequency": "month",
-                            "help_text": "Total States that have launched ICDS CAS"
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 3,
+                            'label': 'States/UTs covered',
+                            'frequency': 'month',
+                            'help_text': 'Total States that have launched ICDS CAS'
                         }
                     ]
                 ]

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_clean_drinking_water_help_text
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from django.test import TestCase
@@ -24,8 +25,8 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a source of clean drinking water",
-                    "average": 96.15384615384616,
+                    "info": awcs_reported_clean_drinking_water_help_text(),
+                    "average": 96.66666666666667,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a source of clean drinking water:',
@@ -36,18 +37,13 @@ class TestCleanWater(TestCase):
                 },
                 "label": "Percentage of AWCs that reported having a source of clean drinking water",
                 "data": {
-                    "st1": {
-                        "in_month": 17,
-                        "original_name": ["st1"],
-                        "all": 17,
-                        "fillKey": "75%-100%"
-                    },
-                    "st2": {
-                        "in_month": 12,
-                        "original_name": ["st2"],
-                        "all": 13,
-                        "fillKey": "75%-100%"
-                    }
+                    'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                    'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                    'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                    'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+                    'st1': {'in_month': 17, 'original_name': ['st1'], 'all': 17, 'fillKey': '75%-100%'},
+                    'st2': {'in_month': 12, 'original_name': ['st2'], 'all': 13, 'fillKey': '75%-100%'},
+                    'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
                 },
                 "slug": "clean_water",
                 "fills": {
@@ -73,7 +69,7 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                    "info": awcs_reported_clean_drinking_water_help_text(),
                     "average": 100.0,
                     'extended_info': [
                         {
@@ -147,35 +143,28 @@ class TestCleanWater(TestCase):
                     }
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 100.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 92.3076923076923
-                    }
+                    {'loc_name': 'st1', 'percent': 100.0},
+                    {'loc_name': 'st2', 'percent': 92.3076923076923},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
                 ],
                 "location_type": "State",
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 100.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 92.3076923076923
-                    }
+                    {'loc_name': 'st1', 'percent': 100.0},
+                    {'loc_name': 'st2', 'percent': 92.3076923076923},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 100.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 92.3076923076923
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )
@@ -195,7 +184,7 @@ class TestCleanWater(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                "info": awcs_reported_clean_drinking_water_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 3,

@@ -12,7 +12,14 @@ from mock import patch, Mock
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
-from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
+from couchexport.writers import (
+    MAX_XLS_COLUMNS,
+    CsvFileWriter,
+    PythonDictWriter,
+    XlsLengthException,
+    ZippedExportWriter,
+)
+from six.moves import range
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -66,6 +73,24 @@ class CsvFileWriterTests(SimpleTestCase):
         file_start = writer.get_file().read(6)
         self.assertEqual(file_start, BOM_UTF8 + b'ham')
 
+    def test_csv_file_writer_utf8(self):
+        writer = CsvFileWriter()
+        headers = ['hám', 'spam', 'eggs']
+        writer.open('Spam')
+        writer.write_row(headers)
+        writer.finish()
+        file_start = writer.get_file().read(7)
+        self.assertEqual(file_start, BOM_UTF8 + 'hám'.encode('utf-8'))
+
+    def test_csv_file_writer_int(self):
+        writer = CsvFileWriter()
+        headers = [100, 'spam', 'eggs']
+        writer.open('Spam')
+        writer.write_row(headers)
+        writer.finish()
+        file_start = writer.get_file().read(6)
+        self.assertEqual(file_start, BOM_UTF8 + b'100')
+
 
 class HtmlExportWriterTests(SimpleTestCase):
 
@@ -81,7 +106,7 @@ class HtmlExportWriterTests(SimpleTestCase):
 
         root = html.fromstring(html_string)
         html_rows = [
-            [etree.tostring(td).strip() for td in tr.xpath('./td')]
+            [etree.tostring(td).strip().decode('utf-8') for td in tr.xpath('./td')]
             for tr in root.xpath('./body/table/tbody/tr')
         ]
         self.assertEqual(html_rows,
@@ -101,6 +126,28 @@ class Excel2007ExportWriterTests(SimpleTestCase):
             [b'row2\xe2\x80\x931', b'row2\xe2\x80\x932', b'row2\xe2\x80\x933'],
         ]
         tables = [[b'table\xe2\x80\x93title', table]]
+        export_from_tables(tables, file_, format_)
+
+
+class Excel2003ExportWriterTests(SimpleTestCase):
+
+    def test_data_length(self):
+        format_ = Format.XLS
+        file_ = io.BytesIO()
+        table = [
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS + 1)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS + 1)],
+        ]
+        tables = [['title', table]]
+
+        with self.assertRaises(XlsLengthException):
+            export_from_tables(tables, file_, format_)
+
+        table = [
+            ['header{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+            ['row{}'.format(i) for i in range(MAX_XLS_COLUMNS)],
+        ]
+        tables = [['title', table]]
         export_from_tables(tables, file_, format_)
 
 

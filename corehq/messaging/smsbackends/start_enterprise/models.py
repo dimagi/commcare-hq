@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import codecs
 import jsonfield
 import re
 import requests
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
 from django.db import models
 from django.db import IntegrityError
 from corehq.apps.sms.models import SQLSMSBackend
@@ -67,10 +69,11 @@ class StartEnterpriseBackend(SQLSMSBackend):
     def get_params(self, msg_obj):
         config = self.config
         try:
-            message = str(msg_obj.text)
+            message = msg_obj.text
+            message.encode('ascii')
             message_type = LONG_TEXT_MSG_TYPE
         except UnicodeEncodeError:
-            message = msg_obj.text.encode('utf_16_be').encode('hex').upper()
+            message = codecs.encode(codecs.encode(msg_obj.text, 'utf_16_be'), 'hex').decode('utf-8').upper()
             message_type = LONG_UNICODE_MSG_TYPE
 
         return {
@@ -96,7 +99,8 @@ class StartEnterpriseBackend(SQLSMSBackend):
 
         response = requests.get(
             SINGLE_SMS_URL,
-            params=self.get_params(msg_obj)
+            params=self.get_params(msg_obj),
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 

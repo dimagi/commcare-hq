@@ -41,7 +41,7 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
         doc_prep_fn=transform_domain_for_elasticsearch
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.DOMAIN], group_id='domains-to-es', num_processes=num_processes, process_num=process_num
+        topics=[topics.DOMAIN], client_id='domains-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,
@@ -62,7 +62,7 @@ class DomainReindexerFactory(ReindexerFactory):
 
     def build(self):
         return ElasticPillowReindexer(
-            pillow=get_domain_kafka_to_elasticsearch_pillow(),
+            pillow_or_processor=get_domain_kafka_to_elasticsearch_pillow(),
             change_provider=CouchViewChangeProvider(
                 couch_db=Domain.get_db(),
                 view_name='all_docs/by_doc_type',

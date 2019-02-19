@@ -7,7 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.template.loader import render_to_string
 
-from corehq.apps.domain.views import EditInternalDomainInfoView
+from corehq.apps.domain.views.internal import EditInternalDomainInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
@@ -60,7 +60,7 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue'
 )
@@ -102,7 +102,7 @@ def incomplete_self_started_domains():
     return email_domains
 
 
-@periodic_task(
+@periodic_task(serializer='pickle',
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue',
 )

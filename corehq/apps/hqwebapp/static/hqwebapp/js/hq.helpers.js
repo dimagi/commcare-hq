@@ -3,7 +3,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
-], function(
+], function (
     $,
     ko,
     _,
@@ -23,7 +23,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     });
 
     // disable-on-submit is a class for form submit buttons so they're automatically disabled when the form is submitted
-    $(document).on('submit', 'form', function(ev) {
+    $(document).on('submit', 'form', function (ev) {
         var form = $(ev.target);
         form.find('.disable-on-submit').disableButton();
         form.find('.disable-on-submit-no-spinner').disableButtonNoSpinner();
@@ -37,22 +37,15 @@ hqDefine("hqwebapp/js/hq.helpers", [
     $(document).on('reset', 'form.disable-on-submit', function (ev) {
         $(ev.target).enableButton();
     });
-    $(document).on('click', '.add-spinner-on-click', function(ev) {
+    $(document).on('click', '.add-spinner-on-click', function (ev) {
         $(ev.target).addSpinnerToButton();
     });
 
-    $(document).on('click', '.notification-close-btn', function() {
+    $(document).on('click', '.notification-close-btn', function () {
         var note_id = $(this).data('note-id');
         var post_url = $(this).data('url');
         $.post(post_url, {note_id: note_id});
         $(this).parents('.alert').hide(150);
-    });
-
-    // Initialize common widgets
-    $(function() {
-        _.each($(".ko-select2"), function(element) {
-            $(element).select2();
-        });
     });
 
     if ($.timeago) {
@@ -60,7 +53,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
         $(".timeago").timeago();
     }
 
-    window.onerror = function(message, file, line, col, error) {
+    window.onerror = function (message, file, line, col, error) {
         $.post('/jserror/', {
             message: message,
             page: window.location.href,
@@ -73,10 +66,10 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
     var oldHide = $.fn.popover.Constructor.prototype.hide;
 
-    $.fn.popover.Constructor.prototype.hide = function() {
+    $.fn.popover.Constructor.prototype.hide = function () {
         if (this.options.trigger === "hover" && this.tip().is(":hover")) {
             var that = this;
-            setTimeout(function() {
+            setTimeout(function () {
                 return that.hide.apply(that, arguments);
             }, that.options.delay.hide);
             return;
@@ -86,7 +79,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
     $.fn.hqHelp = function () {
         var self = this;
-        self.each(function(i) {
+        self.each(function (i) {
             var $self = $(self),
                 $helpElem = $($self.get(i)),
                 $link = $helpElem.find('a');
@@ -97,7 +90,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
                 container: 'body',
             };
             if (!$link.data('content')) {
-                options.content = function() {
+                options.content = function () {
                     return $('#popover_content_wrapper').html();
                 };
             }
@@ -107,7 +100,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
             $link.popover(options);
 
             // Prevent jumping to the top of the page when link is clicked
-            $helpElem.find('a').click(function(event) {
+            $helpElem.find('a').click(function (event) {
                 googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
                 event.preventDefault();
             });
@@ -131,7 +124,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
 
     $.fn.removeSpinnerFromButton = function () {
-        $(this).find('i').remove();
+        $(this).find('i.fa-spin').remove();
     };
 
 
@@ -165,7 +158,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     };
 
     $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
+        beforeSend: function (xhr, settings) {
             // Don't pass csrftoken cross domain
             // Ignore HTTP methods that do not require CSRF protection
             if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {

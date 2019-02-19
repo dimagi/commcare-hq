@@ -10,7 +10,7 @@ from six.moves import range
 class TestClosingContextProxy(TestCase):
 
     def test_proxy_is_iterable(self):
-        with NamedTemporaryFile() as tmp:
+        with NamedTemporaryFile(mode='w+') as tmp:
             tmp.write("line 1\nline 2\n")
             tmp.seek(0)
             proxy = mod.ClosingContextProxy(tmp)

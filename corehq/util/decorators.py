@@ -4,13 +4,11 @@ from celery.task import task
 from functools import wraps
 import logging
 import requests
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 from six.moves import zip
 
 
@@ -117,7 +115,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
-        @task(bind=True, queue=queue, ignore_result=ignore_result,
+        @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
@@ -146,7 +144,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     return decorator
 
 
-def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queue'):
+def analytics_task(default_retry_delay=10, max_retries=3, queue='analytics_queue', serializer='json'):
     '''
         defines a task that posts data to one of our analytics endpoints. It retries the task
         up to 3 times if the post returns with a status code indicating an error with the post
@@ -154,7 +152,7 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queu
     '''
     def decorator(func):
         @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+              default_retry_delay=default_retry_delay, max_retries=max_retries, serializer=serializer)
         @wraps(func)
         def _inner(self, *args, **kwargs):
             try:

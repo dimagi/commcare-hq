@@ -18,7 +18,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_apps_by_id,
-    get_brief_app, get_latest_released_app_version)
+    get_brief_app, get_latest_released_app_version, get_app_ids_in_domain)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -91,15 +91,9 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         normal_app, remote_app = sorted(apps, key=lambda app: app.is_remote_app())
         expected_normal_app, expected_remote_app = sorted(self.apps, key=lambda app: app.is_remote_app())
 
-        # Since brief apps removes anonymous_cloudcare_hash, a new one gets generated and thus causes
-        # a mismatch. Setting it none so we can ignore the difference
         brief_remote = self._make_app_brief(expected_remote_app)
-        brief_remote.anonymous_cloudcare_hash = None
-        remote_app.anonymous_cloudcare_hash = None
 
         brief_normal_app = self._make_app_brief(expected_normal_app)
-        brief_normal_app.anonymous_cloudcare_hash = None
-        normal_app.anonymous_cloudcare_hash = None
 
         self.assert_docs_equal(remote_app, brief_remote)
         self.assert_docs_equal(normal_app, brief_normal_app)
@@ -108,10 +102,8 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.apps[0].save()
         brief_app = get_brief_app(self.domain, self.apps[0]._id)
         self.assertIsNotNone(brief_app)
-        brief_app.anonymous_cloudcare_hash = None
 
         exepcted_app = self._make_app_brief(self.apps[0])
-        exepcted_app.anonymous_cloudcare_hash = None
         self.assert_docs_equal(brief_app, exepcted_app)
 
     def test_get_brief_app_not_found(self):
@@ -131,11 +123,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(apps), 1)
         normal_app, = apps
         expected_normal_app, _ = sorted(self.apps, key=lambda app: app.is_remote_app())
-        # Since brief apps removes anonymous_cloudcare_hash, a new one gets generated and thus causes
-        # a mismatch. Setting it none so we can ignore the difference
         brief_app = self._make_app_brief(expected_normal_app)
-        brief_app.anonymous_cloudcare_hash = None
-        normal_app.anonymous_cloudcare_hash = None
         self.assert_docs_equal(normal_app, brief_app)
 
     def test_get_apps_in_domain_exclude_remote(self):
@@ -169,14 +157,16 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
     def test_get_built_app_ids_with_submissions_for_app_ids_and_versions(self):
+        app_ids_in_domain = get_app_ids_in_domain(self.domain)
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
             self.domain,
+            app_ids_in_domain,
             {self.apps[0]._id: self.first_saved_version},
         )
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
         app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
-            self.domain,
+            self.domain, app_ids_in_domain
         )
         self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
 

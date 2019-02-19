@@ -43,7 +43,7 @@ def requires_privilege_with_fallback(slug, **assignment):
                 )
             except PermissionDenied:
                 request.show_trial_notice = False
-                from corehq.apps.domain.views import SubscriptionUpgradeRequiredView
+                from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
                 return SubscriptionUpgradeRequiredView().get(
                     request, request.domain, slug
                 )

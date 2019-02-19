@@ -12,6 +12,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import children_initiated_appropriate_complementary_feeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
@@ -58,10 +59,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         "fills": fills,
         "rightLegend": {
             "average": average,
-            "info": _((
-                "Percentage of children between 6 - 8 months given timely introduction to solid, "
-                "semi-solid or soft food."
-            )),
+            "info": children_initiated_appropriate_complementary_feeding_help_text(html=True),
             "extended_info": [
                 {
                     'indicator': 'Total number of children between age 6 - 8 months{}:'.format(chosen_filters),
@@ -228,10 +226,7 @@ def get_children_initiated_sector_data(domain, config, loc_level, location_id, s
 
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Percentage of children between 6 - 8 months given timely introduction to solid, "
-            "semi-solid or soft food."
-        )),
+        "info": children_initiated_appropriate_complementary_feeding_help_text(html=True),
         "chart_data": [
             {
                 "values": chart_data['blue'],

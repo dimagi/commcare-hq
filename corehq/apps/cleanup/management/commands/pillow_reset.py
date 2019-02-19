@@ -11,6 +11,7 @@ from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
 import six
 from six.moves import input
+from io import open
 
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, file_path, **options):
         db = get_db()
         checkpoints = []
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             config = PillowResetConfig.wrap(json.loads(f.read()))
             for pillow in config.pillows:
                 checkpoint_doc_name = pillow.checkpoint.checkpoint_id

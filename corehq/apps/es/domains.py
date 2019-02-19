@@ -48,6 +48,7 @@ class DomainES(HQESQuery):
             is_active,
             is_active_project,
             created_by_user,
+            self_started,
         ] + super(DomainES, self).builtin_filters
 
 
@@ -104,3 +105,7 @@ def is_active_project(is_active=True):
 
 def created_by_user(creating_user):
     return filters.term('creating_user', creating_user)
+
+
+def self_started():
+    return filters.term("internal.self_started", "true")

@@ -36,7 +36,6 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dbaccessors import (
     hq_group_export_configs_by_domain,
-    stale_get_exports_json,
 )
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
@@ -74,19 +73,23 @@ from six.moves import map
 
 
 class HQUserType(object):
-    REGISTERED = 0
+    ACTIVE = 0
     DEMO_USER = 1
     ADMIN = 2
     UNKNOWN = 3
     COMMTRACK = 4
+    DEACTIVATED = 5
+    WEB = 6
     human_readable = [settings.COMMCARE_USER_TERM,
                       ugettext_noop("demo_user"),
                       ugettext_noop("admin"),
                       ugettext_noop("Unknown Users"),
-                      ugettext_noop("CommCare Supply")]
-    toggle_defaults = (True, False, False, False, False)
+                      ugettext_noop("CommCare Supply"),
+                      ugettext_noop("Deactivated Mobile Workers"),
+                      ugettext_noop("Web Users"), ]
+    toggle_defaults = (True, False, False, False, False, True, True)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False)
+    included_defaults = (True, True, True, True, False, True, True)
 
     @classmethod
     def use_defaults(cls):
@@ -95,12 +98,12 @@ class HQUserType(object):
     @classmethod
     def all_but_users(cls):
         no_users = [True] * cls.count
-        no_users[cls.REGISTERED] = False
+        no_users[cls.ACTIVE] = False
         return cls._get_manual_filterset(cls.included_defaults, no_users)
 
     @classmethod
     def commtrack_defaults(cls):
-        # this is just a convenience method for clairty on commtrack projects
+        # this is just a convenience method for clarity on commtrack projects
         return cls.all()
 
     @classmethod
@@ -500,6 +503,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
         mock_request.method = 'GET'
+        mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
@@ -578,6 +582,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report config': self.get_id
             })
             return ReportContent(_("An error occurred while generating this report."), None)
+
+    @property
+    def is_active(self):
+        """
+        Returns True if the report has a start_date that is in the past or there is
+        no start date
+        :return: boolean
+        """
+        return self.start_date is None or self.start_date <= datetime.today().date()
 
     @property
     def is_configurable_report(self):
@@ -808,8 +821,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
             attach_excel = getattr(self, 'attach_excel', False)
             content, excel_files = get_scheduled_report_response(
-                self.owner, self.domain, self._id, attach_excel=attach_excel)
-            slugs = [r.report_slug for r in self.configs]
+                self.owner, self.domain, self._id, attach_excel=attach_excel,
+                send_only_active=True
+            )
+
+            # Will be False if ALL the ReportConfigs in the ReportNotification
+            # have a start_date in the future.
+            if content is False:
+                return
 
             for email in emails:
                 body = render_full_report_notification(None, content, email, self).content
@@ -851,14 +870,6 @@ class HQExportSchema(SavedExportSchema):
         if not self.domain:
             self.domain = self.index[0]
         return self
-
-    @classmethod
-    def get_stale_exports(cls, domain):
-        return [
-            cls.wrap(export)
-            for export in stale_get_exports_json(domain)
-            if export['type'] == cls._default_type
-        ]
 
 
 class FormExportSchema(HQExportSchema):

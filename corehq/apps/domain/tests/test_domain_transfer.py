@@ -11,7 +11,7 @@ from corehq import toggles
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.forms import TransferDomainForm, TransferDomainFormErrors
-from corehq.apps.domain.views import TransferDomainView
+from corehq.apps.domain.views.internal import TransferDomainView
 from corehq.apps.domain.exceptions import InactiveTransferDomainException
 
 

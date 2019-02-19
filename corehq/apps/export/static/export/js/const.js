@@ -3,7 +3,7 @@
  * so if changing a value, ensure that both places reflect the change
  */
 
-hqDefine('export/js/const', function () {
+hqDefine('export/js/const', [], function () {
     var TAG_DELETED = 'deleted';
     var MULTISELECT_SPLIT_TYPE = 'multi-select';
     var PLAIN_SPLIT_TYPE = 'plain';
@@ -22,6 +22,11 @@ hqDefine('export/js/const', function () {
         CSV: 'csv',
         XLS: 'xls',
         XLSX: 'xlsx',
+    };
+    var SHARING_OPTIONS = {
+        PRIVATE: 'private',
+        EXPORT_ONLY: 'export_only',
+        EDIT_AND_EXPORT: 'edit_and_export',
     };
     var DEID_OPTIONS = {
         NONE: null,
@@ -47,6 +52,7 @@ hqDefine('export/js/const', function () {
         USER_DEFINED_SPLIT_TYPES: USER_DEFINED_SPLIT_TYPES,
         SAVE_STATES: SAVE_STATES,
         EXPORT_FORMATS: EXPORT_FORMATS,
+        SHARING_OPTIONS: SHARING_OPTIONS,
         DEID_OPTIONS: DEID_OPTIONS,
         ANALYTICS_EVENT_CATEGORIES: ANALYTICS_EVENT_CATEGORIES,
         FORM_EXPORT: FORM_EXPORT,

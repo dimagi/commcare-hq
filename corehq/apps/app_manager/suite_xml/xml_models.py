@@ -163,6 +163,10 @@ class XFormResource(AbstractResource):
     ROOT_NAME = 'xform'
 
 
+class ReleaseInfoXFormResource(AbstractResource):
+    ROOT_NAME = 'xform-update-info'
+
+
 class LocaleResource(AbstractResource):
     ROOT_NAME = 'locale'
     language = StringField('@language')
@@ -571,7 +575,7 @@ class GraphTemplate(Template):
                                     for k, v in six.iteritems(s.config)
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in six.iteritems(s.locale_specific_config)
+                                    for k, v in sorted(six.iteritems(s.locale_specific_config))
                                 ]
                             )
                         )
@@ -852,6 +856,7 @@ class Suite(OrderedXmlObject):
     descriptor = StringField('@descriptor')
 
     xform_resources = NodeListField('xform', XFormResource)
+    # releases_xform_resources = NodeListField('xform-update-info', ReleaseInfoXFormResource)
     locale_resources = NodeListField('locale', LocaleResource)
     media_resources = NodeListField('locale', MediaResource)
     practice_user_restore_resources = NodeListField('user-restore', PracticeUserRestoreResource)

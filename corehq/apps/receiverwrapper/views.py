@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import os
 
 import six
 from couchdbkit import ResourceNotFound
@@ -11,7 +12,7 @@ from django.http import (
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -26,11 +27,15 @@ from corehq.apps.receiverwrapper.util import (
     should_ignore_submission,
     DEMO_SUBMIT_MODE,
 )
+from corehq.form_processor.exceptions import XFormLockError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.metrics import (
+    MULTIMEDIA_SUBMISSION_ERROR_COUNT,
+    XFORM_LOCKED_COUNT,
+)
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 import couchforms
@@ -40,11 +45,17 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
+PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
+
+@profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [
@@ -73,18 +84,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             except:
                 meta = {}
 
-            details = [
-                "domain:{}".format(domain),
-                "app_id:{}".format(app_id),
-                "user_id:{}".format(user_id),
-                "authenticated:{}".format(authenticated),
-                "form_meta:{}".format(meta),
-            ]
-            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
-            notify_exception(request, "Received a submission with POST.keys()", details)
-            response = HttpResponseBadRequest(six.text_type(e))
-            _record_metrics(metric_tags, 'unknown', response)
-            return response
+            return _submission_error(
+                request, "Received a submission with POST.keys()",
+                MULTIMEDIA_SUBMISSION_ERROR_COUNT, metric_tags,
+                domain, app_id, user_id, authenticated, meta,
+            )
 
         app_id, build_id = get_app_and_build_ids(domain, app_id)
         submission_post = SubmissionPost(
@@ -107,7 +111,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             openrosa_headers=couchforms.get_openrosa_headers(request),
         )
 
-        result = submission_post.run()
+        try:
+            result = submission_post.run()
+        except XFormLockError as err:
+            return _submission_error(
+                request, "XFormLockError: %s" % err, XFORM_LOCKED_COUNT,
+                metric_tags, domain, app_id, user_id, authenticated, status=423,
+                notify=False,
+            )
 
     response = result.response
 
@@ -119,6 +130,30 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     _record_metrics(metric_tags, result.submission_type, response, result, timer)
 
+    return response
+
+
+def _submission_error(request, message, count_metric, metric_tags,
+        domain, app_id, user_id, authenticated, meta=None, status=400,
+        notify=True):
+    """Notify exception, datadog count, record metrics, construct response
+
+    :param status: HTTP status code (default: 400).
+    :returns: HTTP response object
+    """
+    details = [
+        "domain:{}".format(domain),
+        "app_id:{}".format(app_id),
+        "user_id:{}".format(user_id),
+        "authenticated:{}".format(authenticated),
+        "form_meta:{}".format(meta or {}),
+    ]
+    datadog_counter(count_metric, tags=details)
+    if notify:
+        notify_exception(request, message, details)
+    response = HttpResponseBadRequest(
+        message, status=status, content_type="text/plain")
+    _record_metrics(metric_tags, 'unknown', response)
     return response
 
 
@@ -138,6 +173,7 @@ def _record_metrics(tags, submission_type, response, result=None, timer=None):
     datadog_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @check_domain_migration
@@ -252,20 +288,6 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
-@handle_401_response
-@login_or_token_ex(allow_cc_users=True)
-@two_factor_exempt
-def _secure_post_token(request, domain, app_id=None):
-    """only ever called from secure post"""
-    return _process_form(
-        request=request,
-        domain=domain,
-        app_id=app_id,
-        user_id=request.couch_user.get_id,
-        authenticated=True,
-    )
-
-
 @location_safe
 @csrf_exempt
 @require_POST
@@ -276,8 +298,6 @@ def secure_post(request, domain, app_id=None):
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
     }
-    if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
-        authtype_map['token'] = _secure_post_token
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']

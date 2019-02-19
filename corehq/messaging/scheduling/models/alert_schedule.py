@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
+from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
 from datetime import timedelta, time
 from memoized import memoized
@@ -24,10 +24,7 @@ class AlertSchedule(Schedule):
 
     def set_next_event_due_timestamp(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
-        instance.next_event_due += timedelta(
-            hours=current_event.time_to_wait.hour,
-            minutes=current_event.time_to_wait.minute
-        )
+        instance.next_event_due += timedelta(minutes=current_event.minutes_to_wait)
 
     def get_current_event_content(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
@@ -63,15 +60,57 @@ class AlertSchedule(Schedule):
             event = AlertEvent(
                 order=1,
                 schedule=self,
-                time_to_wait=time(0, 0),
+                minutes_to_wait=0,
             )
             event.content = content
             event.save()
 
+    @classmethod
+    def create_custom_alert(cls, domain, event_and_content_objects, extra_options=None):
+        schedule = cls(domain=domain)
+        schedule.set_custom_alert(event_and_content_objects, extra_options=extra_options)
+        return schedule
+
+    def set_custom_alert(self, event_and_content_objects, extra_options=None):
+        if len(event_and_content_objects) == 0:
+            raise ValueError("Expected at least one (event, content) tuple")
+
+        with transaction.atomic():
+            self.ui_type = Schedule.UI_TYPE_CUSTOM_IMMEDIATE
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
+
+            self.delete_related_events()
+
+            # passing `start` just controls where order starts counting at, it doesn't
+            # cause elements to be skipped
+            for order, event_and_content in enumerate(event_and_content_objects, start=1):
+                event, content = event_and_content
+
+                if not isinstance(event, AlertEvent):
+                    raise TypeError("Expected AlertEvent")
+
+                if not isinstance(content, Content):
+                    raise TypeError("Expected Content")
+
+                content.save()
+                event.schedule = self
+                event.content = content
+                event.order = order
+                event.save()
+
 
 class AlertEvent(Event):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
-    time_to_wait = models.TimeField()
+    minutes_to_wait = models.IntegerField()
+
+    def create_copy(self):
+        """
+        See Event.create_copy() for docstring.
+        """
+        return AlertEvent(
+            minutes_to_wait=self.minutes_to_wait,
+        )
 
 
 class ImmediateBroadcast(Broadcast):

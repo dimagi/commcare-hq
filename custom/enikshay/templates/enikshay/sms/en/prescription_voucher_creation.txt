@@ -1,1 +1,0 @@
-Drug Voucher ID {{ voucher_id }} issued to {{ person_name }} with Beneficiary ID {{ person_id }}.

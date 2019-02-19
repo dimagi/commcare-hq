@@ -1,5 +1,5 @@
 /*
- * Filter that only returns xforms.  Used by the change listener.
+ * Filter that returns documents that are neither cases nor forms.  Used by the change listener.
  */
 function (doc, req) {
     var doc_type = doc["doc_type"];

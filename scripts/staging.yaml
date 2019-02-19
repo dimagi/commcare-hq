@@ -49,26 +49,12 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging # J$ 11/13
-  - jls/privacy-policy  # Jenny 3/19
-  - jls/data-corrections-forms  # Jenny 3/27
-  - ce/app-status-staging+np/training-module # CE 4/10
-  - je/report-builder-button # J$ 4/3
-  - ce/auto-batches # Cal April 6
-  - ce/app-status-staging # Cal April 9
-  - jls/externalize-js-locations-widgets # Jenny April 19
-  - jls/externalize-js-reassign-cases # Jenny April 19
-  - emord-patch-1 # J$ April 19 (upgrading celery)
-  - jls/inheritance-cleanup # Jenny April 20
-  - jr/drilldown-filters-again # jordan April 23
-submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
-  submodules/django-digest-src:
-    branches: []
-  corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches: []
-  submodules/commcare-translations:
-    branches: []
+  - dmr/fix-es-service-check  # Danny Jan 3
+  - es/child-module-metrics  # Ethan Feb 7
+  - jls/requirejs-select2-conflict-test   # Jenny Feb 11
+  - ns/update_uwsgi+np/celery-4.x-2  # Nick P Feb 14
+  - ns/update_uwsgi  # Nitigya Feb 12 
+  - np/celery-4.x-2  # Nick P Feb 14
+  - send_report_email_sync  # Nick P Feb 14
+  - debug-celery  # Nick P Feb 14
+submodules: {}

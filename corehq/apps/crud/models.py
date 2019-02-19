@@ -13,9 +13,8 @@ class BaseAdminHQTabularCRUDManager(TabularCRUDManager):
     def edit_button(self):
         doc_id = self.document_instance.get_id if self.document_instance else ""
         return mark_safe("""<a href="#crud_update_modal"
-            class="btn btn-default"
+            class="btn btn-default crud-edit"
             data-item_id="%s"
-            onclick="crud_interface.update_item(this)"
             data-toggle="modal"><i class="fa fa-pencil"></i> Edit</a>""" % doc_id)
 
     def update(self, **kwargs):

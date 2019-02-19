@@ -13,9 +13,15 @@ function setup() {
     rm *.log *.lock || true
 
     scripts/uninstall-requirements.sh
-    pip install \
-        -r requirements/requirements.txt \
-        -r requirements/test-requirements.txt
+    if [ "$PYTHON_VERSION" = "py3" ]; then
+        pip install \
+            -r requirements-python3_6/requirements.txt \
+            -r requirements-python3_6/test-requirements.txt
+    else
+        pip install \
+            -r requirements/requirements.txt \
+            -r requirements/test-requirements.txt
+    fi
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
@@ -89,7 +95,7 @@ function send_metric_to_datadog() {
               ]}
             ]
         }" \
-    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}"
+    "https://app.datadoghq.com/api/v1/series?api_key=${DATADOG_API_KEY}" || true
 }
 
 function _run_tests() {

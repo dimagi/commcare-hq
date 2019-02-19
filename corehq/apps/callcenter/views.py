@@ -65,11 +65,11 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
             (self.get_static_options_size, self.get_static_options),
             (self.get_groups_size, self.get_groups),
             (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
+            (self.get_active_users_size, self.get_active_users),
         ]
 
-    def user_es_query(self, query):
-        q = super(CallCenterOwnerOptionsView, self).user_es_query(query)
+    def active_user_es_query(self, query):
+        q = super(CallCenterOwnerOptionsView, self).active_user_es_query(query)
         return q.mobile_users()
 
     @staticmethod

@@ -1,6 +1,6 @@
 /* globals hqDefine, hqImport */
 /* Behavior for app_view.html, regardless of document type (i.e., applies to both normal and remote apps) */
-hqDefine("app_manager/js/app_view", function() {
+hqDefine("app_manager/js/app_view", function () {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
             reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
@@ -32,10 +32,10 @@ hqDefine("app_manager/js/app_view", function() {
         }
 
         // Multimedia analytics
-        $(document).on("click", '#download_zip', function() {
+        $(document).on("click", '#download_zip', function () {
             hqImport('analytix/js/google').track.event('App Builder', 'Download Multimedia');
         });
-        $(document).on("click", '#open_checker', function() {
+        $(document).on("click", '#open_checker', function () {
             hqImport('analytix/js/google').track.event('App Builder', 'Manage Multimedia');
         });
 
@@ -49,12 +49,17 @@ hqDefine("app_manager/js/app_view", function() {
                     self.load_state('loading');
                     $.ajax({
                         url: hqImport("hqwebapp/js/initial_page_data").reverse("app_multimedia_ajax"),
-                        success: function(content) {
+                        success: function (content) {
                             self.load_state('loaded');
                             self.multimedia_page_html(content);
                         },
-                        error: function() {
-                            alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                        error: function (data) {
+                            if (data.hasOwnProperty('responseJSON')) {
+                                alert(data.responseJSON.message);
+                            }
+                            else {
+                                alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                            }
                             self.load_state('error');
                         },
                     });
@@ -63,12 +68,19 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new multimediaTabModel();
+            var multimediaTab = multimediaTabModel(),
+                initializeMultimediaTab = function () {
+                    if (multimediaTab.load_state() === null) {
+                        multimediaTab.load_if_necessary();
+                    }
+                };
             $("#multimedia-tab").koApplyBindings(multimediaTab);
+            if ($('[href="#multimedia-tab"]').parent().hasClass("active")) {
+                // Multimedia tab has already been selected
+                initializeMultimediaTab();
+            }
             $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
-                if (multimediaTab.load_state() === null) {
-                    multimediaTab.load_if_necessary();
-                }
+                initializeMultimediaTab();
             });
         }
     });

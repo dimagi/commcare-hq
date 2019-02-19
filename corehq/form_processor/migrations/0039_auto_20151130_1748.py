@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('section_id', models.CharField(max_length=100, db_index=True)),
                 ('balance', models.IntegerField(default=0)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field=b'case_id', on_delete=models.CASCADE)),
+                ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field='case_id', on_delete=models.CASCADE)),
             ],
             options={
             },

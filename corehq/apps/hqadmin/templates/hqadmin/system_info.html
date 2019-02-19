@@ -145,13 +145,13 @@
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: models">
-                        <tr data-bind="css: overall_status, attr: {id: name}">
+                        <tr data-bind="css: overallStatus, attr: {id: name}">
                             <td><code data-bind="text: name"></code></td>
                             <td>
-                                    <label data-bind="text: supervisor_state, css: supervisor_state_css" class="label"></label>
-                                    <span data-bind="makeHqHelp: { name: 'Info', description: supervisor_message, format: 'html'}, visible: supervisor_message"></span>
+                                    <label data-bind="text: supervisorState, css: supervisorStateCss" class="label"></label>
+                                    <span data-bind="makeHqHelp: { name: 'Info', description: supervisorMessage, format: 'html'}, visible: supervisorMessage"></span>
                             </td>
-                            <td><label data-bind="text: time_since_last, css: checkpoint_status_css" class="label"></label></td>
+                            <td><label data-bind="text: timeSinceLast, css: checkpointStatusCss" class="label"></label></td>
                             <td class="col-md-6" data-bind="foreach: progress">
                                 <div class="row">
                                   <div class="col-sm-4">
@@ -161,8 +161,8 @@
                                   </div>
                                   <div class="col-sm-4">
                                       <span data-bind="text: seq"></span>
-                                            / <span data-bind="text: db_offset"></span>
-                                          (<span data-bind="text: changes_behind()"></span>)
+                                            / <span data-bind="text: dbOffset"></span>
+                                          (<span data-bind="text: changesBehind()"></span>)
                                   </div>
                                   <div class="col-sm-4" data-bind="text: name">
                                   </div>
@@ -171,16 +171,16 @@
                             <td>
                                 {% if user_is_support %}
                                 <button class="btn btn-default" type="button" data-bind="
-                                    click: reset_checkpoint,
+                                    click: resetCheckpoint,
                                     disable: disabled">{% trans "Reset" %}</button>
                                 <button class="btn btn-default" type="button" data-bind="
-                                    click: start_stop,
-                                    text: start_stop_text,
+                                    click: startStop,
+                                    text: startStopText,
                                     disable: disabled"></button>
                                 {% endif %}
                                 <button class="btn btn-default" type="button" data-bind="
                                     click: refresh">
-                                    <i class="fa fa-refresh" data-bind="css: {'fa-spin': operation_in_progress}"></i>
+                                    <i class="fa fa-refresh" data-bind="css: {'fa-spin': operationInProgress}"></i>
                                 </button>
                             </td>
                         </tr>
@@ -205,13 +205,13 @@
             <div class="panel-body">
                 <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
                 <div class="row" data-bind="visible: !error(), foreach: models">
-                    <strong data-bind="text: design_document"></strong>
+                    <strong data-bind="text: designDocument"></strong>
                      (<span data-bind="text: tasks().length"></span>)
                     <a href="#" data-bind="click: showDetails"> <i class="fa fa-plus-circle"></i></a>
                     <div class="progress" data-bind="foreach: tasks">
-                      <div class="progress-bar"  data-bind="style: { width: progress_contribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
+                      <div class="progress-bar"  data-bind="style: { width: progressContribution() + '%'}, css: {'bar-success': ($index() % 2 === 0) }"></div>
                     </div>
-                    <div class="well" data-bind="attr: {id: details_id}, foreach: tasks" style="display: none">
+                    <div class="well" data-bind="attr: {id: detailsId}, foreach: tasks" style="display: none">
                         <table class="table">
                             <tbody>
                             <tr>
@@ -222,8 +222,8 @@
                                 </td>
                                 <td>
                                     <p class="help-inline">
-                                        <span data-bind="text: changes_done"></span> of
-                                        <span data-bind="text: total_changes"></span>
+                                        <span data-bind="text: changesDone"></span> of
+                                        <span data-bind="text: totalChanges"></span>
                                     </p>
                                 </td>
                             </tr>
@@ -269,16 +269,16 @@
                         <td data-bind="text: pid"></td>
                         <td data-bind="text: name"></td>
                         <td data-bind="text: database"></td>
-                        <td data-bind="text: design_document"></td>
-                        <td data-bind="text: started_on"></td>
-                        <td data-bind="text: updated_on"></td>
+                        <td data-bind="text: designDocument"></td>
+                        <td data-bind="text: startedOn"></td>
+                        <td data-bind="text: updatedOn"></td>
                         <td>
                             <div class="progress">
                                 <div class="progress-bar progress-bar-striped active" data-bind="style: {width: progress()}"></div>
                             </div>
                         </td>
                         <td>
-                            <p class="help-inline" data-bind="text: total_changes"></p>
+                            <p class="help-inline" data-bind="text: totalChanges"></p>
                         </td>
                     </tr>
                     </tbody>

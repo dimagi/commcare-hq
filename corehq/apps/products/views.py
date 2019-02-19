@@ -26,9 +26,10 @@ from corehq.apps.products.forms import ProductForm
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.commtrack.util import encode_if_needed
 from corehq.apps.programs.models import Program
-from corehq.apps.custom_data_fields import (CustomDataFieldsDefinition,
-                                            CustomDataEditor,
-                                            CustomDataModelMixin)
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -214,6 +215,10 @@ class NewProductView(BaseCommTrackManageView):
     urlname = 'commtrack_product_new'
     page_title = ugettext_noop("New Product")
     template_name = 'products/manage/product.html'
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(NewProductView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

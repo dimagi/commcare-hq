@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL
+from io import open
 
 
 class Command(BaseCommand):
@@ -81,7 +82,7 @@ class Command(BaseCommand):
                     file_name = "{case_type}_{db_name}_{timestamp}.csv".format(
                         case_type=case_type, db_name=db,
                         timestamp=datetime.utcnow().strftime(DATETIME_FORMAT))
-                    with open(file_name, "w") as output:
+                    with open(file_name, "w", encoding='utf-8') as output:
                         c = db_conn.cursor()
                         _where_clause = where_clause + "type='{case_type}' ".format(case_type=case_type)
                         copy_query = "copy (SELECT * FROM form_processor_commcarecasesql " \

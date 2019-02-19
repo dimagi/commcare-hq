@@ -6,13 +6,14 @@ from corehq.apps.sms.models import SMS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
+from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from corehq.util.argparse_types import date_type
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
 from memoized import memoized
 from django.core.management.base import BaseCommand
+from io import open
 
 
 class BaseICDSSMSExportCommand(BaseCommand):
@@ -105,7 +106,7 @@ class BaseICDSSMSExportCommand(BaseCommand):
             domain=domain,
             date__gt=start_timestamp,
             date__lte=end_timestamp,
-            backend_api=SQLICDSBackend.get_api_id(),
+            backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
         ).order_by('date'):

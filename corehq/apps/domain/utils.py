@@ -5,7 +5,8 @@ import os
 import re
 import datetime
 import json
-import csv
+import csv342 as csv
+import sys
 import tempfile
 
 from django.conf import settings
@@ -17,11 +18,11 @@ from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.apps.es import DomainES
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import send_HTML_email
 
-from soil.util import ExposeBlobDownload
+from soil.util import expose_zipped_blob_download
 from couchexport.models import Format
+from io import open
 
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
@@ -52,10 +53,10 @@ def get_domain_from_url(path):
 
 @quickcache(['domain'])
 def domain_restricts_superusers(domain):
-    domain = Domain.get_by_name(domain)
-    if not domain:
+    domain_obj = Domain.get_by_name(domain)
+    if not domain_obj:
         return False
-    return domain.restrict_superusers
+    return domain_obj.restrict_superusers
 
 
 def user_has_custom_top_menu(domain_name, couch_user):
@@ -106,12 +107,12 @@ def guess_domain_language(domain_name):
     A domain does not have a default language, but its apps do. Return
     the language code of the most common default language across apps.
     """
-    domain = Domain.get_by_name(domain_name)
-    counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
+    domain_obj = Domain.get_by_name(domain_name)
+    counter = Counter([app.default_language for app in domain_obj.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
-@task(queue='background_queue')
+@task(serializer='pickle', queue='background_queue')
 def send_repeater_payloads(repeater_id, payload_ids, email_id):
     from corehq.motech.repeaters.models import Repeater, RepeatRecord
     repeater = Repeater.get(repeater_id)
@@ -167,5 +168,17 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
 
     headers = populate_payloads(headers)
     temp_file_path = create_result_file()
-    download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
+    download_url = expose_zipped_blob_download(
+        temp_file_path,
+        result_file_name,
+        Format.CSV,
+        repeater.domain,
+    )
     email_result(download_url)
+
+
+def silence_during_tests():
+    if settings.UNIT_TESTING:
+        return open(os.devnull, 'w')
+    else:
+        return sys.stdout

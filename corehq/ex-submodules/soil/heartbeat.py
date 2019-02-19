@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.core.cache import cache
+from io import open
 
 NOT_FOUND = "None found"
 NOT_CONFIGURED = "Not configured."
@@ -24,7 +25,7 @@ def write_file_heartbeat():
     Writes the current time to a file. Returns true if written.
     """
     if hasattr(settings, "SOIL_HEARTBEAT_FILE"):
-        with open(settings.SOIL_HEARTBEAT_FILE, 'w') as f:
+        with open(settings.SOIL_HEARTBEAT_FILE, 'w', encoding='utf-8') as f:
             f.write(datetime.utcnow().strftime(DATE_FORMAT))
             return True
 
@@ -34,13 +35,13 @@ def write_cache_heartbeat():
     Writes the current time to the cache. Returns true if written.
     """
     if hasattr(settings, "SOIL_HEARTBEAT_CACHE_KEY"):
-        cache.set(settings.SOIL_HEARTBEAT_CACHE_KEY, datetime.utcnow().strftime(DATE_FORMAT))
+        return cache.set(settings.SOIL_HEARTBEAT_CACHE_KEY, datetime.utcnow().strftime(DATE_FORMAT))
     
 
 def get_file_heartbeat():
     if hasattr(settings, "SOIL_HEARTBEAT_FILE"):
         try:
-            with open(settings.SOIL_HEARTBEAT_FILE, 'r') as f:
+            with open(settings.SOIL_HEARTBEAT_FILE, 'r', encoding='utf-8') as f:
                 return f.read()
         except IOError:
             return NOT_FOUND

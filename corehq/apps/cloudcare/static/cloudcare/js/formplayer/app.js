@@ -68,7 +68,7 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
-FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
+FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function (path) {
     if (path) {
         FormplayerFrontend.gridPolyfillPath = path;
     } else {
@@ -83,7 +83,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function() {
+FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function () {
     if (!sessionStorage.locationLat) {
         return null;
     } else {
@@ -125,13 +125,13 @@ FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     }
 });
 
-FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
+FormplayerFrontend.reqres.setHandler('showSuccess', function (successMessage) {
     showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
 });
 
-FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
-    if (notification.error){
-        FormplayerFrontend.request('showError', notification.message);
+FormplayerFrontend.reqres.setHandler('handleNotification', function (notification) {
+    if (notification.error) {
+        FormplayerFrontend.trigger('showError', notification.message);
     } else {
         FormplayerFrontend.request('showSuccess', notification.message);
     }
@@ -155,7 +155,9 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            if (resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            var $alert,
+                isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT;
+            if (resp.submitResponseMessage) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     analyticsLinks = [
@@ -164,11 +166,11 @@ FormplayerFrontend.on('startForm', function (data) {
                         { url: reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
                         { url: reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
                     ],
-                    dataFeedbackLoopAnalytics = function(e) {
+                    dataFeedbackLoopAnalytics = function (e) {
                         var $target = $(e.target);
                         if ($target.is("a")) {
                             var href = $target.attr("href") || '';
-                            _.each(analyticsLinks, function(link) {
+                            _.each(analyticsLinks, function (link) {
                                 if (href.match(RegExp(link.url))) {
                                     $target.attr("target", "_blank");
                                     hqImport('analytix/js/kissmetrix').track.event(link.text);
@@ -177,14 +179,30 @@ FormplayerFrontend.on('startForm', function (data) {
                         }
                     };
                 $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 10000, true);
+                $alert = showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
             } else {
-                showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"), 10000);
+                $alert = showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
+            }
+            if ($alert) {
+                // Clear the success notification the next time user changes screens
+                var clearSuccess = function () {
+                    $alert.fadeOut(500, function () {
+                        $alert.remove();
+                        FormplayerFrontend.off('navigation', clearSuccess);
+                    });
+                };
+                _.delay(function () {
+                    FormplayerFrontend.on('navigation', clearSuccess);
+                });
             }
 
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
+            } else if (user.environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT) {
+                hqImport('analytix/js/kissmetrix').track.event("[web apps] User submitted a form");
+                hqImport('analytix/js/google').track.event("Web Apps", "User submitted a form");
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
             }
 
@@ -193,9 +211,9 @@ FormplayerFrontend.on('startForm', function (data) {
             urlObject.onSubmit();
             Util.setUrlToObject(urlObject);
 
-            if(resp.nextScreen !== null && resp.nextScreen !== undefined) {
+            if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
                 FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
-            } else if(urlObject.appId !== null && urlObject.appId !== undefined) {
+            } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                 FormplayerFrontend.trigger("apps:currentApp");
             } else {
                 FormplayerFrontend.navigate('/apps', { trigger: true });
@@ -208,7 +226,7 @@ FormplayerFrontend.on('startForm', function (data) {
         }
     };
     data.debuggerEnabled = user.debuggerEnabled;
-    data.resourceMap = function(resource_path) {
+    data.resourceMap = function (resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
         return FormplayerFrontend.request('resourceMap', resource_path, appId);
@@ -286,7 +304,7 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
-FormplayerFrontend.on('configureDebugger', function() {
+FormplayerFrontend.on('configureDebugger', function () {
     var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
         TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
         user = FormplayerFrontend.request('currentUser'),
@@ -316,7 +334,7 @@ FormplayerFrontend.on('configureDebugger', function() {
     $debug.koApplyBindings(cloudCareDebugger);
 });
 
-FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
+FormplayerFrontend.reqres.setHandler('getCurrentAppId', function () {
     // First attempt to grab app id from URL
     var urlObject = Util.currentUrlToObject(),
         user = FormplayerFrontend.request('currentUser'),
@@ -335,25 +353,25 @@ FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
     return appId || null;
 });
 
-FormplayerFrontend.on('navigation:back', function() {
+FormplayerFrontend.on('navigation:back', function () {
     var url = Backbone.history.getFragment();
     if (!url.includes('single_app')) {
         window.history.back();
     }
 });
 
-FormplayerFrontend.on('setAppDisplayProperties', function(app) {
+FormplayerFrontend.on('setAppDisplayProperties', function (app) {
     FormplayerFrontend.DisplayProperties = app.profile.properties;
     if (Object.freeze) {
         Object.freeze(FormplayerFrontend.DisplayProperties);
     }
 });
 
-FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function() {
+FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function () {
     return FormplayerFrontend.DisplayProperties || {};
 });
 
-FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username) {
+FormplayerFrontend.reqres.setHandler('restoreAsUser', function (domain, username) {
     return FormplayerFrontend.Utils.Users.getRestoreAsUser(
         domain,
         username
@@ -367,7 +385,7 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function(domain, username)
  * unset the restore as user from the currentUser. It then
  * navigates you to the main page.
  */
-FormplayerFrontend.on('clearRestoreAsUser', function() {
+FormplayerFrontend.on('clearRestoreAsUser', function () {
     var user = FormplayerFrontend.request('currentUser'),
         appId;
     FormplayerFrontend.Utils.Users.clearRestoreAsUser(
@@ -398,9 +416,9 @@ FormplayerFrontend.on("sync", function () {
         },
         options;
 
-    complete = function(response) {
+    complete = function (response) {
         if (response.responseJSON.status === 'retry') {
-            FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+            FormplayerFrontend.trigger('retry', response.responseJSON, function () {
                 // Ensure that when we hit the sync db route we don't use the overwrite_cache param
                 options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
                 $.ajax(options);
@@ -428,7 +446,7 @@ FormplayerFrontend.on("sync", function () {
  * @param {function} retryFn - The function to be called when ready to retry restoring
  * @param {String} progressMessage - The message to be displayed above the progress bar
  */
-FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
+FormplayerFrontend.on("retry", function (response, retryFn, progressMessage) {
 
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         retryTimeout = response.retryAfter * 1000;
@@ -445,11 +463,11 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
-FormplayerFrontend.on('view:tablet', function() {
+FormplayerFrontend.on('view:tablet', function () {
     $('body').addClass('preview-tablet-mode');
 });
 
-FormplayerFrontend.on('view:phone', function() {
+FormplayerFrontend.on('view:phone', function () {
     $('body').removeClass('preview-tablet-mode');
 });
 
@@ -459,13 +477,13 @@ FormplayerFrontend.on('view:phone', function() {
  * Clears the progress bar. If currently in progress, wait 200 ms to transition
  * to complete progress.
  */
-FormplayerFrontend.on('clearProgress', function() {
+FormplayerFrontend.on('clearProgress', function () {
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
         progressFinishTimeout = 200;
 
     if (progressView) {
         progressView.setProgress(1, progressFinishTimeout);
-        setTimeout(function() {
+        setTimeout(function () {
             FormplayerFrontend.regions.loadingProgress.empty();
         }, progressFinishTimeout);
     } else {
@@ -474,7 +492,7 @@ FormplayerFrontend.on('clearProgress', function() {
 });
 
 
-FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+FormplayerFrontend.on('setVersionInfo', function (versionInfo) {
     var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
     if (versionInfo) {
@@ -491,7 +509,7 @@ FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
  *
  * @param {String} appId - The id of the application to refresh
  */
-FormplayerFrontend.on('refreshApplication', function(appId) {
+FormplayerFrontend.on('refreshApplication', function (appId) {
     if (!appId) {
         throw new Error('Attempt to refresh application for null appId');
     }
@@ -512,7 +530,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     resp = $.ajax(options);
     resp.fail(function () {
         formplayerLoadingComplete(true);
-    }).done(function(response) {
+    }).done(function (response) {
         if (response.hasOwnProperty('exception')) {
             formplayerLoadingComplete(true);
             return;
@@ -530,7 +548,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
  * Sends a request to formplayer to wipe out all application and user db for the
  * current user. Returns the ajax promise.
  */
-FormplayerFrontend.reqres.setHandler('clearUserData', function() {
+FormplayerFrontend.reqres.setHandler('clearUserData', function () {
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
@@ -547,13 +565,13 @@ FormplayerFrontend.reqres.setHandler('clearUserData', function() {
     resp = $.ajax(options);
     resp.fail(function () {
         formplayerLoadingComplete(true);
-    }).done(function(response) {
+    }).done(function (response) {
         clearUserDataComplete(response.hasOwnProperty('exception'));
     });
     return resp;
 });
 
-FormplayerFrontend.on('navigateHome', function() {
+FormplayerFrontend.on('navigateHome', function () {
     var urlObject = Util.currentUrlToObject(),
         appId,
         currentUser = FormplayerFrontend.request('currentUser');
@@ -593,7 +611,7 @@ FormplayerFrontend.on('navigateHome', function() {
  * https://manage.dimagi.com/default.asp?250644
  */
 _.extend(Backbone.History.prototype, {
-    getHash: function(window) {
+    getHash: function (window) {
         var match = (window || this).location.href.match(/#(.*)$/);
         return match ? decodeURI(match[1]) : '';
     },

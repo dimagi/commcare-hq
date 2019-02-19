@@ -86,6 +86,11 @@ Things to look out for:
   work. You may need to have the gateway enable a setting to do this or include an additional parameter when
   sending SMS to make this work.
 
+* If this gateway has a phone number that people can reply to (whether a long code or short code), you'll want
+  to add an entry to the sms.Phoneblacklist model for the gateway's phone number so that the system won't
+  allow sending SMS to this number as a precaution. You can do so in the Django admin, and you'll want to make
+  sure that send_sms and can_opt_in are both False on the record.
+
 Inbound
 ^^^^^^^
 

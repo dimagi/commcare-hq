@@ -1,7 +1,8 @@
-/*global cheapxml, XMLSerializer */
-
-var casexml = (function () {
+hqDefine("case/js/casexml",[
+    'case/js/cheapxml',
+], function (cheapxml) {
     'use strict';
+
     var casexml = {
         guid: function (n) {
             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -253,5 +254,9 @@ var casexml = (function () {
             },
         },
     };
-    return casexml;
-}());
+
+    return {
+        casexml: casexml,
+    };
+});
+

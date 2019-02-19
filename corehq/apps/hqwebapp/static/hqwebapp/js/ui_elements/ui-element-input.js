@@ -99,7 +99,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input', function () {
             return $elem.val();
         }, function ($elem, value) {
             return $elem.val(value);
-        }, function ($elem, value){
+        }, function ($elem, value) {
             return $elem.attr('placeholder', value);
         });
     };
@@ -109,7 +109,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input', function () {
             return $elem.val();
         }, function ($elem, value) {
             return $elem.val($elem, value);
-        }, function ($elem, value){
+        }, function ($elem, value) {
             $elem.attr('placeholder', value);
         });
     };

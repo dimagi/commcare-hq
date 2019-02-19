@@ -19,7 +19,11 @@ class AppES(HQESQuery):
             created_from_template,
             uses_case_sharing,
             cloudcare_enabled,
+            app_id,
         ] + super(AppES, self).builtin_filters
+
+    def build_comment(self, comment):
+        return self.search_string_query(comment, default_fields=['build_comment'])
 
 
 def is_build(build=True):
@@ -46,3 +50,7 @@ def uses_case_sharing(case_sharing=True):
 
 def cloudcare_enabled(cloudcare_enabled):
     return filters.term('cloudcare_enabled', cloudcare_enabled)
+
+
+def app_id(app_id):
+    return filters.term('copy_of', app_id)

@@ -1,4 +1,4 @@
-hqDefine('userreports/js/data_source_from_app', function() {
+hqDefine('userreports/js/data_source_from_app', function () {
     $(function () {
         $("#data-source-config").koApplyBindings({
             application: ko.observable(""),

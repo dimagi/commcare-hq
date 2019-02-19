@@ -5,7 +5,7 @@
 {% requirejs_main "fixtures/js/lookup-manage" %}
 
 {% block page_title %}
-    {% trans 'Manage Lookup Tables' %}
+    {% trans 'Manage Tables' %}
 {% endblock %}
 
 {% block page_content %}
@@ -58,7 +58,7 @@
                     </th>
                     <th class="col-sm-3">
                         {% trans "Include in Download" %}
-                        <a href="#" class="btn btn-xs btn-info toggle" data-all="true" data-bind="click: updateSelectedTables">{% trans "all" %}</a>
+                        <a href="#" class="btn btn-xs btn-default toggle" data-all="true" data-bind="click: updateSelectedTables">{% trans "all" %}</a>
                         <a href="#" class="btn btn-xs btn-default toggle" data-all="false" data-bind="click: updateSelectedTables">{% trans "none" %}</a>
                     </th>
                 </tr>
@@ -118,7 +118,7 @@
                 See the
                 <a href='https://confluence.dimagi.com/pages/viewpage.action?pageId=12222793' target='_blank'>
                     Lookup Tables help page
-                </a> for instructions on setting up your excel file.
+                </a> for instructions on setting up your Excel file.
             {% endblocktrans %}
         </p>
     </div>

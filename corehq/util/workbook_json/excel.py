@@ -1,11 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from tempfile import NamedTemporaryFile
+
+import io
 from zipfile import BadZipfile
+from tempfile import NamedTemporaryFile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
 from six.moves import zip
+from django.core.files.uploadedfile import UploadedFile
 
 
 class InvalidExcelFileException(Exception):
@@ -188,26 +191,32 @@ class WorksheetJSONReader(IteratorJSONReader):
 
 class WorkbookJSONReader(object):
 
-    def __init__(self, f):
-        if isinstance(f, six.string_types):
-            filename = f
-        elif not isinstance(f, file):
-            tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
-            filename = tmp.name
-            tmp.write(f.read())
-            tmp.close()
+    def __init__(self, file_or_filename):
+        if six.PY3:
+            check_types = (UploadedFile, io.RawIOBase, io.BufferedIOBase)
         else:
-            filename = f
+            from types import FileType
+            check_types = (UploadedFile, FileType, io.BytesIO)
 
+        if isinstance(file_or_filename, check_types):
+            tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
+            file_or_filename.seek(0)
+            tmp.write(file_or_filename.read())
+            tmp.close()
+            file_or_filename = tmp.name
         try:
-            self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
-        except (BadZipfile, InvalidFileException) as e:
+            self.wb = openpyxl.load_workbook(file_or_filename, read_only=True, data_only=True)
+        except (BadZipfile, InvalidFileException, KeyError) as e:
             raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}
         self.worksheets = []
 
         for worksheet in self.wb.worksheets:
-            ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            try:
+                ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            except IndexError:
+                raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
+                                      'the lookup table first, and then add data to it.')
             self.worksheets_by_title[worksheet.title] = ws
             self.worksheets.append(ws)
 

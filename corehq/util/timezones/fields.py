@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.db import models
-from django.utils.encoding import smart_unicode, smart_str
+from django.utils.encoding import smart_text, smart_str
 
 import pytz
 
@@ -41,7 +41,7 @@ class TimeZoneField(models.CharField):
 
     def get_prep_value(self, value):
         if value is not None:
-            return smart_unicode(value)
+            return smart_text(value)
         return value
 
     def get_db_prep_save(self, value, connection=None):
@@ -54,4 +54,4 @@ class TimeZoneField(models.CharField):
         value = self._get_val_from_obj(obj)
         if value is None:
             value = ""
-        return {self.attname: smart_unicode(value)}
+        return {self.attname: smart_text(value)}

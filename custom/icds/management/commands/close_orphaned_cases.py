@@ -13,6 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
 import six
+from io import open
 
 
 class Command(BaseCommand):
@@ -31,7 +32,7 @@ class Command(BaseCommand):
         total_cases = CaseES().domain(domain).case_type('household').is_closed().count()
         self.case_accessor = CaseAccessors(domain)
         failed_updates = []
-        with open(log_file, "w") as fh:
+        with open(log_file, "w", encoding='utf-8') as fh:
             fh.write('--------Successful Form Ids----------\n')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
                 related_cases = self._get_related_cases(cases)

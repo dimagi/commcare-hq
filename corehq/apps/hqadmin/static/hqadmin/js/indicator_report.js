@@ -1,6 +1,6 @@
-hqDefine('hqadmin/js/indicator_report', function() {
+hqDefine('hqadmin/js/indicator_report', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        HQVisualizations = hqImport("hqadmin/js/visualizations").HQVisualizations;
+        hqVisualizations = hqImport("hqadmin/js/visualizations").hqVisualizations;
 
     function parse_url_params() {
         var result = {}, queryString = location.search.slice(1),
@@ -27,12 +27,12 @@ hqDefine('hqadmin/js/indicator_report', function() {
             indicators = initialPageData.get('indicators'),
             visualizations = {};
 
-        _.each(indicatorData, function(data, indicator) {
+        _.each(indicatorData, function (data, indicator) {
             if (indicators.indexOf(indicator) === -1) { return; }
 
             visualizations[indicator] = _.extend(
                 {}, data, {
-                    viz: new HQVisualizations({
+                    viz: hqVisualizations({
                         chart_name: data.chart_name,
                         histogram_type: data.histogram_type,
                         xaxis_label: data.xaxis_label,
@@ -46,7 +46,7 @@ hqDefine('hqadmin/js/indicator_report', function() {
             );
         });
 
-        $("#all-charts-filter").on("submit", function() {
+        $("#all-charts-filter").on("submit", function () {
             var $this = $(this);
             var startdate = $this.find('[name="startdate"]').val();
             var enddate = $this.find('[name="enddate"]').val();

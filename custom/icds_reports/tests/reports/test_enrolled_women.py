@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_pregnant_women_enrolled_help_text
 from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
     get_enrolled_women_data_chart, get_enrolled_women_sector_data
 from django.test import TestCase
@@ -12,6 +13,7 @@ from django.test import TestCase
 class TestEnrolledWomen(TestCase):
 
     def test_map_data(self):
+
         self.assertDictEqual(
             get_enrolled_women_data_map(
                 'icds-cas',
@@ -23,9 +25,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
-                    "average": 77.5,
-                    "average_format": "number",
+                    "info": percent_pregnant_women_enrolled_help_text(),
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
@@ -48,18 +49,13 @@ class TestEnrolledWomen(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    "st1": {
-                        "valid": 70,
-                        "all": 70,
-                        'original_name': ["st1"],
-                        "fillKey": "Women"
-                    },
-                    "st2": {
-                        "valid": 85,
-                        "all": 85,
-                        'original_name': ["st2"],
-                        "fillKey": "Women"
-                    }
+                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Women'},
+                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Women'}, 
+                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Women'}, 
+                    'st7': {'all': 0, 'valid': 0, 'original_name': ['st7'], 'fillKey': 'Women'}, 
+                    'st1': {'all': 70, 'valid': 70, 'original_name': ['st1'], 'fillKey': 'Women'}, 
+                    'st2': {'all': 85, 'valid': 85, 'original_name': ['st2'], 'fillKey': 'Women'}, 
+                    'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Women'}
                 },
                 "slug": "enrolled_women",
                 "label": ""
@@ -80,9 +76,8 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
-                    "average": 35.0,
-                    "average_format": "number",
+                    "info": percent_pregnant_women_enrolled_help_text(),
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
@@ -130,24 +125,18 @@ class TestEnrolledWomen(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "value": 85
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 70
-                    }
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "value": 85
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 70
-                    }
+                    {'loc_name': 'st2', 'value': 85.0},
+                    {'loc_name': 'st1', 'value': 70.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -180,14 +169,13 @@ class TestEnrolledWomen(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "value": 85
-                    },
-                    {
-                        "loc_name": "st1",
-                        "value": 70
-                    }
+                    {'loc_name': 'st2', 'value': 85.0},
+                    {'loc_name': 'st1', 'value': 70.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )
@@ -207,7 +195,7 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
+                "info": percent_pregnant_women_enrolled_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,

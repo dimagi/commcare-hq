@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load humanize %}
 {% comment %}
-requires proptable.css to be included in the main template
+    requires proptable.css and single_form.js to be included in the main template
 {% endcomment %}
 <style media="print">
     header {
@@ -17,85 +17,21 @@ requires proptable.css to be included in the main template
         content: none !important;
     }
 </style>
-
 <style>
-.form-data-raw {
-    display: none;
-}
-.hq-help {
-    /* TODO: does .hq-help really need to be width 0 by default? */
-    width: auto;
-}
-#form-actions-toolbar form {
-    display: inline-block;
-}
-#form-actions-toolbar > * {
-  margin-left: 10px;
-}
+    .form-data-raw {
+        display: none;
+    }
+    .hq-help {
+        /* TODO: does .hq-help really need to be width 0 by default? */
+        width: auto;
+    }
+    #form-actions-toolbar form {
+        display: inline-block;
+    }
+    #form-actions-toolbar > * {
+      margin-left: 10px;
+    }
 
-</style>
-<script>
-    $(function () {
-        function _analytics_usage(action, callback) {
-            var label = 'standalone_form', extra = {};
-            {% if context_case_id %}
-            label = 'case';
-            {% endif %}
-            hqImport('analytix/js/google').track.event('Edit Data', action, label, '', extra, callback);
-        }
-
-        $('.hq-help-template').each(function () {
-            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
-        });
-
-        $('#edit-form').click(function() {
-            _analytics_usage('Edit Form Submission')
-        });
-
-        $("#archive-form").submit(function() {
-            document.getElementById('archive-form-btn').disabled=true;
-            $('#archive-spinner').show();
-
-            // _.after(2,...) means the callback will only be called after *both* analytics
-            // functions have finished.
-            var analyticsCallback = _.after(2, function() {
-                    document.getElementById('archive-form').submit();
-                }
-            );
-            _analytics_usage('Archive Form Submission', analyticsCallback);
-            hqImport('analytix/js/kissmetrix').track.event("Clicked on Archive Form", {}, analyticsCallback);
-
-            return false;
-        });
-        $("#unarchive-form").submit(function() {
-            document.getElementById('unarchive-form-btn').disabled=true;
-            $('#unarchive-spinner').show();
-            hqImport('analytix/js/google').track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
-                document.getElementById('unarchive-form').submit();
-            });
-            return false;
-        });
-        $("#resave-form").submit(function() {
-            document.getElementById('resave-form-btn').disabled=true;
-            $('#resave-spinner').show();
-        });
-
-        $.when(
-            $.getScript('{% static "clipboard/dist/clipboard.js" %}')
-        ).done(function () {
-            var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre').text(); } }),
-                $copyBtn = $('.copy-xml');
-            $copyBtn.tooltip({
-                title: '{% trans "Copied!"|escapejs %}'
-            });
-            clipboard.on('success', function() {
-                $copyBtn.tooltip('show');
-                window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000)
-            });
-        });
-    });
-</script>
-<style>
     .form-data-group-table {
         margin-bottom: 0;
     }
@@ -114,38 +50,40 @@ requires proptable.css to be included in the main template
         background-color: #fcf8e3;
         text-align: center;
     }
-
 </style>
 
 {% if is_archived %}
 <div class="alert alert-info alert-full alert-block">
     {% blocktrans %}
-    This form is archived and will not be included in reports. 
+        This form is archived and will not be included in reports. 
     {% endblocktrans %}
-{% if user.can_edit_data %}
-    {% blocktrans %}
-    To unarchive this form, click the "Restore this form" button.
-    This will also restore case data associated with the form.
-    {% endblocktrans %}
-{% endif %}
+    {% if user.can_edit_data %}
+        {% blocktrans %}
+            To unarchive this form, click the "Restore this form" button.
+            This will also restore case data associated with the form.
+        {% endblocktrans %}
+    {% endif %}
 </div>
 {% endif %}
+
 {% if edit_info.was_edited %}
 <div class="alert alert-info alert-full alert-block">
     {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
     {% blocktrans %}
-    This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+        This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
     {% endblocktrans %}
 </div>
 {% endif %}
+
 {% if edit_info.is_edit %}
 <div class="alert alert-warning alert-full alert-block">
     {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
-    {% blocktrans with when=edit_info.edit_on|naturaltime %}
+    {% blocktrans with when=edit_info.edited_on|naturaltime %}
         This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
     {% endblocktrans %}
 </div>
 {% endif %}
+
 <div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}
@@ -181,8 +119,8 @@ requires proptable.css to be included in the main template
         </ul>
     </div>
 </div>
-<ul class="nav nav-tabs">
-    <li class="active">
+<ul class="nav nav-tabs sticky-tabs">
+    <li>
         <a href="#form-data" data-toggle="tab">
             {% trans "Form Properties" %}
         </a>
@@ -225,7 +163,7 @@ requires proptable.css to be included in the main template
     </li>
 </ul>
 <div class="tab-content form-details" style="overflow:visible; margin-top: 10px;">
-    <div class="tab-pane active" id="form-data">
+    <div class="tab-pane" id="form-data">
         <div class="btn-toolbar row" id='form-actions-toolbar'>
             {% if context_case_id %}
                 <a class="btn btn-default"
@@ -235,9 +173,10 @@ requires proptable.css to be included in the main template
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn btn-default" id="edit-form">
-                            <i class="fa fa-edit"></i> {% trans "Edit this form" %}
-                        </a>
+                    <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                        <i class="fa fa-shower"></i>
+                        {% trans 'Clean Form Submission' %}
+                    </button>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
@@ -320,7 +259,7 @@ requires proptable.css to be included in the main template
                         {% if case_data.valid_case %}
                         <span class="pull-right">
                             {% if case_data.is_current_case %}
-                            <strong class="muted">{% trans "(this case)" %}</strong>
+                            <strong class="text-muted">{% trans "(this case)" %}</strong>
                             {% else %}
                             <a class="btn btn-sm btn-primary" href="{{ case_data.url }}" style="margin-top: -6px;">
                                 {% trans "View" %}
@@ -403,3 +342,9 @@ requires proptable.css to be included in the main template
         {% render_form_xml instance %}
     </div>
 </div>
+
+{% if show_edit_options %}
+    {% if show_edit_submission %}
+        {% include 'reports/partials/data_corrections_modal.html' %}
+    {% endif %}
+{% endif %}

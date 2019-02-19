@@ -5,16 +5,14 @@ from datetime import datetime, date
 from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
-from mock import Mock
 
-import settings
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter, REQUEST_USER_KEY
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
@@ -148,69 +146,63 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         cls.data_sources = {}
         cls.adapters = {}
 
-        # this is a hack to have both sql and es backends created in a class
-        # method. alternative would be to have these created on each test run
-        for backend_id in UCR_BACKENDS:
-            config = DataSourceConfiguration(
-                backend_id=backend_id,
-                domain=cls.domain,
-                display_name=cls.domain,
-                referenced_doc_type='CommCareCase',
-                table_id="foo",
-                configured_filter={
-                    "type": "boolean_expression",
-                    "operator": "eq",
+        config = DataSourceConfiguration(
+            domain=cls.domain,
+            display_name=cls.domain,
+            referenced_doc_type='CommCareCase',
+            table_id="foo",
+            configured_filter={
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "property_value": cls.case_type,
+            },
+            configured_indicators=[
+                {
+                    "type": "expression",
                     "expression": {
                         "type": "property_name",
-                        "property_name": "type"
+                        "property_name": 'my_date'
                     },
-                    "property_value": cls.case_type,
+                    "column_id": 'date_as_string',
+                    "display_name": 'date_as_string',
+                    "datatype": "string"
                 },
-                configured_indicators=[
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'my_date'
-                        },
-                        "column_id": 'date_as_string',
-                        "display_name": 'date_as_string',
-                        "datatype": "string"
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'my_date'
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": 'my_date'
-                        },
-                        "column_id": 'date_as_date',
-                        "datatype": "date"
+                    "column_id": 'date_as_date',
+                    "datatype": "date"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "my_datetime",
                     },
-                    {
-                        "type": "expression",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "my_datetime",
-                        },
-                        "column_id": "datetime_as_datetime",
-                        "datatype": "datetime"
-                    }
-                ],
-            )
-            config.validate()
-            config.save()
-            rebuild_indicators(config._id)
-            adapter = get_indicator_adapter(config)
-            adapter.refresh_table()
-            cls.data_sources[backend_id] = config
-            cls.adapters[backend_id] = adapter
+                    "column_id": "datetime_as_datetime",
+                    "datatype": "datetime"
+                }
+            ],
+        )
+        config.validate()
+        config.save()
+        rebuild_indicators(config._id)
+        adapter = get_indicator_adapter(config)
+        cls.data_sources[UCR_SQL_BACKEND] = config
+        cls.adapters[UCR_SQL_BACKEND] = adapter
 
     @classmethod
     def _create_report(cls):
-        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=cls.domain,
-            config_id=cls.data_sources[backend_id]._id,
+            config_id=cls.data_sources[UCR_SQL_BACKEND]._id,
             title='foo',
             filters=[
                 {
@@ -383,12 +375,6 @@ class PreFilterTestCase(SimpleTestCase):
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'yes'})
 
     def test_pre_filter_value_null(self):
-        column = Mock()
-        column.name = 'at_risk_field'
-        column.is_.return_value = 'foo'
-        table = Mock()
-        table.c = [column]
-
         pre_value = None
         filter_ = {
             'type': 'pre',
@@ -399,15 +385,12 @@ class PreFilterTestCase(SimpleTestCase):
         }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {})
-        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression()),
+            'at_risk_field IS NULL'
+        )
 
     def test_pre_filter_value_array(self):
-        column = Mock()
-        column.name = 'at_risk_field'
-        column.in_.return_value = 'foo'
-        table = Mock()
-        table.c = [column]
-
         pre_value = ['yes', 'maybe']
         filter_ = {
             'type': 'pre',
@@ -418,7 +401,10 @@ class PreFilterTestCase(SimpleTestCase):
         }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
-        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression()),
+            'at_risk_field IN (:at_risk_slug_0, :at_risk_slug_1)'
+        )
 
     def test_pre_filter_operator(self):
         value = {'operator': '<=', 'operand': '99'}
@@ -448,12 +434,6 @@ class PreFilterTestCase(SimpleTestCase):
             filter_value.to_sql_filter()
 
     def test_pre_filter_between_operator(self):
-        column = Mock()
-        column.name = 'dob_field'
-        column.between.return_value = 'foo'
-        table = Mock()
-        table.c = [column]
-
         value = {'operator': 'between', 'operand': ['2017-03-13', '2017-04-11']}
         filter_ = {
             'type': 'pre',
@@ -465,15 +445,12 @@ class PreFilterTestCase(SimpleTestCase):
         }
         filter_value = PreFilterValue(filter_, value)
         self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
-        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression()),
+            'dob_field BETWEEN :dob_slug_0 AND :dob_slug_1'
+        )
 
     def test_pre_filter_distinct_from_operator(self):
-        column = Mock()
-        column.name = 'at_risk_field'
-        column.is_distinct_from.return_value = 'foo'
-        table = Mock()
-        table.c = [column]
-
         value = {'operator': 'distinct from', 'operand': 'test'}
         filter_ = {
             'type': 'pre',
@@ -485,17 +462,9 @@ class PreFilterTestCase(SimpleTestCase):
         }
         filter_value = PreFilterValue(filter_, value)
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'test'})
-        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
 
     def test_pre_filter_dyn_operator(self):
         from corehq.apps.reports.daterange import get_daterange_start_end_dates
-
-        column = Mock()
-        column.name = 'dob_field'
-        column.between.return_value = 'foo'
-        table = Mock()
-        table.c = [column]
-
         start_date, end_date = get_daterange_start_end_dates('lastmonth')
 
         value = {'operator': 'lastmonth', 'operand': [None]}
@@ -512,7 +481,10 @@ class PreFilterTestCase(SimpleTestCase):
             'dob_slug_0': str(start_date),
             'dob_slug_1': str(end_date),
         })
-        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression()),
+            'dob_field BETWEEN :dob_slug_0 AND :dob_slug_1'
+        )
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):
@@ -717,14 +689,14 @@ class DateFilterOffsetTest(SimpleTestCase):
         start, end = date(2015, 1, 1), date(2015, 1, 2)
         computed_start, computed_end = self._computed_dates(start, end)
         self.assertEqual(computed_start, start)
-        self.assertEqual(computed_end, end)
+        self.assertEqual(computed_end, datetime.combine(end, datetime.max.time()))
 
     def test_datetime_objects(self):
         # computed_enddate should be last minute of the enddate
         start, end = datetime(2015, 1, 1), datetime(2015, 1, 2)
         computed_start, computed_end = self._computed_dates(start, end)
         self.assertEqual(computed_start, start)
-        self.assertNotEqual(computed_end, end)
+        self.assertEqual(computed_end, datetime.combine(end, datetime.max.time()))
         self.assertEqual((computed_end - end).days, 0)
 
 
@@ -795,10 +767,6 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         )
 
     def test_filter_value(self):
-        from sqlalchemy import Column, String
-        mock_table = Mock()
-        mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
-
         filter = {
             "type": "location_drilldown",
             "field": "block_id",
@@ -808,7 +776,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
         self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
         self.assertEqual(
-            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            str(filter_value.to_sql_filter().build_expression()),
             'block_id IN (:block_id_drill_0)'
         )
         self.assertEqual(
@@ -830,10 +798,6 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             })
 
     def test_prefix_ancestor_location(self):
-        from sqlalchemy import Column, String
-        mock_table = Mock()
-        mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
-
         filter = {
             "type": "location_drilldown",
             "field": "block_id",
@@ -849,7 +813,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         # make sure ancestor gets passed if right block is passed
         filter_value = LocationDrilldownFilterValue(filter, [middlesex_id])
         self.assertEqual(
-            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            str(filter_value.to_sql_filter().build_expression()),
             'state_id = :state_id AND block_id IN (:block_id_drill_0)'
         )
         self.assertEqual(
@@ -859,7 +823,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         # make sure ancestor doesn't get passed if multiple locations are passed
         filter_value = LocationDrilldownFilterValue(filter, [middlesex_id, 'Suffolk'])
         self.assertEqual(
-            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            str(filter_value.to_sql_filter().build_expression()),
             'block_id IN (:block_id_drill_0, :block_id_drill_1)'
         )
         self.assertEqual(
@@ -869,7 +833,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         # no ancestor is passed if passed in location is invalid
         filter_value = LocationDrilldownFilterValue(filter, ['random'])
         self.assertEqual(
-            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            str(filter_value.to_sql_filter().build_expression()),
             'block_id IN (:block_id_drill_0)'
         )
         self.assertEqual(

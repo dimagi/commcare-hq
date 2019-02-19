@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
 import uuid
 
 from django.conf import settings
@@ -43,14 +44,19 @@ class PillowtopRetryAllPillowsTests(TestCase):
         pillow = _pillow_instance_from_config_with_mock_process_change(pillow_config)
         if pillow.retry_errors:
             exc_class = Exception
-            exc_class_string = 'exceptions.Exception'
+            if six.PY3:
+                exc_class_string = 'builtins.Exception'
+            else:
+                exc_class_string = 'exceptions.Exception'
         else:
             exc_class = DocumentMissingError
             exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'
 
         pillow.process_change = MagicMock(side_effect=exc_class(pillow.pillow_id))
         doc = self._get_random_doc()
-        pillow.process_with_error_handling(Change(id=doc['id'], sequence_id='3', document=doc))
+        pillow.process_with_error_handling(
+            Change(id=doc['id'], sequence_id='3', document=doc),
+        )
 
         errors = PillowError.objects.filter(pillow=pillow.pillow_id).all()
         self.assertEqual(1, len(errors), pillow_config)

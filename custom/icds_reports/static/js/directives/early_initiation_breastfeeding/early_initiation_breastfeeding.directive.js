@@ -15,8 +15,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.label = "Early Initiation of Breastfeeding";
     vm.steps = {
-        'map': {route: '/early_initiation/map', label: 'Map View'},
-        'chart': {route: '/early_initiation/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/early_initiation/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/early_initiation/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: '% Newborns',
@@ -24,7 +24,9 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.filters = ['age'];
 
     vm.rightLegend = {
-        info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
+        info: 'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery.\n' +
+        '\n' +
+        'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -64,9 +66,9 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children who were put to the breast within one hour of birth. \n' +
+        'captionContent': ' Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
         '\n' +
-        'Early initiation of breastfeeding ensure the newborn recieves the ""first milk"" rich in nutrients and encourages exclusive breastfeeding practice',
+        'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

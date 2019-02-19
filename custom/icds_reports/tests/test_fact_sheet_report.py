@@ -7,7 +7,7 @@ from custom.icds_reports.views import FactSheetsReport
 from custom.icds_reports.utils import get_location_level
 
 
-class TestFactSheetReportMaternalAndChildNutrition(TestCase):
+class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
     maxDiff = None
 
     def get_data(self):
@@ -34,13 +34,13 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 68.97066136250622,
-                    'sort_key': 68.97066136250622
+                    'html': 70.3030303030303,
+                    'sort_key': 70.3030303030303
                 },
                 'data': [
                     {'html': 'Weighing Efficiency (Children <5 weighed)'},
                     {'html': 67.61252446183953, 'sort_key': 67.61252446183953},
-                    {'html': 70.37411526794742, 'sort_key': 70.37411526794742},
+                    {'html': 70.3030303030303, 'sort_key': 70.3030303030303},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -54,14 +54,11 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
-                'average': {
-                    'html': 2.2595901208617972,
-                    'sort_key': 2.2595901208617972
-                },
+                'average': {'html': 3.361344537815126, 'sort_key': 3.361344537815126},
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.1410788381742738, 'sort_key': 1.1410788381742738},
-                    {'html': 3.407880724174654, 'sort_key': 3.407880724174654},
+                    {'html': 1.1213047910295617, 'sort_key': 1.1213047910295617},
+                    {'html': 3.361344537815126, 'sort_key': 3.361344537815126},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -78,7 +75,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data': [
                     {'html': 'Total number of unweighed children (0-5 Years)'},
                     {'html': 331, 'sort_key': 331},
-                    {'html': 293, 'sort_key': 293},
+                    {'html': 294, 'sort_key': 294},
                     {'html': 0}],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'header': 'Total number of unweighed children (0-5 Years)',
@@ -92,8 +89,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 2.523431867339582,
-                    'sort_key': 2.523431867339582
+                    'html': 2.8735632183908044,
+                    'sort_key': 2.8735632183908044
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years who are severely underweight (weight-for-age)'},
@@ -114,8 +111,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
-                    'html': 20.90843547224225,
-                    'sort_key': 20.90843547224225
+                    'html': 18.67816091954023,
+                    'sort_key': 18.67816091954023
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are moderately underweight (weight-for-age)'},
@@ -136,8 +133,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
-                    'html': 76.56813266041817,
-                    'sort_key': 76.56813266041817
+                    'html': 78.44827586206897,
+                    'sort_key': 78.44827586206897
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are at normal weight-for-age'},
@@ -157,18 +154,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
-                    'html': 2.380952380952381,
-                    'sort_key': 2.380952380952381
+                    'html': 0.0,
+                    'sort_key': 0.0
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)'},
-                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
+                    {'html': 22.22222222222222, 'sort_key': 22.22222222222222},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)',
+                'header': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)',
                 'reverseColors': True,
                 'slug': 'wasting_severe'
             }
@@ -179,18 +176,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 21.428571428571427,
-                    'sort_key': 21.428571428571427
+                    'html': 29.62962962962963,
+                    'sort_key': 29.62962962962963
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'},
-                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
-                    {'html': 25.806451612903224, 'sort_key': 25.806451612903224},
+                    {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
+                    {'html': 11.11111111111111, 'sort_key': 11.11111111111111},
+                    {'html': 29.62962962962963, 'sort_key': 29.62962962962963},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)',
+                'header': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)',
                 'reverseColors': True,
                 'slug': 'wasting_moderate'
             }
@@ -201,18 +198,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
-                    'html': 59.523809523809526,
-                    'sort_key': 59.523809523809526
+                    'html': 70.37037037037037,
+                    'sort_key': 70.37037037037037
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with normal weight-for-height'},
-                    {'html': 54.54545454545455, 'sort_key': 54.54545454545455},
-                    {'html': 61.29032258064516, 'sort_key': 61.29032258064516},
+                    {'html': 'Children from 0 - 5 years with normal weight-for-height'},
+                    {'html': 66.66666666666667, 'sort_key': 66.66666666666667},
+                    {'html': 70.37037037037037, 'sort_key': 70.37037037037037},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with normal weight-for-height',
+                'header': 'Children from 0 - 5 years with normal weight-for-height',
                 'slug': 'wasting_normal'
             }
         )
@@ -222,18 +219,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
-                    'html': 37.2093023255814,
-                    'sort_key': 37.2093023255814
+                    'html': 34.375,
+                    'sort_key': 34.375,
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with severe stunting (height-for-age)'},
-                    {'html': 45.45454545454545, 'sort_key': 45.45454545454545},
+                    {'html': 'Children from 0 - 5 years with severe stunting (height-for-age)'},
+                    {'html': 38.46153846153846, 'sort_key': 38.46153846153846},
                     {'html': 34.375, 'sort_key': 34.375},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
+                'header': 'Children from 0 - 5 years with severe stunting (height-for-age)',
                 'reverseColors': True,
                 'slug': 'stunting_severe'
             }
@@ -244,18 +241,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
-                    'html': 27.906976744186046,
-                    'sort_key': 27.906976744186046
+                    'html': 25.0,
+                    'sort_key': 25.0
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with moderate stunting (height-for-age)'},
-                    {'html': 36.36363636363637, 'sort_key': 36.36363636363637},
+                    {'html': 'Children from 0 - 5 years with moderate stunting (height-for-age)'},
+                    {'html': 30.76923076923077, 'sort_key': 30.76923076923077},
                     {'html': 25.0, 'sort_key': 25.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
+                'header': 'Children from 0 - 5 years with moderate stunting (height-for-age)',
                 'reverseColors': True,
                 'slug': 'stunting_moderate'
             }
@@ -266,18 +263,18 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 34.883720930232556,
-                    'sort_key': 34.883720930232556
+                    'html': 40.625,
+                    'sort_key': 40.625
                 },
                 'data': [
-                    {'html': 'Children from 6 - 60 months with normal height-for-age'},
-                    {'html': 18.181818181818183, 'sort_key': 18.181818181818183},
+                    {'html': 'Children from 0 - 5 years with normal height-for-age'},
+                    {'html': 30.76923076923077, 'sort_key': 30.76923076923077},
                     {'html': 40.625, 'sort_key': 40.625},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children from 6 - 60 months with normal height-for-age',
+                'header': 'Children from 0 - 5 years with normal height-for-age',
                 'slug': 'stunting_normal'
             }
         )
@@ -355,14 +352,14 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.896898575020955,
-                            'sort_key': 10.896898575020955
+                            'html': 10.747271200671705,
+                            'sort_key': 10.747271200671705
                         },
                         'data': [
                             {'html': 'Children 1 year+ who have recieved complete immunization'
                                      ' required by age 1.'},
-                            {'html': 10.765349032800673, 'sort_key': 10.765349032800673},
-                            {'html': 10.896898575020955, 'sort_key': 10.896898575020955},
+                            {'html': 10.477001703577512, 'sort_key': 10.477001703577512},
+                            {'html': 10.747271200671705, 'sort_key': 10.747271200671705},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',
@@ -958,6 +955,8 @@ class TestFactSheetReportWaterSanitationAndHygiene(TestCase):
 
 
 class TestFactSheetReportDemographics(TestCase):
+    maxDiff = None
+
     def get_data(self):
         config = {
             'aggregation_level': 1,
@@ -1022,13 +1021,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
-                    'html': 1582,
-                    'sort_key': 1582
+                    'html': 1610,
+                    'sort_key': 1610
                 },
                 'data': [
                     {'html': 'Total number of members enrolled at AWC'},
-                    {'html': 1501, 'sort_key': 1501},
-                    {'html': 1582, 'sort_key': 1582},
+                    {'html': 1526, 'sort_key': 1526},
+                    {'html': 1610, 'sort_key': 1610},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1042,13 +1041,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 21.554993678887485,
-                    'sort_key': 21.554993678887485
+                    'html': 21.490683229813666,
+                    'sort_key': 21.490683229813666
                 },
                 'data': [
                     {'html': 'Percent Aadhaar-seeded beneficiaries'},
-                    {'html': 19.520319786808795, 'sort_key': 19.520319786808795},
-                    {'html': 21.554993678887485, 'sort_key': 21.554993678887485},
+                    {'html': 19.528178243774573, 'sort_key': 19.528178243774573},
+                    {'html': 21.490683229813666, 'sort_key': 21.490683229813666},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1103,13 +1102,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
-                    'html': 166,
-                    'sort_key': 166
+                    'html': 167,
+                    'sort_key': 167
                 },
                 'data': [
                     {'html': 'Total lactating women'},
-                    {'html': 159, 'sort_key': 159},
-                    {'html': 166, 'sort_key': 166},
+                    {'html': 160, 'sort_key': 160},
+                    {'html': 167, 'sort_key': 167},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1123,13 +1122,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 166,
-                    'sort_key': 166
+                    'html': 167,
+                    'sort_key': 167
                 },
                 'data': [
                     {'html': 'Total lactating women registered for services at AWC'},
-                    {'html': 159, 'sort_key': 159},
-                    {'html': 166, 'sort_key': 166},
+                    {'html': 160, 'sort_key': 160},
+                    {'html': 167, 'sort_key': 167},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1143,13 +1142,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
-                    'html': 1287,
-                    'sort_key': 1287
+                    'html': 1288,
+                    'sort_key': 1288
                 },
                 'data': [
                     {'html': 'Total children (0-6 years)'},
                     {'html': 1262, 'sort_key': 1262},
-                    {'html': 1287, 'sort_key': 1287},
+                    {'html': 1288, 'sort_key': 1288},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1163,13 +1162,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
-                    'html': 1287,
-                    'sort_key': 1287
+                    'html': 1288,
+                    'sort_key': 1288
                 },
                 'data': [
                     {'html': 'Total chldren (0-6 years) enrolled for Anganwadi Services'},
                     {'html': 1262, 'sort_key': 1262},
-                    {'html': 1287, 'sort_key': 1287},
+                    {'html': 1288, 'sort_key': 1288},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1183,8 +1182,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
-                    'html': 10,
-                    'sort_key': 10
+                    'html': 5,
+                    'sort_key': 5
                 },
                 'data': [
                     {'html': 'Children (0-28 days)  enrolled for Anganwadi Services'},
@@ -1203,8 +1202,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 98,
-                    'sort_key': 98
+                    'html': 45,
+                    'sort_key': 45
                 },
                 'data': [
                     {'html': 'Children (28 days - 6 months)  enrolled for Anganwadi Services'},
@@ -1223,8 +1222,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
-                    'html': 95,
-                    'sort_key': 95
+                    'html': 51,
+                    'sort_key': 51
                 },
                 'data': [
                     {'html': 'Children (6 months - 1 year)  enrolled for Anganwadi Services'},
@@ -1243,8 +1242,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][13],
             {
                 'average': {
-                    'html': 450,
-                    'sort_key': 450
+                    'html': 213,
+                    'sort_key': 213
                 },
                 'data': [
                     {'html': 'Children (1 year - 3 years)  enrolled for Anganwadi Services'},
@@ -1263,13 +1262,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][14],
             {
                 'average': {
-                    'html': 1896,
-                    'sort_key': 1896
+                    'html': 974,
+                    'sort_key': 974
                 },
                 'data': [
                     {'html': 'Children (3 years - 6 years)  enrolled for Anganwadi Services'},
                     {'html': 923, 'sort_key': 923},
-                    {'html': 973, 'sort_key': 973},
+                    {'html': 974, 'sort_key': 974},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',

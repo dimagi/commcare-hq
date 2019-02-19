@@ -15,15 +15,15 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
 
     vm.label = "Immunization coverage (at age 1 year)";
     vm.steps = {
-        'map': {route: '/immunization_coverage/map', label: 'Map View'},
-        'chart': {route: '/immunization_coverage/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/immunization_coverage/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/immunization_coverage/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
     };
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
+        info: 'Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -68,7 +68,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1. <br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
+        'captionContent': ' Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1. <br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

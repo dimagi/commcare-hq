@@ -1,6 +1,12 @@
-hqDefine("indicators/js/copy_to_domain", function() {
+hqDefine("indicators/js/copy_to_domain", [
+    'jquery',
+    'hqwebapp/js/multiselect_utils',
+], function (
+    $,
+    multiselectUtils
+) {
     $(function () {
-        hqImport('hqwebapp/js/multiselect_utils').createFullMultiselectWidget(
+        multiselectUtils.createFullMultiselectWidget(
             'id_indicator_ids',
             gettext("Available Indicators"),
             gettext("Indicators to Copy"),

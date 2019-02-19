@@ -12,11 +12,11 @@ hqDefine('toggle_ui/js/flags', [
         tagFilter: ko.observable(null),
     };
     $.fn.dataTableExt.afnFiltering.push(
-        function( oSettings, aData, iDataIndex ) {
+        function (oSettings, aData, iDataIndex) {
             if (viewModel.tagFilter() === null) {
                 return true;
             }
-            var tag = aData[0].replace(/\n/g," ").replace( /<.*?>/g, "" );
+            var tag = aData[0].replace(/\n/g," ").replace(/<.*?>/g, "");
             return tag === viewModel.tagFilter();
         }
     );
@@ -28,7 +28,7 @@ hqDefine('toggle_ui/js/flags', [
     });
     table.render();
 
-    viewModel.tagFilter.subscribe(function(value){
+    viewModel.tagFilter.subscribe(function (value) {
         table.datatable.fnDraw();
     });
 });

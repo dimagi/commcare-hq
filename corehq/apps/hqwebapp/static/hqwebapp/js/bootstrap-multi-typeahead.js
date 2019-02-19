@@ -1,10 +1,12 @@
-// http://stackoverflow.com/a/3561711
-RegExp.escape = function(s) {
-    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
-
-(function($) {
+hqDefine("hqwebapp/js/bootstrap-multi-typeahead",[
+    "jquery",
+    "bootstrap3-typeahead/bootstrap3-typeahead.min",
+],function ($) {
     "use strict";
+    // http://stackoverflow.com/a/3561711
+    var regExpEscape = function (s) {
+        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    };
 
     $.fn.multiTypeahead = function (options) {
         /**
@@ -14,45 +16,48 @@ RegExp.escape = function(s) {
          * @author mwhite
          */
 
-        function current_val_and_input(string) {
-            /* split the current value and the current input (the latter to be
-               matched against.) Handles when users manually edit the input such
-               that the number of spaces after a comma is not 1 */
+        function currentValAndInput(string) {
+        /* split the current value and the current input (the latter to be
+           matched against.) Handles when users manually edit the input such
+           that the number of spaces after a comma is not 1 */
             var index = string.lastIndexOf(',');
             if (index === -1) {
-                return ['', '']; 
+                return ['', ''];
             } else {
                 index++;
                 while (string.charAt(index) === ' ') {
-                    index++; 
+                    index++;
                 }
                 return [string.substring(0, index), string.substring(index)];
             }
         }
 
         options = $.extend(options, {
-            matcher: function(item) {
-                var split = current_val_and_input(this.$element.val()),
-                    current_val = split[0],
-                    current_input = split[1];
+            matcher: function (item) {
+                var split = currentValAndInput(this.$element.val()),
+                    currentVal = split[0],
+                    currentInput = split[1];
 
-                var pattern = new RegExp("(?:^|,\\s*)" + RegExp.escape(item) + "(?:\\s*,?|$)");
-                if (current_val.match(pattern)) {
+                var pattern = new RegExp("(?:^|,\\s*)" + regExpEscape(item) + "(?:\\s*,?|$)");
+                if (currentVal.match(pattern)) {
                     return 0;
                 }
-                return ~item.toLowerCase().indexOf(current_input.toLowerCase());
+
+                return ~item.toLowerCase().indexOf(currentInput.toLowerCase());
             },
             updater: function (item) {
-                var split = current_val_and_input(this.$element.val()),
-                    current_val = split[0];
+                var split = currentValAndInput(this.$element.val()),
+                    currentVal = split[0];
 
                 this.$element.focus();
-                return current_val + item + ', ';
-            }
+                return currentVal + item + ', ';
+            },
         });
 
         return this.each(function (i, v) {
             $(v).typeahead(options);
         });
     };
-})(window.jQuery);
+
+
+});

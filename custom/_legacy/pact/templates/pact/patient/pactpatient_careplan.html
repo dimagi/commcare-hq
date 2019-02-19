@@ -1,5 +1,6 @@
 {% extends "pact/patient/pactpatient_base.html" %}
 {% load case_tags %}
+{% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
     <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
@@ -15,9 +16,6 @@
 </script>
 
 <div class="row">
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
     {% include "case/partials/case_hierarchy.html" %}
 </div>
 {% endblock %}

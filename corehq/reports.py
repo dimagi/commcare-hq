@@ -40,6 +40,7 @@ from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
+from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -55,6 +56,7 @@ from corehq.apps.accounting.interface import (
     SoftwarePlanInterface,
     InvoiceInterface,
     WireInvoiceInterface,
+    CustomerInvoiceInterface,
     PaymentRecordInterface,
     SubscriptionAdjustmentInterface,
     CreditAdjustmentInterface,
@@ -87,15 +89,16 @@ def REPORTS(project):
         monitoring.WorkerActivityTimes,
         ProjectHealthDashboard,
     )
-    inspect_reports = (
+    inspect_reports = [
         inspect.SubmitHistory, CaseListReport, OdmExportReport,
-    )
+    ]
+    if toggles.CASE_LIST_EXPLORER.enabled(project.name):
+        inspect_reports.append(CaseListExplorer)
     deployments_reports = (
         deployments.ApplicationStatusReport,
         deployments.AggregateUserStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
-        deployments.SyncHistoryReport,
         deployments.ApplicationErrorReport,
     )
 
@@ -345,6 +348,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         SoftwarePlanInterface,
         InvoiceInterface,
         WireInvoiceInterface,
+        CustomerInvoiceInterface,
         PaymentRecordInterface,
         SubscriptionAdjustmentInterface,
         CreditAdjustmentInterface,

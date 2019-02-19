@@ -1,0 +1,317 @@
+{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "report_id": "static-hmis_monthly_mobile_job_4_child_illness_r3",
+  "data_source_table": "static-hmis_job_aid",
+  "config": {
+    "description": "Fourth batch of indicators for the HMIS Report",
+    "title": "(mobile) HMIS Monthly Mobile Job Aid 4 (R3)(Child illnesses)",
+    "aggregation_columns": [
+      "report_month_date"
+    ],
+    "filters": [
+      {
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": false
+        },
+        "show_all": true,
+        "slug": "health_post",
+        "field": "health_post_id",
+        "ancestor_expression": {},
+        "type": "dynamic_choice_list",
+        "display": "Location"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "report_month_date",
+        "field": "report_month_date",
+        "ancestor_expression": {},
+        "choice_provider": {},
+        "display": "Reporting Month"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "slug": "report_month_date_for_filter_gregorian",
+        "field": "report_month_date_for_filter_gregorian",
+        "type": "date",
+        "display": "Report Month (for mobile)"
+      },
+      {
+        "display": "Test or Real",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Test",
+            "value": "Test"
+          },
+          {
+            "display": "Real",
+            "value": "Real"
+          }
+        ],
+        "field": "test_or_real",
+        "type": "choice_list",
+        "slug": "test_or_real"
+      }
+    ],
+    "columns": [
+      {
+        "field": "report_month_date",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "report_month_date",
+        "visible": true,
+        "display": "Reporting Month",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "iccm_treated_for_pneumonia",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "iccm_treated_for_pneumonia",
+        "visible": true,
+        "display": "iCCM treated for Pneumonia",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cbnc_treated_for_vsd_or_lbi",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cbnc_treated_for_vsd_or_lbi",
+        "visible": true,
+        "display": "CBNC treated for VSD/LBI",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cbnc_treated_for_vsd",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cbnc_treated_for_vsd",
+        "visible": true,
+        "display": "CBNC treated for VSD",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "cbnc_treated_for_lbi",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "cbnc_treated_for_lbi",
+        "visible": true,
+        "display": "CBNC treated for LBI",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "iccm_or_cbnc_treated_for_diarrhoea_with_ors_zinc",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "iccm_or_cbnc_treated_for_diarrhoea_with_ors_zinc",
+        "visible": true,
+        "display": "iCCM/CBNC treated for Diarrhoea, ORS & Zinc",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "iccm_or_cbnc_treated_for_diarrhoea_with_ors_only",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "iccm_or_cbnc_treated_for_diarrhoea_with_ors_only",
+        "visible": true,
+        "display": "iCCM/CBNC treated for Diarrhoea, ORS only",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "morbidity_attributed_to_malaria",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "morbidity_attributed_to_malaria",
+        "visible": true,
+        "display": "Morbidity attributed to malaria",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "morbidity_attributed_to_malaria_clinical_male",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "morbidity_attributed_to_malaria_clinical_male",
+        "visible": true,
+        "display": "Morbidity attributed to malaria, clinical, male",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "morbidity_attributed_to_malaria_clinical_female",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "morbidity_attributed_to_malaria_clinical_female",
+        "visible": true,
+        "display": "Morbidity attributed to malaria, clinical, female",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "morbidity_attributed_to_malaria_lab_male",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "morbidity_attributed_to_malaria_lab_male",
+        "visible": true,
+        "display": "Morbidity attributed to malaria, lab, male",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "morbidity_attributed_to_malaria_lab_female",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "morbidity_attributed_to_malaria_lab_female",
+        "visible": true,
+        "display": "Morbidity attributed to malaria, lab, female",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "malaria_positivity_rate_numerator_male",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "malaria_positivity_rate_numerator_male",
+        "visible": true,
+        "display": "Malaria positivity rate, numerator, male",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "malaria_positivity_rate_numerator_female",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "malaria_positivity_rate_numerator_female",
+        "visible": true,
+        "display": "Malaria positivity rate, numerator, female",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "malaria_positivity_rate_denominator_male",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "malaria_positivity_rate_denominator_male",
+        "visible": true,
+        "display": "Malaria positivity rate, denominator, male",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "malaria_positivity_rate_denominator_female",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "malaria_positivity_rate_denominator_female",
+        "visible": true,
+        "display": "Malaria positivity rate, denominator, female",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      }
+    ]
+  }
+}

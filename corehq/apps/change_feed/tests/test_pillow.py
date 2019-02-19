@@ -7,12 +7,13 @@ from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from kafka.common import ConsumerTimeout, KafkaUnavailableError
+
+from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.pillow import get_change_feed_pillow_for_db
 from corehq.apps.change_feed.data_sources import SOURCE_COUCH
-from corehq.pillows.case import get_case_to_elasticsearch_pillow
+from corehq.pillows.case import get_case_pillow
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
 from corehq.util.elastic import ensure_index_deleted
@@ -24,19 +25,28 @@ class ChangeFeedPillowTest(SimpleTestCase):
     # note: these tests require a valid kafka setup running
 
     def setUp(self):
+        super(ChangeFeedPillowTest, self).setUp()
         self._fake_couch = FakeCouchDb()
         # use a 'real' db name here so that we don't cause other
         # tests down the line to fail.
         # Specifically KafkaChangeFeedTest.test_multiple_topics_with_partial_checkpoint
         self._fake_couch.dbname = 'test_commcarehq'
-        with trap_extra_setup(KafkaUnavailableError):
-            self.consumer = KafkaConsumer(
-                topics.CASE,
-                group_id='test-consumer',
-                bootstrap_servers=[settings.KAFKA_URL],
-                consumer_timeout_ms=100,
-            )
+        self.consumer = KafkaConsumer(
+            topics.CASE,
+            bootstrap_servers=settings.KAFKA_BROKERS,
+            consumer_timeout_ms=100,
+            enable_auto_commit=False,
+        )
+        try:
+            # This initialized the consumer listening from the latest offset
+            next(self.consumer)
+        except StopIteration:
+            pass
         self.pillow = get_change_feed_pillow_for_db('fake-changefeed-pillow-id', self._fake_couch)
+
+    def tearDown(self):
+        self.consumer.close()
+        super(ChangeFeedPillowTest, self).tearDown()
 
     def test_process_change(self):
         document = {
@@ -45,8 +55,8 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'domain': 'kafka-test-domain',
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
-        message = next(self.consumer)
 
+        message = next(self.consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(SOURCE_COUCH, change_meta.data_source_type)
         self.assertEqual(self._fake_couch.dbname, change_meta.data_source_name)
@@ -56,7 +66,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.assertEqual(document['domain'], change_meta.domain)
         self.assertEqual(False, change_meta.is_deletion)
 
-        with self.assertRaises(ConsumerTimeout):
+        with self.assertRaises(StopIteration):
             next(self.consumer)
 
     def test_process_change_with_unicode_domain(self):
@@ -97,7 +107,7 @@ class TestElasticProcessorPillows(TestCase):
 
     def setUp(self):
         with patch('pillowtop.checkpoints.manager.get_or_create_checkpoint'):
-            self.pillow = get_case_to_elasticsearch_pillow()
+            self.pillow = get_case_pillow(skip_ucr=True)
 
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)

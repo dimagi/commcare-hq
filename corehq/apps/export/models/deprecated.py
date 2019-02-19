@@ -49,7 +49,7 @@ class FormQuestionSchema(Document):
             return str if str is not None else ''
 
         key = list(map(_none_to_empty_string, [domain, app_id, xmlns]))
-        return hashlib.sha1(':'.join(key)).hexdigest()
+        return hashlib.sha1(':'.join(key).encode('utf-8')).hexdigest()
 
     @classmethod
     def get_by_key(cls, domain, app_id, xmlns):

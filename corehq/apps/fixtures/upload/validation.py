@@ -96,7 +96,7 @@ def _validate_fixture_upload(workbook):
 
                     try:
                         field_prop_len = len(data_item['field'][field.field_name])
-                    except TypeError:
+                    except (TypeError, KeyError):
                         field_prop_len = None
 
                     for prop in sheet_props:

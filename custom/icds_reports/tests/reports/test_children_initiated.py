@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import children_initiated_appropriate_complementary_feeding_help_text
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_map, \
     get_children_initiated_data_chart, get_children_initiated_sector_data
 from django.test import TestCase
@@ -10,7 +11,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestChildrenInitiated(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_children_initiated_data_map(
@@ -54,18 +54,13 @@ class TestChildrenInitiated(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "all": 17,
-                    "children": 14,
-                    'original_name': ["st1"],
-                    "fillKey": "60%-100%"
-                },
-                "st2": {
-                    "all": 23,
-                    "children": 20,
-                    'original_name': ["st2"],
-                    "fillKey": "60%-100%"
-                }
+                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
+                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
+                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
+                'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
+                'st1': {'all': 17, 'original_name': ['st1'], 'children': 14, 'fillKey': '60%-100%'},
+                'st2': {'all': 23, 'original_name': ['st2'], 'children': 20, 'fillKey': '60%-100%'},
+                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
         )
 
@@ -78,10 +73,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of children between 6 - 8 months"
-            " given timely introduction to solid, semi-solid or soft food."
-        )
+        expected = children_initiated_appropriate_complementary_feeding_help_text(html=True)
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -93,7 +85,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 84.65473145780052)
+        self.assertEquals(data['rightLegend']['average'], 85.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_children_initiated_data_map(
@@ -200,7 +192,7 @@ class TestChildrenInitiated(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 80.71428571428572)
+        self.assertEquals(data['rightLegend']['average'], 82.3529411764706)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -215,24 +207,18 @@ class TestChildrenInitiated(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 86.95652173913044
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 82.3529411764706
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 86.95652173913044
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 82.3529411764706
-                    }
+                    {'loc_name': 'st2', 'percent': 86.95652173913044},
+                    {'loc_name': 'st1', 'percent': 82.3529411764706},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -269,14 +255,13 @@ class TestChildrenInitiated(TestCase):
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 86.95652173913044
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 82.3529411764706
-                    }
+                    {'loc_name': 'st2', 'percent': 86.95652173913044},
+                    {'loc_name': 'st1', 'percent': 82.3529411764706},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )
@@ -296,8 +281,7 @@ class TestChildrenInitiated(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 6 - 8 months "
-                        "given timely introduction to solid, semi-solid or soft food.",
+                "info": children_initiated_appropriate_complementary_feeding_help_text(html=True),
                 "tooltips_data": {
                     "s2": {
                         "all": 7,

@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import re
+from django.utils.translation import ugettext as _
+
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
@@ -87,7 +89,8 @@ class EntryInstances(PostProcessor):
 
         for instance in custom_instances:
             if instance.instance_id in known_instance_ids:
-                raise DuplicateInstanceIdError(instance.instance_id)
+                raise DuplicateInstanceIdError(
+                    _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.instance_id))
             # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
             required_instances.discard(instance.instance_id)
         return {
@@ -174,6 +177,12 @@ def location_fixture_instances(domain, instance_name):
             and not LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture):
         return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('related_locations')
+def related_locations_fixture_instances(domain, instance_name):
+    if instance_name == 'related_locations' and toggles.RELATED_LOCATIONS.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
 def get_all_instances_referenced_in_xpaths(domain, xpaths):

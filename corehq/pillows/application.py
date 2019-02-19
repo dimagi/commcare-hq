@@ -29,7 +29,7 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
         doc_prep_fn=transform_app_for_es
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.APP], group_id='apps-to-es', num_processes=num_processes, process_num=process_num
+        topics=[topics.APP], client_id='apps-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

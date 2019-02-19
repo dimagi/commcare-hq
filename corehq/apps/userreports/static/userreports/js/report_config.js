@@ -1,95 +1,92 @@
 /* global _, $, django, window */
-hqDefine('userreports/js/report_config', function() {
+hqDefine('userreports/js/report_config', function () {
     return {
         reportBuilder: function () {
             var self = this;
 
-            var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
-            var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
+            var propertyList = hqImport('userreports/js/builder_view_models').propertyList;
+            var propertyListItem = hqImport('userreports/js/builder_view_models').propertyListItem;
             var constants = hqImport('userreports/js/constants');
 
             var _kmq_track_click = function (action) {
                 hqImport('analytix/js/kissmetrix').track.event("RBv2 - " + action);
             };
 
-            var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
-                PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
-                var self = this;
-                this.inputBoundCalculation = ko.computed({
+            var columnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
+                var self = propertyListItem(getDefaultDisplayText, getPropertyObject, hasDisplayText);
+                self.inputBoundCalculation = ko.computed({
                     read: function () {
                         return self.calculation();
                     },
                     write: function (value) {
                         self.calculation(value);
-                        if (window._bindingsApplied){
+                        if (window._bindingsApplied) {
                             //reorderColumns();
                         }
                     },
                     owner: this,
                 });
+                return self;
             };
-            ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
-            ColumnProperty.prototype.constructor = ColumnProperty;
 
+            var columnList = function (options) {
+                var self = propertyList(options);
+                self.newProperty = ko.observable(null);
 
-            var ColumnList = function(options) {
-                PropertyList.call(this, options);
-                this.newProperty = ko.observable(null);
-            };
-            ColumnList.prototype = Object.create(PropertyList.prototype);
-            ColumnList.prototype.constructor = ColumnList;
-            ColumnList.prototype._createListItem = function () {
-                return new ColumnProperty(
-                    this.getDefaultDisplayText.bind(this),
-                    this.getPropertyObject.bind(this),
-                    this.reorderColumns.bind(this),
-                    this.hasDisplayCol
-                );
-            };
-            ColumnList.prototype.buttonHandler = function () {
-                if (this.newProperty()) {
-                    var item = this._createListItem();
-                    item.property(this.newProperty());
-                    if (this.reportType() === constants.REPORT_TYPE_LIST) {
-                        item.calculation(constants.GROUP_BY);
-                    } else {
-                        item.calculation(item.getDefaultCalculation());
-                    }
-                    this.newProperty(null);
-                    this.columns.push(item);
-                    if (_.isFunction(this.addItemCallback)) {
-                        this.addItemCallback();
-                    }
-                }
-            };
-            ColumnList.prototype.reorderColumns = function () {
-                var items = {};
-
-                // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
-                // each ColumnProperty), but we don't want this function to run until the this.columns exists.
-                if (this.columns) {
-                    this.columns().forEach(function (v, i) {
-                        items[[v.property(), v.calculation(), v.displayText()]] = i;
-                    });
-
-                    var isGroupBy = function (column) {
-                        return column.calculation() === constants.GROUP_BY;
-                    };
-                    var index = function (column) {
-                        return items[[column.property(), column.calculation(), column.displayText()]];
-                    };
-                    var compare = function (first, second) {
-                        // return negative if first is smaller than second
-                        if (isGroupBy(first) !== isGroupBy(second)) {
-                            return isGroupBy(first) ? -1 : 1;
+                self._createListItem = function () {
+                    return columnProperty(
+                        self.getDefaultDisplayText.bind(self),
+                        self.getPropertyObject.bind(self),
+                        self.reorderColumns.bind(self),
+                        self.hasDisplayCol
+                    );
+                };
+                self.buttonHandler = function () {
+                    if (self.newProperty()) {
+                        var item = self._createListItem();
+                        item.property(self.newProperty());
+                        if (self.reportType() === constants.REPORT_TYPE_LIST) {
+                            item.calculation(constants.GROUP_BY);
+                        } else {
+                            item.calculation(item.getDefaultCalculation());
                         }
-                        if (index(first) !== index(second)) {
-                            return index(first) < index(second) ? -1 : 1;
+                        self.newProperty(null);
+                        self.columns.push(item);
+                        if (_.isFunction(self.addItemCallback)) {
+                            self.addItemCallback();
                         }
-                        return 0;
-                    };
-                    this.columns.sort(compare);
-                }
+                    }
+                };
+                self.reorderColumns = function () {
+                    var items = {};
+
+                    // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
+                    // each ColumnProperty), but we don't want this function to run until the this.columns exists.
+                    if (self.columns) {
+                        self.columns().forEach(function (v, i) {
+                            items[[v.property(), v.calculation(), v.displayText()]] = i;
+                        });
+
+                        var isGroupBy = function (column) {
+                            return column.calculation() === constants.GROUP_BY;
+                        };
+                        var index = function (column) {
+                            return items[[column.property(), column.calculation(), column.displayText()]];
+                        };
+                        var compare = function (first, second) {
+                            // return negative if first is smaller than second
+                            if (isGroupBy(first) !== isGroupBy(second)) {
+                                return isGroupBy(first) ? -1 : 1;
+                            }
+                            if (index(first) !== index(second)) {
+                                return index(first) < index(second) ? -1 : 1;
+                            }
+                            return 0;
+                        };
+                        self.columns.sort(compare);
+                    }
+                };
+                return self;
             };
 
 
@@ -121,8 +118,12 @@ hqDefine('userreports/js/report_config', function() {
                 self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
                 self.previewDatasourceId = config["previewDatasourceId"];
 
-                self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
-                self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
+                self.reportTypeListLabel = (
+                    (config['sourceType'] === "case") ? "Case List" :
+                        (config['sourceType'] === "form") ? "Form List" : "List");
+                self.reportTypeAggLabel = (
+                    (config['sourceType'] === "case") ? "Case Summary" :
+                        (config['sourceType'] === "form") ? "Form Summary" : "Summary");
                 self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
                 self.reportType.subscribe(function (newValue) {
                     _ga_track_config_change('Change Report Type', newValue);
@@ -131,12 +132,12 @@ hqDefine('userreports/js/report_config', function() {
                     self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
                     self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
                     if (self.reportType() === constants.REPORT_TYPE_LIST) {
-                        self.columnList.columns().forEach(function(val, index) {
+                        self.columnList.columns().forEach(function (val, index) {
                             val.calculation(constants.GROUP_BY);
                         });
                     }
                     if (self.isAggregationEnabled() && !wasAggregationEnabled) {
-                        self.columnList.columns().forEach(function(val, index) {
+                        self.columnList.columns().forEach(function (val, index) {
                             if (index === 0) {
                                 val.calculation(constants.GROUP_BY);
                             } else {
@@ -177,7 +178,7 @@ hqDefine('userreports/js/report_config', function() {
                 self.tooManyChartCategoriesWarning = ko.observable(false);
                 self.noChartForConfigWarning = ko.observable(false);
 
-                self.previewChart.subscribe(function() {
+                self.previewChart.subscribe(function () {
                     // Clear these warnings before revealing the chart div. This prevents them from flickering.
                     // The warnings will be update in _renderChartPreview
                     self.tooManyChartCategoriesWarning(false);
@@ -204,7 +205,7 @@ hqDefine('userreports/js/report_config', function() {
                     }
                 };
 
-                var _getSelectableReportColumnOptions = function(reportColumnOptions, dataSourceIndicators) {
+                var _getSelectableReportColumnOptions = function (reportColumnOptions, dataSourceIndicators) {
                     var utils = hqImport('userreports/js/utils');
                     if (self._optionsContainQuestions(dataSourceIndicators)) {
                         return _.compact(_.map(
@@ -244,7 +245,7 @@ hqDefine('userreports/js/report_config', function() {
                 self.selectablePropertyOptions = _getSelectableProperties(config['dataSourceProperties']);
                 self.selectableReportColumnOptions = _getSelectableReportColumnOptions(self.columnOptions, config['dataSourceProperties']);
 
-                self.columnList = new ColumnList({
+                self.columnList = columnList({
                     hasFormatCol: false,
                     hasCalculationCol: self.isAggregationEnabled,
                     initialCols: config['initialColumns'],
@@ -275,7 +276,7 @@ hqDefine('userreports/js/report_config', function() {
                     self.saveButton.fire('change');
                 });
 
-                self.filterList = new PropertyList({
+                self.filterList = propertyList({
                     hasFormatCol: self._sourceType === "case",
                     hasCalculationCol: false,
                     initialCols: config['initialUserFilters'],
@@ -301,7 +302,7 @@ hqDefine('userreports/js/report_config', function() {
                 self.filterList.serializedProperties.subscribe(function () {
                     self.saveButton.fire("change");
                 });
-                self.defaultFilterList = new PropertyList({
+                self.defaultFilterList = propertyList({
                     hasFormatCol: true,
                     hasCalculationCol: false,
                     hasDisplayCol: false,
@@ -331,6 +332,7 @@ hqDefine('userreports/js/report_config', function() {
                     self.saveButton.fire("change");
                 });
                 self.previewError = ko.observable(false);
+                self.previewErrorMessage = ko.observable(null);
                 self._suspendPreviewRefresh = false;
                 self._pendingUpdate = false;
                 self.refreshPreview = function (serializedColumns) {
@@ -368,11 +370,15 @@ hqDefine('userreports/js/report_config', function() {
                                     self.renderReportPreview(data);
                                 }
                             },
-                            error: function () {
+                            error: function (response) {
                                 self._suspendPreviewRefresh = false;
                                 if (self._pendingUpdate) {
                                     self.refreshPreview();
                                 } else {
+                                    if (response.status === 400) {
+                                        var errorMessage = response.responseJSON;
+                                        self.previewErrorMessage(errorMessage.message);
+                                    }
                                     self.previewError(true);
                                 }
                             },
@@ -386,6 +392,7 @@ hqDefine('userreports/js/report_config', function() {
 
                 self.renderReportPreview = function (data) {
                     self.previewError(false);
+                    self.previewErrorMessage(null);
                     self.noChartForConfigWarning(false);
                     self.tooManyChartCategoriesWarning(false);
                     self._renderTablePreview(data['table']);
@@ -429,7 +436,7 @@ hqDefine('userreports/js/report_config', function() {
                         "ordering": false,
                         "paging": false,
                         "searching": false,
-                        "columns": _.map(data[0], function(column) { return {"title": column}; }),
+                        "columns": _.map(data[0], function (column) { return {"title": column}; }),
                         "data": data.slice(1),
                     });
                     $('#preview').show();
@@ -449,7 +456,7 @@ hqDefine('userreports/js/report_config', function() {
                         isValid = false;
                         $("#report-config-defaultfilters").collapse('show');
                     }
-                    if (!isValid){
+                    if (!isValid) {
                         alert('Invalid report configuration. Please fix the issues and try again.');
                     }
                     return isValid;
@@ -460,7 +467,7 @@ hqDefine('userreports/js/report_config', function() {
                     var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
                     default_filters = _.filter(
                         default_filters,
-                        function(c){return c.property && c.pre_value;}
+                        function (c) {return c.property && c.pre_value;}
                     );
                     return {
                         "existing_report": self.existingReportId,
@@ -502,6 +509,10 @@ hqDefine('userreports/js/report_config', function() {
 
 
                 $("#btnSaveView").click(function () {
+                    var thisButton = $(this);
+                    self.saveButton.setState('saving');
+                    thisButton.disableButton();
+
                     var isValid = self.validate();
                     if (isValid) {
                         _ga_track_config_change('Save and View Report');
@@ -517,6 +528,10 @@ hqDefine('userreports/js/report_config', function() {
                                 // Redirect to the newly-saved report
                                 self.saveButton.setState('saved');
                                 window.location.href = data['report_url'];
+                            },
+                            error: function () {
+                                self.saveButton.setState('retry');
+                                thisButton.enableButton();
                             },
                             dataType: 'json',
                         });

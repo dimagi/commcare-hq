@@ -51,7 +51,7 @@ class SoftAssert(object):
             short_tb = get_traceback(skip=self.tb_skip, limit=self.key_limit)
             full_tb = get_traceback(skip=self.tb_skip)
             line = short_tb.strip().split('\n')[-1].strip()
-            tb_id = hashlib.md5(short_tb).hexdigest()
+            tb_id = hashlib.md5(short_tb.encode('utf-8')).hexdigest()
             count = ExponentialBackoff.increment(tb_id)
             if not self.use_exponential_backoff or not ExponentialBackoff.should_backoff(tb_id):
                 if msg:

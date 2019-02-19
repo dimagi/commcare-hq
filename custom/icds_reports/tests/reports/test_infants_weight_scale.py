@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test.utils import override_settings
 
+from custom.icds_reports.messages import awcs_reported_weighing_scale_infants_help_text
 from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_map, \
     get_infants_weight_scale_data_chart, get_infants_weight_scale_sector_data
 from django.test import TestCase
@@ -11,7 +12,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInfantsWeightScale(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_infants_weight_scale_data_map(
@@ -55,18 +55,13 @@ class TestInfantsWeightScale(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 13,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "75%-100%"
-                },
-                "st2": {
-                    "in_month": 11,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "75%-100%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'},
+                'st1': {'in_month': 13, 'original_name': ['st1'], 'all': 17, 'fillKey': '75%-100%'},
+                'st2': {'in_month': 11, 'original_name': ['st2'], 'all': 13, 'fillKey': '75%-100%'},
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -79,9 +74,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of AWCs that reported having a weighing scale for infants"
-        )
+        expected = awcs_reported_weighing_scale_infants_help_text()
         self.assertEquals(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -93,7 +86,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 80.54298642533936)
+        self.assertEquals(data['rightLegend']['average'], 80.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_infants_weight_scale_data_map(
@@ -190,7 +183,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 77.08333333333334)
+        self.assertEquals(data['rightLegend']['average'], 76.47058823529412)
 
     def test_chart_data(self):
         data = get_infants_weight_scale_data_chart(
@@ -263,14 +256,11 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {"loc_name": "st2", "percent": 84.61538461538461},
+                {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -286,14 +276,11 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -320,14 +307,13 @@ class TestInfantsWeightScale(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 84.61538461538461
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 76.47058823529412
-                }
+                {"loc_name": "st2", "percent": 84.61538461538461},
+                {"loc_name": "st1", "percent": 76.47058823529412},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -399,7 +385,7 @@ class TestInfantsWeightScale(TestCase):
         )
         self.assertEquals(
             data['info'],
-            "Percentage of AWCs that reported having a weighing scale for infants"
+            awcs_reported_weighing_scale_infants_help_text()
         )
 
     def test_sector_data_tooltips_data(self):

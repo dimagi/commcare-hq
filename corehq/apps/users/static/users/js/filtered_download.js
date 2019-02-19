@@ -6,7 +6,7 @@ hqDefine('users/js/filtered_download', function () {
             'search_string': $("#id_search_string").val(),
         };
         var countUsersUrl = hqImport('hqwebapp/js/initial_page_data').get('count_users_url');
-        setInterval(function(){
+        setInterval(function () {
             var currentFilters = {
                 'role_id': $("#id_role_id").val(),
                 'search_string': $("#id_search_string").val(),
@@ -15,13 +15,13 @@ hqDefine('users/js/filtered_download', function () {
                 $.get({
                     url: countUsersUrl,
                     data: currentFilters,
-                    success: function(data) {
+                    success: function (data) {
                         var count = data['count'];
                         var text = ngettext("Download %s User", "Download %s Users", count);
                         text = interpolate(text, [count]);
                         $('.submit_button').text(text);
                     },
-                    error: function() {
+                    error: function () {
                         alert("Error determining number of matching users");
                     },
                 });

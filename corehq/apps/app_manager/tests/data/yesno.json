@@ -31,6 +31,7 @@
     "deployment_date": null,
     "description": null,
     "doc_type": "Application",
+    "domain": "test",
     "force_http": false,
     "is_released": false,
     "langs": [
@@ -277,7 +278,8 @@
                 "en": "jr://file/commcare_media/image/image.jpeg"
             },
             "name": {
-                "en": "Untitled Module"
+                "en": "Untitled Module",
+                "es": "Untitled Module in Spanish"
             },
             "put_in_root": false,
             "referral_label": {

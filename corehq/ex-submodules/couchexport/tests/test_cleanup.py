@@ -18,7 +18,13 @@ class CleanupTest(TestCase):
             **get_safe_write_kwargs()
         )
         doc = db.get(res['id'])
-        db.put_attachment(doc, 'some content', 'attach.txt')
+        doc['_attachments'] = {
+            "attach.txt": {
+                "content_type": "text/plain",
+                "data": "some content",
+            },
+        }
+        db.save_doc(doc)
 
         config = ExportConfiguration(db, ['attachments-test'], cleanup_fn=None)
         schema = config.get_latest_schema()

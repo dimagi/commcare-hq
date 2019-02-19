@@ -27,18 +27,28 @@
 
 .datatable .header,
 .dataTable .header {
-  &.headerSortUp {
+  .dt-sort-icon:before{
+    font-family: "Glyphicons Halflings";
+    vertical-align: bottom;
+  }
+  &.headerSort {
     .dt-sort-icon:before {
-      content: "\f077";
+      content: "\e150";
+      opacity: 0.2;
     }
   }
-  &.headerSortDown {
+  &.headerSortDesc {
     .dt-sort-icon:before {
-      content: "\f078";
+      content: "\e156";
     }
   }
-  &.headerSortUp,
-  &.headerSortDown {
+  &.headerSortAsc {
+    .dt-sort-icon:before {
+      content: "\e155";
+    }
+  }
+  &.headerSortDesc,
+  &.headerSortAsc {
     background-color: @cc-brand-mid;
   }
 }

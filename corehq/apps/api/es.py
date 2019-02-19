@@ -16,9 +16,10 @@ from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new
+from corehq.elastic import ESError, get_es_new, report_shard_failures
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -145,6 +146,7 @@ class ESView(View):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            report_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
@@ -160,7 +162,6 @@ class ESView(View):
                         querystring)
 
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, str(e), es_query)
-            notify_exception(None, message=msg)
             raise ESError(msg)
 
         hits = []
@@ -331,6 +332,7 @@ class UserES(ESView):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            report_shard_failures(es_results)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
                 self.index, str(e), es_query)
@@ -563,13 +565,18 @@ class ElasticAPIQuerySet(object):
         for field in fields:
             if not field:
                 continue
-            
+
             direction = 'asc'
+            missing_dir = '_first'
             if field[0] == '-':
                 direction = 'desc'
+                missing_dir = '_last'
                 field = field[1:]
 
-            new_payload['sort'].append({field: direction})
+            new_payload['sort'].append({field: {
+                'order': direction,
+                "missing": missing_dir
+            }})
 
         return self.with_fields(payload=new_payload)
 
@@ -629,19 +636,53 @@ def validate_date(date):
                 raise DateTimeError("Date not in the correct format")
     return date
 
+
 RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
 
-# Note that dates are already in a string format when they arrive as query params
-query_param_transforms = {
-    'xmlns': lambda v: {'term': {'xmlns.exact': v}},
-    'received_on_start': lambda v: {'range': {'received_on': {'from': validate_date(v)}}},
-    'received_on_end': lambda v: {'range': {'received_on': {'to': validate_date(v)}}},
-    'server_modified_on_start': lambda v: {'range': {'server_modified_on': {'from': validate_date(v)}}},
-    'server_modified_on_end': lambda v: {'range': {'server_modified_on': {'to': validate_date(v)}}},
-}
+
+class DateRangeParams(object):
+    def __init__(self, field):
+        self.field = field
+        self.start_param = '{}_start'.format(field)
+        self.end_param = '{}_end'.format(field)
+
+    def consume_params(self, raw_params):
+        start = raw_params.pop(self.start_param, None)
+        end = raw_params.pop(self.end_param, None)
+        if start:
+            validate_date(start)
+        if end:
+            validate_date(end)
+
+        if start or end:
+            # Note that dates are already in a string format when they arrive as query params
+            return filters.date_range(self.field, gte=start, lte=end)
+
+
+class TermParam(object):
+    def __init__(self, param, term=None):
+        self.param = param
+        self.term = term or param
+
+    def consume_params(self, raw_params):
+        value = raw_params.pop(self.param, None)
+        if value:
+            return filters.term(self.term, value)
+
+
+query_param_consumers = [
+    TermParam('xmlns', 'xmlns.exact'),
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('indexed_on'),
+]
 
 
 def es_search(request, domain, reserved_query_params=None):
+    return es_search_by_params(request.GET, domain, reserved_query_params)
+
+
+def es_search_by_params(search_params, domain, reserved_query_params=None):
     payload = {
         "filter": {
             "and": [
@@ -653,8 +694,8 @@ def es_search(request, domain, reserved_query_params=None):
     # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
     # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
     # XML / JSON.
-    if '_search' in request.GET:
-        additions = json.loads(request.GET['_search'])
+    if '_search' in search_params:
+        additions = json.loads(search_params['_search'])
 
         if 'filter' in additions:
             payload['filter']['and'].append(additions['filter'])
@@ -663,23 +704,28 @@ def es_search(request, domain, reserved_query_params=None):
             payload['query'] = additions['query']
 
     # ?q=<lucene>
-    if 'q' in request.GET:
+    if 'q' in search_params:
         payload['query'] = payload.get('query', {})
-        payload['query']['query_string'] = {'query': request.GET['q']} # A bit indirect?
+        payload['query']['query_string'] = {'query': search_params['q']}  # A bit indirect?
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
-    for key in set(request.GET.keys()) - reserved_query_params:
-        if key.endswith('__full'): continue
-        
-        value = request.GET[key]
+    query_params = {
+        param: value
+        for param, value in search_params.items()
+        if param not in reserved_query_params and not param.endswith('__full')
+    }
+    for consumer in query_param_consumers:
+        try:
+            payload_filter = consumer.consume_params(query_params)
+        except DateTimeError:
+            raise Http400("Bad query parameter")
 
-        if key in query_param_transforms:
-            try:
-                payload["filter"]["and"].append(query_param_transforms[key](value))
-            except DateTimeError:
-                raise Http400("Bad query parameter")
-        else:
-            payload["filter"]["and"].append({"term": {key: value}})
+        if payload_filter:
+            payload["filter"]["and"].append(payload_filter)
+
+    # add unconsumed filters
+    for param, value in query_params.items():
+        payload["filter"]["and"].append(filters.term(param, value))
 
     return payload

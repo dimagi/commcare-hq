@@ -5,7 +5,7 @@ import datetime
 from corehq.apps.accounting.exceptions import NewSubscriptionError
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
-    SubscriptionAdjustmentMethod, SubscriptionType, EntryPoint,)
+    SubscriptionAdjustmentMethod, SubscriptionType, EntryPoint)
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
@@ -141,3 +141,24 @@ class TestNewDomainSubscription(BaseAccountingTest):
         )
 
         self.assertEqual(subscription.account.entry_point, EntryPoint.CONTRACTED)
+
+    def test_exceeding_max_domains_prevents_new_domains(self):
+        self.advanced_plan.plan.max_domains = 1
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        )
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain2.name, self.advanced_plan
+        ))
+
+    def test_customer_plan_not_added_to_regular_account(self):
+        self.advanced_plan.plan.is_customer_software_plan = True
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        ))
+
+    def test_regular_plan_not_added_to_customer_account(self):
+        self.account.is_customer_billing_account = True
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        ))

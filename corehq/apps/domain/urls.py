@@ -15,54 +15,60 @@ from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
-from corehq.apps.domain.views import (
-    ActivateTransferDomainView,
-    BillingStatementPdfView,
-    BulkStripePaymentView,
-    CalendarFixtureConfigView,
-    CardView,
-    CardsView,
+from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
-    ConfirmBillingAccountInfoView,
-    ConfirmSelectedPlanView,
-    ConfirmSubscriptionRenewalView,
-    CreateNewExchangeSnapshotView,
-    CreditsStripePaymentView,
-    CreditsWireInvoiceView,
-    DeactivateTransferDomainView,
     DefaultProjectSettingsView,
-    DomainBillingStatementsView,
-    DomainSubscriptionView,
     EditBasicProjectInfoView,
-    EditExistingBillingAccountView,
-    EditInternalCalculationsView,
-    EditInternalDomainInfoView,
     EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
-    EmailOnDowngradeView,
-    ExchangeSnapshotsView,
-    FlagsAndPrivilegesView,
     FeaturePreviewsView,
-    InternalSubscriptionManagementView,
-    InvoiceStripePaymentView,
-    LocationFixtureConfigView,
     ManageProjectMediaView,
     PasswordResetView,
-    ProBonoView,
-    SMSRatesView,
-    SelectPlanView,
-    SelectedEnterprisePlanView,
-    SubscriptionRenewalView,
-    TransferDomainView,
-    WireInvoiceView,
-    autocomplete_fields,
-    calculated_properties,
-    select,
-    set_published_snapshot,
-    toggle_diff,
-    generate_repeater_payloads,
+    RecoveryMeasuresHistory,
 )
+from corehq.apps.domain.views.accounting import (
+    BillingStatementPdfView,
+    BulkStripePaymentView,
+    CardView,
+    CardsView,
+    ConfirmBillingAccountInfoView,
+    ConfirmSelectedPlanView,
+    ConfirmSubscriptionRenewalView,
+    CreditsStripePaymentView,
+    CreditsWireInvoiceView,
+    DomainBillingStatementsView,
+    DomainSubscriptionView,
+    EditExistingBillingAccountView,
+    EmailOnDowngradeView,
+    InternalSubscriptionManagementView,
+    InvoiceStripePaymentView,
+    SelectedEnterprisePlanView,
+    SelectedAnnualPlanView,
+    SelectPlanView,
+    SubscriptionRenewalView,
+    WireInvoiceView,
+)
+from corehq.apps.domain.views.base import select
+from corehq.apps.domain.views.exchange import (
+    ExchangeSnapshotsView,
+    CreateNewExchangeSnapshotView,
+    set_published_snapshot,
+)
+from corehq.apps.domain.views.fixtures import CalendarFixtureConfigView, LocationFixtureConfigView
+from corehq.apps.domain.views.internal import (
+    ActivateTransferDomainView,
+    DeactivateTransferDomainView,
+    EditInternalCalculationsView,
+    EditInternalDomainInfoView,
+    FlagsAndPrivilegesView,
+    TransferDomainView,
+    calculated_properties,
+    toggle_diff,
+)
+from corehq.apps.domain.views.pro_bono import ProBonoView
+from corehq.apps.domain.views.repeaters import generate_repeater_payloads
+from corehq.apps.domain.views.sms import SMSRatesView
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
@@ -82,11 +88,11 @@ from corehq.motech.repeaters.views import (
     resume_repeater,
     test_repeater,
 )
+from corehq.motech.repeaters.views.repeaters import EditDhis2RepeaterView
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
-    url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -135,6 +141,8 @@ domain_settings = [
         name=ConfirmSelectedPlanView.urlname),
     url(r'^subscription/change/request/$', SelectedEnterprisePlanView.as_view(),
         name=SelectedEnterprisePlanView.urlname),
+    url(r'^subscription/change/request_annual/$', SelectedAnnualPlanView.as_view(),
+        name=SelectedAnnualPlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
     url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
@@ -184,6 +192,8 @@ domain_settings = [
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
     url(r'^forwarding/OpenmrsRepeater/edit/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
+    url(r'^forwarding/Dhis2Repeater/edit/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
+        {'repeater_type': 'Dhis2Repeater'}, name=EditDhis2RepeaterView.urlname),
     url(r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
 
@@ -208,7 +218,9 @@ domain_settings = [
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
-    url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^recovery_measures_history/$',
+        RecoveryMeasuresHistory.as_view(),
+        name=RecoveryMeasuresHistory.urlname),
 
     DomainReportDispatcher.url_pattern()
 ]

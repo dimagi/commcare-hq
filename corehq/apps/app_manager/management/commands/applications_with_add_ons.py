@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management.base import BaseCommand, CommandError
 from corehq import toggles
@@ -10,6 +10,7 @@ from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application
+from io import open
 
 
 class Command(BaseCommand):
@@ -49,34 +50,34 @@ class Command(BaseCommand):
             add_to_toggle = find_static_toggle(add_to_toggle)
             if not add_to_toggle:
                 raise CommandError('Toggle %s not found.' % add_to_toggle)
-        with open("apps_with_feature_%s.csv" % add_on_name, "w") as csvfile:
+        with open("apps_with_feature_%s.csv" % add_on_name, "w", encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile,
                                     fieldnames=[
                                         'domain', 'application_id', 'app_name',
                                         'all_add_ons_enabled', 'status'
                                     ])
             writer.writeheader()
-            for domain in self._iter_domains(options):
-                application_ids = get_app_ids_in_domain(domain.name)
+            for domain_obj in self._iter_domains(options):
+                application_ids = get_app_ids_in_domain(domain_obj.name)
                 for application_id in application_ids:
                     application = Application.get(application_id)
                     if not application.is_remote_app():
-                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain.name)
+                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain_obj.name)
                         if add_on_name in application.add_ons or all_add_ons_enabled:
                             try:
                                 writer.writerow({
-                                    'domain': domain.name.encode('utf-8'),
+                                    'domain': domain_obj.name.encode('utf-8'),
                                     'application_id': application.get_id,
                                     'app_name': application.name.encode('utf-8'),
                                     'all_add_ons_enabled': all_add_ons_enabled,
                                     'status': application.add_ons.get(add_on_name)
                                 })
                                 if add_to_toggle:
-                                    add_to_toggle.set(domain.name, True, NAMESPACE_DOMAIN)
+                                    add_to_toggle.set(domain_obj.name, True, NAMESPACE_DOMAIN)
                             except UnicodeEncodeError:
                                 print('encode error')
                                 print({
-                                    'domain': domain.name,
+                                    'domain': domain_obj.name,
                                     'application_id': application.get_id,
                                     'app_name': application.name,
                                     'all_add_ons_enabled': all_add_ons_enabled,

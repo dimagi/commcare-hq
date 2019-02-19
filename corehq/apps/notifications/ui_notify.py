@@ -91,3 +91,26 @@ REPORT_BUILDER_V2 = StaticUINotify(
     ends_on=datetime(2017, 12, 22, 20),
     only_visible_for_users_created_before=datetime(2017, 11, 5, 20),
 )
+
+MESSAGING_DASHBOARD = StaticUINotify(
+    'messaging_dashboard_may2018',
+    ends_on=datetime(2018, 7, 1),
+    only_visible_for_users_created_before=datetime(2018, 5, 25),
+)
+
+ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
+    'ability_to_hide_translations',
+    ends_on=datetime(2018, 7, 1),
+    only_visible_for_users_created_before=datetime(2018, 5, 31),
+)
+
+DATA_FIND_BY_ID = StaticUINotify(
+    'data_find_by_id_sept2018',
+    ends_on=datetime(2018, 11, 1),
+    only_visible_for_users_created_before=datetime(2018, 9, 26),
+)
+
+FORMS_CASES_URL_IN_EXPORTS = StaticUINotify(
+    'forms_cases_url_in_exports_jan2019',
+    ends_on=datetime(2019, 2, 14)
+)

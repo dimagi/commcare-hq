@@ -1,6 +1,8 @@
+/* global locationModel */
+
 function IntrahealthLocModel(data, root, depth) {
     var loc = this;
-    LocationModel.apply(this, [data, root, depth, IntrahealthLocModel, false]);
+    locationModel.apply(this, [data, root, depth, IntrahealthLocModel, false]);
 
     this.load_children_async = function(callback) {
         if (this.depth < root.location_types.length) {

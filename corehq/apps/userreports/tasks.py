@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
+import time
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
@@ -16,16 +17,14 @@ from django.db import transaction
 from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
-from restkit import RequestError
 
-from couchexport.export import export_from_tables
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
 from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email
+from corehq.apps.reports.util import send_report_download_email, DatatablesParams
 from corehq.apps.userreports.const import (
-    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
@@ -48,9 +47,9 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
-from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 import six
 
@@ -65,7 +64,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+    adapter = get_indicator_adapter(config, raise_errors=True)
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -77,14 +76,16 @@ def _build_indicators(config, document_store, relevant_ids):
             adapter.best_effort_save(doc)
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     config = _get_config_by_id(indicator_config_id)
-    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
-    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
-    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
+    failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
+    send = False
+    if limit == -1:
+        send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -97,14 +98,14 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
         _iteratively_build_table(config, limit=limit)
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
-    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
-    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
+    failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
@@ -115,11 +116,11 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config, in_place=True)
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
-    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
-    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
+    failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
@@ -176,16 +177,20 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.after_table_build()
 
 
-@task(queue=UCR_CELERY_QUEUE)
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
-    def _run_report(backend_to_use):
-        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True, backend=backend_to_use)
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is None:
+        return
+
+    def _run_report(spec):
+        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -209,32 +214,57 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    spec, is_static = get_report_config(report_config_id, domain)
+    old_spec, unused = get_report_config(report_config_id, domain)
+    new_spec, unused = get_report_config(new_report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,
+        "new_report_config_id": new_report_config_id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(UCR_SQL_BACKEND))
+        c.record(_run_report(old_spec))
 
     with experiment.candidate() as c:
-        c.record(_run_report(UCR_ES_BACKEND))
+        c.record(_run_report(new_spec))
 
     objects = experiment.run()
     return objects
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def delete_data_source_task(domain, config_id):
     from corehq.apps.userreports.views import delete_data_source_shared
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(
-    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+def reprocess_archive_stubs():
+    # Check for archive stubs
+    from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+    from couchforms.models import UnfinishedArchiveStub
+    stubs = UnfinishedArchiveStub.objects.filter()
+    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    start = time.time()
+    cutoff = start + timedelta(minutes=4).total_seconds()
+    for stub in stubs:
+        # Exit this task after 4 minutes so that the same stub isn't ever processed in multiple queues.
+        if time.time() - start > cutoff:
+            return
+        xform = FormAccessors(stub.domain).get_form(form_id=stub.xform_id)
+        # If the history wasn't updated the first time around, run the whole thing again.
+        if not stub.history_updated:
+            if stub.archive:
+                xform.archive(user_id=stub.user_id)
+            else:
+                xform.unarchive(user_id=stub.user_id)
+        # If the history was updated the first time around, just send the update to kafka
+        else:
+            xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
+
+
+@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -245,7 +275,7 @@ def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
-    # don't requeue anything that has been retired more than 20 times
+    # don't requeue anything that has been retried more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
@@ -287,7 +317,7 @@ def _queue_indicators(indicators):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        save_document.delay(indicator_doc_ids)
+        build_async_indicators.delay(indicator_doc_ids)
         datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
@@ -301,127 +331,136 @@ def _queue_indicators(indicators):
         _queue_chunk(to_queue)
 
 
-@quickcache(['config_id'])
-def _get_config(config_id):
-    # performance optimization for save_document. don't use elsewhere
-    return _get_config_by_id(config_id)
+@task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
+def build_async_indicators(indicator_doc_ids):
+    # written to be used with _queue_indicators, indicator_doc_ids must
+    #   be a chunk of 100
+    for ids in chunked(indicator_doc_ids, 10):
+        _build_async_indicators(ids)
 
 
-@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(doc_ids):
-    lock_keys = []
-    for doc_id in doc_ids:
-        lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
+def _build_async_indicators(indicator_doc_ids):
+    def handle_exception(exception, config_id, doc, adapter):
+        metric = None
+        if isinstance(exception, (ProtocolError, ReadTimeout)):
+            metric = 'commcare.async_indicator.riak_error'
+        elif isinstance(exception, (ESError, ConnectionTimeout)):
+            # a database had an issue so log it and go on to the next document
+            metric = 'commcare.async_indicator.es_error'
+        elif isinstance(exception, (DatabaseError, InternalError)):
+            # a database had an issue so log it and go on to the next document
+            metric = 'commcare.async_indicator.psql_error'
+        else:
+            # getting the config could fail before the adapter is set
+            if adapter:
+                adapter.handle_exception(doc, exception)
+        if metric:
+            datadog_counter(metric, 1,
+                tags={'config_id': config_id, 'doc_id': doc['_id']})
 
-    indicator_config_ids = None
+    def doc_ids_from_rows(rows):
+        formatted_rows = [
+            {column.column.database_column_name.decode('utf-8'): column.value for column in row}
+            for row in rows
+        ]
+        return set(row['doc_id'] for row in formatted_rows)
+
+    # tracks processed/deleted configs to be removed from each indicator
+    configs_to_remove_by_indicator_id = defaultdict(list)
+
+    def _mark_config_to_remove(config_id, indicator_ids):
+        for _id in indicator_ids:
+            configs_to_remove_by_indicator_id[_id].append(config_id)
+
     timer = TimingContext()
+    lock_keys = [
+        get_async_indicator_modify_lock_key(indicator_id)
+        for indicator_id in indicator_doc_ids
+    ]
     with CriticalSection(lock_keys):
-        indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
-        if not indicators:
+        all_indicators = AsyncIndicator.objects.filter(
+            doc_id__in=indicator_doc_ids
+        )
+        if not all_indicators:
             return
 
-        first_indicator = indicators[0]
-        processed_indicators = []
-        failed_indicators = []
+        doc_store = get_document_store_for_doc_type(
+            all_indicators[0].domain, all_indicators[0].doc_type
+        )
+        failed_indicators = set()
 
-        for i in indicators:
-            assert i.domain == first_indicator.domain
-            assert i.doc_type == first_indicator.doc_type
-
-        indicator_by_doc_id = {i.doc_id: i for i in indicators}
-        doc_store = get_document_store_for_doc_type(first_indicator.domain, first_indicator.doc_type)
-        indicator_config_ids = first_indicator.indicator_config_ids
-        related_docs_to_rebuild = set()
-
+        rows_to_save_by_adapter = defaultdict(list)
+        indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
+        config_ids = set()
         with timer:
             for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
-                if rebuild_related_docs:
-                    related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
-                if successfully_processed:
-                    processed_indicators.append(indicator.pk)
-                else:
-                    failed_indicators.append((indicator, to_remove))
+                eval_context = EvaluationContext(doc)
+                for config_id in indicator.indicator_config_ids:
+                    config_ids.add(config_id)
+                    try:
+                        config = _get_config_by_id(config_id)
+                    except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                        celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                        # remove because the config no longer exists
+                        _mark_config_to_remove(config_id, [indicator.pk])
+                        continue
+                    except ESError:
+                        celery_task_logger.info("ES errored when trying to retrieve config")
+                        failed_indicators.add(indicator)
+                        continue
+                    adapter = None
+                    try:
+                        adapter = get_indicator_adapter(config)
+                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        eval_context.reset_iteration()
+                    except Exception as e:
+                        failed_indicators.add(indicator)
+                        handle_exception(e, config_id, doc, adapter)
 
-        num_processed = len(processed_indicators)
-        num_failed = len(failed_indicators)
-        AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                doc_ids = doc_ids_from_rows(rows)
+                indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
+                try:
+                    adapter.save_rows(rows)
+                except Exception as e:
+                    failed_indicators.union(indicators)
+                    message = e.message
+                    if isinstance(message, bytes):
+                        # TODO - figure out where these are coming from and use unicode message from the start
+                        message = repr(message)
+                    notify_exception(None,
+                        "Exception bulk saving async indicators:{}".format(message))
+                else:
+                    # remove because it's sucessfully processed
+                    _mark_config_to_remove(
+                        config_id,
+                        [i.pk for i in indicators]
+                    )
+
+        # delete fully processed indicators
+        processed_indicators = set(all_indicators) - failed_indicators
+        AsyncIndicator.objects.filter(pk__in=[i.pk for i in processed_indicators]).delete()
+
+        # update failure for failed indicators
         with transaction.atomic():
-            for indicator, to_remove in failed_indicators:
-                indicator.update_failure(to_remove)
+            for indicator in failed_indicators:
+                indicator.update_failure(
+                    configs_to_remove_by_indicator_id.get(indicator.pk, [])
+                )
                 indicator.save()
 
-    # remove any related docs that were just rebuilt
-    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
-    # queue the docs that aren't already queued
-    _queue_indicators(AsyncIndicator.objects.filter(
-        doc_id__in=related_docs_to_rebuild, date_queued=None
-    ))
-
-    datadog_counter('commcare.async_indicator.processed_success', num_processed)
-    datadog_counter('commcare.async_indicator.processed_fail', num_failed)
-    datadog_histogram(
-        'commcare.async_indicator.processing_time', timer.duration,
-        tags=[
-            'config_ids:{}'.format(indicator_config_ids)
-        ]
-    )
+        datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
+        datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
+        datadog_histogram(
+            'commcare.async_indicator.processing_time', timer.duration / len(indicator_doc_ids),
+            tags=[
+                'config_ids:{}'.format(config_ids),
+            ]
+        )
 
 
-def _save_document_helper(indicator, doc):
-    eval_context = EvaluationContext(doc)
-    something_failed = False
-    configs_to_remove = []
-    configs = dict()
-    for config_id in indicator.indicator_config_ids:
-        try:
-            configs[config_id] = _get_config(config_id)
-        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
-            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-            configs_to_remove.append(config_id)
-            continue
-        except ESError:
-            celery_task_logger.info("ES errored when trying to retrieve config")
-            something_failed = True
-            continue
-
-    for config_id, config in six.iteritems(configs):
-        adapter = None
-        try:
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.save(doc, eval_context)
-            eval_context.reset_iteration()
-        except (ProtocolError, ReadTimeout):
-            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
-            something_failed = True
-        except RequestError:
-            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
-            something_failed = True
-        except (ESError, ConnectionTimeout):
-            # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("ES error when saving config: {}".format(config_id))
-            something_failed = True
-        except (DatabaseError, InternalError):
-            # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("psql error when saving config: {}".format(config_id))
-            something_failed = True
-        except Exception as e:
-            # getting the config could fail before the adapter is set
-            if adapter:
-                adapter.handle_exception(doc, e)
-            something_failed = True
-        else:
-            configs_to_remove.append(config_id)
-
-    rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
-    return (not something_failed, configs_to_remove, rebuild_related_docs)
-
-
-@periodic_task(
-    run_every=crontab(minute="*/5"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
+@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
@@ -487,10 +526,11 @@ def _indicator_metrics(date_created=None):
     return ret
 
 
-@task
+@task(serializer='pickle')
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}.xlsx'.format(report_export.title.replace('/', '?'))
+    ascii_title = report_export.title.encode('ascii', 'replace')
+    filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 
     report_export.create_export(file_path, Format.XLS_2007)
@@ -498,4 +538,4 @@ def export_ucr_async(report_export, download_id, user):
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
-    send_report_download_email(report_export.title, user, link)
+    send_report_download_email(report_export.title, user.get_email(), link)

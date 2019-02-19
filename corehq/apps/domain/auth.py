@@ -2,13 +2,16 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
 import re
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from functools import wraps
+
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
+from django.views.decorators.debug import sensitive_variables
 from tastypie.authentication import ApiKeyAuthentication
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
+
+from corehq.apps.users.models import CouchUser
+from corehq.util.hmac_request import validate_request_hmac
+from dimagi.utils.django.request import mutable_querydict
 from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
@@ -17,7 +20,7 @@ ANDROID = 'android'
 BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
-TOKEN = 'token'
+FORMPLAYER = 'formplayer'
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -41,10 +44,11 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif auth_header.startswith('token '):
-        return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
+
+    if request.META.get('HTTP_X_MAC_DIGEST', None):
+        return FORMPLAYER
 
     return default
 
@@ -65,6 +69,7 @@ def is_probably_j2me(user_agent):
     return user_agent and re.search(j2me_pattern, user_agent)
 
 
+@sensitive_variables('auth', 'password')
 def get_username_and_password_from_request(request):
     """Returns tuple of (username, password). Tuple values
     may be null."""
@@ -73,6 +78,7 @@ def get_username_and_password_from_request(request):
     if 'HTTP_AUTHORIZATION' not in request.META:
         return None, None
 
+    @sensitive_variables()
     def _decode(string):
         try:
             return string.decode('utf-8')
@@ -89,10 +95,9 @@ def get_username_and_password_from_request(request):
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(b':', 1)
+        username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
         # decode password submitted from mobile app login
-        password = decode_password(password)
-        username, password = _decode(username), _decode(password)
+        password = decode_password(password, username)
     return username, password
 
 
@@ -117,20 +122,33 @@ def basicauth(realm=''):
     return real_decorator
 
 
-def tokenauth(view):
+def formplayer_auth(view):
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(view)
+
+
+def formplayer_as_user_auth(view):
+    """Auth decorator for requests coming from Formplayer that are authenticated
+    using the shared key.
+
+    All requests with this decorator require the `as` param in order to simulate auth by that user.
+    This is used by SMS forms.
+    """
 
     @wraps(view)
     def _inner(request, *args, **kwargs):
-        if not ANONYMOUS_WEB_APPS_USAGE.enabled(request.domain):
-            return HttpResponse(status=401)
-        try:
-            user, token = TokenAuthentication().authenticate(request)
-        except AuthenticationFailed as e:
-            return HttpResponse(e, status=401)
+        with mutable_querydict(request.GET):
+            as_user = request.GET.pop('as', None)
 
-        if user.is_active:
-            request.user = user
-            return view(request, *args, **kwargs)
-        else:
-            return HttpResponse('Inactive user', status=401)
-    return _inner
+        if not as_user:
+            return HttpResponse('User required', status=401)
+
+        couch_user = CouchUser.get_by_username(as_user[-1])
+        if not couch_user:
+            return HttpResponse('Unknown user', status=401)
+
+        request.user = couch_user.get_django_user()
+        request.couch_user = couch_user
+
+        return view(request, *args, **kwargs)
+
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)

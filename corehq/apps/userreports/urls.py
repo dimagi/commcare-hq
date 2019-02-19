@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.conf.urls import url
+from django.conf.urls import url, include
 
 from corehq.apps.userreports.reports.view import DownloadUCRStatusView, ucr_download_job_poll
 from corehq.apps.userreports.views import (
@@ -71,9 +71,9 @@ urlpatterns = [
         name='expression_debugger'),
     url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),
         name='data_source_debugger'),
-    url(r'^export_status/(?P<download_id>[0-9a-fA-Z]{25,32})/(?P<subreport_slug>[\w-]+)/$',
+    url(r'^export_status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/(?P<subreport_slug>[\w-]+)/$',
         DownloadUCRStatusView.as_view(), name=DownloadUCRStatusView.urlname),
-    url(r'^export_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
+    url(r'^export_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         ucr_download_job_poll, name='ucr_download_job_poll'),
 
     # Update Report Description
@@ -85,4 +85,6 @@ urlpatterns = [
         choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
     url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
+    url(r'^aggregate/', include('corehq.apps.aggregate_ucrs.urls')),
+
 ]

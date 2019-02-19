@@ -23,7 +23,6 @@ from couchforms.analytics import get_number_of_forms_in_domain, \
     get_last_form_submission_received
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
@@ -33,9 +32,11 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
 from corehq.motech.repeaters.models import Repeater
-from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
+from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain, \
+    get_export_count_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
+from corehq.messaging.scheduling.util import domain_has_reminders
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -240,8 +241,7 @@ def app_list(domain, *args):
 
 
 def uses_reminders(domain, *args):
-    handlers = CaseReminderHandler.get_handlers(domain)
-    return len(handlers) > 0
+    return domain_has_reminders(domain)
 
 
 def not_implemented(domain, *args):
@@ -410,6 +410,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
         "cp_n_apps": len(_get_domain_apps(dom)),
         "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
+        "cp_n_saved_custom_exports": get_export_count_by_domain(dom),
     }
 
 
@@ -433,8 +434,8 @@ def num_telerivet_backends(domain):
 
 
 def use_domain_security_settings(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords
+    domain_obj = Domain.get_by_name(domain)
+    return domain_obj.two_factor_auth or domain_obj.secure_sessions or domain_obj.strong_mobile_passwords
 
 
 def num_custom_roles(domain):
@@ -484,13 +485,13 @@ def num_lookup_tables(domain):
 
 
 def has_domain_icon(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.has_custom_logo
+    domain_obj = Domain.get_by_name(domain)
+    return domain_obj.has_custom_logo
 
 
 def num_apps_with_icon(domain):
     apps = _get_domain_apps(domain)
-    return len([a for a in apps if isinstance(a, HQMediaMixin) and a.logo_refs])
+    return len([a for a in apps if isinstance(a, ApplicationMediaMixin) and a.logo_refs])
 
 
 def num_apps_with_profile(domain):

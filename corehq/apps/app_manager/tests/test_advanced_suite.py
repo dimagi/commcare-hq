@@ -151,7 +151,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             load_case_from_fixture=LoadCaseFromFixture(
                 fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
-                fixture_variable="date",
+                fixture_variable="./@date",
                 case_property="adherence_event_date",
                 auto_select=True,
             )
@@ -168,7 +168,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             load_case_from_fixture=LoadCaseFromFixture(
                 fixture_nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
-                fixture_variable="date",
+                fixture_variable="./@date",
                 case_property="adherence_event_date",
                 auto_select=True,
                 arbitrary_datum_id="extra_id",
@@ -189,7 +189,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             load_case_from_fixture=LoadCaseFromFixture(
                 fixture_nodeset="instance('enikshay:calendar')/calendar/year/month/day[@date > 735992 and @date < 736000]",
                 fixture_tag="selected_date",
-                fixture_variable="date",
+                fixture_variable="./@date",
                 case_property="adherence_event_date",
                 auto_select=True,
             )
@@ -207,7 +207,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             load_case_from_fixture=LoadCaseFromFixture(
                 fixture_nodeset="instance('commcare:reports')/reports/report[@id='some-report-guid']/rows/row",
                 fixture_tag="selected_row",
-                fixture_variable="index",
+                fixture_variable="./@index",
             )
         ))
         suite = app.create_suite()
@@ -222,7 +222,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             load_case_from_fixture=LoadCaseFromFixture(
                 fixture_nodeset=nodeset,
                 fixture_tag="selected_date",
-                fixture_variable="date",
+                fixture_variable="./@date",
                 case_property="adherence_event_date",
                 auto_select=True,
             )
@@ -252,7 +252,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
     def test_tiered_select_with_advanced_module_as_parent_with_filters(self):
-        factory = AppFactory(build_version='2.25')
+        factory = AppFactory(build_version='2.25.0')
         parent_module, parent_form = factory.new_advanced_module('parent', 'parent')
         parent_module.case_details.short.filter = 'parent_filter = 1'
 

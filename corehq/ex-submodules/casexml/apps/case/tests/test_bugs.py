@@ -14,11 +14,13 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
 class SimpleCaseBugTests(SimpleTestCase):
@@ -39,12 +41,11 @@ class CaseBugTestCouchOnly(TestCase):
         case_block = CaseBlock(
             case_id=conflict_id,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         with self.assertRaises(BulkSaveError):
             submit_case_blocks(case_block, 'test-conflicts', form_id=conflict_id)
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseBugTest(TestCase, TestFileMixin):
     """
     Tests bugs that come up in case processing
@@ -69,7 +70,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_block = CaseBlock(
             case_id='',
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         form, cases = submit_case_blocks(case_block, 'test-domain')
         self.assertIn('IllegalCaseId', form.problem)
         self.assertEqual([], cases)  # should make no cases
@@ -82,7 +83,7 @@ class CaseBugTest(TestCase, TestFileMixin):
             case_name=value,
             case_type=value,
             create=True,
-        ).as_string()
+        ).as_string().decode('utf-8')
         update_caseblock = CaseBlock(
             case_id=case_id,
             user_id=value,
@@ -90,7 +91,7 @@ class CaseBugTest(TestCase, TestFileMixin):
                 'case_name': value,
                 'case_type': value,
             }
-        ).as_string()
+        ).as_string().decode('utf-8')
         for caseblock in create_caseblock, update_caseblock:
             form, [case] = submit_case_blocks(caseblock, 'test-domain')
             self.assertEqual(value, case.user_id)
@@ -136,11 +137,11 @@ class CaseBugTest(TestCase, TestFileMixin):
             CaseBlock(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
             CaseBlock(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
-            }).as_string(),
+            }).as_string().decode('utf-8'),
         ]
         form, [case] = submit_case_blocks(case_blocks, 'test-domain')
         self.assertEqual('v1', case.dynamic_case_properties()['p1'])
@@ -309,6 +310,32 @@ class TestCaseHierarchy(TestCase):
         self.assertEqual(1, len(hierarchy['child_cases']))
         self.assertEqual(2, len(hierarchy['child_cases'][0]['case_list']))
         self.assertEqual(1, len(hierarchy['child_cases'][0]['child_cases']))
+
+    @softer_assert()
+    def test_missing_transactions(self):
+        # this could happen if a form was edited and resulted in a new case transaction
+        # e.g. a condition on a case transaction changed
+        case_id1 = uuid.uuid4().hex
+        case_id2 = uuid.uuid4().hex
+        form_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            case_id=case_id1,
+            create=True,
+        ).as_string().decode('utf-8')
+        submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
+        with self.assertRaises(CaseNotFound):
+            CaseAccessors().get_case(case_id2)
+
+        # form with same ID submitted but now has a new case transaction
+        new_case_block = CaseBlock(
+            case_id=case_id2,
+            create=True,
+            case_type='t1',
+        ).as_string().decode('utf-8')
+        submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
+        case2 = CaseAccessors().get_case(case_id2)
+        self.assertEqual([form_id], case2.xform_ids)
+        self.assertEqual('t1', case2.type)
 
 
 @use_sql_backend

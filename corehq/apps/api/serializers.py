@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from io import BytesIO
 
 # Django & Tastypie imports
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from tastypie.bundle import Bundle
 from tastypie.serializers import Serializer, get_type_string
 
@@ -91,7 +91,7 @@ class CommCareCaseSerializer(Serializer):
                 if isinstance(simple_data, six.text_type):
                     element.text = simple_data
                 else:
-                    element.text = force_unicode(simple_data)
+                    element.text = force_text(simple_data)
 
         return element
 

@@ -1,8 +1,8 @@
 /* globals hqDefine hqImport django */
-hqDefine("app_manager/js/releases/app_view_release_manager", function() {
+hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
-    hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Publish"));
+    hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Releases"));
 
     // Main releases content
     var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
@@ -11,11 +11,12 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         recipient_contacts: initial_page_data('sms_contacts'),
         download_modal_id: '#download-zip-modal',
         fetchLimit: initial_page_data('fetch_limit'),
+        latestReleasedVersion: initial_page_data('latestReleasedVersion'),
     };
     var el = $('#releases-table');
     if (el.length) {
         var releasesMain = releasesMainModel(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+        _.defer(function () { releasesMain.goToPage(1); });
         el.koApplyBindings(releasesMain);
     }
 
@@ -29,17 +30,20 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var $profilesTab = $('#profiles-tab');
     if ($profilesTab.length) {
         var profiles = hqImport('app_manager/js/releases/language_profiles');
+        var latestEnabledVersions = hqImport("hqwebapp/js/initial_page_data").get(
+            'latest_version_for_build_profiles');
         profiles.setProfileUrl(initial_page_data('application_profile_url'));
-        var ProfileManager = profiles.ProfileManager;
+        var profileManagerModel = profiles.profileManager;
         var app_langs = initial_page_data("langs");
         var app_profiles = initial_page_data('build_profiles');
         var enable_practice_users = initial_page_data('enable_practice_users');
         var practice_users = initial_page_data('practice_users');
-        var profileManager = new ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users);
+        var profileManager = profileManagerModel(app_profiles, app_langs, enable_practice_users, practice_users,
+            latestEnabledVersions);
         $profilesTab.koApplyBindings(profileManager);
     }
 
-    $(function() {
+    $(function () {
         if (initial_page_data('intro_only')) {
             hqImport('app_manager/js/preview_app').forceShowPreview();
         }

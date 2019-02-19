@@ -91,7 +91,7 @@ hqDefine('analytix/js/initial', [
         return _abTests;
     };
 
-    $(function() {
+    $(function () {
         _initData = _gather(_selector, _initData);
     });
 

@@ -22,8 +22,6 @@ from custom.icds.const import (
 )
 from custom.icds.messaging.custom_content import (
     GROWTH_MONITORING_XMLNS,
-    get_state_code,
-    get_language_code_for_state,
     render_message,
     person_case_is_migrated_or_opted_out,
     run_indicator_for_usercase,
@@ -82,6 +80,10 @@ class CustomContentTest(BaseICDSTest):
         cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', location=cls.awc2)
         cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', location=cls.ls1)
 
+        cls.create_user_case(cls.user1)
+        cls.create_user_case(cls.user2)
+        cls.create_user_case(cls.user3)
+
         cls.create_basic_related_cases(cls.awc1.location_id)
         cls.red_child_health_case = cls.create_case(
             'child_health',
@@ -94,6 +96,14 @@ class CustomContentTest(BaseICDSTest):
 
         cls.migrated_case = cls.create_case('person', update={'migration_status': 'migrated'})
         cls.opted_out_case = cls.create_case('person', update={'registered_status': 'not_registered'})
+
+    @classmethod
+    def create_user_case(cls, user):
+        return cls.create_case(
+            'commcare-user',
+            owner_id=user.get_id,
+            update={'hq_user_id': user.get_id, 'external_id': user.get_id, 'language_code': ENGLISH},
+        )
 
     def test_run_indicator_for_usercase(self):
         with create_user_case(self.user1) as case:
@@ -173,8 +183,7 @@ class CustomContentTest(BaseICDSTest):
             []
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_missed_cf_visit_to_aww(self, language_code_patch):
+    def test_missed_cf_visit_to_aww(self):
         c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_AWW')
 
         schedule_instance = CaseTimedScheduleInstance(
@@ -184,14 +193,12 @@ class CustomContentTest(BaseICDSTest):
 
         c.set_context(schedule_instance=schedule_instance)
 
-        language_code_patch.return_value = ENGLISH
         self.assertEqual(
             c.get_list_of_messages(self.user1),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_missed_cf_visit_to_ls(self, language_code_patch):
+    def test_missed_cf_visit_to_ls(self):
         c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_LS')
 
         schedule_instance = CaseTimedScheduleInstance(
@@ -201,14 +208,12 @@ class CustomContentTest(BaseICDSTest):
 
         c.set_context(schedule_instance=schedule_instance)
 
-        language_code_patch.return_value = ENGLISH
         self.assertEqual(
             c.get_list_of_messages(self.user3),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_missed_pnc_visit_to_ls(self, language_code_patch):
+    def test_missed_pnc_visit_to_ls(self):
         c = CustomContent(custom_content_id='ICDS_MISSED_PNC_VISIT_TO_LS')
 
         schedule_instance = CaseTimedScheduleInstance(
@@ -218,14 +223,12 @@ class CustomContentTest(BaseICDSTest):
 
         c.set_context(schedule_instance=schedule_instance)
 
-        language_code_patch.return_value = ENGLISH
         self.assertEqual(
             c.get_list_of_messages(self.user3),
             ["AWC awc1 has not reported a visit during the PNC within one week of delivery for Sam"],
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_child_illness_reported(self, language_code_patch):
+    def test_child_illness_reported(self):
         c = CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED')
 
         schedule_instance = CaseTimedScheduleInstance(
@@ -235,15 +238,13 @@ class CustomContentTest(BaseICDSTest):
 
         c.set_context(schedule_instance=schedule_instance)
 
-        language_code_patch.return_value = ENGLISH
         self.assertEqual(
             c.get_list_of_messages(self.user3),
             ["AWC awc1 has reported illness for the child Joe. Please ensure that AWW follows up with mother "
              "immediately"],
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_cf_visits_complete(self, language_code_patch):
+    def test_cf_visits_complete(self):
         c = CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE')
 
         schedule_instance = CaseTimedScheduleInstance(
@@ -253,21 +254,10 @@ class CustomContentTest(BaseICDSTest):
 
         c.set_context(schedule_instance=schedule_instance)
 
-        language_code_patch.return_value = ENGLISH
         self.assertEqual(
             c.get_list_of_messages(self.user1),
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
         )
-
-    def test_get_state_code(self):
-        self.assertEqual(get_state_code(self.user1.location), 'state1')
-        self.assertIsNone(get_state_code(self.user2.location))
-        self.assertEqual(get_state_code(self.user3.location), 'state1')
-
-    def test_get_language_code_for_state(self):
-        self.assertEqual(get_language_code_for_state(ANDHRA_PRADESH_SITE_CODE), TELUGU)
-        self.assertEqual(get_language_code_for_state(MAHARASHTRA_SITE_CODE), MARATHI)
-        self.assertEqual(get_language_code_for_state(None), HINDI)
 
     def test_render_message(self):
         context = {

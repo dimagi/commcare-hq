@@ -1,8 +1,8 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Users", function(Users, FormplayerFrontend, Backbone, Marionette){
+FormplayerFrontend.module("Users", function (Users, FormplayerFrontend, Backbone, Marionette) {
     Users.Controller = {
-        listUsers: function(page, query){
+        listUsers: function (page, query) {
             var currentUser = FormplayerFrontend.request('currentUser'),
                 users;
 

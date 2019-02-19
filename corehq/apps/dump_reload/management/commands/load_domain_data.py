@@ -48,7 +48,7 @@ class Command(BaseCommand):
         model_counts = Counter()
         loaders = options.get('loaders')
         if loaders:
-            loaders = [loader for loader in loaders if loader.slug in loaders]
+            loaders = [loader for loader in LOADERS if loader.slug in loaders]
         else:
             loaders = LOADERS
 

@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from itertools import chain
 
-from couchdbkit.exceptions import DocTypeError
-from couchdbkit.resource import ResourceNotFound
+from couchdbkit.exceptions import DocTypeError, ResourceNotFound
+
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
@@ -100,6 +100,12 @@ def get_latest_build_id(domain, app_id):
     return res['id'] if res else None
 
 
+def get_latest_build_version(domain, app_id):
+    """Get id of the latest build of the application, regardless of star."""
+    res = _get_latest_build_view(domain, app_id, include_docs=False)
+    return res['value']['version'] if res else None
+
+
 def get_build_doc_by_version(domain, app_id, version):
     from .models import Application
     res = Application.get_db().view(
@@ -117,6 +123,15 @@ def wrap_app(app_doc, wrap_cls=None):
     from corehq.apps.app_manager.util import get_correct_app_class
     cls = wrap_cls or get_correct_app_class(app_doc)
     return cls.wrap(app_doc)
+
+
+def get_current_app_version(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        key=[domain, app_id],
+    ).one(except_all=True)
+    return result['value']['version']
 
 
 def get_current_app_doc(domain, app_id):
@@ -310,7 +325,7 @@ def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
-def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_and_versions=None):
+def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids, app_ids_and_versions=None):
     """
     Returns all the built app_ids for a domain that has submissions.
     If version is specified returns all apps after that version.
@@ -318,13 +333,27 @@ def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_
     :app_ids_and_versions: A dictionary mapping an app_id to build version
     """
     app_ids_and_versions = app_ids_and_versions or {}
-    app_ids = get_app_ids_in_domain(domain)
     results = []
     for app_id in app_ids:
         results.extend(
             get_built_app_ids_with_submissions_for_app_id(domain, app_id, app_ids_and_versions.get(app_id))
         )
     return results
+
+
+def get_auto_generated_built_apps(domain, app_id):
+    """
+    Returns all the built apps that were automatically generated for an application id.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'saved_apps_auto_generated/view',
+        startkey=[domain, app_id],
+        endkey=[domain, app_id, {}],
+        reduce=False,
+        include_docs=False,
+    ).all()
+    return [doc['value'] for doc in results]
 
 
 def get_latest_app_ids_and_versions(domain, app_id=None):
@@ -425,8 +454,25 @@ def get_all_built_app_results(domain, app_id=None):
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
-        include_docs=True,
+        include_docs=False,
     ).all()
+
+
+def get_available_versions_for_app(domain, app_id):
+    from .models import Application
+    result = Application.get_db().view('app_manager/saved_app',
+                                       startkey=[domain, app_id, {}],
+                                       endkey=[domain, app_id],
+                                       descending=True)
+    return [doc['value']['version'] for doc in result]
+
+
+def get_version_build_id(domain, app_id, version):
+    built_app_ids = get_all_built_app_ids_and_versions(domain, app_id)
+    for app_built_version in built_app_ids:
+        if app_built_version.version == version:
+            return app_built_version.build_id
+    raise Exception("Build for version requested not found")
 
 
 def get_case_types_from_apps(domain):

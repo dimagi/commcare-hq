@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.api.accounting import *
-from corehq.apps.api.domain_metadata import DomainMetadataResource, MaltResource
+from corehq.apps.api.domain_metadata import DomainMetadataResource, MaltResource, GIRResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
+from corehq.apps.api.odata.views import ODataMetadataView, ODataServiceView
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
 from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms, DomainCases, DomainUsernames
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
@@ -59,6 +60,7 @@ API_LIST = (
         sms_v0_5.UserSelfRegistrationResource,
         sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
+        v0_5.ODataCommCareCaseResource,
     )),
 )
 
@@ -70,6 +72,9 @@ class CommCareHqApi(Api):
 
 
 def api_url_patterns():
+    # todo: these have to come first to short-circuit tastypie's matching
+    yield url(r'v0.5/odata/Cases/$', ODataServiceView.as_view(), name='odata_service')
+    yield url(r'v0.5/odata/Cases/\$metadata$', ODataMetadataView.as_view(), name='odata_meta')
     for version, resources in API_LIST:
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
@@ -103,6 +108,7 @@ ADMIN_API_LIST = (
     BillingAccountResource,
     SubscriptionResource,
     InvoiceResource,
+    CustomerInvoiceResource,
     LineItemResource,
     PaymentMethodResource,
     BillingContactInfoResource,
@@ -112,6 +118,7 @@ ADMIN_API_LIST = (
     SubscriptionAndAdjustmentResource,
     BillingRecordResource,
     MaltResource,
+    GIRResource,
 )
 
 
@@ -125,5 +132,6 @@ def api_url_patterns():
     for resource in ADMIN_API_LIST + USER_API_LIST:
         api.register(resource())
         yield url(r'^', include(api.urls))
+
 
 admin_urlpatterns = list(api_url_patterns())

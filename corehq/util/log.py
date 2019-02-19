@@ -14,7 +14,6 @@ from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
 
-from celery.utils.mail import ErrorMail
 from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
 from django.core import mail
 from django.http import HttpRequest
@@ -27,6 +26,7 @@ from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from six.moves import range
+from io import open
 
 
 def clean_exception(exception):
@@ -157,7 +157,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             filename = trace[0]
             lineno = trace[1]
             offset = 10
-            with open(filename) as f:
+            with open(filename, encoding='utf-8') as f:
                 code_context = list(islice(f, lineno - offset, lineno + offset))
 
             return highlight(''.join(code_context),
@@ -191,18 +191,6 @@ class NotifyExceptionEmailer(HqAdminEmailHandler):
         context = super(NotifyExceptionEmailer, self).get_context(record)
         context['subject'] = record.getMessage()
         return context
-
-
-class SensitiveErrorMail(ErrorMail):
-    """
-    Extends Celery's ErrorMail class to prevents task args and kwargs from being printed in error emails.
-    """
-    replacement = '(excluded due to sensitive nature)'
-
-    def format_body(self, context):
-        context['args'] = self.replacement
-        context['kwargs'] = self.replacement
-        return self.body.strip() % context
 
 
 class HQRequestFilter(Filter):
@@ -262,7 +250,7 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout):
+                      stream=sys.stdout, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
@@ -278,12 +266,12 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
                 .format(type(iterable))
             )
 
-    granularity = min(50, length)
+    granularity = min(50, length or 50)
     start = datetime.now()
 
-    def draw(position):
+    def draw(position, done=False):
         percent = float(position) / length if length > 0 else 1
-        dots = int(round(percent * granularity))
+        dots = int(round(min(percent, 1) * granularity))
         spaces = granularity - dots
         elapsed = (datetime.now() - start).total_seconds()
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
@@ -293,23 +281,26 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         print("[{}{}]".format("." * dots, " " * spaces), end=' ', file=stream)
         print("{}/{}".format(position, length), end=' ', file=stream)
         print("{:.0%}".format(percent), end=' ', file=stream)
-        if position == length:
-            print("{} elapsed".format(datetime.now() - start), file=stream)
+        if position >= length or done:
+            print("{} elapsed".format(datetime.now() - start), end='', file=stream)
         else:
-            print("{} remaining".format(remaining), end=' ', file=stream)
-        print(("\r" if oneline else "\n"), end='', file=stream)
+            print("{} remaining".format(remaining), end='', file=stream)
+        print(("\r" if oneline and not done else "\n"), end='', file=stream)
         stream.flush()
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    checkpoints = {length * i // granularity for i in range(length)}
-    for i, x in enumerate(iterable):
-        yield x
-        if i in checkpoints:
-            draw(i)
-    draw(length)
+    if step is None:
+        step = length // granularity
+    i = -1
+    try:
+        for i, x in enumerate(iterable):
+            yield x
+            if i % step == 0:
+                draw(i)
+    finally:
+        draw(i + 1, done=True)
     if oneline != "concise":
-        print("", file=stream)
         end = datetime.now()
         print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
         print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)

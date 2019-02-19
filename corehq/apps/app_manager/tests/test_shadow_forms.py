@@ -69,7 +69,7 @@ class ShadowFormSuiteTest(SimpleTestCase, TestXmlMixin):
         suite = self.factory.app.create_suite()
         shadow_source_session = extract_xml_partial(suite, "./entry/command[@id='m0-f0']/../session")
         shadow_form_session = extract_xml_partial(suite, "./entry/command[@id='m0-f1']/../session")
-        self.assertXMLEqual(shadow_source_session, shadow_form_session)
+        self.assertXMLEqual(shadow_source_session.decode('utf-8'), shadow_form_session.decode('utf-8'))
 
     def test_shadow_form_entry_references_source_form(self):
         suite = self.factory.app.create_suite()

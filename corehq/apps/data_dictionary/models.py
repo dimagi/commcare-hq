@@ -76,3 +76,8 @@ class CaseProperty(models.Model):
                 case_type_obj = CaseType.get_or_create(domain, case_type)
                 prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
             return prop
+
+    def save(self, *args, **kwargs):
+        from .util import get_data_dict_props_by_case_type
+        get_data_dict_props_by_case_type.clear(self.case_type.domain)
+        return super(CaseProperty, self).save(*args, **kwargs)

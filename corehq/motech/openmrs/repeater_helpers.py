@@ -2,12 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from collections import namedtuple, defaultdict
-from datetime import timedelta
-from itertools import chain
 import re
-import six
 
+from requests import RequestException
 from six.moves import zip
+from urllib3.exceptions import HTTPError
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import extract_case_blocks
@@ -15,6 +14,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.const import DIRECTION_EXPORT
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -23,80 +23,13 @@ from corehq.motech.openmrs.const import (
     PERSON_UUID_IDENTIFIER_TYPE_ID,
     XMLNS_OPENMRS,
 )
+from corehq.motech.openmrs.exceptions import OpenmrsConfigurationError
 from corehq.motech.openmrs.finders import PatientFinder
-from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
-from corehq.motech.utils import pformat_json
-
+from corehq.motech.value_source import CaseTriggerInfo
+from corehq.util.quickcache import quickcache
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
-
-
-class Requests(object):
-    def __init__(self, base_url, username, password):
-        import requests
-        self.requests = requests
-        self.base_url = base_url
-        self.username = username
-        self.password = password
-
-    def send_request(self, method_func, *args, **kwargs):
-        raise_for_status = kwargs.pop('raise_for_status', False)
-        try:
-            response = method_func(*args, **kwargs)
-            if raise_for_status:
-                response.raise_for_status()
-        except self.requests.RequestException as err:
-            err_request, err_response = parse_request_exception(err)
-            logger.error('Request: %s', err_request)
-            logger.error('Response: %s', err_response)
-            raise
-        return response
-
-    def get_url(self, uri):
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
-
-    def delete(self, uri, **kwargs):
-        return self.requests.delete(self.get_url(uri),
-                                    auth=(self.username, self.password), **kwargs)
-
-    def get(self, uri, *args, **kwargs):
-        return self.send_request(self.requests.get, self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
-
-    def post(self, uri, *args, **kwargs):
-        return self.send_request(self.requests.post, self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
-
-
-def parse_request_exception(err):
-    """
-    Parses an instance of RequestException and returns a request
-    string and response string tuple
-    """
-    err_request = '{method} {url}\n\n{body}'.format(
-        method=err.request.method,
-        url=err.request.url,
-        body=err.request.body
-    ) if err.request.body else ' '.join((err.request.method, err.request.url))
-    err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
-    err_response = '\n\n'.join((str(err), err_content))
-    return err_request, err_response
-
-
-def serialize(data):
-    """
-    Convert values in data to a format OpenMRS will accept.
-
-    >>> serialize({'birthdate': '2017-06-27'}) == {'birthdate': '2017-06-27T00:00:00.000+0000'}
-    True
-
-    """
-    # We can get away with not worrying about namespaces because these
-    # property names are fixed and unique.
-    serializers = dict(chain(six.iteritems(ADDRESS_PROPERTIES), six.iteritems(NAME_PROPERTIES), six.iteritems(PERSON_PROPERTIES)))
-    return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
 def get_case_location(case):
@@ -106,6 +39,8 @@ def get_case_location(case):
     primary location, return None.
     """
     case_owner = get_wrapped_owner(get_owner_id(case))
+    if not case_owner:
+        return None
     if isinstance(case_owner, SQLLocation):
         return case_owner
     location_id = case_owner.get_location_id(case.domain)
@@ -135,10 +70,15 @@ def get_case_location_ancestor_repeaters(case):
     return []
 
 
-def get_openmrs_location_uuid(domain, case_id):
+def get_ancestor_location_openmrs_uuid(domain, case_id):
     case = CaseAccessors(domain).get_case(case_id)
-    location = get_case_location(case)
-    return location.metadata.get(LOCATION_OPENMRS_UUID) if location else None
+    case_location = get_case_location(case)
+    if not case_location:
+        return None
+    for location in reversed(case_location.get_ancestors(include_self=True)):
+        if location.metadata.get(LOCATION_OPENMRS_UUID):
+            return location.metadata[LOCATION_OPENMRS_UUID]
+    return None
 
 
 class CreatePersonAttributeTask(WorkflowTask):
@@ -154,6 +94,7 @@ class CreatePersonAttributeTask(WorkflowTask):
         response = self.requests.post(
             '/ws/rest/v1/person/{person_uuid}/attribute'.format(person_uuid=self.person_uuid),
             json={'attributeType': self.attribute_type_uuid, 'value': self.value},
+            raise_for_status=True,
         )
         self.attribute_uuid = response.json()['uuid']
 
@@ -186,7 +127,8 @@ class UpdatePersonAttributeTask(WorkflowTask):
             json={
                 'value': self.value,
                 'attributeType': self.attribute_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -197,7 +139,8 @@ class UpdatePersonAttributeTask(WorkflowTask):
             json={
                 'value': self.existing_value,
                 'attributeType': self.attribute_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
 
@@ -214,6 +157,7 @@ class CreatePatientIdentifierTask(WorkflowTask):
         response = self.requests.post(
             '/ws/rest/v1/patient/{patient_uuid}/identifier'.format(patient_uuid=self.patient_uuid),
             json={'identifierType': self.identifier_type_uuid, 'identifier': self.identifier},
+            raise_for_status=True,
         )
         self.identifier_uuid = response.json()['uuid']
 
@@ -246,7 +190,8 @@ class UpdatePatientIdentifierTask(WorkflowTask):
             json={
                 'identifier': self.identifier,
                 'identifierType': self.identifier_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
     def rollback(self):
@@ -257,18 +202,20 @@ class UpdatePatientIdentifierTask(WorkflowTask):
             json={
                 'identifier': self.existing_identifier,
                 'identifierType': self.identifier_type_uuid,
-            }
+            },
+            raise_for_status=True,
         )
 
 
 class CreateVisitTask(WorkflowTask):
 
-    def __init__(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, location_uuid=None):
+    def __init__(self, requests, person_uuid, provider_uuid, start_datetime, stop_datetime, values_for_concept,
+                 encounter_type, openmrs_form, visit_type, location_uuid=None):
         self.requests = requests
         self.person_uuid = person_uuid
         self.provider_uuid = provider_uuid
-        self.visit_datetime = visit_datetime
+        self.start_datetime = start_datetime
+        self.stop_datetime = stop_datetime
         self.values_for_concept = values_for_concept
         self.encounter_type = encounter_type
         self.openmrs_form = openmrs_form
@@ -278,16 +225,12 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = to_timestamp(self.visit_datetime)
         if self.visit_type:
-            stop_datetime = to_timestamp(
-                self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-            )
             visit = {
                 'patient': self.person_uuid,
                 'visitType': self.visit_type,
-                'startDatetime': start_datetime,
-                'stopDatetime': stop_datetime,
+                'startDatetime': self.start_datetime,
+                'stopDatetime': self.stop_datetime,
             }
             if self.location_uuid:
                 visit['location'] = self.location_uuid
@@ -296,7 +239,7 @@ class CreateVisitTask(WorkflowTask):
 
         subtasks.append(
             CreateEncounterTask(
-                self.requests, self.person_uuid, self.provider_uuid, start_datetime, self.values_for_concept,
+                self.requests, self.person_uuid, self.provider_uuid, self.start_datetime, self.values_for_concept,
                 self.encounter_type, self.openmrs_form, self.visit_uuid, self.location_uuid
             )
         )
@@ -327,15 +270,20 @@ class CreateEncounterTask(WorkflowTask):
         encounter = {
             'encounterDatetime': self.start_datetime,
             'patient': self.person_uuid,
-            'form': self.openmrs_form,
             'encounterType': self.encounter_type,
         }
+        if self.openmrs_form:
+            encounter['form'] = self.openmrs_form
         if self.visit_uuid:
             encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
-            encounter['provider'] = self.provider_uuid
+            encounter_role = get_unknown_encounter_role(self.requests)
+            encounter['encounterProviders'] = [{
+                'provider': self.provider_uuid,
+                'encounterRole': encounter_role['uuid']
+            }]
         response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
@@ -428,12 +376,15 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
     # Fetching the patient is the first request sent to the server. If
     # there is a mistake in the server details, or the server is
     # offline, this is where we will discover it.
+    if not patient_identifier:
+        # The case property has no value
+        return None
     try:
         if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
             return get_patient_by_uuid(requests, patient_identifier)
         else:
             return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
-    except requests.RequestException as err:
+    except (RequestException, HTTPError) as err:
         # This message needs to be useful to an administrator because
         # it will be shown in the Repeat Records report.
         http_error_msg = (
@@ -458,7 +409,11 @@ class UpdatePersonNameTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_name.items()
-            if property_ in NAME_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in NAME_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(
@@ -466,7 +421,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -477,7 +432,7 @@ class UpdatePersonNameTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person['preferredName'][property_]
+            property_: self.person['preferredName'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_name.keys()
             if property_ in NAME_PROPERTIES
         }
@@ -487,7 +442,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -506,12 +461,16 @@ class CreatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in ADDRESS_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -541,7 +500,11 @@ class UpdatePersonAddressTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_preferred_address.items()
-            if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in ADDRESS_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(
@@ -549,13 +512,13 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
     def rollback(self):
         properties = {
-            property_: self.person['preferredAddress'][property_]
+            property_: self.person['preferredAddress'].get(property_)
             for property_ in self.openmrs_config.case_config.person_preferred_address.keys()
             if property_ in ADDRESS_PROPERTIES
         }
@@ -565,7 +528,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -575,35 +538,103 @@ def save_match_ids(case, case_config, patient):
     If we are confident of the patient matched to a case, save
     the patient's identifiers to the case.
     """
+    def get_patient_id_type_uuids_values(patient_):
+        yield PERSON_UUID_IDENTIFIER_TYPE_ID, patient_['uuid']
+        for identifier in patient_['identifiers']:
+            yield identifier['identifierType']['uuid'], identifier['identifier']
+
     case_config_ids = case_config['patient_identifiers']
     case_update = {}
-    id_type_uuid = PERSON_UUID_IDENTIFIER_TYPE_ID
-    if id_type_uuid in case_config_ids:
-        case_property = case_config_ids[id_type_uuid]['case_property']
-        value = patient['uuid']
-        case_update[case_property] = value
-    for identifier in patient['identifiers']:
-        id_type_uuid = identifier['identifierType']['uuid']
+    kwargs = {}
+    for id_type_uuid, value in get_patient_id_type_uuids_values(patient):
         if id_type_uuid in case_config_ids:
             case_property = case_config_ids[id_type_uuid]['case_property']
-            value = identifier['identifier']
-            case_update[case_property] = value
+            if case_property == 'external_id':
+                kwargs['external_id'] = value
+            else:
+                case_update[case_property] = value
     case_block = CaseBlock(
         case_id=case.get_id,
         create=False,
         update=case_update,
+        **kwargs
     )
     submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
-def find_patient(requests, domain, case_id, openmrs_config):
-    case = CaseAccessors(domain).get_case(case_id)
+def create_patient(requests, info, case_config):
+    name = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_preferred_name.items()
+        if (
+            property_ in NAME_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
+    }
+    address = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_preferred_address.items()
+        if (
+            property_ in ADDRESS_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
+    }
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in case_config.person_properties.items()
+        if (
+            property_ in PERSON_PROPERTIES and
+            value_source.check_direction(DIRECTION_EXPORT) and
+            value_source.get_value(info)
+        )
+    }
+    person = {}
+    if name:
+        person['names'] = [name]
+    if address:
+        person['addresses'] = [address]
+    if properties:
+        person.update(properties)
+    if person:
+        identifiers = [
+            {'identifierType': patient_identifier_type, 'identifier': value_source.get_value(info)}
+            for patient_identifier_type, value_source in case_config.patient_identifiers.items()
+            if (
+                patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(info)
+            )
+        ]
+        patient = {
+            'person': person,
+        }
+        if identifiers:
+            patient['identifiers'] = identifiers
+        response = requests.post(
+            '/ws/rest/v1/patient/',
+            json=patient,
+        )
+        if 200 <= response.status_code < 300:
+            # response.json() is not the full patient record. We need
+            # the patient's identifiers and attributes.
+            return get_patient_by_uuid(requests, response.json()['uuid'])
+
+
+def find_or_create_patient(requests, domain, info, openmrs_config):
+    case = CaseAccessors(domain).get_case(info.case_id)
     patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     if len(patients) == 1:
         patient, = patients
         save_match_ids(case, openmrs_config.case_config, patient)
         return patient
+    if not patients and patient_finder.create_missing:
+        patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient:
+            save_match_ids(case, openmrs_config.case_config, patient)
+            return patient
     # If PatientFinder can't narrow down the number of candidate
     # patients, don't guess. Just admit that we don't know.
     return None
@@ -622,7 +653,7 @@ def get_patient(requests, domain, info, openmrs_config):
         # Definitive IDs did not match a patient in OpenMRS.
         if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
-            patient = find_patient(requests, domain, info.case_id, openmrs_config)
+            patient = find_or_create_patient(requests, domain, info, openmrs_config)
 
     return patient
 
@@ -639,12 +670,16 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         properties = {
             property_: value_source.get_value(self.info)
             for property_, value_source in self.openmrs_config.case_config.person_properties.items()
-            if property_ in PERSON_PROPERTIES and value_source.get_value(self.info)
+            if (
+                property_ in PERSON_PROPERTIES and
+                value_source.check_direction(DIRECTION_EXPORT) and
+                value_source.get_value(self.info)
+            )
         }
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
 
@@ -655,56 +690,16 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         start of the workflow.
         """
         properties = {
-            property_: self.person[property_]
+            property_: self.person.get(property_)
             for property_ in self.openmrs_config.case_config.person_properties.keys()
             if property_ in PERSON_PROPERTIES
         }
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=serialize(properties),
+                json=properties,
                 raise_for_status=True,
             )
-
-
-CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
-
-
-def get_form_question_values(form_json):
-    """
-    Returns question-value pairs to result where questions are given as "/data/foo/bar"
-
-    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    >>> values == {'/data/foo/bar': 'baz'}
-    True
-
-    """
-    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
-
-    def _recurse_form_questions(form_dict, path, result_):
-        for key, value in form_dict.items():
-            if key in _reserved_keys:
-                continue
-            new_path = path + [key]
-            if isinstance(value, list):
-                # Repeat group
-                for v in value:
-                    assert isinstance(v, dict)
-                    _recurse_form_questions(v, new_path, result_)
-            elif isinstance(value, dict):
-                # Group
-                _recurse_form_questions(value, new_path, result_)
-            else:
-                # key is a question and value is its answer
-                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
-                result_[question] = value
-
-    result = {}
-    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
-    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
-    # necessarily. If this causes problems we may need a more reliable way to get to it.
-    return result
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
@@ -727,6 +722,35 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 form_question_values={}
             ))
     return result
+
+
+@quickcache(['requests.base_url'])
+def get_unknown_encounter_role(requests):
+    """
+    Return "Unknown" encounter role for legacy providers with no
+    encounter role set
+    """
+    response_json = requests.get('/ws/rest/v1/encounterrole').json()
+    for encounter_role in response_json['results']:
+        if encounter_role['display'] == 'Unknown':
+            return encounter_role
+    raise OpenmrsConfigurationError(
+        'The standard "Unknown" EncounterRole was not found on the OpenMRS server at "{}". Please notify the '
+        'administrator of that server.'.format(requests.base_url)
+    )
+
+
+@quickcache(['requests.base_url'])
+def get_unknown_location_uuid(requests):
+    """
+    Returns the UUID of Bahmni's "Unknown Location" or None if it
+    doesn't exist.
+    """
+    response_json = requests.get('/ws/rest/v1/location').json()
+    for location in response_json['results']:
+        if location['display'] == 'Unknown Location':
+            return location['uuid']
+    return None
 
 
 def get_patient_identifier_types(requests):

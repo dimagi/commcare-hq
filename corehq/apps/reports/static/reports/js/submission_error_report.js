@@ -1,6 +1,6 @@
-hqDefine("reports/js/submission_error_report", function() {
-    $(function() {
-        $('#report-content').on('click', '.reprocess-error', function() {
+hqDefine("reports/js/submission_error_report", function () {
+    $(function () {
+        $('#report-content').on('click', '.reprocess-error', function () {
             var $btn = $(this),
                 formId = $btn.data().formId;
             $btn.disableButton();
@@ -8,7 +8,7 @@ hqDefine("reports/js/submission_error_report", function() {
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse('reprocess_xform_errors'),
                 data: { form_id: formId },
-                success: function(data) {
+                success: function (data) {
                     $btn.removeSpinnerFromButton();
                     if (data.success) {
                         $btn.text(gettext('Success!'));
@@ -20,7 +20,7 @@ hqDefine("reports/js/submission_error_report", function() {
                         $('#processing-error-modal .error-message').text(data.failure_reason);
                     }
                 },
-                error: function() {
+                error: function () {
                     $btn.removeSpinnerFromButton();
                     $btn.text(gettext('Failed to re-process'));
                     $btn.addClass('btn-danger');

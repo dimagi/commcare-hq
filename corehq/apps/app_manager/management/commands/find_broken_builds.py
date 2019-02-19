@@ -23,7 +23,7 @@ def premature_auto_gps(build):
         for form in module.get_forms():
             try:
                 built_source = app.fetch_attachment(
-                    'files/modules-{}/forms-{}.xml'.format(module.id, form.id))
+                    'files/modules-{}/forms-{}.xml'.format(module.id, form.id), return_bytes=True).decode('utf-8')
             except ResourceNotFound:
                 continue
             if form.get_auto_gps_capture():
@@ -47,9 +47,10 @@ def form_filter_error(build):
 
 def broken_suite_files(build):
     db = Application.get_db()
+    code = Application._blobdb_type_code
     error = None
     try:
-        suite = BlobHelper(build, db).fetch_attachment('files/suite.xml')
+        suite = BlobHelper(build, db, code).fetch_attachment('files/suite.xml', return_bytes=True)
     except ResourceNotFound:
         error = 'build has no attachment files/suite.xml'
     else:

@@ -3,9 +3,13 @@ from __future__ import unicode_literals
 import logging
 from collections import namedtuple
 
-from couchdbkit import push, RequestFailed
+import six
+from requests.exceptions import HTTPError
+
+from django.conf import settings
+
+from couchdbkit import push
 from couchdbkit.exceptions import ResourceNotFound
-import settings
 
 log = logging.getLogger(__name__)
 
@@ -40,8 +44,8 @@ def index_design_docs(db, docid, design_name, wait=True):
                     list(db.view(view, limit=0))
                 else:
                     list(db.view(view, limit=0, stale=settings.COUCH_STALE_QUERY))
-            except RequestFailed as e:
-                if 'timeout' not in e.message and e.status_int != 504:
+            except HTTPError as e:
+                if 'timeout' not in six.text_type(e) and e.response.status_code != 504:
                     raise
             else:
                 break

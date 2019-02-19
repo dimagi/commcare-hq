@@ -5,9 +5,10 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
+from corehq.apps.domain.decorators import _two_factor_required, two_factor_check, OTP_AUTH_FAIL_RESPONSE
 from mock import mock, Mock
 import json
+import six
 
 
 class TestTwoFactorCheck(TestCase):
@@ -45,7 +46,7 @@ class TestTwoFactorCheck(TestCase):
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_check_with_feature_flag(self):
         mock_fn_to_call = Mock(return_value='Function was called!')
-        mock_fn_to_call.__name__ = b'test_name'
+        mock_fn_to_call.__name__ = 'test_name' if six.PY3 else b'test_name'
         request = self.request
         api_key = None
         view_func = 'dummy_view_func'
@@ -54,13 +55,15 @@ class TestTwoFactorCheck(TestCase):
         with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
-            data = json.loads(response.content)
+            self.assertEqual(response.status_code, 401)
             mock_fn_to_call.assert_not_called()
-            self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
+
+            data = json.loads(response.content)
+            self.assertDictEqual(data, OTP_AUTH_FAIL_RESPONSE)
 
     def test_two_factor_check_without_feature_flag(self):
         mock_fn_to_call = Mock(return_value="Function was called!")
-        mock_fn_to_call.__name__ = b'test_name'
+        mock_fn_to_call.__name__ = 'test_name' if six.PY3 else b'test_name'
         request = self.request
         api_key = None
         view_func = 'dummy_view_func'

@@ -66,6 +66,7 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Calculations+in+the+Case+List+and+Details'
 )
 
 ENUM_IMAGE = FeaturePreview(
@@ -84,7 +85,7 @@ CONDITIONAL_ENUM = FeaturePreview(
     label=_('Conditional ID Mapping in Case List'),
     description=_(
         "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or "
-        "case tile enum columns"
+        "case tile enum columns."
     ),
 )
 
@@ -100,9 +101,9 @@ SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
 
 def enable_callcenter(domain_name, checked):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name)
-    domain.call_center_config.enabled = checked
-    domain.save()
+    domain_obj = Domain.get_by_name(domain_name)
+    domain_obj.call_center_config.enabled = checked
+    domain_obj.save()
 
 
 CALLCENTER = FeaturePreview(

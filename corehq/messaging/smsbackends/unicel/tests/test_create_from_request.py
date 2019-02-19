@@ -1,18 +1,36 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import codecs
 from datetime import timedelta
+
 from django.test import TestCase
 from django.test.client import Client
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, INCOMING
 from corehq.apps.users.models import WebUser
-from corehq.messaging.smsbackends.unicel.models import InboundParams
+from corehq.messaging.smsbackends.unicel.models import InboundParams, SQLUnicelBackend
 import json
 
 
 class IncomingPostTest(TestCase):
 
     INDIA_TZ_OFFSET = timedelta(hours=5.5)
+
+    @classmethod
+    def setUpClass(cls):
+        super(IncomingPostTest, cls).setUpClass()
+        cls.unicel_backend = SQLUnicelBackend.objects.create(
+            name='UNICEL',
+            is_global=True,
+            hq_api_id=SQLUnicelBackend.get_api_id()
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.unicel_backend.delete()
+        super(IncomingPostTest, cls).tearDownClass()
 
     def setUp(self):
         self.domain = Domain(name='mockdomain')
@@ -36,7 +54,7 @@ class IncomingPostTest(TestCase):
                      InboundParams.MESSAGE: self.message_ascii,
                      InboundParams.MID: '00001',
                      InboundParams.DCS: '0'}
-        response, log = post(fake_post)
+        response, log = post(fake_post, self.unicel_backend)
         self.assertEqual(200, response.status_code)
         self.assertEqual(self.message_ascii, log.text)
         self.assertEqual(INCOMING, log.direction)
@@ -47,16 +65,16 @@ class IncomingPostTest(TestCase):
                      InboundParams.MESSAGE: self.message_utf_hex,
                      InboundParams.MID: '00002',
                      InboundParams.DCS: '8'}
-        response, log = post(fake_post)
+        response, log = post(fake_post, self.unicel_backend)
         self.assertEqual(200, response.status_code)
-        self.assertEqual(self.message_utf_hex.decode("hex").decode("utf_16_be"),
+        self.assertEqual(codecs.decode(codecs.decode(self.message_utf_hex, 'hex'), 'utf_16_be'),
                         log.text)
         self.assertEqual(INCOMING, log.direction)
         self.assertEqual(log.backend_message_id, fake_post[InboundParams.MID])
 
 
-def post(data):
+def post(data, backend):
     client = Client()
-    response = client.get('/unicel/in/', data)
+    response = client.get('/unicel/in/%s/' % backend.inbound_api_key, data)
     message_id = json.loads(response.content)['message_id']
     return response, SMS.objects.get(couch_id=message_id)

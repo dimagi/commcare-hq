@@ -8,8 +8,6 @@ from six.moves.urllib.parse import urlparse
 from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from http_parser.http import ParserError
-from restkit import RequestError
 from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couchdb_management import CouchConfig
@@ -22,6 +20,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
 import six
+from io import open
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -296,7 +295,7 @@ class Command(BaseCommand):
         for i in range(1000):  # arbitrarily large number
             candidate = name % i
             if not os.path.isfile(candidate):
-                return open(candidate, 'a', buffering=1)
+                return open(candidate, 'a', buffering=1, encoding='utf-8')
 
 
 class Worker(Process):
@@ -329,18 +328,12 @@ def copy_doc(doc, count, sourcedb, target_couch, exclude_types, total, simulate,
               (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
-            for i in reversed(list(range(5))):
-                try:
-                    dt = DocumentTransform(doc, sourcedb, exclude_attachments)
-                    break
-                except RequestError:
-                    if i == 0:
-                        raise
+            dt = DocumentTransform(doc, sourcedb, exclude_attachments)
             for i in reversed(list(range(5))):
                 try:
                     save(dt, target_couch)
                     break
-                except (ResourceConflict, ParserError, TypeError):
+                except (ResourceConflict, TypeError):
                     if i == 0:
                         raise
     print("     Synced %s/%s docs (%s: %s)" % (count, total, doc["doc_type"], doc["_id"]))

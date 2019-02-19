@@ -1,16 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from datetime import datetime
 
 import argparse
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
 from auditcare.utils.export import write_log_events, get_users_to_export
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+from io import open
 
 
 def valid_date(s):

@@ -9,6 +9,7 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.couch.database import iter_docs_with_retry
 from django.core.management import BaseCommand
 from couchforms.models import XFormInstance
+from io import open
 
 
 class Command(BaseCommand):
@@ -50,15 +51,15 @@ class Command(BaseCommand):
             reduce=False,
         )]
 
-        with open(self.filename, 'w') as f:
+        with open(self.filename, 'w', encoding='utf-8') as f:
             device_log_docs = iter_docs_with_retry(XFormInstance.get_db(), device_log_ids)
             for doc in with_progress_bar(device_log_docs, length=doc_count):
                 f.write(json.dumps(doc) + '\n')
 
     def delete_from_file(self):
-        with open(self.filename) as f:
+        with open(self.filename, encoding='utf-8') as f:
             doc_count = sum(1 for line in f)
-        with open(self.filename) as f:
+        with open(self.filename, encoding='utf-8') as f:
             with IterDB(XFormInstance.get_db(), throttle_secs=2, chunksize=100) as iter_db:
                 for line in with_progress_bar(f, length=doc_count):
                     doc = json.loads(line)

@@ -18,6 +18,7 @@ from django.utils.safestring import mark_safe
 from memoized import memoized
 from django_prbac.utils import has_privilege
 
+from corehq.motech.utils import pformat_json
 from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -28,6 +29,7 @@ from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
 import six
+from io import open
 
 
 register = template.Library()
@@ -104,6 +106,14 @@ except (ImportError, SyntaxError):
 
 
 @register.filter
+def pp_json(data):
+    """
+    Pretty-print data as JSON
+    """
+    return pformat_json(data)
+
+
+@register.filter
 @register.simple_tag
 def static(url):
     resource_url = url
@@ -124,9 +134,9 @@ def cachebuster(url):
 def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
     return [{
-        'url': reverse('domain_homepage', args=[domain.name]),
-        'name': domain.long_display_name(),
-    } for domain in domains]
+        'url': reverse('domain_homepage', args=[domain_obj.name]),
+        'name': domain_obj.long_display_name(),
+    } for domain_obj in domains]
 
 
 @register.simple_tag(takes_context=True)
@@ -281,31 +291,21 @@ def can_use_restore_as(request):
 
 
 @register.simple_tag
-def toggle_js_url(domain, username):
-    return (
-        '{url}?username={username}'
-        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
-    ).format(
-        url=reverse('toggles_js', args=[domain]),
-        username=username,
-        domain_cb=toggle_js_domain_cachebuster(domain),
-        user_cb=toggle_js_user_cachebuster(username),
-        toggles_cb=toggles_cachebuster(),
-        previews_cb=previews_cachebuster(),
-    )
+def css_label_class():
+    from corehq.apps.hqwebapp.crispy import CSS_LABEL_CLASS
+    return CSS_LABEL_CLASS
 
 
-@quickcache(['domain'], timeout=30 * 24 * 60 * 60)
-def toggle_js_domain_cachebuster(domain):
-    # to get fresh cachebusters on the next deploy
-    # change the date below (output from *nix `date` command)
-    #   Wed Apr 25 14:12:12 EDT 2018
-    return random_hex()[:3]
+@register.simple_tag
+def css_field_class():
+    from corehq.apps.hqwebapp.crispy import CSS_FIELD_CLASS
+    return CSS_FIELD_CLASS
 
 
-@quickcache(['username'], timeout=30 * 24 * 60 * 60)
-def toggle_js_user_cachebuster(username):
-    return random_hex()[:3]
+@register.simple_tag
+def css_action_class():
+    from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
+    return CSS_ACTION_CLASS
 
 
 def _get_py_filename(module):
@@ -315,20 +315,6 @@ def _get_py_filename(module):
 
     """
     return module.__file__.rstrip('c')
-
-
-@memoized
-def toggles_cachebuster():
-    import corehq.toggles
-    with open(_get_py_filename(corehq.toggles)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
-
-
-@memoized
-def previews_cachebuster():
-    import corehq.feature_previews
-    with open(_get_py_filename(corehq.feature_previews)) as f:
-        return hashlib.sha1(f.read()).hexdigest()[:3]
 
 
 @register.filter
@@ -480,18 +466,17 @@ def reverse_chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert():
-    try:
-        alert = (MaintenanceAlert.objects
-                 .filter(active=True)
-                 .order_by('-modified'))[0]
-    except IndexError:
-        return ''
-    else:
+def maintenance_alert(request):
+    alert = MaintenanceAlert.get_latest_alert()
+    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            alert.id,
+            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
         )
+    else:
+        return ''
 
 
 @register.simple_tag
@@ -628,7 +613,8 @@ def url_replace(context, field, value):
 
 @register.filter
 def view_pdb(element):
-    import ipdb; ipdb.set_trace()
+    import ipdb
+    ipdb.sset_trace()
     return element
 
 

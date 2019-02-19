@@ -61,20 +61,20 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         $('#' + multiselectId).multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
-                _renderAction(selectAllId, 'btn-info', 'fa fa-plus', django.gettext("Add All")),
+                _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All")),
                 _renderSearch(searchSelectableId, searchItemTitle)
             ),
             selectionHeader: _renderHeader(
                 selectedHeaderTitle,
-                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', django.gettext("Remove All")),
+                _renderAction(removeAllId, 'btn-default', 'fa fa-remove', gettext("Remove All")),
                 _renderSearch(searchSelectedId, searchItemTitle)
             ),
             afterInit: function () {
                 var that = this,
-                    $selectableSearch = $('#'+searchSelectableId),
-                    $selectionSearch = $('#'+searchSelectedId),
-                    selectableSearchString = '#'+that.$container.attr('id')+' .ms-elem-selectable:not(.ms-selected)',
-                    selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
+                    $selectableSearch = $('#' + searchSelectableId),
+                    $selectionSearch = $('#' + searchSelectedId),
+                    selectableSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selectable:not(.ms-selected)',
+                    selectionSearchString = '#' + that.$container.attr('id') + ' .ms-elem-selection.ms-selected';
 
                 that.search_left = $selectableSearch.quicksearch(selectableSearchString)
                     .on('keydown', function (e) {
@@ -108,14 +108,14 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                         }
                     });
             },
-            afterSelect: function(){
+            afterSelect: function () {
                 this.search_left.cache();
                 // remove search option so that user doesn't get confused
                 this.search_right.val('').search('');
                 $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                 this.search_right.cache();
             },
-            afterDeselect: function(){
+            afterDeselect: function () {
                 // remove search option so that user doesn't get confused
                 this.search_left.val('').search('');
                 $('#' + selectAllId).removeClass('disabled').prop('disabled', false);

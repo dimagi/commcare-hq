@@ -16,15 +16,17 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
     vm.label = "Exclusive Breastfeeding";
     vm.steps = {
-        'map': {route: '/exclusive_breastfeeding/map', label: 'Map View'},
-        'chart': {route: '/exclusive_breastfeeding/chart', label: 'Chart View'},
+        'map': {route: '/maternal_and_child/exclusive_breastfeeding/map', label: 'Map View'},
+        'chart': {route: '/maternal_and_child/exclusive_breastfeeding/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
     };
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: '"Percentage of infants 0-6 months of age who are fed exclusively with breast milk. An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"',
+        info: 'Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the percentage that was exclusively fed with breast milk. An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months\n' +
+        '\n' +
+        'An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -64,9 +66,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of infants 0-6 months of age who are fed exclusively with breast milk. \n' +
+        'captionContent': ' Of the total children enrolled for Anganwadi services between the ages of 0 to 6 months, the percentage that was exclusively fed with breast milk. \n' +
         '\n' +
-        'An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months',
+        'An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

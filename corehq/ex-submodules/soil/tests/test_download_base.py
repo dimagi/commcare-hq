@@ -1,15 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from io import StringIO
-from django.test import SimpleTestCase
+from io import BytesIO
+from uuid import uuid4
+from django.test import TestCase
 
 from soil import BlobDownload
 from soil.util import expose_blob_download
 
-from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.blobs.tests.util import new_meta, TemporaryFilesystemBlobDB
 
 
-class TestBlobDownload(SimpleTestCase):
+class TestBlobDownload(TestCase):
     identifier = 'identifier'
 
     @classmethod
@@ -23,20 +24,12 @@ class TestBlobDownload(SimpleTestCase):
         super(TestBlobDownload, cls).tearDownClass()
 
     def test_expose_blob_download(self):
-        content_disposition = 'text/xml'
-        download_id = 'abc123'
-
-        self.db.put(StringIO('content'), self.identifier)
-
-        expose_blob_download(
+        ref = expose_blob_download(
             self.identifier,
-            content_disposition=content_disposition,
-            download_id=download_id
+            expiry=60,
+            content_disposition='text/xml',
         )
+        self.db.put(BytesIO(b'content'), meta=new_meta(key=ref.download_id))
 
-        download = BlobDownload.get(download_id)
-
-        self.assertIsNotNone(download)
-
-        response = download.toHttpResponse()
-        self.assertEqual(next(response.streaming_content), 'content')
+        response = BlobDownload.get(ref.download_id).toHttpResponse()
+        self.assertEqual(next(response.streaming_content), b'content')

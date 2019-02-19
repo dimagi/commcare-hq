@@ -1,11 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
-    "icds-cas"
+    "reach-sandbox",
+    "reach-test",
+    "icds-cas",
+    "cas-lab"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new"
+    "icds-new",
+    "icds"
   ],
   "config": {
     "table_id": "static-child_tasks_cases",
@@ -180,7 +184,7 @@
         {
           "column": "state_id",
           "subtype": "string_lastchars",
-          "constraint": "5"
+          "constraint": "3"
         }
       ]
     },

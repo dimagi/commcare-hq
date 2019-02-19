@@ -849,5 +849,121 @@
         "outcome": [
             "a", "b"
         ]
+    },
+    {
+        "name": "reach_tests_subcase",
+        "owned": [
+            "claim"
+        ],
+        "closed": [
+            "p_mother"
+        ],
+        "subcases": [
+            ["p_child", "p_mother"]
+        ],
+        "extensions": [
+            ["claim", "house"],
+            ["p_mother", "house"],
+            ["p_child", "house"],
+
+            ["child_health", "p_child"],
+            ["measurement", "child_health"]
+        ],
+        "outcome": [
+            "claim", "house", "p_mother", "p_child", "child_health", "measurement"
+        ]
+    },
+    {
+        "name": "reach_tests_extension",
+        "owned": [
+            "claim"
+        ],
+        "closed": [
+            "p_mother"
+        ],
+        "subcases": [
+
+        ],
+        "extensions": [
+            ["claim", "house"],
+            ["p_mother", "house"],
+            ["p_child", "house"],
+            ["p_child", "p_mother"],
+            ["child_health", "p_child"],
+            ["measurement", "child_health"]
+        ],
+        "outcome": [
+            "claim", "house", "p_mother", "p_child", "child_health", "measurement"
+        ]
+    },
+    {
+        "name": "reach_tests_subcase_both_closed",
+        "owned": [
+            "claim"
+        ],
+        "closed": [
+            "p_mother",
+            "p_child"
+        ],
+        "subcases": [
+            ["p_child", "p_mother"]
+        ],
+        "extensions": [
+            ["claim", "house"],
+            ["p_mother", "house"],
+            ["p_child", "house"],
+
+            ["child_health", "p_child"],
+            ["measurement", "child_health"]
+        ],
+        "outcome": [
+            "claim", "house"
+        ]
+    },
+    {
+        "name": "reach_tests_extension_both_closed",
+        "owned": [
+            "claim"
+        ],
+        "closed": [
+            "p_mother",
+            "p_child"
+        ],
+        "subcases": [
+
+        ],
+        "extensions": [
+            ["claim", "house"],
+            ["p_mother", "house"],
+            ["p_child", "house"],
+            ["p_child", "p_mother"],
+            ["child_health", "p_child"],
+            ["measurement", "child_health"]
+        ],
+        "outcome": [
+            "claim", "house"
+        ]
+    },
+    {
+        "name": "alternating_propogation",
+        "owned": [
+            "L"
+        ],
+        "closed": [
+
+        ],
+        "subcases": [
+
+        ],
+        "extensions": [
+            ["L", "B"],
+            ["C", "B"],
+            ["C", "D"],
+            ["E", "D"]
+        ],
+        "outcome": [
+            "L", "B", "C", "D", "E"
+        ]
     }
+
 ]

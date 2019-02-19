@@ -8,15 +8,15 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     var vm = this;
     vm.label = "AWCs Reported Medicine Kit";
     vm.steps = {
-        'map': {route: '/medicine_kit/map', label: 'Map View'},
-        'chart': {route: '/medicine_kit/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/medicine_kit/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/medicine_kit/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs that reported having a Medicine Kit',
+        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Medicine Kit',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +49,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of AWCs that reported having a Medicine Kit',
+        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Medicine Kit',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

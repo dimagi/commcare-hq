@@ -1,8 +1,5 @@
-{% extends "domain/admin/info_base.html" %}
-{% load hq_shared_tags %}
+{% extends "hqwebapp/base_section.html" %}
 {% load crispy_forms_tags %}
-{% load i18n %}
-
 
 {% block page_content %}
     {% crispy privacy_form %}

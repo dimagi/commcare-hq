@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from decimal import Decimal
 
 from django.urls import reverse
 from django.db.models import Q
@@ -34,6 +35,8 @@ from .filters import (
     DueDatePeriodFilter,
     EndDateFilter,
     EntryPointFilter,
+    InvoiceNumberFilter,
+    InvoiceBalanceFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -49,6 +52,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
+    CustomerAccountFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -66,6 +70,7 @@ from .models import (
     SubscriptionAdjustmentMethod,
     SubscriptionAdjustmentReason,
     WireInvoice,
+    CustomerInvoice
 )
 from .utils import (
     get_money_str,
@@ -83,6 +88,28 @@ def invoice_column_cell(invoice):
             invoice.invoice_number
         )),
         invoice.id,
+    )
+
+
+def customer_invoice_cell(invoice):
+    from corehq.apps.accounting.views import CustomerInvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(CustomerInvoiceSummaryView.urlname, args=(invoice.id,)),
+            invoice.invoice_number
+        )),
+        invoice.id
+    )
+
+
+def invoice_cost_cell(invoice):
+    from corehq.apps.accounting.views import InvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+            '$%.2f' % invoice.subtotal
+        )),
+        invoice.subtotal,
     )
 
 
@@ -125,6 +152,7 @@ class AccountingInterface(AddItemInterface):
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
         'corehq.apps.accounting.interface.AccountTypeFilter',
+        'corehq.apps.accounting.interface.CustomerAccountFilter',
         'corehq.apps.accounting.interface.ActiveStatusFilter',
         'corehq.apps.accounting.interface.DimagiContactFilter',
         'corehq.apps.accounting.interface.EntryPointFilter',
@@ -185,6 +213,11 @@ class AccountingInterface(AddItemInterface):
         if account_type is not None:
             queryset = queryset.filter(
                 account_type=account_type,
+            )
+        is_customer_account = CustomerAccountFilter.get_value(self.request, self.domain)
+        if is_customer_account is not None:
+            queryset = queryset.filter(
+                is_customer_billing_account=is_customer_account == CustomerAccountFilter.is_customer_account
             )
         is_active = ActiveStatusFilter.get_value(self.request, self.domain)
         if is_active is not None:
@@ -493,7 +526,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
     @property
@@ -605,6 +638,8 @@ class InvoiceInterface(InvoiceInterfaceBase):
     description = "List of all invoices"
     slug = "invoices"
     fields = [
+        'corehq.apps.accounting.interface.InvoiceNumberFilter',
+        'corehq.apps.accounting.interface.InvoiceBalanceFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -654,7 +689,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             DataTablesColumn("Total Credits"),
             DataTablesColumn("Amount Due"),
             DataTablesColumn("Payment Status"),
-            DataTablesColumn("Do Not Invoice"),
+            DataTablesColumn("Hidden from Client"),
         )
 
         if not self.is_rendered_as_email:
@@ -761,6 +796,14 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = Invoice.objects.all()
+
+        invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
+        if invoice_id is not None:
+            queryset = queryset.filter(id=int(invoice_id))
+
+        invoice_balance = InvoiceBalanceFilter.get_value(self.request, self.domain)
+        if invoice_balance is not None:
+            queryset = queryset.filter(balance=Decimal(invoice_balance))
 
         if self.subscription:
             queryset = queryset.filter(subscription=self.subscription)
@@ -889,6 +932,265 @@ class InvoiceInterface(InvoiceInterfaceBase):
         self.subscription = subscription
 
 
+class CustomerInvoiceInterface(InvoiceInterfaceBase):
+    name = "Customer Invoices"
+    description = "List of all customer invoices"
+    slug = "customer_invoices"
+    fields = [
+        'corehq.apps.accounting.interface.NameFilter',
+        'corehq.apps.accounting.interface.SubscriberFilter',
+        'corehq.apps.accounting.interface.PaymentStatusFilter',
+        'corehq.apps.accounting.interface.StatementPeriodFilter',
+        'corehq.apps.accounting.interface.DueDatePeriodFilter',
+        'corehq.apps.accounting.interface.SalesforceAccountIDFilter',
+        'corehq.apps.accounting.interface.SalesforceContractIDFilter',
+        'corehq.apps.accounting.interface.SoftwarePlanNameFilter',
+        'corehq.apps.accounting.interface.BillingContactFilter',
+        'corehq.apps.accounting.interface.IsHiddenFilter',
+    ]
+
+    account = None
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn("Invoice #"),
+            DataTablesColumn("Account Name (Fogbugz Client Name)"),
+            DataTablesColumn("New This Month?"),
+            DataTablesColumn("Company Name"),
+            DataTablesColumn("Emails"),
+            DataTablesColumn("First Name"),
+            DataTablesColumn("Last Name"),
+            DataTablesColumn("Phone Number"),
+            DataTablesColumn("Address Line 1"),
+            DataTablesColumn("Address Line 2"),
+            DataTablesColumn("City"),
+            DataTablesColumn("State/Province/Region"),
+            DataTablesColumn("Postal Code"),
+            DataTablesColumn("Country"),
+            DataTablesColumn("Salesforce Account ID"),
+            DataTablesColumnGroup("Statement Period",
+                                  DataTablesColumn("Start"),
+                                  DataTablesColumn("End")),
+            DataTablesColumn("Date Due"),
+            DataTablesColumn("Plan Cost"),
+            DataTablesColumn("Plan Credits"),
+            DataTablesColumn("SMS Cost"),
+            DataTablesColumn("SMS Credits"),
+            DataTablesColumn("User Cost"),
+            DataTablesColumn("User Credits"),
+            DataTablesColumn("Total"),
+            DataTablesColumn("Total Credits"),
+            DataTablesColumn("Amount Due"),
+            DataTablesColumn("Payment Status"),
+            DataTablesColumn("Hidden from Client"),
+        )
+
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        return header
+
+    @property
+    def rows(self):
+        def _invoice_to_row(invoice):
+            from corehq.apps.accounting.views import ManageBillingAccountView
+            new_this_month = (
+                invoice.date_created.month == invoice.account.date_created.month and
+                invoice.date_created.year == invoice.account.date_created.year
+            )
+            try:
+                contact_info = BillingContactInfo.objects.get(
+                    account=invoice.account,
+                )
+            except BillingContactInfo.DoesNotExist:
+                contact_info = BillingContactInfo()
+
+            account_name = invoice.account.name
+            account_href = reverse(ManageBillingAccountView.urlname, args=[invoice.account.id])
+            columns = [
+                customer_invoice_cell(invoice),
+                format_datatables_data(
+                    mark_safe(make_anchor_tag(account_href, account_name)),
+                    invoice.account.name
+                ),
+                "YES" if new_this_month else "no",
+                contact_info.company_name,
+                ', '.join(contact_info.email_list),
+                contact_info.first_name,
+                contact_info.last_name,
+                contact_info.phone_number,
+                contact_info.first_line,
+                contact_info.second_line,
+                contact_info.city,
+                contact_info.state_province_region,
+                contact_info.postal_code,
+                contact_info.country,
+                invoice.account.salesforce_account_id or "--",
+                invoice.date_start,
+                invoice.date_end,
+                invoice.date_due if invoice.date_due else "None",
+            ]
+
+            plan_subtotal, plan_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_products().all()
+            )
+            sms_subtotal, sms_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(FeatureType.SMS).all()
+            )
+            user_subtotal, user_deduction = get_subtotal_and_deduction(
+                invoice.lineitem_set.get_feature_by_type(
+                    FeatureType.USER
+                ).all()
+            )
+
+            columns.extend([
+                get_exportable_column(plan_subtotal),
+                get_exportable_column(plan_deduction),
+                get_exportable_column(sms_subtotal),
+                get_exportable_column(sms_deduction),
+                get_exportable_column(user_subtotal),
+                get_exportable_column(user_deduction),
+                get_exportable_column(invoice.subtotal),
+                get_exportable_column(invoice.applied_credit),
+                get_exportable_column(invoice.balance),
+                "Paid" if invoice.is_paid else "Not paid",
+                "YES" if invoice.is_hidden else "no",
+            ])
+
+            if not self.is_rendered_as_email:
+                adjust_name = "Adjust Balance"
+                adjust_href = "#adjustBalanceModal-{invoice_id}".format(invoice_id=invoice.id)
+                adjust_attrs = {
+                    "data-toggle": "modal",
+                    "data-target": adjust_href,
+                    "class": "btn btn-default",
+                }
+                columns.append(
+                    mark_safe(make_anchor_tag(adjust_href, adjust_name, adjust_attrs)),
+                )
+            return columns
+
+        return list(map(_invoice_to_row, self._invoices))
+
+    @property
+    @memoized
+    def _invoices(self):
+        queryset = CustomerInvoice.objects.all()
+
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name is not None:
+            queryset = queryset.filter(
+                account__name=account_name,
+            )
+
+        payment_status = \
+            PaymentStatusFilter.get_value(self.request, self.domain)
+        if payment_status is not None:
+            queryset = queryset.filter(
+                date_paid__isnull=(
+                    payment_status == PaymentStatusFilter.NOT_PAID
+                ),
+            )
+
+        statement_period = \
+            StatementPeriodFilter.get_value(self.request, self.domain)
+        if statement_period is not None:
+            queryset = queryset.filter(
+                date_start__gte=statement_period[0],
+                date_start__lte=statement_period[1],
+            )
+
+        due_date_period = \
+            DueDatePeriodFilter.get_value(self.request, self.domain)
+        if due_date_period is not None:
+            queryset = queryset.filter(
+                date_due__gte=due_date_period[0],
+                date_due__lte=due_date_period[1],
+            )
+
+        salesforce_account_id = \
+            SalesforceAccountIDFilter.get_value(self.request, self.domain)
+        if salesforce_account_id is not None:
+            queryset = queryset.filter(
+                account__salesforce_account_id=salesforce_account_id,
+            )
+
+        contact_name = \
+            BillingContactFilter.get_value(self.request, self.domain)
+        if contact_name is not None:
+            queryset = queryset.filter(
+                account__in=[
+                    contact_info.account.id
+                    for contact_info in BillingContactInfo.objects.all()
+                    if contact_name == contact_info.full_name
+                ],
+            )
+
+        is_hidden = IsHiddenFilter.get_value(self.request, self.domain)
+        if is_hidden is not None:
+            queryset = queryset.filter(
+                is_hidden=(is_hidden == IsHiddenFilter.IS_HIDDEN),
+            )
+
+        subscriber_domain = SubscriberFilter.get_value(self.request, self.domain)
+        if subscriber_domain is not None:
+            invoices_for_domain = []
+            for invoice in queryset.all():
+                for subscription in invoice.subscriptions.all():
+                    if subscription.subscriber.domain == subscriber_domain:
+                        invoices_for_domain.append(invoice.pk)
+                        break
+            queryset = queryset.filter(id__in=invoices_for_domain)
+
+        return queryset
+
+    @property
+    @memoized
+    def adjust_balance_forms(self):
+        return [AdjustBalanceForm(invoice) for invoice in self._invoices]
+
+    @property
+    def report_context(self):
+        context = super(CustomerInvoiceInterface, self).report_context
+        if list(self.request.GET.items()):  # A performance improvement
+            context.update(
+                adjust_balance_forms=self.adjust_balance_forms,
+            )
+        return context
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        return AdjustBalanceForm(
+            Invoice.objects.get(id=int(self.request.POST.get('invoice_id'))),
+            self.request.POST
+        )
+
+    @property
+    @request_cache()
+    def view_response(self):
+        if self.request.method == 'POST':
+            if self.adjust_balance_form.is_valid():
+                self.adjust_balance_form.adjust_balance(
+                    web_user=self.request.user.username,
+                )
+        return super(CustomerInvoiceInterface, self).view_response
+
+    @property
+    def email_response(self):
+        self.is_rendered_as_email = True
+        statement_start = StatementPeriodFilter.get_value(
+            self.request, self.domain) or datetime.date.today()
+        return render_to_string('accounting/email/bookkeeper.html', {
+            'headers': self.headers,
+            'month': statement_start.strftime("%B"),
+            'rows': self.rows,
+        })
+
+    def filter_by_account(self, account):
+        self.account = account
+
+
 def _get_domain_from_payment_record(payment_record):
     credit_adjustments = CreditAdjustment.objects.filter(payment_record=payment_record)
     domains = set(
@@ -990,7 +1292,7 @@ class PaymentRecordInterface(GenericTabularReport):
             queryset = queryset.filter(
                 Q(creditadjustment__credit_line__subscription__subscriber__domain=subscriber)
                 | Q(creditadjustment__credit_line__account__created_by_domain=subscriber)
-            )
+            ).distinct()
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
             queryset = queryset.filter(
@@ -1023,6 +1325,8 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
             DataTablesColumn("Method"),
+            DataTablesColumn("Invoice"),
+            DataTablesColumn("Invoice Was Sent"),
             DataTablesColumn("Note"),
             DataTablesColumn("By User"),
         )
@@ -1043,6 +1347,8 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
                 sub_adj.subscription.subscriber.domain,
                 dict(SubscriptionAdjustmentReason.CHOICES).get(sub_adj.reason),
                 dict(SubscriptionAdjustmentMethod.CHOICES).get(sub_adj.method),
+                invoice_cost_cell(sub_adj.invoice) if sub_adj.invoice else None,
+                {True: 'No', False: 'YES'}[sub_adj.invoice.is_hidden] if sub_adj.invoice else None,
                 sub_adj.note,
                 sub_adj.web_user,
             ]]

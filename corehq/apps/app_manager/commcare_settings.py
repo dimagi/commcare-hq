@@ -5,10 +5,12 @@ import re
 
 from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext
-from corehq.apps.app_manager import static_strings
 import os
 import yaml
 import six
+from io import open
+
+from corehq.apps.app_manager.util import app_doc_types
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
@@ -32,16 +34,16 @@ def _translate_setting(setting, prop):
         return ugettext(value)
 
 
-def _load_custom_commcare_settings(user=None):
+def _load_custom_commcare_settings():
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
-    with open(os.path.join(path, 'commcare-profile-settings.yaml')) as f:
+    with open(os.path.join(path, 'commcare-profile-settings.yaml'), encoding='utf-8') as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
 
-    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
+    with open(os.path.join(path, 'commcare-app-settings.yaml'), encoding='utf-8') as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
@@ -56,24 +58,32 @@ def _load_custom_commcare_settings(user=None):
     return settings
 
 
-def _load_commcare_settings_layout(doc_type, user):
+def _load_commcare_settings_layout(doc_type):
     settings = dict([
         ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in _load_custom_commcare_settings(user)
+        for setting in _load_custom_commcare_settings()
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
+    with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
         layout = yaml.load(f)
 
     for section in layout:
         # i18n; not statically analyzable
         section['title'] = ugettext_noop(section['title'])
         for i, key in enumerate(section['settings']):
+            include = False
             setting = settings.pop(key)
-            if doc_type == 'Application' or setting['type'] == 'hq':
+            if doc_type == 'Application':
+                include = True
                 section['settings'][i] = setting
+            elif doc_type == 'LinkedApplication':
+                include = setting.get('supports_linked_app', False)
+            elif doc_type == 'RemoteApp':
+                include = setting['type'] == 'hq'
             else:
-                section['settings'][i] = None
+                raise Exception("Unexpected doc_type received: %s" % doc_type)
+            section['settings'][i] = setting if include else None
+
         section['settings'] = [_f for _f in section['settings'] if _f]
         for setting in section['settings']:
             setting['value'] = None
@@ -98,13 +108,10 @@ def get_custom_commcare_settings():
 
 
 @memoized
-def get_commcare_settings_layout(user):
-    layout = {
-        doc_type: _load_commcare_settings_layout(doc_type, user)
-        for doc_type in ('Application', 'RemoteApp', 'LinkedApplication')
-    }
-    layout.update({'LinkedApplication': {}})
-    return layout
+def get_commcare_settings_layout(doc_type):
+    if doc_type in app_doc_types():
+        return _load_commcare_settings_layout(doc_type)
+    raise Exception("Unexpected doc_type received: %s" % doc_type)
 
 
 @memoized

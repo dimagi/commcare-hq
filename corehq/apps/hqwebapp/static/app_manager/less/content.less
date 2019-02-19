@@ -62,6 +62,10 @@
     animation: spin 4s infinite linear;
     -webkit-animation: spin 4s infinite linear;
   }
+
+  @media(max-width: @screen-sm-max) {
+    display: none;
+  }
 }
 
 @keyframes spin {
@@ -84,12 +88,16 @@
   background-color: white;
   padding-top: 9px;
   padding-left: 20px;
-  padding-right: 20px;
+  padding-right: @preview-toggler-width + 20px;
   padding-bottom: 60px;
   min-height:  100%;
   position: absolute;
   width: 100%;
   top: 0;
+
+  &.offset-for-preview {
+    padding-right: 20px;
+  }
 }
 
 .appmanager-loading-container {
@@ -212,6 +220,10 @@
 
 .appmanager-content-row {
   background-color: @cc-brand-low;
+
+  @media(max-width: @screen-sm-max) {
+    overflow: hidden;
+  }
 }
 
 .app-preview-icon::before {

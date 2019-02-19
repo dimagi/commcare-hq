@@ -23,8 +23,11 @@ class Column(object):
     def database_column_name(self):
         """
         Column name going into the database - needs to be truncated according to db limitations
+        Returns bytes
         """
-        return truncate_value(self.id)
+        # we have to explicitly truncate the column IDs otherwise postgres will do it
+        # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
+        return truncate_value(self.id).encode('utf-8')
 
     def __repr__(self):
         return "Column('{}', '{}')".format(self.id, self.datatype)

@@ -78,8 +78,8 @@ def _grandfathered(slug, app):
         "advanced_itemsets", "case_detail_overwrite",
     ]:
         return False
-    domain = Domain.get_by_name(app.domain)
-    return (getattr(domain, 'date_created') or datetime(2000, 1, 1)) < release_date
+    domain_obj = Domain.get_by_name(app.domain)
+    return (getattr(domain_obj, 'date_created') or datetime(2000, 1, 1)) < release_date
 
 
 _ADD_ONS = {
@@ -92,6 +92,7 @@ _ADD_ONS = {
         name=feature_previews.CALC_XPATHS.label,
         description=feature_previews.CALC_XPATHS.description,
         used_in_module=_uses_calculated_property,
+        help_link=feature_previews.CALC_XPATHS.help_link,
     ),
     "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),
@@ -257,7 +258,6 @@ def init_app(request, app):
     # Don't use previews_dict because it doesn't include disabled previews
     previews = {p.slug: p.enabled(app.domain) for p in feature_previews.all_previews()}
 
-    domain = Domain.get_by_name(app.domain)
     for slug in _ADD_ONS.keys():
         add_on = _ADD_ONS[slug]
         enable = False

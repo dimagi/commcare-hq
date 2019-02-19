@@ -17,9 +17,9 @@ from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case import const
 from casexml.apps.phone import xml
 from corehq.form_processor.tests.utils import use_sql_backend
+from io import open
 
 
-@override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class Version2CaseParsingTest(TestCase):
     """
     Tests parsing v2 casexml

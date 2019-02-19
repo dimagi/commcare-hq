@@ -205,6 +205,21 @@ def arbitrary_backend_ids():
 
 
 @unit_testing_only
+def arbitrary_non_global_backend_ids():
+    backend_ids = {}
+    for backend in _available_gateway_fee_backends():
+        backend_instance = data_gen.arbitrary_unique_name("back")
+        backend_ids[backend.get_api_id()] = backend_instance
+        sms_backend = backend()
+        sms_backend.hq_api_id = backend.get_api_id()
+        sms_backend.couch_id = backend_instance
+        sms_backend.name = backend_instance
+        sms_backend.is_global = False
+        sms_backend.save()
+    return backend_ids
+
+
+@unit_testing_only
 def arbitrary_messages_by_backend_and_direction(backend_ids,
                                                 phone_number=None,
                                                 domain=None,

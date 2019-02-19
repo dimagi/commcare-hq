@@ -11,6 +11,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.messages import percent_adolescent_girls_enrolled_help_text
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 import six
@@ -66,11 +67,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         "label": "",
         "fills": fills,
         "rightLegend": {
-            "average": sum(average) / float(len(average) or 1),
-            "average_format": 'number',
-            "info": _((
-                "Total number of adolescent girls who are enrolled for Anganwadi Services"
-            )),
+            "average": '%.2f' % (total_valid * 100 / float(total or 1)),
+            "info": percent_adolescent_girls_enrolled_help_text(),
             "extended_info": [
                 {
                     'indicator': (
@@ -153,9 +151,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     return {
         "tooltips_data": dict(tooltips_data),
         "format": "number",
-        "info": _((
-            "Total number of adolescent girls who are enrolled for Anganwadi Services"
-        )),
+        "info": percent_adolescent_girls_enrolled_help_text(),
         "chart_data": [
             {
                 "values": chart_data['blue'],

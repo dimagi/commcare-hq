@@ -7,6 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.util.test_utils import softer_assert
 
 
 class UserModelTest(TestCase):
@@ -45,6 +46,7 @@ class UserModelTest(TestCase):
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
 
+    @softer_assert()
     def test_last_modified_bulk(self):
         lm = self.user.last_modified
         CommCareUser.save_docs([self.user])

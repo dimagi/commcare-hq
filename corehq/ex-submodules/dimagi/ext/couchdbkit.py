@@ -36,3 +36,10 @@ class DocumentSchema(OldDocumentSchema):
 
 class SafeSaveDocument(OldSafeSaveDocument):
     Meta = USecDateTimeMeta
+
+
+# A formatter configured in HQ settings (`couch-request-formatter`) logs
+# extra metrics provided by this logger to a file that can be consumed
+# for couch request timing analysis.
+from couchdbkit.logging import install_request_logger as _install_logger
+_install_logger()

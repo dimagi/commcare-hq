@@ -1,15 +1,15 @@
-/* global FormplayerFrontend */
+/* global FormplayerFrontend, Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
     var Menus = FormplayerFrontend.Menus;
     var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
         var server;
-        beforeEach(function() {
+        beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
         });
 
@@ -34,13 +34,19 @@ describe('Render a case list', function () {
         });
     });
 
-    describe('#getMenus', function() {
+    describe('#getMenus', function () {
         var server,
             clock,
             user,
             requests;
 
-        beforeEach(function() {
+        before(function () {
+            hqImport("hqwebapp/js/initial_page_data").register("apps", [{
+                "_id": "my-app-id",
+            }]);
+        });
+
+        beforeEach(function () {
             window.gettext = sinon.spy();
 
             FormplayerFrontend.regions = {
@@ -61,15 +67,18 @@ describe('Render a case list', function () {
             user.domain = 'test-domain';
             user.username = 'test-username';
             user.formplayer_url = 'url';
+            user.restoreAs = '';
+            user.displayOptions = {};
 
+            FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
         });
 
-        afterEach(function() {
+        afterEach(function () {
             server.restore();
             clock.restore();
         });
 
-        it('Should execute an async restore using sync db', function() {
+        it('Should execute an async restore using sync db', function () {
             FormplayerFrontend.trigger('sync');
 
             // Should have fired off a request for a restore
@@ -80,7 +89,7 @@ describe('Render a case list', function () {
                 202,
                 { "Content-Type": "application/json" },
                 JSON.stringify({
-                    "exception":"Asynchronous restore under way for asdf",
+                    "exception": "Asynchronous restore under way for asdf",
                     "done": 9,
                     "total": 30,
                     "retryAfter": 30,
@@ -104,6 +113,7 @@ describe('Render a case list', function () {
                     domain: user.domain,
                     username: user.username,
                     preserveCache: true,
+                    restoreAs: '',
                 }
             );
             assert.equal(requests[1].url, user.formplayer_url + '/sync-db');
@@ -119,9 +129,11 @@ describe('Render a case list', function () {
             assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
         });
 
-        it('Should execute an async restore', function() {
+        it('Should execute an async restore', function () {
             var promise = FormplayerFrontend.request('app:select:menus', {
                 appId: 'my-app-id',
+                // Bypass permissions check by using preview mode
+                preview: true,
             });
 
             // Should have fired off a request for a restore
@@ -154,7 +166,6 @@ describe('Render a case list', function () {
             // We should have emptied the progress bar
             assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
             assert.equal(promise.state(), 'resolved');  // We have now completed the restore
-
         });
     });
 });

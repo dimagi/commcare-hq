@@ -20,7 +20,7 @@ hqDefine('app_manager/js/settings/linked_whitelist', function () {
             self.saveButton.fire('change');
         };
         self.linkedDomains.subscribe(changeSaveButton);
-        self.removeDomain = function(domain) {
+        self.removeDomain = function (domain) {
             self.linkedDomains.remove(domain);
         };
         return self;

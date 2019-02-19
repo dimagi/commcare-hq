@@ -3,13 +3,13 @@ from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
+from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_help_text
 from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdhaar(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_adhaar_data_map(
@@ -53,18 +53,13 @@ class TestAdhaar(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 190,
-                    "all": 761,
-                    'original_name': ["st1"],
-                    "fillKey": "0%-25%"
-                },
-                "st2": {
-                    "in_month": 151,
-                    "all": 821,
-                    'original_name': ["st2"],
-                    "fillKey": "0%-25%"
-                }
+                 'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'},
+                 'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 2, 'fillKey': '0%-25%'},
+                 'st1': {'in_month': 192, 'original_name': ['st1'], 'all': 775, 'fillKey': '0%-25%'},
+                 'st2': {'in_month': 154, 'original_name': ['st2'], 'all': 833, 'fillKey': '0%-25%'},
+                 'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -77,10 +72,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        expected = (
-            "Percentage of individuals registered using CAS "
-            "whose Aadhaar identification has been captured"
-        )
+        expected = percent_aadhaar_seeded_beneficiaries_help_text()
         self.assertEqual(data['rightLegend']['info'], expected)
 
     def test_map_data_right_legend_average(self):
@@ -92,7 +84,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 21.679676558666156)
+        self.assertEqual(data['rightLegend']['average'], 21.490683229813666)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_adhaar_data_map(
@@ -108,11 +100,11 @@ class TestAdhaar(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': "341"
+                    'value': "346"
                 },
                 {
                     'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                    'value': '21.55%'
+                    'value': '21.49%'
                 }
             ]
         )
@@ -173,9 +165,9 @@ class TestAdhaar(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'in_month': 190,
+                    'in_month': 192,
                     'original_name': ['b1', 'b2'],
-                    'all': 761,
+                    'all': 775,
                     'fillKey': '0%-25%'
                 }
             }
@@ -192,7 +184,7 @@ class TestAdhaar(TestCase):
             },
             loc_level='block',
         )
-        self.assertEqual(data['rightLegend']['average'], 24.82689277717887)
+        self.assertEqual(data['rightLegend']['average'], 24.774193548387096)
 
     def test_chart_data(self):
         self.assertDictEqual(
@@ -207,24 +199,18 @@ class TestAdhaar(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.967148488830485
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.392204628501826
-                    }
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.967148488830485
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.392204628501826
-                    }
+                    {'loc_name': 'st1', 'percent': 24.774193548387096},
+                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -243,28 +229,27 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.19520319786808793,
+                                "y": 0.19528178243774574,
                                 "x": 1491004800000,
-                                "all": 1501
+                                "all": 1526
                             },
                             {
-                                "y": 0.21554993678887485,
+                                "y": 0.21490683229813665,
                                 "x": 1493596800000,
-                                "all": 1582
+                                "all": 1610
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 24.967148488830485
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 18.392204628501827
-                    }
+                    {'loc_name': 'st1', 'percent': 24.774193548387096},
+                    {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st4', 'percent': 0.0},
+                    {'loc_name': 'st5', 'percent': 0.0},
+                    {'loc_name': 'st6', 'percent': 0.0},
+                    {'loc_name': 'st7', 'percent': 0.0},
+                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )
@@ -284,16 +269,15 @@ class TestAdhaar(TestCase):
                 location_id='b1'
             ),
             {
-                "info": "Percentage of individuals registered using "
-                        "CAS whose Aadhaar identification has been captured",
+                "info": percent_aadhaar_seeded_beneficiaries_help_text(),
                 "tooltips_data": {
                     "s2": {
-                        "in_month": 50,
-                        "all": 255
+                        "in_month": 51,
+                        "all": 262
                     },
                     "s1": {
-                        "in_month": 71,
-                        "all": 134
+                        "in_month": 72,
+                        "all": 139
                     }
                 },
                 "chart_data": [
@@ -304,11 +288,11 @@ class TestAdhaar(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.5298507462686567
+                                0.5179856115107914
                             ],
                             [
                                 "s2",
-                                0.19607843137254902
+                                0.1946564885496183
                             ]
                         ],
                         "key": ""

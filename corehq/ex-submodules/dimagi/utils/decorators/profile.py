@@ -1,17 +1,22 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import random
 from functools import wraps
-import hotshot
+import cProfile
 import resource
 import os
 import gc
+import logging
 
 from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
 from dimagi.utils.modules import to_function
 import six
+
+logger = logging.getLogger(__name__)
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
@@ -22,37 +27,68 @@ except Exception:
 
 
 def profile(log_file):
+    return profile_prod(log_file, 1, None)
+
+
+def profile_prod(log_file, probability, limit):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
     a view function or method) and dumps the profile data somewhere sensible
     for later processing and examination.
 
-    It takes one argument, the profile log name. If it's a relative path, it
-    places it under the PROFILE_LOG_BASE. It also inserts a time stamp into the
-    file name, such that 'my_view.prof' become 'my_view-20100211T170321.prof',
-    where the time stamp is in UTC. This makes it easy to run and compare
-    multiple trials.
+    :param log_file: If it's a relative path, it places it under the PROFILE_LOG_BASE.
+        It also inserts a time stamp into the file name, such that
+        'my_view.prof' become 'my_view-2018-06-07T12:46:56.367347.prof', where the time stamp is in UTC.
+        This makes it easy to run and compare multiple trials.
+    :param probability: A number N between 0 and 1 such that P(profile) ~= N
+    :param limit: The maximum number of profiles to record.
     """
+    assert isinstance(probability, (int, float)), 'probability must be numeric'
+    assert 0 <= probability <= 1, 'probability must be in range [0, 1]'
+    assert not limit or isinstance(limit, int), 'limit must be an integer'
 
     if not os.path.isabs(log_file):
         log_file = os.path.join(PROFILE_LOG_BASE, log_file)
 
     def _outer(f):
+        if probability <= 0:
+            return f
+
+        base, ext = os.path.splitext(log_file)
+
+        header = '=' * 100
+        logger.warn("""
+        %(header)s
+        Profiling enabled for %(module)s.%(name)s with probability %(prob)s and limit %(limit)s.
+        Output will be written to %(base)s-[datetime]%(ext)s
+        %(header)s
+        """, {
+            'header': header, 'module': f.__module__, 'name': f.__name__,
+            'prob': probability, 'base': base, 'ext': ext, 'limit': limit
+        })
+
+        class Scope:
+            """Class to keep outer scoped variable"""
+            profile_count = 0
+
         @wraps(f)
         def _inner(*args, **kwargs):
-            # Add a timestamp to the profile output when the callable
-            # is actually called.
-            (base, ext) = os.path.splitext(log_file)
-            base = base + "-" + datetime.now().strftime("%Y%m%dT%H%M%S%f")
-            final_log_file = base + ext
+            hit_limit = limit and Scope.profile_count > limit
+            if hit_limit or random.random() > probability:
+                return f(*args, **kwargs)
+            else:
+                Scope.profile_count += 1
+                # Add a timestamp to the profile output when the callable
+                # is actually called.
+                final_log_file = '{}-{}{}'.format(base, datetime.now().isoformat(), ext)
 
-            prof = hotshot.Profile(final_log_file)
-            try:
-                ret = prof.runcall(f, *args, **kwargs)
-            finally:
-                prof.close()
-            return ret
+                prof = cProfile.Profile()
+                try:
+                    ret = prof.runcall(f, *args, **kwargs)
+                finally:
+                    prof.dump_stats(final_log_file)
+                return ret
 
         return _inner
     return _outer

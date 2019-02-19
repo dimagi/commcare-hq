@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import csv
+import csv342 as csv
 from collections import defaultdict
 
 from django.apps import apps
@@ -14,6 +14,7 @@ from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
 import six
 from six.moves import map
+from io import open
 
 
 class Command(BaseCommand):

@@ -20,7 +20,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     AdvancedOpenCaseAction,
-    CaseReferences, CaseIndex)
+    CaseReferences, CaseIndex, Form)
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -44,7 +44,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
 )
+from six.moves import filter
 from six.moves import map
+from six.moves import zip
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -142,58 +144,77 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].options[1].value, 'choice2')
 
     def test_repeat_subcases_schema_generation(self):
-        form_xml = self.get_xml('nested_repeat_form')
-        repeats_with_subcases = [
+        module = Module(case_type='child', _parent=Application())
+        form = Form().with_id(0, module)
+        form.actions.subcases = [
             OpenSubCaseAction(
                 repeat_context='/data/repeat',
                 case_properties={
                     'weight': '/data/repeat/group/weight',
                 },
                 subcase_index=0,
-                nest=False,
+                _nest=True
             ).with_id(0, None),
+            OpenSubCaseAction(
+                repeat_context='/data/repeat',
+                case_properties={
+                    'height': '/data/repeat/height',
+                },
+                subcase_index=1,
+                _nest=True
+            ).with_id(1, None),
             OpenSubCaseAction(
                 repeat_context='/data/repeat/nested_repeat',
                 case_properties={
                     'age': '/data/repeat/nested_repeat/age',
                 },
-                subcase_index=1,
-                nest=False,  # would normally get added by caller
-            ).with_id(1, None),
+                subcase_index=2,
+                _nest=False
+            ).with_id(2, None),
         ]
 
-        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
-            XForm(form_xml),
-            repeats_with_subcases,
-            ['en'],
-            self.app_id,
-            1,
-        )
+        schema = FormExportDataSchema._add_export_items_for_cases(
+            ExportGroupSchema(path=MAIN_TABLE),
+            [form],
+            ['/data/repeat', '/data/nested_repeat'],
+        )[0]
 
-        self.assertEqual(len(schema.group_schemas), 2)
+        self.assertEqual(len(schema.group_schemas), len(form.actions.subcases))
+        for group_schema, action in zip(schema.group_schemas, form.actions.subcases):
+            base_path = 'form.{}'.format(action.repeat_context[6:].replace('/', '.'))
+            if action._nest:
+                base_path += '.{}'.format(action.form_element_name)
+            self._check_subcase_repeat_group_schema(group_schema, list(action.case_properties), base_path)
 
-        group_schema = schema.group_schemas[0]
+    def _check_subcase_repeat_group_schema(self, group_schema, case_properties, base_path):
+        def _check_base_path(items, count, suffix):
+            self.assertEqual(len(items), count)
+            self.assertTrue(all(map(
+                lambda item: item.readable_path.startswith('{}{}'.format(base_path, suffix)),
+                items,
+            )))
+
+        self.assertEqual(group_schema.readable_path, base_path)
         attribute_items = [item for item in group_schema.items if item.path[-1].name in CASE_ATTRIBUTES]
-
-        self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
-        self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('form.repeat.case'),
-            attribute_items,
-        )))
+        _check_base_path(attribute_items, len(CASE_ATTRIBUTES), '.case')
 
         create_items = [item for item in group_schema.items if item.path[-1].name in CASE_CREATE_ELEMENTS]
-        self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
-        self.assertTrue(all(map(
-            lambda item: item.readable_path.startswith('form.repeat.case.create'),
-            create_items,
-        )))
+        _check_base_path(create_items, len(CASE_CREATE_ELEMENTS), '.case.create')
 
         index_items = [item for item in group_schema.items if 'case.index.parent' in item.readable_path]
-        self.assertEqual(len(index_items), 2)
+        _check_base_path(index_items, 2, '.case.index.parent')
 
         update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
-        self.assertEqual(len(update_items), 1)
-        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.group.weight')
+        self.assertEqual(len(update_items), len(case_properties))
+        for item in update_items:
+            self.assertTrue(item.readable_path.startswith('{}.case'.format(base_path)))
+            try:
+                case_properties.remove(item.path[-1].name)
+            except (ValueError, KeyError):
+                self.fail("Unexpected case property: {}".format(item.readable_path))
+
+        if case_properties:
+            self.fail("Missing case properties: {}".format(case_properties))
 
     def test_xform_parsing_with_stock_questions(self):
         form_xml = self.get_xml('stock_form')
@@ -395,10 +416,10 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
-        multichoice = filter(
-            lambda item: item.path == [PathNode(name='form'), PathNode(name='question2')],
-            group_schema.items
-        )[0]
+        multichoice = [
+            item for item in group_schema.items
+            if item.path == [PathNode(name='form'), PathNode(name='question2')]
+        ][0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
             len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
@@ -537,9 +558,9 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build.version = 3
         cls.first_build.has_submissions = True
 
-        factory = AppFactory(build_version='2.36')
+        factory = AppFactory(build_version='2.36.0')
         m0, f0 = factory.new_advanced_module('mod0', 'advanced')
-        f0.source = cls.get_xml('repeat_group_form')
+        f0.source = cls.get_xml('repeat_group_form').decode('utf-8')
         f0.xmlns = 'repeat-xmlns'
 
         factory.form_requires_case(f0, 'case0')
@@ -711,7 +732,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         super(TestAppCasePropertyReferences, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
         m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
-        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
+        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
@@ -808,7 +829,7 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.current_app._id = '1234'
         cls.current_app.version = 10
         module = cls.current_app.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form'))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.build = Application.new_app(cls.domain, "Untitled Application")
@@ -817,7 +838,8 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         cls.build.version = 5
         cls.build.has_submissions = True
         module = cls.build.add_module(Module.new_module('Untitled Module', None))
-        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2'))
+        form = module.new_form("Untitled Form", 'en',
+                               attachment=cls.get_xml('basic_form_version2').decode('utf-8'))
         form.xmlns = cls.xmlns
 
         cls.apps = [
@@ -1153,7 +1175,7 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         # One for case, one for case history, one for parent case
         self.assertEqual(len(schema.group_schemas), 3)
-        main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
+        main_table = next(filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas))
         self.assertEqual(
             len([item for item in main_table.items if item.doc_type == 'CaseIndexItem']),
             1
@@ -1193,7 +1215,7 @@ class TestOrderingOfSchemas(SimpleTestCase):
         )
 
     def _assert_item_order(self, schema, path, items):
-        group_schema = filter(lambda gs: gs.path == path, schema.group_schemas)[0]
+        group_schema = [gs for gs in schema.group_schemas if gs.path == path][0]
 
         for item in group_schema.items:
             if not items:

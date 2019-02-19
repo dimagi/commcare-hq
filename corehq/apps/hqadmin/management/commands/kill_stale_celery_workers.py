@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import json
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from celery import Celery
-from restkit import Resource
+import requests
 
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
@@ -20,9 +19,11 @@ class Command(BaseCommand):
 def _kill_stale_workers():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
-        t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-        all_workers = json.loads(t)
+        all_workers = requests.get(
+            celery_monitoring + '/api/workers',
+            params={'status': True},
+            timeout=3,
+        ).json()
         expected_running, expected_stopped = parse_celery_workers(all_workers)
 
         celery = Celery()

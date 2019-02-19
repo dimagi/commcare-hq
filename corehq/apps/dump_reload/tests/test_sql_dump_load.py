@@ -23,13 +23,15 @@ from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
 from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_model_iterator_builders_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
+    XFormInstanceSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from six.moves import zip
+from io import open
 
 
 class BaseDumpLoadTest(TestCase):
@@ -80,7 +82,7 @@ class BaseDumpLoadTest(TestCase):
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
         dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
+        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
         total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
@@ -134,7 +136,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_dump_load_form(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 2,
-            XFormAttachmentSQL: 2
+            BlobMeta: 2
         })
 
         pre_forms = [
@@ -153,7 +155,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_sql_dump_load_case(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 2,
-            XFormAttachmentSQL: 2,
+            BlobMeta: 2,
             CommCareCaseSQL: 2,
             CaseTransaction: 3,
             CommCareCaseIndexSQL: 1
@@ -184,7 +186,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     def test_ledgers(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 3,
-            XFormAttachmentSQL: 3,
+            BlobMeta: 3,
             CommCareCaseSQL: 1,
             CaseTransaction: 3,
             LedgerValue: 1,
@@ -226,12 +228,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             pre_json = serializers.serialize('python', [pre])[0]
             post_json = serializers.serialize('python', [post])[0]
             self.assertDictEqual(pre_json, post_json)
-
-    def tearDown(self):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateAction, AutomaticUpdateRuleCriteria
-        AutomaticUpdateAction.objects.all().delete()
-        AutomaticUpdateRuleCriteria.objects.all().delete()
-        super(TestSQLDumpLoad, self).tearDown()
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
@@ -310,7 +306,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         self.addCleanup(user.delete)
 
-        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml') as f:
+        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
         submit_form_locally(xml, self.domain_name)
 

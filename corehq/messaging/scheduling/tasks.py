@@ -12,6 +12,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
@@ -29,6 +30,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_case_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
     delete_timed_schedule_instances_for_schedule,
+    delete_schedule_instances_by_case_id,
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
@@ -256,11 +258,15 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         self.schedule_revision = schedule.get_schedule_revision(case=case)
 
     def create_new_instance_for_recipient(self, recipient_type, recipient_id):
+        start_date = self.start_date
+        if not start_date and self.model_instance:
+            start_date = self.model_instance.start_date
+
         return CaseTimedScheduleInstance.create_for_recipient(
             self.schedule,
             recipient_type,
             recipient_id,
-            start_date=self.start_date,
+            start_date=start_date,
             move_to_next_event_not_in_the_past=True,
             case_id=self.case.case_id,
             rule_id=self.rule.pk,
@@ -286,7 +292,7 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         return False
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_alert_schedule_instances(schedule_id, recipients):
     """
     :param schedule_id: the AlertSchedule schedule_id
@@ -302,7 +308,7 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
         ).refresh()
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
     """
     :param schedule_id: the TimedSchedule schedule_id
@@ -320,7 +326,7 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
         ).refresh()
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
                 default_retry_delay=60 * 60, max_retries=24, bind=True)
 def delete_alert_schedule_instances(self, schedule_id):
     """
@@ -333,7 +339,7 @@ def delete_alert_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
                 default_retry_delay=60 * 60, max_retries=24, bind=True)
 def delete_timed_schedule_instances(self, schedule_id):
     """
@@ -346,7 +352,7 @@ def delete_timed_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
                 default_retry_delay=60 * 60, max_retries=24, bind=True)
 def delete_case_alert_schedule_instances(self, schedule_id):
     """
@@ -358,7 +364,7 @@ def delete_case_alert_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
-@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
                 default_retry_delay=60 * 60, max_retries=24, bind=True)
 def delete_case_timed_schedule_instances(self, schedule_id):
     """
@@ -423,11 +429,25 @@ def _handle_schedule_instance(instance, save_function):
     """
     :return: True if the event was handled, otherwise False
     """
-    if instance.memoized_schedule.deleted:
+    if (
+        instance.memoized_schedule.deleted or
+        (isinstance(instance, CaseScheduleInstanceMixin) and (instance.case is None or instance.case.is_deleted))
+    ):
         instance.delete()
         return False
 
     if instance.active and instance.next_event_due < datetime.utcnow():
+        # We have to call check_active_flag_against_schedule before processing
+        # in case the schedule was deactivated and the task which deactivates
+        # instances hasn't finished yet. We also have to call it after processing
+        # to handle the other checks whose result might change based on next_event_due
+        # changing.
+        instance.check_active_flag_against_schedule()
+        if not instance.active:
+            # The instance was just deactivated
+            save_function(instance)
+            return False
+
         instance.handle_current_event()
         instance.check_active_flag_against_schedule()
         save_function(instance)
@@ -440,7 +460,7 @@ def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
     broadcast_class.objects.filter(schedule_id=schedule_id).update(last_sent_timestamp=datetime.utcnow())
 
 
-@no_result_task(queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_alert_schedule_instance(schedule_instance_id):
     with CriticalSection(['handle-alert-schedule-instance-%s' % schedule_instance_id.hex]):
         try:
@@ -452,7 +472,7 @@ def handle_alert_schedule_instance(schedule_instance_id):
             update_broadcast_last_sent_timestamp(ImmediateBroadcast, instance.alert_schedule_id)
 
 
-@no_result_task(queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_timed_schedule_instance(schedule_instance_id):
     with CriticalSection(['handle-timed-schedule-instance-%s' % schedule_instance_id.hex]):
         try:
@@ -464,9 +484,11 @@ def handle_timed_schedule_instance(schedule_instance_id):
             update_broadcast_last_sent_timestamp(ScheduledBroadcast, instance.timed_schedule_id)
 
 
-@no_result_task(queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
-    with CriticalSection(['handle-case-alert-schedule-instance-%s' % schedule_instance_id.hex]):
+    # Use the same lock key as the tasks which refresh case schedule instances
+    from corehq.messaging.tasks import get_sync_key
+    with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
             instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
         except CaseAlertScheduleInstance.DoesNotExist:
@@ -475,12 +497,20 @@ def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
         _handle_schedule_instance(instance, save_case_schedule_instance)
 
 
-@no_result_task(queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
-    with CriticalSection(['handle-case-timed-schedule-instance-%s' % schedule_instance_id.hex]):
+    # Use the same lock key as the tasks which refresh case schedule instances
+    from corehq.messaging.tasks import get_sync_key
+    with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
         try:
             instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
         except CaseTimedScheduleInstance.DoesNotExist:
             return
 
         _handle_schedule_instance(instance, save_case_schedule_instance)
+
+
+@no_result_task(serializer='pickle', queue='background_queue', acks_late=True)
+def delete_schedule_instances_for_cases(domain, case_ids):
+    for case_id in case_ids:
+        delete_schedule_instances_by_case_id(domain, case_id)

@@ -1,13 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.conf import settings
-from django.urls import resolve, reverse
-from django.http import Http404
-from ws4redis.context_processors import default
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq import privileges
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
+import datetime
+
+import six
+from django.conf import settings
+from django.http import Http404
+from django.urls import resolve, reverse
+from django_prbac.utils import has_privilege
+from ws4redis.context_processors import default
+
+from corehq import privileges
+from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -56,14 +62,32 @@ def get_per_domain_context(project, request=None):
     return {
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
+        'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
     }
 
 
 def domain(request):
     """Global per-domain context variables"""
-
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
+
+
+def domain_billing_context(request):
+    is_domain_billing_admin = False
+    restrict_domain_creation = settings.RESTRICT_DOMAIN_CREATION
+    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        if account:
+            if has_privilege(request, privileges.ACCOUNTING_ADMIN):
+                is_domain_billing_admin = True
+            elif account.has_enterprise_admin(request.couch_user.username):
+                is_domain_billing_admin = True
+            if not is_domain_billing_admin:
+                restrict_domain_creation = restrict_domain_creation or account.restrict_domain_creation
+    return {
+        'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
+        'restrict_domain_creation': restrict_domain_creation,
+    }
 
 
 def current_url_name(request):
@@ -92,6 +116,19 @@ def js_api_keys(request):
     }
 
 
+def js_toggles(request):
+    if not getattr(request, 'couch_user', None):
+        return {}
+    if not getattr(request, 'project', None):
+        return {}
+    from corehq import toggles, feature_previews
+    domain = request.project.name
+    return {
+        'toggles_dict': toggles.toggle_values_by_name(username=request.couch_user.username, domain=domain),
+        'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    }
+
+
 def websockets_override(request):
     # for some reason our proxy setup doesn't properly detect these things, so manually override them
     try:
@@ -110,14 +147,81 @@ def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
-        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
 
 
-def commcare_hq_names(request):
+def commcare_hq_names(request=None):
     return {
         'commcare_hq_names': {
-            'COMMCARE_NAME': settings.COMMCARE_NAME,
-            'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
-        }
+            'COMMCARE_NAME': _get_cc_name(request, 'COMMCARE_NAME'),
+            'COMMCARE_HQ_NAME': _get_cc_name(request, 'COMMCARE_HQ_NAME'),
+        },
+    }
+
+
+def _get_cc_name(request, var):
+    value = getattr(settings, var)
+    if isinstance(value, six.string_types):
+        return value
+
+    if request is None:
+        # There are a few places where we do not have access to a request,
+        # for these we return the default name for the enviroment.
+        return value['default']
+
+    try:
+        host = request.get_host()
+    except KeyError:
+        # In reporting code we create an HttpRequest object inside python which
+        # does not have an HTTP_HOST attribute. Its unclear what host would be
+        # expected in that scenario, so we're showing the default.
+        # The true fix for this lies in removing fake requests from scheduled reports
+        host = 'default'
+
+    return value.get(host) or value['default']
+
+
+def mobile_experience(request):
+    show_mobile_ux_warning = False
+    mobile_ux_cookie_name = ''
+    if (hasattr(request, 'couch_user') and
+            hasattr(request, 'user_agent') and
+            settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev']):
+        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+        show_mobile_ux_warning = (
+            not request.COOKIES.get(mobile_ux_cookie_name) and
+            request.user_agent.is_mobile and
+            request.user.is_authenticated and
+            request.user.is_active and
+            not mobile_experience_hidden_by_toggle(request)
+        )
+    return {
+        'show_mobile_ux_warning': show_mobile_ux_warning,
+        'mobile_ux_cookie_name': mobile_ux_cookie_name,
+    }
+
+
+def mobile_experience_hidden_by_toggle(request):
+    from corehq import toggles
+    user = request.couch_user
+    for project in user.domains:
+        if toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(project, toggles.NAMESPACE_DOMAIN):
+            return True
+    return False
+
+
+def get_demo(request):
+    is_demo_visible = False
+    num_trial_days_remaining = 0
+    if (settings.IS_SAAS_ENVIRONMENT
+            and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')):
+        if getattr(request, 'user', None) and not request.user.is_authenticated:
+            is_demo_visible = True
+        elif hasattr(request, 'subscription') and request.subscription.is_trial:
+            delta = request.subscription.date_end - datetime.date.today()
+            num_trial_days_remaining = max(0, delta.days)
+            is_demo_visible = True
+    return {
+        'is_demo_visible': is_demo_visible,
+        'num_trial_days_remaining': num_trial_days_remaining,
     }

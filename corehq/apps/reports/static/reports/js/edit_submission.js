@@ -1,4 +1,4 @@
-hqDefine("reports/js/edit_submission", function() {
+hqDefine("reports/js/edit_submission", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is a global variable depended on by touchforms

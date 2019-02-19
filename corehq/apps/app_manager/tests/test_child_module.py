@@ -9,7 +9,7 @@ from corehq.apps.app_manager.models import (
     Module,
     PreloadAction,
 )
-from corehq.apps.app_manager.models import WORKFLOW_PREVIOUS
+from corehq.apps.app_manager.const import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'
@@ -20,7 +20,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
     child_module_class = None
 
     def setUp(self):
-        self.factory = AppFactory(build_version='2.9', domain=DOMAIN)
+        self.factory = AppFactory(build_version='2.9.0', domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
 
@@ -60,7 +60,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
           </menu>
           <menu id="m0">
             <text>
-              <locale id="modules.m1"/>
+              <locale id="modules.m0"/>
             </text>
             <command id="m1-f0"/>
           </menu>
@@ -68,8 +68,9 @@ class ModuleAsChildTestBase(TestXmlMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_deleted_parent(self, mock):
+    def test_deleted_parent(self, *args):
         self.module_1.root_module_id = "unknownmodule"
 
         cycle_error = {
@@ -78,8 +79,9 @@ class ModuleAsChildTestBase(TestXmlMixin):
         errors = self.app.validate_app()
         self.assertIn(cycle_error, errors)
 
+    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_circular_relation(self, mock):
+    def test_circular_relation(self, *args):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {
             'type': 'root cycle',
@@ -122,7 +124,7 @@ class AdvancedModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m0f0)
 
         m1f0 = self.module_1.get_form(0)
-        m1f0.source = self.get_xml('original_form', override_path=('data',))
+        m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         self.factory.form_requires_case(m1f0, 'gold-fish', update={'question1': '/data/question1'})
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
@@ -237,7 +239,7 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
         m1f0 = self.module_1.get_form(0)
-        m1f0.source = self.get_xml('original_form', override_path=('data',))
+        m1f0.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish', update={
             'question1': '/data/question1',
             'parent/question1': '/data/question1',
@@ -329,7 +331,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         """
         The session vars in the entries for the submodule should match the parent and avoid naming conflicts.
         """
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         reg_goldfish_mod, reg_goldfish_form = factory.new_basic_module('reg_goldfish', 'gold-fish')
         factory.form_opens_case(reg_goldfish_form)
         reg_guppy_mod, reg_guppy_form = factory.new_advanced_module('reg_guppy', 'guppy')
@@ -348,7 +350,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             'guppy',
             parent_module=upd_goldfish_mod,
         )
-        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',))
+        upd_guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         factory.form_requires_case(upd_guppy_form, 'gold-fish', update={'question1': '/data/question1'})
         factory.form_requires_case(
             upd_guppy_form,
@@ -364,7 +366,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
 
     def test_incorrect_case_var_for_case_update(self):
         # see http://manage.dimagi.com/default.asp?230013
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         new_episode_module, new_episode_form = factory.new_basic_module('register_episode', 'episode')
         factory.form_opens_case(new_episode_form)
 
@@ -376,7 +378,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
         lab_update_module, lab_update_form = factory.new_advanced_module('lab_update', 'lab_test', parent_module=lab_test_module)
         factory.form_requires_case(lab_update_form, 'episode', update={'episode_type': '/data/question1'})
         factory.form_requires_case(lab_update_form, 'lab_test', parent_case_type='episode')
-        lab_update_form.source = self.get_xml('original_form', override_path=('data',))
+        lab_update_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
 
         expected_suite_entry = """
         <partial>
@@ -393,7 +395,7 @@ class AdvancedSubModuleTests(SimpleTestCase, TestXmlMixin):
             suite_xml,
             './entry[3]/session'
         )
-        form_xml = lab_update_form.render_xform()
+        form_xml = lab_update_form.render_xform().decode('utf-8')
         self.assertTrue(
             '<bind calculate="instance(\'commcaresession\')/session/data/case_id_new_lab_test_0" nodeset="/data/case_load_episode_0/case/@case_id"/>' not in form_xml
         )
@@ -409,7 +411,7 @@ class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
         """
         Test parent case is correctly set in preloads when first form of parent module updates a case
         """
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
         upd_goldfish_mod, upd_goldfish_form = factory.new_basic_module('upd_goldfish', 'gold-fish')
         factory.form_requires_case(upd_goldfish_form)
 
@@ -418,7 +420,7 @@ class BasicSubModuleTests(SimpleTestCase, TestXmlMixin):
             'guppy',
             parent_module=upd_goldfish_mod,
         )
-        guppy_form.source = self.get_xml('original_form', override_path=('data',))
+        guppy_form.source = self.get_xml('original_form', override_path=('data',)).decode('utf-8')
         factory.form_requires_case(
             guppy_form,
             'guppy',

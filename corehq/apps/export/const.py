@@ -10,6 +10,8 @@ from couchexport.deid import (
 )
 from corehq.apps.export.transforms import (
     case_id_to_case_name,
+    case_id_to_link,
+    form_id_to_link,
     user_id_to_username,
     owner_id_to_display,
     workflow_transform,
@@ -30,6 +32,8 @@ DEID_TRANSFORM_FUNCTIONS = {
     DEID_DATE_TRANSFORM: deid_date,
 }
 CASE_NAME_TRANSFORM = "case_name_transform"
+CASE_ID_TO_LINK = "case_link_transform"
+FORM_ID_TO_LINK = "form_link_transform"
 USERNAME_TRANSFORM = "username_transform"
 OWNER_ID_TRANSFORM = "owner_id_transform"
 WORKFLOW_TRANSFORM = "workflow_transform"
@@ -38,6 +42,8 @@ CASE_OR_USER_ID_TRANSFORM = "case_or_user_id_transform"
 CASE_CLOSE_TO_BOOLEAN = "case_close_to_boolean"
 TRANSFORM_FUNCTIONS = {
     CASE_NAME_TRANSFORM: case_id_to_case_name,
+    CASE_ID_TO_LINK: case_id_to_link,
+    FORM_ID_TO_LINK: form_id_to_link,
     USERNAME_TRANSFORM: user_id_to_username,
     OWNER_ID_TRANSFORM: owner_id_to_display,
     WORKFLOW_TRANSFORM: workflow_transform,
@@ -68,7 +74,11 @@ PROPERTY_TAG_STOCK = 'stock'
 KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
 # Attributes found on a case block. <case case_id="..." date_modified="..." ...>
-CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+CASE_ATTRIBUTES = {
+    '@case_id': 'string',
+    '@date_modified': 'datetime',
+    '@user_id': 'string'
+}
 
 # Elements that are found in a case create block
 # <case>
@@ -92,34 +102,9 @@ EMPTY_VALUE = ''
 
 UNKNOWN_INFERRED_FROM = 'unknown'
 
-SKIPPABLE_PROPERTIES = frozenset([
-    'initial_processing_complete',
-    '_rev',
-    'computed_modified_on_',
-    'server_modified_on',
-    'domain',
-    'form.#type',
-    'form.@uiVersion',
-    'openrosa_headers.HTTP_X_OPENROSA_VERSION',
-    'openrosa_headers.HTTP_ACCEPT_LANGUAGE',
-    'openrosa_headers.HTTP_DATE',
-    'problem',
-    'doc_type',
-    'path',
-    'version',
-    'date_header',
-    'migrating_blobs_from_couch',
-    'orig_id',
-    'edited_on',
-    'deprecated_date',
-    'deprecated_form_id',
-    'auth_context.authenticated',
-    'auth_context.doc_type',
-    'auth_context.domain',
-    'auth_context.user_id',
-])
-
-
+# Used for manually triggered exports
+EXPORT_DOWNLOAD_QUEUE = 'export_download_queue'
+# Used for automatically triggered exports
 SAVED_EXPORTS_QUEUE = 'saved_exports_queue'
 
 # The maximum file size of one DataFile
@@ -127,3 +112,18 @@ MAX_DATA_FILE_SIZE = 104857600  # 100 MB
 
 # The total space allowance of a domain for DataFiles
 MAX_DATA_FILE_SIZE_TOTAL = 2147483648  # 2 GB
+
+
+class SharingOption(object):
+    PRIVATE = 'private'
+    EXPORT_ONLY = 'export_only'
+    EDIT_AND_EXPORT = 'edit_and_export'
+
+    CHOICES = (
+        PRIVATE,
+        EXPORT_ONLY,
+        EDIT_AND_EXPORT,
+    )
+
+
+UNKNOWN_EXPORT_OWNER = 'unknown'

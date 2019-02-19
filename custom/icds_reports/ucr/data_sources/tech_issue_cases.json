@@ -1,9 +1,12 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
     "icds-sql",
     "icds-test",
     "icds-cas",
+    "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
@@ -397,7 +400,7 @@
         "property_value": "ls"
       }
     },
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-non-dashboard",
     "disable_destructive_rebuild": true
   }
 }

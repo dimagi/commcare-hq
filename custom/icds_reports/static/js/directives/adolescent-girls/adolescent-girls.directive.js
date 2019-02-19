@@ -8,15 +8,15 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var vm = this;
     vm.label = "Adolescent Girls (11-14 years)";
     vm.steps = {
-        'map': {route: '/adolescent_girls/map', label: 'Map View'},
-        'chart': {route: '/adolescent_girls/chart', label: 'Chart View'},
+        'map': {route: '/demographics/adolescent_girls/map', label: 'Map View'},
+        'chart': {route: '/demographics/adolescent_girls/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Women',
     };
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
+        info: 'Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -54,7 +54,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ",",
-        'captionContent': ' Total number of adolescent girls who are enrolled for Anganwadi Services',
+        'captionContent': ' Of the total number of adolescent girls (aged 11-14 years), the percentage of girls enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;

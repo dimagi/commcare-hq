@@ -8,15 +8,15 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     var vm = this;
     vm.label = "AWCs Reported Weighing Scale: Mother and Child";
     vm.steps = {
-        'map': {route: '/adult_weight_scale/map', label: 'Map View'},
-        'chart': {route: '/adult_weight_scale/chart', label: 'Chart View'},
+        'map': {route: '/awc_infrastructure/adult_weight_scale/map', label: 'Map View'},
+        'chart': {route: '/awc_infrastructure/adult_weight_scale/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage',
     };
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs that reported having a weighing scale for mother and child',
+        info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for mother and child',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -49,7 +49,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of AWCs that reported having a weighing scale for mother and child',
+        'captionContent': ' Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for mother and child',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();

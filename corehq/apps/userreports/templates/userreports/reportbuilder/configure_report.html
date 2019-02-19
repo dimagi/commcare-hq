@@ -70,7 +70,7 @@
       {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}
-          <button id="btnSaveView" class="btn btn-info">{% trans 'Save and View Report' %}</button>
+          <button id="btnSaveView" class="btn btn-primary">{% trans 'Save and View Report' %}</button>
         {% endif %}
       {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
@@ -83,17 +83,19 @@
           id: 'report-title',
           placeholder: '{% trans "Enter report name here"|escapejs %}',
           cols: 50,
-        "></inline-edit>
+        " data-apply-bindings="false"></inline-edit>
       </div>
       <div class="page-edit-description">
         <inline-edit params="
           value: reportDescription,
           id: 'report-description',
+	  {% if existing_report.get_id %}
           url: '{% url "update_report_description" domain existing_report.get_id %}',
+	  {% endif %}
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
           cols: 50,
-        "></inline-edit>
+        " data-apply-bindings="false"></inline-edit>
       </div>
     </div>
     <div class="row">
@@ -298,10 +300,13 @@
             <div class="ucr-preview-container fs-hide">
               <h3 data-bind="visible: !previewError()">{% trans 'Data Table' %}</h3>
               <p data-bind="visible: previewError" class="alert alert-warning">
-                {% blocktrans %}
-                  There was an error rendering your report preview. Please adjust your configuration to try again.
-                  If the issue persists, please report an issue.
-                {% endblocktrans %}
+                <span data-bind="text: previewErrorMessage"></span>
+                <span data-bind="visible: !previewErrorMessage()">
+                  {% blocktrans %}
+                    There was an error rendering your report preview. Please adjust your configuration to try again.
+                    If the issue persists, please report an issue.
+                  {% endblocktrans %}
+                </span>
               </p>
               <table id="preview" class="table"></table>
             </div>

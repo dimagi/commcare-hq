@@ -6,6 +6,7 @@ from django.test.utils import override_settings
 
 from django.test import TestCase
 
+from custom.icds_reports.messages import awcs_reported_functional_toilet_help_text
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_map, \
     get_functional_toilet_data_chart, get_functional_toilet_sector_data
 from custom.icds_reports.const import ChartColors, MapColors
@@ -13,7 +14,6 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestFunctionalToilet(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_functional_toilet_data_map(
@@ -57,18 +57,13 @@ class TestFunctionalToilet(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                "st1": {
-                    "in_month": 8,
-                    "original_name": ["st1"],
-                    "all": 17,
-                    "fillKey": "25%-75%"
-                },
-                "st2": {
-                    "in_month": 7,
-                    "original_name": ["st2"],
-                    "all": 13,
-                    "fillKey": "25%-75%"
-                }
+                'st4': {'in_month': 0, 'original_name': ['st4'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st5': {'in_month': 0, 'original_name': ['st5'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st6': {'in_month': 0, 'original_name': ['st6'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st7': {'in_month': 0, 'original_name': ['st7'], 'all': 0, 'fillKey': '0%-25%'}, 
+                'st1': {'in_month': 8, 'original_name': ['st1'], 'all': 17, 'fillKey': '25%-75%'}, 
+                'st2': {'in_month': 7, 'original_name': ['st2'], 'all': 13, 'fillKey': '25%-75%'}, 
+                'st3': {'in_month': 0, 'original_name': ['st3'], 'all': 0, 'fillKey': '0%-25%'}
             }
         )
 
@@ -82,7 +77,8 @@ class TestFunctionalToilet(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of AWCs that reported having a functional toilet"
+            "Of the AWCs that submitted an Infrastructure Details form, the percentage of AWCs that reported "
+            "having a functional toilet"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -95,7 +91,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 50.452488687782804)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_functional_toilet_data_map(
@@ -192,7 +188,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 47.22222222222222)
+        self.assertEquals(data['rightLegend']['average'], 47.05882352941177)
 
     def test_chart_data(self):
         data = get_functional_toilet_data_chart(
@@ -265,14 +261,11 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {'loc_name': 'st2', 'percent': 53.84615384615385},
+                {'loc_name': 'st1', 'percent': 47.05882352941177},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0}
             ]
         )
 
@@ -288,14 +281,11 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -322,14 +312,13 @@ class TestFunctionalToilet(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
-                {
-                    "loc_name": "st2",
-                    "percent": 53.84615384615385
-                },
-                {
-                    "loc_name": "st1",
-                    "percent": 47.05882352941177
-                }
+                {"loc_name": "st2", "percent": 53.84615384615385},
+                {"loc_name": "st1", "percent": 47.05882352941177},
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
+                {'loc_name': 'st6', 'percent': 0.0},
+                {'loc_name': 'st7', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0}
             ]
         )
 
@@ -348,7 +337,7 @@ class TestFunctionalToilet(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a functional toilet",
+                "info": awcs_reported_functional_toilet_help_text(),
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,
