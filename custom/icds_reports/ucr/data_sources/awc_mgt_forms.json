@@ -77,11 +77,8 @@
           "datatype": null,
           "type": "ancestor_location",
           "location_id": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "awc_selected_location_id"
-            ]
+            "type": "named",
+            "name": "user_location_id"
           },
           "location_type": "supervisor",
           "location_property": "_id"
