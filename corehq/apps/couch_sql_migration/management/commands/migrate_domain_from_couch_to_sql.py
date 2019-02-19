@@ -9,10 +9,16 @@ from django.core.management.base import BaseCommand, CommandError
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, delete_diff_db, get_diff_db)
+    do_couch_to_sql_migration,
+    delete_diff_db,
+    get_diff_db,
+    revert_form_attachment_meta_domain,
+)
 from corehq.apps.couch_sql_migration.progress import (
-    set_couch_sql_migration_started, couch_sql_migration_in_progress,
-    set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+    set_couch_sql_migration_started,
+    couch_sql_migration_in_progress,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_complete,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -111,7 +117,7 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            _blow_away_migration(dst_domain)
+            _blow_away_migration(domain, dst_domain)
 
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
@@ -235,20 +241,27 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def _blow_away_migration(domain):
-    assert not should_use_sql_backend(domain)
-    delete_diff_db(domain)
+def _blow_away_migration(src_domain, dst_domain=None):
+    if dst_domain is None:
+        dst_domain = src_domain
+    if src_domain == dst_domain:
+        # If src_domain and dst_domain are different their backends don't change
+        assert not should_use_sql_backend(src_domain)
+    delete_diff_db(src_domain)
+
+    if src_domain != dst_domain:
+        revert_form_attachment_meta_domain(src_domain)
 
     for doc_type in doc_types():
-        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+        sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(dst_domain, doc_type)
+        FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=False)
 
-    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-    FormAccessorSQL.hard_delete_forms(domain, sql_form_ids, delete_attachments=False)
+    sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(dst_domain)
+    FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=False)
 
-    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(dst_domain)
+    CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
 
-    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-    CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    _logger.info("blew away migration for domain {}".format(domain))
+    sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain)
+    CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
+    _logger.info("blew away migration for domain {}".format(src_domain))
