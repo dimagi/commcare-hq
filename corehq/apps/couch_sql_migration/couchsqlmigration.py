@@ -2,6 +2,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
+
+import csv
+import io
 import os
 import uuid
 from copy import deepcopy
@@ -66,6 +69,10 @@ _logger = logging.getLogger('main_couch_sql_datamigration')
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
+
+UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'undo.csv')
+UNDO_SET_DOMAIN = 'set_domain'
+UNDO_CREATE = 'create'
 
 
 def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, debug=False, run_timestamp=None):
@@ -566,7 +573,14 @@ def _copy_form_properties(domain, sql_form, couch_form):
     return sql_form
 
 
-def _migrate_form_attachments(sql_form, couch_form):
+def append_undo(meta, operation):
+    with io.open(UNDO_CSV, 'ab') as undo_csv:
+        writer = csv.writer(undo_csv)
+        row = (meta.parent_id, meta.type_code, meta.name, operation)
+        writer.writerow(row)
+
+
+def _migrate_form_attachments(src_domain, sql_form, couch_form):
     """Copy over attachment meta - includes form.xml"""
     attachments = []
     metadb = get_blob_db().metadb
@@ -578,7 +592,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 type_code=type_code,
                 name=name
             )
-            assert meta.domain == couch_form.domain, (meta.domain, couch_form.domain)
+            assert meta.domain == src_domain, (meta.domain, src_domain)
             return meta
         except BlobMeta.DoesNotExist:
             return None
@@ -587,12 +601,21 @@ def _migrate_form_attachments(sql_form, couch_form):
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
 
+        if meta and meta.domain != couch_form.domain:
+            # meta domain is src_domain; form is being migrated to dst_domain
+            append_undo(meta, UNDO_SET_DOMAIN)
+            meta.domain = couch_form.domain
+            meta.save()
+
         # there was a bug in a migration causing the type code for many form attachments to be set as form_xml
         # this checks the db for a meta resembling this and fixes it for postgres
         # https://github.com/dimagi/commcare-hq/blob/3788966119d1c63300279418a5bf2fc31ad37f6f/corehq/blobs/migrate.py#L371
         if not meta and name != "form.xml":
             meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
             if meta:
+                if meta.domain != couch_form.domain:
+                    append_undo(meta, UNDO_SET_DOMAIN)
+                    meta.domain = couch_form.domain
                 meta.type_code = CODES.form_attachment
                 meta.save()
 
@@ -607,9 +630,40 @@ def _migrate_form_attachments(sql_form, couch_form):
                 key=blob.key,
             )
             meta.save()
+            append_undo(meta, UNDO_CREATE)
 
         attachments.append(meta)
     sql_form.attachments_list = attachments
+
+
+def revert_form_attachment_meta_domain(src_domain):
+    """
+    Change form attachment meta.domain from dst_domain back to src_domain
+    """
+    try:
+        csv_file = io.open(UNDO_CSV, 'rb')
+    except IOError as err:
+        if 'No such file or directory' in str(err):
+            # Nothing to undo
+            return
+        raise
+    metadb = get_blob_db().metadb
+    with csv_file as undo_csv:
+        reader = csv.reader(undo_csv)
+        for row in reader:
+            parent_id, type_code, name, operation = row
+            meta = metadb.get(
+                parent_id=parent_id,
+                type_code=type_code,
+                name=name
+            )
+            if operation == UNDO_SET_DOMAIN:
+                meta.domain = src_domain
+                meta.save()
+            elif operation == UNDO_CREATE:
+                meta.delete()
+
+    os.unlink(UNDO_CSV)
 
 
 def _migrate_form_operations(sql_form, couch_form):
