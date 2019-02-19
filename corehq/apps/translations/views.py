@@ -27,6 +27,7 @@ from corehq.apps.translations.app_translations import (
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
     read_uploaded_app_translation_file,
+    bulk_app_sheet_question_rows,
 )
 from corehq.util.workbook_json.excel import InvalidExcelFileException
 
@@ -98,6 +99,40 @@ def download_bulk_app_translations(request, domain, app_id):
     filename = '{app_name} v.{app_version} - App Translations'.format(
         app_name=app.name,
         app_version=app.version)
+    return export_response(temp, Format.XLS_2007, filename)
+
+
+@require_can_edit_apps
+def download_bulk_multimedia_translations(request, domain, app_id):
+    lang = request.GET.get('lang')
+    app = get_app(domain, app_id)
+
+    # TODO: probably extract
+    headers = (('multimedia', (
+        'menu',
+        'form',
+        'label',
+        'default',
+        'audio',
+        'image',
+        'video',
+    )),)
+    rows = []
+
+    # TODO: extract
+    for module_index, module in enumerate(app.modules):
+        module_string = 'module{}'.format(module_index + 1)
+        for form_index, form in enumerate(module.forms):
+            form_string = 'form{}'.format(form_index + 1)
+            for row in bulk_app_sheet_question_rows(form, lang):
+                rows.append([module_string, form_string] + row)
+
+    temp = io.BytesIO()
+    export_raw(headers, [('multimedia', rows)], temp)
+    filename = '{app_name} v.{app_version} - {lang} Multimedia Translations'.format(
+        app_name=app.name,
+        app_version=app.version,
+        lang=lang)
     return export_response(temp, Format.XLS_2007, filename)
 
 

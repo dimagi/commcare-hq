@@ -410,7 +410,6 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                 if exclude_form is not None and exclude_form(form):
                     continue
                 form_string = module_string + "_form" + str(form_index + 1)
-                xform = form.wrapped_xform()
 
                 # Add row for this form to the first sheet
                 # This next line is same logic as above :(
@@ -427,49 +426,59 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                 # Add form to the first street
                 rows[MODULES_AND_FORMS_SHEET_NAME].append(first_sheet_row)
 
-                if form.form_type == 'shadow_form':
-                    continue
-
                 # Populate form sheet
-                rows[form_string] = []
+                rows[form_string] = bulk_app_sheet_question_rows(form)
 
-                itext_items = OrderedDict()
-                try:
-                    nodes = xform.itext_node.findall("./{f}translation")
-                except XFormException:
-                    nodes = []
+    return rows
 
-                for translation_node in nodes:
-                    lang = translation_node.attrib['lang']
-                    for text_node in translation_node.findall("./{f}text"):
-                        text_id = text_node.attrib['id']
-                        itext_items[text_id] = itext_items.get(text_id, {})
 
-                        for value_node in text_node.findall("./{f}value"):
-                            value_form = value_node.attrib.get("form", "default")
-                            value = ''
-                            for part in ItextValue.from_node(value_node).parts:
-                                if isinstance(part, ItextOutput):
-                                    value += "<output value=\"" + part.ref + "\"/>"
-                                else:
-                                    value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
-                            itext_items[text_id][(lang, value_form)] = value
+def bulk_app_sheet_question_rows(form, lang=None):
+    if form.form_type == 'shadow_form':
+        return None
 
-                for text_id, values in six.iteritems(itext_items):
-                    row = [text_id]
-                    for value_form in ["default", "audio", "image", "video"]:
-                        # Get the fallback value for this form
-                        fallback = ""
-                        for lang in app.langs:
-                            fallback = values.get((lang, value_form), fallback)
-                            if fallback:
-                                break
-                        # Populate the row
-                        for lang in app.langs:
-                            row.append(values.get((lang, value_form), fallback))
-                    # Don't add empty rows:
-                    if any(row[1:]):
-                        rows[form_string].append(row)
+    rows = []
+
+    xform = form.wrapped_xform()
+    itext_items = OrderedDict()
+    try:
+        nodes = xform.itext_node.findall("./{f}translation" + ("[@lang='{}']".format(lang) if lang else ""))
+    except XFormException:
+        nodes = []
+
+    for translation_node in nodes:
+        lang = translation_node.attrib['lang']
+        for text_node in translation_node.findall("./{f}text"):
+            text_id = text_node.attrib['id']
+            itext_items[text_id] = itext_items.get(text_id, {})
+
+            for value_node in text_node.findall("./{f}value"):
+                value_form = value_node.attrib.get("form", "default")
+                value = ''
+                for part in ItextValue.from_node(value_node).parts:
+                    if isinstance(part, ItextOutput):
+                        value += "<output value=\"" + part.ref + "\"/>"
+                    else:
+                        value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
+                itext_items[text_id][(lang, value_form)] = value
+
+    app = form.get_app()
+    langs = [lang] if lang else app.langs
+    for text_id, values in six.iteritems(itext_items):
+        row = [text_id]
+        for value_form in ["default", "audio", "image", "video"]:
+            # Get the fallback value for this form
+            fallback = ""
+            for lang in app.langs:
+                fallback = values.get((lang, value_form), fallback)
+                if fallback:
+                    break
+            # Populate the row
+            for lang in langs:
+                row.append(values.get((lang, value_form), fallback))
+        # Don't add empty rows:
+        if any(row[1:]):
+            rows.append(row)
+
     return rows
 
 

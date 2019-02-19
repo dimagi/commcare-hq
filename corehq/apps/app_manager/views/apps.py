@@ -261,7 +261,7 @@ def get_app_view_context(request, app):
         'bulk_app_multimedia_upload': {
             'action': reverse('upload_bulk_app_translations',   # TODO
                               args=(app.domain, app.get_id)),
-            'download_url': reverse('download_bulk_app_translations',   # TODO
+            'download_url': reverse('download_bulk_multimedia_translations',
                                     args=(app.domain, app.get_id)),
             'adjective': _("multimedia"),
             'plural_noun': _("multimedia references"),
