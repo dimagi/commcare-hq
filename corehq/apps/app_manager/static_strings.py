@@ -201,6 +201,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Unsent Form Limit'),
     ugettext_noop('Unsynced Time Limit'),
     ugettext_noop('Update on every sync'),
+    ugettext_noop('Upload a file to serve as a demo logo on Android phones'),
     ugettext_noop('Upload a file to serve as a login logo on Android phones'),
     ugettext_noop('Use Secure Submissions'),
     ugettext_noop('Use project level setting'),
