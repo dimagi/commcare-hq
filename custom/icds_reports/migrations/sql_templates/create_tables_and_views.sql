@@ -71,19 +71,6 @@ CREATE TABLE india_geo_data
 );
 CREATE INDEX "india_geo_data_indx1" ON "india_geo_data" (state_site_code, district_site_code, block_site_code);
 
--- Table: Child Categories
-DROP TABLE IF EXISTS child_health_categories CASCADE;
-CREATE TABLE child_health_categories
-(
-	gender text NOT NULL,
-	age_tranche text NOT NULL,
-	caste text NOT NULL,
-	disabled text NOT NULL,
-	minority text NOT NULL,
-	resident text NOT NULL,
-	CONSTRAINT child_health_categories_pkey PRIMARY KEY (gender, age_tranche, caste, disabled, minority, resident)
-);
-
 -- Table: Table Name Mapping
 -- DROP TABLE IF EXISTS ucr_table_name_mapping CASCADE;
 CREATE TABLE ucr_table_name_mapping
