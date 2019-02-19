@@ -48,7 +48,7 @@
           "location_id": {
             "type": "property_name",
             "property_name": "owner_id"
-          }
+          },
           "location_type": "supervisor",
           "location_property": "_id"
         },
