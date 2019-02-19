@@ -8,4 +8,3 @@ restkit
 http-parser
 zeep
 cython
-xhtml2pdf
