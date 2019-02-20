@@ -477,19 +477,19 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {location_levels}, %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE
-                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges))
+                COALESCE(COUNT(*) FILTER (WHERE
+                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges) OR pregnant_ranges IS NULL)
                     AND migration_status IS DISTINCT FROM 'migrated'
                     AND marital_status = 'married'
-                ) as registered_eligible_couples,
-                COUNT(*) FILTER (WHERE
+                ), 0) as registered_eligible_couples,
+                COALESCE(COUNT(*) FILTER (WHERE
                     daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
-                ) as registered_pregnancies,
-                COUNT(*) FILTER (WHERE
+                ), 0) as registered_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
                     daterange(%(window_start)s, %(window_end)s) && any(fp_current_method_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
-                ) as eligible_couples_using_fp_method
+                ), 0) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND (opened_on < closed_on OR closed_on IS NULL)
@@ -519,11 +519,11 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {location_levels}, %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE hrp = 'yes') as high_risk_pregnancies,
-                COUNT(*) FILTER (WHERE child_birth_location = 'hospital') as institutional_deliveries,
-                COUNT(*) FILTER (WHERE
+                COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE child_birth_location = 'hospital'), 0) as institutional_deliveries,
+                COALESCE(COUNT(*) FILTER (WHERE
                     child_birth_location IS NOT NULL OR child_birth_location != ''
-                ) as total_deliveries
+                ), 0) as total_deliveries
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
@@ -554,7 +554,7 @@ class AggLocation(models.Model):
                 %(domain)s,
                 {location_levels},
                 %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
+                COALESCE(COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5), 0) as registered_children
             FROM "{child_tablename}" child
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND (opened_on < closed_on OR closed_on IS NULL)
