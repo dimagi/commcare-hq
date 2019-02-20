@@ -98,21 +98,18 @@
         "column_id": "state_id"
       },
       {
+        "display_name": "Supervisor ID",
         "datatype": "string",
-        "expression": {
-          "location_id": {
-            "expression": {
-              "type": "property_name",
-              "property_name": "owner_id"
-            },
-            "type": "root_doc"
-          },
-          "location_type": "supervisor",
-          "location_propery": "_id",
-          "type": "ancestor_location"
-        },
+        "column_id": "supervisor_id",
         "type": "expression",
-        "column_id": "supervisor_id"
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor"
+        }
       },
       {
         "comment": null,
