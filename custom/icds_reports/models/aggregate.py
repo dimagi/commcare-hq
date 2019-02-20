@@ -1646,6 +1646,7 @@ class AWWIncentiveReport(models.Model):
     # primary key as it's unique for every partition
     awc_id = models.CharField(max_length=40, primary_key=True)
     block_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     state_name = models.TextField(null=True)
     district_name = models.TextField(null=True)
     block_name = models.TextField(null=True)

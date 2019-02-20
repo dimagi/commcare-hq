@@ -32,7 +32,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-            state_id, month, awc_id, block_id, state_name, district_name, block_name, 
+            state_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name, 
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
             wer_eligible, awc_num_open, valid_visits, expected_visits
         ) (
@@ -41,6 +41,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
             %(month)s AS month,
             awcm.awc_id,
             awcm.block_id,
+            awcm.supervisor_id,
             awcm.state_name,
             awcm.district_name,
             awcm.block_name,
