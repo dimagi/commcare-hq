@@ -5,8 +5,39 @@ hqDefine("users/js/roles_and_permissions",[
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
     'bootstrap', // for bootstrap modal
-    'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
+    'hqwebapp/js/knockout_bindings.ko', // for roles modal
 ], function ($, ko, _, initialPageData, userRoles) {
+
+    ko.bindingHandlers.permissionIcon = {
+        init: function (element) {
+            $('<i class="icon fa"></i> <div class="details"></div>').appendTo(element);
+        },
+        update: function (element, valueAccessor, allBindingsAccessor) {
+            var opts = valueAccessor(),
+                isEdit = ko.utils.unwrapObservable(opts.edit),
+                isView = ko.utils.unwrapObservable(opts.view),
+                isManage = ko.utils.unwrapObservable(opts.manage),
+                iconEdit = 'fa-check',
+                iconView = 'fa-eye',
+                iconManage = 'fa-check',
+                details = $(element).find('.details'),
+                $icon = $(element).find('.icon');
+
+            if (isEdit) {
+                $icon.removeClass(iconView).removeClass(iconManage).addClass(iconEdit);
+                details.text("");
+            } else if (isView) {
+                $icon.removeClass(iconEdit).removeClass(iconManage).addClass(iconView);
+                details.text(django.gettext("View Only"));
+            } else if (isManage) {
+                $icon.removeClass(iconEdit).removeClass(iconView).addClass(iconManage);
+                details.text("");
+            } else {
+                $icon.removeClass(iconEdit).removeClass(iconView).removeClass(iconManage);
+                details.text("");
+            }
+        },
+    };
 
     ko.bindingHandlers.linkChecked = {
         // Makes sure that the value accessor is set to true if the checked
