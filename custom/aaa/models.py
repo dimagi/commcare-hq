@@ -204,12 +204,45 @@ class Woman(LocationDenormalizedModel):
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_eligible_couple_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-eligible_couple_forms')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{woman_tablename}" AS woman SET
+            fp_current_method_ranges = eligible_couple_fp.fp_current_method_ranges
+        FROM (
+            SELECT person_case_id, array_agg(fp_current_method_range) AS fp_current_method_ranges
+            FROM (
+                SELECT person_case_id, fp_current_method, daterange(timeend::date, next_timeend::date) AS fp_current_method_range
+                FROM(
+                    SELECT person_case_id,
+                           fp_current_method,
+                           timeend,
+                           LEAD(fp_current_method) OVER w AS next_fp_current_method,
+                           LEAD(timeend) OVER w AS next_timeend
+                    FROM "{eligible_couple_ucr_tablename}"
+                    WINDOW w AS (PARTITION BY person_case_id ORDER BY timeend DESC)
+                ) AS _tmp_table
+            ) eligible_couple
+            WHERE fp_current_method != 'none'
+            GROUP BY person_case_id
+        ) AS eligible_couple_fp
+        WHERE woman.person_case_id = eligible_couple_fp.person_case_id
+        """.format(
+            woman_tablename=cls._meta.db_table,
+            eligible_couple_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
     @classproperty
     def aggregation_queries(self):
         return [
             self.agg_from_person_case_ucr,
             self.agg_from_household_case_ucr,
             self.agg_from_ccs_record_case_ucr,
+            self.agg_from_eligible_couple_forms_ucr,
             self.agg_from_village_ucr,
             self.agg_from_awc_ucr,
         ]
