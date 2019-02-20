@@ -11,7 +11,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.dbaccessors import get_case_export_instances
+from corehq.apps.export.dbaccessors import get_case_export_instances, get_form_export_instances
 from corehq.privileges import DAILY_SAVED_EXPORT
 from corehq.util.log import with_progress_bar
 
@@ -19,24 +19,28 @@ from corehq.util.log import with_progress_bar
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
+        parser.add_argument('case_or_form')
         parser.add_argument('filename')
         parser.add_argument('domains', nargs='*')
 
-    def handle(self, filename, domains, **options):
+    def handle(self, case_or_form, filename, domains, **options):
         domain_names = domains or Domain.get_all_names()
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow([
                 'Export ID', 'Project Space', 'Export Size (bytes)', 'Export Format', '# Rows', '# Columns'
             ])
-            writer.writerows(self.get_output_rows(domain_names))
+            writer.writerows(self.get_output_rows(case_or_form, domain_names))
 
     @staticmethod
-    def get_output_rows(domain_names):
+    def get_output_rows(case_or_form, domain_names):
         for domain_name in with_progress_bar(domain_names):
             if not domain_has_privilege(domain_name, DAILY_SAVED_EXPORT):
                 continue
-            exports = get_case_export_instances(domain_name)
+            exports = {
+                'case': get_case_export_instances,
+                'form': get_form_export_instances,
+            }[case_or_form](domain_name)
             for export in exports:
                 export_id = export.get_id
                 if export.is_daily_saved_export and export.has_file():
