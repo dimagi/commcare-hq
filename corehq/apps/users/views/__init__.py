@@ -457,8 +457,8 @@ class BaseRoleAccessView(BaseUserSettingsView):
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
             role.has_unpermitted_location_restriction = (
-                    not self.can_restrict_access_by_location
-                    and not role.permissions.access_all_locations
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
             )
         if show_es_issue:
             messages.error(
@@ -521,8 +521,8 @@ class ListRolesView(BaseRoleAccessView):
 
     @property
     def can_edit_roles(self):
-        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
-               and self.couch_user.is_domain_admin
+        return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+                and self.couch_user.is_domain_admin)
 
     @property
     def is_location_safety_exempt(self):
@@ -531,18 +531,17 @@ class ListRolesView(BaseRoleAccessView):
     @property
     def landing_page_choices(self):
         return [
-                   {'id': None, 'name': _('Use Default')}
-               ] + [
-                   {'id': page.id, 'name': _(page.name)}
-                   for page in get_allowed_landing_pages(self.domain)
-               ]
+            {'id': None, 'name': _('Use Default')}
+        ] + [
+            {'id': page.id, 'name': _(page.name)}
+            for page in get_allowed_landing_pages(self.domain)
+        ]
 
     @property
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
-                        for role in self.user_roles)
-        ):
+                        for role in self.user_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -563,10 +562,10 @@ class ListRolesView(BaseRoleAccessView):
             'is_location_safety_exempt': self.is_location_safety_exempt,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
-                    toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
-                    toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
+                toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
-    }
+        }
 
 
 @require_can_edit_and_view_web_users

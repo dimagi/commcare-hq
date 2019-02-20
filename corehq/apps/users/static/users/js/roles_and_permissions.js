@@ -1,3 +1,4 @@
+/* globals django */
 hqDefine("users/js/roles_and_permissions",[
     'jquery',
     'knockout',
@@ -12,7 +13,7 @@ hqDefine("users/js/roles_and_permissions",[
         init: function (element) {
             $('<i class="icon fa"></i> <div class="details"></div>').appendTo(element);
         },
-        update: function (element, valueAccessor, allBindingsAccessor) {
+        update: function (element, valueAccessor) {
             var opts = valueAccessor(),
                 isEdit = ko.utils.unwrapObservable(opts.edit),
                 isView = ko.utils.unwrapObservable(opts.view),
@@ -42,7 +43,7 @@ hqDefine("users/js/roles_and_permissions",[
     ko.bindingHandlers.linkChecked = {
         // Makes sure that the value accessor is set to true if the checked
         // observable is true.
-        update: function(element, valueAccessor, allBindings) {
+        update: function (element, valueAccessor, allBindings) {
             var checkedVal = ko.utils.unwrapObservable(allBindings.get('checked'));
             if (checkedVal) {
                 valueAccessor()(checkedVal);

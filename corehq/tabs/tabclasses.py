@@ -1197,8 +1197,8 @@ class ProjectUsersTab(UITab):
                             for Mobile Workers."""),
                 'subpages': [
                     {'title': lambda **context: (
-                            "%s %s" % (_("Viewing") if is_view_only_subpage
-                                       else _("Editing"), context['group'].name)),
+                        "%s %s" % (_("Viewing") if is_view_only_subpage
+                                   else _("Editing"), context['group'].name)),
                      'urlname': 'group_members'},
                     {'title': _('Membership Info'),
                      'urlname': 'group_membership'}
@@ -1338,7 +1338,7 @@ class ProjectUsersTab(UITab):
     @property
     def sidebar_items(self):
         items = []
-        
+
         mobile_users_menu = self._get_mobile_users_menu()
         if mobile_users_menu:
             items.append((_('Application Users'), mobile_users_menu))
