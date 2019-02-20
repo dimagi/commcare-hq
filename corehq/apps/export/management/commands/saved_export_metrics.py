@@ -33,7 +33,7 @@ class Command(BaseCommand):
         for domain_name in with_progress_bar(domain_names):
             exports = get_form_export_instances(domain_name)
             for export in exports:
-                if export.has_file():
+                if export.is_daily_saved_export and export.has_file():
                     attachment = export.get_payload()
                     if isinstance(attachment, six.text_type):
                         attachment = attachment.encode('utf-8')
