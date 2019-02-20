@@ -19,6 +19,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
+        supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
         MAX(comp_feeding) OVER w AS comp_feeding_ever,
@@ -27,8 +28,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(comp_feeding) OVER w AS comp_feeding_latest,
         LAST_VALUE(diet_diversity) OVER w AS diet_diversity,
         LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
-        LAST_VALUE(hand_wash) OVER w AS hand_wash,
-        supervisor_id
+        LAST_VALUE(hand_wash) OVER w AS hand_wash
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -61,12 +61,13 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         # and we want NULL in the aggregate table
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
           demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
-          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash, supervisor_id
+          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
         ) (
           SELECT
             %(state_id)s AS state_id,
+            supervisor_id AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
@@ -85,8 +86,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
             END AS diet_quantity,
             CASE WHEN ucr.latest_time_end IS NOT NULL
                  THEN ucr.hand_wash ELSE prev_month.hand_wash
-            END AS hand_wash,
-            supervisor_id
+            END AS hand_wash
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
