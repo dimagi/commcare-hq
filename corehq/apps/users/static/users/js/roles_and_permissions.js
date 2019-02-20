@@ -65,6 +65,7 @@ hqDefine("users/js/roles_and_permissions",[
             appsList: initialPageData.get("apps_list"),
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
+            isLocationSafetyExempt: initialPageData.get("is_location_safety_exempt"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
         });
         $userRolesTable.show();

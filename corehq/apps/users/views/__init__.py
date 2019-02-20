@@ -525,6 +525,10 @@ class ListRolesView(BaseRoleAccessView):
                and self.couch_user.is_domain_admin
 
     @property
+    def is_location_safety_exempt(self):
+        return toggles.LOCATION_SAFETY_EXEMPTION.enabled(self.domain)
+
+    @property
     def landing_page_choices(self):
         return [
                    {'id': None, 'name': _('Use Default')}
@@ -555,6 +559,7 @@ class ListRolesView(BaseRoleAccessView):
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'is_location_safety_exempt': self.is_location_safety_exempt,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
                     toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
