@@ -62,12 +62,14 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "type": "ancestor_location",
-        "location_id": {
-          "type": "named",
-          "name": "user_location_id"
-        },
-        "location_type": "supervisor"
+        "type": "expression",
+        "expression":{
+          "type": "location_parent_id",
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          }
+        }
       },
       {
         "display_name": null,
