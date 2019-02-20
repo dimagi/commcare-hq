@@ -545,6 +545,8 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'redis://localhost:6379/0'
 
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+
 CELERY_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
@@ -1999,6 +2001,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [

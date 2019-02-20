@@ -445,6 +445,13 @@
                                 <label>{% trans "Fixture Variable" %}&nbsp;</label>
                                 <input type="text" class="form-control" data-bind="value: load_case_from_fixture.fixture_variable" />
                             </div>
+                            &nbsp;&nbsp;
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" data-bind="checked: load_case_from_fixture.auto_select_fixture" />
+                                    {% trans "Autoselect If Only One Result Returned From Fixture" %}
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="well well-sm">

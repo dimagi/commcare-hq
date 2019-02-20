@@ -56,6 +56,10 @@ class DbaccessorsTest(TestCase):
             # gets latest first
             [self.case_upload_2,
              self.case_upload_1])
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, limit=1, skip=1),
+            # skips latest, gets previous
+            [self.case_upload_1])
 
 
 class FormAndCaseIdsTest(TestCase):

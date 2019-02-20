@@ -690,9 +690,10 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
+        export = self.rendered_as == 'export'
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
-        ):
+        ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -737,6 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             user_ids=user_ids,
             xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
+            export=self.rendered_as == 'export'
         )
 
 
@@ -1733,6 +1735,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return avg_datespan
 
     def _report_data(self):
+        export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
         case_owners = _get_owner_ids_from_users(self.users_to_iterate)
@@ -1740,22 +1743,22 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
-                self.domain, avg_datespan, user_ids=user_ids
+                self.domain, avg_datespan, user_ids=user_ids, export=export
             ),
             submissions_by_user=get_submission_counts_by_user(
-                self.domain, self.datespan, user_ids=user_ids
+                self.domain, self.datespan, user_ids=user_ids, export=export
             ),
             active_cases_by_owner=get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             total_cases_by_owner=get_total_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             cases_closed_by_user=get_case_counts_closed_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
             cases_opened_by_user=get_case_counts_opened_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
         )
 

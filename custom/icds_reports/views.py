@@ -757,7 +757,9 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             config = beneficiary_config
         if indicator == AWW_INCENTIVE_REPORT:
-            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK
+            ]:
                 return HttpResponseBadRequest()
             today = datetime.now(INDIA_TIMEZONE)
             month_offset = 2 if today.day < 15 else 1
@@ -1639,8 +1641,8 @@ class DownloadPDFReport(View):
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-        res = AsyncResult(task_id)
-        status = res.ready()
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
 
         if status:
             return JsonResponse(
@@ -1770,3 +1772,76 @@ class CasDataExport(View):
             return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
         except NotFound:
             raise Http404
+
+
+class CasDataExportAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        types = ", ".join(self.valid_types)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "invalid_type": "Please specify one of {} as data_type".format(types),
+            "not_available": "The file you have requested is no longer available",
+            "no_access": "You do not have access to this state"
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 15 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        user_states = [loc.name
+                       for loc in self.request.couch_user.get_sql_locations(self.request.domain)
+                       if loc.location_type__name == 'state']
+        if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
+            return JsonResponse(self.message('no_access'), status=403)
+
+        state_id = SQLLocation.objects.get(location_type__name='state', name=state_name, domain=self.request.domain).location_id
+
+        data_type = request.GET.get('type')
+        if data_type not in self.valid_types:
+            return JsonResponse(self.message('invalid_type'), status=400)
+        type_code = self.get_type_code(data_type)
+
+        sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
+
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+        except NotFound:
+            return JsonResponse(self.message('not_available'), status=400)
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+    @property
+    def valid_types(self):
+        return ('woman', 'child', 'awc')
+
+    def get_type_code(self, data_type):
+        type_map = {
+            "child": 1,
+            "woman": 2,
+            "awc": 3
+        }
+        return type_map[data_type]

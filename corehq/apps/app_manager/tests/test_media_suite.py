@@ -106,7 +106,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         self._assertMediaSuiteResourcesEqual(self.get_xml('case_list_media_suite'), app.create_media_suite())
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.hqmedia.models.domain_has_privilege', return_value=True)
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version', lambda _: None)
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
@@ -133,9 +133,9 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         form_xml = self.get_xml('form_with_media_refs').decode('utf-8')
         form = app.get_module(0).new_form('form_with_media', 'en', attachment=form_xml)
         xform = form.wrapped_xform()
-        for i, path in enumerate(xform.media_references(form="audio")):
+        for i, path in enumerate(reversed(sorted(xform.media_references(form="audio")))):
             app.create_mapping(CommCareAudio(_id='form_audio_{}'.format(i)), path, save=False)
-        for i, path in enumerate(xform.media_references(form="image")):
+        for i, path in enumerate(sorted(xform.media_references(form="image"))):
             app.create_mapping(CommCareImage(_id='form_image_{}'.format(i)), path, save=False)
 
         app.set_media_versions()
