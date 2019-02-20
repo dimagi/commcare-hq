@@ -44,6 +44,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
                  lock=False, wrap=True, initial=None, xforms=None,
                  load_src="unknown"):
 
+        self._track_load = case_load_counter(load_src, self.domain)
         self._populate_from_initial(initial)
         self.domain = domain
         self.cached_xforms = xforms if xforms is not None else []
@@ -59,7 +60,6 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         # onto this stack and restores them when the context exits
         self.lock_stack = []
         self.processor_interface = FormProcessorInterface(self.domain)
-        self._track_load = case_load_counter(load_src, self.domain)
 
     def _populate_from_initial(self, initial_cases):
         if initial_cases:

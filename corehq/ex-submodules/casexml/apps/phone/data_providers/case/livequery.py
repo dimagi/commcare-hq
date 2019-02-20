@@ -267,6 +267,7 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
 class PrefetchIndexCaseAccessor(object):
 
     def __init__(self, accessor, indices):
+        self.domain = accessor.domain
         self.accessor = accessor
         self.indices = indices
 
