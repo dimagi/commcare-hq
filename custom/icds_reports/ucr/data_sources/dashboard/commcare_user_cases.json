@@ -43,14 +43,11 @@
         "type": "expression",
         "is_primary_key": false,
         "expression": {
-          "datatype": null,
-          "type": "ancestor_location",
-          "location_id": {
+          "location_id_expression": {
             "type": "property_name",
             "property_name": "owner_id"
           },
-          "location_type": "supervisor",
-          "location_property": "_id"
+          "type": "location_parent_id"
         },
         "column_id": "supervisor_id"
       },
