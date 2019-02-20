@@ -127,7 +127,7 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
     metric = "commcare.load.%s" % load_type
 
     def track_load(value=1):
-        datadog_counter(metric, value, tags)
+        datadog_counter(metric, value, tags=tags)
 
     return track_load
 
