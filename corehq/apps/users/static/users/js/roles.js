@@ -134,7 +134,8 @@ hqDefine('users/js/roles',[
         };
 
         self.setRoleBeingEdited = function (role) {
-            var title = role === self.defaultRole ? gettext("New Role") : gettext("Edit Role: ") + role.name();
+            var actionType = self.allowEdit ? gettext("Edit Role: ") : gettext("View Role: ");
+            var title = role === self.defaultRole ? gettext("New Role") : actionType + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
