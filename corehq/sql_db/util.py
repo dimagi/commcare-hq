@@ -303,4 +303,4 @@ def select_db_for_read(weighted_dbs):
         # normalize weights of remaining dbs
         total_weight = sum(weights)
         normalized_weights = [float(weight) / total_weight for weight in weights]
-        return weighted_choice(dbs, p=normalized_weights)
+        return weighted_choice(dbs, normalized_weights)
