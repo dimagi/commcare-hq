@@ -54,7 +54,7 @@
             "name": "user_location_id"
           },
           "location_type": "supervisor",
-      	  "location_property": "_i
+      	  "location_property": "_id"
         }
       },
       {
