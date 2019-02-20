@@ -29,6 +29,26 @@
       {% endif %}
     </p>
 
+    {% if not can_edit_roles and is_domain_admin %}
+        {% url "domain_select_plan" domain as subscription_url %}
+        <div class="alert alert-info">
+            <p>
+                <i class="fa fa-info-circle"></i>
+                {% blocktrans %}
+                    Would you like to edit roles and add new,
+                    custom roles?
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    <strong><a href="{{ subscription_url }}">Upgrade to CommCare Standard</a></strong>
+                    to activate
+                    <strong>Advanced Role-Based Access</strong>.
+                {% endblocktrans %}
+            </p>
+        </div>
+    {% endif %}
+
     <div class="panel panel-default" id="user-roles-table" style="display: none;">
         <div class="panel-heading">
             <h3 class="panel-title">
