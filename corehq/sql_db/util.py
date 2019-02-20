@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
-import random
+from numpy import random
 
 from django.conf import settings
 from django import db
