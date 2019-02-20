@@ -27,7 +27,8 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(comp_feeding) OVER w AS comp_feeding_latest,
         LAST_VALUE(diet_diversity) OVER w AS diet_diversity,
         LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
-        LAST_VALUE(hand_wash) OVER w AS hand_wash
+        LAST_VALUE(hand_wash) OVER w AS hand_wash,
+        supervisor_id
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -62,7 +63,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}" (
           state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
           demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
-          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
+          comp_feeding_latest, diet_diversity, diet_quantity, hand_wash, supervisor_id
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -84,7 +85,8 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
             END AS diet_quantity,
             CASE WHEN ucr.latest_time_end IS NOT NULL
                  THEN ucr.hand_wash ELSE prev_month.hand_wash
-            END AS hand_wash
+            END AS hand_wash,
+            supervisor_id
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id

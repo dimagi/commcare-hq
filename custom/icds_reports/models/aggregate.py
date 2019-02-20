@@ -920,6 +920,7 @@ class AggregateComplementaryFeedingForms(models.Model):
         null=True,
         help_text="Hand washing occurred for this case in the latest form"
     )
+    supervisor_id = models.TextField(null=True)
 
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
