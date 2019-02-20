@@ -312,8 +312,11 @@
       "user_location_id": {
         "type": "icds_user_location",
         "user_id_expression": {
-          "type": "property_path",
-          "property_path": ["form", "meta", "userID"]
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "meta", "userID"]
+          }
         }
       }
     },
