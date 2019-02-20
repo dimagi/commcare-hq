@@ -19,14 +19,16 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('filename')
+        parser.add_argument('domains', nargs='*')
 
-    def handle(self, filename, **options):
+    def handle(self, filename, domains, **options):
+        domain_names = domains or Domain.get_all_names()
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow([
                 'Export ID', 'Project Space', 'Export Size (bytes)', 'Export Format', '# Rows', '# Columns'
             ])
-            writer.writerows(self.get_output_rows(Domain.get_all_names()))
+            writer.writerows(self.get_output_rows(domain_names))
 
     @staticmethod
     def get_output_rows(domain_names):
