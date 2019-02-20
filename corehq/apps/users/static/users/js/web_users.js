@@ -5,7 +5,6 @@ hqDefine("users/js/web_users",[
     "hqwebapp/js/initial_page_data",
     'bootstrap', // for bootstrap modal
     'hqwebapp/js/components.ko',    // pagination widget
-    'hqwebapp/js/knockout_bindings.ko', // for staticChecked data binding in web_users.html
 ], function ($, ko, _, initialPageData) {
 
     var webUsersList = function () {
