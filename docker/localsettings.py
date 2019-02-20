@@ -94,6 +94,21 @@ if USE_PARTITIONED_DATABASE:
     }
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
+    
+USE_CITUSDB = os.environ.get('USE_CITUSDB', 'no') == 'yes'
+if USE_CITUSDB:
+    DATABASES['citus'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+        'NAME': 'commcarehq_citus',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5433',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    }
 
 ####### Couch Config ######
 COUCH_DATABASES = {

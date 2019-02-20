@@ -103,6 +103,7 @@ function _run_tests() {
     shift
     if [ "$TEST" == "python-sharded" -o "$TEST" == "python-sharded-and-javascript" ]; then
         export USE_PARTITIONED_DATABASE=yes
+        export USE_CITUSDB=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
     else

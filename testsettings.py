@@ -105,6 +105,7 @@ REPORTING_DATABASES = {
     'icds-ucr-non-dashboard': 'default',
     'icds-test-ucr': 'default',
     'aaa-data': 'default',
+    'citus': 'citus' if 'citus' in DATABASES else 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED
