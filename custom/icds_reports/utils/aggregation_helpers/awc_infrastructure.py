@@ -46,6 +46,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
         return """
             SELECT
                 DISTINCT awc_id AS awc_id,
+                supervisor_id AS supervisor_id,
                 {select_lines}
             FROM "{ucr_tablename}"
             WHERE timeend >= %(six_months_ago)s AND timeend < %(next_month_start)s
@@ -75,7 +76,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-            state_id, month, awc_id, latest_time_end_processed,
+            state_id, supervisor_id, month, awc_id, latest_time_end_processed,
             awc_building, source_drinking_water, toilet_functional,
             electricity_awc, adequate_space_pse,
             adult_scale_available, baby_scale_available, flat_scale_available,
@@ -84,6 +85,7 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
+            supervisor_id AS supervisor_id,
             %(month)s AS month,
             ucr.awc_id AS awc_id,
             ucr.timeend as latest_time_end_processed,

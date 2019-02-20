@@ -25,11 +25,12 @@ class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, sum_attended_child_ids,
-          lunch_count
+          state_id, supervisor_id, month, case_id, latest_time_end_processed,
+          sum_attended_child_ids, lunch_count
         ) (
           SELECT
             %(state_id)s AS state_id,
+            supervisor_id AS supervisor_id
             %(month)s AS month,
             child_health_case_id AS case_id,
             MAX(timeend) AS latest_time_end_processed,

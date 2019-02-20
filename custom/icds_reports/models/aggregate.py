@@ -877,6 +877,7 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1239,6 +1240,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1556,6 +1558,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1572,6 +1575,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         null=True,
         help_text="Number of days the child had the lunch"
     )
+
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
 
@@ -1598,6 +1602,7 @@ class AggregateAwcInfrastructureForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
