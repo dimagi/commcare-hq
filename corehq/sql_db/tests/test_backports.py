@@ -7,8 +7,6 @@ import functools
 import random
 from collections import Counter
 
-from django.test import SimpleTestCase
-
 from corehq.sql_db import backports
 
 
@@ -48,8 +46,6 @@ def test_low_weight():
     assert 'almost_never' in result_set
 
 
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(backports)
-        self.assertEqual(results.failed, 0)
+def test_doctests():
+    results = doctest.testmod(backports)
+    assert results.failed == 0
