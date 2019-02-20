@@ -17,6 +17,7 @@ from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, IVRSurveyContent, SMSCallbackContent
 from corehq.sql_db.models import PartitionedModel
+from corehq.util.datadog.lockmeter import LockMeter
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
@@ -286,7 +287,11 @@ class ScheduleInstance(PartitionedModel):
             doc_type,
             doc_id,
         )
-        return client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60)
+        return LockMeter(
+            client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60),
+            "send_content_for_%s" % type(self).__name__,
+            track_unreleased=False,
+        )
 
     def send_current_event_content_to_recipients(self):
         client = get_redis_client()

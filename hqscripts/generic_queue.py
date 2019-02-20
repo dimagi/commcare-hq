@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import attr
 from corehq.sql_db.util import handle_connection_failure
+from corehq.util.datadog.lockmeter import LockMeter
 from datetime import datetime
 from time import sleep
 from django.core.management.base import BaseCommand
@@ -69,7 +70,11 @@ class GenericEnqueuingOperation(BaseCommand):
 
     def get_enqueuing_lock(self, client, key):
         lock_timeout = self.get_enqueuing_timeout() * 60
-        return client.lock(key, timeout=lock_timeout)
+        return LockMeter(
+            client.lock(key, timeout=lock_timeout),
+            self.get_queue_name(),
+            track_unreleased=False,
+        )
 
     def get_queue_name(self):
         """Should return the name of this queue. Used for acquiring the

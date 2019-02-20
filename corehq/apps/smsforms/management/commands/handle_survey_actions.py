@@ -4,6 +4,7 @@ from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.tasks import handle_due_survey_action
 from corehq.sql_db.util import handle_connection_failure
+from corehq.util.datadog.lockmeter import LockMeter
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -31,7 +32,11 @@ class Command(BaseCommand):
             session_id,
             current_action_due.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return client.lock(key, timeout=60 * 60)
+        return LockMeter(
+            client.lock(key, timeout=60 * 60),
+            "smsforms_task",
+            track_unreleased=False,
+        )
 
     def get_survey_sessions_due_for_action(self):
         return SQLXFormsSession.objects.filter(

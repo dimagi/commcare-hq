@@ -19,6 +19,7 @@ from corehq.messaging.scheduling.tasks import (
 )
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
+from corehq.util.datadog.lockmeter import LockMeter
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -63,7 +64,11 @@ class Command(BaseCommand):
             schedule_instance_id.hex,
             next_event_due.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return client.lock(key, timeout=60 * 60)
+        return LockMeter(
+            client.lock(key, timeout=60 * 60),
+            "create_task_for_%s" % cls.__name__,
+            track_unreleased=False,
+        )
 
     @handle_connection_failure(get_db_aliases=get_default_and_partitioned_db_aliases)
     def create_tasks(self):

@@ -4,6 +4,7 @@ from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import send_to_sms_queue
 from corehq.sql_db.util import handle_connection_failure
+from corehq.util.datadog.lockmeter import LockMeter
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.core.management.base import BaseCommand
@@ -30,7 +31,11 @@ class SMSEnqueuingOperation(BaseCommand):
             queued_sms.pk,
             queued_sms.datetime_to_process.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return client.lock(key, timeout=3 * 60 * 60)
+        return LockMeter(
+            client.lock(key, timeout=3 * 60 * 60),
+            "sms_task",
+            track_unreleased=False,
+        )
 
     @handle_connection_failure()
     def create_tasks(self):

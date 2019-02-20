@@ -30,6 +30,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
 from corehq.toggles import RETRY_SMS_INDEFINITELY, USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
+from corehq.util.datadog.lockmeter import LockMeter
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -87,7 +88,10 @@ def delay_processing(msg, minutes):
 
 
 def get_lock(client, key):
-    return client.lock(key, timeout=settings.SMS_QUEUE_PROCESSING_LOCK_TIMEOUT*60)
+    return LockMeter(
+        client.lock(key, timeout=settings.SMS_QUEUE_PROCESSING_LOCK_TIMEOUT * 60),
+        "_".join(key.split("-", 3)[:3]),
+    )
 
 
 def time_within_windows(domain_now, windows):
@@ -162,7 +166,7 @@ def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections
     slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
     key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
     client = get_redis_client()
-    return client.lock(key, timeout=60)
+    return LockMeter(client.lock(key, timeout=60), "connection_slot")
 
 
 def passes_trial_check(msg):

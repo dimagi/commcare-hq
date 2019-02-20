@@ -185,10 +185,10 @@ class RedisLockableMixIn(object):
     @classmethod
     def get_redis_lock(cls, key, timeout_seconds, obj_id=None):
         client = get_redis_client()
-        lock = client.lock(key, timeout=timeout_seconds)
-        return LockMeter(lock, tags=[
-            "name:%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj"))
-        ])
+        return LockMeter(
+            client.lock(key, timeout=timeout_seconds),
+            "%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj")),
+        )
 
     @classmethod
     def get_class_lock(cls, timeout_seconds=120):
@@ -354,17 +354,12 @@ class CriticalSection(object):
         self.block = block
 
     def __enter__(self):
-        if self.keys:
-            key = self.keys[0]
-            sep = "-" if "-" in key else "_"
-            name = "_".join(key.split(sep, 2)[:2])
-        else:
-            name = type(self).__name__
-        tags = ["name:%s" % name]
         try:
             client = get_redis_client()
             for key in self.keys:
-                lock = LockMeter(client.lock(key, timeout=self.timeout), tags)
+                sep = "-" if "-" in key else "_"
+                name = "_".join(key.split(sep, 2)[:2])
+                lock = LockMeter(client.lock(key, timeout=self.timeout), name)
                 self.locks.append(lock)
             for lock in self.locks:
                 self.status.append(lock.acquire(blocking=self.block))

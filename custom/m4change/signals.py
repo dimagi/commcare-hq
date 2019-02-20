@@ -4,6 +4,7 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.models import XFormInstance
 from fluff.signals import indicator_document_updated
 import json
+from corehq.util.datadog.lockmeter import LockMeter
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.core.exceptions import ObjectDoesNotExist
@@ -124,7 +125,7 @@ def handle_fixture_location_update(sender, doc, diff, backend, **kwargs):
             client = get_redis_client()
             redis_key = REDIS_FIXTURE_KEYS[xform.domain]
             redis_lock_key = REDIS_FIXTURE_LOCK_KEYS[xform.domain]
-            lock = client.lock(redis_lock_key, timeout=5)
+            lock = LockMeter(client.lock(redis_lock_key, timeout=5), redis_lock_key)
             if lock.acquire(blocking=True):
                 try:
                     location_ids_str = client.get(redis_key)

@@ -13,11 +13,12 @@ class LockMeter(object):
 
     timing_buckets = (0.1, 1, 5, 10, 30, 60, 120, 60 * 5, 60 * 10, 60 * 15, 60 * 30)
 
-    def __init__(self, lock, name):
+    def __init__(self, lock, name, track_unreleased=True):
         self.lock = lock
         self.tags = ["name:%s" % name]
         self.lock_timer = datadog_bucket_timer(
             "commcare.lock.locked_time", self.tags, self.timing_buckets)
+        self.track_unreleased = track_unreleased
 
     def acquire(self, *args, **kw):
         tags = self.tags
@@ -41,7 +42,7 @@ class LockMeter(object):
         self.release()
 
     def __del__(self):
-        if self.lock_timer.is_started():
+        if self.track_unreleased and self.lock_timer.is_started():
             datadog_counter("commcare.lock.not_released", tags=self.tags)
 
     def release_failed(self):

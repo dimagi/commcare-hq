@@ -35,6 +35,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import download_locations_async, import_locations_async
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
+from corehq.util.datadog.lockmeter import LockMeter
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -77,7 +78,10 @@ def lock_locations(func):
     def func_wrapper(request, *args, **kwargs):
         key = "import_locations_async-{domain}".format(domain=request.domain)
         client = get_redis_client()
-        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
+        lock = LockMeter(
+            client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT),
+            "import_locations_async",
+        )
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)

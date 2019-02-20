@@ -114,6 +114,7 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
+        from corehq.util.datadog.lockmeter import LockMeter
         from dimagi.utils.couch import release_lock
 
         @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
@@ -125,18 +126,12 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
 
             client = get_redis_client()
             key = _get_unique_key(unique_key, fn, *args, **kwargs)
-            lock = client.lock(key, timeout=timeout)
+            lock = LockMeter(client.lock(key, timeout=timeout), fn.__name__)
             if lock.acquire(blocking=False):
                 try:
-                    # Actually call the function
-                    ret_val = fn(*args, **kwargs)
-                except Exception:
-                    # Don't leave the lock around if the task fails
+                    return fn(*args, **kwargs)
+                finally:
                     release_lock(lock, True)
-                    raise
-
-                release_lock(lock, True)
-                return ret_val
             else:
                 msg = "Could not aquire lock '{}' for task '{}'.".format(
                     key, fn.__name__)
