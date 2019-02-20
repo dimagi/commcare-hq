@@ -64,8 +64,11 @@ def require_permission(permission,
     if view_only_permission is not None:
         view_only_permission = (get_permission_name(view_only_permission)
                                 or view_only_permission)
-        view_only_check = lambda couch_user, domain: couch_user.has_permission(
-            domain, view_only_permission, data=data)
+
+        def _check_permission(_user, _domain):
+            return _user.has_permission(_domain, view_only_permission, data=data)
+
+        view_only_check = _check_permission
 
     return require_permission_raw(
         permission_check, login_decorator,
