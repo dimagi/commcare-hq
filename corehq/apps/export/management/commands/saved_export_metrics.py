@@ -38,7 +38,9 @@ class Command(BaseCommand):
                 continue
             exports = get_case_export_instances(domain_name)
             for export in exports:
+                export_id = export.get_id
                 if export.is_daily_saved_export and export.has_file():
+                    file_size = export.file_size
                     attachment = export.get_payload()
                     if isinstance(attachment, six.text_type):
                         attachment = attachment.encode('utf-8')
@@ -55,5 +57,5 @@ class Command(BaseCommand):
                         row_count = ''
                         column_count = ''
                     yield [
-                        export.get_id, domain_name, export.file_size, export_format, row_count, column_count
+                        export_id, domain_name, file_size, export_format, row_count, column_count
                     ]
