@@ -143,8 +143,12 @@ def form_load_counter(*args, **kw):
 
 
 def ledger_load_counter(*args, **kw):
-    # grep: commcare.load.ledger_transaction
-    return load_counter("ledger_transaction", *args, **kw)
+    """Make a ledger transaction load counter function
+
+    Each item counted is a ledger transaction (not a ledger value).
+    """
+    # grep: commcare.load.ledger
+    return load_counter("ledger", *args, **kw)
 
 
 def sms_load_counter(*args, **kw):
