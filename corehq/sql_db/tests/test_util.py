@@ -19,3 +19,15 @@ def test_weighted_choice():
         'Expected a third of 6000 to be roughly 2000. Was {}.'.format(count_by_choice['one_third'])
     assert 500 < count_by_choice['one_sixth'] < 1500, \
         'Expected a sixth of 6000 to be roughly 1000. Was {}.'.format(count_by_choice['one_sixth'])
+
+
+def test_low_weight():
+    """
+    We expect that if a weight is low enough, its choice will never get
+    chosen.
+    """
+    choices = ['always', 'never']
+    weights = [999 / 1000, 1 / 1000]
+    result_set = {weighted_choice(choices, weights) for __ in range(10000)}
+    assert 'always' in result_set
+    assert 'never' not in result_set
