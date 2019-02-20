@@ -23,6 +23,7 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms,
+    _aggregate_bp_forms,
     _aggregate_gm_forms)
 from io import open
 from six.moves import range
@@ -31,6 +32,7 @@ from six.moves import zip
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
+    "ccs_cases": "config_report_icds-cas_static-ccs_record_cases_cedcca39",
     'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
@@ -53,6 +55,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
     'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
     'agg_awc': 'agg_awc',
+    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
+    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -170,6 +174,7 @@ def setUpModule():
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
