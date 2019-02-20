@@ -49,6 +49,7 @@ TEST_ENVIRONMENT = 'icds'
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
+    always_include_columns = {'awc_id', 'village_id'}
 
     @classmethod
     def setUpClass(cls):
