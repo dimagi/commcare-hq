@@ -46,8 +46,10 @@ class Command(BaseCommand):
                         print('xlsx: %s' % export.get_id)
                         workbook = openpyxl.load_workbook(attachment_io, read_only=True)
                         first_worksheet = workbook.worksheets[0]
-                        row_count = first_worksheet.max_row
-                        column_count = first_worksheet.max_column
+                        row_count = column_count = 0
+                        for row in first_worksheet.rows:
+                            row_count += 1
+                            column_count = max(column_count, len(row))
                     else:
                         print('skipping: %s' % export.get_id)
                         row_count = ''
