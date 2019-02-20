@@ -11,7 +11,7 @@ from csv342 import csv
 from django.core.management import BaseCommand
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.dbaccessors import get_form_export_instances
+from corehq.apps.export.dbaccessors import get_case_export_instances
 from corehq.util.log import with_progress_bar
 
 
@@ -33,7 +33,7 @@ class Command(BaseCommand):
     @staticmethod
     def get_output_rows(domain_names):
         for domain_name in with_progress_bar(domain_names):
-            exports = get_form_export_instances(domain_name)
+            exports = get_case_export_instances(domain_name)
             for export in exports:
                 print(export.get_id)
                 if export.is_daily_saved_export and export.has_file():
