@@ -35,7 +35,6 @@ class Command(BaseCommand):
         for domain_name in with_progress_bar(domain_names):
             exports = get_case_export_instances(domain_name)
             for export in exports:
-                print(export.get_id)
                 if export.is_daily_saved_export and export.has_file():
                     attachment = export.get_payload()
                     if isinstance(attachment, six.text_type):
@@ -43,7 +42,6 @@ class Command(BaseCommand):
                     attachment_io = BytesIO(attachment)
                     export_format = export.export_format
                     if export_format == 'xlsx':
-                        print('xlsx: %s' % export.get_id)
                         workbook = openpyxl.load_workbook(attachment_io, read_only=True)
                         first_worksheet = workbook.worksheets[0]
                         row_count = column_count = 0
@@ -51,11 +49,8 @@ class Command(BaseCommand):
                             row_count += 1
                             column_count = max(column_count, len(row))
                     else:
-                        print('skipping: %s' % export.get_id)
                         row_count = ''
                         column_count = ''
-                    x = [
+                    yield [
                         export.get_id, domain_name, export.file_size, export_format, row_count, column_count
                     ]
-                    print(x)
-                    yield x
