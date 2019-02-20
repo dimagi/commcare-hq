@@ -318,7 +318,9 @@ class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
         selected_build_text = ''
         if selected_build_id:
             build = get_app(self.app.domain, selected_build_id)
-            selected_build_text = build.version
+            selected_build_text = str(build.version)
+            if build.build_comment:
+                selected_build_text += ": " + build.build_comment
         context.update({
             "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
                             for t in CommCareMultimedia.get_doc_types()},
