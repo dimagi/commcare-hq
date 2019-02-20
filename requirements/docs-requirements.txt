@@ -7,19 +7,18 @@
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alabaster==0.7.12         # via sphinx
 alembic==0.8.6
-amqp==1.4.9
-anyjson==0.3.3
+amqp==2.4.1
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
-billiard==3.3.0.23
-boto3==1.9.94
-botocore==1.12.94
-celery==3.1.25
+billiard==3.5.0.5
+boto3==1.9.98
+botocore==1.12.98
+celery==4.2.1
 certifi==2018.11.29
-cffi==1.12.0
+cffi==1.12.1
 chardet==3.0.4
-cloudant==2.7.0
+cloudant==2.11.0
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 cryptography==2.5
@@ -35,7 +34,7 @@ django-angular==0.7.16
 django-appconf==1.0.2
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -90,7 +89,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37
+kombu==4.2.2.post1
 laboratory==0.2.0
 lxml==4.3.1
 mako==1.0.7
@@ -150,7 +149,7 @@ sphinx==1.8.4
 sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
-sqlalchemy==1.2.17
+sqlalchemy==1.2.18
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
@@ -162,6 +161,7 @@ ua-parser==0.8.0
 unidecode==0.04.20
 urllib3==1.24.1
 user-agents==1.1.0
+vine==1.2.0
 webencodings==0.5.1
 werkzeug==0.11.15
 wrapt==1.11.1

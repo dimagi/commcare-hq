@@ -7,22 +7,21 @@
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 -e git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose
 alembic==0.8.6
-amqp==1.4.9
-anyjson==0.3.3
+amqp==2.4.1
 argparse==1.4.0           # via unittest2
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 backports.functools-lru-cache==1.5  # via soupsieve
 beautifulsoup4==4.7.1
-billiard==3.3.0.23
-boto3==1.9.94
-botocore==1.12.94
-celery==3.1.25
+billiard==3.5.0.5
+boto3==1.9.98
+botocore==1.12.98
+celery==4.2.1
 certifi==2018.11.29
-cffi==1.12.0
+cffi==1.12.1
 chardet==3.0.4
-cloudant==2.7.0
+cloudant==2.11.0
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 coverage==4.5.1
@@ -39,7 +38,7 @@ django-angular==0.7.16
 django-appconf==1.0.2
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -94,7 +93,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37
+kombu==4.2.2.post1
 laboratory==0.2.0
 linecache2==1.0.0         # via traceback2
 lxml==4.3.1
@@ -150,10 +149,10 @@ simplejson==3.16.0
 six==1.12.0
 smartypants==2.0.1
 socketpool==0.5.3
-soupsieve==1.7.3          # via beautifulsoup4
+soupsieve==1.8            # via beautifulsoup4
 sqlagg==0.12.0
 sqlalchemy-postgres-copy==0.5.0
-sqlalchemy==1.2.17
+sqlalchemy==1.2.18
 stripe==1.67.0
 suds-jurko==0.6
 testil==1.1
@@ -167,6 +166,7 @@ unidecode==0.04.20
 unittest2==1.1.0
 urllib3==1.24.1
 user-agents==1.1.0
+vine==1.2.0
 webencodings==0.5.1
 werkzeug==0.11.15
 wrapt==1.11.1
