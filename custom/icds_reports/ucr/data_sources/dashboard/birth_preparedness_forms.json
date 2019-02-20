@@ -47,19 +47,12 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          },
-          "argument_expression": {
             "type": "ancestor_location",
             "location_id": {
               "type": "named",
               "name": "user_location_id"
             },
             "location_type": "state"
-          }
         },
         "create_index": true
       },
