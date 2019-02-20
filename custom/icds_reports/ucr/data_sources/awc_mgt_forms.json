@@ -70,11 +70,7 @@
         "display_name": "",
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
-        "transform": {},
-        "is_nullable": true,
         "expression": {
-          "datatype": null,
           "type": "ancestor_location",
           "location_id": {
             "type": "named",
