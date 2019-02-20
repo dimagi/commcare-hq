@@ -56,8 +56,7 @@
                                 <input type="checkbox"
                                        id="view-web-users-checkbox"
                                        data-bind="checked: permissions.view_web_users,
-                                                  disable: permissions.edit_web_users,
-                                                  disable: !$root.allowEdit" />
+                                                  disable: permissions.edit_web_users || !$root.allowEdit" />
                                 <label for="view-web-users-checkbox"><span class="sr-only">{% trans "View-Only Web Users" %}</span></label>
                             </div>
                         </div>
@@ -84,8 +83,7 @@
                                 <input type="checkbox"
                                        id="view-commcare-users-checkbox"
                                        data-bind="checked: permissions.view_commcare_users,
-                                                  disable: permissions.edit_commcare_users,
-                                                  disable: !$root.allowEdit" />
+                                                  disable: permissions.edit_commcare_users || !$root.allowEdit" />
                                 <label for="view-commcare-users-checkbox"><span class="sr-only">{% trans "View-Only Mobile Workers" %}</span></label>
                             </div>
                         </div>
@@ -112,8 +110,7 @@
                                 <input type="checkbox"
                                        id="view-groups-checkbox"
                                        data-bind="checked: permissions.view_groups,
-                                                  disable: permissions.edit_groups,
-                                                  disable: !$root.allowEdit" />
+                                                  disable: permissions.edit_groups || !$root.allowEdit" />
                                 <label for="view-groups-checkbox"><span class="sr-only">{% trans "View-Only Groups" %}</span></label>
                             </div>
                         </div>
@@ -139,8 +136,7 @@
                                 <input type="checkbox"
                                        id="view-locations-checkbox"
                                        data-bind="checked: permissions.view_locations,
-                                                  disable: permissions.edit_locations,
-                                                  disable: !$root.allowEdit" />
+                                                  disable: permissions.edit_locations || !$root.allowEdit" />
                                 <label for="view-locations-checkbox"><span class="sr-only">{% trans "View-Only Locations" %}</span></label>
                             </div>
                         </div>
