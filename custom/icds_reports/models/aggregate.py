@@ -1103,6 +1103,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.CharField(max_length=40, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
