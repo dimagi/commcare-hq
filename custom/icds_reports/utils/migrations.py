@@ -16,7 +16,6 @@ def get_view_migrations():
         'disha_indicators.sql',
         'ccs_record_monthly_view.sql',
         'agg_ls_monthly.sql',
-        'service_delivery_monthly.sql'
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []

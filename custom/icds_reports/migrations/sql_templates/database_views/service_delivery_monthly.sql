@@ -1,4 +1,4 @@
-DROP VIEW IF EXISTS agg_ls_monthly CASCADE;
+DROP VIEW IF EXISTS service_delivery_monthly CASCADE;
 CREATE VIEW service_delivery_monthly AS
 SELECT
 "awc_location_months"."awc_id" AS "awc_id",
@@ -82,6 +82,7 @@ INNER JOIN (
 GROUP BY
   "awc_location_months"."awc_id",
   "awc_location_months"."awc_name",
+  "awc_location_months"."awc_site_code",
   "awc_location_months"."supervisor_id",
   "awc_location_months"."supervisor_name" ,
   "awc_location_months"."supervisor_site_code",
@@ -99,7 +100,9 @@ GROUP BY
   "awc_location_months"."state_map_location_name",
   "awc_location_months"."aggregation_level",
   agg_awc.num_launched_awcs,
-  agg_awc.num_awcs_conducted_cbe ,
+  agg_awc.num_awcs_conducted_cbe,
+  agg_awc.valid_visits,
+  agg_awc.expected_visits,
   agg_awc.num_awcs_conducted_vhnd,
   ccr.mother_thr,
   ccr.mother_thr_eligible
