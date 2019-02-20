@@ -257,10 +257,11 @@ class LocationTypesView(BaseDomainView):
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
 
-    @method_decorator(can_edit_location_types)
     @use_jquery_ui
-    @method_decorator(check_pending_locations_import())
     @use_select2_v4
+    @method_decorator(can_edit_location_types)
+    @method_decorator(require_can_edit_locations)
+    @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 

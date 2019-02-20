@@ -1364,7 +1364,8 @@ class ProjectUsersTab(UITab):
             })
 
         from corehq.apps.locations.permissions import user_can_edit_location_types
-        if user_can_edit_location_types(self.couch_user, self.domain):
+        if (user_can_edit_location_types(self.couch_user, self.domain) and
+                self.couch_user.can_edit_locations()):
             from corehq.apps.locations.views import LocationTypesView
             menu.append({
                 'title': _(LocationTypesView.page_title),
