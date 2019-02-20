@@ -64,8 +64,6 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es import filters
-from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES
 from corehq.apps.users.models import CouchUser
 import six
