@@ -133,14 +133,17 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
 
 
 def case_load_counter(*args, **kw):
+    # grep: commcare.load.case
     return load_counter("case", *args, **kw)
 
 
 def form_load_counter(*args, **kw):
+    # grep: commcare.load.form
     return load_counter("form", *args, **kw)
 
 
 def ledger_load_counter(*args, **kw):
+    # grep: commcare.load.ledger_transaction
     return load_counter("ledger_transaction", *args, **kw)
 
 
@@ -150,4 +153,5 @@ def sms_load_counter(*args, **kw):
     This is used to count all kinds of messaging load, including email
     (not strictly SMS).
     """
+    # grep: commcare.load.sms
     return load_counter("sms", *args, **kw)
