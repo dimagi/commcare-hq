@@ -136,7 +136,7 @@
       },
       {
         "column_id": "child_birth_location",
-        "datatype": "date",
+        "datatype": "string",
         "type": "raw",
         "property_name": "child_birth_location"
       }
