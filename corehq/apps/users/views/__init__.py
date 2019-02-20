@@ -556,6 +556,7 @@ class ListRolesView(BaseRoleAccessView):
             'report_list': get_possible_reports(self.domain),
             'web_apps_list': get_cloudcare_apps(self.domain),
             'apps_list': get_brief_apps_in_domain(self.domain),
+            'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
