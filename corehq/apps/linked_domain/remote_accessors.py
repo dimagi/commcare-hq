@@ -82,11 +82,11 @@ def _get_missing_multimedia(app):
             filename = path.split('/')[-1]
             missing.append((filename, media_info))
         else:
-            _check_domain_access(app.domain, local_media)
+            _add_domain_access(app.domain, local_media)
     return missing
 
 
-def _check_domain_access(domain, media):
+def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
 
