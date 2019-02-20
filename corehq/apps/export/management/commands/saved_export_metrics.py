@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from io import BytesIO
 
 import openpyxl
+import six
 from csv342 import csv
 
 from django.core.management import BaseCommand
@@ -33,6 +34,8 @@ class Command(BaseCommand):
             for export in exports:
                 if export.blobs:
                     attachment = export.fetch_attachment('payload')
+                    if isinstance(attachment, six.text_type):
+                        attachment = attachment.encode('utf-8')
                     attachment_io = BytesIO(attachment)
                     export_format = export.export_format
                     if export.export_format == 'xlsx':
