@@ -49,6 +49,8 @@ class Command(BaseCommand):
                         print('skipping: %s' % export.get_id)
                         row_count = ''
                         column_count = ''
-                    yield [
+                    x = [
                         export.get_id, domain_name, export.file_size, export_format, row_count, column_count
                     ]
+                    print(x)
+                    yield x
