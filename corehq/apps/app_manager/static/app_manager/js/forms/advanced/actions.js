@@ -639,6 +639,7 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                 'fixture_nodeset',
                 'fixture_tag',
                 'fixture_variable',
+                'auto_select_fixture',
                 'case_property',
                 'auto_select',
                 'arbitrary_datum_id',

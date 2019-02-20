@@ -1274,6 +1274,14 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
+CAUTIOUS_MULTIMEDIA = StaticToggle(
+    'cautious_multimedia',
+    'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds', 'icds-cas'},
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Add a page to update multimedia paths in bulk',

@@ -38,6 +38,7 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
+            awcm.district_id,
             %(month)s AS month,
             awcm.awc_id,
             awcm.block_id,

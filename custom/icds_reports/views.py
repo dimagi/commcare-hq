@@ -757,7 +757,9 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             config = beneficiary_config
         if indicator == AWW_INCENTIVE_REPORT:
-            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK
+            ]:
                 return HttpResponseBadRequest()
             today = datetime.now(INDIA_TIMEZONE)
             month_offset = 2 if today.day < 15 else 1
