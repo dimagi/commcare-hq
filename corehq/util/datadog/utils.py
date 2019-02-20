@@ -126,10 +126,10 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
     maybe_add_domain_tag(domain_name, tags)
     metric = "commcare.load.%s" % load_type
 
-    def add_load(value=1):
+    def track_load(value=1):
         datadog_counter(metric, value, tags)
 
-    return add_load
+    return track_load
 
 
 def case_load_counter(*args, **kw):

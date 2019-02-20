@@ -347,7 +347,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     total_rows = 0
     compute_total = 0
     write_total = 0
-    add_load = load_counter(export_instance.type, "export", export_instance.domain)
+    track_load = load_counter(export_instance.type, "export", export_instance.domain)
 
     for row_number, doc in enumerate(documents):
         total_bytes += sys.getsizeof(doc)
@@ -380,7 +380,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
 
             total_rows += len(rows)
 
-        add_load()
+        track_load()
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 

@@ -283,13 +283,13 @@ def batch_cases(accessor, case_ids):
         # https://docs.python.org/2/library/itertools.html#recipes
         return list(islice(iterable, n))
 
-    add_load = case_load_counter("livequery_restore", accessor.domain)
+    track_load = case_load_counter("livequery_restore", accessor.domain)
     ids = iter(case_ids)
     while True:
         next_ids = take(1000, ids)
         if not next_ids:
             break
-        add_load(len(next_ids))
+        track_load(len(next_ids))
         yield accessor.get_cases(next_ids)
 
 

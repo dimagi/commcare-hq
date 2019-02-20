@@ -59,12 +59,12 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         # onto this stack and restores them when the context exits
         self.lock_stack = []
         self.processor_interface = FormProcessorInterface(self.domain)
-        self._add_load = case_load_counter(load_src, self.domain)
+        self._track_load = case_load_counter(load_src, self.domain)
 
     def _populate_from_initial(self, initial_cases):
         if initial_cases:
             self.cache = {_get_id_for_case(case): case for case in initial_cases}
-            self._add_load(len(initial_cases))
+            self._track_load(len(initial_cases))
         else:
             self.cache = {}
 
@@ -103,13 +103,13 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case:
             self._validate_case(case)
             self.cache[case_id] = case
-            self._add_load()
+            self._track_load()
         return case
 
     def set(self, case_id, case):
         assert isinstance(case, self.case_model_classes)
         if case_id not in self.cache:
-            self._add_load()
+            self._track_load()
         self.cache[case_id] = case
 
     def in_cache(self, case_id):
