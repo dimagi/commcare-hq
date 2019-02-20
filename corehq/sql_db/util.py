@@ -263,6 +263,16 @@ def filter_out_stale_standbys(dbs):
     ]
 
 
+def weighted_choice(choices, weights):
+    assert len(choices) == len(weights), 'Every choice needs a weight'
+    assert 0.9 < sum(weights) < 1.1, 'Weights should be normalized'
+
+    big_weights = (int(w * 100) for w in weights)
+    choices_lists = ([c] * w for c, w in zip(choices, big_weights))
+    weighted_by_count = [c for l in choices_lists for c in l]
+    return random.choice(weighted_by_count)
+
+
 def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
@@ -293,4 +303,4 @@ def select_db_for_read(weighted_dbs):
         # normalize weights of remaining dbs
         total_weight = sum(weights)
         normalized_weights = [float(weight) / total_weight for weight in weights]
-        return random.choice(dbs, p=normalized_weights)
+        return weighted_choice(dbs, p=normalized_weights)
