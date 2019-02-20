@@ -1,11 +1,14 @@
 {% extends "hqmedia/uploader_base.html" %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
-    <script src="{% static 'app_manager/js/widgets_v4.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/widgets_v4.js' %}"></script>
+        <script src="{% static 'app_manager/js/widgets_v4.js' %}"></script>
+    {% endcompress js %}
 {% endblock js %}
 
 {% block page_content %}
