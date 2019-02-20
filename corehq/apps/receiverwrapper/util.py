@@ -9,7 +9,6 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
-from corehq.util.datadog.utils import form_load_counter
 from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
@@ -26,7 +25,6 @@ def get_submit_url(domain, app_id=None):
 
 def submit_form_locally(instance, domain, **kwargs):
     # intentionally leave these unauth'd for now
-    form_load_counter("local_submission", domain)()
     kwargs['auth_context'] = kwargs.get('auth_context') or DefaultAuthContext()
     result = SubmissionPost(
         domain=domain,

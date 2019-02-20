@@ -35,6 +35,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.util.datadog.utils import form_load_counter
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
@@ -95,6 +96,7 @@ class SubmissionPost(object):
             assert case_db.domain == domain
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+        self.track_load = form_load_counter("form_submission", domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -212,6 +214,7 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def run(self):
+        self.track_load()
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
@@ -235,6 +238,8 @@ class SubmissionPost(object):
         submission_type = 'unknown'
         openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
+            if len(xforms) > 1:
+                self.track_load(len(xforms) - 1)
             if self.case_db:
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
