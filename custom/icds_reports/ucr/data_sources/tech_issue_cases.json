@@ -305,29 +305,29 @@
         }
       },
       "supervisor_id": {
-          "location_id": {
-            "type": "conditional",
-            "test": {
-              "operator": "eq",
-              "expression": {
-                "type": "property_name",
-                "property_name": "aww_or_ls"
-              },
-              "type": "boolean_expression",
-              "property_value": "aww"
-            },
-            "expression_if_true": {
-                "type": "property_name",
-                "property_name": "aww_id"
-            },
-            "expression_if_false": {
-                "type": "property_name",
-                "property_name": "ls_id"
-            }
+        "type": "conditional",
+        "test": {
+          "operator": "eq",
+          "expression": {
+            "type": "property_name",
+            "property_name": "aww_or_ls"
           },
+          "type": "boolean_expression",
+          "property_value": "aww"
+        },
+        "expression_if_true": {
           "location_type": "supervisor",
           "location_propery": "_id",
           "type": "ancestor_location"
+          "location_id":{
+            "type": "property_name",
+            "property_name": "aww_id"
+          }
+        },
+        "expression_if_false": {
+            "type": "property_name",
+            "property_name": "ls_id"
+        }
       }
     },
     "named_filters": {
