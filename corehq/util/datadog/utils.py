@@ -140,6 +140,10 @@ def form_load_counter(*args, **kw):
     return load_counter("form", *args, **kw)
 
 
+def ledger_load_counter(*args, **kw):
+    return load_counter("ledger_transaction", *args, **kw)
+
+
 def sms_load_counter(*args, **kw):
     """Make a messaging load counter function
 

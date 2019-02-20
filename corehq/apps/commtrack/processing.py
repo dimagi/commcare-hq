@@ -9,11 +9,12 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.log_exception import log_exception
 
 from casexml.apps.case.exceptions import IllegalCaseId
+from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockTransaction
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from casexml.apps.stock import const as stockconst
 from corehq.form_processor.parsers.ledgers import get_stock_actions
+from corehq.util.datadog.utils import ledger_load_counter
 
 
 logger = logging.getLogger('commtrack.incoming')
@@ -44,11 +45,16 @@ class StockProcessingResult(object):
         processor = interface.ledger_processor
         ledger_db = interface.ledger_db
 
+        track_load = ledger_load_counter("process_stock", self.domain)
+        normal_helpers = []
+        deprecated_helpers = []
         for helper in self.stock_report_helpers:
             assert helper.domain == self.domain
-
-        normal_helpers = [srh for srh in self.stock_report_helpers if not srh.deprecated]
-        deprecated_helpers = [srh for srh in self.stock_report_helpers if srh.deprecated]
+            if not helper.deprecated:
+                normal_helpers.append(helper)
+            else:
+                deprecated_helpers.append(helper)
+            track_load(len(helper.transactions))
 
         models_result = processor.get_models_to_update(
             self.xform.form_id, normal_helpers, deprecated_helpers, ledger_db
@@ -197,7 +203,7 @@ _SaveStockTransaction = namedtuple(
     ['stock_transaction', 'previous_ledger_values', 'ledger_values'])
 
 
-def plan_rebuild_stock_state(case_id, section_id, product_id):
+def plan_rebuild_stock_state(case_id, section_id, product_id, domain):
     """
     planner for rebuild_stock_state
 
@@ -212,7 +218,7 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
     """
 
     # these come out latest first, so reverse them below
-    stock_transactions = (
+    stock_transactions = list(
         StockTransaction
         .get_ordered_transactions_for_stock(
             case_id=case_id, section_id=section_id, product_id=product_id)
@@ -220,6 +226,7 @@ def plan_rebuild_stock_state(case_id, section_id, product_id):
         .select_related('report')
     )
     balance = None
+    ledger_load_counter("rebuild_stock", domain)(len(stock_transactions))
     for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
             yield _DeleteStockTransaction(stock_transaction)
