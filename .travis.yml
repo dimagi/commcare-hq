@@ -41,7 +41,7 @@ script:
   - |
     if [[ "CITUS" == "yes" ]]
     then
-      docker-compose -f docker/citus-compose.yml up -d
+      bash scripts/initialize-citus.sh
     fi
   - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
