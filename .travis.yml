@@ -39,7 +39,7 @@ script:
       bash scripts/test-make-requirements.sh
     fi
   - |
-    if [[ "CITUS" == "yes" ]]
+    if [[ "$USE_CITUSDB" == "yes" ]]
     then
       bash scripts/initialize-citus.sh
     fi
