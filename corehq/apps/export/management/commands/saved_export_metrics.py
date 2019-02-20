@@ -5,13 +5,14 @@ from io import BytesIO
 
 import openpyxl
 import six
-from couchdbkit import ResourceNotFound
 from csv342 import csv
 
 from django.core.management import BaseCommand
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import get_case_export_instances
+from corehq.privileges import DAILY_SAVED_EXPORT
 from corehq.util.log import with_progress_bar
 
 
@@ -33,6 +34,8 @@ class Command(BaseCommand):
     @staticmethod
     def get_output_rows(domain_names):
         for domain_name in with_progress_bar(domain_names):
+            if not domain_has_privilege(domain_name, DAILY_SAVED_EXPORT):
+                continue
             exports = get_case_export_instances(domain_name)
             for export in exports:
                 if export.is_daily_saved_export and export.has_file():
