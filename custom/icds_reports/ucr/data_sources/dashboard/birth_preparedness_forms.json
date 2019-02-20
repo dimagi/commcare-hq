@@ -52,7 +52,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": "state"
+          "location_type": "state",
+	  "location_property": "_id"
         },
         "create_index": true
       },
