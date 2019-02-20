@@ -182,7 +182,7 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
             'female': columns.sex == 'F',
         }[other]
         return func.count(self.table.c.case_id).filter(column).label(
-            "thr_rations_{}_{}_{}".format(thr, gender_or_migrant, other))
+            "thr_rations_{}_{}".format(gender_or_migrant, other))
 
     def _columns(self, total_row=False):
         columns = (
@@ -200,8 +200,8 @@ class MPR5ChildHealth(ChildHealthMonthlyUCR):
             self._column_helper("absent", "female"),
             self._column_helper("partial", "male"),
             self._column_helper("partial", "female"),
-            self._column_helper("migrant", "male"),
-            self._column_helper("migrant", "female"),
+            self._column_helper("rations", "migrant", "male"),
+            self._column_helper("rations", "migrant", "female"),
             func.count(self.table.c.case_id).filter(
                 self.table.c.sex == 'M').label("child_count_male"),
             func.count(self.table.c.case_id).filter(

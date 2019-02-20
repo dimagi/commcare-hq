@@ -373,7 +373,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
-    'custom.reach',
+    'custom.aaa',
 )
 
 # also excludes any app starting with 'django.'
@@ -544,6 +544,8 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
 BROKER_URL = 'redis://localhost:6379/0'
+
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 
 CELERY_ANNOTATIONS = {
     '*': {
@@ -1999,6 +2001,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2107,7 +2110,7 @@ DOMAIN_MODULE_MAP = {
     'icds-test': 'custom.icds_reports',
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
-    'reach-test': 'custom.reach',
+    'reach-test': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

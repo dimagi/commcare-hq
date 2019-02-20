@@ -10,7 +10,7 @@ import re
 import six
 from uuid import UUID
 
-from bulk_update.helper import bulk_update as bulk_update_helper
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField

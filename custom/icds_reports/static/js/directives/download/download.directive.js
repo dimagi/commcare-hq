@@ -9,6 +9,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.years = [];
     vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     $rootScope.report_link = '';
 
     var getTaskStatus = function () {
@@ -345,6 +346,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
             vm.selectedYear = latest.getFullYear();
             vm.selectedMonth = 12;
+        } else if (year.id < latest.getFullYear()) {
+            vm.years =  _.filter(vm.yearsCopy, function (y) {
+                return y.id <= latest.getFullYear();
+            });
         }
         if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
@@ -431,9 +436,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.hasErrors = function() {
-        beneficiary_list_errors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isBlockSelected();
-        return beneficiary_list_errors || incentive_report_errors;
+        var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var incentiveReportErrors = vm.isIncentiveReportSelected() && (
+            (vm.haveAccessToFeatures && !vm.isStateSelected()) ||
+            (!vm.haveAccessToFeatures && !vm.isBlockSelected())
+        );
+        return beneficiaryListErrors || incentiveReportErrors;
     };
 
     vm.isCombinedPDFSelected = function() {
@@ -442,6 +450,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isBlockOrBelowSelected = function () {
         return vm.selectedLocations[2] && vm.selectedLocations[2] !== ALL_OPTION.location_id;
+    };
+
+    vm.isStateOrBelowSelected = function () {
+        return vm.selectedLocations[0] && vm.selectedLocations[0] !== ALL_OPTION.location_id;
     };
 
     vm.hasErrorsISSNIPExport = function() {
@@ -479,6 +491,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     
     vm.isBlockSelected = function () {
         return vm.isBlockOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
+    };
+
+    vm.isStateSelected = function () {
+        return vm.isStateOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
     };
 
     vm.showViewBy = function () {

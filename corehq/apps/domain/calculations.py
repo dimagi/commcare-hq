@@ -434,8 +434,8 @@ def num_telerivet_backends(domain):
 
 
 def use_domain_security_settings(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords
+    domain_obj = Domain.get_by_name(domain)
+    return domain_obj.two_factor_auth or domain_obj.secure_sessions or domain_obj.strong_mobile_passwords
 
 
 def num_custom_roles(domain):
@@ -485,8 +485,8 @@ def num_lookup_tables(domain):
 
 
 def has_domain_icon(domain):
-    domain = Domain.get_by_name(domain)
-    return domain.has_custom_logo
+    domain_obj = Domain.get_by_name(domain)
+    return domain_obj.has_custom_logo
 
 
 def num_apps_with_icon(domain):

@@ -863,13 +863,13 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
 
 def _commtrackify(domain_name, toggle_is_enabled):
     from corehq.apps.domain.models import Domain
-    domain = Domain.get_by_name(domain_name, strict=True)
-    if domain and domain.commtrack_enabled != toggle_is_enabled:
+    domain_obj = Domain.get_by_name(domain_name, strict=True)
+    if domain_obj and domain_obj.commtrack_enabled != toggle_is_enabled:
         if toggle_is_enabled:
-            domain.convert_to_commtrack()
+            domain_obj.convert_to_commtrack()
         else:
-            domain.commtrack_enabled = False
-            domain.save()
+            domain_obj.commtrack_enabled = False
+            domain_obj.save()
 
 
 COMMTRACK = StaticToggle(
@@ -1274,6 +1274,14 @@ LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
     help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
+CAUTIOUS_MULTIMEDIA = StaticToggle(
+    'cautious_multimedia',
+    'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds', 'icds-cas'},
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Add a page to update multimedia paths in bulk',
@@ -1639,7 +1647,7 @@ ICDS_DISHA_API = StaticToggle(
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
-    'eCHIS: Allow blank case tags',
+    'eCHIS/ICDS: Allow blank case tags',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

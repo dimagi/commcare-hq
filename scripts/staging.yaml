@@ -49,9 +49,7 @@
 trunk: master
 name: autostaging
 branches:
-  - lwyszomi:lw/js-forms-modules  # Jenny Dec 14
-  - dmr/fix-es-service-check  # Danny Jan 3
-  - np/edit-feed # Nick P Jan 23
-  - jls/select2-accept-csv  # Jenny Feb 1
-  - jls/widen-app-preview-bar   # Jenny Feb 6
+  - es/child-module-metrics  # Ethan Feb 7
+  - ns/update_uwsgi  # Nitigya Feb 12 
+  - dmr/kill-mvp  # Danny Feb 19
 submodules: {}

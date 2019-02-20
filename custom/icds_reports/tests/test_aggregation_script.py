@@ -253,7 +253,6 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
             sort_key=self.sort_key
         )
-
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',

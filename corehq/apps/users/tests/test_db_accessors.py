@@ -33,7 +33,12 @@ class AllCommCareUsersTest(TestCase):
         cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
         cls.custom_role = UserRole.get_or_create_with_permissions(
             cls.ccdomain.name,
-            Permissions(edit_apps=True, edit_web_users=True),
+            Permissions(
+                edit_apps=True,
+                edit_web_users=True,
+                view_web_users=True,
+                view_roles=True,
+            ),
             "Custom Role"
         )
         cls.custom_role.save()

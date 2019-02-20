@@ -51,9 +51,9 @@ OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' U
 
 def load_domain(req, domain):
     domain_name = normalize_domain_name(domain)
-    domain = Domain.get_by_name(domain_name)
-    req.project = domain
-    return domain_name, domain
+    domain_obj = Domain.get_by_name(domain_name)
+    req.project = domain_obj
+    return domain_name, domain_obj
 
 ########################################################################################################
 
@@ -292,9 +292,9 @@ def two_factor_check(view_func, api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            dom = Domain.get_by_name(domain)
+            domain_obj = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
+            if not api_key and domain_obj and _two_factor_required(view_func, domain_obj, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
                     with mutable_querydict(request.GET):

@@ -622,8 +622,12 @@ class RestoreConfig(object):
         new_task = False
         # fetch the task from celery
         task_id = self.async_restore_task_id_cache.get_value()
-        task = AsyncResult(task_id)
-        task_exists = task.status == ASYNC_RESTORE_SENT
+        if task_id:
+            task = AsyncResult(task_id)
+            task_exists = task.status == ASYNC_RESTORE_SENT
+        else:
+            task = None
+            task_exists = False
 
         if not task_exists:
             # start a new task

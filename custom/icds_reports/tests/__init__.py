@@ -23,6 +23,7 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms,
+    _aggregate_bp_forms,
     _aggregate_gm_forms)
 from io import open
 from six.moves import range
@@ -31,13 +32,14 @@ from six.moves import zip
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
+    "ccs_cases": "config_report_icds-cas_static-ccs_record_cases_cedcca39",
     'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
     'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
-    'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
+    'person_cases': 'config_report_icds-cas_static-person_cases_v3_2ae0879a',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
     'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
@@ -53,6 +55,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
     'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
     'agg_awc': 'agg_awc',
+    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
+    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -170,6 +174,7 @@ def setUpModule():
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
