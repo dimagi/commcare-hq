@@ -1,9 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import sys
 import uuid
 from collections import defaultdict
-from numpy import random
+import random
+from bisect import bisect
+from itertools import repeat, accumulate
 
 from django.conf import settings
 from django import db
@@ -263,6 +267,36 @@ def filter_out_stale_standbys(dbs):
     ]
 
 
+# Backported from Python 3.6
+# cf. https://github.com/python/cpython/blob/3.6/Lib/random.py#L343-L365
+def choices_backport(population, weights=None, **kwargs):
+    """
+    Return a k sized list of population elements chosen with replacement.
+    If the relative weights or cumulative weights are not specified,
+    the selections are made with equal probability.
+    """
+    cum_weights = kwargs.pop('cum_weights', None)
+    k = kwargs.pop('k', 1)
+
+    random_ = random.random
+    n = len(population)
+    if cum_weights is None:
+        if weights is None:
+            _int = int
+            n += 0.0    # convert to float for a small speed improvement
+            return [population[_int(random_() * n)]
+                    for __ in repeat(None, k)]
+        cum_weights = list(accumulate(weights))
+    elif weights is not None:
+        raise TypeError('Cannot specify both weights and cumulative weights')
+    if len(cum_weights) != n:
+        raise ValueError('The number of weights does not match the population')
+    total = cum_weights[-1] + 0.0   # convert to float
+    hi = n - 1
+    return [population[bisect(cum_weights, random_() * total, 0, hi)]
+            for __ in repeat(None, k)]
+
+
 def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
@@ -290,7 +324,5 @@ def select_db_for_read(weighted_dbs):
             weights.append(weight)
 
     if dbs:
-        # normalize weights of remaining dbs
-        total_weight = sum(weights)
-        normalized_weights = [float(weight) / total_weight for weight in weights]
-        return random.choice(dbs, p=normalized_weights)
+        choices_func = random.choices if sys.version_info >= (3, 6) else choices_backport
+        return choices_func(dbs, weights=weights)[0]
