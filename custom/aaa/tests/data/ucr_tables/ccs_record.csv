@@ -1,2 +1,3 @@
 doc_id,inserted_at,person_case_id,opened_on,closed_on,modified_on,edd,add,lmp,preg_reg_date,woman_weight_at_preg_reg,hrp,ifa_tablets_issued_pre,ifa_tablets_issued_post,date_abortion,abortion_type,pnc1_date,pnc2_date,pnc3_date,pnc4_date,child_birth_location
 pregnant_woman_ccs_record_1,2019-01-01,pregnant_woman,2018-08-01,,2019-01-01,2019-05-01,,,,,,,,,,,,,,
+high_risk_pregnant_woman_ccs_record,2019-01-01,high_risk_pregnant_woman,2018-09-14,,2019-01-01,2019-05-01,,,,,yes,,,,,,,,,
