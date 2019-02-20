@@ -44,7 +44,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
                  lock=False, wrap=True, initial=None, xforms=None,
                  load_src="unknown"):
 
-        self._track_load = case_load_counter(load_src, self.domain)
+        self._track_load = case_load_counter(load_src, domain)
         self._populate_from_initial(initial)
         self.domain = domain
         self.cached_xforms = xforms if xforms is not None else []
