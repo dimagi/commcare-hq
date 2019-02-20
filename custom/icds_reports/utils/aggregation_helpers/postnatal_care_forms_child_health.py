@@ -19,6 +19,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
+        supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
         MAX(counsel_breast) OVER w AS counsel_breast,
@@ -61,13 +62,14 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, counsel_increase_food_bf,
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_increase_food_bf,
           counsel_breast, skin_to_skin, is_ebf, water_or_milk, other_milk_to_child,
           tea_other, eating, counsel_exclusive_bf, counsel_only_milk, counsel_adequate_bf,
           not_breastfeeding
         ) (
           SELECT
             %(state_id)s AS state_id,
+            supervisor_id AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
