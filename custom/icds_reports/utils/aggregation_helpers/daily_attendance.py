@@ -45,6 +45,7 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
               SELECT DISTINCT ON (awc_id, submitted_on)
                 doc_id,
                 awc_id,
+                supervisor_id,
                 month,
                 submitted_on as pse_date,
                 awc_open_count,

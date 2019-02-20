@@ -42,4 +42,9 @@ class Migration(migrations.Migration):
             name='supervisor_id',
             field=models.CharField(max_length=40, null=True),
         ),
+        migrations.AddField(
+            model_name='dailyattendance',
+            name='supervisor_id',
+            field=models.CharField(max_length=40, null=True),
+        ),
     ]
