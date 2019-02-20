@@ -520,9 +520,12 @@ class AggLocation(models.Model):
             SELECT
                 %(domain)s, {location_levels}, %(window_start)s AS month,
                 COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
-                COALESCE(COUNT(*) FILTER (WHERE child_birth_location = 'hospital'), 0) as institutional_deliveries,
                 COALESCE(COUNT(*) FILTER (WHERE
-                    child_birth_location IS NOT NULL OR child_birth_location != ''
+                    add <@ daterange(%(window_start)s, %(window_end)s)
+                    AND child_birth_location = 'hospital'
+                ), 0) as institutional_deliveries,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    add <@ daterange(%(window_start)s, %(window_end)s)
                 ), 0) as total_deliveries
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
