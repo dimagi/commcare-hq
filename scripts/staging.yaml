@@ -52,4 +52,5 @@ branches:
   - es/child-module-metrics  # Ethan Feb 7
   - ns/update_uwsgi  # Nitigya Feb 12 
   - dmr/kill-mvp  # Danny Feb 19
+  - bmb/users-perms-ui  # Biyeun Feb 20
 submodules: {}
