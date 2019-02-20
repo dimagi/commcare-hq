@@ -1825,6 +1825,7 @@ REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'deidentified_va_report.json'),
     os.path.join('custom', 'abt', 'reports', 'incident_report.json'),
     os.path.join('custom', 'abt', 'reports', 'sms_indicator_report.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_country.json'),
@@ -1932,6 +1933,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
+    os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
@@ -2049,6 +2051,7 @@ CUSTOM_UCR_EXPRESSIONS = [
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
+    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
