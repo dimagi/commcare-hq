@@ -42,7 +42,7 @@ class Command(BaseCommand):
                 if export.is_daily_saved_export and export.has_file():
                     export_format = export.export_format
                     file_size = export.file_size
-                    if file_size > 2 * 10 ** 9:
+                    if file_size <= 2 * 10 ** 9:
                         attachment = export.get_payload()
                         if isinstance(attachment, six.text_type):
                             attachment = attachment.encode('utf-8')
