@@ -40,11 +40,13 @@ class Command(BaseCommand):
                     attachment_io = BytesIO(attachment)
                     export_format = export.export_format
                     if export_format == 'xlsx':
+                        print('xlsx: %s' % export.get_id)
                         workbook = openpyxl.load_workbook(attachment_io, read_only=True)
                         first_worksheet = workbook.worksheets[0]
                         row_count = first_worksheet.max_row
                         column_count = first_worksheet.max_column
                     else:
+                        print('skipping: %s' % export.get_id)
                         row_count = ''
                         column_count = ''
                     yield [
