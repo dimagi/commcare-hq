@@ -2,6 +2,7 @@
   "domains": [
     "reach-test",
     "reach-sandbox"
+    "reach-dashboard-qa",
   ],
   "server_environment": [
     "softlayer",
