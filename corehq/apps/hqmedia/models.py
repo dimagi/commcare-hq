@@ -897,7 +897,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         permitted_paths = self.all_media_paths() | self.logo_paths
         deleted_media = []
         allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
-        allow_deletion = allow_deletion and self.domain not in {'icds-cas', 'icds-test'}
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
@@ -947,7 +946,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         all_media = {m.path: m for m in self.all_media()}
         deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
+        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
         for path, map_item in self.multimedia_map_for_build(build_profile=build_profile).items():
             media_item = raw_docs.get(map_item.multimedia_id)
