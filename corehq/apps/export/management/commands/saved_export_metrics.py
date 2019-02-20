@@ -34,24 +34,27 @@ class Command(BaseCommand):
             exports = get_form_export_instances(domain_name)
             for export in exports:
                 if export.blobs:
-                    attachment_length = ''
-                    export_format = ''
-                    row_count = ''
-                    column_count = ''
                     try:
                         attachment = export.fetch_attachment('payload')
+                    except ResourceNotFound:
+                        attachment_length = ''
+                        export_format = ''
+                        row_count = ''
+                        column_count = ''
+                    else:
                         if isinstance(attachment, six.text_type):
                             attachment = attachment.encode('utf-8')
                         attachment_length = len(attachment)
                         attachment_io = BytesIO(attachment)
                         export_format = export.export_format
-                        if export.export_format == 'xlsx':
+                        if export_format == 'xlsx':
                             workbook = openpyxl.load_workbook(attachment_io, read_only=True)
                             first_worksheet = workbook.worksheets[0]
                             row_count = first_worksheet.max_row
                             column_count = first_worksheet.max_column
-                    except ResourceNotFound:
-                        pass
+                        else:
+                            row_count = ''
+                            column_count = ''
                     yield [
                         export.get_id, domain_name, attachment_length, export_format, row_count, column_count
                     ]
