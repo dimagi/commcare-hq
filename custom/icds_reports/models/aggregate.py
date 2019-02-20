@@ -1483,7 +1483,7 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         null=True,
         help_text="Where the child is born"
     )
-    supervisor_id = models.TextField(null=True)
+    supervisor_id = models.CharField(max_length=40, null=True)
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
