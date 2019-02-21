@@ -7,9 +7,9 @@ branches:
 env:
   matrix:
     # need node installs for app_manager.XpathValidatorTest
-#    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
-#    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
-#    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes TEST_MAKE_REQUIREMENTS=yes USE_CITUSDB=yes
   global:
     # TRAVIS_HQ_USERNAME
@@ -38,11 +38,12 @@ script:
     then
       bash scripts/test-make-requirements.sh
     fi
-  - |
-    if [[ "$USE_CITUSDB" == "yes" ]]
-    then
-      bash scripts/initialize-citus.sh
-    fi
+#  - |
+#    if [[ "$USE_CITUSDB" == "yes" ]]
+#    then
+#      bash scripts/initialize-citus.sh
+#    fi
+  - bash scripts/initialize-citus.sh
   - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available

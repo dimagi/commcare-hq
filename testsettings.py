@@ -101,11 +101,10 @@ LOGGING = {
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-ucr-non-dashboard': 'default',
+    'icds-ucr': 'citus_ucr',
+    'icds-ucr-non-dashboard': 'citus_ucr',
     'icds-test-ucr': 'default',
     'aaa-data': 'default',
-    'citus': 'citus_ucr' if 'citus_ucr' in DATABASES else 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED
