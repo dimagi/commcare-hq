@@ -1135,19 +1135,24 @@ class ProjectUsersTab(UITab):
     @property
     def _is_viewable(self):
         return self.domain and (self.couch_user.can_edit_commcare_users() or
+                                self.couch_user.can_view_commcare_users() or
+                                self.couch_user.can_edit_groups() or
+                                self.couch_user.can_view_groups() or
                                 self.couch_user.can_edit_locations() or
-                                self.couch_user.can_edit_web_users())
+                                self.couch_user.can_view_locations() or
+                                self.couch_user.can_edit_web_users() or
+                                self.couch_user.can_view_web_users() or
+                                self.couch_user.can_view_roles())
 
     @property
     def can_view_cloudcare(self):
         return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
 
-    @property
-    def sidebar_items(self):
-        items = []
-
-        if self.couch_user.can_edit_commcare_users():
-            def _get_commcare_username(request=None, couch_user=None, **context):
+    def _get_mobile_users_menu(self):
+        menu = []
+        if self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users():
+            def _get_commcare_username(request=None, couch_user=None,
+                                       **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
@@ -1163,50 +1168,58 @@ class ProjectUsersTab(UITab):
                 MobileWorkerListView,
             )
 
-            mobile_users_menu = [
-                {
-                    'title': _(MobileWorkerListView.page_title),
-                    'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
-                    'description': _(
-                        "Create and manage users for CommCare and CloudCare."),
-                    'subpages': [
-                        {'title': _get_commcare_username,
-                         'urlname': EditCommCareUserView.urlname},
-                        {'title': _('Bulk Upload'),
-                         'urlname': 'upload_commcare_users'},
-                        {'title': _(ConfirmBillingAccountForExtraUsersView.page_title),
-                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
-                    ],
-                    'show_in_dropdown': True,
-                },
-                {
-                    'title': _('Groups'),
-                    'url': reverse('all_groups', args=[self.domain]),
-                    'description': _("""Create and manage
-                        reporting and case sharing groups
-                        for Mobile Workers."""),
-                    'subpages': [
-                        {'title': lambda **context: (
-                            "%s %s" % (_("Editing"), context['group'].name)),
-                         'urlname': 'group_members'},
-                        {'title': _('Membership Info'),
-                         'urlname': 'group_membership'}
-                    ],
-                    'show_in_dropdown': True,
-                }
-            ]
+            menu.append({
+                'title': _(MobileWorkerListView.page_title),
+                'url': reverse(MobileWorkerListView.urlname,
+                               args=[self.domain]),
+                'description': _(
+                    "Create and manage users for CommCare and CloudCare."),
+                'subpages': [
+                    {'title': _get_commcare_username,
+                     'urlname': EditCommCareUserView.urlname},
+                    {'title': _('Bulk Upload'),
+                     'urlname': 'upload_commcare_users'},
+                    {'title': _(
+                        ConfirmBillingAccountForExtraUsersView.page_title),
+                        'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
+                ],
+                'show_in_dropdown': True,
+            })
 
-            if self.can_view_cloudcare:
-                title = _("Web Apps Permissions")
-                mobile_users_menu.append({
-                    'title': title,
-                    'url': reverse('cloudcare_app_settings',
-                                   args=[self.domain])
-                })
+        if self.couch_user.can_edit_groups() or self.couch_user.can_view_groups():
+            is_view_only_subpage = (hasattr(self._request, 'is_view_only')
+                                    and self._request.is_view_only)
+            menu.append({
+                'title': _('Groups'),
+                'url': reverse('all_groups', args=[self.domain]),
+                'description': _("""Create and manage
+                            reporting and case sharing groups
+                            for Mobile Workers."""),
+                'subpages': [
+                    {'title': lambda **context: (
+                        "%s %s" % (_("Viewing") if is_view_only_subpage
+                                   else _("Editing"), context['group'].name)),
+                     'urlname': 'group_members'},
+                    {'title': _('Membership Info'),
+                     'urlname': 'group_membership'}
+                ],
+                'show_in_dropdown': True,
+            })
 
-            items.append((_('Application Users'), mobile_users_menu))
+        if self.can_view_cloudcare:
+            title = _("Web Apps Permissions")
+            menu.append({
+                'title': title,
+                'url': reverse('cloudcare_app_settings',
+                               args=[self.domain])
+            })
 
-        if self.couch_user.can_edit_web_users():
+        return menu
+
+    def _get_project_users_menu(self):
+        menu = []
+
+        if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
             def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         not couch_user.is_commcare_user()):
@@ -1221,82 +1234,122 @@ class ProjectUsersTab(UITab):
                 EditWebUserView,
                 ListWebUsersView,
             )
-            items.append((_('Project Users'), [
-                {
-                    'title': _(ListWebUsersView.page_title),
-                    'url': reverse(ListWebUsersView.urlname, args=[self.domain]),
-                    'description': _("Grant other CommCare HQ users access to your project and manage user roles."),
-                    'subpages': [
-                        {
-                            'title': _("Invite Web User"),
-                            'urlname': 'invite_web_user'
-                        },
-                        {
-                            'title': _get_web_username,
-                            'urlname': EditWebUserView.urlname
-                        }
-                    ],
-                    'show_in_dropdown': True,
-                }
-            ]))
-
-        if has_privilege(self._request, privileges.LOCATIONS):
-            locations_config = []
-            if self.couch_user.can_edit_locations():
-                from corehq.apps.locations.views import (
-                    LocationsListView,
-                    NewLocationView,
-                    EditLocationView,
-                    LocationImportView,
-                    LocationImportStatusView,
-                    LocationFieldsView,
-                )
-
-                locations_config.append({
-                    'title': _(LocationsListView.page_title),
-                    'url': reverse(LocationsListView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                    'subpages': [
-                        {
-                            'title': _(NewLocationView.page_title),
-                            'urlname': NewLocationView.urlname,
-                        },
-                        {
-                            'title': _(EditLocationView.page_title),
-                            'urlname': EditLocationView.urlname,
-                        },
-                        {
-                            'title': _(LocationImportView.page_title),
-                            'urlname': LocationImportView.urlname,
-                        },
-                        {
-                            'title': _(LocationImportStatusView.page_title),
-                            'urlname': LocationImportStatusView.urlname,
-                        },
-                        {
-                            'title': _(LocationFieldsView.page_name()),
-                            'urlname': LocationFieldsView.urlname,
-                        },
-                    ]
-                })
-
-            from corehq.apps.locations.permissions import user_can_edit_location_types
-            if user_can_edit_location_types(self.couch_user, self.domain):
-                from corehq.apps.locations.views import LocationTypesView
-                locations_config.append({
-                    'title': _(LocationTypesView.page_title),
-                    'url': reverse(LocationTypesView.urlname, args=[self.domain]),
-                    'show_in_dropdown': True,
-                })
-            if locations_config:
-                items.append((_('Organization'), locations_config))
-
-        elif users_have_locations(self.domain):  # This domain was downgraded
-            items.append((_('Organization'), [{
-                'title': _("No longer available"),
-                'url': reverse('downgrade_locations', args=[self.domain]),
+            menu.append({
+                'title': _(ListWebUsersView.page_title),
+                'url': reverse(ListWebUsersView.urlname,
+                               args=[self.domain]),
+                'description': _(
+                    "Grant other CommCare HQ users access to your project."),
+                'subpages': [
+                    {
+                        'title': _("Invite Web User"),
+                        'urlname': 'invite_web_user'
+                    },
+                    {
+                        'title': _get_web_username,
+                        'urlname': EditWebUserView.urlname
+                    }
+                ],
                 'show_in_dropdown': True,
-            }]))
+            })
+
+        if self.couch_user.is_domain_admin() or self.couch_user.can_view_roles():
+            from corehq.apps.users.views import (
+                ListRolesView,
+            )
+            menu.append({
+                'title': _(ListRolesView.page_title),
+                'url': reverse(ListRolesView.urlname,
+                               args=[self.domain]),
+                'description': _(
+                    "View and manage user roles."),
+                'subpages': [],
+                'show_in_dropdown': False,
+            })
+
+        return menu
+
+    def _get_locations_menu(self):
+        if (not has_privilege(self._request, privileges.LOCATIONS)
+                and users_have_locations(self.domain)):
+            return [
+                {
+                    'title': _("No longer available"),
+                    'url': reverse('downgrade_locations', args=[self.domain]),
+                    'show_in_dropdown': True,
+                },
+            ]
+
+        if not has_privilege(self._request, privileges.LOCATIONS):
+            return []
+
+        menu = []
+
+        if (self.couch_user.can_edit_locations()
+                or self.couch_user.can_view_locations()):
+            from corehq.apps.locations.views import (
+                LocationsListView,
+                NewLocationView,
+                EditLocationView,
+                LocationImportView,
+                LocationImportStatusView,
+                LocationFieldsView,
+            )
+            menu.append({
+                'title': _(LocationsListView.page_title),
+                'url': reverse(LocationsListView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+                'subpages': [
+                    {
+                        'title': _(NewLocationView.page_title),
+                        'urlname': NewLocationView.urlname,
+                    },
+                    {
+                        'title': _(EditLocationView.page_title),
+                        'urlname': EditLocationView.urlname,
+                    },
+                    {
+                        'title': _(LocationImportView.page_title),
+                        'urlname': LocationImportView.urlname,
+                    },
+                    {
+                        'title': _(LocationImportStatusView.page_title),
+                        'urlname': LocationImportStatusView.urlname,
+                    },
+                    {
+                        'title': _(LocationFieldsView.page_name()),
+                        'urlname': LocationFieldsView.urlname,
+                    },
+                ]
+            })
+
+        from corehq.apps.locations.permissions import user_can_edit_location_types
+        if (user_can_edit_location_types(self.couch_user, self.domain) and
+                self.couch_user.can_edit_locations()):
+            from corehq.apps.locations.views import LocationTypesView
+            menu.append({
+                'title': _(LocationTypesView.page_title),
+                'url': reverse(LocationTypesView.urlname, args=[self.domain]),
+                'show_in_dropdown': True,
+            })
+
+        return menu
+
+    @property
+    def sidebar_items(self):
+        items = []
+
+        mobile_users_menu = self._get_mobile_users_menu()
+        if mobile_users_menu:
+            items.append((_('Application Users'), mobile_users_menu))
+
+        project_users_menu = self._get_project_users_menu()
+        if project_users_menu:
+            items.append((_('Project Users'), project_users_menu))
+
+        locations_menu = self._get_locations_menu()
+        if locations_menu:
+            items.append((_('Organization'), locations_menu))
 
         return items
 
