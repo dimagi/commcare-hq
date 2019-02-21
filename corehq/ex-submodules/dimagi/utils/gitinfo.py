@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import re
 from subprocess import Popen, PIPE
+import six
 
 
 def git_file_deltas(git_dir, commit, compare=None):
@@ -98,7 +99,7 @@ def sub_git_info(git_dir, log_count=1):
     line_by_line_format = LINE_DELIMITER.join([b'%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
 
     args = [b'log',
-            b'-%s' % log_count,
+            b'-%s' % six.text_type(log_count).encode('utf-8'),
             b'-z',
             b'--pretty=format:%s' % line_by_line_format
     ]
