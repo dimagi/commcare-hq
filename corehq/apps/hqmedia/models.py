@@ -960,8 +960,10 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     media = media.get(map_item.multimedia_id)
                     retry_successes.append(map_item)
                     yield path, media
-                except ResourceNotFound:
+                except ResourceNotFound as e:
                     retry_failures.append(map_item)
+                    if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
+                        raise e
 
         if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
             if retry_successes or retry_failures:
