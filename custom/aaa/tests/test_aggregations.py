@@ -48,7 +48,7 @@ TEST_ENVIRONMENT = 'icds'
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
-class AggregationScriptTestBase(CSVTestCase):
+class AggregationScriptTest(CSVTestCase):
     always_include_columns = {'village_id'}
 
     @classmethod
