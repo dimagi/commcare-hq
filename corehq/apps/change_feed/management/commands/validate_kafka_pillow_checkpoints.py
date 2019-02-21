@@ -60,5 +60,5 @@ def _get_checkpoint_dict(pillow):
             }
     # filter out 0's since we don't want to check those as they are likely new pillows
     return {
-        k: v for k, v in sequence_dict.items() if v > 0
+        k: v for k, v in sequence_dict.items() if v is not None and v > 0
     }
