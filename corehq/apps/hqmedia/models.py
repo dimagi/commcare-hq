@@ -12,6 +12,7 @@ from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
@@ -782,6 +783,21 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     self.media_form_errors = True
         return media
 
+    def multimedia_map_for_build(self, build_profile=None):
+        if self.multimedia_map:
+            self.remove_unused_mappings()
+        else:
+            self.multimedia_map = {}
+
+        if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
+            return self.multimedia_map
+
+        requested_media = self.logo_paths   # logos aren't language-specific
+        for lang in build_profile.langs:
+            requested_media |= self.all_media_paths(lang=lang)
+
+        return {path: self.multimedia_map[path] for path in requested_media if path in self.multimedia_map}
+
     # The following functions (get_menu_media, get_case_list_form_media, get_case_list_menu_item_media,
     # get_case_list_lookup_image, _get_item_media, and get_media_ref_kwargs) are used to set up context
     # for app manager settings pages. Ideally, they'd be moved into ModuleMediaMixin and FormMediaMixin
@@ -880,7 +896,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
         deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
+        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
@@ -914,7 +930,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 updated_doc = self.get(self._id)
                 updated_doc.create_mapping(multimedia, form_path)
 
-    def get_media_objects(self, languages=None):
+    def get_media_objects(self, build_profile_id=None):
         """
             Gets all the media objects stored in the multimedia map.
             If passed a profile, will only get those that are used
@@ -924,30 +940,25 @@ class ApplicationMediaMixin(Document, MediaMixin):
             the path (jr://...) and the second is the object (CommCareMultimedia or a subclass)
         """
         found_missing_mm = False
-        filter_multimedia = languages and domain_has_privilege(self.domain, privileges.BUILD_PROFILES)
-        if filter_multimedia:
-            requested_media = set()
-            for lang in languages:
-                requested_media |= self.all_media_paths(lang=lang)
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
         expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
         all_media = {m.path: m for m in self.all_media()}
         deleted_media = []
-        allow_deletion = self.domain not in {'icds-cas', 'icds-test'}
-        for path, map_item in list(self.multimedia_map.items()):
-            if not filter_multimedia or path in requested_media:
-                media_item = raw_docs.get(map_item.multimedia_id)
-                if media_item:
-                    media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
-                    yield path, media_cls.wrap(media_item)
-                else:
-                    # delete media reference from multimedia map so this doesn't pop up again!
-                    deleted_media.append((path, map_item, all_media.get(path)))
-                    if allow_deletion:
-                        del self.multimedia_map[path]
-                        found_missing_mm = True
+        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
+        build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
+        for path, map_item in self.multimedia_map_for_build(build_profile=build_profile).items():
+            media_item = raw_docs.get(map_item.multimedia_id)
+            if media_item:
+                media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
+                yield path, media_cls.wrap(media_item)
+            else:
+                # delete media reference from multimedia map so this doesn't pop up again!
+                deleted_media.append((path, map_item, all_media.get(path)))
+                if allow_deletion:
+                    del self.multimedia_map[path]
+                    found_missing_mm = True
 
         if not allow_deletion and deleted_media:
             _log_media_deletion(self, deleted_media)

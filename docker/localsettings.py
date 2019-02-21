@@ -112,7 +112,9 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
-    'OPTIONS': {},
+    'OPTIONS': {
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
+    },
 }
 
 CACHES = {
