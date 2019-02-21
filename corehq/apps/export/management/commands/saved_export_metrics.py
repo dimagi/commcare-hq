@@ -55,16 +55,20 @@ class Command(BaseCommand):
                     except MemoryError:
                         row_count = column_count = ''
                     else:
-                        if isinstance(attachment, six.text_type):
-                            attachment = attachment.encode('utf-8')
-                        attachment_io = BytesIO(attachment)
                         if export_format == 'xlsx':
-                            workbook = openpyxl.load_workbook(attachment_io, read_only=True)
-                            first_worksheet = workbook.worksheets[0]
-                            row_count = column_count = 0
-                            for row in first_worksheet.rows:
-                                row_count += 1
-                                column_count = max(column_count, len(row))
+                            try:
+                                if isinstance(attachment, six.text_type):
+                                    attachment = attachment.encode('utf-8')
+                                attachment_io = BytesIO(attachment)
+                            except MemoryError:
+                                row_count = column_count = ''
+                            else:
+                                workbook = openpyxl.load_workbook(attachment_io, read_only=True)
+                                first_worksheet = workbook.worksheets[0]
+                                row_count = column_count = 0
+                                for row in first_worksheet.rows:
+                                    row_count += 1
+                                    column_count = max(column_count, len(row))
                         else:
                             row_count = column_count = ''
                     yield [
