@@ -23,11 +23,13 @@ class AppES(HQESQuery):
             app_id,
         ] + super(AppES, self).builtin_filters
 
-    def build_comment(self, comment):
-        return self.add_query(queries.search_string_query(comment, ['build_comment']), queries.SHOULD)
 
-    def version(self, version):
-        return self.add_query(filters.term('version', version), queries.SHOULD)
+def build_comment(comment):
+    return queries.search_string_query(comment, ['build_comment'])
+
+
+def version(version):
+    return filters.term('version', version)
 
 
 def is_build(build=True):

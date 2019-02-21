@@ -64,7 +64,8 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es.apps import AppES
+from corehq.apps.es.apps import AppES, build_comment, version
+from corehq.apps.es import queries
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -124,8 +125,8 @@ def paginate_releases(request, domain, app_id):
         if only_show_released:
             app_es = app_es.is_released()
         if query:
-            app_es = app_es.build_comment(query)
-            app_es = app_es.version(query)
+            app_es = app_es.add_query(build_comment(query), queries.SHOULD)
+            app_es = app_es.add_query(version(query), queries.SHOULD)
 
         results = app_es.exclude_source().run()
         total_apps = results.total
