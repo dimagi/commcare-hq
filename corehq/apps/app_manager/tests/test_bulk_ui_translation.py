@@ -35,10 +35,8 @@ class BulkUiTranslation(SimpleTestCase):
         f = self._build_translation_download_file(headers)
 
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-        self.assertEqual(
-            dict(translations), dict()
-        )
-        self.assertTrue(len(error_properties) == 0)
+        self.assertEqual(dict(translations), {})
+        self.assertEqual(len(error_properties), 0)
 
     def test_translation(self):
         headers = (('translations', ('property', 'en', 'fra')),)
