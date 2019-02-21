@@ -35,14 +35,14 @@ hqDefine("aaa/js/utils/reach_utils", [
         };
 
         self.monthName = function (month) {
-            return moment.months()[month - 1]
+            return moment.months()[month - 1];
         };
 
         self.toTitleCase = function (string) {
-            if (string !== null && string !== void(0)) {
-                return string.split('_')
-                    .map(w => w[0].toUpperCase() + w.substr(1).toLowerCase())
-                    .join(' ')
+            if (string !== null && string !== void(0) && string.length > 0) {
+                return _.map(string.split('_'), function (word) {
+                    return word[0].toUpperCase() + w.substr(1).toLowerCase();
+                }).join(' ')
             }
             return string;
         };

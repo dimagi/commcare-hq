@@ -13,7 +13,7 @@ hqDefine("aaa/js/dashboard", [
     filtersModal,
     monthYearFilter,
     locationFilter,
-    beneficiaryTypeFilter,
+    beneficiaryTypeFilter
 ) {
     var components = {
         'filters-modal': filtersModal,
@@ -48,7 +48,7 @@ hqDefine("aaa/js/dashboard", [
         };
     }();
 
-    $.extend( $.fn.dataTableExt.oStdClasses, {
+    Object.assign($.fn.dataTableExt.oStdClasses, {
         "sLengthSelect": "form-control"
     });
 

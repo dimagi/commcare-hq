@@ -3,13 +3,18 @@
 
 {% block dependencies %}
     <script src="{% static 'moment/moment.js' %}"></script>
-    <script src="{% static 'aaa/js/dashboard.js' %}"></script>
+    <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+    <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+
     <script src="{% static 'aaa/js/utils/reach_utils.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/month_year_filter.js' %}"></script>
     <script src="{% static 'aaa/js/filters/filters_modal.js' %}"></script>
     <script src="{% static 'aaa/js/filters/location_model.js' %}"></script>
     <script src="{% static 'aaa/js/filters/location_filter.js' %}"></script>
-    <script src="{% static 'aaa/js/filters/month_year_filter.js' %}"></script>
+    <script src="{% static 'aaa/js/filters/beneficiary_type_filter.js' %}"></script>
     <script src="{% static 'aaa/js/reports/program_overview.js' %}"></script>
+    <script src="{% static 'aaa/js/dashboard.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}

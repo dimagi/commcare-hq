@@ -47,7 +47,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                 {data: 'age()', name: 'age', title: 'Age'},
                 {data: 'gender()', name: 'gender', title: 'Gender'},
                 {data: 'lastImmunizationType()', name: 'lastImmunizationType', title: 'Last Immunization Type'},
-                {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'}
+                {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'},
             ];
             return self;
         };
@@ -143,7 +143,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
 
         self.dt = null;
 
-        var tables = {
+        var views = {
             'eligible_couple': eligibleCoupleModel(),
             'pregnant_women': pregnantWomenModel(),
             'child': childModel(),
@@ -167,7 +167,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                 $('#datatable').empty();
             }
             selectedType = self.postData.selectedBeneficiaryType();
-            reportListView = tables[selectedType];
+            reportListView = views[selectedType];
 
             self.dt = $('#datatable').DataTable({
                 dom: tableDom,

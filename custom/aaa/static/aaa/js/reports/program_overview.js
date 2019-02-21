@@ -86,8 +86,10 @@ hqDefine("aaa/js/reports/program_overview", [
 
     $(function () {
         var model = programOverviewModel();
-        $('#aaa-dashboard').koApplyBindings(model);
-        model.callback();
+        if ($('#aaa-dashboard')[0] !== void(0)) {
+            $('#aaa-dashboard').koApplyBindings(model);
+            model.callback();
+        }
     });
 
     return {
