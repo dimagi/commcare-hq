@@ -8,7 +8,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.ui_translations import (
-    get_default_translations_for_download, 
+    get_default_translations_for_download,
     process_ui_translation_upload,
 )
 from corehq.apps.translations.utils import update_app_translations_from_trans_dict
@@ -26,6 +26,7 @@ EXPECTED_TRANSLATIONS = {
         'specific.item.to.translate': 'Cyrus',
     }
 }
+
 
 class TestBulkUiTranslation(SimpleTestCase):
 
