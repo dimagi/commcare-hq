@@ -170,9 +170,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             domain,
             config.case_type
         )
+        track_load()
 
         if case:
-            track_load()
             if case.type != config.case_type:
                 continue
         elif error == LookupErrors.NotFound:
@@ -232,8 +232,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 domain,
                 parent_type
             )
+            track_load()
             if parent_case:
-                track_load()
                 extras['index'] = {
                     parent_ref: (parent_type, parent_case.case_id)
                 }
@@ -266,7 +266,6 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
                 caseblocks.append(RowAndCase(i, caseblock))
                 created_count += 1
-                track_load()
                 if external_id:
                     ids_seen.add(external_id)
             except CaseBlockError:
