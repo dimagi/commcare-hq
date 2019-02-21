@@ -55,4 +55,5 @@ branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
   - nonetype-cmp  # Nick P Feb 21
   - py3-requirejs  # Nick P Feb 21
+  - notifications-migration-text  # Nick P Feb 21
 submodules: {}
