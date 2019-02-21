@@ -12,11 +12,10 @@ import six
 
 class BulkUiTranslation(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(BulkUiTranslation, cls).setUpClass()
-        cls.app = Application.new_app("test-domain", "Test App")
-        cls.app.langs = ["en", "fra"]
+    def setUp(self):
+        super(BulkUiTranslation, self).setUp()
+        self.app = Application.new_app("test-domain", "Test App")
+        self.app.langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):
         if data is None:
