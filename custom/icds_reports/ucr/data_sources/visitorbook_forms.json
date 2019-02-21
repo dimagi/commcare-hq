@@ -58,11 +58,14 @@
         "display_name": "Supervisor ID",
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "is_primary_key": false,
         "transform": {},
@@ -75,23 +78,13 @@
         "display_name": "Block ID",
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "type": "named",
-                "name": "user_location_id"
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "is_primary_key": false,
         "transform": {},
@@ -103,35 +96,13 @@
         "display_name": "District ID",
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "_id"
-                },
-                "type": "related_doc",
-                "related_doc_type": "Location",
-                "doc_id_expression": {
-                  "location_id_expression": {
-                    "type": "named",
-                    "name": "user_location_id"
-                  },
-                  "type": "location_parent_id"
-                }
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "is_primary_key": false,
         "transform": {},
@@ -143,47 +114,13 @@
         "display_name": "State ID",
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "related_doc",
-            "related_doc_type": "Location",
-            "doc_id_expression": {
-              "location_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "_id"
-                },
-                "type": "related_doc",
-                "related_doc_type": "Location",
-                "doc_id_expression": {
-                  "location_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_name",
-                      "property_name": "_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                      "location_id_expression": {
-                        "type": "named",
-                        "name": "user_location_id"
-                      },
-                      "type": "location_parent_id"
-                    }
-                  },
-                  "type": "location_parent_id"
-                }
-              },
-              "type": "location_parent_id"
-            }
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "is_primary_key": false,
         "transform": {},
