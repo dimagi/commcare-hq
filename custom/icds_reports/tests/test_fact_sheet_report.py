@@ -781,13 +781,13 @@ class TestFactSheetReportBehaviorChange(TestCase):
             self.get_data()['config']['sections'][1]['rows_config'][0],
             {
                 'average': {
-                    'html': 105.16129032258064,
-                    'sort_key': 105.16129032258064
+                    'html': 89.6774193548387,
+                    'sort_key': 89.6774193548387
                 },
                 'data': [
                     {'html': 'Women resting during pregnancy'},
-                    {'html': 62.5, 'sort_key': 62.5},
-                    {'html': 105.16129032258064, 'sort_key': 105.16129032258064},
+                    {'html': 53.84615384615385, 'sort_key': 53.84615384615385},
+                    {'html': 89.6774193548387, 'sort_key': 89.6774193548387},
                     {'html': 0}
                 ],
                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -798,17 +798,18 @@ class TestFactSheetReportBehaviorChange(TestCase):
         )
 
     def test_extra_meal(self):
+
         self.assertDictEqual(
             self.get_data()['config']['sections'][1]['rows_config'][1],
             {
                 'average': {
-                    'html': 105.16129032258064,
-                    'sort_key': 105.16129032258064
+                    'html': 89.6774193548387,
+                    'sort_key': 89.6774193548387
                 },
                 'data': [
                     {'html': 'Women eating an extra meal during pregnancy'},
-                    {'html': 62.5, 'sort_key': 62.5},
-                    {'html': 105.16129032258064, 'sort_key': 105.16129032258064},
+                    {'html': 53.84615384615385, 'sort_key': 53.84615384615385},
+                    {'html': 89.6774193548387, 'sort_key': 89.6774193548387},
                     {'html': 0}
                 ],
                 'data_source': 'AggCCSRecordMonthlyDataSource',

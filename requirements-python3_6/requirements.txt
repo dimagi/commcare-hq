@@ -12,13 +12,13 @@ asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
-boto3==1.9.96
-botocore==1.12.96         # via boto3, s3transfer
+boto3==1.9.97
+botocore==1.12.97         # via boto3, s3transfer
 celery==3.1.25
 certifi==2018.11.29       # via requests
 cffi==1.12.1              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
-cloudant==2.7.0
+cloudant==2.11.0          # via jsonobject-couchdbkit
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 cryptography==2.5         # via pyopenssl, requests

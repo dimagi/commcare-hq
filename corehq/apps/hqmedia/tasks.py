@@ -153,7 +153,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             download_targeted_version=download_targeted_version,
         )
 
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
+        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
             manifest = json.dumps({
                 'include_multimedia_files': include_multimedia_files,
                 'include_index_files': include_index_files,
@@ -178,11 +178,13 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     DownloadBase.set_progress(build_application_zip, progress, 100)
 
         # Integrity check that all media files present in media_suite.xml were added to the zip
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain) or app.domain in ['icds', 'icds-cas']:
+        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
             with open(fpath, 'rb') as tmp:
                 with zipfile.ZipFile(tmp, "r") as z:
                     media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
-                    if len(media_suites) == 1:
+                    if len(media_suites) != 1:
+                        errors.append(_('Could not identify media_suite.xml in CCZ'))
+                    else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
                             parsed = parse_xml(media_suite.read())

@@ -1,6 +1,13 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
     "reach-test",
     "icds-sql",
@@ -55,6 +62,20 @@
         "expression": {
           "type": "named",
           "name": "user_location_id"
+        }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "type": "expression",
+        "column_id": "supervisor_id",
+        "type": "expression",
+        "expression":{
+          "type": "location_parent_id",
+          "location_id_expression": {
+            "type": "named",
+            "name": "user_location_id"
+          }
         }
       },
       {
