@@ -154,6 +154,9 @@ class AbstractUCRDataSource(object):
     def get_columns(self):
         raise NotImplementedError()
 
+    def pk_columns(self):
+        raise NotImplementedError()
+
 
 @six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):

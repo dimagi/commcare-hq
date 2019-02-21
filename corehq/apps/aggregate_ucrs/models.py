@@ -89,6 +89,7 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         # todo: will probably need to make this configurable at some point
         return []
 
+    @memoized
     def get_columns(self):
         for adapter in self.get_column_adapters():
             yield adapter.to_ucr_column_spec()
@@ -109,6 +110,16 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
             yield self.time_aggregation.get_column_adapter()
         for primary_column in self.primary_columns.all():
             yield PrimaryColumnAdapter.from_db_column(primary_column)
+
+    @property
+    def pk_columns(self):
+        columns = []
+        for col in self.get_columns():
+            if col.is_primary_key:
+                column_name = col.database_column_name
+                if isinstance(column_name, bytes):
+                    column_name = column_name.decode('utf-8')
+                columns.append(column_name)
 
 
 class PrimaryColumn(models.Model):
