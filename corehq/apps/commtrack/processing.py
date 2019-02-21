@@ -203,7 +203,7 @@ _SaveStockTransaction = namedtuple(
     ['stock_transaction', 'previous_ledger_values', 'ledger_values'])
 
 
-def plan_rebuild_stock_state(case_id, section_id, product_id, domain):
+def plan_rebuild_stock_state(case_id, section_id, product_id):
     """
     planner for rebuild_stock_state
 
@@ -226,7 +226,9 @@ def plan_rebuild_stock_state(case_id, section_id, product_id, domain):
         .select_related('report')
     )
     balance = None
-    ledger_load_counter("rebuild_stock", domain)(len(stock_transactions))
+    if stock_transactions:
+        domain = stock_transactions[0].report.domain
+        ledger_load_counter("rebuild_stock", domain)(len(stock_transactions))
     for stock_transaction in stock_transactions:
         if stock_transaction.subtype == stockconst.TRANSACTION_SUBTYPE_INFERRED:
             yield _DeleteStockTransaction(stock_transaction)
