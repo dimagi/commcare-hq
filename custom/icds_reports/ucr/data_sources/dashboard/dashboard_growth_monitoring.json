@@ -74,37 +74,28 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "value_expression": {
-                "type": "property_path",
-                "property_path": [
-                  "user_data",
-                  "commcare_location_id"
-                ]
-              },
-              "type": "related_doc",
-              "related_doc_type": "CommCareUser",
-              "doc_id_expression": {
-                "expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "meta",
-                    "userID"
-                  ]
-                },
-                "type": "root_doc"
-              }
-            },
-            "location_type": "state"
-          }
+          "location_type": "state",
+      	  "location_property": "_id"
+        }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "column_id": "supervisor_id",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+      	  "location_property": "_id"
         }
       },
       {
@@ -327,6 +318,16 @@
       }
     ],
     "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "meta", "userID"]
+          }
+        }
+      }
     },
     "named_filters": {
       "is_delivery_form": {
