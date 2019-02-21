@@ -8,6 +8,7 @@ from custom.aaa.views import (
     ProgramOverviewReport,
     ProgramOverviewReportAPI,
     UnifiedBeneficiaryReport,
+    UnifiedBeneficiaryReportAPI
 )
 
 dashboardurls = [
@@ -17,6 +18,7 @@ dashboardurls = [
 
 dataurls = [
     url('^program_overview/', ProgramOverviewReportAPI.as_view(), name='program_overview_api'),
+    url('^unified_beneficiary/', UnifiedBeneficiaryReportAPI.as_view(), name='unified_beneficiary_api'),
     url('^location_api/', LocationFilterAPI.as_view(), name='location_api'),
     url(r'^aggregate/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
 ]
