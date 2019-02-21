@@ -1243,7 +1243,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         updated_xform_ids = set(updated_xforms_map)
         form_ids_to_fetch = list(form_ids - updated_xform_ids)
-        form_load_counter("fetch_case_transaction_forms", case.domain)(len(form_ids_to_fetch))
+        form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
         xform_map = {
             form.form_id: form
             for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)

@@ -71,7 +71,7 @@ def _perfom_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
     cache = interface.casedb_cache(
         domain=form.domain, lock=False, deleted_ok=True, xforms=[form],
-        load_src="reprocess_post_save",
+        load_src="reprocess_form_post_save",
     )
     with cache as casedb:
         case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
@@ -135,7 +135,7 @@ def reprocess_form(form, save=True, lock_form=True):
 
         cache = interface.casedb_cache(
             domain=form.domain, lock=True, deleted_ok=True, xforms=[form],
-            load_src="reprocess",
+            load_src="reprocess_form",
         )
         with cache as casedb:
             try:
