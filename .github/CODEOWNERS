@@ -3,6 +3,7 @@
 /custom/aaa/ @emord
 
 /static/ @orangejenny
+/templates/ @orangejenny
 
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/hqwebapp/ @orangejenny
