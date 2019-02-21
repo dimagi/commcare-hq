@@ -5,7 +5,6 @@ from functools import wraps
 import logging
 import requests
 from corehq.util.global_request import get_request
-from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
@@ -115,6 +114,8 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
+        from dimagi.utils.couch import release_lock
+
         @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
               default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
+from six.moves import zip_longest
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
@@ -9,6 +10,8 @@ from redis.exceptions import RedisError, LockError
 import json
 import six
 import sys
+
+from corehq.util.datadog.lockmeter import LockMeter
 
 LOCK_EXPIRATION = timedelta(hours=1)
 
@@ -80,11 +83,15 @@ def acquire_lock(lock, degrade_gracefully, **kwargs):
         acquired = lock.acquire(**kwargs)
     except RedisError:
         if degrade_gracefully:
+            lock.degraded()
             lock = None
         else:
             raise
-    if lock and not acquired and not degrade_gracefully:
-        raise RedisError("Unable to acquire lock")
+    if lock and not acquired:
+        if degrade_gracefully:
+            lock.degraded()
+        else:
+            raise RedisError("Unable to acquire lock")
     return lock
 
 
@@ -107,7 +114,9 @@ def release_lock(lock, degrade_gracefully):
                     pass
                 six.reraise(*exc)
         except RedisError:
-            if not degrade_gracefully:
+            if degrade_gracefully:
+                lock.release_failed()
+            else:
                 raise
 
 
@@ -167,17 +176,19 @@ class RedisLockableMixIn(object):
     @classmethod
     def get_obj_lock(cls, obj, timeout_seconds=120):
         obj_id = cls.get_obj_id(obj)
-        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
+        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds, obj_id)
 
     @classmethod
     def get_obj_lock_by_id(cls, obj_id, timeout_seconds=120):
-        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds)
+        return cls.get_redis_lock(cls._redis_obj_lock_key(obj_id), timeout_seconds, obj_id)
 
     @classmethod
-    def get_redis_lock(cls, key, timeout_seconds):
+    def get_redis_lock(cls, key, timeout_seconds, obj_id=None):
         client = get_redis_client()
         lock = client.lock(key, timeout=timeout_seconds)
-        return lock
+        return LockMeter(lock, tags=[
+            "name:%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj"))
+        ])
 
     @classmethod
     def get_class_lock(cls, timeout_seconds=120):
@@ -343,16 +354,26 @@ class CriticalSection(object):
         self.block = block
 
     def __enter__(self):
+        if self.keys:
+            key = self.keys[0]
+            sep = "-" if "-" in key else "_"
+            name = "_".join(key.split(sep, 2)[:2])
+        else:
+            name = type(self).__name__
+        tags = ["name:%s" % name]
         try:
             client = get_redis_client()
             for key in self.keys:
-                lock = client.lock(key, timeout=self.timeout)
+                lock = LockMeter(client.lock(key, timeout=self.timeout), tags)
                 self.locks.append(lock)
             for lock in self.locks:
                 self.status.append(lock.acquire(blocking=self.block))
         except Exception:
             if self.fail_hard:
                 raise
+        for lock, status in zip_longest(self.locks, self.status):
+            if not status:
+                lock.degraded()
         return self
 
     def success(self):
