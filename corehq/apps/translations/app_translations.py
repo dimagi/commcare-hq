@@ -53,10 +53,10 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def read_uploaded_app_translation_file(f):
+def get_app_translation_workbook(file_or_filename):
     msgs = []
     try:
-        workbook = WorkbookJSONReader(f)
+        workbook = WorkbookJSONReader(file_or_filename)
     # todo: HeaderValueError does not belong here
     except (HeaderValueError, InvalidExcelFileException) as e:
         msgs.append(

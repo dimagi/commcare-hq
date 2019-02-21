@@ -23,12 +23,12 @@ from corehq.apps.app_manager.ui_translations import process_ui_translation_uploa
     build_ui_translation_download_file
 from corehq.apps.translations.app_translations import (
     bulk_app_sheet_menu_row,
+    bulk_app_sheet_question_rows,
     expected_bulk_app_sheet_headers,
     expected_bulk_app_sheet_rows,
+    get_app_translation_workbook,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
-    read_uploaded_app_translation_file,
-    bulk_app_sheet_question_rows,
 )
 from corehq.util.workbook_json.excel import InvalidExcelFileException
 
@@ -153,7 +153,7 @@ def download_bulk_multimedia_translations(request, domain, app_id):
 def upload_bulk_app_translations(request, domain, app_id):
     validate = request.POST.get('validate')
     app = get_app(domain, app_id)
-    workbook, msgs = read_uploaded_app_translation_file(request.file)
+    workbook, msgs = get_app_translation_workbook(request.file)
     if workbook:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email)

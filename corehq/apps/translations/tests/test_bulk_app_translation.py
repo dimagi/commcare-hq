@@ -19,8 +19,8 @@ from corehq.apps.translations.app_translations import (
     expected_bulk_app_sheet_rows,
     expected_bulk_app_sheet_headers,
     update_form_translations,
+    get_app_translation_workbook,
     get_unicode_dicts,
-    read_uploaded_app_translation_file,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
@@ -62,7 +62,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
             f.seek(0)
-            workbook, messages = read_uploaded_app_translation_file(f)
+            workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 
@@ -81,7 +81,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
         with io.open(self.get_path(name, "xlsx"), 'rb') as f:
-            workbook, messages = read_uploaded_app_translation_file(f)
+            workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 
