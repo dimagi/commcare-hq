@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import tempfile
 
+from corehq.apps.app_manager.models import LinkedApplication
+
 
 def get_file_content_from_workbook(wb):
     # temporary write the in-memory workbook to be able to read its content
@@ -10,3 +12,9 @@ def get_file_content_from_workbook(wb):
         f.seek(0)
         content = f.read()
     return content
+
+
+def update_app_translations_from_trans_dict(app, trans_dict):
+    if isinstance(app, LinkedApplication):
+        app.linked_app_translations.update(dict(trans_dict))
+    app.translations.update(dict(trans_dict))
