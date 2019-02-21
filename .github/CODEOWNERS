@@ -1,3 +1,8 @@
 # https://help.github.com/en/articles/about-code-owners
 
 /custom/aaa/ @emord
+
+/static/ @orangejenny
+
+/corehq/apps/app_manager/ @orangejenny
+/corehq/apps/hqwebapp/ @orangejenny
