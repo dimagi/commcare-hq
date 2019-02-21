@@ -97,10 +97,10 @@ if USE_PARTITIONED_DATABASE:
     
 USE_CITUSDB = os.environ.get('USE_CITUSDB', 'no') == 'yes'
 if USE_CITUSDB:
-    DATABASES['citus'] = {
+    DATABASES['citus_ucr'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcarehq_citus',
+        'NAME': 'commcarehq_citus_ucr',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',

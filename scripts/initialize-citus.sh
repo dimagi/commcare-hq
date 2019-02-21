@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DATABASE=commcarehq_citus
+DATABASE=commcarehq_citus_ucr
 
 function exec_sql() {
     HOST=$1
