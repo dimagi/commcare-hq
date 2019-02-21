@@ -113,40 +113,40 @@ class AggregationScriptTest(CSVTestCase):
             self._load_csv(path)
         )
 
-    def test_agg_woman_table(self):
-        self._load_and_compare_data(
-            Woman,
-            os.path.join(OUTPUT_PATH, 'woman.csv'),
-            sort_key=['awc_id', 'village_id', 'person_case_id']
-        )
+    # def test_agg_woman_table(self):
+    #     self._load_and_compare_data(
+    #         Woman,
+    #         os.path.join(OUTPUT_PATH, 'woman.csv'),
+    #         sort_key=['awc_id', 'village_id', 'person_case_id']
+    #     )
 
-    def test_agg_child_table(self):
-        self._load_and_compare_data(
-            Child,
-            os.path.join(OUTPUT_PATH, 'child.csv'),
-            sort_key=['awc_id', 'village_id', 'person_case_id']
-        )
-
-    def test_agg_ccs_record_table(self):
-        self._load_and_compare_data(
-            CcsRecord,
-            os.path.join(OUTPUT_PATH, 'ccs_record.csv'),
-            sort_key=['awc_id', 'village_id', 'ccs_record_case_id']
-        )
-
-    def test_agg_awc_table(self):
-        self._load_and_compare_data(
-            AggAwc,
-            os.path.join(OUTPUT_PATH, 'agg_awc.csv'),
-            sort_key=['month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
-        )
-
-    def test_agg_village_table(self):
-        self._load_and_compare_data(
-            AggVillage,
-            os.path.join(OUTPUT_PATH, 'agg_village.csv'),
-            sort_key=['month', 'state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
-        )
+    # def test_agg_child_table(self):
+    #     self._load_and_compare_data(
+    #         Child,
+    #         os.path.join(OUTPUT_PATH, 'child.csv'),
+    #         sort_key=['awc_id', 'village_id', 'person_case_id']
+    #     )
+    #
+    # def test_agg_ccs_record_table(self):
+    #     self._load_and_compare_data(
+    #         CcsRecord,
+    #         os.path.join(OUTPUT_PATH, 'ccs_record.csv'),
+    #         sort_key=['awc_id', 'village_id', 'ccs_record_case_id']
+    #     )
+    #
+    # def test_agg_awc_table(self):
+    #     self._load_and_compare_data(
+    #         AggAwc,
+    #         os.path.join(OUTPUT_PATH, 'agg_awc.csv'),
+    #         sort_key=['month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+    #     )
+    #
+    # def test_agg_village_table(self):
+    #     self._load_and_compare_data(
+    #         AggVillage,
+    #         os.path.join(OUTPUT_PATH, 'agg_village.csv'),
+    #         sort_key=['month', 'state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
+    #     )
 
 
 # The following setup and teardown methods are kept here to allow quick loading of test data
