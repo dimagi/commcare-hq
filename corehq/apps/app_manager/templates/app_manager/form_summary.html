@@ -38,6 +38,8 @@
                                            icon: 'fa fa-quote-left', text: '{% trans "Comments"|escapejs %}' } }--><!-- /ko -->
                         <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleDefaultValues, activeObs: showDefaultValues,
                                            icon: 'fa fa-home', text: '{% trans "Default Values"|escapejs %}' } }--><!-- /ko -->
+                        <!-- ko template: {name: 'attribute-toggle', data: { clickFn: toggleCaseProperties, activeObs: showCaseProperties,
+                             icon: 'fa fa-briefcase', text: '{% trans "Cases"|escapejs %}' } }--><!-- /ko -->
                     </div>
                  </div>
              </div>
@@ -107,30 +109,52 @@
                                 &nbsp; <!-- ko text: comment --><!-- /ko -->
                             </span>
                             <!-- /ko -->
-                            <!-- ko if:  calculate || relevant || constraint || setvalue  -->
+                            <!-- ko if:  calculate || relevant || constraint || setvalue || load_properties || save_properties  -->
                             <ul class="fa-ul">
                                 <!-- ko if: calculate -->
                                 <li data-bind="visible: $root.showCalculations">
-                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-calculator'}"></i>
+                                    <i class = "fa-li fa text-muted fa-calculator"></i>
                                     <!-- ko text: calculate --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: relevant -->
                                 <li data-bind="visible: $root.showRelevance">
-                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                                    <i class = "fa-li fa text-muted fa-code-fork"></i>
                                     <!-- ko text: relevant --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: constraint -->
                                 <li data-bind="visible: $root.showConstraints">
-                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-ban'}"></i>
+                                    <i class = "fa-li fa text-muted fa-ban"></i>
                                     <!-- ko text: constraint --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                                 <!-- ko if: setvalue -->
                                 <li data-bind="visible: $root.showDefaultValues">
-                                    <i data-bind="attr: {'class': 'fa-li fa text-muted fa-home'}"></i>
+                                    <i class = "fa-li fa text-muted fa-home"></i>
                                     <!-- ko text: setvalue --><!-- /ko -->
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko foreach: load_properties -->
+                                <li data-bind="visible: $root.showCaseProperties">
+                                    <i class = "fa fa-li text-muted fa-briefcase"></i>
+                                    <span class="text-muted" data-bind="text:$data[0]"></span> -
+                                    <!-- ko text: $data[1] --><!-- /ko -->
+                                    <span title="{% trans 'Load property' %}">
+                                        <i class = "fa text-muted fa-arrow-right"></i>
+                                        <i class = "fa text-muted fa-file"></i>
+                                    </span>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko foreach: save_properties -->
+                                <li data-bind="visible: $root.showCaseProperties">
+                                    <i class = "fa fa-li text-muted fa-file"></i>
+                                    <span title="{% trans 'Save property' %}">
+                                        <i class = "fa text-muted fa-arrow-right"></i>
+                                        <i class = "fa text-muted fa-briefcase"></i>
+                                    </span>
+                                    <span class="text-muted" data-bind="text:$data[0]"></span> -
+                                    <!-- ko text: $data[1] --><!-- /ko -->
                                 </li>
                                 <!-- /ko -->
                             </ul>

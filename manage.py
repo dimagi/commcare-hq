@@ -132,7 +132,6 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update'),
         GeventCommand('run_gunicorn'),
         GeventCommand('run_sql'),
         GeventCommand('run_blob_migration'),
@@ -158,6 +157,7 @@ if __name__ == "__main__":
 
     patch_assertItemsEqual()
 
+    # After PY3 migration: remove
     patch_pickle_version()
 
     set_default_settings_path(sys.argv)

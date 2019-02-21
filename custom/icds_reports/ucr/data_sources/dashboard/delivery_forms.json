@@ -1,6 +1,13 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
     "reach-test",
     "icds-cas",
@@ -39,7 +46,22 @@
             "name": "user_location_id"
           },
           "location_type": "state",
-          "location_propery": "_id"
+      	  "location_property": "_id"
+        }
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "column_id": "supervisor_id",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+      	  "location_property": "_id"
         }
       },
       {
