@@ -5,5 +5,7 @@
 /static/ @orangejenny
 /templates/ @orangejenny
 
+/corehq/apps/analytics/ @orangejenny
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/hqwebapp/ @orangejenny
+/corehq/apps/styleguide/ @orangejenny
