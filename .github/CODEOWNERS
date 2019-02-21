@@ -1,7 +1,5 @@
 # https://help.github.com/en/articles/about-code-owners
 
-/custom/aaa/ @emord
-
 *.html @orangejenny
 *.js @orangejenny
 *.less @orangejenny
@@ -13,3 +11,5 @@
 
 /corehq/apps/accounting/ @nickpell
 /corehq/apps/smsbillables/ @nickpell
+
+/custom/aaa/ @emord
