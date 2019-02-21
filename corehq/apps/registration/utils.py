@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 import logging
+
+from django.db import transaction
 from django.utils.translation import ugettext
 import uuid
 from datetime import datetime, date, timedelta
@@ -101,15 +103,16 @@ def request_new_domain(request, form, is_new_user=True):
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
 
-    if is_new_user:
-        # Only new-user domains are eligible for Advanced trial
-        # domains with no subscription are equivalent to be on free Community plan
-        create_30_day_advanced_trial(new_domain, current_user.username)
-    else:
-        ensure_explicit_community_subscription(
-            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-            web_user=current_user.username,
-        )
+    with transaction.atomic():
+        if is_new_user:
+            # Only new-user domains are eligible for Advanced trial
+            # domains with no subscription are equivalent to be on free Community plan
+            create_30_day_advanced_trial(new_domain, current_user.username)
+        else:
+            ensure_explicit_community_subscription(
+                new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
+                web_user=current_user.username,
+            )
 
     UserRole.init_domain_with_presets(new_domain.name)
 

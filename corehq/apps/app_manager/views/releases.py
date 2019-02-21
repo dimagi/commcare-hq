@@ -64,7 +64,8 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es.apps import AppES
+from corehq.apps.es.apps import AppES, build_comment, version
+from corehq.apps.es import queries
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -124,26 +125,13 @@ def paginate_releases(request, domain, app_id):
         if only_show_released:
             app_es = app_es.is_released()
         if query:
-            app_es = app_es.build_comment(query)
+            app_es = app_es.add_query(build_comment(query), queries.SHOULD)
+            app_es = app_es.add_query(version(query), queries.SHOULD)
 
         results = app_es.exclude_source().run()
         total_apps = results.total
         app_ids = results.doc_ids
         apps = get_docs(Application.get_db(), app_ids)
-
-        # Check if user is searching for a specific version number
-        if query:
-            try:
-                version = int(query)
-            except ValueError:
-                pass
-            else:
-                build_doc = get_build_doc_by_version(domain, app_id, version)
-                if build_doc and build_doc['_id'] not in app_ids:
-                    total_apps = total_apps + 1
-                    apps = apps + [build_doc]
-                    apps = sorted(apps, key=lambda a: -a['version'])
-                    apps = apps[:limit]
 
         saved_apps = [
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)

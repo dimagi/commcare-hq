@@ -18,6 +18,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import models
+from django.utils.decorators import classproperty
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -144,7 +145,11 @@ class Woman(LocationDenormalizedModel):
             WHERE sex = 'F' AND date_part('year', age(dob)) BETWEEN 15 AND 49
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           dob = EXCLUDED.dob,
+           marital_status = EXCLUDED.marital_status,
+           sex = EXCLUDED.sex,
+           migration_status = EXCLUDED.migration_status
         """.format(
             woman_tablename=cls._meta.db_table,
             person_cases_ucr_tablename=ucr_tablename,
@@ -181,23 +186,66 @@ class Woman(LocationDenormalizedModel):
 
         return """
         UPDATE "{woman_tablename}" AS woman SET
-            pregnant_ranges = pregnant_ranges
+            pregnant_ranges = ccs_record.pregnant_ranges
         FROM (
-            SELECT person_case_id, agg_array(pregnancy_range) as pregnancy_ranges
+            SELECT person_case_id, array_agg(pregnant_range) as pregnant_ranges
             FROM(
                 SELECT person_case_id,
-                       [opened_on, add] as pregnancy_range
+                       daterange(opened_on::date, add, '[]') as pregnant_range
                 FROM "{ccs_record_cases_ucr_tablename}"
-                WHERE opened_on < add
-                GROUP BY person_case_id, pregnancy_range
+                WHERE opened_on < add OR add IS NULL
+                GROUP BY person_case_id, pregnant_range
             ) AS _tmp_table
             GROUP BY person_case_id
         ) ccs_record
-        WHERE woman.person_case_id = ccs_record.doc_id
+        WHERE woman.person_case_id = ccs_record.person_case_id
         """.format(
             woman_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_eligible_couple_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-eligible_couple_forms')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{woman_tablename}" AS woman SET
+            fp_current_method_ranges = eligible_couple_fp.fp_current_method_ranges
+        FROM (
+            SELECT person_case_id, array_agg(fp_current_method_range) AS fp_current_method_ranges
+            FROM (
+                SELECT person_case_id, fp_current_method, daterange(timeend::date, next_timeend::date) AS fp_current_method_range
+                FROM(
+                    SELECT person_case_id,
+                           fp_current_method,
+                           timeend,
+                           LEAD(fp_current_method) OVER w AS next_fp_current_method,
+                           LEAD(timeend) OVER w AS next_timeend
+                    FROM "{eligible_couple_ucr_tablename}"
+                    WINDOW w AS (PARTITION BY person_case_id ORDER BY timeend DESC)
+                ) AS _tmp_table
+            ) eligible_couple
+            WHERE fp_current_method != 'none'
+            GROUP BY person_case_id
+        ) AS eligible_couple_fp
+        WHERE woman.person_case_id = eligible_couple_fp.person_case_id
+        """.format(
+            woman_tablename=cls._meta.db_table,
+            eligible_couple_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_ccs_record_case_ucr,
+            self.agg_from_eligible_couple_forms_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
 
 
 class WomanHistory(models.Model):
@@ -242,7 +290,7 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = get_table_name(domain, config.table_id)
 
         return """
-        INSERT INTO "{ccs_reccord_tablename}" AS ccs_record (
+        INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
             hrp, child_birth_location, add, edd
         ) (
@@ -254,14 +302,18 @@ class CcsRecord(LocationDenormalizedModel):
                 closed_on,
                 hrp,
                 child_birth_location,
-                edd,
-                add
+                add,
+                edd
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
-        ON CONFLICT (person_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+        ON CONFLICT (ccs_record_case_id) DO UPDATE SET
+           closed_on = EXCLUDED.closed_on,
+           hrp = EXCLUDED.hrp,
+           child_birth_location = EXCLUDED.child_birth_location,
+           add = EXCLUDED.add,
+           edd = EXCLUDED.edd
         """.format(
-            woman_tablename=cls._meta.db_table,
+            ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -275,7 +327,7 @@ class CcsRecord(LocationDenormalizedModel):
         UPDATE "{child_tablename}" AS child SET
             household_case_id = person.household_case_id
         FROM (
-            SELECT household_case_id,
+            SELECT doc_id, household_case_id
             FROM "{person_cases_ucr_tablename}"
         ) person
         WHERE child.person_case_id = person.doc_id
@@ -306,6 +358,16 @@ class CcsRecord(LocationDenormalizedModel):
             child_tablename=cls._meta.db_table,
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_ccs_record_case_ucr,
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
 
 
 class Child(LocationDenormalizedModel):
@@ -404,6 +466,302 @@ class Child(LocationDenormalizedModel):
             child_tablename=cls._meta.db_table,
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_child_health_case_ucr,
+            self.agg_from_person_case_ucr,
+            self.agg_from_household_case_ucr,
+            self.agg_from_village_ucr,
+            self.agg_from_awc_ucr,
+        ]
+
+
+class AggLocation(models.Model):
+    """Abstract base model for aggregate location tables.
+
+    Child classes should define location_levels and fields for each level.
+    """
+
+    domain = models.TextField()
+
+    month = models.DateField()
+
+    registered_eligible_couples = models.PositiveIntegerField(null=True)
+    registered_pregnancies = models.PositiveIntegerField(null=True)
+    registered_children = models.PositiveIntegerField(null=True)
+
+    eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
+    high_risk_pregnancies = models.PositiveIntegerField(null=True)
+    institutional_deliveries = models.PositiveIntegerField(null=True)
+    total_deliveries = models.PositiveIntegerField(null=True)
+
+    @classmethod
+    def agg_from_woman_table(cls, domain, window_start, window_end):
+        base_tablename = Woman._meta.db_table
+
+        return """
+        INSERT INTO "{agg_tablename}" AS agg (
+            domain, {location_levels}, month,
+            registered_eligible_couples,
+            registered_pregnancies,
+            eligible_couples_using_fp_method
+        ) (
+            SELECT
+                %(domain)s, {location_levels}, %(window_start)s AS month,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges) OR pregnant_ranges IS NULL)
+                    AND migration_status IS DISTINCT FROM 'migrated'
+                    AND marital_status = 'married'
+                ), 0) as registered_eligible_couples,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges)
+                    AND migration_status IS DISTINCT FROM 'migrated'
+                ), 0) as registered_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    daterange(%(window_start)s, %(window_end)s) && any(fp_current_method_ranges)
+                    AND migration_status IS DISTINCT FROM 'migrated'
+                ), 0) as eligible_couples_using_fp_method
+            FROM "{woman_tablename}" woman
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND (opened_on < closed_on OR closed_on IS NULL)
+                  AND state_id IS NOT NULL
+            GROUP BY {location_levels}
+        )
+        ON CONFLICT ({location_levels}, month) DO UPDATE SET
+           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
+           registered_pregnancies = EXCLUDED.registered_pregnancies,
+           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method
+        """.format(
+            agg_tablename=cls._meta.db_table,
+            woman_tablename=base_tablename,
+            location_levels=', '.join(cls.location_levels),
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_ccs_record_table(cls, domain, window_start, window_end):
+        base_tablename = CcsRecord._meta.db_table
+
+        return """
+        INSERT INTO "{agg_tablename}" AS agg (
+            domain, {location_levels}, month,
+            high_risk_pregnancies,
+            institutional_deliveries,
+            total_deliveries
+        ) (
+            SELECT
+                %(domain)s, {location_levels}, %(window_start)s AS month,
+                COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    add <@ daterange(%(window_start)s, %(window_end)s)
+                    AND child_birth_location = 'hospital'
+                ), 0) as institutional_deliveries,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    add <@ daterange(%(window_start)s, %(window_end)s)
+                ), 0) as total_deliveries
+            FROM "{woman_tablename}" woman
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
+                  AND (opened_on < closed_on OR closed_on IS NULL)
+                  AND state_id IS NOT NULL
+            GROUP BY {location_levels}
+        )
+        ON CONFLICT ({location_levels}, month) DO UPDATE SET
+           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
+           institutional_deliveries = EXCLUDED.institutional_deliveries,
+           total_deliveries = EXCLUDED.total_deliveries
+        """.format(
+            agg_tablename=cls._meta.db_table,
+            woman_tablename=base_tablename,
+            location_levels=', '.join(cls.location_levels),
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_child_table(cls, domain, window_start, window_end):
+        base_tablename = Child._meta.db_table
+
+        return """
+        INSERT INTO "{agg_tablename}" AS agg (
+            domain, {location_levels}, month,
+            registered_children
+        ) (
+            SELECT
+                %(domain)s,
+                {location_levels},
+                %(window_start)s AS month,
+                COALESCE(COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5), 0) as registered_children
+            FROM "{child_tablename}" child
+            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                  AND (opened_on < closed_on OR closed_on IS NULL)
+                  AND state_id IS NOT NULL
+            GROUP BY {location_levels}
+        )
+        ON CONFLICT ({location_levels}, month) DO UPDATE SET
+           registered_children = EXCLUDED.registered_children
+        """.format(
+            agg_tablename=cls._meta.db_table,
+            child_tablename=base_tablename,
+            location_levels=', '.join(cls.location_levels),
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def _rollup_helper(cls, level):
+        base_tablename = cls._meta.db_table
+        location_levels = cls.location_levels
+
+        insert_into_columns = ', '.join(location_levels)
+        if level == 0:
+            select_group_by_location_levels = ''
+            group_by = ''
+        else:
+            select_group_by_location_levels = ', '.join(location_levels[:level]) + ','
+            group_by = 'GROUP BY ' + ', '.join(location_levels[:level])
+
+        return """
+        INSERT INTO "{agg_tablename}" AS agg (
+            domain, {insert_into_columns}, month,
+            registered_eligible_couples, registered_pregnancies, registered_children,
+            eligible_couples_using_fp_method, high_risk_pregnancies, institutional_deliveries, total_deliveries
+        ) (
+            SELECT
+                %(domain)s,
+                {select_group_by_location_levels}
+                {select_location_levels},
+                %(window_start)s AS month,
+                SUM(registered_eligible_couples),
+                SUM(registered_pregnancies),
+                SUM(registered_children),
+                SUM(eligible_couples_using_fp_method),
+                SUM(high_risk_pregnancies),
+                SUM(institutional_deliveries),
+                SUM(total_deliveries)
+            FROM "{child_tablename}" child
+            WHERE month = %(window_start)s AND {where_locations}
+            {group_by_location_levels}
+        )
+        ON CONFLICT ({insert_into_columns}, month) DO UPDATE SET
+           registered_eligible_couples = EXCLUDED.registered_eligible_couples,
+           registered_pregnancies = EXCLUDED.registered_pregnancies,
+           registered_children = EXCLUDED.registered_children,
+           eligible_couples_using_fp_method = EXCLUDED.eligible_couples_using_fp_method,
+           high_risk_pregnancies = EXCLUDED.high_risk_pregnancies,
+           institutional_deliveries = EXCLUDED.institutional_deliveries,
+           total_deliveries = EXCLUDED.total_deliveries
+        """.format(
+            agg_tablename=cls._meta.db_table,
+            child_tablename=base_tablename,
+            insert_into_columns=insert_into_columns,
+            select_group_by_location_levels=select_group_by_location_levels,
+            select_location_levels=', '.join(["'ALL'"] * (len(location_levels) - level)),
+            where_locations=' AND '.join(["{} != 'ALL'".format(lev) for lev in location_levels[level:]]),
+            group_by_location_levels=group_by
+        )
+
+    class Meta(object):
+        abstract = True
+
+
+class AggAwc(AggLocation):
+    location_levels = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+
+    state_id = models.TextField()
+    district_id = models.TextField()
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField()
+
+    @classmethod
+    def rollup_supervisor(cls, domain, window_start, window_end):
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_block(cls, domain, window_start, window_end):
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_district(cls, domain, window_start, window_end):
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_state(cls, domain, window_start, window_end):
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_national(cls, domain, window_start, window_end):
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_woman_table,
+            self.agg_from_ccs_record_table,
+            self.agg_from_child_table,
+            self.rollup_supervisor,
+            self.rollup_block,
+            self.rollup_district,
+            self.rollup_state,
+            self.rollup_national,
+        ]
+
+    class Meta(object):
+        unique_together = (
+            ('state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id', 'month'),
+        )
+
+
+class AggVillage(AggLocation):
+    location_levels = ['state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id']
+
+    state_id = models.TextField()
+    district_id = models.TextField()
+    taluka_id = models.TextField()
+    phc_id = models.TextField()
+    sc_id = models.TextField()
+    village_id = models.TextField()
+
+    @classmethod
+    def rollup_sc(cls, domain, window_start, window_end):
+        return cls._rollup_helper(5), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_phc(cls, domain, window_start, window_end):
+        return cls._rollup_helper(4), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_taluka(cls, domain, window_start, window_end):
+        return cls._rollup_helper(3), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_district(cls, domain, window_start, window_end):
+        return cls._rollup_helper(2), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_state(cls, domain, window_start, window_end):
+        return cls._rollup_helper(1), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def rollup_national(cls, domain, window_start, window_end):
+        return cls._rollup_helper(0), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(self):
+        return [
+            self.agg_from_woman_table,
+            self.agg_from_ccs_record_table,
+            self.agg_from_child_table,
+            self.rollup_sc,
+            self.rollup_phc,
+            self.rollup_taluka,
+            self.rollup_district,
+            self.rollup_state,
+            self.rollup_national,
+        ]
+
+    class Meta(object):
+        unique_together = (
+            ('state_id', 'district_id', 'taluka_id', 'phc_id', 'sc_id', 'village_id', 'month'),
+        )
 
 
 class AggregationInformation(models.Model):

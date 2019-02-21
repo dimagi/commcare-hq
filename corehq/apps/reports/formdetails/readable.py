@@ -121,7 +121,6 @@ class CaseFormMeta(JsonObject):
 class CaseDetailMeta(JsonObject):
     module_id = StringProperty()
     header = DictProperty()
-    format = StringProperty()
     error = StringProperty()
 
 
@@ -133,6 +132,7 @@ class CaseProperty(JsonObject):
     long_details = ListProperty(CaseDetailMeta)
     has_errors = BooleanProperty()
     description = StringProperty()
+    is_detail_calculation = BooleanProperty()
 
     def get_form(self, form_id):
         try:
@@ -156,11 +156,12 @@ class CaseProperty(JsonObject):
             condition=(condition if condition and condition.type == 'if' else None)
         ))
 
-    def add_detail(self, type_, module_id, header, format, error=None):
+    def add_detail(self, type_, module_id, header, is_detail_calculation=False, error=None):
+        self.is_detail_calculation = is_detail_calculation
         {
             "short": self.short_details,
             "long": self.long_details,
-        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format, error=error))
+        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, error=error))
 
 
 class CaseTypeMeta(JsonObject):
@@ -319,8 +320,6 @@ class AppCaseMetadata(JsonObject):
             root_case_type = USERCASE_TYPE
             field = field.split('user/')[1]
 
-        if column.useXpathExpression:
-            return column.field
         try:
             props = self.get_property_list(root_case_type, field)
         except CaseMetaException as e:
@@ -329,7 +328,7 @@ class AppCaseMetadata(JsonObject):
         else:
             error = None
         for prop in props:
-            prop.add_detail(detail_type, module_id, column.header, column.format, error)
+            prop.add_detail(detail_type, module_id, column.header, column.useXpathExpression, error)
 
     def get_error_property(self, case_type, name):
         type_ = self.get_type(case_type)

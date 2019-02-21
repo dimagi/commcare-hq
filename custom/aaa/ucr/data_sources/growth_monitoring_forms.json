@@ -1,6 +1,7 @@
 {
   "domains": [
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
