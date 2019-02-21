@@ -2,8 +2,9 @@
 
 /custom/aaa/ @emord
 
-/static/ @orangejenny
-/templates/ @orangejenny
+*.html @orangejenny
+*.js @orangejenny
+*.less @orangejenny
 
 /corehq/apps/analytics/ @orangejenny
 /corehq/apps/app_manager/ @orangejenny
