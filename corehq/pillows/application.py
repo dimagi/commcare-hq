@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from datetime import datetime
+from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.app_manager.util import get_correct_app_class
 from corehq.apps.change_feed import topics
@@ -16,6 +18,7 @@ from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, R
 def transform_app_for_es(doc_dict):
     # perform any lazy migrations
     doc = get_correct_app_class(doc_dict).wrap(doc_dict)
+    doc['@indexed_on'] = json_format_datetime(datetime.utcnow())
     return doc.to_json()
 
 
