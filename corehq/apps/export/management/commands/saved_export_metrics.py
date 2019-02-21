@@ -54,6 +54,8 @@ class Command(BaseCommand):
                             attachment = export.get_payload()
                     except MemoryError:
                         row_count = column_count = ''
+                    except ResourceNotFound:
+                        row_count = column_count = 'transient_error'
                     else:
                         if export_format == 'xlsx':
                             try:
