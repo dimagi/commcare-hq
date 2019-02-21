@@ -4,19 +4,34 @@ from __future__ import unicode_literals
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView, View
 
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
+from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
-from custom.aaa.const import INDICATOR_LIST, NUMERIC, PERCENT, COLORS
+from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
 from custom.aaa.models import AggVillage
+from custom.aaa.tasks import (
+    update_agg_awc_table,
+    update_agg_village_table,
+    update_ccs_record_table,
+    update_child_table,
+    update_woman_table,
+)
 from custom.aaa.utils import build_location_filters
+
+from dimagi.utils.dates import force_to_date
 
 
 class ReachDashboardView(TemplateView):
@@ -152,3 +167,38 @@ class LocationFilterAPI(View):
                 parent_id=loc.parent.location_id if loc.parent else None
             ) for loc in locations]
         })
+
+
+@method_decorator([login_and_domain_required, require_superuser_or_contractor], name='dispatch')
+class AggregationScriptPage(BaseDomainView):
+    page_title = 'Aggregation Script'
+    urlname = 'aggregation_script_page'
+    template_name = 'icds_reports/aggregation_script.html'
+
+    @use_daterangepicker
+    def dispatch(self, *args, **kwargs):
+        if settings.SERVER_ENVIRONMENT == 'softlayer':
+            return HttpResponse("This page is only available for QA and not available for production instances.")
+
+        couch_user = self.request.couch_user
+        if couch_user.is_domain_admin(self.domain):
+            return super(AggregationScriptPage, self).dispatch(*args, **kwargs)
+
+        raise PermissionDenied()
+
+    def section_url(self):
+        return
+
+    def post(self, request, *args, **kwargs):
+        date_param = self.request.POST.get('date')
+        if not date_param:
+            messages.error(request, 'Date is required')
+            return redirect(self.urlname, domain=self.domain)
+        date = force_to_date(date_param)
+        update_child_table(self.domain)
+        update_ccs_record_table(self.domain)
+        update_woman_table(self.domain)
+        update_agg_awc_table(self.domain, date)
+        update_agg_village_table(self.domain, date)
+        messages.success(request, 'Aggregation task has run.')
+        return redirect(self.urlname, domain=self.domain)
