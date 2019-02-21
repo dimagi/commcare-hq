@@ -55,13 +55,14 @@ class ReachDashboardView(TemplateView):
         ).distinct() if user_location else []
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
+        kwargs['is_web_user'] = self.couch_user.is_web_user
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramOverviewReport(ReachDashboardView):
-    template_name = 'reach/reports/program_overview.html'
+    template_name = 'aaa/reports/program_overview.html'
 
 
 @location_safe
@@ -143,7 +144,62 @@ class ProgramOverviewReportAPI(View):
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class UnifiedBeneficiaryReport(ReachDashboardView):
-    template_name = 'reach/reports/unified_beneficiary.html'
+    template_name = 'aaa/reports/unified_beneficiary.html'
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class UnifiedBeneficiaryReportAPI(View):
+    def post(self, request, *args, **kwargs):
+        # TODO add query to database
+        # Prepared to the ajax pagination, remember that we need to return number of rows = length
+        # start - selected page on the UI (if first page selected then start = 0)
+        # sortColumn - name of the sorting column
+        # sortColumnDir - asc or desc
+
+        selected_month = int(self.request.POST.get('selectedMonth'))
+        selected_year = int(self.request.POST.get('selectedYear'))
+        selected_location = self.request.POST.get('selectedLocation')
+        beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
+        draw = self.request.POST.get('draw', 0)
+        length = self.request.POST.get('length', 0)
+        start = self.request.POST.get('start', 0)
+        sortColumn = self.request.POST.get('sortColumn', 0)
+        sortColumnDir = self.request.POST.get('sortColumnDir', 0)
+        data = []
+        if beneficiary_type == 'child':
+             data = [
+                dict(name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(name='test 4', age='5', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(name='test 5', age='16', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+            ]
+        elif beneficiary_type == 'eligible_couple':
+            data = [
+                dict(name='test 1', age='17', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
+                dict(name='test 2', age='57', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
+                dict(name='test 3', age='25', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
+                dict(name='test 4', age='16', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
+                dict(name='test 5', age='22', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
+                dict(name='test 6', age='31', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
+            ]
+        elif beneficiary_type == 'pregnant_women':
+            data = [
+                dict(name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(name='test 2', age='32', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
+                dict(name='test 3', age='17', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(name='test 4', age='56', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(name='test 5', age='48', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
+                dict(name='test 6', age='19', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+            ]
+        return JsonResponse(data={
+            'rows': data,
+            'draw': draw,
+            'recordsTotal': len(data),
+            'recordsFiltered': len(data),
+        })
 
 
 @location_safe
