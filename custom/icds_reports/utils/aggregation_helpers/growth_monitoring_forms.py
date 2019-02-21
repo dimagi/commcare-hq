@@ -24,7 +24,7 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         return """
             SELECT
                 DISTINCT child_health_case_id AS case_id,
-                supervisor_id AS supervisor_id,
+                LAST_VALUE(supervisor_id) OVER weight_child AS supervisor_id,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
                 CASE
                     WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
