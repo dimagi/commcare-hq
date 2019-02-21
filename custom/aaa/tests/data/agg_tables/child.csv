@@ -1,2 +1,0 @@
-domain,state_id,district_id,block_id,supervisor_id,awc_id,taluka_id,phc_id,sc_id,village_id,household_case_id,person_case_id,child_health_case_id,opened_on,closed_on,dob,sex,migration_status
-reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,household_case_1,3_yo_male_child,child_health_3_yo_male_child,2018-04-01,,2016-02-01,M,
