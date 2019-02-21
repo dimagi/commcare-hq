@@ -54,11 +54,12 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, locations_queryset, restore_user):
+def should_sync_locations(last_sync, locations_queryset, restore_state):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
     """
+    restore_user = restore_state.restore_user
     if (
         not last_sync or
         not last_sync.date or
@@ -105,7 +106,7 @@ class LocationFixtureProvider(FixtureProvider):
 
         # This just calls get_location_fixture_queryset but is memoized to the user
         locations_queryset = restore_user.get_locations_to_sync()
-        if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_user):
+        if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_state):
             return []
 
         data_fields = _get_location_data_fields(restore_user.domain)
