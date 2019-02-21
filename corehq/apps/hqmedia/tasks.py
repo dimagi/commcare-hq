@@ -196,6 +196,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                                 errors.append(_('Media file missing from CCZ: {}').format(m))
 
         if errors:
+            os.remove(fpath)
             build_application_zip.update_state(state=states.FAILURE, meta={'errors': errors})
             raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
