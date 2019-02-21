@@ -383,33 +383,9 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                                 )
                             )
 
+
                     # Add rows for graph configuration
-                    if detail.format == "graph":
-                        for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
-                            rows[module_string].append(
-                                (
-                                    key + " (graph config)",
-                                    list_or_detail
-                                ) + tuple(val.get(lang, "") for lang in app.langs)
-                            )
-                        for i, series in enumerate(detail.graph_configuration.series):
-                            for key, val in six.iteritems(series.locale_specific_config):
-                                rows[module_string].append(
-                                    (
-                                        "{} {} (graph series config)".format(key, i),
-                                        list_or_detail
-                                    ) + tuple(val.get(lang, "") for lang in app.langs)
-                                )
-                        for i, annotation in enumerate(detail.graph_configuration.annotations):
-                            rows[module_string].append(
-                                (
-                                    "graph annotation {}".format(i + 1),
-                                    list_or_detail
-                                ) + tuple(
-                                    annotation.display_text.get(lang, "")
-                                    for lang in app.langs
-                                )
-                            )
+                    rows[module_string] += bulk_app_sheet_module_detail_graph_rows(detail)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
@@ -433,6 +409,39 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                 # Populate form sheet
                 rows[form_string] = bulk_app_sheet_question_rows(form)
 
+    return rows
+
+
+def bulk_app_sheet_module_detail_graph_rows(detail, list_or_detail):
+    if detail.format == "graph":
+        return []
+
+    rows = []
+    for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
+        rows.append(
+            (
+                key + " (graph config)",
+                list_or_detail
+            ) + tuple(val.get(lang, "") for lang in app.langs)
+        )
+    for i, series in enumerate(detail.graph_configuration.series):
+        for key, val in six.iteritems(series.locale_specific_config):
+            rows.append(
+                (
+                    "{} {} (graph series config)".format(key, i),
+                    list_or_detail
+                ) + tuple(val.get(lang, "") for lang in app.langs)
+            )
+    for i, annotation in enumerate(detail.graph_configuration.annotations):
+        rows.append(
+            (
+                "graph annotation {}".format(i + 1),
+                list_or_detail
+            ) + tuple(
+                annotation.display_text.get(lang, "")
+                for lang in app.langs
+            )
+        )
     return rows
 
 
