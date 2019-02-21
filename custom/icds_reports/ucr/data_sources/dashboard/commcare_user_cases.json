@@ -39,19 +39,6 @@
         }
       },
       {
-        "datatype": "string",
-        "type": "expression",
-        "is_primary_key": false,
-        "expression": {
-          "location_id_expression": {
-            "type": "property_name",
-            "property_name": "owner_id"
-          },
-          "type": "location_parent_id"
-        },
-        "column_id": "supervisor_id"
-      },
-      {
         "column_id": "commcare_location_id",
         "datatype": "string",
         "type": "expression",
