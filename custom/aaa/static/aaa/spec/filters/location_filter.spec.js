@@ -42,15 +42,15 @@ describe('Reach Location Filter', function () {
             state.setChild(district);
             var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: void(0), postData: {}});
             district.setChild(block);
-            var sector = locationModel.locationModel({slug: 'sector', name: 'Sector (Project)', parent: block, userLocationId: void(0), postData: {}});
-            block.setChild(sector);
-            var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: sector, userLocationId: void(0), postData: {}});
-            sector.setChild(awc);
+            var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: void(0), postData: {}});
+            block.setChild(supervisor);
+            var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: void(0), postData: {}});
+            supervisor.setChild(awc);
             var expectedHierarchy = [
                 state,
                 district,
                 block,
-                sector,
+                supervisor,
                 awc,
             ];
             _.each(expectedHierarchy, function (element, idx) {

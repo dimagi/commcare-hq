@@ -56,16 +56,16 @@ hqDefine('aaa/js/filters/location_filter', [
                     ]);
                 } else {
                     var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData});
-                    var sector = locationModel.locationModel({slug: 'sector', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData});
-                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: sector, userLocationId: self.userLocationIds[4], postData: params.postData});
+                    var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData});
+                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: self.userLocationIds[4], postData: params.postData});
                     district.setChild((block));
-                    block.setChild(sector);
-                    sector.setChild(awc);
+                    block.setChild(supervisor);
+                    supervisor.setChild(awc);
                     self.hierarchyConfig([
                         state,
                         district,
                         block,
-                        sector,
+                        supervisor,
                         awc,
                     ]);
                 }
