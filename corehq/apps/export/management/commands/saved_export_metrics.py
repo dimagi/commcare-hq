@@ -47,11 +47,14 @@ class Command(BaseCommand):
                 if export.is_daily_saved_export and export.has_file():
                     export_format = export.export_format
                     file_size = export.file_size
-                    if file_size <= 2 * 10 ** 9:
+                    try:
                         try:
                             attachment = export.get_payload()
                         except ResourceNotFound:
                             attachment = export.get_payload()
+                    except MemoryError:
+                        row_count = column_count = ''
+                    else:
                         if isinstance(attachment, six.text_type):
                             attachment = attachment.encode('utf-8')
                         attachment_io = BytesIO(attachment)
@@ -64,8 +67,6 @@ class Command(BaseCommand):
                                 column_count = max(column_count, len(row))
                         else:
                             row_count = column_count = ''
-                    else:
-                        row_count = column_count = ''
                     yield [
                         export_id, domain_name, file_size, export_format, row_count, column_count
                     ]
