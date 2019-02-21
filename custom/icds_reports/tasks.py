@@ -65,7 +65,7 @@ from custom.icds_reports.models import (
     AggLs,
     AggAwc,
     AwcLocation,
-    AwcLocationMonths)
+)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
     AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
@@ -671,29 +671,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             month=config['month'],
             aggregation_level=aggregation_level
         ).get_excel_data()
-        if aggregation_level == 1:
-            location_object = AwcLocationMonths.objects.filter(
-                state_id=location,
-                aggregation_level=aggregation_level
-            ).first()
-        elif aggregation_level == 2:
-            location_object = AwcLocationMonths.objects.filter(
-                district_id=location,
-                aggregation_level=aggregation_level
-            ).first()
-        else:
-            location_object = AwcLocationMonths.objects.filter(
-                block_id=location,
-                aggregation_level=aggregation_level
-            ).first()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
-                location_object.state_name,
-                location_object.district_name if aggregation_level >= 2 else None,
-                location_object.block_name if aggregation_level == 3 else None,
+                state=SQLLocation.objects.get(
+                    location_id=config['state_id'], domain=config['domain']
+                ).name,
+                district=SQLLocation.objects.get(
+                    location_id=config['district_id'], domain=config['domain']
+                ).name if aggregation_level >= 2 else None,
+                block=SQLLocation.objects.get(
+                    location_id=config['block_id'], domain=config['domain']
+                ).name if aggregation_level == 3 else None,
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
