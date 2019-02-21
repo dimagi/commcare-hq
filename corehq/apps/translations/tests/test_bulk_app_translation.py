@@ -16,8 +16,8 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations import (
     process_bulk_app_translation_upload,
-    expected_bulk_app_sheet_rows,
-    expected_bulk_app_sheet_headers,
+    get_bulk_app_sheet_rows,
+    get_bulk_app_sheet_headers,
     update_form_translations,
     get_app_translation_workbook,
     get_unicode_dicts,
@@ -579,8 +579,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                                      for ws in wb_reader.worksheets]
 
     def test_download(self):
-        actual_headers = expected_bulk_app_sheet_headers(self.app)
-        actual_rows = expected_bulk_app_sheet_rows(self.app)
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_rows = get_bulk_app_sheet_rows(self.app)
 
         actual_workbook = [
             {'name': title,

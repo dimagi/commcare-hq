@@ -86,7 +86,7 @@ def process_bulk_app_translation_upload(app, workbook):
     """
     msgs = []
 
-    headers = expected_bulk_app_sheet_headers(app)
+    headers = get_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
 
@@ -243,7 +243,7 @@ def bulk_app_sheet_menu_row(languages, media_image, media_audio):
     return languages + media_image + media_audio
 
 
-def expected_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -301,7 +301,7 @@ def expected_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None)
     return headers
 
 
-def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
     """
     Data rows for bulk app translation download
 
@@ -329,7 +329,7 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
 
         rows[module_string] = []
         if not isinstance(module, ReportModule):
-            rows[module_string] += bulk_app_sheet_module_case_list_reg_rows(app.langs, module)
+            rows[module_string] += bulk_app_sheet_module_case_list_form_rows(app.langs, module)
             rows[module_string] += bulk_app_sheet_module_detail_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
@@ -351,7 +351,7 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
     return rows
 
 
-def bulk_app_sheet_module_case_list_reg_rows(langs, module):
+def bulk_app_sheet_module_case_list_form_rows(langs, module):
     if not module.case_list_form.form_id:
         return []
 

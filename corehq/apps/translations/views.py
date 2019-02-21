@@ -24,8 +24,8 @@ from corehq.apps.app_manager.ui_translations import process_ui_translation_uploa
 from corehq.apps.translations.app_translations import (
     bulk_app_sheet_menu_row,
     bulk_app_sheet_question_rows,
-    expected_bulk_app_sheet_headers,
-    expected_bulk_app_sheet_rows,
+    get_bulk_app_sheet_headers,
+    get_bulk_app_sheet_rows,
     get_app_translation_workbook,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
@@ -92,8 +92,8 @@ def download_bulk_ui_translations(request, domain, app_id):
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    headers = expected_bulk_app_sheet_headers(app)
-    rows = expected_bulk_app_sheet_rows(app)
+    headers = get_bulk_app_sheet_headers(app)
+    rows = get_bulk_app_sheet_rows(app)
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
