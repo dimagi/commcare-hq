@@ -22,7 +22,7 @@ from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.apps.translations.app_translations import (
-    bulk_app_sheet_menu_row,
+    get_menu_row,
     bulk_app_sheet_question_rows,
     get_bulk_app_sheet_headers,
     get_bulk_app_sheet_rows,
@@ -124,16 +124,16 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     for module_index, module in enumerate(app.modules):
         module_string = 'module{}'.format(module_index + 1)
         prefix = [module_string, '', '']    # blank form and label columns
-        rows.append(prefix + bulk_app_sheet_menu_row([module.name.get(lang)],
-                                                     [module.icon_by_language(lang)],
-                                                     [module.audio_by_language(lang)]))
+        rows.append(prefix + get_menu_row([module.name.get(lang)],
+                                          [module.icon_by_language(lang)],
+                                          [module.audio_by_language(lang)]))
         for form_index, form in enumerate(module.forms):
             form_string = 'form{}'.format(form_index + 1)
             prefix = [module_string, form_string]
             # Name / menu media row, with a blank for the label column
-            rows.append(prefix + [''] + bulk_app_sheet_menu_row([form.name.get(lang)],
-                                                                [form.icon_by_language(lang)],
-                                                                [form.audio_by_language(lang)]))
+            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
+                                                     [form.icon_by_language(lang)],
+                                                     [form.audio_by_language(lang)]))
             # Questions
             for row in bulk_app_sheet_question_rows(form, lang):
                 rows.append(prefix + row)

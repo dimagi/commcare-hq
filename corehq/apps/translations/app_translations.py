@@ -216,7 +216,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
 
 
-def _make_modules_and_forms_row(row_type, sheet_name, languages,
+def _get_modules_and_forms_row(row_type, sheet_name, languages,
                                 media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
@@ -235,11 +235,11 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
 
     return [item if item is not None else "" for item in
             ([row_type, sheet_name] +
-             bulk_app_sheet_menu_row(languages, media_image, media_audio) +
+             get_menu_row(languages, media_image, media_audio) +
              [unique_id])]
 
 
-def bulk_app_sheet_menu_row(languages, media_image, media_audio):
+def get_menu_row(languages, media_image, media_audio):
     return languages + media_image + media_audio
 
 
@@ -269,7 +269,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
     # Add headers for the first sheet
     headers.append([
         MODULES_AND_FORMS_SHEET_NAME,
-        _make_modules_and_forms_row(
+        _get_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
             languages=languages_list,
@@ -318,7 +318,7 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
             continue
 
         module_string = "module" + str(mod_index + 1)
-        rows[MODULES_AND_FORMS_SHEET_NAME].append(_make_modules_and_forms_row(
+        rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
             row_type="Module",
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
@@ -329,15 +329,15 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
 
         rows[module_string] = []
         if not isinstance(module, ReportModule):
-            rows[module_string] += bulk_app_sheet_module_case_list_form_rows(app.langs, module)
-            rows[module_string] += bulk_app_sheet_module_detail_rows(app.langs, module)
+            rows[module_string] += _get_module_case_list_form_rows(app.langs, module)
+            rows[module_string] += _get_module_detail_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
                     continue
 
                 form_string = module_string + "_form" + str(form_index + 1)
-                rows[MODULES_AND_FORMS_SHEET_NAME].append(_make_modules_and_forms_row(
+                rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
                     row_type="Form",
                     sheet_name=form_string,
                     languages=[form.name.get(lang) for lang in app.langs],
@@ -351,7 +351,7 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
     return rows
 
 
-def bulk_app_sheet_module_case_list_form_rows(langs, module):
+def _get_module_case_list_form_rows(langs, module):
     if not module.case_list_form.form_id:
         return []
 
@@ -361,18 +361,18 @@ def bulk_app_sheet_module_case_list_form_rows(langs, module):
     ]
 
 
-def bulk_app_sheet_module_detail_rows(langs, module):
+def _get_module_detail_rows(langs, module):
     rows = []
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
     ]:
-        rows += bulk_app_sheet_module_detail_tabs_rows(langs, detail, list_or_detail)
-        rows += bulk_app_sheet_module_detail_fields_rows(langs, detail, list_or_detail)
+        rows += _get_module_detail_tabs_rows(langs, detail, list_or_detail)
+        rows += _get_module_detail_fields_rows(langs, detail, list_or_detail)
     return rows
 
 
-def bulk_app_sheet_module_detail_tabs_rows(langs, detail, list_or_detail):
+def _get_module_detail_tabs_rows(langs, detail, list_or_detail):
     return [
         ("Tab {}".format(index), list_or_detail) +
         tuple(tab.header.get(lang, "") for lang in langs)
@@ -380,16 +380,16 @@ def bulk_app_sheet_module_detail_tabs_rows(langs, detail, list_or_detail):
     ]
 
 
-def bulk_app_sheet_module_detail_fields_rows(langs, detail, list_or_detail):
+def _get_module_detail_fields_rows(langs, detail, list_or_detail):
     rows = []
     for detail in detail.get_columns():
-        rows.append(bulk_app_sheet_module_detail_field_row(langs, detail, list_or_detail))
-        rows += bulk_app_sheet_module_detail_enum_rows(langs, detail, list_or_detail)
-        rows += bulk_app_sheet_module_detail_graph_rows(langs, detail, list_or_detail)
+        rows.append(_get_module_detail_field_row(langs, detail, list_or_detail))
+        rows += _get_module_detail_enum_rows(langs, detail, list_or_detail)
+        rows += _get_module_detail_graph_rows(langs, detail, list_or_detail)
     return rows
 
 
-def bulk_app_sheet_module_detail_field_row(langs, detail, list_or_detail):
+def _get_module_detail_field_row(langs, detail, list_or_detail):
     field_name = detail.field
     if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
         field_name += " (ID Mapping Text)"
@@ -402,7 +402,7 @@ def bulk_app_sheet_module_detail_field_row(langs, detail, list_or_detail):
     )
 
 
-def bulk_app_sheet_module_detail_enum_rows(langs, detail, list_or_detail):
+def _get_module_detail_enum_rows(langs, detail, list_or_detail):
     if not re.search(r'\benum\b', detail.format):
         return []
 
@@ -420,7 +420,7 @@ def bulk_app_sheet_module_detail_enum_rows(langs, detail, list_or_detail):
     return rows
 
 
-def bulk_app_sheet_module_detail_graph_rows(langs, detail, list_or_detail):
+def _get_module_detail_graph_rows(langs, detail, list_or_detail):
     if detail.format != "graph":
         return []
 
