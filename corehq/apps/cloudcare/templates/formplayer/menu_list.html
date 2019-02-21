@@ -78,6 +78,9 @@
         <div class="module-column-name text-center">
             <h3><%- displayText ? displayText : "" %></h3>
         </div>
+        <% if (typeof badgeText !== 'undefined' && badgeText) { %>
+        <span class="badge badge-info"><%- badgeText %></span>
+        <% } %>
     </div>
     <% if (menuIndex % 2 === 1) { %>
       <div class="clearfix visible-xs"></div>
