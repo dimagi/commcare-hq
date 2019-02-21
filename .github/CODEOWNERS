@@ -10,3 +10,6 @@
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/styleguide/ @orangejenny
+
+/corehq/apps/accounting/ @nickpell
+/corehq/apps/smsbillables/ @nickpell
