@@ -232,6 +232,7 @@
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
+                <span ng-if="$ctrl.previousTaskFailed">Generation of your report has failed</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>
