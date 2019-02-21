@@ -5,6 +5,7 @@ from io import BytesIO
 
 import openpyxl
 import six
+from couchdbkit import ResourceNotFound
 from csv342 import csv
 
 from django.core.management import BaseCommand
@@ -47,7 +48,10 @@ class Command(BaseCommand):
                     export_format = export.export_format
                     file_size = export.file_size
                     if file_size <= 2 * 10 ** 9:
-                        attachment = export.get_payload()
+                        try:
+                            attachment = export.get_payload()
+                        except ResourceNotFound:
+                            attachment = export.get_payload()
                         if isinstance(attachment, six.text_type):
                             attachment = attachment.encode('utf-8')
                         attachment_io = BytesIO(attachment)
