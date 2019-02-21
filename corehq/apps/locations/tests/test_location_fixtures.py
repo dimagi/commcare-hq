@@ -848,8 +848,22 @@ class ShouldSyncLocationFixturesTest(TestCase):
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, restore_state)
         )
 
+    def test_changed_build_id(self):
+        app = MockApp('project_default', 'build_1')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=app))
+        sync_log_from_old_app = SyncLog(date=datetime.utcnow(), build_id=app.get_id)
+        self.assertFalse(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
 
-MockApp = namedtuple("MockApp", ["location_fixture_restore", "build_id"])
+        new_build = MockApp('project_default', 'build_2')
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=new_build))
+        self.assertTrue(
+            should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
+
+
+MockApp = namedtuple("MockApp", ["location_fixture_restore", "get_id"])
 MockRestoreState = namedtuple("MockRestoreState", ["restore_user", "params"])
 
 
@@ -911,7 +925,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_sync_format_with_app_aware_project_default(self):
-        app = MockApp(location_fixture_restore='project_default', build_id="build")
+        app = MockApp(location_fixture_restore='project_default', get_id="build")
         conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
         conf.sync_hierarchical_fixture = True
         conf.sync_flat_fixture = False
@@ -929,7 +943,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
 @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 def test_sync_format(self, fixture_restore_type, sync_flat, sync_hierarchical):
-    app = MockApp(location_fixture_restore=fixture_restore_type, build_id="build")
+    app = MockApp(location_fixture_restore=fixture_restore_type, get_id="build")
     conf = LocationFixtureConfiguration.for_domain(self.domain_obj.name)
     conf.sync_hierarchical_fixture = not sync_hierarchical
     conf.sync_flat_fixture = not sync_flat
