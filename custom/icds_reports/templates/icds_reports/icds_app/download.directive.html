@@ -228,7 +228,7 @@
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask) && !$ctrl.downloaded">
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask || $ctrl.previousTaskFailed) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
