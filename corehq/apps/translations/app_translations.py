@@ -317,103 +317,111 @@ def expected_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
 
-        # This is duplicated logic from expected_bulk_app_sheet_headers,
-        # which I don't love.
         module_string = "module" + str(mod_index + 1)
-
-        # Add module to the first sheet
-        row_data = _make_modules_and_forms_row(
+        rows[MODULES_AND_FORMS_SHEET_NAME].append(_make_modules_and_forms_row(
             row_type="Module",
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
             media_image=[module.icon_by_language(lang) for lang in app.langs],
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
-        )
-        rows[MODULES_AND_FORMS_SHEET_NAME].append(row_data)
+        ))
 
-        # Populate module sheet
         rows[module_string] = []
         if not isinstance(module, ReportModule):
-            if module.case_list_form.form_id:
-                # Add row for label of case list registration form
-                rows[module_string].append(
-                        ('case_list_form_label', 'list') +
-                        tuple(module.case_list_form.label.get(lang, '') for lang in app.langs)
-                )
-
-            for list_or_detail, detail in [
-                ("list", module.case_details.short),
-                ("detail", module.case_details.long)
-            ]:
-                # Add a row for each tab heading
-                for index, tab in enumerate(detail.tabs):
-                    rows[module_string].append(
-                        ("Tab {}".format(index), list_or_detail) +
-                        tuple(tab.header.get(lang, "") for lang in app.langs)
-                    )
-
-                # Add a row for each detail field
-                # Complex fields may get multiple rows
-                case_properties = detail.get_columns()
-                for detail in case_properties:
-
-                    field_name = detail.field
-                    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
-                        field_name += " (ID Mapping Text)"
-                    elif detail.format == "graph":
-                        field_name += " (graph)"
-
-                    # Add a row for this case detail
-                    rows[module_string].append(
-                        (field_name, list_or_detail) +
-                        tuple(detail.header.get(lang, "") for lang in app.langs)
-                    )
-
-                    # Add a row for any mapping pairs
-                    if re.search(r'\benum\b', detail.format):
-                        for mapping in detail.enum:
-                            rows[module_string].append(
-                                (
-                                    mapping.key + " (ID Mapping Value)",
-                                    list_or_detail
-                                ) + tuple(
-                                    mapping.value.get(lang, "")
-                                    for lang in app.langs
-                                )
-                            )
-
-
-                    # Add rows for graph configuration
-                    rows[module_string] += bulk_app_sheet_module_detail_graph_rows(detail)
+            rows[module_string] += bulk_app_sheet_module_case_list_reg_rows(app.langs, module)
+            rows[module_string] += bulk_app_sheet_module_detail_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
                     continue
-                form_string = module_string + "_form" + str(form_index + 1)
 
-                # Add row for this form to the first sheet
-                # This next line is same logic as above :(
-                first_sheet_row = _make_modules_and_forms_row(
+                form_string = module_string + "_form" + str(form_index + 1)
+                rows[MODULES_AND_FORMS_SHEET_NAME].append(_make_modules_and_forms_row(
                     row_type="Form",
                     sheet_name=form_string,
                     languages=[form.name.get(lang) for lang in app.langs],
                     media_image=[form.icon_by_language(lang) for lang in app.langs],
                     media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
-                )
+                ))
 
-                # Add form to the first street
-                rows[MODULES_AND_FORMS_SHEET_NAME].append(first_sheet_row)
-
-                # Populate form sheet
                 rows[form_string] = bulk_app_sheet_question_rows(form)
 
     return rows
 
 
-def bulk_app_sheet_module_detail_graph_rows(detail, list_or_detail):
-    if detail.format == "graph":
+def bulk_app_sheet_module_case_list_reg_rows(langs, module):
+    if not module.case_list_form.form_id:
+        return []
+
+    return [
+        ('case_list_form_label', 'list') +
+        tuple(module.case_list_form.label.get(lang, '') for lang in langs)
+    ]
+
+
+def bulk_app_sheet_module_detail_rows(langs, module):
+    rows = []
+    for list_or_detail, detail in [
+        ("list", module.case_details.short),
+        ("detail", module.case_details.long)
+    ]:
+        rows += bulk_app_sheet_module_detail_tabs_rows(langs, detail, list_or_detail)
+        rows += bulk_app_sheet_module_detail_fields_rows(langs, detail, list_or_detail)
+    return rows
+
+
+def bulk_app_sheet_module_detail_tabs_rows(langs, detail, list_or_detail):
+    return [
+        ("Tab {}".format(index), list_or_detail) +
+        tuple(tab.header.get(lang, "") for lang in langs)
+        for index, tab in enumerate(detail.tabs)
+    ]
+
+
+def bulk_app_sheet_module_detail_fields_rows(langs, detail, list_or_detail):
+    rows = []
+    for detail in detail.get_columns():
+        rows.append(bulk_app_sheet_module_detail_field_row(langs, detail, list_or_detail))
+        rows += bulk_app_sheet_module_detail_enum_rows(langs, detail, list_or_detail)
+        rows += bulk_app_sheet_module_detail_graph_rows(langs, detail, list_or_detail)
+    return rows
+
+
+def bulk_app_sheet_module_detail_field_row(langs, detail, list_or_detail):
+    field_name = detail.field
+    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
+        field_name += " (ID Mapping Text)"
+    elif detail.format == "graph":
+        field_name += " (graph)"
+
+    return (
+        (field_name, list_or_detail) +
+        tuple(detail.header.get(lang, "") for lang in langs)
+    )
+
+
+def bulk_app_sheet_module_detail_enum_rows(langs, detail, list_or_detail):
+    if not re.search(r'\benum\b', detail.format):
+        return []
+
+    rows = []
+    for mapping in detail.enum:
+        rows.append(
+            (
+                mapping.key + " (ID Mapping Value)",
+                list_or_detail
+            ) + tuple(
+                mapping.value.get(lang, "")
+                for lang in langs
+            )
+        )
+    return rows
+
+
+def bulk_app_sheet_module_detail_graph_rows(langs, detail, list_or_detail):
+    if detail.format != "graph":
         return []
 
     rows = []
@@ -422,7 +430,7 @@ def bulk_app_sheet_module_detail_graph_rows(detail, list_or_detail):
             (
                 key + " (graph config)",
                 list_or_detail
-            ) + tuple(val.get(lang, "") for lang in app.langs)
+            ) + tuple(val.get(lang, "") for lang in langs)
         )
     for i, series in enumerate(detail.graph_configuration.series):
         for key, val in six.iteritems(series.locale_specific_config):
@@ -430,7 +438,7 @@ def bulk_app_sheet_module_detail_graph_rows(detail, list_or_detail):
                 (
                     "{} {} (graph series config)".format(key, i),
                     list_or_detail
-                ) + tuple(val.get(lang, "") for lang in app.langs)
+                ) + tuple(val.get(lang, "") for lang in langs)
             )
     for i, annotation in enumerate(detail.graph_configuration.annotations):
         rows.append(
@@ -439,7 +447,7 @@ def bulk_app_sheet_module_detail_graph_rows(detail, list_or_detail):
                 list_or_detail
             ) + tuple(
                 annotation.display_text.get(lang, "")
-                for lang in app.langs
+                for lang in langs
             )
         )
     return rows
