@@ -53,7 +53,7 @@ class AggregationScriptTest(CSVTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AggregationScriptTestBase, cls).setUpClass()
+        super(AggregationScriptTest, cls).setUpClass()
         _setup_ucr_tables()
         update_child_table(TEST_DOMAIN)
         update_woman_table(TEST_DOMAIN)
@@ -66,7 +66,7 @@ class AggregationScriptTest(CSVTestCase):
     @classmethod
     def tearDownClass(cls):
         _teardown_ucr_tables()
-        super(AggregationScriptTestBase, cls).tearDownClass()
+        super(AggregationScriptTest, cls).tearDownClass()
 
     def _convert_decimal_to_string(self, value):
         """
