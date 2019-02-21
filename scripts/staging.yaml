@@ -53,4 +53,5 @@ branches:
   - ns/update_uwsgi  # Nitigya Feb 12 
   - dmr/kill-mvp  # Danny Feb 19
   - bmb/users-perms-ui  # Biyeun Feb 20
+  - fix-sub_git_info  # Nick P Feb 21
 submodules: {}
