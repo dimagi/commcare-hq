@@ -83,6 +83,8 @@ hqDefine('app_manager/js/download_async_modal', function () {
         self.downloadError = function (text) {
             self.init();
             self.$download_progress.html(text);
+            self.$download_progress.removeClass("hide");
+            self.$downloading.addClass("hide");
         };
 
         self.$el.on("hidden hidden.bs.modal", function () {

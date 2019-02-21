@@ -69,7 +69,7 @@ def get_es_export():
         retry_on_timeout=True,
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
-        timeout=30,
+        timeout=300,
     )
 
 ES_DEFAULT_INSTANCE = 'default'
