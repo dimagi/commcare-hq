@@ -28,10 +28,13 @@
 <script type="text/template" id="menu-view-row-audio-template">
     <td class="module-column module-column-icon">
         <% if (imageUrl) { %>
-          <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
+          <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+          </div>
         <% } else { %>
-          <div class="module-icon-container">
+          <div class="module-icon-container badge-container">
             <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
           </div>
         <% } %>
     </td>
