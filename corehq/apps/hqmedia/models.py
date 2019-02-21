@@ -8,7 +8,7 @@ from datetime import datetime
 from io import BytesIO
 
 import magic
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.template.defaultfilters import filesizeformat
 
 from corehq import privileges
@@ -956,7 +956,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
             else:
                 # Re-attempt to fetch media directly from couch
                 media = CommCareMultimedia.get_doc_class(map_item.media_type)
-                success = False
                 try:
                     media = media.get(map_item.multimedia_id)
                     retry_successes.append(map_item)
