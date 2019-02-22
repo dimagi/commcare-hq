@@ -48,32 +48,33 @@ class Command(BaseCommand):
                 if export.is_daily_saved_export and export.has_file():
                     export_format = export.export_format
                     file_size = export.file_size
-                    try:
-                        try:
-                            attachment = export.get_payload()
-                        except ResourceNotFound:
-                            attachment = export.get_payload()
-                    except MemoryError:
+                    if export_format == 'html':
                         row_count = column_count = ''
-                    except (ResourceNotFound, ReadTimeoutError):
-                        row_count = column_count = 'transient_error'
                     else:
-                        if export_format == 'xlsx':
+                        try:
                             try:
-                                if isinstance(attachment, six.text_type):
-                                    attachment = attachment.encode('utf-8')
-                                attachment_io = BytesIO(attachment)
-                            except MemoryError:
-                                row_count = column_count = ''
-                            else:
-                                workbook = openpyxl.load_workbook(attachment_io, read_only=True)
-                                first_worksheet = workbook.worksheets[0]
-                                row_count = column_count = 0
-                                for row in first_worksheet.rows:
-                                    row_count += 1
-                                    column_count = max(column_count, len(row))
+                                attachment = export.get_payload()
+                            except ResourceNotFound:
+                                attachment = export.get_payload()
+                        except (MemoryError, ResourceNotFound, ReadTimeoutError):
+                            row_count = column_count = 'transient_error'
                         else:
-                            row_count = column_count = ''
+                            if export_format == 'xlsx':
+                                try:
+                                    if isinstance(attachment, six.text_type):
+                                        attachment = attachment.encode('utf-8')
+                                    attachment_io = BytesIO(attachment)
+                                except MemoryError:
+                                    row_count = column_count = 'transient_error'
+                                else:
+                                    workbook = openpyxl.load_workbook(attachment_io, read_only=True)
+                                    first_worksheet = workbook.worksheets[0]
+                                    row_count = column_count = 0
+                                    for row in first_worksheet.rows:
+                                        row_count += 1
+                                        column_count = max(column_count, len(row))
+                            else:
+                                row_count = column_count = ''
                     yield [
                         export_id, domain_name, file_size, export_format, row_count, column_count
                     ]
