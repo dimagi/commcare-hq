@@ -16,34 +16,15 @@ ccs_record_ucrs = [
     'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
 ]
 
-owner_id_ucrs = [
-    'config_report_icds-cas_static-hardware_cases_af8ee171', # owner_id
-]
-
 ucrs_with_location_id = ['config_report_icds-cas_static-it_report_follow_issue_5be3538d']
 
-unclear_ccs_record = ['config_report_icds-cas_static-dashboard_delivery_forms_946d56bd'] # has column 'case_load_ccs_record0'
-
-
-def generate_sql(ucr_table, join_table, ucr_column, join_table_column):
-    template = """
-    UPDTE {ucr_table}
-    SET supervisor_id = loc.supervisor_id
-    FROM {ucr_table} ucr
-    INNER JOIN {join_table} loc
-        ON ucr.{ucr_column} = loc.{join_table_column}
-    """
-    sql = template.format(
-        ucr_table=ucr_table, join_table=join_table,
-        ucr_column=ucr_column, join_table_column=join_table_column
-    )
-    return sql
-
+# has column 'case_load_ccs_record0'
+unclear_ccs_record = ['config_report_icds-cas_static-dashboard_delivery_forms_946d56bd']
 
 ucr_to_sql = [
-    # ([ucr_list, (join_table, ucr_column, join_table_column)])
+    # ([ucr_table_list, (join_table_name, ucr_column, join_table_column)])
     (ucrs_with_awc_id, ('awc_location', 'awc_id', 'doc_id')),
-    (ucrs_with_location_id, ('awc_location', 'user_location_id', 'doc_id'))
+    (ucrs_with_location_id, ('awc_location', 'user_location_id', 'doc_id')),
     (child_health_ucrs, (
         'config_report_icds-cas_static-child_health_cases_a46c129f',
         'child_health_case_id',
@@ -56,13 +37,27 @@ ucr_to_sql = [
         'config_report_icds-cas_static-ccs_record_cases_cedcca39',
         'case_load_ccs_record0',
         'doc_id')),
-
 ]
 
 
+def generate_sql(ucr_table, join_table, ucr_column, join_table_column):
+    template = """
+    UPDTE "{ucr_table}"
+    SET supervisor_id = loc.supervisor_id
+    FROM "{ucr_table}" ucr
+    INNER JOIN "{join_table}" loc
+        ON ucr.{ucr_column} = loc.{join_table_column}
+    """
+    sql = template.format(
+        ucr_table=ucr_table, join_table=join_table,
+        ucr_column=ucr_column, join_table_column=join_table_column
+    )
+    return sql
+
+
 def get_sql_scripts():
-    sql_scripts = []
+    sql_scripts = {}
     for ucrs, (join_table, ucr_column, join_table_column) in ucr_to_sql:
         for table in ucrs:
-            generate_sql(table, join_table, ucr_column, join_table_column)
+            sql_scripts[table] = generate_sql(table, join_table, ucr_column, join_table_column)
     return sql_scripts
