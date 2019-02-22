@@ -28,7 +28,13 @@
 <header>
     <div class="row">
         <div class="col-sm-8">
-            <p class="lead">{% trans "Manage Organization Structure" %}</p>
+            <p class="lead">
+              {% if request.is_view_only %}
+                  {% trans "View Organization Structure" %}
+              {% else %}
+                  {% trans "Manage Organization Structure" %}
+              {% endif %}
+            </p>
             <p>
                 {% blocktrans %}
                     The organization feature allows you to represent the real-world
@@ -63,6 +69,7 @@
             </a>
             {% endif %}
 
+            {% if not request.is_view_only %}
             <a class="btn btn-default"
                {% if not has_location_types %}
                    disabled
@@ -72,8 +79,9 @@
             >
                 <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
+            {% endif %}
 
-            {% if request.can_access_all_locations %}
+            {% if request.can_access_all_locations and not request.is_view_only %}
             <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
                data-category="Organization Structure" data-action="Edit Location Fields">
                 <i class="fa fa-edit"></i>
@@ -154,29 +162,35 @@
                 {% if not show_inactive %}
                     <a class="btn btn-primary"
                        data-bind="attr: { href: loc_edit_url(uuid()) }">
-                        <i class="fa fa-edit"></i>
-                        {% trans "Edit" %}
+                        {% if request.is_view_only %}
+                            <i class="fa fa-eye"></i>
+                            {% trans "View" %}
+                        {% else %}
+                            <i class="fa fa-edit"></i>
+                            {% trans "Edit" %}
+                        {% endif %}
                     </a>
                 {% endif %}
-
-                {% if show_inactive %}
-                    <button class="btn btn-default"
-                        data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
-                        <i class="fa fa-archive"></i>
-                        {% trans "Unarchive" %}
-                    </button>
-                {% else %}
-                    <button class="btn btn-default"
-                        data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                        <i class="fa fa-archive"></i>
-                        {% trans "Archive" %}
+                {% if not request.is_view_only %}
+                    {% if show_inactive %}
+                        <button class="btn btn-default"
+                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
+                            <i class="fa fa-archive"></i>
+                            {% trans "Unarchive" %}
+                        </button>
+                    {% else %}
+                        <button class="btn btn-default"
+                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                            <i class="fa fa-archive"></i>
+                            {% trans "Archive" %}
+                        </button>
+                    {% endif %}
+                    <button class="btn btn-danger"
+                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                        <i class="fa fa-trash"></i>
+                        {% trans "Delete" %}
                     </button>
                 {% endif %}
-                <button class="btn btn-danger"
-                    data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Delete" %}
-                </button>
             </div>
 
             <!-- want to make entire row clickable, but overrides click on 'edit' button -->
@@ -212,7 +226,7 @@
 
             </div>
 
-            {% if not show_inactive %}
+            {% if not show_inactive and not request.is_view_only %}
                 <!-- create child button -->
                 <!-- ko if: can_edit() -->
                     <a class="btn btn-primary loc_child"
@@ -230,6 +244,7 @@
 
 {% block modals %}
 {{ block.super }}
+{% if not request.is_view_only %}
 <div class="modal fade" id="delete-location-modal">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -280,4 +295,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock modals %}
