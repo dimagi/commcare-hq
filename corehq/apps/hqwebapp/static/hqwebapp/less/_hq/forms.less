@@ -272,3 +272,75 @@ textarea.vertical-resize {
     float: left;
   }
 }
+
+.form-check {
+  padding-left: 10px;
+}
+
+.form-check label{
+  cursor: pointer;
+  position: relative;
+  font-weight: normal;
+  margin-top: 7px;
+}
+
+.form-check label::before {
+  content: "";
+  display: inline-block;
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  left: 0;
+  border: 2px solid @checkbox-default-color;
+  border-radius: 3px;
+  background-color: white;
+  margin-left: -25px;
+}
+
+.form-check label::after {
+  display: inline-block;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 0;
+  top: 0;
+  margin-left: -25px;
+  padding-left: 3px;
+  padding-top: 1px;
+  font-size: 11px;
+  color: #555555;
+}
+
+.form-check input[type="checkbox"] {
+  opacity: 0;
+}
+.form-check input[type="checkbox"]:checked + label::before {
+  background-color: @checkbox-default-color;
+  border-color: @checkbox-default-color;
+}
+.form-check input[type="checkbox"]:checked + label::after {
+  font-family: 'FontAwesome';
+  content: "\f00c";
+  color: white;
+}
+.form-check input[type="checkbox"]:disabled + label {
+  opacity: 0.65;
+}
+.form-check-placeholder label {
+  font-weight: bold;
+  margin-top: 15px;
+  margin-left: 2px;
+  border-bottom: 2px solid @gray-light;
+  width: 13px;
+  height: 4px;
+  opacity: 0.65;
+  display: inline-block;
+}
+
+.controls-text {
+  padding-top: 7px;
+}
+
+.form-hide-actions .form-actions {
+  display: none;
+}

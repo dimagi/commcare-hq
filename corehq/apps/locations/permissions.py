@@ -118,6 +118,15 @@ def require_can_edit_locations(view_fn):
     )
 
 
+def require_can_edit_and_view_locations(view_fn):
+    """Decorator verifying that the user has permission to edit and view
+    individual locations."""
+    return locations_access_required(
+        require_permission('edit_locations',
+                           view_only_permission='view_locations')(view_fn)
+    )
+
+
 def user_can_edit_location_types(user, domain):
     return user.has_permission(domain, 'edit_apps')
 
