@@ -306,7 +306,7 @@ class RestoreParams(object):
 
     @property
     def app_id(self):
-        return self.app._id if self.app else None
+        return self.app.get_id if self.app else None
 
 
 class RestoreCacheSettings(object):
