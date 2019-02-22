@@ -53,4 +53,5 @@ branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
   - vellum-staging      # Farid 20 Feb
   - fr/question-links   # Farid 20 Feb
+  - remove-pickle-serializer  # Nick P Feb 22
 submodules: {}
