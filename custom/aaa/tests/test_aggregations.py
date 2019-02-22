@@ -1,20 +1,20 @@
-from __future__ import absolute_import, unicode_literals
-
-import os
-import re
-from datetime import date, time
-from decimal import Decimal
-from io import open
-
-import mock
-import postgres_copy
-import sqlalchemy
-import six
-from django.test.utils import override_settings
-
-from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
+# from __future__ import absolute_import, unicode_literals
+#
+# import os
+# import re
+# from datetime import date, time
+# from decimal import Decimal
+# from io import open
+#
+# import mock
+# import postgres_copy
+# import sqlalchemy
+# import six
+# from django.test.utils import override_settings
+#
+# from corehq.apps.userreports.models import StaticDataSourceConfiguration
+# from corehq.apps.userreports.util import get_indicator_adapter
+# from corehq.sql_db.connections import connection_manager
 # from custom.aaa.models import (
 #     AggAwc,
 #     AggVillage,
