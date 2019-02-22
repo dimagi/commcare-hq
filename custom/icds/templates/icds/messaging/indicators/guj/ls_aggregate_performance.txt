@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWCs
+તમારા આંગણવાડી કેન્દ્રોનો છેલ્લા 30 દિવસોમાં થયેલ કામગીરીનો રિપોર્ટ
 
-1. Number of visits / Number of desired visits: {{ visits }} / {{ visits_goal }}
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+કરવા પાત્ર મુલાકાતો ની સામે થયેલ મુલાકાતો : {{ visits }} / {{ visits_goal }} 
+સમયસર લીઘેલ મુલાકાત સામે લીઘેલ મુલાકાત: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+THR વિતરણ: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+વજન કરેલ બાળકોની સંખ્યા : {{ children_weighed }}
 
-Average no. of days AWC open / Goal: {{ days_open }} / 25
+લક્ષ્યાંક સામે આંગણવાડી કેન્દ્ર ચાલુ હોય તેવા સરેરાશ દિવસો : {{ days_open }} / 25
