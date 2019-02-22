@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has reduced in the last month. Please consult your AWW for necessary advice.
+নহাক্কী আঙ্গনৱাডি সেন্টরগী অনৌবা রেকোর্ডকী মতুং ইন্না॥নহাক্কী অঙাং {{ child_name }} গী অরুম্বগী চাং অসি মমাংগী থাদগী হন্থনা লৈ॥ চান্বীদুনা নঙগী আঙ্গনৱাডি ৱার্করগা তান্নবীদুনা মরুওইবা পাওতাক লৌবীয়ু
