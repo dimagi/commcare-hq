@@ -398,6 +398,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
+    'custom.icds_reports',
 )
 
 # any built-in management commands we want to override should go in hqscripts
