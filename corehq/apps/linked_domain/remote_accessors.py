@@ -58,7 +58,7 @@ def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
-    if app.domain in {'icds-cas', 'icds-test'}:
+    if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(

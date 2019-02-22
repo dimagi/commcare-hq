@@ -28,6 +28,7 @@ from six.moves import range
 from io import open
 
 
+@flag_enabled('CAUTIOUS_MULTIMEDIA')
 class AppManagerTest(TestCase):
     min_paths = (
         'files/profile.ccpr',
