@@ -49,8 +49,9 @@
 trunk: master
 name: autostaging
 branches:
-  - es/child-module-metrics  # Ethan Feb 7
-  - ns/update_uwsgi  # Nitigya Feb 12 
-  - pre-celery4  # Nick P Feb 19
-  - dmr/kill-mvp  # Danny Feb 19
+  - ns/update_uwsgi  # Nitigya Feb 12
+  - bmb/users-perms-ui  # Biyeun Feb 20
+  - vellum-staging      # Farid 20 Feb
+  - fr/question-links   # Farid 20 Feb
+  - remove-pickle-serializer  # Nick P Feb 22
 submodules: {}

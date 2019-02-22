@@ -68,7 +68,7 @@ def _filter_by_hash(configs, ucr_division):
     ucr_end = ucr_division[-1]
     filtered_configs = []
     for config in configs:
-        table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+        table_hash = hashlib.md5(config.table_id.encode('utf-8')).hexdigest()[0]
         if ucr_start <= table_hash <= ucr_end:
             filtered_configs.append(config)
     return filtered_configs

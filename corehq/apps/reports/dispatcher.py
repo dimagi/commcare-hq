@@ -98,11 +98,6 @@ class ReportDispatcher(View):
             else:
                 custom_reports = ()
 
-            # soon to be removed
-            if not custom_reports:
-                domain_module = Domain.get_module_by_name(domain)
-                custom_reports = process(getattr(domain_module, attr_name, ()))
-
         return corehq_reports + custom_reports
 
     def get_report(self, domain, report_slug, *args):

@@ -1648,7 +1648,8 @@ class CheckExportReportStatus(View):
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': res.result
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
                 }
             )
         return JsonResponse({'task_ready': status})
