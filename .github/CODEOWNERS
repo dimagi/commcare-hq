@@ -7,6 +7,7 @@
 /.github/ @orangejenny
 
 /corehq/blobs/ @millerdev
+/corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/ex-submodules/pillowtop/ @emord
 /corehq/form_processor/ @snopoke
 /corehq/messaging/ @millerdev
@@ -15,6 +16,8 @@
 /corehq/sql_accessors/ @snopoke
 /corehq/sql_db/ @snopoke
 /corehq/sql_proxy_accessors/ @snopoke
+/corehq/tests/nose.py @millerdev
+/corehq/tests/noseplugins/ @millerdev
 /corehq/util/ @esoergel
 /corehq/warehouse/ @calellowitz
 
@@ -28,14 +31,16 @@
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
-/corehq/apps/couch_sql_migration/ @snopoke @emord
+/corehq/apps/couch_sql_migration/ @snopoke @emord @millerdev
 /corehq/apps/es/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/locations/ @esoergel
+/corehq/apps/locations/adjacencylist.py @esoergel @millerdev
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
 /corehq/apps/receiverwrapper/ @snopoke
+/corehq/apps/sms*/ @millerdev
 /corehq/apps/smsbillables/ @nickpell
 /corehq/apps/smsbillables/static/ @nickpell @orangejenny
 /corehq/apps/styleguide/ @orangejenny
@@ -50,3 +55,8 @@
 /custom/aaa/ @emord
 
 /docs/js-guide/ @orangejenny @millerdev
+
+/docker/ @millerdev
+
+/scripts/docker @millerdev
+/scripts/vellum-to-hq @millerdev
