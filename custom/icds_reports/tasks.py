@@ -135,8 +135,8 @@ SQL_FUNCTION_PATHS = [
 
 @periodic_task(run_every=crontab(minute=30, hour=23),
                acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task(date=None):
-    move_ucr_data_into_aggregation_tables.delay(date)
+def run_move_ucr_data_into_aggregation_tables_task():
+    move_ucr_data_into_aggregation_tables.delay()
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
