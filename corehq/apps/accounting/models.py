@@ -3288,7 +3288,7 @@ class CreditLine(models.Model):
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
         assert not (feature_type and is_product)
         return cls.objects.filter(
-            account=account, subscription__exact=None
+            account=account, subscription__exact=None, is_active=True
         ).filter(
             is_product=is_product, feature_type__exact=feature_type
         ).all()
@@ -3302,11 +3302,12 @@ class CreditLine(models.Model):
             subscription=subscription,
             feature_type__exact=feature_type,
             is_product=is_product,
+            is_active=True
         ).all()
 
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
-        return cls.objects.filter(subscription=subscription).filter(
+        return cls.objects.filter(subscription=subscription, is_active=True).filter(
             Q(is_product=True) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
@@ -3332,6 +3333,7 @@ class CreditLine(models.Model):
                 subscription__exact=subscription,
                 is_product=is_product,
                 feature_type__exact=feature_type,
+                is_active=True
             )
             if not permit_inactive and not credit_line.is_active and not invoice:
                 raise CreditLineError(
