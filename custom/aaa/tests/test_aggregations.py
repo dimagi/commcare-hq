@@ -181,10 +181,10 @@ TEST_ENVIRONMENT = 'icds'
 #                 null='' if six.PY3 else b'', columns=columns
 #             )
 
-
-def _teardown_ucr_tables():
-    with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
-        configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
-        adapters = [get_indicator_adapter(config) for config in configs]
-        for adapter in adapters:
-            adapter.drop_table()
+#
+# def _teardown_ucr_tables():
+#     with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
+#         configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
+#         adapters = [get_indicator_adapter(config) for config in configs]
+#         for adapter in adapters:
+#             adapter.drop_table()
