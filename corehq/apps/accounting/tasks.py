@@ -68,7 +68,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
-from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
+from corehq.apps.users.models import FakeUser, WebUser, CommCareUser, CouchUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
     SERVER_DATETIME_FORMAT_NO_SEC,
@@ -1020,6 +1020,12 @@ def send_prepaid_credits_export():
 
 @task(serializer='pickle', queue="email_queue")
 def email_enterprise_report(domain, slug, couch_user):
+    email_enterprise_report_json_args(domain, slug, couch_user.get_id)
+
+
+@task(queue='email_queue')
+def email_enterprise_report_json_args(domain, slug, couch_user_id):
+    couch_user = CouchUser.get_by_user_id(couch_user_id)
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
 
