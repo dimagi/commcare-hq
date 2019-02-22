@@ -630,7 +630,8 @@ def pay_autopay_invoices():
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
-def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
+def update_exchange_rates():
+    app_id = settings.OPEN_EXCHANGE_RATES_API_ID
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
