@@ -24,7 +24,7 @@ from corehq.motech.repeaters.const import (
 logging = get_task_logger(__name__)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=CHECK_REPEATERS_INTERVAL,
     queue=settings.CELERY_PERIODIC_QUEUE,
 )

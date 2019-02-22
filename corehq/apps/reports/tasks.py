@@ -110,7 +110,7 @@ def send_report_throttled(notification_id):
     send_report(notification_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -119,7 +119,7 @@ def daily_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -128,7 +128,7 @@ def weekly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -142,7 +142,7 @@ def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
     all_stats = all_domain_stats()
@@ -187,7 +187,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}

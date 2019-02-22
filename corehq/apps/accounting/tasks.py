@@ -214,7 +214,7 @@ def warn_subscriptions_without_domain():
         log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -239,7 +239,7 @@ def check_credit_line_balances():
             )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -375,7 +375,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -385,7 +385,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -528,7 +528,7 @@ def send_autopay_failed(invoice):
 
 
 # Email this out every Monday morning.
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -623,13 +623,13 @@ def weekly_digest():
         })
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0,), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
@@ -692,7 +692,7 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
     )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def run_downgrade_process(today=None):
     today = today or datetime.date.today()
 
@@ -857,7 +857,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -958,7 +958,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.username, body)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains():
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)
