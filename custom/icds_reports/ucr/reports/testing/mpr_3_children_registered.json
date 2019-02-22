@@ -3,7 +3,15 @@
     "icds-cas",
     "cas-lab",
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
@@ -121,7 +129,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident = 'yes'": 1
+          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
         }
       },
       {
@@ -131,7 +139,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 'yes'": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
         }
       },
       {
@@ -141,7 +149,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 'yes'": 1
+          "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 1": 1
         }
       },
       {
@@ -151,7 +159,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 'yes'": 1
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 1": 1
         }
       }
     ],

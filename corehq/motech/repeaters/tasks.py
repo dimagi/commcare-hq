@@ -71,19 +71,19 @@ def process_repeat_record(repeat_record):
     if repeat_record.cancelled:
         return
 
-    try:
-        repeat_record.repeater
-    except ResourceNotFound:
+    repeater = repeat_record.repeater
+    if not repeater:
         repeat_record.cancel()
         repeat_record.save()
+        return
 
     try:
-        if repeat_record.repeater and repeat_record.repeater.paused:
+        if repeater.paused:
             # postpone repeat record by 1 hour so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
             repeat_record.postpone_by(timedelta(hours=1))
             return
-        if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
+        if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
                 repeat_record.save()

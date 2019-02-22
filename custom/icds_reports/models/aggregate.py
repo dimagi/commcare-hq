@@ -460,6 +460,8 @@ class AggAwc(models.Model):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+    valid_visits = models.IntegerField(null=True)
+    expected_visits = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1641,6 +1643,7 @@ class AWWIncentiveReport(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    district_id = models.TextField(blank=True, null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition

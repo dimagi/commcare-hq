@@ -1,6 +1,7 @@
 {
   "domains": [
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
@@ -22,7 +23,7 @@
             "type": "property_name",
             "property_name": "is_archived"
           },
-          "property_value": "False"
+          "property_value": false
         },
         {
           "operator": "eq",

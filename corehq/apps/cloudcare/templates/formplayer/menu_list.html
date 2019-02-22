@@ -47,6 +47,15 @@
             <% } %>
           </div>
         <% } %>
+        <% /*
+            Ensure backwards compatibility with formplayer backend
+            before it added the badgeText field.
+            typeof x !== 'undefined' means "the variable hasn't been defined",
+            and is different from x === undefined.
+        */ %>
+        <% if (typeof badgeText !== 'undefined' && badgeText) { %>
+        <span class="badge badge-info"><%- badgeText %></span>
+        <% } %>
     </td>
     <td class="module-column module-column-name">
         <h3><%- displayText ? displayText : "" %></h3>

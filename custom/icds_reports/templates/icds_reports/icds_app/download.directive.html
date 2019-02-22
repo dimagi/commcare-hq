@@ -25,7 +25,12 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isIncentiveReportSelected() && $ctrl.hasErrors()">
           <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isBlockSelected()" style="padding: 5px;">Select a block-level location</li>
+                <li ng-if="!$ctrl.haveAccessToFeatures && !$ctrl.isBlockSelected()" style="padding: 5px;">
+                    Select a block-level location
+                </li>
+                <li ng-if="$ctrl.haveAccessToFeatures && !$ctrl.isStateSelected()" style="padding: 5px;">
+                    Select a at least state-level location
+                </li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -223,10 +228,11 @@
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask) && !$ctrl.downloaded">
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedTask || $ctrl.previousTaskFailed) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedTask">Preparing your report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your report is ready to be downloaded</span>
+                <span ng-if="$ctrl.previousTaskFailed">Generation of your report has failed</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

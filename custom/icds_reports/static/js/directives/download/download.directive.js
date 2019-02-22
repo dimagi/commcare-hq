@@ -9,6 +9,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.years = [];
     vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
+    vm.haveAccessToFeatures = haveAccessToFeatures;
+    vm.previousTaskFailed = null;
     $rootScope.report_link = '';
 
     var getTaskStatus = function () {
@@ -16,7 +18,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (resp.task_ready) {
                 clearInterval(vm.statusCheck);
                 $rootScope.task_id = '';
-                $rootScope.report_link = resp.task_result.link;
+                vm.previousTaskFailed = !resp.task_successful;
+                $rootScope.report_link = resp.task_successful ? resp.task_result.link : '';
                 vm.queuedTask = false;
             }
         });
@@ -419,6 +422,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
         vm.queuedTask = true;
         vm.downloaded = false;
+        vm.previousTaskFailed = null;
     };
 
     vm.resetForm = function() {
@@ -435,9 +439,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.hasErrors = function() {
-        beneficiary_list_errors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        incentive_report_errors = vm.isIncentiveReportSelected() && !vm.isBlockSelected();
-        return beneficiary_list_errors || incentive_report_errors;
+        var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var incentiveReportErrors = vm.isIncentiveReportSelected() && (
+            (vm.haveAccessToFeatures && !vm.isStateSelected()) ||
+            (!vm.haveAccessToFeatures && !vm.isBlockSelected())
+        );
+        return beneficiaryListErrors || incentiveReportErrors;
     };
 
     vm.isCombinedPDFSelected = function() {
@@ -446,6 +453,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isBlockOrBelowSelected = function () {
         return vm.selectedLocations[2] && vm.selectedLocations[2] !== ALL_OPTION.location_id;
+    };
+
+    vm.isStateOrBelowSelected = function () {
+        return vm.selectedLocations[0] && vm.selectedLocations[0] !== ALL_OPTION.location_id;
     };
 
     vm.hasErrorsISSNIPExport = function() {
@@ -485,6 +496,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.isBlockOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
     };
 
+    vm.isStateSelected = function () {
+        return vm.isStateOrBelowSelected() && !vm.isSupervisorOrBelowSelected();
+    };
+
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected());
     };
@@ -502,7 +517,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.readyToDownload = function () {
-        return $rootScope.report_link;
+        return vm.previousTaskFailed ? false : $rootScope.report_link;
     };
 
     vm.goToLink = function () {

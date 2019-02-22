@@ -170,15 +170,15 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
         self.assertFalse(invalidate.called)
@@ -254,14 +254,14 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
