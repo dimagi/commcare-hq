@@ -12,4 +12,7 @@
 /corehq/apps/accounting/ @nickpell
 /corehq/apps/smsbillables/ @nickpell
 
+/corehq/apps/userreports/reports/builder/ @kaapstorm
+/corehq/motech/ @kaapstorm
+
 /custom/aaa/ @emord
