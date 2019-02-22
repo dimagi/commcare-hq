@@ -151,35 +151,35 @@ TEST_ENVIRONMENT = 'icds'
 
 # The following setup and teardown methods are kept here to allow quick loading of test data
 # outside of the test suite
-def _setup_ucr_tables():
-    with mock.patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'):
-        with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
-            configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
-            adapters = [get_indicator_adapter(config) for config in configs]
-
-            for adapter in adapters:
-                try:
-                    adapter.drop_table()
-                except Exception:
-                    pass
-                adapter.build_table()
-
-    engine = connection_manager.get_engine('aaa-data')
-    metadata = sqlalchemy.MetaData(bind=engine)
-    metadata.reflect(bind=engine, extend_existing=True)
-
-    for file_name in os.listdir(INPUT_PATH):
-        with open(os.path.join(INPUT_PATH, file_name), encoding='utf-8') as f:
-            table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
-            table = metadata.tables[table_name]
-            columns = [
-                '"{}"'.format(c.strip())  # quote to preserve case
-                for c in f.readline().split(',')
-            ]
-            postgres_copy.copy_from(
-                f, table, engine, format='csv' if six.PY3 else b'csv',
-                null='' if six.PY3 else b'', columns=columns
-            )
+# def _setup_ucr_tables():
+#     with mock.patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'):
+#         with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
+#             configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
+#             adapters = [get_indicator_adapter(config) for config in configs]
+#
+#             for adapter in adapters:
+#                 try:
+#                     adapter.drop_table()
+#                 except Exception:
+#                     pass
+#                 adapter.build_table()
+#
+#     engine = connection_manager.get_engine('aaa-data')
+#     metadata = sqlalchemy.MetaData(bind=engine)
+#     metadata.reflect(bind=engine, extend_existing=True)
+#
+#     for file_name in os.listdir(INPUT_PATH):
+#         with open(os.path.join(INPUT_PATH, file_name), encoding='utf-8') as f:
+#             table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
+#             table = metadata.tables[table_name]
+#             columns = [
+#                 '"{}"'.format(c.strip())  # quote to preserve case
+#                 for c in f.readline().split(',')
+#             ]
+#             postgres_copy.copy_from(
+#                 f, table, engine, format='csv' if six.PY3 else b'csv',
+#                 null='' if six.PY3 else b'', columns=columns
+#             )
 
 
 def _teardown_ucr_tables():
