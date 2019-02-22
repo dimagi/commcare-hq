@@ -7,7 +7,8 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import F, Func, Q
+from django.db.models.functions import ExtractYear
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -21,7 +22,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import AggVillage
+from custom.aaa.models import AggVillage, Woman
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -177,14 +178,22 @@ class UnifiedBeneficiaryReportAPI(View):
                 dict(name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
             ]
         elif beneficiary_type == 'eligible_couple':
-            data = [
-                dict(name='test 1', age='17', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 2', age='57', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 3', age='25', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 4', age='16', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 5', age='22', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 6', age='31', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-            ]
+            data = (
+                Woman.objects
+                .annotate(
+                    age=ExtractYear(Func(F('dob'), function='age')),
+                )
+                .filter(
+                    # should filter for date
+                    # should filter for location
+                    age__range=(19, 49),
+                    marital_status='married',
+                )
+                .exclude(migration_status='yes')
+                .extra(select={'currentFamilyPlanningMethod': 0, 'adoptionDateOfFamilyPlaning': '2018-03-01'})
+                .values('person_case_id', 'name', 'age', 'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
+            )[:10]
+            data = list(data)
         elif beneficiary_type == 'pregnant_women':
             data = [
                 dict(name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
