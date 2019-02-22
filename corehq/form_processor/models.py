@@ -1647,9 +1647,9 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     user_defined_type = TruncatingCharField(max_length=20, null=True, blank=True)
 
     # change from previous balance
-    delta = models.IntegerField(default=0)
+    delta = models.BigIntegerField(default=0)
     # new balance
-    updated_balance = models.IntegerField(default=0)
+    updated_balance = models.BigIntegerField(default=0)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
