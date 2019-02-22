@@ -10,6 +10,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
+    vm.previousTaskFailed = null;
     $rootScope.report_link = '';
 
     var getTaskStatus = function () {
@@ -17,7 +18,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (resp.task_ready) {
                 clearInterval(vm.statusCheck);
                 $rootScope.task_id = '';
-                $rootScope.report_link = resp.task_result.link;
+                vm.previousTaskFailed = !resp.task_successful;
+                $rootScope.report_link = resp.task_successful ? resp.task_result.link : '';
                 vm.queuedTask = false;
             }
         });
@@ -420,6 +422,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
         vm.queuedTask = true;
         vm.downloaded = false;
+        vm.previousTaskFailed = null;
     };
 
     vm.resetForm = function() {
@@ -514,7 +517,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.readyToDownload = function () {
-        return $rootScope.report_link;
+        return vm.previousTaskFailed ? false : $rootScope.report_link;
     };
 
     vm.goToLink = function () {
