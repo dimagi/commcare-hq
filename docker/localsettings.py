@@ -29,7 +29,7 @@ DATABASES = {
     },
     'aaa-data': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
+        'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
