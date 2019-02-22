@@ -43,6 +43,12 @@ EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 </fixture>
 """
 
+EMPTY_FLAT_LOCATION_FIXTURE_TEMPLATE = """
+<fixture id="locations" indexed="true" user_id="{}">
+  <locations/>
+</fixture>
+"""
+
 TEST_LOCATION_STRUCTURE = [
     ('Massachusetts', [
         ('Middlesex', [
@@ -126,6 +132,11 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     def test_no_user_locations_returns_empty(self):
         empty_fixture = EMPTY_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
         fixture = ElementTree.tostring(call_fixture_generator(location_fixture_generator, self.user)[0])
+        self.assertXmlEqual(empty_fixture, fixture)
+
+    def test_no_user_locations_returns_empty_flat(self):
+        empty_fixture = EMPTY_FLAT_LOCATION_FIXTURE_TEMPLATE.format(self.user.user_id)
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[1])
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_metadata(self):
