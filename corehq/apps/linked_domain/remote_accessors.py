@@ -70,6 +70,18 @@ def pull_missing_multimedia_for_app(app):
                 }, indent=4)
             )
             return False
+        else:
+            soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
+                False, "[ICDS-291] Multimedia pull successful", json.dumps([{
+                    'domain': app.domain,
+                    'app_id': app.get_id,
+                    'version': app.version,
+                    'length of multimedia_map': len(app.multimedia_map),
+                    'number of missing files pulled': len(missing_media),
+                }, {
+                    'missing': missing_media,
+                }], indent=4)
+            )
     return True
 
 
