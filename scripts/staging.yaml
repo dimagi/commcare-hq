@@ -52,4 +52,5 @@ branches:
   - ns/update_uwsgi  # Nitigya Feb 12
   - bmb/users-perms-ui  # Biyeun Feb 20
   - vellum-staging      # Farid 20 Feb
+  - fr/question-links   # Farid 20 Feb
 submodules: {}
