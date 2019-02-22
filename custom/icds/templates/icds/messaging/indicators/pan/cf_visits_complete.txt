@@ -1,1 +1,1 @@
-Congratulations! You've done all the Complementary Feeding  Visits for {{ beneficiary }}
+ਮੁਬਾਰਕਾਂ ! ਤੁਸੀ  {{ beneficiary }}  ਪੂਰਕ ਪੋੋਸ਼ਣ ਆਹਾਰ ਲਈ ਸਾਰੀਆਂ ਮੁਲਾਕਾਤਾਂ ਮੁਕੰਮਲ  ਕਰ ਲਈਆਂ ਹਨ ।
