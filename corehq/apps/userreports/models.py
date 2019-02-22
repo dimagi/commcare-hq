@@ -154,6 +154,7 @@ class AbstractUCRDataSource(object):
     def get_columns(self):
         raise NotImplementedError()
 
+    @property
     def pk_columns(self):
         raise NotImplementedError()
 
