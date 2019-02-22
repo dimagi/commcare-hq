@@ -110,6 +110,7 @@ class Woman(LocationDenormalizedModel):
         help_text="The ranges in which a ccs_record has been opened and the baby has not been born",
         null=True
     )
+    name = models.TextField(null=True)
     dob = models.DateField(null=True)
     marital_status = models.TextField(null=True)
     sex = models.TextField(null=True)
@@ -142,7 +143,7 @@ class Woman(LocationDenormalizedModel):
         return """
         INSERT INTO "{woman_tablename}" AS child (
             domain, household_case_id, person_case_id, opened_on, closed_on,
-            dob, marital_status, sex, migration_status, age_marriage,
+            name, dob, marital_status, sex, migration_status, age_marriage,
             has_aadhar_number, husband_name, contact_phone_number,
             num_male_children_died, num_female_children_died
         ) (
@@ -152,6 +153,7 @@ class Woman(LocationDenormalizedModel):
                 doc_id,
                 opened_on,
                 closed_on,
+                name,
                 dob,
                 marital_status,
                 sex,
@@ -167,6 +169,7 @@ class Woman(LocationDenormalizedModel):
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
            closed_on = EXCLUDED.closed_on,
+           name = EXCLUDED.name,
            dob = EXCLUDED.dob,
            marital_status = EXCLUDED.marital_status,
            sex = EXCLUDED.sex,
