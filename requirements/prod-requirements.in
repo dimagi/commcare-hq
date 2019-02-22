@@ -6,7 +6,7 @@ flower==0.9.2
 tornado<5.0
 errand-boy==0.3.8
 setproctitle==1.1.9
-uWSGI==2.0.11.2
+uWSGI==2.0.18
 ipython==5.2.2
 ndg-httpsclient
 pyasn1
