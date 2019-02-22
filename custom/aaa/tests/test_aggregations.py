@@ -41,8 +41,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'person': 'config_report_reach-test_reach-person_cases_26a9647f',
     'village': 'config_report_reach-test_reach-village_location_569fb159',
 }
-INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
+# INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
+# OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
 TEST_DOMAIN = 'reach-test'
 TEST_ENVIRONMENT = 'icds'
 
