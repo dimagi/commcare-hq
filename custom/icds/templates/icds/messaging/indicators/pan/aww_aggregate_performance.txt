@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWC
+ਤੁਹਾਡੇ ਖੇਤਰ ਦੇ ਅਂਗਨਵਾੜੀ ਕੇਂਦਰਾਂ ਦੀ ਆਖਰੀ 30 ਦਿਨਾਂ ਦੀ ਸਮੁੱਚੀ ਕਾਰਗੁਜਾਰੀ ਰਿਪੋਰਟ। 
 
-1. Number of visits / Number of desired visits: {{ visits }} / 65
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+1. ਦੌਰਿਆਂ ਦੀ ਗਿਣਤੀ / ਲੌੜੀਦੇ ਦੌਰਿਆਂ ਦੀ ਗਿਣਤੀ: {{ visits }} / 65
+2. ਸਮੇ ਸਿਰ ਪੂਰਨ ਕੀਤੇ ਦੌਰਿਆਂ ਦੀ ਗਿਣਤੀ / ਦੌਰਿਆਂ ਦੀ ਗਿਣਤੀ: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+THR ਵੰਡਿਆ: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+ਵਜ਼ਨ ਕੀਤੇ ਗਏ ਬੱਚਿਆ ਦੀ ਗਿਣਤੀ: {{ children_weighed }}
 
-Days AWC open / Goal: {{ days_open }} / 25
+ਆਂਗਣਵਾੜੀ ਕੇਂਦਰਾਂ ਦੇ ਖੁੱਲੇ ਰਹਿਣ  ਦੀ ਗਿਣਤੀ / ਲੋੜੀਂਦਾ ਟੀਚਾ: {{ days_open }} / 25
