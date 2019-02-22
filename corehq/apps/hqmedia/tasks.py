@@ -203,7 +203,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                                     'version': app.version,
                                     'build_profile_id': build_profile_id,
                                     'build_profile_name': app.build_profiles[build_profile_id].name
-                                                          if build_profile_id else '',
+                                        if build_profile_id else '',
                                 }, {
                                     'files': missing,
                                 }])
