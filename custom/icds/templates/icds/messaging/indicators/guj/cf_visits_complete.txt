@@ -1,1 +1,1 @@
-Congratulations! You've done all the Complementary Feeding  Visits for {{ beneficiary }}
+અભિનંદન આપે {{ beneficiary }} ઉપરી આહાર માટેની તમામ મુુુુલાકાતો પુર્ણ કરેલ છે.
