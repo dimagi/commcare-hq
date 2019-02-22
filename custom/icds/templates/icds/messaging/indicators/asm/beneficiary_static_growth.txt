@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has remained static in the last month. Please consult your AWW for necessary advice.
+আপোনাৰ শেহতীয়া অংগনবাড়ী কেন্দ্ৰ প্ৰতিবেদনৰ মতে {{ child_name }} ওজন যোৱা মাহৰ হৈতে একে আছে। অনুগ্ৰহ কৰি প্ৰয়োজনীয় পৰামৰ্শ বাবে আপোনাৰ অংগনবাড়ী কৰ্মীৰ লগত আলোচনা কৰক।

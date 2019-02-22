@@ -1,1 +1,1 @@
-AWC {{ awc }} has reported illness for the child {{ child }}. Please ensure that AWW follows up with mother immediately
+AWC {{ awc }} hian naute damloh thu a report a {{ child }}. Khawngaih takin AWW hian a nu hnenah rang takin a a thlen in a ngaihven zui ani

@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has remained static in the last month. Please consult your AWW for necessary advice.
+কেন্দ্রের সর্বশেষ তথ্য অনুযায়ী {{ child_name }} শিশুটির ওজন গত মাসে একই রয়ে গেছে । প্রয়োজনীয় পরামর্শ দানের বিষয়ে অনুগ্রহ করে অঙ্গনওয়াড়ি কর্মীর সাথে আলোচনা করুন ।

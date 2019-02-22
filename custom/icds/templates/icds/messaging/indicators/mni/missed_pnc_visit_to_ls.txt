@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during the PNC within one week of delivery for {{ beneficiary }}
+আঙ্গনৱাডি সেন্টর  {{ awc }} না {{ beneficiary }} গী অঙাং উন্নরবা মতুং চয়োল অমগী মনুংগী পি.এন.সি. দা চৎখিবগী পাও লৈতে

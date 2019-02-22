@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during complementary feeding initiation period for {{ beneficiary }}
+AWC {{ awc }} hian complementary feeding report  hemi te tan hian a pe lo {{ beneficiary }}

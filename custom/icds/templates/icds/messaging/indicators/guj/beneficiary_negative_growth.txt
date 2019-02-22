@@ -1,1 +1,2 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has reduced in the last month. Please consult your AWW for necessary advice.
+આંગણવાડીનાં નવા રેકોર્ડ મુજબ, તમારા બાળક {{ child_name }} નું વજન છેલ્લા મહિનામાં ઘટાડો થયેલ છે. જરૂરી માર્ગદર્શન માટે  આંગણવાડીનો કાર્યકરનો સંપર્ક કરો 
+ કાર્યકરનો સંપર્ક કરો.

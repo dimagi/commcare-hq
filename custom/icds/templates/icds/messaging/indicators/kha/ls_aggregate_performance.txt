@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWCs
+Ka Report shaphang ka Jingtip kyllum jong ki jingtreikam hapoh ki 30 sngi ba lah leit jong ka Anganwadi Centre
 
-1. Number of visits / Number of desired visits: {{ visits }} / {{ visits_goal }}
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+1. Nombar jong ka jingleit jngoh / Nombar ba kwah ban leit jngoh: {{ visits }} / {{ visits_goal }}
+2. Nombar jong ka jingleit jngoh biang por / Nombar jong ka jingleit jngoh: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+Ka jingai THR: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+Ka jingdon jong ki khynnah ba lah thew: {{ children_weighed }}
 
-Average no. of days AWC open / Goal: {{ days_open }} / 25
+Ki sngi ba plie ia ka AWC / Ka thong: {{ days_open }} / 25

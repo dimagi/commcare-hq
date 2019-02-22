@@ -1,7 +1,7 @@
 {% if location_names and timeframe == 'week' %}
-The following AWC have not done any activity in ICDS CAS application in more than one week: {{ location_names }}.  Please follow up with them to provide assistance.
+{{ location_names }} অঙ্গনওয়াড়ি কেন্দ্র এক সপ্তাহের বেশি ICDS CAS অ্যাপ্লিকেশন-এ কোন কাজ করে নি। অনুগ্রহ করে ফলো-আপ  করুন এবং তাদের সাহায্য করুন। 
 {% endif %}
 
 {% if location_names and timeframe == 'month' %}
-The following AWC have not done any activity in ICDS CAS application in more than one month: {{ location_names }}.  Please follow up with them to provide assistance.
+{{ location_names }} অঙ্গনওয়াড়ি কেন্দ্র এক মাসের বেশি ICDS CAS অ্যাপ্লিকেশন-এ কোন কাজ করে নি। অনুগ্রহ করে ফলো-আপ করুন এবং তাদের সাহায্য করুন।
 {% endif %}

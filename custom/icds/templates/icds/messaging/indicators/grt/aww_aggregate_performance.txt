@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWC
+Re·anggipa sal 30 ni gisepo  nang·ni AWC-rangna  kam ka∙e onnani report 
 
-1. Number of visits / Number of desired visits: {{ visits }} / 65
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+1. Badita chang re·e niaha/ Badita chang re·na nangnikkuenga: {{ visits }} / 65
+2. Badita chang somoi gita re·e niaha / Badita chang re·e niaha: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+THR sualatani: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+Badita sak bi·sarangni jrimaniko ra·aha: {{ children_weighed }}
 
-Days AWC open / Goal: {{ days_open }} / 25
+Badita sal AWC ko  kuliaha ba average / Dakna nangani: {{ days_open }} / 25

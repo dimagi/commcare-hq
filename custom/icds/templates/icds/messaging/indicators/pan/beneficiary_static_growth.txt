@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has remained static in the last month. Please consult your AWW for necessary advice.
+ਤੁਹਾਡੇ ਬੱਚੇ {{ child_name }} ਦੇ ਭਾਰ ਵਿੱਚ ਪਿਛਲੇ ਮਹੀਨੇ ਦੇ ਭਾਰ ਨਾਲੋ ਕੋਈ ਵਾਧਾ ਨਹੀ ਹੋਇਆ ਹੈ। ਕ੍ਰਿਪਾ ਕਰਕੇ ਜਰੂਰੀ ਸਲਾਹ ਲਈ ਆਂਗਣਵਾੜੀ ਵਰਕਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ । 

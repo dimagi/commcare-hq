@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during complementary feeding initiation period for {{ beneficiary }}
+Ka AWC {{ awc }} ka khlem pyntip shaphang ka jingleit jngoh ha ka por ba sdang ai jingbam nyngkong lem bad ka buin jong {{ beneficiary }}

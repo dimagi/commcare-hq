@@ -1,1 +1,1 @@
-VHND hasn't been conducted at the following AWC in the last 30 days: {{ location_names }}
+Reanggipa sal 30-ni gisep-o mesokatenggipa AWC-rango VHND-ko ong·atjaha: {{ location_names }}

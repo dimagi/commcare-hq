@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during the PNC within one week of delivery for {{ beneficiary }}
+{{ awc }} টোৱে {{ beneficiary }} জন্মৰ 1 সপ্তাহৰ ভিতৰত হবলগীয়া 1 টা প্ৰসৱোত্তৰ যতনৰ গৃহভ্ৰমণৰ প্ৰতিবেদন দিয়া নাছিল

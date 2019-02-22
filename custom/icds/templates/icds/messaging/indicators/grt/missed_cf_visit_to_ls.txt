@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during complementary feeding initiation period for {{ beneficiary }}
+{{ awc }} AWC {{ beneficiary }}-na complementary feeding-na visit  ka∙aniko  report ka∙jaha

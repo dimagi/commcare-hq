@@ -1,1 +1,1 @@
-AWC {{ awc }} has reported illness for the child {{ child }}. Please ensure that AWW follows up with mother immediately
+{{ awc }} AWC  {{ child }} -na saa-ko report ka·aha. Ka·sapae AWW-ko ta·raken bi∙sani ma·gipa nikrokama nirokjaenga uko niekanna ge∙etbo
