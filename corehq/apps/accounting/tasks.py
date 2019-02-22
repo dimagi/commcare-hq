@@ -694,8 +694,8 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
 
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
-def run_downgrade_process(today=None):
-    today = today or datetime.date.today()
+def run_downgrade_process():
+    today = datetime.date.today()
 
     for domain, oldest_unpaid_invoice, total in _get_domains_with_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
