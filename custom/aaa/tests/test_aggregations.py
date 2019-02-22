@@ -8,8 +8,8 @@ from io import open
 
 import mock
 import postgres_copy
-import sqlalchemy
 import six
+import sqlalchemy
 from django.test.utils import override_settings
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -21,6 +21,7 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     Woman,
+    WomanHistory,
 )
 from custom.aaa.tasks import (
     update_agg_awc_table,
@@ -28,6 +29,7 @@ from custom.aaa.tasks import (
     update_ccs_record_table,
     update_child_table,
     update_woman_table,
+    update_woman_history_table,
 )
 from custom.icds_reports.tests import CSVTestCase
 
@@ -49,7 +51,7 @@ TEST_ENVIRONMENT = 'icds'
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
-    always_include_columns = {'village_id'}
+    always_include_columns = {'person_case_id'}
 
     @classmethod
     def setUpClass(cls):
@@ -57,6 +59,7 @@ class AggregationScriptTestBase(CSVTestCase):
         _setup_ucr_tables()
         update_child_table(TEST_DOMAIN)
         update_woman_table(TEST_DOMAIN)
+        update_woman_history_table(TEST_DOMAIN)
         update_ccs_record_table(TEST_DOMAIN)
 
         for month in range(1, 3):
@@ -118,6 +121,13 @@ class AggregationScriptTestBase(CSVTestCase):
             Woman,
             os.path.join(OUTPUT_PATH, 'woman.csv'),
             sort_key=['awc_id', 'village_id', 'person_case_id']
+        )
+
+    def test_agg_woman_history_table(self):
+        self._load_and_compare_data(
+            WomanHistory,
+            os.path.join(OUTPUT_PATH, 'womanhistory.csv'),
+            sort_key=['person_case_id']
         )
 
     def test_agg_child_table(self):

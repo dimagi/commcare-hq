@@ -254,6 +254,7 @@ class AggregationScriptPage(BaseDomainView):
         update_child_table(self.domain)
         update_ccs_record_table(self.domain)
         update_woman_table(self.domain)
+        update_woman_history_table(self.domain)
         update_agg_awc_table(self.domain, date)
         update_agg_village_table(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
