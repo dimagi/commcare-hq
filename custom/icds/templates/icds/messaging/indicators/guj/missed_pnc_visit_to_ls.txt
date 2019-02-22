@@ -1,1 +1,1 @@
-AWC {{ awc }} has not reported a visit during the PNC within one week of delivery for {{ beneficiary }}
+આંગણવાડી કેન્દ્ર {{ awc }} દ્વારા પ્રસુતિ બાદના તરતના એક અઠવાડીયામાં {{ beneficiary }}ની તપાસ નોંઘાયેલ નથી.
