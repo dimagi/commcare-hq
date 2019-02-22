@@ -42,7 +42,7 @@ ucr_to_sql = [
 
 def generate_sql(ucr_table, join_table, ucr_column, join_table_column):
     template = """
-    UPDTE "{ucr_table}"
+    UPDATE "{ucr_table}"
     SET supervisor_id = loc.supervisor_id
     FROM "{ucr_table}" ucr
     INNER JOIN "{join_table}" loc
