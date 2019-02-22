@@ -102,6 +102,7 @@ class Woman(LocationDenormalizedModel):
     household_case_id = models.TextField(null=True)
     person_case_id = models.TextField(primary_key=True)
 
+    # person case properties
     opened_on = models.DateField()
     closed_on = models.DateField(null=True)
     pregnant_ranges = ArrayField(
@@ -113,6 +114,18 @@ class Woman(LocationDenormalizedModel):
     marital_status = models.TextField(null=True)
     sex = models.TextField(null=True)
     migration_status = models.TextField(null=True)
+    age_marriage = models.PositiveIntegerField(null=True)
+    has_aadhar_number = models.NullBooleanField()
+    husband_name = models.TextField(null=True)
+    contact_phone_number = models.TextField(null=True)
+    num_male_children_died = models.TextField(null=True)
+    num_female_children_died = models.TextField(null=True)
+
+    # household properties
+    hh_address = models.TextField(null=True)
+    hh_religion = models.TextField(null=True)
+    hh_caste = models.TextField(null=True)
+    hh_bpl_apl = models.TextField(null=True)
 
     fp_current_method_ranges = ArrayField(
         DateRangeField(),
@@ -257,6 +270,11 @@ class WomanHistory(models.Model):
     fp_current_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
     fp_preferred_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
 
+    family_planning_form_history = ArrayField(
+        models.DateField(), null=True,
+        help_text="timeEnd from Family Planning forms submitted against this case"
+    )
+
 
 class CcsRecord(LocationDenormalizedModel):
     """Represent a single pregnancy, lactation, and complementary feeding schedule for a Woman.
@@ -381,6 +399,7 @@ class Child(LocationDenormalizedModel):
     # where a person has multiple child_health cases
     person_case_id = models.TextField(unique=True)
     child_health_case_id = models.TextField(primary_key=True)
+    mother_case_id = models.TextField(null=True)
 
     # For now, these should be the same between child_health and person case
     # but going with child_health as there's a potential for person case to live
