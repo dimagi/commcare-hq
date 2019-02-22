@@ -19,7 +19,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
-        supervisor_id AS supervisor_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
         MAX(comp_feeding) OVER w AS comp_feeding_ever,
@@ -67,7 +67,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
-            supervisor_id AS supervisor_id,
+            ucr.supervisor_id AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,

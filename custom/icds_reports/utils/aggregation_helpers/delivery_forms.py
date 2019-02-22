@@ -32,7 +32,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
           SELECT
             DISTINCT case_load_ccs_record0 AS case_id,
             %(state_id)s AS state_id,
-            supervisor_id as supervisor_id,
+            LAST_VALUE(supervisor_id) over w as supervisor_id,
             %(month)s::DATE AS month,
             LAST_VALUE(timeend) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,

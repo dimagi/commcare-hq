@@ -29,7 +29,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
         SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
-        supervisor_id as supervisor_id
+        LAST_VALUE(supervisor_id) OVER w as supervisor_id
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -61,7 +61,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
-            supervisor_id as supervisor_id,
+            ucr.supervisor_id as supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,

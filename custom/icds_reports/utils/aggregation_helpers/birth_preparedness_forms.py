@@ -25,7 +25,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
-        supervisor_id AS supervisor_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
         MAX(play_birth_preparedness_vid) OVER w as play_birth_preparedness_vid,
@@ -85,7 +85,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
-            supervisor_id AS supervisor_id,
+            ucr.supervisor_id AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             COALESCE(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,

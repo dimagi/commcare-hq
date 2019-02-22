@@ -40,7 +40,7 @@ class THRFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 ccs_record_case_id IS NOT NULL
-          GROUP BY ccs_record_case_id
+          GROUP BY ccs_record_case_id, supervisor_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
