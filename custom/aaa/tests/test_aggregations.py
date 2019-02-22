@@ -15,20 +15,20 @@ from django.test.utils import override_settings
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
-from custom.aaa.models import (
-    AggAwc,
-    AggVillage,
-    CcsRecord,
-    Child,
-    Woman,
-)
-from custom.aaa.tasks import (
-    update_agg_awc_table,
-    update_agg_village_table,
-    update_ccs_record_table,
-    update_child_table,
-    update_woman_table,
-)
+# from custom.aaa.models import (
+#     AggAwc,
+#     AggVillage,
+#     CcsRecord,
+#     Child,
+#     Woman,
+# )
+# from custom.aaa.tasks import (
+#     update_agg_awc_table,
+#     update_agg_village_table,
+#     update_ccs_record_table,
+#     update_child_table,
+#     update_woman_table,
+# )
 # from custom.icds_reports.tests import CSVTestCase
 
 # FILE_NAME_TO_TABLE_MAPPING = {
