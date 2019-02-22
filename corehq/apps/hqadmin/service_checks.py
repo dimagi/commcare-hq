@@ -271,7 +271,7 @@ CHECKS = {
         "check_func": check_couch,
     },
     'celery': {
-        "always_check": True,
+        "always_check": False,
         "check_func": check_celery,
     },
     'heartbeat': {
