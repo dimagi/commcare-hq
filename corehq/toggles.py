@@ -1279,11 +1279,12 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
+    always_enabled={'icds', 'icds-cas'},
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
-    'Add a page to update multimedia paths in bulk',
+    'Bulk multimedia path management',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
