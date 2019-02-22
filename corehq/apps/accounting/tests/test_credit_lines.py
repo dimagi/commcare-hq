@@ -279,21 +279,6 @@ class TestCreditLines(BaseInvoiceTestCase):
 
 class TestDeactivatedCredits(BaseInvoiceTestCase):
 
-    def setUp(self):
-        super(TestDeactivatedCredits, self).setUp()
-
-        self.product_rate = self.subscription.plan_version.product_rate
-        # self.sms_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.SMS)[:1].get()
-        # num_active = random.randint(self.user_rate.monthly_limit + 1, self.user_rate.monthly_limit + 2)
-        # generator.arbitrary_commcare_users_for_domain(self.domain.name, num_active)
-        # num_excess = num_active - self.user_rate.monthly_limit
-        # self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
-
-    def tearDown(self):
-        for user in self.domain.all_users():
-            user.delete()
-        super(TestDeactivatedCredits, self).tearDown()
-
     def add_account_credit(self, amount):
         account_credit = CreditLine.add_credit(amount, account=self.account)
         self.assertEqual(CreditLine.get_credits_for_account(self.account).count(), 1)
