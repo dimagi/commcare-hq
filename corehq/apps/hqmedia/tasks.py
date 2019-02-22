@@ -17,6 +17,8 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
+from dimagi.utils.logging import notify_exception
+from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
 from soil.util import expose_file_download, expose_cached_download
@@ -183,7 +185,9 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                 with zipfile.ZipFile(tmp, "r") as z:
                     media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
                     if len(media_suites) != 1:
-                        errors.append(_('Could not identify media_suite.xml in CCZ'))
+                        message = _('Could not identify media_suite.xml in CCZ')
+                        errors.append(message)
+                        notify_exception(None, message)
                     else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
@@ -192,8 +196,18 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                                          parsed.findall("media/resource/location[@authority='local']")}
                             names = z.namelist()
                             missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                            for m in missing:
-                                errors.append(_('Media file missing from CCZ: {}').format(m))
+                            if missing:
+                                soft_assert(notify_admins=True)(False, 'Media files missing from CCZ', [{
+                                    'missing file count': len(missing),
+                                    'app_id': app._id,
+                                    'version': app.version,
+                                    'build_profile_id': build_profile_id,
+                                    'build_profile_name': app.build_profiles[build_profile_id].name
+                                                          if build_profile_id else '',
+                                }, {
+                                    'files': missing,
+                                }])
+                            errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
         if errors:
             os.remove(fpath)
