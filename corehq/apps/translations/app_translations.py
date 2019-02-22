@@ -238,6 +238,17 @@ def _get_modules_and_forms_row(row_type, sheet_name, languages,
              get_menu_row(languages, media_image, media_audio) +
              [unique_id])]
 
+def get_module_sheet_name(module):
+    return "module{}".format(module.get_app().get_module_index(module.unique_id) + 1)
+
+
+def get_form_sheet_name(form):
+    module = form.get_module()
+    return "_".join([
+        get_module_sheet_name(module),
+        "form{}".format(module.get_form_index(form.unique_id) + 1)
+    ])
+
 
 def get_menu_row(languages, media_image, media_audio):
     return languages + media_image + media_audio
@@ -283,8 +294,8 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
 
-        module_string = "module" + str(mod_index + 1)
-        headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
+        sheet_name = get_module_sheet_name(module)
+        headers.append([sheet_name, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
             if form.form_type == 'shadow_form':
@@ -292,11 +303,10 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
             if exclude_form is not None and exclude_form(form):
                 continue
 
-            form_string = module_string + "_form" + str(form_index + 1)
+            sheet_name = get_form_sheet_name(form)
             headers.append([
-                form_string,
-                ["label"] + languages_list + audio_lang_list + image_lang_list
-                                                             + video_lang_list
+                sheet_name,
+                ["label"] + languages_list + audio_lang_list + image_lang_list + video_lang_list
             ])
     return headers
 
@@ -317,36 +327,36 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
 
-        module_string = "module" + str(mod_index + 1)
+        sheet_name = get_module_sheet_name(module)
         rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
             row_type="Module",
-            sheet_name=module_string,
+            sheet_name=sheet_name,
             languages=[module.name.get(lang) for lang in app.langs],
             media_image=[module.icon_by_language(lang) for lang in app.langs],
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         ))
 
-        rows[module_string] = []
+        rows[sheet_name] = []
         if not isinstance(module, ReportModule):
-            rows[module_string] += _get_module_case_list_form_rows(app.langs, module)
-            rows[module_string] += _get_module_detail_rows(app.langs, module)
+            rows[sheet_name] += _get_module_case_list_form_rows(app.langs, module)
+            rows[sheet_name] += _get_module_detail_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
                     continue
 
-                form_string = module_string + "_form" + str(form_index + 1)
+                sheet_name = get_form_sheet_name(form)
                 rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
                     row_type="Form",
-                    sheet_name=form_string,
+                    sheet_name=sheet_name,
                     languages=[form.name.get(lang) for lang in app.langs],
                     media_image=[form.icon_by_language(lang) for lang in app.langs],
                     media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
                 ))
 
-                rows[form_string] = bulk_app_sheet_question_rows(form)
+                rows[sheet_name] = bulk_app_sheet_question_rows(form)
 
     return rows
 

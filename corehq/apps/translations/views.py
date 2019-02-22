@@ -27,6 +27,8 @@ from corehq.apps.translations.app_translations import (
     get_bulk_app_sheet_headers,
     get_bulk_app_sheet_rows,
     get_app_translation_workbook,
+    get_form_sheet_name,
+    get_module_sheet_name,
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
 )
@@ -110,9 +112,8 @@ def download_bulk_multimedia_translations(request, domain, app_id):
 
     # TODO: probably extract
     headers = (('multimedia', (
-        'menu',
-        'form',
-        'label',
+        'menu or form',# jls
+        'question label',
         'default',
         'audio',
         'image',
@@ -122,14 +123,12 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     # TODO: extract
     rows = []
     for module_index, module in enumerate(app.modules):
-        module_string = 'module{}'.format(module_index + 1)
-        prefix = [module_string, '', '']    # blank form and label columns
+        prefix = [get_module_sheet_name(module), '']    # blank label column
         rows.append(prefix + get_menu_row([module.name.get(lang)],
                                           [module.icon_by_language(lang)],
                                           [module.audio_by_language(lang)]))
         for form_index, form in enumerate(module.forms):
-            form_string = 'form{}'.format(form_index + 1)
-            prefix = [module_string, form_string]
+            prefix = [get_form_sheet_name(form)]
             # Name / menu media row, with a blank for the label column
             rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
                                                      [form.icon_by_language(lang)],
