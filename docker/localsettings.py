@@ -27,17 +27,6 @@ DATABASES = {
             'SERIALIZE': False,
         },
     },
-    'aaa-data': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
-    },
 }
 
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
