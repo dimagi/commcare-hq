@@ -13,6 +13,7 @@
 /corehq/sql_accessors/ @snopoke
 /corehq/sql_db/ @snopoke
 /corehq/sql_proxy_accessors/ @snopoke
+/corehq/util/ @esoergel
 /corehq/warehouse/ @calellowitz
 
 /corehq/apps/accounting/ @nickpell
@@ -20,13 +21,17 @@
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/change_feed/ @emord
+/corehq/apps/commtrack/ @esoergel
 /corehq/apps/couch_sql_migration/ @snopoke @emord
+/corehq/apps/es/ @esoergel
 /corehq/apps/hqwebapp/ @orangejenny
+/corehq/apps/locations/ @esoergel
 /corehq/apps/ota/ @snopoke
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/smsbillables/ @nickpell
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/userreports/ @emord
 /corehq/apps/userreports/reports/builder/ @kaapstorm @emord
+/corehq/apps/users/ @esoergel
 
 /custom/aaa/ @emord
