@@ -78,6 +78,7 @@ class ProgramOverviewReportAPI(View):
         location_filters = build_location_filters(selected_location)
         data = AggVillage.objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
+            domain=self.request.domain,
             **location_filters
         ).order_by('month').values()
 
