@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has reduced in the last month. Please consult your AWW for necessary advice.
+ਹੁਣ ਦੇ ਰਿਕਾਰਡ ਅਨੁਸਾਰ ਤੁਹਾਡੇ ਬੱਚੇ  {{ child_name }} ਦਾ ਭਾਰ ਪਿਛਲੇ ਮਹੀਨੇ ਦੇ ਭਾਰ ਨਾਲੋ ਘਟਿਆ ਹੋਇਆ ਹੈ। ਕ੍ਰਿਪਾ ਕਰਕੇ ਜਰੂਰੀ ਸਲਾਹ ਲਈ ਆਂਗਣਵਾੜੀ ਵਰਕਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।
