@@ -19,7 +19,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
-        supervisor_id AS supervisor_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
         MAX(counsel_breast) OVER w AS counsel_breast,
