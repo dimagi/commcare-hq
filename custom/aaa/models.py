@@ -419,17 +419,19 @@ class Child(LocationDenormalizedModel):
 
         return """
         INSERT INTO "{child_tablename}" AS child (
-            domain, person_case_id, child_health_case_id, opened_on, closed_on
+            domain, person_case_id, child_health_case_id, mother_case_id, opened_on, closed_on
         ) (
             SELECT
                 %(domain)s AS domain,
-                child_health.person_case_id AS person_case_id,
-                child_health.doc_id AS child_health_case_id,
-                child_health.opened_on AS opened_on,
-                child_health.closed_on AS closed_on
+                child_health.person_case_id,
+                child_health.doc_id,
+                child_health.mother_case_id,
+                child_health.opened_on,
+                child_health.closed_on
             FROM "{child_health_cases_ucr_tablename}" child_health
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
+           mother_case_id = EXCLUDED.mother_case_id,
            closed_on = EXCLUDED.closed_on
         """.format(
             child_tablename=cls._meta.db_table,
