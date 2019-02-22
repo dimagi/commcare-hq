@@ -9,11 +9,18 @@ hqDefine('app_manager/js/summary/case_summary',[
     'hqwebapp/js/knockout_bindings.ko', // popover
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
-    var caseTypeModel = function (caseType) {
+    var caseTypeModel = function (caseType, showCalculations) {
         var self = models.contentItemModel(caseType);
 
         self.properties = _.map(caseType.properties, function (property) {
             return models.contentItemModel(property);
+        });
+
+        self.visibleProperties = ko.computed(function () {
+            return _.filter(self.properties, function (property) {
+                // only show case list / detail calculated properties if calculations are turned on
+                return showCalculations() || !property.is_detail_calculation;
+            });
         });
 
         // Convert these from objects to lists so knockout can process more easily
@@ -43,11 +50,13 @@ hqDefine('app_manager/js/summary/case_summary',[
         var self = models.contentModel(_.extend(options, {
             query_label: gettext("Filter properties"),
             onQuery: function (query) {
+                query = query.trim().toLowerCase();
                 _.each(self.caseTypes, function (caseType) {
                     var hasVisible = false;
                     _.each(caseType.properties, function (property) {
                         var isVisible = !query || property.name.indexOf(query) !== -1;
                         property.matchesQuery(isVisible);
+                        self.showCalculations(self.showCalculations() || (query && isVisible && property.is_detail_calculation));
                         hasVisible = hasVisible || isVisible;
                     });
                     caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
@@ -60,11 +69,6 @@ hqDefine('app_manager/js/summary/case_summary',[
             },
         }));
 
-        assertProperties.assertRequired(options, ['case_types']);
-        self.caseTypes = _.map(options.case_types, function (caseType) {
-            return caseTypeModel(caseType);
-        });
-
         self.showConditions = ko.observable(false);
         self.toggleConditions = function () {
             self.showConditions(!self.showConditions());
@@ -74,6 +78,11 @@ hqDefine('app_manager/js/summary/case_summary',[
         self.toggleCalculations = function () {
             self.showCalculations(!self.showCalculations());
         };
+
+        assertProperties.assertRequired(options, ['case_types']);
+        self.caseTypes = _.map(options.case_types, function (caseType) {
+            return caseTypeModel(caseType, self.showCalculations);
+        });
 
         return self;
     };

@@ -13,13 +13,13 @@ asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 billiard==3.3.0.23
-boto3==1.9.94
-botocore==1.12.94
+boto3==1.9.97
+botocore==1.12.97
 celery==3.1.25
 certifi==2018.11.29
-cffi==1.12.0
+cffi==1.12.1
 chardet==3.0.4
-cloudant==2.7.0
+cloudant==2.11.0
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 cryptography==2.5
@@ -149,7 +149,7 @@ sphinx==1.8.4
 sphinxcontrib-django==0.4
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
-sqlalchemy==1.2.17
+sqlalchemy==1.2.18
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2

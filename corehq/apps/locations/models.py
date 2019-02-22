@@ -887,7 +887,7 @@ class LocationRelation(models.Model):
         """
         relations = cls.objects.filter(
             Q(location_a__in=locations) | Q(location_b__in=locations)
-        ).prefetch_related('location_a', 'location_b')
+        )
         location_ids = {loc.location_id for loc in locations}
 
         distance_dictionary = defaultdict(dict)
