@@ -142,18 +142,26 @@ class Woman(LocationDenormalizedModel):
         return """
         INSERT INTO "{woman_tablename}" AS child (
             domain, household_case_id, person_case_id, opened_on, closed_on,
-            dob, marital_status, sex, migration_status
+            dob, marital_status, sex, migration_status, age_marriage,
+            has_aadhar_number, husband_name, contact_phone_number,
+            num_male_children_died, num_female_children_died
         ) (
             SELECT
                 %(domain)s,
-                person.household_case_id,
-                person.doc_id,
-                person.opened_on,
-                person.closed_on,
-                person.dob,
-                person.marital_status,
-                person.sex,
-                person.migration_status
+                household_case_id,
+                doc_id,
+                opened_on,
+                closed_on,
+                dob,
+                marital_status,
+                sex,
+                migration_status,
+                age_marriage,
+                aadhar_number IS NOT NULL and aadhar_number != '' AS has_aadhar_number,
+                husband_name,
+                contact_phone_number,
+                num_male_children_died,
+                num_female_children_died
             FROM "{person_cases_ucr_tablename}" person
             WHERE sex = 'F' AND date_part('year', age(dob)) BETWEEN 15 AND 49
         )
@@ -162,7 +170,13 @@ class Woman(LocationDenormalizedModel):
            dob = EXCLUDED.dob,
            marital_status = EXCLUDED.marital_status,
            sex = EXCLUDED.sex,
-           migration_status = EXCLUDED.migration_status
+           migration_status = EXCLUDED.migration_status,
+           age_marriage = EXCLUDED.age_marriage,
+           has_aadhar_number = EXCLUDED.has_aadhar_number,
+           husband_name = EXCLUDED.husband_name,
+           contact_phone_number = EXCLUDED.contact_phone_number,
+           num_male_children_died = EXCLUDED.num_male_children_died,
+           num_female_children_died = EXCLUDED.num_female_children_died
         """.format(
             woman_tablename=cls._meta.db_table,
             person_cases_ucr_tablename=ucr_tablename,
