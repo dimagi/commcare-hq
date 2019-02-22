@@ -544,12 +544,30 @@ def get_form_data(domain, app, include_shadow_forms=True):
                     include_groups=True,
                     include_translations=True
                 )
-
-                for q in questions:
-                    response = FormQuestionResponse(q).to_json()
-                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, q['value'])
-                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, q['value'])
+                seen_save_to_case = set()
+                for question in questions:
+                    is_save_to_case = '/case/' in question['value']
+                    response = FormQuestionResponse(question).to_json()
+                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, question['value'])
+                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, question['value'])
+                    if is_save_to_case:
+                        response['type'] = 'SaveToCase'
                     form_meta['questions'].append(response)
+
+                    if is_save_to_case:
+                        question_path = question['value'].split('/case/')[0]
+                        if question_path not in seen_save_to_case:
+                            response = FormQuestionResponse(question).to_json()
+                            response['load_properties'] = case_meta.get_load_properties(form.unique_id, question_path)
+                            response['save_properties'] = case_meta.get_save_properties(form.unique_id, question_path)
+                            response['value'] = question_path
+                            response['label'] = response['label'].split('/case/')[0]
+                            response['type'] = 'SaveToCase'
+                            form_meta['questions'].append(response)
+                        seen_save_to_case.add(question_path)
+
+
+
 
             except XFormException as e:
                 form_meta['error'] = {
