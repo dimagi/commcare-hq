@@ -5,6 +5,7 @@ from io import BytesIO
 
 import openpyxl
 import six
+from botocore.exceptions import ReadTimeoutError
 from couchdbkit import ResourceNotFound
 from csv342 import csv
 
@@ -54,7 +55,7 @@ class Command(BaseCommand):
                             attachment = export.get_payload()
                     except MemoryError:
                         row_count = column_count = ''
-                    except ResourceNotFound:
+                    except (ResourceNotFound, ReadTimeoutError):
                         row_count = column_count = 'transient_error'
                     else:
                         if export_format == 'xlsx':
