@@ -177,12 +177,20 @@ class Woman(LocationDenormalizedModel):
         return """
         UPDATE "{child_tablename}" AS child SET
             awc_id = household.awc_owner_id,
-            village_id = household.village_owner_id
+            village_id = household.village_owner_id,
+            hh_address = household.hh_address,
+            hh_religion = household.hh_religion,
+            hh_caste = household.hh_caste,
+            hh_bpl_apl = household.hh_bpl_apl
         FROM (
             SELECT
                 doc_id,
                 awc_owner_id,
-                village_owner_id
+                village_owner_id,
+                hh_address,
+                hh_religion,
+                hh_caste,
+                hh_bpl_apl
             FROM "{household_cases_ucr_tablename}"
         ) household
         WHERE child.household_case_id = household.doc_id
