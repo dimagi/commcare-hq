@@ -115,11 +115,12 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
     def pk_columns(self):
         columns = []
         for col in self.get_columns():
-            if col.is_primary_key:
+            if col.is_primary_key():
                 column_name = col.database_column_name
                 if isinstance(column_name, bytes):
                     column_name = column_name.decode('utf-8')
                 columns.append(column_name)
+        return columns
 
 
 class PrimaryColumn(models.Model):
