@@ -742,9 +742,6 @@ class RestoreConfig(object):
             'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         maybe_add_domain_tag(self.domain, tags)
-        env = settings.SERVER_ENVIRONMENT
-        if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append('domain:{}'.format(self.domain))
         timer_buckets = (5, 20, 60, 120)
         for timer in timing.to_list(exclude_root=True):
             if timer.name in RESTORE_SEGMENTS:
