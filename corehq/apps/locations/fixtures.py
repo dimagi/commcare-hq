@@ -59,20 +59,26 @@ def should_sync_locations(last_sync, locations_queryset, restore_state):
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
     """
-    if (last_sync and last_sync.build_id is not None
-            and restore_state.params.app_id is not None
-            and restore_state.params.app_id != last_sync.build_id):
-        return True
-
     restore_user = restore_state.restore_user
+    return (
+        _app_has_changed(last_sync, restore_state.params.app_id)
+        or _fixture_has_changed(last_sync, restore_user)
+        or _locations_have_changed(last_sync, locations_queryset, restore_user)
+    )
 
-    if (
-        not last_sync or
-        not last_sync.date or
-        restore_user.get_fixture_last_modified() >= last_sync.date
-    ):
-        return True
 
+def _app_has_changed(last_sync, app_id):
+    return (last_sync and last_sync.build_id is not None
+            and app_id is not None
+            and app_id != last_sync.build_id)
+
+
+def _fixture_has_changed(last_sync, restore_user):
+    return (not last_sync or not last_sync.date or
+            restore_user.get_fixture_last_modified() >= last_sync.date)
+
+
+def _locations_have_changed(last_sync, locations_queryset, restore_user):
     return locations_queryset.filter(last_modified__gte=last_sync.date).values('last_modified').union(
         LocationType.objects.filter(
             domain=restore_user.domain, last_modified__gte=last_sync.date).values('last_modified'),
@@ -85,6 +91,7 @@ def _location_relation_queryset(locations_queryset, time):
             .filter(last_modified__gte=time)
             .filter(Q(location_a__in=locations_queryset) | Q(location_b__in=locations_queryset))
             .values('last_modified'))
+
 
 class LocationFixtureProvider(FixtureProvider):
 
