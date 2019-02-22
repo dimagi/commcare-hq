@@ -239,7 +239,7 @@ def check_credit_line_balances():
             )
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
