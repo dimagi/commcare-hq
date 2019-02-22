@@ -771,9 +771,17 @@ class ShouldSyncLocationFixturesTest(TestCase):
         cls.user = CommCareUser.create(cls.domain, cls.username, password)
         cls.user.save()
         cls.location_type.save()
+        cls.location = SQLLocation.objects.create(
+            domain=cls.domain,
+            name="Braavos",
+            location_type=cls.location_type,
+        )
 
     @classmethod
     def tearDownClass(cls):
+        cls.location.delete()
+        cls.location_type.delete()
+        cls.user.delete()
         cls.domain_obj.delete()
         super(ShouldSyncLocationFixturesTest, cls).tearDownClass()
 
@@ -860,6 +868,27 @@ class ShouldSyncLocationFixturesTest(TestCase):
         restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams(app=new_build))
         self.assertTrue(
             should_sync_locations(sync_log_from_old_app, SQLLocation.objects.all(), restore_state)
+        )
+
+    def test_remove_user_from_location(self):
+        self.user.set_location(self.location)
+        restore_state = MockRestoreState(self.user.to_ota_restore_user(), RestoreParams())
+
+        # before location was created
+        sync_log = SyncLog(date=datetime.utcnow() - timedelta(days=1))
+        self.assertTrue(
+            should_sync_locations(sync_log, SQLLocation.objects.all(), restore_state)
+        )
+
+        # after location is created
+        sync_log = SyncLog(date=datetime.utcnow())
+        self.assertFalse(
+            should_sync_locations(sync_log, SQLLocation.objects.all(), restore_state)
+        )
+
+        self.user.unset_location(self.location)
+        self.assertTrue(
+            should_sync_locations(sync_log, SQLLocation.objects.all(), restore_state)
         )
 
 
