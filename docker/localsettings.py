@@ -227,8 +227,6 @@ UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
 
-ELASTICSEARCH_VERSION = 1.7
-
 CACHE_REPORTS = True
 
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
