@@ -230,7 +230,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             )
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour=23, minute=55),
     queue='background_queue',
 )
