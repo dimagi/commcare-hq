@@ -31,20 +31,20 @@ from custom.aaa.tasks import (
 )
 from custom.icds_reports.tests import CSVTestCase
 
-FILE_NAME_TO_TABLE_MAPPING = {
-    'awc': 'config_report_reach-test_reach-awc_location_4646cfd7',
-    'ccs_record': 'config_report_reach-test_reach-ccs_record_cases_eaef76c6',
-    'child_health': 'config_report_reach-test_reach-child_health_cases_10a84c1d',
-    'eligible_couple_forms': 'config_report_reach-test_reach-eligible_couple_forms_002d1d07',
-    'growth_monitoring': 'config_report_reach-test_reach-growth_monitoring_forms_66bc5792',
-    'household': 'config_report_reach-test_reach-household_cases_73b9e4e8',
-    'person': 'config_report_reach-test_reach-person_cases_26a9647f',
-    'village': 'config_report_reach-test_reach-village_location_569fb159',
-}
-# INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
-# OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
-TEST_DOMAIN = 'reach-test'
-TEST_ENVIRONMENT = 'icds'
+# FILE_NAME_TO_TABLE_MAPPING = {
+#     'awc': 'config_report_reach-test_reach-awc_location_4646cfd7',
+#     'ccs_record': 'config_report_reach-test_reach-ccs_record_cases_eaef76c6',
+#     'child_health': 'config_report_reach-test_reach-child_health_cases_10a84c1d',
+#     'eligible_couple_forms': 'config_report_reach-test_reach-eligible_couple_forms_002d1d07',
+#     'growth_monitoring': 'config_report_reach-test_reach-growth_monitoring_forms_66bc5792',
+#     'household': 'config_report_reach-test_reach-household_cases_73b9e4e8',
+#     'person': 'config_report_reach-test_reach-person_cases_26a9647f',
+#     'village': 'config_report_reach-test_reach-village_location_569fb159',
+# }
+# # INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
+# # OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
+# TEST_DOMAIN = 'reach-test'
+# TEST_ENVIRONMENT = 'icds'
 
 
 # @override_settings(SERVER_ENVIRONMENT='icds')
