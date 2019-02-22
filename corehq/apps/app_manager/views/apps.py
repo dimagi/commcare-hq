@@ -137,6 +137,7 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -440,6 +441,7 @@ def copy_app(request, domain):
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
