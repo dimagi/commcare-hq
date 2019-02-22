@@ -62,7 +62,7 @@ def pull_missing_multimedia_for_app(app):
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(
-                False, "Multimedia still missing", json.dumps({
+                False, "[ICDS-291] Multimedia still missing", json.dumps({
                     'domain': app.domain,
                     'app_id': app.get_id,
                     'fetched-attempted': missing_media,
