@@ -28,7 +28,9 @@ hqDefine('app_manager/js/summary/form_summary',[
                             var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
                                 return match(query, prop[0]) || match(query, prop[1]);
                             });
-                            self.showCaseProperties(self.showCaseProperties() || casePropsVisible);
+                            if (!self.showCaseProperties() && casePropsVisible) {
+                                self.showCaseProperties(true);
+                            }
                             questionIsVisible = questionIsVisible || casePropsVisible;
                             question.matchesQuery(questionIsVisible);
                             formIsVisible = formIsVisible || questionIsVisible;

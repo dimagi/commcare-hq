@@ -56,7 +56,9 @@ hqDefine('app_manager/js/summary/case_summary',[
                     _.each(caseType.properties, function (property) {
                         var isVisible = !query || property.name.indexOf(query) !== -1;
                         property.matchesQuery(isVisible);
-                        self.showCalculations(self.showCalculations() || (query && isVisible && property.is_detail_calculation));
+                        if (!self.showCalculations() && (query && isVisible && property.is_detail_calculation)) {
+                            self.showCalculations(true);
+                        }
                         hasVisible = hasVisible || isVisible;
                     });
                     caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
