@@ -26,7 +26,9 @@ from corehq.apps.translations.app_translations import (
     get_module_rows,
     get_form_question_rows,
     get_bulk_app_sheet_headers,
+    get_bulk_multimedia_sheet_headers,
     get_bulk_app_sheet_rows,
+    get_bulk_multimedia_sheet_rows,
     get_app_translation_workbook,
     get_form_sheet_name,
     get_module_sheet_name,
@@ -111,45 +113,11 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     app = get_app(domain, app_id)
 
-    # TODO: probably extract
-    headers = (('translations', (
-        'menu or form',
-        '',         # case property name (module)
-        '',         # detail type (module) or question label (form)
-        lang,       # localized text
-        'image',
-        'audio',
-        'video',
-    )),)
-
-    # TODO: extract
-    rows = []
-    for module_index, module in enumerate(app.modules):
-        prefix = [get_module_sheet_name(module)]
-
-        # Name / menu media row
-        rows.append(prefix + ['', ''] + get_menu_row([module.name.get(lang)],
-                                                     [module.icon_by_language(lang)],
-                                                     [module.audio_by_language(lang)]))
-
-        # Detail case properties, etc.
-        for row in get_module_rows([lang], module):
-            rows.append(prefix + list(row))
-
-        for form_index, form in enumerate(module.forms):
-            prefix = [get_form_sheet_name(form), '']
-
-            # Name / menu media row
-            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
-                                                     [form.icon_by_language(lang)],
-                                                     [form.audio_by_language(lang)]))
-
-            # Questions
-            for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row)
+    headers = get_bulk_multimedia_sheet_headers(lang)
+    rows = get_bulk_multimedia_sheet_rows(lang, app)
 
     temp = io.BytesIO()
-    export_raw(headers, [('translations', rows)], temp)
+    export_raw(headers, [(headers[0][0], rows)], temp)
     filename = '{app_name} v.{app_version} - Multimedia Translations {lang}'.format(
         app_name=app.name,
         app_version=app.version,
