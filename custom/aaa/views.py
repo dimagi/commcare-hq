@@ -169,7 +169,7 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-             data = [
+            data = [
                 dict(name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),

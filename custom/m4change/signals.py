@@ -103,11 +103,11 @@ def _filter_forms(xform, cases):
 
 
 def handle_m4change_forms(sender, xform, cases, **kwargs):
-     if hasattr(xform, "domain") and xform.domain in M4CHANGE_DOMAINS and hasattr(xform, "xmlns"):
-         if xform.xmlns in ALL_M4CHANGE_FORMS:
+    if hasattr(xform, "domain") and xform.domain in M4CHANGE_DOMAINS and hasattr(xform, "xmlns"):
+        if xform.xmlns in ALL_M4CHANGE_FORMS:
             _handle_duplicate_form(xform, cases)
-         if xform.xmlns in BOOKING_FORMS + BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS +\
-                 IMMUNIZATION_FORMS + FOLLOW_UP_FORMS:
+        if xform.xmlns in BOOKING_FORMS + BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS +\
+            IMMUNIZATION_FORMS + FOLLOW_UP_FORMS:
             _filter_forms(xform, cases)
 
 

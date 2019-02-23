@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.users.models import  CouchUser
+from corehq.apps.users.models import CouchUser
 from dimagi.utils.logging import notify_exception
 from pact.utils import get_case_id
 from couchforms.signals import successful_form_received

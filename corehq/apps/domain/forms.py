@@ -31,7 +31,7 @@ from django.db import transaction
 from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
                                  ImageField, IntegerField, Field)
-from django.forms.widgets import  Select
+from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
