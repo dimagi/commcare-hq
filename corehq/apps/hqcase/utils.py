@@ -162,7 +162,7 @@ def get_case_by_identifier(domain, identifier):
 
 def _process_case_block(domain, case_block, attachments, old_case_id):
     def get_namespace(element):
-        m = re.match('\{.*\}', element.tag)
+        m = re.match(r'\{.*\}', element.tag)
         return m.group(0)[1:-1] if m else ''
 
     def local_attachment(attachment, old_case_id, tag):

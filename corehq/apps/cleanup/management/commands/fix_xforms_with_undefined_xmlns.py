@@ -136,7 +136,7 @@ def _log(stream, level, event, xform=None, xform_id=None):
 
 
 def parse_log_message(line):
-    match = re.match('^\[(.*)\] ([^,]*), (.*)', line)
+    match = re.match(r'^\[(.*)\] ([^,]*), (.*)', line)
     level, event, extras = match.groups()
     extras_dict = {}
     for pair in extras.split(", "):
