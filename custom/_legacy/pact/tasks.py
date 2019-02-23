@@ -76,7 +76,7 @@ def eval_dots_block(xform_json, callback=None):
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="12", minute="0", day_of_week="*"))
+@periodic_task(run_every=crontab(hour="12", minute="0", day_of_week="*"))
 def update_schedule_case_properties():
     """
     Iterate through all pact patient cases in the domain and set schedule case properties if necessary.

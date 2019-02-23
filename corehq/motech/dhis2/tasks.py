@@ -53,7 +53,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             requests.post(endpoint, json=dataset)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=3, hour=3),
     queue='background_queue'
 )
