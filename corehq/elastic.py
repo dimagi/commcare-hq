@@ -475,7 +475,7 @@ def parse_args_for_es(request, prefix=None):
         return str[:-2] if str.endswith('[]') else str
 
     params, facets = {}, []
-    for attr in request.GET.iterlists():
+    for attr in six.iterlists(request.GET):
         param, vals = attr[0], attr[1]
         if param == 'facets':
             facets = vals[0].split()

@@ -1226,7 +1226,7 @@ class GetParamsMixin(object):
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in self.request.GET.iterlists():
+        for k, v in self.request.GET.items():
             ret.append(dict(name=k, value=v))
         return ret
 
