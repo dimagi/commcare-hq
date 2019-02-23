@@ -53,4 +53,5 @@ branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
   - vellum-staging      # Farid 20 Feb
   - fr/question-links   # Farid 20 Feb
+  - fix-_make_report_class  # Nick Feb 23
 submodules: {}
