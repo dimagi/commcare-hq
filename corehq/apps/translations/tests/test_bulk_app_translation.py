@@ -30,8 +30,8 @@ from corehq.apps.translations.app_translations import (
     get_modules_and_forms_row,
     get_unicode_dicts,
     process_bulk_app_translation_upload,
+    _remove_description_from_case_property,
     update_form_translations,
-    _remove_description_from_case_property
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
