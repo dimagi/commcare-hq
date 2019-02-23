@@ -23,7 +23,8 @@ from corehq.apps.app_manager.ui_translations import process_ui_translation_uploa
     build_ui_translation_download_file
 from corehq.apps.translations.app_translations import (
     get_menu_row,
-    bulk_app_sheet_question_rows,
+    get_module_rows,
+    get_form_question_rows,
     get_bulk_app_sheet_headers,
     get_bulk_app_sheet_rows,
     get_app_translation_workbook,
@@ -111,34 +112,44 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     app = get_app(domain, app_id)
 
     # TODO: probably extract
-    headers = (('multimedia', (
-        'menu or form',# jls
-        'question label',
-        'default',
-        'audio',
+    headers = (('translations', (
+        'menu or form',
+        '',         # case property name (module)
+        '',         # detail type (module) or question label (form)
+        lang,       # localized text
         'image',
+        'audio',
         'video',
     )),)
 
     # TODO: extract
     rows = []
     for module_index, module in enumerate(app.modules):
-        prefix = [get_module_sheet_name(module), '']    # blank label column
-        rows.append(prefix + get_menu_row([module.name.get(lang)],
-                                          [module.icon_by_language(lang)],
-                                          [module.audio_by_language(lang)]))
+        prefix = [get_module_sheet_name(module)]
+
+        # Name / menu media row
+        rows.append(prefix + ['', ''] + get_menu_row([module.name.get(lang)],
+                                                     [module.icon_by_language(lang)],
+                                                     [module.audio_by_language(lang)]))
+
+        # Detail case properties, etc.
+        for row in get_module_rows([lang], module):
+            rows.append(prefix + list(row))
+
         for form_index, form in enumerate(module.forms):
-            prefix = [get_form_sheet_name(form)]
-            # Name / menu media row, with a blank for the label column
+            prefix = [get_form_sheet_name(form), '']
+
+            # Name / menu media row
             rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
                                                      [form.icon_by_language(lang)],
                                                      [form.audio_by_language(lang)]))
+
             # Questions
-            for row in bulk_app_sheet_question_rows(form, lang):
+            for row in get_form_question_rows([lang], form):
                 rows.append(prefix + row)
 
     temp = io.BytesIO()
-    export_raw(headers, [('multimedia', rows)], temp)
+    export_raw(headers, [('translations', rows)], temp)
     filename = '{app_name} v.{app_version} - Multimedia Translations {lang}'.format(
         app_name=app.name,
         app_version=app.version,

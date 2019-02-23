@@ -339,8 +339,7 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
 
         rows[sheet_name] = []
         if not isinstance(module, ReportModule):
-            rows[sheet_name] += _get_module_case_list_form_rows(app.langs, module)
-            rows[sheet_name] += _get_module_detail_rows(app.langs, module)
+            rows[sheet_name] += get_module_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
@@ -356,9 +355,13 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                     unique_id=form.unique_id
                 ))
 
-                rows[sheet_name] = bulk_app_sheet_question_rows(form)
+                rows[sheet_name] = get_form_question_rows(app.langs, form)
 
     return rows
+
+
+def get_module_rows(langs, module):
+    return _get_module_case_list_form_rows(langs, module) + _get_module_detail_rows(langs, module)
 
 
 def _get_module_case_list_form_rows(langs, module):
@@ -463,7 +466,7 @@ def _get_module_detail_graph_rows(langs, detail, list_or_detail):
     return rows
 
 
-def bulk_app_sheet_question_rows(form, lang=None):
+def get_form_question_rows(langs, form):
     if form.form_type == 'shadow_form':
         return None
 
@@ -471,10 +474,12 @@ def bulk_app_sheet_question_rows(form, lang=None):
 
     xform = form.wrapped_xform()
     itext_items = OrderedDict()
+    nodes = []
     try:
-        nodes = xform.itext_node.findall("./{f}translation" + ("[@lang='{}']".format(lang) if lang else ""))
+        for lang in langs:
+            nodes += xform.itext_node.findall("./{f}translation[@lang='%s']" % lang)
     except XFormException:
-        nodes = []
+        pass
 
     for translation_node in nodes:
         lang = translation_node.attrib['lang']
@@ -493,7 +498,6 @@ def bulk_app_sheet_question_rows(form, lang=None):
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()
-    langs = [lang] if lang else app.langs
     for text_id, values in six.iteritems(itext_items):
         row = [text_id]
         for value_form in ["default", "image", "audio", "video"]:
