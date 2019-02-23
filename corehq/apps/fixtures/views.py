@@ -384,7 +384,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=six.text_type(e))
         return HttpResponseServerError()
 
     return render(request, template, context)
