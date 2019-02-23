@@ -935,7 +935,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        notify_exception(None, e.message)
+        notify_exception(None, six.text_type(e))
         errors = [six.text_type(e)]
 
     return _files(files), errors, len(files)

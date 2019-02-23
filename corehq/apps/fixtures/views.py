@@ -426,7 +426,7 @@ def _upload_fixture_api(request, domain):
     try:
         excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
-        return UploadFixtureAPIResponse('fail', e.message)
+        return UploadFixtureAPIResponse('fail', six.text_type(e))
 
     with excel_file as filename:
         try:

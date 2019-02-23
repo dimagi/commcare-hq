@@ -932,11 +932,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 return HttpResponseBadRequest("Unrecognized format")
         except JSONReaderError as e:
             messages.error(request,
-                           'Your upload was unsuccessful. %s' % e.message)
+                           'Your upload was unsuccessful. %s' % six.text_type(e))
             return self.get(request, *args, **kwargs)
         except HeaderValueError as e:
             return HttpResponseBadRequest("Upload encountered a data type error: %s"
-                                          % e.message)
+                                          % six.text_type(e))
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')

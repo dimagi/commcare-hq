@@ -111,7 +111,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
-        messages.error(request, e.message)
+        messages.error(request, six.text_type(e))
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)

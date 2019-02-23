@@ -3350,7 +3350,7 @@ class CreditLine(models.Model):
                     'feature': (" | Feature %s" % feature_type
                                 if feature_type is not None else ""),
                     'product': (" | Product" if is_product else ""),
-                    'error': e.message,
+                    'error': six.text_type(e),
                 }
             )
         except cls.DoesNotExist:

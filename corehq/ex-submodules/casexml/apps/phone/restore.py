@@ -548,7 +548,7 @@ class RestoreConfig(object):
                               (type(e).__name__, self.restore_user.username, str(e)))
             is_async = False
             response = get_simple_response_xml(
-                e.message,
+                six.text_type(e),
                 ResponseNature.OTA_RESTORE_ERROR
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
