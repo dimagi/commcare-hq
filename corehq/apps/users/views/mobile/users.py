@@ -954,7 +954,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         # convert to list here because iterator destroys the row once it has
@@ -975,13 +975,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)

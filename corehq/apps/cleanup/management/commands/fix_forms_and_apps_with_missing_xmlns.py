@@ -105,8 +105,8 @@ class Command(BaseCommand):
                 try:
                     unique_id = get_form_unique_id(xform_instance)
                 except (MultipleFormsMissingXmlns, FormNameMismatch) as e:
-                    log_file.write(e.message)
-                    print(e.message)
+                    log_file.write(six.text_type(e))
+                    print(six.text_type(e))
                     continue
 
                 if unique_id:

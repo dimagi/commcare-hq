@@ -419,7 +419,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(e.message)
+            self.errors.append(six.text_type(e))
         response.update({
             'errors': self.errors,
         })
