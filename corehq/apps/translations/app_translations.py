@@ -216,8 +216,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
 
 
-def _get_modules_and_forms_row(row_type, sheet_name, languages,
-                                media_image, media_audio, unique_id):
+def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
     {sheet_name} sheet into a single row (a flat tuple).
@@ -321,7 +320,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
     # Add headers for the first sheet
     headers.append([
         MODULES_AND_FORMS_SHEET_NAME,
-        _get_modules_and_forms_row(
+        get_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
             languages=languages_list,
@@ -369,7 +368,7 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
             continue
 
         sheet_name = get_module_sheet_name(module)
-        rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
+        rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
             row_type="Module",
             sheet_name=sheet_name,
             languages=[module.name.get(lang) for lang in app.langs],
@@ -387,7 +386,7 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                     continue
 
                 sheet_name = get_form_sheet_name(form)
-                rows[MODULES_AND_FORMS_SHEET_NAME].append(_get_modules_and_forms_row(
+                rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
                     row_type="Form",
                     sheet_name=sheet_name,
                     languages=[form.name.get(lang) for lang in app.langs],
@@ -402,10 +401,10 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
 
 
 def get_module_rows(langs, module):
-    return _get_module_case_list_form_rows(langs, module) + _get_module_detail_rows(langs, module)
+    return get_module_case_list_form_rows(langs, module) + get_module_detail_rows(langs, module)
 
 
-def _get_module_case_list_form_rows(langs, module):
+def get_module_case_list_form_rows(langs, module):
     if not module.case_list_form.form_id:
         return []
 
@@ -415,18 +414,18 @@ def _get_module_case_list_form_rows(langs, module):
     ]
 
 
-def _get_module_detail_rows(langs, module):
+def get_module_detail_rows(langs, module):
     rows = []
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
     ]:
-        rows += _get_module_detail_tabs_rows(langs, detail, list_or_detail)
-        rows += _get_module_detail_fields_rows(langs, detail, list_or_detail)
+        rows += get_module_detail_tabs_rows(langs, detail, list_or_detail)
+        rows += get_module_detail_fields_rows(langs, detail, list_or_detail)
     return rows
 
 
-def _get_module_detail_tabs_rows(langs, detail, list_or_detail):
+def get_module_detail_tabs_rows(langs, detail, list_or_detail):
     return [
         ("Tab {}".format(index), list_or_detail) +
         tuple(tab.header.get(lang, "") for lang in langs)
@@ -434,16 +433,16 @@ def _get_module_detail_tabs_rows(langs, detail, list_or_detail):
     ]
 
 
-def _get_module_detail_fields_rows(langs, detail, list_or_detail):
+def get_module_detail_fields_rows(langs, detail, list_or_detail):
     rows = []
     for detail in detail.get_columns():
-        rows.append(_get_module_detail_field_row(langs, detail, list_or_detail))
-        rows += _get_module_detail_enum_rows(langs, detail, list_or_detail)
-        rows += _get_module_detail_graph_rows(langs, detail, list_or_detail)
+        rows.append(get_module_detail_field_row(langs, detail, list_or_detail))
+        rows += get_module_detail_enum_rows(langs, detail, list_or_detail)
+        rows += get_module_detail_graph_rows(langs, detail, list_or_detail)
     return rows
 
 
-def _get_module_detail_field_row(langs, detail, list_or_detail):
+def get_module_detail_field_row(langs, detail, list_or_detail):
     field_name = detail.field
     if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
         field_name += " (ID Mapping Text)"
@@ -456,7 +455,7 @@ def _get_module_detail_field_row(langs, detail, list_or_detail):
     )
 
 
-def _get_module_detail_enum_rows(langs, detail, list_or_detail):
+def get_module_detail_enum_rows(langs, detail, list_or_detail):
     if not re.search(r'\benum\b', detail.format):
         return []
 
@@ -474,7 +473,7 @@ def _get_module_detail_enum_rows(langs, detail, list_or_detail):
     return rows
 
 
-def _get_module_detail_graph_rows(langs, detail, list_or_detail):
+def get_module_detail_graph_rows(langs, detail, list_or_detail):
     if detail.format != "graph":
         return []
 
