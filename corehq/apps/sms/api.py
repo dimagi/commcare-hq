@@ -3,16 +3,24 @@ from __future__ import unicode_literals
 import logging
 import random
 import string
+from datetime import datetime
+
+import six
+from six.moves import range
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.smsbillables.utils import log_smsbillables_error
-from corehq.apps.users.models import CommCareUser, WebUser
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.modules import to_function
 from dimagi.utils.logging import notify_exception
+
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
     get_sms_backend_classes)
 from corehq.apps.sms.models import (OUTGOING, INCOMING,
@@ -22,15 +30,10 @@ from corehq.apps.sms.messages import (get_message, MSG_OPTED_IN,
     MSG_OPTED_OUT, MSG_DUPLICATE_USERNAME, MSG_USERNAME_TOO_LONG,
     MSG_REGISTRATION_WELCOME_CASE, MSG_REGISTRATION_WELCOME_MOBILE_WORKER)
 from corehq.apps.sms.mixin import BadSMSConfigException
-from corehq.apps.sms.util import is_contact_active
-from corehq.apps.domain.models import Domain
+from corehq.apps.sms.util import is_contact_active, register_sms_contact, strip_plus
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
-from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.apps.sms.util import register_sms_contact, strip_plus
-from corehq import toggles
-import six
-from six.moves import range
+from corehq.util.datadog.utils import sms_load_counter
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -252,6 +255,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """
+    sms_load_counter("outbound", msg.domain)()
     try:
         msg.text = clean_text(msg.text)
     except Exception:
@@ -590,6 +594,7 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
+    sms_load_counter("inbound", msg.domain)()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:

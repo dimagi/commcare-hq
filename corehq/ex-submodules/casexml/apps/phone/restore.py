@@ -29,7 +29,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
-from corehq.util.datadog.utils import bucket_value
+from corehq.util.datadog.utils import bucket_value, maybe_add_domain_tag
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
@@ -741,9 +741,7 @@ class RestoreConfig(object):
             'status_code:{}'.format(status),
             'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
-        env = settings.SERVER_ENVIRONMENT
-        if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append('domain:{}'.format(self.domain))
+        maybe_add_domain_tag(self.domain, tags)
         timer_buckets = (5, 20, 60, 120)
         for timer in timing.to_list(exclude_root=True):
             if timer.name in RESTORE_SEGMENTS:
