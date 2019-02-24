@@ -118,6 +118,17 @@ class AppTranslationsBulkUploadForm(BulkUploadForm):
         return crispy_form_fields
 
 
+class MultimediaTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
+
+    def crispy_form_fields(self, context):
+        crispy_form_fields = super(MultimediaTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        crispy_form_fields.extend([
+            InlineField('language', data_bind="value: lang")
+        ])
+        return crispy_form_fields
+
+
 class FormListForm(object):
     """
     A higher-level form for editing an arbitrary number of instances of one
