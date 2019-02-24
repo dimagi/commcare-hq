@@ -67,7 +67,6 @@ INNER JOIN (
         SUM(CASE WHEN agg_ccs_record.ccs_status in ('lactating', 'pregnant') THEN agg_ccs_record.rations_21_plus_distributed ELSE 0 END) as mother_thr,
         SUM(valid_in_month) as mother_thr_eligible
         from agg_ccs_record
-        where month='2018-05-01'
         group by state_id,district_id,block_id,supervisor_id,awc_id,aggregation_level, month
 
         ) ccr on (

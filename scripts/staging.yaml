@@ -53,5 +53,7 @@ branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
   - vellum-staging      # Farid 20 Feb
   - fr/question-links   # Farid 20 Feb
-  - remove-pickle-serializer  # Nick P Feb 22
+  - fix-_make_report_class  # Nick Feb 23
+  - iterlists  # Nick Feb 23
+  - jls/download-mm-translations  # Jenny Feb 23
 submodules: {}
