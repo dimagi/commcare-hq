@@ -148,7 +148,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
             loader = getattr(self, '_get_data_%s' % adapter)
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
-        config = dict(self.request.GET.iterlists())
+        config = dict(six.iterlists(self.request.GET))
         for k, v in six.iteritems(config):
             if len(v) == 1:
                 config[k] = v[0]
