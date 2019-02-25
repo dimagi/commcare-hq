@@ -466,6 +466,7 @@ class Child(LocationDenormalizedModel):
     person_case_id = models.TextField(unique=True)
     child_health_case_id = models.TextField(primary_key=True)
     mother_case_id = models.TextField(null=True)
+    tasks_case_id = models.TextField(null=True)
 
     # For now, these should be the same between child_health and person case
     # but going with child_health as there's a potential for person case to live
@@ -473,9 +474,32 @@ class Child(LocationDenormalizedModel):
     opened_on = models.DateField(help_text="child_health.opened_on")
     closed_on = models.DateField(help_text="child_health.closed_on", null=True)
 
+    # child_health properties
+    birth_weight = models.PositiveIntegerField(null=True, help_text="birth weight in grams")
+    breastfed_within_first = models.TextField(null=True)
+    is_exclusive_breastfeeding = models.TextField(null=True)
+    comp_feeding = models.TextField(null=True)
+    diet_diversity = models.TextField(null=True)
+    diet_quantity = models.TextField(null=True)
+    hand_wash = models.TextField(null=True)
+
+    # person case properties
+    name = models.TextField(null=True)
     dob = models.DateField(null=True)
     sex = models.TextField(null=True)
     migration_status = models.TextField(null=True)
+    has_aadhar_number = models.NullBooleanField()
+    contact_phone_number = models.TextField(null=True)
+
+    # household properties
+    hh_address = models.TextField(null=True)
+    hh_religion = models.TextField(null=True)
+    hh_caste = models.TextField(null=True)
+    hh_bpl_apl = models.TextField(null=True)
+
+    # delivery form
+    child_cried = models.TextField(null=True)
+    ccs_record_case_id = models.TextField(null=True)
 
     @classmethod
     def agg_from_child_health_case_ucr(cls, domain, window_start, window_end):
@@ -485,20 +509,27 @@ class Child(LocationDenormalizedModel):
 
         return """
         INSERT INTO "{child_tablename}" AS child (
-            domain, person_case_id, child_health_case_id, mother_case_id, opened_on, closed_on
+            domain, person_case_id, child_health_case_id, mother_case_id, opened_on, closed_on,
+            birth_weight, breastfed_within_first, is_exclusive_breastfeeding, comp_feeding,
+            diet_diversity, diet_quantity, hand_wash
         ) (
             SELECT
                 %(domain)s AS domain,
-                child_health.person_case_id,
-                child_health.doc_id,
-                child_health.mother_case_id,
-                child_health.opened_on,
-                child_health.closed_on
+                person_case_id, doc_id, mother_case_id, opened_on, closed_on,
+                birth_weight, breastfed_within_first, is_exclusive_breastfeeding, comp_feeding,
+                diet_diversity, diet_quantity, hand_wash
             FROM "{child_health_cases_ucr_tablename}" child_health
         )
-        ON CONFLICT (person_case_id) DO UPDATE SET
+        ON CONFLICT (child_health_case_id) DO UPDATE SET
            mother_case_id = EXCLUDED.mother_case_id,
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           birth_weight = EXCLUDED.birth_weight,
+           breastfed_within_first = EXCLUDED.breastfed_within_first,
+           is_exclusive_breastfeeding = EXCLUDED.is_exclusive_breastfeeding,
+           comp_feeding = EXCLUDED.comp_feeding,
+           diet_diversity = EXCLUDED.diet_diversity,
+           diet_quantity = EXCLUDED.diet_quantity,
+           hand_wash = EXCLUDED.hand_wash
         """.format(
             child_tablename=cls._meta.db_table,
             child_health_cases_ucr_tablename=ucr_tablename,
@@ -515,14 +546,18 @@ class Child(LocationDenormalizedModel):
             household_case_id = person.household_case_id,
             dob = person.dob,
             sex = person.sex,
-            migration_status = person.migration_status
+            migration_status = person.migration_status,
+            has_aadhar_number = person.has_aadhar_number,
+            contact_phone_number = person.contact_phone_number
         FROM (
             SELECT
                 household_case_id,
                 doc_id,
                 dob,
                 sex,
-                migration_status
+                migration_status,
+                aadhar_number IS NOT NULL and aadhar_number != '' AS has_aadhar_number,
+                contact_phone_number
             FROM "{person_cases_ucr_tablename}"
         ) person
         WHERE child.person_case_id = person.doc_id
@@ -540,12 +575,20 @@ class Child(LocationDenormalizedModel):
         return """
         UPDATE "{child_tablename}" AS child SET
             awc_id = household.awc_owner_id,
-            village_id = household.village_owner_id
+            village_id = household.village_owner_id,
+            hh_address = household.hh_address,
+            hh_religion = household.hh_religion,
+            hh_caste = household.hh_caste,
+            hh_bpl_apl = household.hh_bpl_apl
         FROM (
             SELECT
                 doc_id,
                 awc_owner_id,
-                village_owner_id
+                village_owner_id,
+                hh_address,
+                hh_religion,
+                hh_caste,
+                hh_bpl_apl
             FROM "{household_cases_ucr_tablename}"
         ) household
         WHERE child.household_case_id = household.doc_id
@@ -554,14 +597,115 @@ class Child(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_tasks_case_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_tasks_cases')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            tasks_case_id = tasks.doc_id
+        FROM (
+            SELECT doc_id, child_health_case_id
+            FROM "{tasks_cases_ucr_tablename}"
+        ) tasks
+        WHERE child.child_health_case_id = tasks.child_health_case_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            tasks_cases_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classmethod
+    def agg_from_delivery_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-delivery_forms')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{child_tablename}" AS child SET
+            ccs_record_case_id = delivery_forms.ccs_record_case_id,
+            child_cried = delivery_forms.child_cried
+        FROM (
+            SELECT child_health_case_id,
+                   LAST_VALUE(ccs_record_case_id) OVER w AS ccs_record_case_id,
+                   LAST_VALUE(child_cried) OVER w as child_cried
+            FROM "{delivery_form_ucr_tablename}"
+            WINDOW w AS (PARTITION BY child_health_case_id ORDER BY timeend DESC)
+        ) AS delivery_forms
+        WHERE child.child_health_case_id = delivery_forms.child_health_case_id
+        """.format(
+            child_tablename=cls._meta.db_table,
+            delivery_form_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
     @classproperty
     def aggregation_queries(self):
         return [
             self.agg_from_child_health_case_ucr,
             self.agg_from_person_case_ucr,
             self.agg_from_household_case_ucr,
+            self.agg_from_tasks_case_ucr,
             self.agg_from_village_ucr,
             self.agg_from_awc_ucr,
+            self.agg_from_delivery_forms_ucr,
+        ]
+
+
+class ChildHistory(models.Model):
+    """The history of form properties for any child registered."""
+
+    child_health_case_id = models.TextField(primary_key=True)
+
+    weight_child_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
+    height_child_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
+    zscore_grading_wfa_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
+    zscore_grading_hfa_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
+    zscore_grading_wfh_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
+
+    @classmethod
+    def agg_from_growth_monitoring_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-growth_monitoring_forms')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        INSERT INTO "{child_history_tablename}" AS child (
+            child_health_case_id, weight_child_history, height_child_history, zscore_grading_wfa_history,
+            zscore_grading_hfa_history, zscore_grading_wfh_history
+        ) (
+            SELECT child_health_case_id,
+                   array_agg(weight_child) AS weight_child_history,
+                   array_agg(height_child) AS height_child_history,
+                   array_agg(zscore_grading_wfh) AS zscore_grading_wfh_history,
+                   array_agg(zscore_grading_hfa) AS zscore_grading_hfa_history,
+                   array_agg(zscore_grading_wfa) AS zscore_grading_wfa_history
+            FROM (
+                SELECT child_health_case_id,
+                       ARRAY[timeend::text, weight_child] AS weight_child,
+                       ARRAY[timeend::text, height_child] AS height_child,
+                       ARRAY[timeend::text, zscore_grading_wfh] AS zscore_grading_wfh,
+                       ARRAY[timeend::text, zscore_grading_hfa] AS zscore_grading_hfa,
+                       ARRAY[timeend::text, zscore_grading_wfa] AS zscore_grading_wfa
+                FROM "{growth_monitoring_ucr_tablename}"
+            ) growth_monitoring
+            GROUP BY person_case_id
+        )
+        ON CONFLICT (child_health_case_id) DO UPDATE SET
+           weight_child_history = EXCLUDED.weight_child_history,
+           height_child_history = EXCLUDED.height_child_history,
+           zscore_grading_wfh_history = EXCLUDED.zscore_grading_wfh_history,
+           zscore_grading_hfa_history = EXCLUDED.zscore_grading_hfa_history,
+           zscore_grading_wfa_history = EXCLUDED.zscore_grading_wfa_history
+        """.format(
+            child_history_tablename=cls._meta.db_table,
+            growth_monitoring_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    @classproperty
+    def aggregation_queries(cls):
+        return [
+            cls.agg_from_growth_monitoring_forms_ucr,
         ]
 
 
