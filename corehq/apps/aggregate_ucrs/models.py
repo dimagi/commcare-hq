@@ -9,6 +9,7 @@ from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONT
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter, WeekColumnAdapter
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings, AbstractUCRDataSource
+from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
@@ -116,9 +117,7 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         columns = []
         for col in self.get_columns():
             if col.is_primary_key():
-                column_name = col.database_column_name
-                if isinstance(column_name, bytes):
-                    column_name = column_name.decode('utf-8')
+                column_name = decode_column_name(col)
                 columns.append(column_name)
         return columns
 
