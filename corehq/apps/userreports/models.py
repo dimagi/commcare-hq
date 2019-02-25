@@ -63,6 +63,7 @@ from corehq.apps.userreports.reports.factory import ChartFactory, \
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
@@ -479,9 +480,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             columns = []
             for col in self.get_columns():
                 if col.is_primary_key:
-                    column_name = col.database_column_name
-                    if isinstance(column_name, bytes):
-                        column_name = column_name.decode('utf-8')
+                    column_name = decode_column_name(col)
                     columns.append(column_name)
         else:
             columns = self.sql_settings.primary_key
