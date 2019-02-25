@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 
 from crispy_forms.layout import Submit
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.integration.models import SimprintsIntegration
