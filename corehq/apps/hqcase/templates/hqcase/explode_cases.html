@@ -28,12 +28,12 @@
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="explode-user_id">User</label>
-                                <input id="explode-user_id"
-                                       name="user_id"
-                                       class="input form-control report-filter-single-option-paginated"
-                                       data-bind="value: user_id"
-                                       style="width: 100%"
-                                       placeholder="Select a User"/>
+                                <select id="explode-user_id"
+                                        name="user_id"
+                                        class="input form-control report-filter-single-option-paginated"
+                                        data-bind="value: user_id"
+                                        style="width: 100%"
+                                        placeholder="Select a User"></select>
                             </div>
                             <div class="form-group" id="explode-factor-input" data-bind="css: {
                                         'has-error': factor() < 2 || factor() >= 150 ,
