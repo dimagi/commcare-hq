@@ -43,6 +43,7 @@ from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
 from io import open
 from pillowtop.models import KafkaCheckpoint
+from six.moves import zip
 
 
 OPERATORS = {
