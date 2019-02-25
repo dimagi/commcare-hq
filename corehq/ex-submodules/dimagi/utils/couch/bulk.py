@@ -4,13 +4,11 @@ import uuid
 from collections import defaultdict
 import json
 import logging
-import requests
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.requestskit import get_auth
 
 
 class BulkFetchException(Exception):
@@ -106,9 +104,9 @@ def get_docs(db, keys, **query_params):
     query_params['include_docs'] = True
 
     query_params = {k: json.dumps(v) for k, v in query_params.items()}
-    r = requests.post(url, data=payload,
+    rsession = db._request_session
+    r = rsession.post(url, data=payload,
                       headers={'content-type': 'application/json'},
-                      auth=get_auth(url),
                       params=query_params)
 
     try:

@@ -1,132 +1,48 @@
-@palette-square-size: 106px;
-@palette-square-color-margin: 15px;
+.swatch {
+    padding: 10px;
 
-.palette-container {
-  position: relative;
-}
-
-.palette-row {
-  width: @palette-square-size * 8;
-  .clearfix();
-}
-
-.palette-base {
-  height: @palette-square-size;
-  > p {
-    text-align: center;
-    margin-top: 40px;
-  }
-}
-
-.palette-square {
-  width: @palette-square-size;
-  height: @palette-square-size;
-  float: left;
-  > p {
-    text-align: center;
-    &:first-child {
-      margin-top: 12px;
+    code {
+        white-space: nowrap;
     }
-  }
-}
 
-.palette-colors {
-  height: 0px;
-  position: absolute;
-}
+    .main {
+        width: 100%;
+        height: 105px;
+        padding: 5px;
+        text-align: right;
+        position: relative;
+        margin-bottom: 10px;
 
-.palette-light,
-.palette-dark {
-  .palette-square {
-    height: @palette-square-size + (@palette-square-color-margin * 2);
-  }
-}
+        &.inverse {
+            color: #ffffff;
+        }
 
-.palette-dark .palette-square p:first-child {
-  margin-top: @palette-square-size / 2;
-}
+        .name {
+            font-weight: bold;
+        }
 
-.palette-colors {
-  top: (@palette-square-size * 2) + (@palette-square-color-margin * 2) - ((@palette-square-size - @palette-square-color-margin * 2) / 2);
+        .description {
+            position: absolute;
+            bottom: 0;
+            right: 5px;
+        }
 
-  .palette-square {
-    width: @palette-square-size - (@palette-square-color-margin * 2);
-    height: @palette-square-size - (@palette-square-color-margin * 2);
-    margin: 0 @palette-square-color-margin;
-    > p {
-      line-height: 25px;
+        .shade {
+            margin-bottom: 5px;
+        }
     }
-  }
 }
 
-.palette-square-bg {
-  background-color: @cc-bg;
+.shade {
+    width: 25px;
+    height: 20px;
 }
 
-.palette-square-dark {
-  background-color: @cc-text;
-}
+.shades-modal .shade-list {
+    font-family: monospace;
 
-.palette-square-neutral-hi { background-color: @cc-neutral-hi; }
-.palette-square-neutral-mid { background-color: @cc-neutral-mid; }
-.palette-square-neutral-low { background-color: @cc-neutral-low; }
-
-.palette-text-neutral-hi { color: @cc-neutral-hi; }
-.palette-text-neutral-mid { color: @cc-neutral-mid; }
-.palette-text-neutral-low { color: @cc-neutral-low; }
-
-.palette-square-brand-hi { background-color: @cc-brand-hi; }
-.palette-square-brand-mid { background-color: @cc-brand-mid; }
-.palette-square-brand-low { background-color: @cc-brand-low; }
-
-.palette-text-brand-hi { color: @cc-brand-hi; }
-.palette-text-brand-mid { color: @cc-brand-mid; }
-.palette-text-brand-low { color: @cc-brand-low; }
-
-.palette-square-light-cool-accent-hi { background-color: @cc-light-cool-accent-hi; }
-.palette-square-light-cool-accent-mid { background-color: @cc-light-cool-accent-mid; }
-.palette-square-light-cool-accent-low { background-color: @cc-light-cool-accent-low; }
-
-.palette-text-light-cool-accent-hi { color: @cc-light-cool-accent-hi; }
-.palette-text-light-cool-accent-mid { color: @cc-light-cool-accent-mid; }
-.palette-text-light-cool-accent-low { color: @cc-light-cool-accent-low; }
-
-.palette-square-dark-cool-accent-hi { background-color: @cc-dark-cool-accent-hi; }
-.palette-square-dark-cool-accent-mid { background-color: @cc-dark-cool-accent-mid; }
-.palette-square-dark-cool-accent-low { background-color: @cc-dark-cool-accent-low; }
-
-.palette-text-dark-cool-accent-hi { color: @cc-dark-cool-accent-hi; }
-.palette-text-dark-cool-accent-mid { color: @cc-dark-cool-accent-mid; }
-.palette-text-dark-cool-accent-low { color: @cc-dark-cool-accent-low; }
-
-.palette-square-light-warm-accent-hi { background-color: @cc-light-warm-accent-hi; }
-.palette-square-light-warm-accent-mid { background-color: @cc-light-warm-accent-mid; }
-.palette-square-light-warm-accent-low { background-color: @cc-light-warm-accent-low; }
-
-.palette-text-light-warm-accent-hi { color: @cc-light-warm-accent-hi; }
-.palette-text-light-warm-accent-mid { color: @cc-light-warm-accent-mid; }
-.palette-text-light-warm-accent-low { color: @cc-light-warm-accent-low; }
-
-.palette-square-dark-warm-accent-hi { background-color: @cc-dark-warm-accent-hi; }
-.palette-square-dark-warm-accent-mid { background-color: @cc-dark-warm-accent-mid; }
-.palette-square-dark-warm-accent-low { background-color: @cc-dark-warm-accent-low; }
-
-.palette-text-dark-warm-accent-hi { color: @cc-dark-warm-accent-hi; }
-.palette-text-dark-warm-accent-mid { color: @cc-dark-warm-accent-mid; }
-.palette-text-dark-warm-accent-low { color: @cc-dark-warm-accent-low; }
-
-.palette-square-att-pos-hi { background-color: @cc-att-pos-hi; }
-.palette-square-att-pos-mid { background-color: @cc-att-pos-mid; }
-.palette-square-att-pos-low { background-color: @cc-att-pos-low; }
-
-.palette-text-att-pos-hi { color: @cc-att-pos-hi; }
-.palette-text-att-pos-mid { color: @cc-att-pos-mid; }
-.palette-text-att-pos-low { color: @cc-att-pos-low; }
-
-.palette-square-att-neg-hi { background-color: @cc-att-neg-hi; }
-.palette-square-att-neg-mid { background-color: @cc-att-neg-mid; }
-.palette-square-att-neg-low { background-color: @cc-att-neg-low; }
-
-.palette-text-att-neg-hi { color: @cc-att-neg-hi; }
-.palette-text-att-neg-mid { color: @cc-att-neg-mid; }
-.palette-text-att-neg-low { color: @cc-att-neg-low; }
+    .shade {
+        display: inline-block;
+        vertical-align: text-bottom;
+    }
+} 

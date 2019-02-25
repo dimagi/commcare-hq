@@ -169,7 +169,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         try:
             return self._adapter.get_table().c[self.report_filter.field]
         except KeyError as e:
-            raise ColumnNotFoundError(e.message)
+            raise ColumnNotFoundError(six.text_type(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
@@ -193,7 +193,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
         try:
             return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
         except KeyError as e:
-            raise ColumnNotFoundError(e.message)
+            raise ColumnNotFoundError(six.text_type(e))
 
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(*self._sql_columns)
@@ -347,7 +347,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
     @staticmethod
     def get_choices_from_es_query(group_es):
         return [Choice(group_id, name)
-                for group_id, name in group_es.values_list('_id', 'name')]
+                for group_id, name in group_es.values_list('_id', 'name', scroll=True)]
 
     def default_value(self, user):
         return None

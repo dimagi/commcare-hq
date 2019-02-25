@@ -1,15 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
+import json
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 
 
@@ -56,6 +59,31 @@ def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
+    if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
+        still_missing_media = _get_missing_multimedia(app)
+        if still_missing_media:
+            soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(
+                False, "[ICDS-291] Multimedia still missing", json.dumps({
+                    'domain': app.domain,
+                    'app_id': app.get_id,
+                    'fetched-attempted': missing_media,
+                    'still-missing': still_missing_media,
+                }, indent=4)
+            )
+            return False
+        else:
+            soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
+                False, "[ICDS-291] Multimedia pull successful", json.dumps([{
+                    'domain': app.domain,
+                    'app_id': app.get_id,
+                    'version': app.version,
+                    'length of multimedia_map': len(app.multimedia_map),
+                    'number of missing files pulled': len(missing_media),
+                }, {
+                    'missing': missing_media,
+                }], indent=4)
+            )
+    return True
 
 
 def _get_missing_multimedia(app):
@@ -67,11 +95,11 @@ def _get_missing_multimedia(app):
             filename = path.split('/')[-1]
             missing.append((filename, media_info))
         else:
-            _check_domain_access(app.domain, local_media)
+            _add_domain_access(app.domain, local_media)
     return missing
 
 
-def _check_domain_access(domain, media):
+def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
 
@@ -128,7 +156,7 @@ def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params
             'params': params,
             'headers': headers
         })
-        raise RemoteRequestError(response.status_code)
+        raise RemoteRequestError()
     if response.status_code == 401:
         raise RemoteAuthError(response.status_code)
     elif response.status_code == 403:

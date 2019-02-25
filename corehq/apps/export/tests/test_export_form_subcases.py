@@ -48,7 +48,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
     def setUpClass(cls):
         super(TestFormExportSubcases, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json(cls.app_json_file))
-        cls.app.get_forms_by_xmlns(cls.form_xmlns)[0].source = cls.get_xml(cls.form_xml_file)
+        cls.app.get_forms_by_xmlns(cls.form_xmlns)[0].source = cls.get_xml(cls.form_xml_file).decode('utf-8')
         with drop_connected_signals(app_post_save):
             cls.app.save()
 

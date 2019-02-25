@@ -96,7 +96,7 @@ class AuthTestMixin(object):
             return url
 
         url = _make_url()
-        with open(file_path, "rb") as f:
+        with open(file_path, "r", encoding='utf-8') as f:
             fileobj = FakeFile(
                 f.read().format(
                     userID=self.user.user_id,

@@ -18,7 +18,7 @@ from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirec
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
-from corehq.apps.registration.utils import PRICING_LINK
+from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
@@ -53,8 +53,6 @@ domain_specific = [
     url(r'^phone/', include('corehq.apps.mobile_auth.urls')),
     url(r'^sms/', include('corehq.apps.sms.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
-    url(r'^indicators/mvp/', include('mvp.urls')),
-    url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
@@ -73,6 +71,7 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^', include('custom.icds_reports.urls')),
+    url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
     url(r'^dhis2/', include('corehq.motech.dhis2.urls')),

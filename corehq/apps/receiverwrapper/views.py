@@ -117,6 +117,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             return _submission_error(
                 request, "XFormLockError: %s" % err, XFORM_LOCKED_COUNT,
                 metric_tags, domain, app_id, user_id, authenticated, status=423,
+                notify=False,
             )
 
     response = result.response
@@ -133,7 +134,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
 
 def _submission_error(request, message, count_metric, metric_tags,
-        domain, app_id, user_id, authenticated, meta=None, status=400):
+        domain, app_id, user_id, authenticated, meta=None, status=400,
+        notify=True):
     """Notify exception, datadog count, record metrics, construct response
 
     :param status: HTTP status code (default: 400).
@@ -147,7 +149,8 @@ def _submission_error(request, message, count_metric, metric_tags,
         "form_meta:{}".format(meta or {}),
     ]
     datadog_counter(count_metric, tags=details)
-    notify_exception(request, message, details)
+    if notify:
+        notify_exception(request, message, details)
     response = HttpResponseBadRequest(
         message, status=status, content_type="text/plain")
     _record_metrics(metric_tags, 'unknown', response)

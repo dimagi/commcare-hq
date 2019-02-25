@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -67,6 +75,21 @@
         "column_id": "awc_id"
       },
       {
+        "display_name": "",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "column_id": "supervisor_id"
+      },
+      {
         "display_name": null,
         "datatype": "string",
         "expression": {
@@ -87,13 +110,33 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
+      },
+      {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_propery": "_id",
+          "type": "ancestor_location"
+        }
       },
       {
         "display_name": "Submission Date",
@@ -177,6 +220,20 @@
         "is_nullable": true,
         "column_id": "awc_location",
         "type": "expression"
+      },
+      {
+        "display_name": "Location Entered",
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "datatype": "string",
+          "type": "property_path",
+          "property_path": ["form", "location_form_filled"]
+        },
+        "column_id": "location_entered"
       },
       {
         "display_name": null,

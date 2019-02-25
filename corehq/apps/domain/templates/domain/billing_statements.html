@@ -20,7 +20,7 @@
         {% if not is_ops_user_but_not_admin %}
         <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
-                    class="btn btn-success"
+                    class="btn btn-primary"
                     data-toggle="modal"
                     data-target="#bulkPaymentModal"
                     id="bulkPaymentBtn">
@@ -29,7 +29,7 @@
         </p>
         <p data-bind="visible: hasInitialLoadFinished() && totalDue()">
             <button type="button"
-                    class="btn btn-success"
+                    class="btn btn-primary"
                     data-toggle="modal"
                     data-target="#bulkWirePaymentModal"
                     id="bulkWirePaymentBtn">
@@ -75,7 +75,7 @@
             <!-- ko if: canMakePayment -->
             {% if not is_ops_user_but_not_admin %}
             <button type="button"
-                    class="btn btn-success payment-button"
+                    class="btn btn-primary payment-button"
                     data-toggle="modal"
                     data-target="#paymentModal">
                 {% trans 'Make Payment' %}

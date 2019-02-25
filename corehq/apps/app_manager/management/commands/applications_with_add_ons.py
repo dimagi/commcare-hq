@@ -57,27 +57,27 @@ class Command(BaseCommand):
                                         'all_add_ons_enabled', 'status'
                                     ])
             writer.writeheader()
-            for domain in self._iter_domains(options):
-                application_ids = get_app_ids_in_domain(domain.name)
+            for domain_obj in self._iter_domains(options):
+                application_ids = get_app_ids_in_domain(domain_obj.name)
                 for application_id in application_ids:
                     application = Application.get(application_id)
                     if not application.is_remote_app():
-                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain.name)
+                        all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain_obj.name)
                         if add_on_name in application.add_ons or all_add_ons_enabled:
                             try:
                                 writer.writerow({
-                                    'domain': domain.name.encode('utf-8'),
+                                    'domain': domain_obj.name.encode('utf-8'),
                                     'application_id': application.get_id,
                                     'app_name': application.name.encode('utf-8'),
                                     'all_add_ons_enabled': all_add_ons_enabled,
                                     'status': application.add_ons.get(add_on_name)
                                 })
                                 if add_to_toggle:
-                                    add_to_toggle.set(domain.name, True, NAMESPACE_DOMAIN)
+                                    add_to_toggle.set(domain_obj.name, True, NAMESPACE_DOMAIN)
                             except UnicodeEncodeError:
                                 print('encode error')
                                 print({
-                                    'domain': domain.name,
+                                    'domain': domain_obj.name,
                                     'application_id': application.get_id,
                                     'app_name': application.name,
                                     'all_add_ons_enabled': all_add_ons_enabled,

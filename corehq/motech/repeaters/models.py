@@ -46,9 +46,8 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post, perform_SOAP_operation
+from dimagi.utils.post import simple_post
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
@@ -94,7 +93,7 @@ DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 
 
-class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
@@ -250,6 +249,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.paused = False
         self.save()
 
     def pause(self):
@@ -337,6 +337,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return self.__class__.__name__
 
 
+@six.python_2_unicode_compatible
 class FormRepeater(Repeater):
     """
     Record that forms should be repeated to a new url
@@ -388,10 +389,11 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding forms to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
@@ -436,7 +438,7 @@ class CaseRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding cases to: %s" % self.url
 
 
@@ -463,13 +465,7 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-class SOAPRepeaterMixin(Repeater):
-    operation = StringProperty()
-
-    def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
-
-
+@six.python_2_unicode_compatible
 class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
@@ -495,7 +491,7 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding short form to: %s" % self.url
 
 
@@ -508,6 +504,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+@six.python_2_unicode_compatible
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
@@ -517,10 +514,11 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding users to: %s" % self.url
 
 
+@six.python_2_unicode_compatible
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
@@ -530,7 +528,7 @@ class LocationRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
 
-    def __unicode__(self):
+    def __str__(self):
         return "forwarding locations to: %s" % self.url
 
 

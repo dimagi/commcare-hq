@@ -18,6 +18,7 @@ from celery import Celery
 import requests
 
 from corehq.util.timer import TimingContext
+from dimagi.utils.make_uuid import random_hex
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -90,18 +91,21 @@ def check_kafka():
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
     cluster_health = check_es_cluster_health()
-    if cluster_health != 'green':
+    if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check',
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
            'date': datetime.datetime.now().isoformat()}
-    send_to_elasticsearch('groups', doc)
-    refresh_elasticsearch_index('groups')
-    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-    send_to_elasticsearch('groups', doc, delete=True)  # clean up
-    if doc in hits:
-        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-    return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    try:
+        send_to_elasticsearch('groups', doc)
+        refresh_elasticsearch_index('groups')
+        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+        if doc in hits:
+            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
+        else:
+            return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    finally:
+        send_to_elasticsearch('groups', doc, delete=True)  # clean up
 
 
 def check_blobdb():
@@ -123,6 +127,16 @@ def check_blobdb():
 
 
 def check_celery():
+    celery_status = _check_celery()
+    celery_worker_status = _check_celery_workers()
+    if celery_status.success and celery_worker_status.success:
+        return celery_status
+    else:
+        message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
+        return ServiceStatus(False, message)
+
+
+def _check_celery():
     from celery import Celery
     from django.conf import settings
     celery = Celery()
@@ -131,11 +145,10 @@ def check_celery():
     if not worker_responses:
         return ServiceStatus(False, 'No running Celery workers were found.')
     else:
-        msg = 'Successfully pinged {} workers'.format(len(worker_responses))
-        return ServiceStatus(True, msg)
+        return ServiceStatus(True, 'Successfully pinged {} workers'.format(len(worker_responses)))
 
 
-def check_heartbeat():
+def _check_celery_workers():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
         all_workers = requests.get(
@@ -163,7 +176,10 @@ def check_heartbeat():
 
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
+    return ServiceStatus(True, "OK")
 
+
+def check_heartbeat():
     is_alive = heartbeat.is_alive()
     return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
 
@@ -255,7 +271,7 @@ CHECKS = {
         "check_func": check_couch,
     },
     'celery': {
-        "always_check": True,
+        "always_check": False,
         "check_func": check_celery,
     },
     'heartbeat': {

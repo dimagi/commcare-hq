@@ -49,7 +49,7 @@ def test_xlsx_types(self, open_workbook, ext):
                         ['Date', date(1988, 7, 7)],
                         ['Date Time', datetime(2016, 1, 1, 12, 0)],
                         ['Time', time(12, 0)],
-                        ['Midnight', time(0, 0)],
+                        ['Midnight', date(1899, 12, 30) if ext == 'xlsx' else time(0, 0)],
                         ['Int', 28],
                         ['Int.0', 5],
                         ['Float', 5.1],

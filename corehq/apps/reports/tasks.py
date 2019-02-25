@@ -55,7 +55,6 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .export import save_metadata_export_to_tempfile
 from .models import (
     ReportConfig,
     FormExportSchema,
@@ -94,6 +93,12 @@ def send_delayed_report(report_id):
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
+
+    # If the report's start date is later than today, return and do not send the email
+    if notification.start_date and notification.start_date > datetime.today().date():
+        daily_reports()
+        return
+
     try:
         notification.send()
     except UnsupportedScheduledReportError:
@@ -105,25 +110,7 @@ def send_report_throttled(notification_id):
     send_report(notification_id)
 
 
-@task(serializer='pickle')
-def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
-    tmp_path = save_metadata_export_to_tempfile(domain, format, datespan, user_ids)
-
-    class FakeCheckpoint(object):
-        # for some silly reason the export cache function wants an object that looks like this
-        # so just hack around it with this stub class rather than do a larger rewrite
-
-        def __init__(self, domain):
-            self.domain = domain
-
-        @property
-        def get_id(self):
-            return '%s-form-metadata' % self.domain
-
-    return cache_file_to_be_served(Temp(tmp_path), FakeCheckpoint(domain), download_id, format, filename)
-
-
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -132,7 +119,7 @@ def daily_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -141,7 +128,7 @@ def weekly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
@@ -155,7 +142,7 @@ def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
     all_stats = all_domain_stats()
@@ -200,7 +187,7 @@ def is_app_active(app_id, domain):
     return app_has_been_submitted_to_in_last_30_days(domain, app_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
+@periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
     es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
@@ -259,7 +246,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     else:
         config.date_range = 'since'
 
-    GET = dict(request_data['GET'].iterlists())
+    GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:
@@ -510,7 +497,7 @@ def _extract_form_attachment_info(form, properties):
 
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
-    # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
+    # XFormInstanceSQL attachment values are BlobMeta objects.
     for attachment_name, attachment in six.iteritems(form.attachments):
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
@@ -528,10 +515,10 @@ def _extract_form_attachment_info(form, properties):
         if not properties or question_id in properties:
             extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
-                # FormAttachmentSQL or BlobMeta
+                # BlobMeta
                 size = attachment.content_length
             elif 'content_length' in attachment:
-                # dict from BlobMeta.to_json() or possibly FormAttachmentSQL
+                # dict from BlobMeta.to_json()
                 size = attachment['content_length']
             else:
                 # couch attachment dict

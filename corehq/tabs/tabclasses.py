@@ -1,26 +1,29 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from six.moves.urllib.parse import urlencode
 
-from django.urls import reverse
 from django.conf import settings
 from django.http import Http404
+from django.urls import reverse
 from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django_prbac.utils import has_privilege
+from memoized import memoized
+from six.moves import map
+from six.moves.urllib.parse import urlencode
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_trial, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
-from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
@@ -34,6 +37,7 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
@@ -51,19 +55,15 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
+from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
-from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
+from corehq.motech.views import MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from memoized import memoized
-from django_prbac.utils import has_privilege
-from six.moves import map
-
-from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 
 
 class ProjectReportsTab(UITab):
@@ -131,7 +131,6 @@ class ProjectReportsTab(UITab):
         """
         Return the url for the start of the report builder, or the paywall.
         """
-        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
         from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
@@ -197,44 +196,6 @@ class ProjectReportsTab(UITab):
             (header, list(map(show, pages)))
             for header, pages in self.sidebar_items
         ])
-
-
-class IndicatorAdminTab(UITab):
-    title = ugettext_noop("Administer Indicators")
-    view = "corehq.apps.indicators.views.default_admin"
-    dispatcher = IndicatorAdminInterfaceDispatcher
-
-    url_prefix_formats = ('/a/{domain}/indicators/',)
-
-    @property
-    def _is_viewable(self):
-        indicator_enabled_projects = get_indicator_domains()
-        return (self.couch_user.can_edit_data() and
-                self.domain in indicator_enabled_projects)
-
-    @property
-    def sidebar_items(self):
-        items = super(IndicatorAdminTab, self).sidebar_items
-        from corehq.apps.indicators.views import (
-            BulkExportIndicatorsView,
-            BulkImportIndicatorsView,
-        )
-        items.append([
-            _("Other Actions"), [
-                {
-                    'title': _(BulkImportIndicatorsView.page_title),
-                    'url': reverse(BulkImportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                    'urlname': BulkImportIndicatorsView.urlname,
-                },
-                {
-                    'title': _("Download Indicators Export"),
-                    'url': reverse(BulkExportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                }
-            ]
-        ])
-        return items
 
 
 class DashboardTab(UITab):
@@ -1186,7 +1147,7 @@ class ProjectUsersTab(UITab):
         items = []
 
         if self.couch_user.can_edit_commcare_users():
-            def commcare_username(request=None, couch_user=None, **context):
+            def _get_commcare_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         couch_user.is_commcare_user()):
                     username = couch_user.username_in_report
@@ -1209,7 +1170,7 @@ class ProjectUsersTab(UITab):
                     'description': _(
                         "Create and manage users for CommCare and CloudCare."),
                     'subpages': [
-                        {'title': commcare_username,
+                        {'title': _get_commcare_username,
                          'urlname': EditCommCareUserView.urlname},
                         {'title': _('Bulk Upload'),
                          'urlname': 'upload_commcare_users'},
@@ -1246,7 +1207,7 @@ class ProjectUsersTab(UITab):
             items.append((_('Application Users'), mobile_users_menu))
 
         if self.couch_user.can_edit_web_users():
-            def web_username(request=None, couch_user=None, **context):
+            def _get_web_username(request=None, couch_user=None, **context):
                 if (couch_user.user_id != request.couch_user.user_id or
                         not couch_user.is_commcare_user()):
                     username = couch_user.human_friendly_name
@@ -1271,7 +1232,7 @@ class ProjectUsersTab(UITab):
                             'urlname': 'invite_web_user'
                         },
                         {
-                            'title': web_username,
+                            'title': _get_web_username,
                             'urlname': EditWebUserView.urlname
                         }
                     ],
@@ -1320,7 +1281,7 @@ class ProjectUsersTab(UITab):
                 })
 
             from corehq.apps.locations.permissions import user_can_edit_location_types
-            if user_can_edit_location_types(self.couch_user, self.project):
+            if user_can_edit_location_types(self.couch_user, self.domain):
                 from corehq.apps.locations.views import LocationTypesView
                 locations_config.append({
                     'title': _(LocationTypesView.page_title),
@@ -1585,7 +1546,7 @@ def _get_administration_section(domain):
 
 def _get_integration_section(domain):
 
-    def forward_name(repeater_type=None, **context):
+    def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
             return _("Forward Forms")
         elif repeater_type == 'ShortFormRepeater':
@@ -1599,11 +1560,11 @@ def _get_integration_section(domain):
             'url': reverse('domain_forwarding', args=[domain]),
             'subpages': [
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_repeater',
                 },
                 {
-                    'title': forward_name,
+                    'title': _get_forward_name,
                     'urlname': 'add_form_repeater',
                 },
             ]
@@ -1833,9 +1794,8 @@ class AdminTab(UITab):
         except Exception:
             pass
         submenu_context.extend([
-            dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
-            dropdown_dict(_("CommCare Builds"), url="/builds/edit_menu"),
+            dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("Django Admin"), url="/admin"),
             dropdown_dict(_("View All"), url=self.url),
@@ -1854,12 +1814,17 @@ class AdminTab(UITab):
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = []
+        admin_operations = [
+            {'title': _('Style Guide'),
+             'url': reverse(MainStyleGuideView.urlname),
+             'icon': 'fa fa-paint-brush'},
+        ]
         data_operations = []
         system_operations = []
         user_operations = [
             {'title': _('Look up user by email'),
-             'url': reverse('web_user_lookup')},
+             'url': reverse('web_user_lookup'),
+             'icon': 'fa fa-address-book'},
         ]
 
         if self.couch_user and self.couch_user.is_staff:
@@ -1886,23 +1851,33 @@ class AdminTab(UITab):
             ]
             user_operations = [
                 {'title': _('Login as another user'),
-                 'url': reverse(AuthenticateAs.urlname)},
+                 'url': reverse(AuthenticateAs.urlname),
+                 'icon': 'fa fa-user-secret'},
             ] + user_operations + [
                 {'title': _('Grant superuser privileges'),
-                 'url': reverse('superuser_management')},
+                 'url': reverse('superuser_management'),
+                 'icon': 'fa fa-magic'},
             ]
-            admin_operations += [
-                {'title': _('Check Call Center UCR tables'),
-                 'url': reverse('callcenter_ucr_check')},
-                {'title': _('Reprocess Messaging Case Updates'),
-                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
+            admin_operations = [
+                {'title': _('CommCare Builds'),
+                 'url': reverse(EditMenuView.urlname),
+                 'icon': 'fa fa-wrench'},
                 {'title': _('Manage Notifications'),
-                 'url': reverse(ManageNotificationView.urlname)},
+                 'url': reverse(ManageNotificationView.urlname),
+                 'icon': 'fa fa-bell'},
                 {'title': _('Mass Email Users'),
-                 'url': reverse('mass_email')},
+                 'url': reverse('mass_email'),
+                 'icon': 'fa fa-envelope'},
                 {'title': _('Maintenance Alerts'),
-                 'url': reverse('alerts')},
-            ]
+                 'url': reverse('alerts'),
+                 'icon': 'fa fa-warning'},
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check'),
+                 'icon': 'fa fa-table'},
+                {'title': _('Reprocess Messaging Case Updates'),
+                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname),
+                 'icon': 'fa fa-refresh'},
+            ] + admin_operations
         sections = [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),

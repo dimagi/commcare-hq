@@ -14,9 +14,9 @@ import six
 
 
 def replace_uuids(string):
-    fake_uuid = 'ba5eba11-babe-d0e5-c0de-affab1ec0b01'
-    return re.sub(r'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]{12,}',
-                  r'\1' + fake_uuid, string)
+    fake_uuid = b'ba5eba11-babe-d0e5-c0de-affab1ec0b01'
+    return re.sub(br'(resource id="|http://openrosa\.org/formdesigner/)[a-f0-9-]{12,}',
+                  br'\1' + fake_uuid, string)
 
 
 class OdmToAppTest(TestCase, TestXmlMixin):
@@ -25,8 +25,8 @@ class OdmToAppTest(TestCase, TestXmlMixin):
 
     def assertXmlEqual(self, expected, actual, normalize=True):
         super(OdmToAppTest, self).assertXmlEqual(
-            replace_uuids(expected).encode('utf-8'),
-            replace_uuids(actual).encode('utf-8'),
+            replace_uuids(expected),
+            replace_uuids(actual),
             normalize
         )
 

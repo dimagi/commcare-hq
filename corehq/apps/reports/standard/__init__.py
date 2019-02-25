@@ -30,7 +30,7 @@ class ProjectReport(GenericReportView):
 
     @property
     def default_report_url(self):
-        return reverse('reports_home', args=[self.request.project])
+        return reverse('reports_home', args=[self.request.project.name])
 
     @property
     def template_context(self):

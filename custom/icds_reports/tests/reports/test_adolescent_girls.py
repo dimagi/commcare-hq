@@ -25,8 +25,7 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
                             "enrolled for Anganwadi Services",
-                    "average": 17.0,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': (
@@ -53,19 +52,13 @@ class TestAdolescentGirls(TestCase):
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    "st1": {
-                        "valid": 17,
-                        "all": 17,
-                        'original_name': ["st1"],
-                        "fillKey": "Adolescent Girls"
-                    },
-                    "st2": {
-                        "valid": 17,
-                        "all": 17,
-                        'original_name': ["st2"],
-                        "fillKey": "Adolescent Girls"
-                    }
-                },
+                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Adolescent Girls'}, 
+                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Adolescent Girls'}, 
+                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Adolescent Girls'}, 
+                    'st7': {'all': 0, 'valid': 0, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'}, 
+                    'st1': {'all': 17, 'valid': 17, 'original_name': ['st1'], 'fillKey': 'Adolescent Girls'},
+                    'st2': {'all': 17, 'valid': 17, 'original_name': ['st2'], 'fillKey': 'Adolescent Girls'},
+                    'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Adolescent Girls'}},
                 "slug": "adolescent_girls",
                 "label": ""
             }
@@ -87,8 +80,7 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Of the total number of adolescent girls (aged 11-14 years), the percentage of girls "
                             "enrolled for Anganwadi Services",
-                    "average": 8.5,
-                    "average_format": "number",
+                    "average": '100.00',
                     'extended_info': [
                         {
                             'indicator': (
@@ -139,24 +131,18 @@ class TestAdolescentGirls(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "value": 17.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 17.0
-                    }
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ],
                 "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "value": 17.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 17.0
-                    }
+                    {'loc_name': 'st1', 'value': 17.0},
+                    {'loc_name': 'st2', 'value': 17.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -164,39 +150,22 @@ class TestAdolescentGirls(TestCase):
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
-                            {
-                                "y": 0,
-                                "x": 1485907200000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0,
-                                "x": 1488326400000,
-                                "all": 0
-                            },
-                            {
-                                "y": 38,
-                                "x": 1491004800000,
-                                "all": 38
-                            },
-                            {
-                                "y": 34,
-                                "x": 1493596800000,
-                                "all": 34
-                            }
+                            {'y': 0, 'x': 1485907200000, 'all': 0},
+                            {'y': 0, 'x': 1488326400000, 'all': 0},
+                            {'y': 38, 'x': 1491004800000, 'all': 38},
+                            {'y': 34, 'x': 1493596800000, 'all': 34}
                         ],
                         "key": "Total number of adolescent girls who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "value": 17.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "value": 17.0
-                    }
+                    {'loc_name': 'st1', 'value': 17.0},
+                    {'loc_name': 'st2', 'value': 17.0},
+                    {'loc_name': 'st4', 'value': 0.0},
+                    {'loc_name': 'st5', 'value': 0.0},
+                    {'loc_name': 'st6', 'value': 0.0},
+                    {'loc_name': 'st7', 'value': 0.0},
+                    {'loc_name': 'st3', 'value': 0.0}
                 ]
             }
         )

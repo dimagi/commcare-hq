@@ -1,17 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
+from datetime import datetime
 from django.test import TestCase
 
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.test_utils import trap_extra_setup
+from corehq.util.elastic import ensure_index_deleted
+
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
+from corehq.apps.userreports.pillow import get_location_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestLocationDataSource(TestCase):
@@ -19,7 +26,8 @@ class TestLocationDataSource(TestCase):
 
     def setUp(self):
         self.domain_obj = create_domain(self.domain)
-
+        es = get_es_new()
+        initialize_index_and_mapping(es, USER_INDEX_INFO)
         self.region = LocationType.objects.create(domain=self.domain, name="region")
         self.town = LocationType.objects.create(domain=self.domain, name="town", parent_type=self.region)
 
@@ -43,11 +51,11 @@ class TestLocationDataSource(TestCase):
         self.data_source_config.validate()
         self.data_source_config.save()
 
-        self.pillow = get_kafka_ucr_pillow()
-        self.pillow.bootstrap(configs=[self.data_source_config])
+        self.pillow = get_location_pillow(ucr_configs=[self.data_source_config])
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
+        ensure_index_deleted(USER_INDEX_INFO.index)
         self.domain_obj.delete()
         self.data_source_config.delete()
 
@@ -59,9 +67,9 @@ class TestLocationDataSource(TestCase):
         adapter = get_indicator_adapter(self.data_source_config)
         query = adapter.get_query_object()
         data_source = query.all()
-        self.assertEqual(
-            set(expected_locations),
-            set(row[-1] for row in data_source)
+        self.assertItemsEqual(
+            expected_locations,
+            [row[-1] for row in data_source]
         )
 
     def test_location_data_source(self):

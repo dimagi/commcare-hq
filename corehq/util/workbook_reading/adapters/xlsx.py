@@ -5,6 +5,7 @@ from zipfile import BadZipfile
 from datetime import datetime, time
 from io import open
 
+from memoized import memoized
 import openpyxl
 import six
 from openpyxl.utils.datetime import from_excel
@@ -33,7 +34,7 @@ def open_xlsx_workbook(filename):
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
         except InvalidFileException as e:
-            raise SpreadsheetFileInvalidError(e.message)
+            raise SpreadsheetFileInvalidError(six.text_type(e))
         except BadZipfile as e:
             f.seek(0)
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
@@ -59,13 +60,27 @@ class _XLSXWorksheetAdaptor(object):
                 return cell.value
         return cell.value
 
+    @property
+    @memoized
+    def _max_row(self):
+        # self._worksheet.max_row is the max_row with data OR WITH FORMATTING
+        # That means that if formatting is applied, that will be the xlsx row limit
+        # Note that this is 1-indexed for consistency with openpyxl
+        max_row = 1
+        for i, row in enumerate(self._worksheet.iter_rows(), 1):
+            if any(cell.value for cell in row):
+                max_row = i
+        return max_row
+
     def iter_rows(self):
-        for row in self._worksheet.iter_rows():
+        for i, row in enumerate(self._worksheet.iter_rows(), 1):
+            if i > self._max_row:
+                break
             yield [Cell(self._make_cell_value(cell)) for cell in row]
 
     def to_worksheet(self):
         # Note that an empty sheet and a sheet with one row both have max_row = 1
-        return Worksheet(title=self._worksheet.title, max_row=self._worksheet.max_row,
+        return Worksheet(title=self._worksheet.title, max_row=self._max_row,
                          iter_rows=self.iter_rows)
 
 

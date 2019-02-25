@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv342 as csv
+
 from datetime import date, time
 from decimal import Decimal
 import os
@@ -13,31 +13,20 @@ from django.test.testcases import TestCase, override_settings
 
 from corehq.sql_db.connections import connection_manager
 from six.moves import zip
-from six.moves import range
-from io import open
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
+from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
 from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
-
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
-class AggregationScriptTestBase(TestCase):
+class AggregationScriptTestBase(CSVTestCase):
     """
     Note: test setup and teardown are done at module level using
         setUpModule and tearDownModule
     """
 
     always_include_columns = None
-
-    def _load_csv(self, path):
-        with open(path, encoding='utf-8') as f:
-            csv_data = list(csv.reader(f))
-            headers = csv_data[0]
-            for row_count, row in enumerate(csv_data):
-                csv_data[row_count] = dict(zip(headers, row))
-        return csv_data[1:]
 
     def _convert_decimal_to_string(self, value):
         """
@@ -88,45 +77,6 @@ class AggregationScriptTestBase(TestCase):
                     elif value is None:
                         row[idx] = ''
                 yield dict(zip(columns, row))
-
-    def _fasterAssertListEqual(self, list1, list2):
-        if len(list1) != len(list2):
-            self.fail('Lists are not equal')
-
-        messages = []
-
-        for idx in range(len(list1)):
-            dict1 = list1[idx]
-            dict2 = list2[idx]
-
-            differences = set()
-
-            for key in dict1.keys():
-                if key != 'id':
-                    value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
-                    value2 = dict2.get(key, '').replace('\r\n', '\n')
-                    if value1 != value2:
-                        differences.add(key)
-
-            if differences:
-                if self.always_include_columns:
-                    differences |= self.always_include_columns
-                messages.append("""
-                    Actual and expected row {} are not the same
-                    Actual:   {}
-                    Expected: {}
-                """.format(
-                    idx + 1,
-                    ', '.join(['{}: {}'.format(
-                        difference, dict1[difference].decode('utf-8')) for difference in differences]
-                    ),
-                    ', '.join(['{}: {}'.format(
-                        difference, dict2.get(difference, '')) for difference in differences]
-                    )
-                ))
-
-        if messages:
-            self.fail('\n'.join(messages))
 
     def _load_and_compare_data(self, table_name, path, sort_key=None):
         # To speed up tests, we use a sort_key wherever possible
@@ -303,7 +253,6 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
             sort_key=self.sort_key
         )
-
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',
@@ -330,6 +279,38 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
             'agg_child_health_2017-05-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
             sort_key=self.sort_key
+        )
+
+
+class AggLsAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'state_id', 'district_id', 'block_id', 'supervisor_id'}
+
+    def test_agg_ls_2017_05_01_4(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_4',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_4_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_3(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_3',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_3_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_2(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_2',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_2_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
+        )
+
+    def test_agg_ls_2017_05_01_1(self):
+        self._load_and_compare_data(
+            'agg_ls_2017-05-01_1',
+            os.path.join(OUTPUT_PATH, 'agg_ls_2017-05-01_1_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id']
         )
 
 

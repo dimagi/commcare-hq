@@ -8,10 +8,11 @@ import mock
 import postgres_copy
 import six
 import sqlalchemy
+import csv342 as csv
 
 from django.conf import settings
-from django.db import connections
 from django.test.utils import override_settings
+from django.test.testcases import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -22,19 +23,23 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms,
+    _aggregate_bp_forms,
     _aggregate_gm_forms)
 from io import open
+from six.moves import range
+from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
     'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
+    "ccs_cases": "config_report_icds-cas_static-ccs_record_cases_cedcca39",
     'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
     'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
     'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
     'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
-    'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
+    'person_cases': 'config_report_icds-cas_static-person_cases_v3_2ae0879a',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
     'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
@@ -45,7 +50,16 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
     'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
+    'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
+    'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
+    'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
+    'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
+    'agg_awc': 'agg_awc',
+    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
+    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
 }
+
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 def setUpModule():
@@ -84,6 +98,36 @@ def setUpModule():
         domain=domain.name,
         name='st2',
         location_id='st2',
+        location_type=state_location_type
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st3',
+        location_id='st3',
+        location_type=state_location_type
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st4',
+        location_id='st4',
+        location_type=state_location_type
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st5',
+        location_id='st5',
+        location_type=state_location_type
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st6',
+        location_id='st6',
+        location_type=state_location_type
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st7',
+        location_id='st7',
         location_type=state_location_type
     )
 
@@ -130,6 +174,7 @@ def setUpModule():
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
             _aggregate_gm_forms(state_id, datetime(2017, 3, 31))
+            _aggregate_bp_forms(state_id, datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
@@ -177,3 +222,54 @@ def tearDownModule():
 
     Domain.get_by_name('icds-cas').delete()
     _call_center_domain_mock.stop()
+
+
+class CSVTestCase(TestCase):
+
+    def _load_csv(self, path):
+        with open(path, encoding='utf-8') as f:
+            csv_data = list(csv.reader(f))
+            headers = csv_data[0]
+            for row_count, row in enumerate(csv_data):
+                csv_data[row_count] = dict(zip(headers, row))
+        return csv_data[1:]
+
+    def _fasterAssertListEqual(self, list1, list2):
+        if len(list1) != len(list2):
+            self.fail('Lists are not equal')
+
+        messages = []
+
+        for idx in range(len(list1)):
+            dict1 = list1[idx]
+            dict2 = list2[idx]
+
+            differences = set()
+
+            for key in dict1.keys():
+                if key != 'id':
+                    value1 = dict1[key] if isinstance(dict1[key], six.text_type) else dict1[key].decode('utf-8')
+                    value1 = value1.replace('\r\n', '\n')
+                    value2 = dict2.get(key, '').replace('\r\n', '\n')
+                    if value1 != value2:
+                        differences.add(key)
+
+            if differences:
+                if self.always_include_columns:
+                    differences |= self.always_include_columns
+                messages.append("""
+                    Actual and expected row {} are not the same
+                    Actual:   {}
+                    Expected: {}
+                """.format(
+                    idx + 1,
+                    ', '.join(['{}: {}'.format(
+                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                    ),
+                    ', '.join(['{}: {}'.format(
+                        difference, dict2.get(difference, '')) for difference in differences]
+                    )
+                ))
+
+        if messages:
+            self.fail('\n'.join(messages))

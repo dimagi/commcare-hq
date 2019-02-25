@@ -48,7 +48,7 @@
                         <!-- /ko -->
                         <div data-bind="visible: showWarning">
                             <span class="help-block" data-bind="
-                                text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message
+                                text: hqImport('app_manager/js/details/screen_config').detailScreenConfig.field_format_warning_message
                             ">
                             </span>
                         </div>
@@ -88,7 +88,8 @@
                         </td>
                         <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
                         {% else %}
-                        <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-5" colspan="2"></td>
                         {% endif %}
                     <!--/ko-->
                 <!--/ko-->

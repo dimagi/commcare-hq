@@ -10,8 +10,9 @@ from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.elastic import get_es_new
-from corehq.pillows.group import get_group_pillow
+from corehq.pillows.groups_to_user import get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index
 
@@ -20,12 +21,14 @@ class GroupPillowTest(TestCase):
 
     def setUp(self):
         self.elasticsearch = get_es_new()
-        ensure_index_deleted(GROUP_INDEX_INFO.index)
-        initialize_index(self.elasticsearch, GROUP_INDEX_INFO)
+        for index in [GROUP_INDEX_INFO, USER_INDEX_INFO]:
+            ensure_index_deleted(index.index)
+            initialize_index(self.elasticsearch, index)
         delete_all_groups()
 
     def tearDown(self):
         ensure_index_deleted(GROUP_INDEX_INFO.index)
+        ensure_index_deleted(USER_INDEX_INFO.index)
 
     def test_kafka_group_pillow(self):
         domain = uuid.uuid4().hex

@@ -38,19 +38,19 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def child_health_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def child_tasks_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def person_case_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v2')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
         config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id).decode('utf-8')
+        return get_table_name(self.domain, config.table_id)
 
     @property
     def tablename(self):
@@ -126,6 +126,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("pse_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pse_eligible)),
             ("pse_days_attended",
                 "CASE WHEN {} THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END".format(pse_eligible)),
+            ("lunch_count", "COALESCE(df.lunch_count, 0)"),
             # EBF Indicators
             ("ebf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(ebf_eligible)),
             ("ebf_in_month", "CASE WHEN {} THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END".format(ebf_eligible)),
@@ -280,6 +281,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
+            ("mother_phone_number", "child_health.mother_phone_number"),
+            ("date_death", "child_health.date_death"),
+            ("mother_case_id", "child_health.mother_case_id")
         )
         return """
         INSERT INTO "{tablename}" (
@@ -319,7 +323,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
-            person_cases_ucr=self.person_case_ucr_tablename,
+            person_cases_ucr=self.person_case_ucr_tablename
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
@@ -344,4 +348,5 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return [
             'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
             'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (mother_case_id, dob)'.format(self.tablename),
         ]

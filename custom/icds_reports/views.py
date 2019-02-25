@@ -8,7 +8,6 @@ from wsgiref.util import FileWrapper
 import requests
 
 from datetime import datetime, date
-from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -17,10 +16,9 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from corehq.util.view_utils import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -32,9 +30,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_select2_v4,
 )
-from corehq.apps.translations.views import ConvertTranslations, BaseTranslationsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
@@ -43,19 +39,13 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds.tasks import (
-    push_translation_files_to_transifex,
-    pull_translation_files_from_transifex,
-    delete_resources_on_transifex,
-)
-from custom.icds.translations.integrations.exceptions import ResourceMissing
-from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT
-from custom.icds_reports.forms import AppTranslationsForm
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+from custom.icds_reports.const import AggregationLevels
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
-from custom.icds_reports.models.views import AwcLocationMonths
+from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
@@ -95,6 +85,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
     get_institutional_deliveries_data_map, get_institutional_deliveries_sector_data
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
+from custom.icds_reports.reports.lady_supervisor import get_lady_supervisor_data
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_chart, get_medicine_kit_data_map, \
     get_medicine_kit_sector_data
@@ -113,8 +104,7 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.dates import force_to_date
+from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
@@ -232,6 +222,11 @@ class DashboardView(TemplateView):
         kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
             self.kwargs['domain']
         ).location_ids())
+        kwargs['state_level_access'] = 'state' in set(
+            [loc.location_type.code for loc in self.request.couch_user.get_sql_locations(
+                self.kwargs['domain']
+            )]
+        )
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -264,8 +259,9 @@ class BaseReportView(View):
         year = int(request.GET.get('year', now.year))
 
         if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
+            prev_month = now - relativedelta(months=1)
+            month = prev_month.month
+            year = prev_month.year
 
         include_test = request.GET.get('include_test', False)
         domain = self.kwargs['domain']
@@ -316,6 +312,26 @@ class ProgramSummaryView(BaseReportView):
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class LadySupervisorView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(current_month.timetuple())[:3]
+        }
+
+        config.update(get_location_filter(location, domain))
+        config['aggregation_level'] = 4
+
+        data = get_lady_supervisor_data(
+            domain, config, include_test
+        )
         return JsonResponse(data=data)
 
 
@@ -739,8 +755,16 @@ class ExportIndicatorView(View):
         if indicator == BENEFICIARY_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
+            config = beneficiary_config
         if indicator == AWW_INCENTIVE_REPORT:
-            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK
+            ]:
+                return HttpResponseBadRequest()
+            today = datetime.now(INDIA_TIMEZONE)
+            month_offset = 2 if today.day < 15 else 1
+            latest_year, latest_month = add_months(today.year, today.month, -month_offset)
+            if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
@@ -1587,8 +1611,8 @@ class DownloadExportReport(View):
         uuid = self.request.GET.get('uuid', None)
         file_format = self.request.GET.get('file_format', 'xlsx')
         content_type = Format.from_format(file_format)
-        data_type = self.request.GET.get('data_type', 'beneficiary_list')
-        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type=data_type)
+        data_type = self.request.GET.get('data_type')
+        icds_file = IcdsFile.objects.get(blob_id=uuid)
         response = HttpResponse(
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype
@@ -1617,14 +1641,15 @@ class DownloadPDFReport(View):
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-        res = AsyncResult(task_id)
-        status = res.ready()
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
 
         if status:
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': res.result
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
                 }
             )
         return JsonResponse({'task_ready': status})
@@ -1648,122 +1673,6 @@ class ICDSImagesAccessorAPI(View):
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type
         )
-
-
-@location_safe
-@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
-class AppTranslations(BaseTranslationsView):
-    page_title = ugettext_lazy('App Translations')
-    urlname = 'app_translations'
-    template_name = 'icds_reports/icds_app/app_translations.html'
-    section_name = ugettext_lazy("Translations")
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppTranslations, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def translations_form(self):
-        if self.request.POST:
-            return AppTranslationsForm(self.domain, self.request.POST)
-        else:
-            return AppTranslationsForm(self.domain)
-
-    @property
-    def page_context(self):
-        context = super(AppTranslations, self).page_context
-        if context['transifex_details_available']:
-            context['translations_form'] = self.translations_form
-        return context
-
-    def section_url(self):
-        return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
-
-    def transifex(self, domain, form_data):
-        transifex_project_slug = form_data.get('transifex_project_slug')
-        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                         form_data['version'],
-                         use_version_postfix='yes' in form_data['use_version_postfix'],
-                         update_resource='yes' in form_data['update_resource'])
-
-    def perform_push_request(self, request, form_data):
-        if form_data['target_lang']:
-            if not self.ensure_resources_present(request):
-                return False
-        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to submit files for translations'))
-        return True
-
-    def resources_translated(self, request):
-        resource_pending_translations = (self._transifex.
-                                         resources_pending_translations(break_if_true=True))
-        if resource_pending_translations:
-            messages.error(
-                request,
-                _("Resources yet to be completely translated, for ex: {}".format(
-                    resource_pending_translations)))
-            return False
-        return True
-
-    def ensure_resources_present(self, request):
-        if not self._transifex.resource_slugs:
-            messages.error(request, _('Resources not found for this project and version.'))
-            return False
-        return True
-
-    def perform_pull_request(self, request, form_data):
-        if not self.ensure_resources_present(request):
-            return False
-        if form_data['perform_translated_check']:
-            if not self.resources_translated(request):
-                return False
-        if form_data['lock_translations']:
-            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-                messages.error(request, _('Resources yet to be completely translated for all languages. '
-                                          'Hence, the request for locking resources can not be performed.'))
-                return False
-        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to pull for translations. '
-                                    'You should receive an email shortly'))
-        return True
-
-    def perform_delete_request(self, request, form_data):
-        if not self.ensure_resources_present(request):
-            return False
-        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-            messages.error(request, _('Resources yet to be completely translated for all languages. '
-                                      'Hence, the request for deleting resources can not be performed.'))
-            return False
-        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
-        messages.success(request, _('Successfully enqueued request to delete resources.'))
-        return True
-
-    def perform_request(self, request, form_data):
-        self._transifex = self.transifex(request.domain, form_data)
-        if not self._transifex.source_lang_is(form_data.get('source_lang')):
-            messages.error(request, _('Source lang selected not available for the project'))
-            return False
-        else:
-            if form_data['action'] == 'push':
-                return self.perform_push_request(request, form_data)
-            elif form_data['action'] == 'pull':
-                return self.perform_pull_request(request, form_data)
-            elif form_data['action'] == 'delete':
-                return self.perform_delete_request(request, form_data)
-
-    def post(self, request, *args, **kwargs):
-        if self.transifex_integration_enabled(request):
-            form = self.translations_form
-            if form.is_valid():
-                form_data = form.cleaned_data
-                try:
-                    if self.perform_request(request, form_data):
-                        return redirect(self.urlname, domain=self.domain)
-                except ResourceMissing as e:
-                    messages.error(request, e)
-        return self.get(request, *args, **kwargs)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1812,12 +1721,128 @@ class DishaAPIView(View):
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        data = DishaDump(state_name, query_month).get_data()
-        if not data:
-            return JsonResponse({"message": "Data is not updated for this month"})
-        return HttpResponse(data, content_type='application/json')
+        dump = DishaDump(state_name, query_month)
+        return dump.get_export_as_http_response(request)
 
     @property
     @quickcache([])
     def valid_state_names(self):
-        return list(AwcLocationMonths.objects.values_list('state_name', flat=True).distinct())
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CasDataExport(View):
+    def post(self, request, *args, **kwargs):
+        data_type = int(request.POST.get('indicator', None))
+        state_id = request.POST.get('location', None)
+        month = int(request.POST.get('month', None))
+        year = int(request.POST.get('year', None))
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
+        if not sync:
+            return JsonResponse({"message": "Export not exists."})
+        else:
+            params = dict(
+                indicator=data_type,
+                location=state_id,
+                month=month,
+                year=year
+            )
+            return JsonResponse(
+                {
+                    "report_link": reverse(
+                        'cas_export',
+                        params=params,
+                        absolute=True,
+                        kwargs={'domain': self.kwargs['domain']}
+                    )
+                }
+            )
+
+    def get(self, request, *args, **kwargs):
+        data_type = int(request.GET.get('indicator', None))
+        state_id = request.GET.get('location', None)
+        month = int(request.GET.get('month', None))
+        year = int(request.GET.get('year', None))
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
+
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+        except NotFound:
+            raise Http404
+
+
+class CasDataExportAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        types = ", ".join(self.valid_types)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "invalid_type": "Please specify one of {} as data_type".format(types),
+            "not_available": "The file you have requested is no longer available",
+            "no_access": "You do not have access to this state"
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 15 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        user_states = [loc.name
+                       for loc in self.request.couch_user.get_sql_locations(self.request.domain)
+                       if loc.location_type__name == 'state']
+        if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
+            return JsonResponse(self.message('no_access'), status=403)
+
+        state_id = SQLLocation.objects.get(location_type__name='state', name=state_name, domain=self.request.domain).location_id
+
+        data_type = request.GET.get('type')
+        if data_type not in self.valid_types:
+            return JsonResponse(self.message('invalid_type'), status=400)
+        type_code = self.get_type_code(data_type)
+
+        sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
+
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+        except NotFound:
+            return JsonResponse(self.message('not_available'), status=400)
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+    @property
+    def valid_types(self):
+        return ('woman', 'child', 'awc')
+
+    def get_type_code(self, data_type):
+        type_map = {
+            "child": 1,
+            "woman": 2,
+            "awc": 3
+        }
+        return type_map[data_type]

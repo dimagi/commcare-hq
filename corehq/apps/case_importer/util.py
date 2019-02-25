@@ -112,7 +112,7 @@ class WorksheetWrapper(object):
     @cached_property
     def _headers_by_index(self):
         try:
-            header_row = next(self._iter_rows())
+            header_row = next(self.iter_rows())
         except StopIteration:
             header_row = []
 
@@ -128,12 +128,12 @@ class WorksheetWrapper(object):
     def max_row(self):
         return self._worksheet.max_row
 
-    def _iter_rows(self):
+    def iter_rows(self):
         for row in self._worksheet.iter_rows():
             yield [cell.value for cell in row]
 
     def iter_row_dicts(self):
-        for row in self._iter_rows():
+        for row in self.iter_rows():
             yield {
                 self._headers_by_index[i]: value
                 for i, value in enumerate(row)
@@ -341,11 +341,11 @@ def get_spreadsheet(filename):
         with open_any_workbook(filename) as workbook:
             yield WorksheetWrapper.from_workbook(workbook)
     except SpreadsheetFileEncrypted as e:
-        raise ImporterExcelFileEncrypted(e.message)
+        raise ImporterExcelFileEncrypted(six.text_type(e))
     except SpreadsheetFileNotFound as e:
-        raise ImporterFileNotFound(e.message)
+        raise ImporterFileNotFound(six.text_type(e))
     except SpreadsheetFileInvalidError as e:
-        raise ImporterExcelError(e.message)
+        raise ImporterExcelError(six.text_type(e))
 
 
 def is_valid_location_owner(owner, domain):
@@ -422,6 +422,6 @@ def get_importer_error_message(e):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
-        return _("The file uploaded has the following error: {}").format(e.message)
+        return _("The file uploaded has the following error: {}").format(six.text_type(e))
     else:
-        return _("Error: {}").format(e.message)
+        return _("Error: {}").format(six.text_type(e))

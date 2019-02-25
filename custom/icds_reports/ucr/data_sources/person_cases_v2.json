@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -67,7 +75,7 @@
         "is_primary_key": false,
         "column_id": "supervisor_id",
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -75,7 +83,9 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -85,21 +95,19 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": false,
         "column_id": "block_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -109,24 +117,19 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": false,
         "column_id": "district_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -139,24 +142,17 @@
         "create_index": false,
         "column_id": "state_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         }
       },
       {
@@ -2395,9 +2391,31 @@
             "constant": null
           }
         }
+      },
+      {
+        "column_id": "household_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "parent_id"
+        }
+      },
+      {
+        "column_id": "phone_number",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "phone_number"
+        }
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "parent_id": {
+        "type": "icds_parent_id"
+      }
+    },
     "named_filters": {
       "referral_reached": {
         "operator": "eq",
@@ -2420,40 +2438,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",
@@ -2500,40 +2486,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",
@@ -2553,40 +2507,8 @@
               "type": "related_doc",
               "related_doc_type": "CommCareCase",
               "doc_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "referenced_id"
-                },
-                "type": "nested",
-                "argument_expression": {
-                  "array_expression": {
-                    "filter_expression": {
-                      "operator": "eq",
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "identifier"
-                      },
-                      "type": "boolean_expression",
-                      "property_value": "parent"
-                    },
-                    "type": "filter_items",
-                    "items_expression": {
-                      "expression": {
-                        "datatype": "array",
-                        "type": "property_name",
-                        "property_name": "indices"
-                      },
-                      "type": "root_doc"
-                    }
-                  },
-                  "type": "array_index",
-                  "index_expression": {
-                    "constant": 0,
-                    "type": "constant"
-                  }
-                }
+                "type": "named",
+                "name": "parent_id"
               }
             },
             "type": "boolean_expression",
@@ -2603,40 +2525,8 @@
               "type": "related_doc",
               "related_doc_type": "CommCareCase",
               "doc_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "referenced_id"
-                },
-                "type": "nested",
-                "argument_expression": {
-                  "array_expression": {
-                    "filter_expression": {
-                      "operator": "eq",
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "identifier"
-                      },
-                      "type": "boolean_expression",
-                      "property_value": "parent"
-                    },
-                    "type": "filter_items",
-                    "items_expression": {
-                      "expression": {
-                        "datatype": "array",
-                        "type": "property_name",
-                        "property_name": "indices"
-                      },
-                      "type": "root_doc"
-                    }
-                  },
-                  "type": "array_index",
-                  "index_expression": {
-                    "constant": 0,
-                    "type": "constant"
-                  }
-                }
+                "type": "named",
+                "name": "parent_id"
               }
             },
             "type": "boolean_expression",
@@ -2720,40 +2610,8 @@
           "type": "related_doc",
           "related_doc_type": "CommCareCase",
           "doc_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "referenced_id"
-            },
-            "type": "nested",
-            "argument_expression": {
-              "array_expression": {
-                "filter_expression": {
-                  "operator": "eq",
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "identifier"
-                  },
-                  "type": "boolean_expression",
-                  "property_value": "parent"
-                },
-                "type": "filter_items",
-                "items_expression": {
-                  "expression": {
-                    "datatype": "array",
-                    "type": "property_name",
-                    "property_name": "indices"
-                  },
-                  "type": "root_doc"
-                }
-              },
-              "type": "array_index",
-              "index_expression": {
-                "constant": 0,
-                "type": "constant"
-              }
-            }
+            "type": "named",
+            "name": "parent_id"
           }
         },
         "type": "boolean_expression",

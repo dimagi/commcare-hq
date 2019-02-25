@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from couchdbkit.ext.django.schema import StringProperty, ListProperty
+from dimagi.ext.couchdbkit import StringProperty, ListProperty
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord

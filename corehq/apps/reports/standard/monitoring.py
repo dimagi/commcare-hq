@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import datetime
 import math
 from collections import defaultdict, namedtuple
@@ -52,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xm
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
@@ -689,9 +690,10 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
+        export = self.rendered_as == 'export'
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
-        ):
+        ) and not export:
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -736,6 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             user_ids=user_ids,
             xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
+            export=self.rendered_as == 'export'
         )
 
 
@@ -1075,7 +1078,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
     is_cacheable = True
 
     description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(settings.COMMCARE_HQ_NAME))
+                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1732,6 +1735,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return avg_datespan
 
     def _report_data(self):
+        export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
         case_owners = _get_owner_ids_from_users(self.users_to_iterate)
@@ -1739,22 +1743,22 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
-                self.domain, avg_datespan, user_ids=user_ids
+                self.domain, avg_datespan, user_ids=user_ids, export=export
             ),
             submissions_by_user=get_submission_counts_by_user(
-                self.domain, self.datespan, user_ids=user_ids
+                self.domain, self.datespan, user_ids=user_ids, export=export
             ),
             active_cases_by_owner=get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             total_cases_by_owner=get_total_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
             ),
             cases_closed_by_user=get_case_counts_closed_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
             cases_opened_by_user=get_case_counts_opened_by_user(
-                self.domain, self.datespan, self.case_types, user_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids, export=export
             ),
         )
 

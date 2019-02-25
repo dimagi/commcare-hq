@@ -206,20 +206,19 @@
     {% include "case/partials/case_property_modal.html" %}
 
     {% if can_edit_data %}
-    {% if not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
             <a class="btn btn-default pull-left" href="{% url 'download_case_history' domain case_id %}">
                 <i class="fa fa-cloud-download"></i>
                 {% trans 'Download Case History' %}
             </a>
-        {% if show_properties_edit %}
-            <button type="button" class="btn btn-default pull-left data-corrections-trigger">
-                <i class="fa fa-shower"></i>
-                {% trans 'Clean Case Data' %}
-            </button>
-        {% endif %}
-        {% if show_case_rebuild %}
+            {% if show_properties_edit %}
+                <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                    <i class="fa fa-shower"></i>
+                    {% trans 'Clean Case Data' %}
+                </button>
+            {% endif %}
+        {% if show_case_rebuild and not is_usercase %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
                 <button type="submit" class="btn btn-default disable-on-submit" >
                     <i class="fa fa-save"></i>
@@ -243,7 +242,6 @@
         {% endif %}
         </div>
     </div>
-    {% endif %}
     {% endif %}
 </div>
 {% endblock %}

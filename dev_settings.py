@@ -30,9 +30,9 @@ SMS_QUEUE_ENABLED = False
 
 # https://docs.djangoproject.com/en/1.8/ref/settings/#std:setting-TEST_NON_SERIALIZED_APPS
 # https://docs.djangoproject.com/en/1.8/ref/settings/#serialize
-TEST_NON_SERIALIZED_APPS = ['corehq.form_processor']
+TEST_NON_SERIALIZED_APPS = ['corehq.form_processor', 'corehq.blobs']
 
-####### Django Extensions #######
+# Django Extensions
 # These things will be imported when you run ./manage.py shell_plus
 SHELL_PLUS_POST_IMPORTS = (
     # Models
@@ -113,9 +113,10 @@ PHONE_TIMEZONES_SHOULD_BE_PROCESSED = True
 
 # These ES hosts are to be used strictly for DEBUG mode read operations
 ELASTICSEARCH_DEBUG_HOSTS = {
-    'prod': 'hqes5.internal-va.commcarehq.org',
-    'staging': 'hqes0-staging.internal-va.commcarehq.org',
+    'prod': '10.202.40.116',
+    'staging': '10.201.40.161',
     'india': '10.162.36.221',
+    'icds': '100.71.184.7',
 }
 
 FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"

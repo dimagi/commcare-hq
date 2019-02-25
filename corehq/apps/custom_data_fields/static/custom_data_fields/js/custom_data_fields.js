@@ -1,4 +1,17 @@
-hqDefine('custom_data_fields/js/custom_data_fields', function () {
+hqDefine('custom_data_fields/js/custom_data_fields', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'hqwebapp/js/knockout_bindings.ko',     // needed for sortable binding
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    toggles
+) {
     function Choice(choice) {
         var self = this;
         self.value = ko.observable(choice);
@@ -16,7 +29,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function () {
         self.regex_msg = ko.observable();
         self.index_in_fixture = ko.observable();
 
-        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('REGEX_FIELD_VALIDATION')) {
+        if (!toggles.toggleEnabled('REGEX_FIELD_VALIDATION')) {
             // if toggle isn't enabled - always show "choice" option
             self.validationMode('choice');
         }
@@ -162,7 +175,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function () {
 
     $(function () {
         var customDataFieldsModel = new CustomDataFieldsModel();
-        customDataFieldsModel.init(hqImport('hqwebapp/js/initial_page_data').get('custom_fields'));
+        customDataFieldsModel.init(initialPageData.get('custom_fields'));
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
         });

@@ -97,7 +97,8 @@ class WriterTest(SimpleTestCase):
         },
     ]
 
-    def test_simple_table(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_simple_table(self, export_save):
         """
         Confirm that some simple documents and a simple FormExportInstance
         are writtern with _write_export_file() correctly
@@ -135,10 +136,12 @@ class WriterTest(SimpleTestCase):
                 'rows': [['baz', 'foo'], ['bop', 'bip']],
             }
         })
+        self.assertTrue(export_save.called)
 
+    @patch('corehq.apps.export.models.FormExportInstance.save')
     @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
     @flag_enabled('PAGINATED_EXPORTS')
-    def test_paginated_table(self):
+    def test_paginated_table(self, export_save):
         export_instance = FormExportInstance(
             export_format=Format.JSON,
             tables=[
@@ -175,8 +178,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [['baz', 'foo'], ['bop', 'bip']],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_split_questions(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_split_questions(self, export_save):
         """Ensure columns are split when `split_multiselects` is set to True"""
         export_instance = FormExportInstance(
             export_format=Format.JSON,
@@ -209,8 +214,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_array_data_in_scalar_question(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_array_data_in_scalar_question(self, export_save):
         '''
         This test ensures that when a question id has array data
         that we return still return a string for scalar data.
@@ -248,8 +255,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [['one two']],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_form_stock_columns(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_form_stock_columns(self, export_save):
         """Ensure that we can export stock properties in a form export"""
         docs = [{
             '_id': 'simone-biles',
@@ -341,8 +350,10 @@ class WriterTest(SimpleTestCase):
                 ],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_transform_dates(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_transform_dates(self, export_save):
         """Ensure dates are transformed for excel when `transform_dates` is set to True"""
         export_instance = FormExportInstance(
             export_format=Format.JSON,
@@ -371,8 +382,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_split_questions_false(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_split_questions_false(self, export_save):
         """Ensure multiselects are not split when `split_multiselects` is set to False"""
         export_instance = FormExportInstance(
             export_format=Format.JSON,
@@ -405,8 +418,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [['two extra'], ['one two']],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_multi_table(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_multi_table(self, export_save):
         export_instance = FormExportInstance(
             export_format=Format.JSON,
             tables=[
@@ -451,8 +466,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [['bar'], ['boop']],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_multi_table_order(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_multi_table_order(self, export_save):
         tables = [
             TableConfiguration(
                 label="My table {}".format(i),
@@ -492,8 +509,10 @@ class WriterTest(SimpleTestCase):
 
         expected_tables = [t.label for t in tables]
         self.assertEqual(len(expected_tables), len(exported_tables))
+        self.assertTrue(export_save.called)
 
-    def test_multiple_write_export_instance_calls(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_multiple_write_export_instance_calls(self, export_save):
         """
         Confirm that calling _write_export_instance() multiple times
         (as part of a bulk export) works as expected.
@@ -582,8 +601,10 @@ class WriterTest(SimpleTestCase):
                         },
                     }
                 )
+        self.assertTrue(export_save.called)
 
-    def test_empty_location(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_empty_location(self, export_save):
         export_instance = FormExportInstance(
             export_format=Format.JSON,
             tables=[
@@ -621,8 +642,10 @@ class WriterTest(SimpleTestCase):
                 'rows': [[EMPTY_VALUE]],
             }
         })
+        self.assertTrue(export_save.called)
 
-    def test_empty_table_label(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_empty_table_label(self, export_save):
         export_instance = FormExportInstance(
             export_format=Format.JSON,
             domain=DOMAIN,
@@ -650,6 +673,7 @@ class WriterTest(SimpleTestCase):
                 'rows': [['foo'], ['bip']],
             }
         })
+        self.assertTrue(export_save.called)
 
 
 class ExportTest(SimpleTestCase):
@@ -682,7 +706,8 @@ class ExportTest(SimpleTestCase):
         cache.clear()
         super(ExportTest, cls).tearDownClass()
 
-    def test_get_export_file(self):
+    @patch('corehq.apps.export.models.CaseExportInstance.save')
+    def test_get_export_file(self, export_save):
         export_json = get_export_json(
             CaseExportInstance(
                 export_format=Format.JSON,
@@ -727,8 +752,10 @@ class ExportTest(SimpleTestCase):
                 }
             }
         )
+        self.assertTrue(export_save.called)
 
-    def test_case_name_transform(self):
+    @patch('corehq.apps.export.models.FormExportInstance.save')
+    def test_case_name_transform(self, export_save):
         docs = [
             {
                 'domain': 'my-domain',
@@ -771,9 +798,11 @@ class ExportTest(SimpleTestCase):
                 'rows': [['batman'], [MISSING_VALUE]],
             }
         })
+        self.assertTrue(export_save.called)
 
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
-    def test_export_transforms(self, _):
+    @patch('corehq.apps.export.models.CaseExportInstance.save')
+    def test_export_transforms(self, export_save, _):
         export_json = get_export_json(
             CaseExportInstance(
                 export_format=Format.JSON,
@@ -813,8 +842,10 @@ class ExportTest(SimpleTestCase):
                 }
             }
         )
+        self.assertTrue(export_save.called)
 
-    def test_selected_false(self):
+    @patch('corehq.apps.export.models.CaseExportInstance.save')
+    def test_selected_false(self, export_save):
         export_json = get_export_json(
             CaseExportInstance(
                 export_format=Format.JSON,
@@ -829,8 +860,10 @@ class ExportTest(SimpleTestCase):
             )
         )
         self.assertEqual(export_json, {})
+        self.assertTrue(export_save.called)
 
-    def test_simple_bulk_export(self):
+    @patch('corehq.apps.export.models.CaseExportInstance.save')
+    def test_simple_bulk_export(self, export_save):
 
         with TransientTempfile() as temp_path:
             export_file = get_export_file(
@@ -906,6 +939,7 @@ class ExportTest(SimpleTestCase):
                                 sheet, cell, expected[sheet][cell], wb[sheet][cell].value
                             )
                         )
+        self.assertTrue(export_save.called)
 
 
 class TableHeaderTest(SimpleTestCase):

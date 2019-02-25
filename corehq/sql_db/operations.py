@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import re
 
+import attr
 from django.conf import settings
 from django.db import connection
 from django.db.migrations import RunPython
@@ -44,15 +45,11 @@ class HqRunPython(HqOpMixin, RunPython):
     pass
 
 
-def noop_migration_fn(apps, schema_editor):
-    pass
-
-
 def noop_migration():
     """
     A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
     """
-    return RunPython(noop_migration_fn, noop_migration_fn)
+    return RunPython(RunPython.noop, RunPython.noop)
 
 
 class RunSqlLazy(RunSQL):
@@ -90,12 +87,21 @@ class RunSqlLazy(RunSQL):
         if path is NOOP:
             return "SELECT 1"
 
-        with open(path, encoding='utf-8') as f:
-            template_string = f.read()
+        if isinstance(path, SQL):
+            template_string = path.value
+        else:
+            with open(path, encoding='utf-8') as f:
+                template_string = f.read()
 
         template = engines['django'].from_string(template_string)
 
         return template.render(self.template_context)
+
+
+@attr.s
+class SQL(object):
+    """Marker class for SQL template strings"""
+    value = attr.ib()
 
 
 class RawSQLMigration(object):
@@ -110,6 +116,14 @@ class RawSQLMigration(object):
     non-reversible migration, set the reverse template to None:
 
         migrator.get_migration('sql_template.sql', None)  # non-reversible
+
+    Raw SQL templates (instead of a template names) can be passed to
+    `get_migration`:
+
+        migrator.get_migration(
+            'get_something.sql',
+            SQL("DROP FUNCTION get_something(TEXT);"),
+        )
     """
 
     def __init__(self, base_path_tuple, template_context=None):
@@ -120,12 +134,17 @@ class RawSQLMigration(object):
         if testing_only and not settings.UNIT_TESTING:
             return noop_migration()
 
-        forward_path = os.path.join(self.base_path, forward_template)
+        if isinstance(forward_template, SQL):
+            forward_path = forward_template
+        else:
+            forward_path = os.path.join(self.base_path, forward_template)
 
         if reverse_template is NOOP:
             reverse_path = NOOP
         elif reverse_template is None:
             reverse_path = None  # make the migration non-reversible
+        elif isinstance(reverse_template, SQL):
+            reverse_path = reverse_template
         else:
             reverse_path = os.path.join(self.base_path, reverse_template)
 

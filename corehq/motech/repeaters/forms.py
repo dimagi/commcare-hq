@@ -125,7 +125,7 @@ class GenericRepeaterForm(forms.Form):
                         _('Test Link'),
                         type='button',
                         css_id='test-forward-link',
-                        css_class='btn btn-info disabled',
+                        css_class='btn btn-default disabled',
                     ),
                     crispy.Div(
                         css_id='test-forward-result',
@@ -258,28 +258,6 @@ class Dhis2RepeaterForm(FormRepeaterForm):
     def get_ordered_crispy_form_fields(self):
         fields = super(Dhis2RepeaterForm, self).get_ordered_crispy_form_fields()
         return fields
-
-
-class SOAPCaseRepeaterForm(CaseRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
-
-
-class SOAPLocationRepeaterForm(GenericRepeaterForm):
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
-    )
-
-    def get_ordered_crispy_form_fields(self):
-        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
-        return fields + ['operation']
 
 
 class EmailBulkPayload(forms.Form):

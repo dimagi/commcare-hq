@@ -64,7 +64,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqmedia.models import HQMediaMixin
+from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
@@ -114,7 +114,7 @@ def activate_subscriptions(based_on_date=None):
             _activate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error activating subscription %d: %s' % (subscription.id, e.message),
+                'Error activating subscription %d: %s' % (subscription.id, six.text_type(e)),
                 show_stack_trace=True,
             )
 
@@ -130,9 +130,15 @@ def _deactivate_subscription(subscription):
         next_subscription.is_active = True
         next_subscription.save()
     else:
+        domain = subscription.subscriber.domain
+        if not subscription.account.is_customer_billing_account:
+            account = subscription.account
+        else:
+            account = BillingAccount.create_account_for_domain(
+                domain, created_by='default_community_after_customer_level'
+            )
         next_subscription = assign_explicit_community_subscription(
-            subscription.subscriber.domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY,
-            account=subscription.account
+            domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, account=account
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -162,7 +168,7 @@ def deactivate_subscriptions(based_on_date=None):
             _deactivate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error deactivating subscription %d: %s' % (subscription.id, e.message),
+                'Error deactivating subscription %d: %s' % (subscription.id, six.text_type(e)),
                 show_stack_trace=True,
             )
 
@@ -208,7 +214,7 @@ def warn_subscriptions_without_domain():
         log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=5), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
     deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
@@ -246,29 +252,28 @@ def generate_invoices(based_on_date=None):
     })
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
-        domain = Domain.wrap(domain_doc)
-        if not domain.is_active:
+        domain_obj = Domain.wrap(domain_doc)
+        if not domain_obj.is_active:
             continue
         try:
-            invoice_factory = DomainInvoiceFactory(
-                invoice_start, invoice_end, domain)
+            invoice_factory = DomainInvoiceFactory(invoice_start, invoice_end, domain_obj)
             invoice_factory.create_invoices()
-            log_accounting_info("Sent invoices for domain %s" % domain.name)
+            log_accounting_info("Sent invoices for domain %s" % domain_obj.name)
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
@@ -289,18 +294,18 @@ def generate_invoices(based_on_date=None):
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                "Could not create invoice for domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e),
+                "domain %s: %s" % (domain_obj.name, e),
                 show_stack_trace=True,
             )
 
@@ -370,7 +375,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -380,7 +385,7 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_dimagi_contact_subscription_ending_60_days():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
@@ -401,7 +406,7 @@ def send_subscription_reminder_emails(num_days):
                 subscription.send_ending_reminder_email()
         except Exception as e:
             log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message),
+                "Error sending reminder for subscription %d: %s" % (subscription.id, six.text_type(e)),
                 show_stack_trace=True,
             )
 
@@ -442,7 +447,7 @@ def create_wire_credits_invoice(domain_name,
                 record.send_email(contact_email=email)
         except Exception as e:
             log_accounting_error(
-                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, six.text_type(e)),
                 show_stack_trace=True,
             )
     else:
@@ -523,7 +528,7 @@ def send_autopay_failed(invoice):
 
 
 # Email this out every Monday morning.
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -618,14 +623,15 @@ def weekly_digest():
         })
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0,), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
-def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
+def update_exchange_rates():
+    app_id = settings.OPEN_EXCHANGE_RATES_API_ID
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
@@ -642,7 +648,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
                 })
         except Exception as e:
             log_accounting_error(
-                "Error updating exchange rates: %s" % e.message,
+                "Error updating exchange rates: %s" % six.text_type(e),
                 show_stack_trace=True,
             )
 
@@ -687,9 +693,9 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
     )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
-def run_downgrade_process(today=None):
-    today = today or datetime.date.today()
+@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+def run_downgrade_process():
+    today = datetime.date.today()
 
     for domain, oldest_unpaid_invoice, total in _get_domains_with_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
@@ -819,7 +825,7 @@ def _create_overdue_notification(invoice, context):
 def archive_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, HQMediaMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
@@ -838,7 +844,7 @@ def archive_logos(self, domain_name):
 def restore_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
-            if isinstance(app, HQMediaMixin):
+            if isinstance(app, ApplicationMediaMixin):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()
@@ -852,7 +858,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -953,7 +959,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.username, body)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
 def calculate_users_in_all_domains():
     for domain in Domain.get_all_names():
         num_users = CommCareUser.total_by_domain(domain)

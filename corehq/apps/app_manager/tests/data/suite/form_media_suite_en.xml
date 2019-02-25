@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite version="1" descriptor="Media Suite File">
+  <media path="../../commcare">
+    <resource id="media-18e63eb214a719bc614787d15fc87c5e-module0_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/456/module0_en.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-71775ddd96c209a3ef1c43bd95e96c8b-module0_en.png" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/123/module0_en.png</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-947716527b2fc7772737f1bae597930b-q1_en.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_0/q1_en.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-368ef7fc202767c37b58490885314cb5-q1_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_2/q1_en.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-e5cce5c17843811c60a9f4898e710cef-q2_en.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_1/q2_en.mp3</location>
+    </resource>
+  </media>
+</suite>

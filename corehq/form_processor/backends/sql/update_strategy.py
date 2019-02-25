@@ -5,6 +5,7 @@ import sys
 import datetime
 from functools import cmp_to_key
 
+import six
 from iso8601 import iso8601
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
@@ -18,7 +19,9 @@ from casexml.apps.case.exceptions import (
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq import toggles
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.models import (
     CommCareCaseSQL,
     CommCareCaseIndexSQL,
@@ -209,6 +212,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform):
+        if not toggles.MM_CASE_PROPERTIES.enabled(self.case.domain):
+            return
 
         # NOTE `attachment_action` is a
         # `casexml.apps.case.xml.parser.CaseAttachmentAction` and
@@ -220,8 +225,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if att.is_delete:
                 if name in current_attachments:
                     self.case.track_delete(current_attachments[name])
-            else:
+            elif att.attachment_src:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
+                if form_attachment is None:
+                    # Probably an improperly configured form. We need a way to
+                    # convey errors like this to domain admins.
+                    raise AttachmentNotFound(
+                        "%s: %r" % (xform.form_id, att.attachment_src))
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]
                     existing_attachment.from_form_attachment(
@@ -314,7 +324,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
 
         return True
 

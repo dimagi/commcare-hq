@@ -137,7 +137,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'underweight_children'
+                    'redirect': 'maternal_and_child/underweight_children'
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
@@ -158,7 +158,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'wasting'
+                    'redirect': 'maternal_and_child/wasting'
                 }
             ],
             [
@@ -181,7 +181,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'stunting'
+                    'redirect': 'maternal_and_child/stunting'
                 },
                 {
                     'label': _('Newborns with Low Birth Weight'),
@@ -204,7 +204,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'low_birth'
+                    'redirect': 'maternal_and_child/low_birth'
                 }
             ],
             [
@@ -227,7 +227,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'early_initiation'
+                    'redirect': 'maternal_and_child/early_initiation'
                 },
                 {
                     'label': _('Exclusive Breastfeeding'),
@@ -248,7 +248,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'exclusive_breastfeeding'
+                    'redirect': 'maternal_and_child/exclusive_breastfeeding'
                 }
             ],
             [
@@ -271,7 +271,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'children_initiated'
+                    'redirect': 'maternal_and_child/children_initiated'
                 },
                 {
                     'label': _('Institutional Deliveries'),
@@ -292,7 +292,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'institutional_deliveries'
+                    'redirect': 'maternal_and_child/institutional_deliveries'
                 }
             ]
         ]

@@ -135,7 +135,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
-            raise BadRequest(e.message)
+            raise BadRequest(six.text_type(e))
         if include_archived:
             es_query['filter']['and'].append({'or': [
                 {'term': {'doc_type': 'xforminstance'}},
@@ -265,7 +265,9 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return MOCK_CASE_ES or CaseES(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        filters = v0_3.CaseListFilters(bundle.request.GET).filters
+        request_filters = {k: v for k, v in bundle.request.GET.items()}
+        request_filters.update(kwargs)
+        filters = v0_3.CaseListFilters(request_filters).filters
 
         # Since tastypie handles the "from" and "size" via slicing, we have to wipe them out here
         # since ElasticCaseQuery adds them. I believe other APIs depend on the behavior of ElasticCaseQuery

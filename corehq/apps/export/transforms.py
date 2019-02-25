@@ -4,6 +4,7 @@ from django.core.cache import cache
 
 from corehq.apps.export.esaccessors import get_case_name
 from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
+from corehq.util import reverse
 
 """
 Module for transforms used in exports.
@@ -24,6 +25,16 @@ def owner_id_to_display(owner_id, doc):
 
 def case_id_to_case_name(case_id, doc):
     return _cached_case_id_to_case_name(case_id)
+
+
+def case_id_to_link(case_id, doc):
+    from corehq.apps.reports.views import CaseDataView
+    return reverse(CaseDataView.urlname, args=[doc['domain'], case_id], absolute=True)
+
+
+def form_id_to_link(form_id, doc):
+    from corehq.apps.reports.views import FormDataView
+    return reverse(FormDataView.urlname, args=[doc['domain'], form_id], absolute=True)
 
 
 def case_or_user_id_to_name(id, doc):

@@ -47,6 +47,11 @@ class CaseListExplorer(CaseListReport):
         SelectOpenCloseFilter,
     ]
 
+    @classmethod
+    def get_subpages(cls):
+        # Override parent implementation
+        return []
+
     @property
     @memoized
     def es_results(self):
@@ -70,7 +75,7 @@ class CaseListExplorer(CaseListReport):
 
                 error = "<p>{}.</p>".format(escape(e))
                 bad_part = "<p>{} <strong>{}</strong></p>".format(
-                    _("The part of your search query we didn't understand is: "),
+                    _("The part of your search query that caused this error is: "),
                     escape(e.filter_part)
                 ) if e.filter_part else ""
                 raise BadRequestError("{}{}".format(error, bad_part))

@@ -12,13 +12,17 @@ from pillowtop.utils import get_all_pillows_json
 _assert = soft_assert("{}@{}".format('jemord', 'dimagi.com'))
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
 def pillow_datadog_metrics():
     def _is_couch(pillow):
         # text is couch, json is kafka
         return pillow['seq_format'] == 'text'
 
     pillow_meta = get_all_pillows_json()
+
+    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
+    if active_pillows:
+        pillow_meta = [pillow for pillow in pillow_meta if pillow['name'] in active_pillows]
 
     for pillow in pillow_meta:
         tags = [

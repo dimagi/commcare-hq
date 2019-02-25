@@ -182,15 +182,15 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
     def setUp(self):
         self.set_up_app()
-        self.releases_form.source = self.get_xml('very_simple_form')
-        self.basic_form.source = self.get_xml('very_simple_form')
+        self.releases_form.source = self.get_xml('very_simple_form').decode('utf-8')
+        self.basic_form.source = self.get_xml('very_simple_form').decode('utf-8')
         self.factory.app.save()
 
         super(ReleaseNotesResourceFileTest, self).setUp()
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.FormBase.is_a_disabled_release_form', return_value=False)
-    def test_enabled(self, mock1, mock2):
+    def test_enabled(self, *args):
         # check form in resource files
         self.factory.app.create_build_files()
         copy = self.factory.app.make_build()
@@ -199,7 +199,7 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.models.FormBase.is_a_disabled_release_form', return_value=True)
-    def test_disabled(self, mock1, mock2):
+    def test_disabled(self, *args):
         self.factory.app.create_build_files()
         copy = self.factory.app.make_build()
         copy.save()

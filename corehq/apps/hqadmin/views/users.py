@@ -187,17 +187,21 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def _parse_reports(xpath, xml_payload):
         reports = xml_payload.findall(xpath)
-        report_row_counts = {
-            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-            for report in reports
-            if 'report_id' in report.attrib
-        }
+        report_row_counts = {}
+        for report in reports:
+            if 'report_id' in report.attrib:
+                report_id = report.attrib['report_id']
+                if 'id' in report.attrib:
+                    report_id = '--'.join([report.attrib['id'], report_id])
+                report_row_count = len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                report_row_counts[report_id] = report_row_count
         return len(reports), report_row_counts
 
     @staticmethod
     def get_stats_from_xml(xml_payload):
         restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        restore_id = restore_id_element.text if restore_id_element else None
+        # note: restore_id_element is ALWAYS falsy, so check explicitly for `None`
+        restore_id = restore_id_element.text if restore_id_element is not None else None
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 

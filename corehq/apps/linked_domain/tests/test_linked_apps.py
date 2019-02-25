@@ -22,7 +22,10 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 from io import open
 
+from corehq.util.test_utils import flag_enabled, softer_assert
 
+
+@flag_enabled('CAUTIOUS_MULTIMEDIA')
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 
@@ -71,10 +74,10 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_overwrite_app_maintain_ids(self):
         module = self.plain_master_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         module = self.linked_app.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         id_map_before = _get_form_id_map(self.linked_app)
 
@@ -212,6 +215,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         copy1.save()
         self.addCleanup(copy1.delete)
 
+        self.linked_app.version = 1
+
         self.linked_app.linked_app_logo_refs = logo_refs
         self.linked_app.create_mapping(image, image_path, save=False)
         self.linked_app.save()
@@ -247,7 +252,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
     def test_remote_app(self):
         module = self.master_app_with_report_modules.add_module(Module.new_module('M1', None))
-        module.new_form('f1', None, self.get_xml('very_simple_form'))
+        module.new_form('f1', None, self.get_xml('very_simple_form').decode('utf-8'))
 
         linked_app = _mock_pull_remote_master(
             self.master_app_with_report_modules, self.linked_app, {'master_report_id': 'mapped_id'}
@@ -290,6 +295,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         image = CommCareImage.get(self.image._id)
         self.assertIn(self.master_app_with_report_modules.domain, image.valid_domains)
 
+    @softer_assert()
     def test_fetch_missing_media(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
@@ -298,7 +304,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         remote_details = RemoteLinkDetails(
             'http://localhost:8000', 'user', 'key'
         )
-        data = 'this is a test'
+        data = b'this is a test: \255'  # Real data will be a binary multimedia file, so mock it with bytes, not unicode
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
@@ -308,7 +314,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
-        content = media.fetch_attachment(list(media.blobs.keys())[0])
+        content = media.fetch_attachment(list(media.blobs.keys())[0], return_bytes=True)
         self.assertEqual(data, content)
 
 

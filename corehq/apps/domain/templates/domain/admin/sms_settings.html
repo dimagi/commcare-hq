@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'commtrack/js/sms.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'commtrack/js/sms' %}
 
 {% block page_content %}
     {% initial_page_data "settings" settings %}
@@ -14,8 +12,8 @@
         <fieldset>
             <legend>{% trans 'Stock Actions' %}</legend>
             <div class="form-group">
-                <label class="col-sm-2 control-label">{% trans 'Edit Actions' %}</label>
-                <div class="col-sm-10">
+                <label class="{% css_label_class %} control-label">{% trans 'Edit Actions' %}</label>
+                <div class="{% css_field_class %}">
                     {% include "domain/admin/commtrack_action_table.html" %}
                     <button type="button" class="btn btn-default" data-bind="click: new_action">
                         <i class="fa fa-plus"></i> {% trans "New Action" %}
@@ -25,7 +23,7 @@
         </fieldset>
 
         <div class="form-actions">
-            <div class="col-sm-10 col-sm-offset-2">
+            <div class="{% css_action_class %}">
                 <button type="submit" class="btn btn-primary">
                     {% trans "Save Settings" %}
                 </button>

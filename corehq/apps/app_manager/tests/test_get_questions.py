@@ -15,6 +15,7 @@ QUESTIONS = [
         'tag': 'input',
         'repeat': None,
         'group': None,
+        'constraintMsg_ref': 'question1-constraintMsg',
         'value': '/data/question1',
         'hashtagValue': '#form/question1',
         'label': 'label en ____ label en',
@@ -34,6 +35,7 @@ QUESTIONS = [
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -50,6 +52,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': "This is a comment",
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -66,6 +69,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'trigger',
@@ -82,6 +86,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -98,6 +103,7 @@ QUESTIONS = [
         'constraint': '1',
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'select1',
@@ -107,6 +113,7 @@ QUESTIONS = [
             {
                 'value': 'item22',
                 'label': None,
+                'label_ref': 'question21-item22-label',
                 'translations': {},
             }
         ],
@@ -121,6 +128,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -137,6 +145,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'input',
@@ -153,6 +162,7 @@ QUESTIONS = [
         'constraint': None,
         'comment': None,
         'setvalue': None,
+        'is_group': False,
     },
     {
         'tag': 'hidden',
@@ -190,14 +200,14 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             module.id,
             name="Form",
             lang='en',
-            attachment=self.get_xml('case_in_form')
+            attachment=self.get_xml('case_in_form').decode('utf-8')
         )
 
         form_with_repeats = self.app.new_form(
             module.id,
             name="Form with repeats",
             lang='en',
-            attachment=self.get_xml('form_with_repeats')
+            attachment=self.get_xml('form_with_repeats').decode('utf-8')
         )
 
         self.form_unique_id = form.unique_id

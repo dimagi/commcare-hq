@@ -23,8 +23,6 @@ In the codebase there are now two models for form and case data.
 +------------------------+----------------------+
 | XFormInstance          | XFormInstanceSQL     |
 +------------------------+----------------------+
-|                        | XFormAttachment      |
-+------------------------+----------------------+
 | XFormOperation         | XFormOperationSQL    |
 +------------------------+----------------------+
 | StockReport            |                      |

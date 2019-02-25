@@ -1,4 +1,15 @@
-(function () {
+hqDefine("hqwebapp/js/daterangepicker.config", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'moment/moment',
+    'bootstrap-daterangepicker/daterangepicker',
+], function (
+    $,
+    _,
+    initialPageData,
+    moment
+) {
     'use strict';
 
     var getLocalDate = function (date) {
@@ -48,8 +59,7 @@
         $(this).daterangepicker(config);
 
         // UCRs
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-        if (initial_page_data('daterangepicker-show-clear')) {
+        if (initialPageData.get('daterangepicker-show-clear')) {
             // Change 'Cancel' button text to 'Clear'
             var $el = $(this);
             config.locale.cancelLabel = gettext('Clear');
@@ -84,4 +94,4 @@
             this.getDateRangeSeparator()
         );
     };
-})();
+});

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django import forms
 
-from crispy_forms.helper import FormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
 
 from memoized import memoized
@@ -133,10 +133,11 @@ class CustomDataEditor(object):
             field_names = list(fields)
 
         CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
-        CustomDataForm.helper = FormHelper()
+        if self.angular_model:
+            CustomDataForm.helper = HQModalFormHelper()
+        else:
+            CustomDataForm.helper = HQFormHelper()
         CustomDataForm.helper.form_tag = False
-        CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
-        CustomDataForm.helper.field_class = 'col-sm-8' if self.angular_model else 'col-lg-9'
 
         additional_fields = []
         if field_names:

@@ -300,8 +300,8 @@ def paywall_home(domain):
     Return the url for the page in the report builder paywall that users
     in the given domain should be directed to upon clicking "+ Create new report"
     """
-    project = Domain.get_by_name(domain, strict=True)
-    if project.requested_report_builder_subscription:
+    domain_obj = Domain.get_by_name(domain, strict=True)
+    if domain_obj.requested_report_builder_subscription:
         return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
     else:
         return reverse(ReportBuilderPaywallPricing.urlname, args=[domain])
@@ -435,7 +435,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, e.message)
+                messages.error(request, six.text_type(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -954,7 +954,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
                 messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
-                xform = Form.get_form(app_source.source)
+                xform = app.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
                 messages.success(request, _("Data source created for '{}'".format(xform.default_name())))
@@ -1312,7 +1312,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(e.message, status=400)
+        return HttpResponse(six.text_type(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

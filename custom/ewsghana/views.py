@@ -17,7 +17,8 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location, location_safe
+from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.locations.permissions import locations_access_required, location_safe
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser
@@ -137,8 +138,11 @@ class InputStockView(BaseDomainView):
 
 @location_safe
 class EWSUserExtensionView(BaseCommTrackManageView):
-
     template_name = 'ewsghana/user_extension.html'
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(EWSUserExtensionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
@@ -246,7 +250,7 @@ def non_administrative_locations_for_select2(request, domain):
 
     user_loc = user.get_sql_location(domain)
 
-    if user_can_edit_any_location(user, request.project):
+    if user.is_domain_admin(domain):
         locs = SQLLocation.objects.filter(domain=domain, location_type__administrative=False)
     elif user_loc:
         locs = user_loc.get_descendants(include_self=True, location_type__administrative=False)

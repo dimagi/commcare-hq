@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -62,12 +70,17 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "datatype": null,
-            "type": "property_name",
-            "property_name": "owner_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
         "is_primary_key": false,
@@ -81,15 +94,17 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
+          "location_id": {
+            "expression": {
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_propery": "_id",
+          "type": "ancestor_location"
         },
         "transform": {},
         "is_primary_key": false,
@@ -536,7 +551,7 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr",
+    "engine_id": "icds-ucr-non-dashboard",
     "disable_destructive_rebuild": true
   }
 }

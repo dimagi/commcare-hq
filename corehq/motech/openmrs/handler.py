@@ -20,6 +20,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     UpdatePersonPropertiesTask,
     get_ancestor_location_openmrs_uuid,
     get_patient,
+    get_unknown_location_uuid,
 )
 from corehq.motech.openmrs.serializers import to_omrs_datetime
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
@@ -226,7 +227,13 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         """
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
-        location_uuid = get_ancestor_location_openmrs_uuid(self.domain, self.info.case_id)
+        location_uuid = (
+            get_ancestor_location_openmrs_uuid(self.domain, self.info.case_id) or
+            get_unknown_location_uuid(self.requests)  # If we don't set
+            # a location, OpenMRS sets it to NULL. That's OK for
+            # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
+            # Location". Use that, if it exists.
+        )
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:

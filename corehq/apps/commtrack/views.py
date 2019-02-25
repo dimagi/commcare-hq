@@ -16,7 +16,7 @@ from corehq import toggles
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_select2
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
 from memoized import memoized
@@ -58,7 +58,6 @@ class BaseCommTrackManageView(BaseDomainView):
             raise Http404()
         return super(BaseCommTrackManageView, self).get(*args, **kwargs)
 
-    @use_select2
     @method_decorator(domain_admin_required)  # TODO: will probably want less restrictive permission?
     def dispatch(self, request, *args, **kwargs):
         return super(BaseCommTrackManageView, self).dispatch(request, *args, **kwargs)

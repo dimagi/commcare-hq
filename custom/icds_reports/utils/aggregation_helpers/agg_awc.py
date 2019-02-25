@@ -10,6 +10,7 @@ from six.moves import map
 
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
     month_formatter
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
@@ -43,24 +44,35 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}"
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
-            is_launched, aggregation_level
+            is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe
         )
         (
             SELECT
-            state_id,
-            district_id,
-            block_id,
-            supervisor_id,
-            doc_id AS awc_id,
+            awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id AS awc_id,
             %(start_date)s,
             1,
             'no',
-            5
-            FROM "{ucr_table}"
+            5,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            FROM "{ucr_table}" awc_location
+            LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
+            LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
+            group by awc_location.state_id,
+            awc_location.district_id,
+            awc_location.block_id,
+            awc_location.supervisor_id,
+            awc_location.doc_id
         )
         """.format(
             tablename=self.tablename,
-            ucr_table=self.ucr_tablename
+            ucr_table=self.ucr_tablename,
+            cbe_table=self._ucr_tablename('static-cbe_form'),
+            vhnd_table=self._ucr_tablename('static-vhnd_form')
         ), {
             'start_date': self.month_start
         }
@@ -140,24 +152,45 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
-            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
+            valid_visits = ut.valid_visits,
+            expected_visits = ut.expected_visits
         FROM (
             SELECT
-                awc_id,
-                month,
-                sum(pregnant) AS cases_ccs_pregnant,
-                sum(lactating) AS cases_ccs_lactating,
-                sum(pregnant_all) AS cases_ccs_pregnant_all,
-                sum(lactating_all) AS cases_ccs_lactating_all
+                agg_ccs_record.awc_id,
+                agg_ccs_record.month,
+                sum(agg_ccs_record.pregnant) AS cases_ccs_pregnant,
+                sum(agg_ccs_record.lactating) AS cases_ccs_lactating,
+                sum(agg_ccs_record.pregnant_all) AS cases_ccs_pregnant_all,
+                sum(agg_ccs_record.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
+                sum(agg_ccs_record.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record
-            WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
+            LEFT OUTER JOIN (
+                    SELECT 
+                        ucr.awc_id,
+                        agg_cf.month,
+                        SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
+                        sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
+                        FROM  "{ccs_record_case_ucr}" ucr
+                        LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+                        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
+                            date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                            date_trunc('month', ucr.opened_on) <= %(start_date)s
+
+                        GROUP BY ucr.awc_id, agg_cf.month
+                    )  home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
+            WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5 
+            GROUP BY agg_ccs_record.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
+            ccs_record_case_ucr=self._ucr_tablename('static-ccs_record_cases'),
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
-        }
+            }
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -187,11 +220,11 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         FROM (
             SELECT
                 awc_id,
-                sum(seeking_services) AS cases_person,
-                sum(count) AS cases_person_all,
-                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14,
+                sum({seeking_services}) AS cases_person,
+                count(*) AS cases_person_all,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_11_14,
                 sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
-                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_15_18,
                 sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
                 sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
             FROM "{ucr_tablename}"
@@ -201,7 +234,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         WHERE ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
-            ucr_tablename=self._ucr_tablename('static-person_cases_v2'),
+            ucr_tablename=self._ucr_tablename('static-person_cases_v3'),
+            seeking_services="(CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)"
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end,
@@ -315,7 +349,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         FROM (
             SELECT DISTINCT(awc_id)
             FROM agg_awc
-            WHERE month = %(prev_month)s AND usage_num_hh_reg > 0 AND awc_id <> 'ALL'
+            WHERE month = %(prev_month)s AND num_launched_awcs > 0 AND aggregation_level=5
         ) ut
         WHERE ut.awc_id = agg_awc.awc_id;
         """.format(
@@ -382,6 +416,45 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'month_start_6m': self.month_start_6m
         }
 
+        yield """
+            UPDATE "{tablename}" agg_awc SET
+              state_is_test = ut.state_is_test,
+              district_is_test = ut.district_is_test,
+              block_is_test = ut.block_is_test,
+              supervisor_is_test = ut.supervisor_is_test,
+              awc_is_test = ut.awc_is_test
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "{awc_location_tablename}"
+              GROUP BY awc_id
+            ) ut
+            WHERE ut.awc_id = agg_awc.awc_id AND (
+                (
+                  agg_awc.state_is_test IS NULL OR
+                  agg_awc.district_is_test IS NULL OR
+                  agg_awc.block_is_test IS NULL OR
+                  agg_awc.supervisor_is_test IS NULL OR
+                  agg_awc.awc_is_test IS NULL
+                ) OR (
+                  ut.state_is_test != agg_awc.state_is_test OR
+                  ut.district_is_test != agg_awc.district_is_test OR
+                  ut.block_is_test != agg_awc.block_is_test OR
+                  ut.supervisor_is_test != agg_awc.supervisor_is_test OR
+                  ut.awc_is_test != agg_awc.awc_is_test
+                )
+            )
+        """.format(
+            tablename=self.tablename,
+            awc_location_tablename='awc_location',
+        ), {
+        }
+
     def rollup_query(self, aggregation_level):
 
         launched_cols = [
@@ -415,6 +488,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
+            ('valid_visits',),
+            ('expected_visits',),
             ('usage_num_pse',),
             ('usage_num_gmp',),
             ('usage_num_thr',),
@@ -448,6 +523,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('num_launched_blocks', lambda col: _launched_col(col)),
             ('num_launched_supervisors', lambda col: _launched_col(col)),
             ('num_launched_awcs', lambda col: _launched_col(col)),
+            ('num_awcs_conducted_vhnd',),
+            ('num_awcs_conducted_cbe',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
@@ -469,6 +546,23 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('stadiometer', 'COALESCE(sum(stadiometer), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
+            ('state_is_test', 'MAX(state_is_test)'),
+            (
+                'district_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 1 else "0"
+            ),
+            (
+                'block_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 2 else "0"
+            ),
+            (
+                'supervisor_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 3 else "0"
+            ),
+            (
+                'awc_is_test',
+                lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
+            )
         ]
 
         def _transform_column(column_tuple):
@@ -480,33 +574,38 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))
-
             return column, 'SUM({})'.format(column)
 
         columns = list(map(_transform_column, columns))
 
         group_by = ["state_id"]
+        child_location = 'district_is_test'
         if aggregation_level > 1:
             group_by.append("district_id")
+            child_location = 'block_is_test'
         if aggregation_level > 2:
             group_by.append("block_id")
+            child_location = 'supervisor_is_test'
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+            child_location = 'awc_is_test'
 
         group_by.append("month")
 
         return """
-        INSERT INTO "{to_tablename}" (
-            {columns}
-        ) (
-            SELECT {calculations}
-            FROM "{from_tablename}"
-            GROUP BY {group_by}
-        )
+            INSERT INTO "{to_tablename}" (
+                {columns}
+            ) (
+                SELECT {calculations}
+                FROM "{from_tablename}"
+                WHERE {child_is_test} = 0
+                GROUP BY {group_by}
+            )
         """.format(
             from_tablename=self._tablename_func(aggregation_level + 1),
             to_tablename=self._tablename_func(aggregation_level),
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
             group_by=", ".join(group_by),
+            child_is_test=child_location
         )

@@ -174,6 +174,11 @@ class ObservationMapping(DocumentSchema):
     concept = StringProperty()
     value = SchemaProperty(ValueSource)
 
+    # Import Observations as case updates from Atom feed. (Case type is
+    # OpenmrsRepeater.white_listed_case_types[0]; Atom feed integration
+    # requires len(OpenmrsRepeater.white_listed_case_types) == 1.)
+    case_property = StringProperty(required=False)
+
 
 class OpenmrsFormConfig(DocumentSchema):
     xmlns = StringProperty()

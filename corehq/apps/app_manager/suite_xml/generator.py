@@ -114,20 +114,8 @@ class MediaSuiteGenerator(object):
     @property
     def media_resources(self):
         PREFIX = 'jr://file/'
-        # you have to call remove_unused_mappings
-        # before iterating through multimedia_map
-        self.app.remove_unused_mappings()
-        if self.app.multimedia_map is None:
-            self.app.multimedia_map = {}
-        filter_multimedia = self.app.media_language_map and self.build_profile
-        if filter_multimedia:
-            media_list = []
-            for lang in self.build_profile.langs:
-                media_list += self.app.media_language_map[lang].media_refs
-            requested_media = set(media_list)
-        for path, m in sorted(list(self.app.multimedia_map.items()), key=lambda item: item[0]):
-            if filter_multimedia and m.form_media and path not in requested_media:
-                continue
+        for path, m in sorted(list(self.app.multimedia_map_for_build(build_profile=self.build_profile).items()),
+                              key=lambda item: item[0]):
             unchanged_path = path
             if path.startswith(PREFIX):
                 path = path[len(PREFIX):]

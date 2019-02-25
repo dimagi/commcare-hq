@@ -45,7 +45,7 @@ from corehq.apps.registration.utils import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
-from corehq import toggles
+from corehq.apps.users.landing_pages import get_cloudcare_urlname
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
@@ -125,7 +125,11 @@ class ProcessRegistrationView(JSONResponseMixin, View):
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(data['data'])
         if reg_form.is_valid():
-            self._create_new_account(reg_form)
+            ab_test = ab_tests.SessionAbTest(ab_tests.APPCUES_V3_APP, self.request)
+            appcues_ab_test = ab_test.context['version']
+            self._create_new_account(reg_form, additional_hubspot_data={
+                "appcues_test": appcues_ab_test,
+            })
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -140,11 +144,9 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                         'project name unavailable': [],
                     }
                 }
-
-            username = reg_form.cleaned_data['email']
-
             return {
                 'success': True,
+                'appcues_ab_test': appcues_ab_test
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -196,7 +198,13 @@ class UserRegistrationView(BasePageView):
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
-        return super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        if settings.IS_SAAS_ENVIRONMENT:
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
+                response)
+            ab_tests.SessionAbTest(ab_tests.SIGNUP_ALT_UX, request).update_response(
+                response)
+        return response
 
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
@@ -219,12 +227,18 @@ class UserRegistrationView(BasePageView):
             'email': self.prefilled_email,
             'atypical_user': True if self.atypical_user else False
         }
-        return {
+        context = {
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
+        if settings.IS_SAAS_ENVIRONMENT:
+            context['demo_workflow_ab'] = ab_tests.SessionAbTest(
+                ab_tests.DEMO_WORKFLOW, self.request).context
+            context['signup_ux_ab'] = ab_tests.SessionAbTest(
+                ab_tests.SIGNUP_ALT_UX, self.request).context
+        return context
 
     @property
     def page_url(self):
@@ -257,7 +271,6 @@ class RegisterDomainView(TemplateView):
         user = self.request.user
         return not (Domain.active_for_user(user) or user.is_superuser)
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')
@@ -397,7 +410,7 @@ def confirm_domain(request, guid=''):
 
         requested_domain = Domain.get_by_name(req.domain)
         view_name = "dashboard_default"
-        view_args = [requested_domain]
+        view_args = [requested_domain.name]
         if not domain_has_apps(req.domain):
             if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
                 view_name = "app_from_template"
@@ -429,6 +442,10 @@ def confirm_domain(request, guid=''):
         track_workflow(requesting_user.email, "Confirmed new project")
         track_confirmed_account_on_hubspot_v2.delay(requesting_user)
         request.session['CONFIRM'] = True
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            # For AppCues v3, land new user in Web Apps
+            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 

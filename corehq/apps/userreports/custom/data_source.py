@@ -86,7 +86,7 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
 
     @property
     def sql_alchemy_filters(self):
-        return [f.build_expression(self.get_table()) for f in self._filters if f]
+        return [f.build_expression() for f in self._filters if f]
 
     @property
     def sql_alchemy_filter_values(self):

@@ -21,7 +21,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][0][0],
             {
-                "redirect": "underweight_children",
+                "redirect": "maternal_and_child/underweight_children",
                 "color": "green",
                 "all": 696,
                 "frequency": "month",
@@ -46,7 +46,7 @@ class TestMaternalChildData(TestCase):
                 True
             )['records'][0][1],
             {
-                "redirect": "wasting",
+                "redirect": "maternal_and_child/wasting",
                 "color": "green",
                 "all": 27,
                 "frequency": "month",
@@ -77,7 +77,7 @@ class TestMaternalChildData(TestCase):
                 True
             )['records'][1][0],
             {
-                "redirect": "stunting",
+                "redirect": "maternal_and_child/stunting",
                 "color": "green",
                 "all": 32,
                 "frequency": "month",
@@ -104,7 +104,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][1][1],
             {
-                "redirect": "low_birth",
+                "redirect": "maternal_and_child/low_birth",
                 "color": "red",
                 "all": 4,
                 "frequency": "month",
@@ -127,7 +127,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][2][0],
             {
-                "redirect": "early_initiation",
+                "redirect": "maternal_and_child/early_initiation",
                 "color": "green",
                 "all": 7,
                 "frequency": "month",
@@ -150,7 +150,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][2][1],
             {
-                "redirect": "exclusive_breastfeeding",
+                "redirect": "maternal_and_child/exclusive_breastfeeding",
                 "color": "green",
                 "all": 50,
                 "frequency": "month",
@@ -173,7 +173,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][3][0],
             {
-                "redirect": "children_initiated",
+                "redirect": "maternal_and_child/children_initiated",
                 "color": "green",
                 "all": 40,
                 "frequency": "month",
@@ -196,7 +196,7 @@ class TestMaternalChildData(TestCase):
                 }
             )['records'][3][1],
             {
-                "redirect": "institutional_deliveries",
+                "redirect": "maternal_and_child/institutional_deliveries",
                 "color": "green",
                 "all": 26,
                 "frequency": "month",

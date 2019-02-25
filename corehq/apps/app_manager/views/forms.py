@@ -12,8 +12,9 @@ import itertools
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.conf import settings
@@ -28,7 +29,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache, form_has_submissions
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
@@ -36,6 +37,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
+from corehq.apps.es import FormES
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -58,10 +60,13 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
-    login_or_digest, api_domain_view
+    login_or_digest, api_domain_view,
+    track_domain_request,
+    LoginAndDomainMixin,
 )
-from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE, WORKFLOW_FORM
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -76,8 +81,6 @@ from corehq.apps.app_manager.models import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     UpdateCaseAction,
-    load_case_reserved_words,
-    WORKFLOW_FORM,
     CustomAssertion,
     CustomInstance,
     CaseReferences,
@@ -108,7 +111,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
-        messages.error(request, e.message)
+        messages.error(request, six.text_type(e))
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)
@@ -287,10 +290,13 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 except Exception:
                     pass
             if xform:
+                if isinstance(xform, six.text_type):
+                    xform = xform.encode('utf-8')
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
+            notify_exception(request, six.text_type(e))
             if ajax:
                 return HttpResponseBadRequest(six.text_type(e))
             else:
@@ -474,6 +480,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
+@track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
@@ -489,13 +496,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
-    xml = save_xform(app, form, xml)
+    xml = save_xform(app, form, xml.encode('utf-8'))
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
     response_json = {
         'status': 'ok',
-        'sha1': hashlib.sha1(xml.encode('utf-8')).hexdigest()
+        'sha1': hashlib.sha1(xml).hexdigest()
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
@@ -522,11 +529,12 @@ def get_xform_source(request, domain, app_id, form_unique_id):
     source = form.source
     response = HttpResponse(source)
     response['Content-Type'] = "application/xml"
+    filename = form.default_name()
     for lc in [lang] + app.langs:
         if lc in form.name:
-            filename = "%s.xml" % unidecode(form.name[lc])
+            filename = form.name[lc]
             break
-    set_file_download(response, filename)
+    set_file_download(response, "%s.xml" % unidecode(filename))
     return response
 
 
@@ -720,6 +728,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
         'form_icon': None,
+        'legacy_select2': False,
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -878,3 +887,19 @@ def _get_case_references(data):
         return references
     except Exception:
         raise ValueError("bad case references data: {!r}".format(refs))
+
+
+class FormHasSubmissionsView(LoginAndDomainMixin, View):
+    urlname = 'form_has_submissions'
+
+    def get(self, request, domain, app_id, form_unique_id):
+        app = get_app(domain, app_id)
+        try:
+            form = app.get_form(form_unique_id)
+        except FormNotFoundException:
+            has_submissions = False
+        else:
+            has_submissions = form_has_submissions(domain, app_id, form.xmlns)
+        return JsonResponse({
+            'form_has_submissions': has_submissions,
+        })

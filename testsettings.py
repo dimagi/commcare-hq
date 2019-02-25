@@ -102,7 +102,9 @@ REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
     'icds-ucr': 'default',
+    'icds-ucr-non-dashboard': 'default',
     'icds-test-ucr': 'default',
+    'aaa-data': 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED

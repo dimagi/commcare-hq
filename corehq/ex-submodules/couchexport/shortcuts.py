@@ -84,7 +84,7 @@ def export_raw_data(export_tag, filename=None):
     f = io.BytesIO()
     zipfile = ZipFile(f, 'w')
     for xform_instance in xform_instances:
-        form_xml = xform_instance.fetch_attachment('form.xml').encode('utf-8')
+        form_xml = xform_instance.fetch_attachment('form.xml', return_bytes=True)
         zipfile.writestr("%s.xml" % xform_instance.get_id, form_xml)
     zipfile.close()
     f.flush()

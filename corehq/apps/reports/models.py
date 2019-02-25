@@ -412,7 +412,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(e.message)
+            logging.exception(six.text_type(e))
             return "#"
 
     @property
@@ -584,6 +584,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
+    def is_active(self):
+        """
+        Returns True if the report has a start_date that is in the past or there is
+        no start date
+        :return: boolean
+        """
+        return self.start_date is None or self.start_date <= datetime.today().date()
+
+    @property
     def is_configurable_report(self):
         from corehq.apps.userreports.reports.view import ConfigurableReportView
         return self.report_type == ConfigurableReportView.prefix
@@ -646,6 +655,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
     uuid = StringProperty()
+    start_date = DateProperty(default=None)
 
     @property
     def is_editable(self):
@@ -812,8 +822,14 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
             attach_excel = getattr(self, 'attach_excel', False)
             content, excel_files = get_scheduled_report_response(
-                self.owner, self.domain, self._id, attach_excel=attach_excel)
-            slugs = [r.report_slug for r in self.configs]
+                self.owner, self.domain, self._id, attach_excel=attach_excel,
+                send_only_active=True
+            )
+
+            # Will be False if ALL the ReportConfigs in the ReportNotification
+            # have a start_date in the future.
+            if content is False:
+                return
 
             for email in emails:
                 body = render_full_report_notification(None, content, email, self).content

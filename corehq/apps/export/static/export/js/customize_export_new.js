@@ -1,8 +1,14 @@
-hqDefine('export/js/customize_export_new', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('export/js/customize_export_new', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'export/js/models',
+], function (
+    $,
+    initialPageData,
+    models
+) {
     $(function () {
-        var ExportInstance = hqImport('export/js/models').ExportInstance;
-        var customExportView = new ExportInstance(
+        var customExportView = new models.ExportInstance(
             initialPageData.get('export_instance'),
             {
                 saveUrl: initialPageData.get('full_path'),

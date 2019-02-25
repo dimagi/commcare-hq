@@ -100,10 +100,10 @@ COUCH_DATABASES = {
     'default': {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
-        'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
+        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
         'COUCH_USERNAME': '',
         'COUCH_PASSWORD': '',
-        'COUCH_DATABASE_NAME': b'commcarehq'
+        'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
 
@@ -112,7 +112,9 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
-    'OPTIONS': {},
+    'OPTIONS': {
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
+    },
 }
 
 CACHES = {
@@ -224,8 +226,6 @@ SKIP_TOUCHFORMS_TESTS = True
 UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
-
-ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 

@@ -311,7 +311,7 @@ class EntriesHelper(object):
             if 'subcases' in actions:
                 for subcase in actions['subcases']:
                     # don't put this in the loop to be consistent with the form's indexing
-                    # see XForm.create_casexml_2
+                    # see XForm._create_casexml_2
                     if not subcase.repeat_context:
                         datums.append(FormDatumMeta(
                             datum=SessionDatum(
@@ -522,9 +522,10 @@ class EntriesHelper(object):
             datum=SessionDatum(
                 id=load_case_from_fixture.fixture_tag,
                 nodeset=load_case_from_fixture.fixture_nodeset,
-                value="./@" + load_case_from_fixture.fixture_variable,
+                value=load_case_from_fixture.fixture_variable,
                 detail_select=self.details_helper.get_detail_id_safe(target_module, 'case_short'),
                 detail_confirm=self.details_helper.get_detail_id_safe(target_module, 'case_long'),
+                autoselect=load_case_from_fixture.auto_select_fixture,
             ),
             case_type=action.case_type,
             requires_selection=True,

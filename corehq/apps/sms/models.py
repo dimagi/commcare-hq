@@ -1853,6 +1853,7 @@ class ActiveMobileBackendManager(models.Manager):
         return super(ActiveMobileBackendManager, self).get_queryset().filter(deleted=False)
 
 
+@six.python_2_unicode_compatible
 class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     SMS = 'SMS'
     IVR = 'IVR'
@@ -1935,7 +1936,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     class ExpectedDomainLevelBackend(Exception):
         pass
 
-    def __unicode__(self):
+    def __str__(self):
         if self.is_global:
             return "Global Backend '%s'" % self.name
         else:
@@ -2460,7 +2461,7 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
+        hashed_destination_phone_number = hashlib.sha1(destination_phone_number.encode('utf-8')).hexdigest()
         index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 

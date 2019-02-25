@@ -2,14 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}
-    {{ block.super }}
-    <script src="{% static 'export/js/const.js' %}"></script>
-    <script src="{% static 'export/js/utils.js' %}"></script>
-    <script src="{% static 'export/js/models.js' %}"></script>
-    <script src="{% static 'export/js/customize_export_new.js' %}"></script>
-{% endblock %}
-
+{% requirejs_main 'export/js/customize_export_new' %}
 
 {% block page_content %}
 {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
@@ -238,22 +231,20 @@
                 {% if can_edit %}
                     <button type="submit" class="btn btn-lg btn-primary" data-bind="
                         click: save,
-                        disable: (saveState() === hqImport('export/js/const').SAVE_STATES.SAVING ||
-                                  saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS ||
-                                  ! isValid())
+                        disable: saveStateSaving() || saveStateSuccess || !isValid()
                     ">
                         <span data-bind="
-                            visible: saveState() === hqImport('export/js/const').SAVE_STATES.READY,
+                            visible: saveStateReady(),
                             text: getSaveText()">
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SAVING">
+                        <span data-bind="visible: saveStateSaving()">
                             <i class="fa fa-refresh fa-spin"></i>
                             {% trans "Saving" %}
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.ERROR">
+                        <span data-bind="visible: saveStateError()">
                             {% trans "Try Again" %}
                         </span>
-                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS">
+                        <span data-bind="visible: saveStateSuccess()">
                             {% trans "Saved!" %}
                         </span>
                     </button>
@@ -266,9 +257,9 @@
                     {% endif %}
                 </a>
                 {% if export_instance.get_id and can_edit %}
-                    <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
-                        <i class="fa fa-remove fa-white"></i>
-                        {% trans "Delete this Export" %}
+                    <a class="btn btn-lg btn-default pull-right" href="{% url 'copy_export' domain export_instance.get_id %}?next={{ export_home_url }}">
+                        <i class="fa fa-copy fa-white"></i>
+                        {% trans "Copy this Export" %}
                     </a>
                 {% endif %}
                 <div class="text-danger" data-bind="if: !isValid()">
@@ -280,12 +271,4 @@
     </form>
 </div>
 {% include "export/partials/new_customize_export_templates.html" %}
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% if export_instance.get_id %}
-        {% with export_instance as export %}
-            {% include "export/dialogs/delete_custom_export_dialog.html" %}
-        {% endwith %}
-    {% endif %}
 {% endblock %}

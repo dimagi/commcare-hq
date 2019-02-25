@@ -96,6 +96,32 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
         return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
     };
 
+    vm.setShowSystemUsageMessageCookie = function (value) {
+        document.cookie = "showSystemUsageMessage=" + value + ";";
+    };
+
+    vm.getShowSystemUsageMessageCookie = function () {
+        if (document.cookie.indexOf("showSystemUsageMessage=") === -1) {
+            return void(0);
+        }
+        return document.cookie.split("showSystemUsageMessage=")[1].split(';')[0] !== 'false';
+    };
+
+    vm.closeSystemUsageMessage = function () {
+        vm.setShowSystemUsageMessageCookie("false");
+        vm.showSystemUsageMessage = false;
+    };
+
+    if (vm.getShowSystemUsageMessageCookie() !== false) {
+        vm.showSystemUsageMessage = true;
+        vm.setShowSystemUsageMessageCookie("true");
+    } else if (vm.getShowSystemUsageMessageCookie() === void(0)) {
+        vm.showSystemUsageMessage = true;
+        vm.setShowSystemUsageMessageCookie("true");
+    } else {
+        vm.showSystemUsageMessage = false;
+    }
+
     vm.getDataForStep(vm.step);
 }
 

@@ -7,6 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Fieldset, Layout, Submit
 import datetime
+import json
 
 from corehq.apps.hqwebapp.widgets import Select2AjaxV4
 from dimagi.utils.django.fields import TrimmedCharField
@@ -32,6 +33,7 @@ from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
+from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
 # Bootstrap 3 Crispy Forms
 from crispy_forms import layout as cb3_layout
@@ -172,7 +174,10 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
             role = self.cleaned_data['role']
             try:
                 self.existing_user.set_role(self.domain, role)
-                self.existing_user.save()
+                if self.existing_user.is_commcare_user():
+                    self.existing_user.save(spawn_task=True)
+                else:
+                    self.existing_user.save()
                 is_update_successful = True
             except KeyError:
                 pass
@@ -583,10 +588,8 @@ class NewMobileWorkerForm(forms.Form):
                 ng_model='mobileWorker.location_id',
             )
 
-        self.helper = FormHelper()
+        self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
@@ -977,7 +980,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2',
+                             data_initial=json.dumps(self.initial.get('email_list'))),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -988,7 +992,8 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'state_province_region',
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
-                             data_countryname=COUNTRIES.get(self.current_country, '')),
+                             data_country_code=self.current_country or '',
+                             data_country_name=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
                 crispy.HTML(
@@ -1180,7 +1185,7 @@ class CommCareUserFilterForm(forms.Form):
                 twbscrispy.StrictButton(
                     _("Download All Users"),
                     type="submit",
-                    css_class="btn btn-success submit_button",
+                    css_class="btn btn-primary submit_button",
                 )
             ),
         )

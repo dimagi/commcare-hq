@@ -22,7 +22,7 @@ describe('Export Utility functions', function () {
                 new models.PathNode({ name: 'form', is_repeat: false, doc_type: 'PathNode' }),
                 new models.PathNode({ name: 'photo', is_repeat: false, doc_type: 'PathNode' }),
             ];
-            assert.equal(utils.readablePath(nodes), 'form.photo');
+            assert.equal(models.readablePath(nodes), 'form.photo');
         });
 
         it('Should convert an array of PathNode to a dot path with repeats', function () {
@@ -30,14 +30,14 @@ describe('Export Utility functions', function () {
                 new models.PathNode({ name: 'form', is_repeat: false, doc_type: 'PathNode' }),
                 new models.PathNode({ name: 'repeat', is_repeat: true, doc_type: 'PathNode' }),
             ];
-            assert.equal(utils.readablePath(nodes), 'form.repeat[]');
+            assert.equal(models.readablePath(nodes), 'form.repeat[]');
         });
     });
 
     describe('#customPathToNodes', function () {
         it('Should convert a string path to PathNodes', function () {
             var customPath = 'form.photo';
-            var nodes = utils.customPathToNodes(customPath);
+            var nodes = models.customPathToNodes(customPath);
 
             assert.equal(nodes.length, 2);
             assert.isTrue(_.all(nodes, function (n) { return n instanceof models.PathNode; }));
@@ -51,7 +51,7 @@ describe('Export Utility functions', function () {
 
         it('Should convert a string path to PathNodes with repeats', function () {
             var customPath = 'form.repeat[]';
-            var nodes = utils.customPathToNodes(customPath);
+            var nodes = models.customPathToNodes(customPath);
 
             assert.equal(nodes.length, 2);
             assert.isTrue(_.all(nodes, function (n) { return n instanceof models.PathNode; }));

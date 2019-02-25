@@ -14,6 +14,8 @@ class PermissionsTest(TestCase):
     def test_OR(self):
         p1 = Permissions(
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1'],
         )
@@ -22,12 +24,14 @@ class PermissionsTest(TestCase):
             view_reports=True,
             view_report_list=['report2'],
         )
-        self.assertEqual(dict(p1 | p2), dict(Permissions(
+        self.assertEqual(p1 | p2, Permissions(
             edit_apps=True,
             edit_web_users=True,
+            view_web_users=True,
+            view_roles=True,
             view_reports=True,
             view_report_list=['report1', 'report2'],
-        )))
+        ))
 
 
 @mock.patch('corehq.apps.export.views.utils.domain_has_privilege',

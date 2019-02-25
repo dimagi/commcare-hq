@@ -15,10 +15,13 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
+
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
+from corehq.util.datadog.utils import load_counter
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -110,7 +113,9 @@ class _ExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        return self.writer.write([(table, [FormattedRow(data=row.data)])])
+        return self.writer.write([
+            (table, [FormattedRow(data=row.data, hyperlink_column_indices=row.hyperlink_column_indices)])
+        ])
 
     def get_preview(self):
         return self.writer.get_preview()
@@ -342,6 +347,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     total_rows = 0
     compute_total = 0
     write_total = 0
+    track_load = load_counter(export_instance.type, "export", export_instance.domain)
 
     for row_number, doc in enumerate(documents):
         total_bytes += sys.getsizeof(doc)
@@ -374,6 +380,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
 
             total_rows += len(rows)
 
+        track_load()
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
@@ -382,6 +389,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
+    _record_export_duration(end - start, export_instance)
 
 
 def _time_in_milliseconds():
@@ -401,6 +409,11 @@ def _record_datadog_export_duration(duration, doc_bytes, n_rows, tags):
 
 
 def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
+    # deprecated: datadog histograms used this way are usually meaningless
+    # because they are aggregated on a 10s window (so unless you're constantly
+    # processing at least 100 measurements per 10s window then the percentile
+    # will approximate the average). Also more nuanced reasons. See
+    # https://confluence.dimagi.com/x/4ArDAQ#TroubleshootingPasteboard/HQchatdumpingground-Datadog
     datadog_histogram(metric, duration, tags=tags)
     if doc_bytes:
         datadog_histogram(
@@ -414,6 +427,16 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
             duration // n_rows,
             tags=tags,
         )
+
+
+def _record_export_duration(duration, export):
+    export.last_build_duration = duration
+    try:
+        export.save()
+    except ResourceConflict:
+        export = get_properly_wrapped_export_instance(export.get_id)
+        export.last_build_duration = duration
+        export.save()
 
 
 def _get_base_query(export_instance):
@@ -450,22 +473,6 @@ def rebuild_export(export_instance, progress_tracker):
         export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
         with export_file as payload:
             save_export_payload(export_instance, payload)
-
-
-def should_rebuild_export(export, last_access_cutoff):
-    """
-    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
-    :return: True if export should be rebuilt
-    """
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
-    is_auto_rebuild = last_access_cutoff is not None
-    return not is_auto_rebuild or (
-        export.auto_rebuild_enabled
-        and (
-            export.last_accessed is None
-            or export.last_accessed > last_access_cutoff
-        )
-    )
 
 
 def save_export_payload(export, payload):

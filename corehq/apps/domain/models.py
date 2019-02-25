@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 import uuid
 
+import six
 from django.db.transaction import atomic
 from six.moves import map
 
@@ -262,6 +263,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
+@six.python_2_unicode_compatible
 class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
@@ -468,8 +470,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @staticmethod
     @quickcache(['name'], timeout=24 * 60 * 60)
     def is_secure_session_required(name):
-        domain = Domain.get_by_name(name)
-        return domain and domain.secure_sessions
+        domain_obj = Domain.get_by_name(name)
+        return domain_obj and domain_obj.secure_sessions
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -578,9 +580,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def readable_languages(self):
         return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
-
-    def __unicode__(self):
-        return self.name
 
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60)
@@ -1019,7 +1018,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return None
 
         return (
-            self.fetch_attachment(LOGO_ATTACHMENT),
+            self.fetch_attachment(LOGO_ATTACHMENT, return_bytes=True),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
 
@@ -1268,23 +1267,7 @@ class DomainAuditRecordEntry(models.Model):
 
     @classmethod
     @atomic
-    def update_calculations(cls, domain, model, method=None):
+    def update_calculations(cls, domain, property_to_update):
         obj, is_new = cls.objects.get_or_create(domain=domain)
-
-        config = {
-            ('retrieve_download', None): "cp_n_downloads_custom_exports",
-            ('ConfigurableReportView', None): "cp_n_viewed_ucr_reports",
-            ('ProjectReportDispatcher', None): "cp_n_viewed_non_ucr_reports",
-            ('ReportConfiguration', 'create'): "cp_n_reports_created",
-            ('ReportConfiguration', 'update'): "cp_n_reports_edited",
-            ('ReportNotification', None): "cp_n_saved_scheduled_reports",
-            ('release_build', None): "cp_n_click_app_deploy",
-            ('form_source', None): "cp_n_form_builder_entered",
-            ('patch_xform', None): "cp_n_saved_app_changes",
-            ('edit_module_attr', None): "cp_n_saved_app_changes",
-            ('edit_app_attr', None): "cp_n_saved_app_changes"
-        }
-
-        property_to_update = config.get((model, method))
         setattr(obj, property_to_update, F(property_to_update) + 1)
         obj.save()

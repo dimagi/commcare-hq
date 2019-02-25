@@ -1,7 +1,15 @@
 {
   "domains": [
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-test",
     "icds-sql",
@@ -18,6 +26,7 @@
   "data_source_table": "static-home_visit_forms",
   "config": {
     "title": "LS - Timely Home Visits (Static)",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.LSTimelyHomeVisitsUCR",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -59,16 +68,16 @@
         },
         "display": "Filter by Supervisor"
       },
-	  {  
+      {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_migrated",
         "field": "is_migrated",
         "display": "Whether Migrated"
       },
       {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_availing",
         "field": "is_availing",
         "display": "Whether Availing Services"

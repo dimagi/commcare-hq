@@ -63,7 +63,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'clean_water'
+                    'redirect': 'awc_infrastructure/clean_water'
                 },
                 {
                     'label': _("AWCs Reported Functional Toilet"),
@@ -84,7 +84,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'functional_toilet'
+                    'redirect': 'awc_infrastructure/functional_toilet'
                 }
             ],
             [
@@ -116,7 +116,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'infants_weight_scale'
+                    'redirect': 'awc_infrastructure/infants_weight_scale'
                 },
                 {
                     'label': _('AWCs Reported Weighing Scale: Mother and Child'),
@@ -137,7 +137,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'adult_weight_scale'
+                    'redirect': 'awc_infrastructure/adult_weight_scale'
                 }
             ],
             [
@@ -160,7 +160,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'sum_last_update'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'medicine_kit'
+                    'redirect': 'awc_infrastructure/medicine_kit'
                 }
             ],
             # [

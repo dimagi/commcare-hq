@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
+from corehq.util.context_processors import commcare_hq_names
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 
@@ -130,7 +131,7 @@ def _get_default_tiles(request):
             return False
         user = request.couch_user
         return not can_edit_users(request) and (
-            user.can_edit_locations() or user_can_edit_location_types(user, request.project)
+            user.can_edit_locations() or user_can_edit_location_types(user, request.domain)
         )
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
@@ -155,6 +156,12 @@ def _get_default_tiles(request):
     )
 
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
+    apps_link = lambda urlname, req: (
+        '' if domain_has_apps(request.domain)
+        else reverse(urlname, args=[request.domain])
+    )
+
+    commcare_name = commcare_hq_names(request)['commcare_hq_names']['COMMCARE_NAME']
 
     return [
         Tile(
@@ -165,6 +172,7 @@ def _get_default_tiles(request):
             paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
+            url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
         ),
         Tile(
@@ -179,12 +187,12 @@ def _get_default_tiles(request):
         ),
         Tile(
             request,
-            title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
+            title=_('{cc_name} Supply Setup').format(cc_name=commcare_name),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
-            help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
+            help_text=_("Update {cc_name} Supply Settings").format(cc_name=commcare_name),
         ),
         Tile(
             request,

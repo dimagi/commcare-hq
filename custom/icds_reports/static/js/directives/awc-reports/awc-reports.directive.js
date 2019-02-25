@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1705,6 +1705,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
+    vm.dataNotEntered = "Data Not Entered";
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -1736,18 +1737,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
             DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderAwwPhoneNumber).withClass('medium-col'),
+            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderMotherPhoneNumber).withClass('medium-col'),
         ];
     } else if (vm.step === 'pregnant') {
         vm.dtColumns = [
             DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
             DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
+            DTColumnBuilder.newColumn('closed').withTitle('Status').renderWith(renderClosed).withClass('medium-col'),
             DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
             DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
             DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
             DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
             DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given to date').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
+            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
             DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
         ];
     } else if (vm.step === 'lactating') {
@@ -1756,11 +1760,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
             DTColumnBuilder.newColumn('add').withTitle('Date of Delivery').renderWith(renderAdd).withClass('medium-col'),
             DTColumnBuilder.newColumn('delivery_nature').withTitle('Type of Delivery').renderWith(renderDeliveryNature).withClass('medium-col'),
-            DTColumnBuilder.newColumn('institutional_delivery_in_month').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
+            DTColumnBuilder.newColumn('institutional_delivery').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
             DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
             DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
             DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given').renderWith(renderNumRationsDistributed).withClass('medium-col'),
+            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given in current month').renderWith(renderNumRationsDistributed).withClass('medium-col'),
         ];
     }
 
@@ -1770,88 +1774,92 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderPersonName(data, type, full) {
         return '<span class="pointer link" ng-click="$ctrl.goToBeneficiaryDetails(\''
-            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+            + full.case_id + '\')">' + full.person_name || vm.dataNotEntered + '</span>';
     }
 
     function renderPersonNamePregnant(data, type, full) {
         return '<span class="pointer link" ng-click="$ctrl.goToPregnantDetails(\''
-            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+            + full.case_id + '\')">' + full.person_name || vm.dataNotEntered + '</span>';
     }
 
     function renderPersonNameLactating(data, type, full) {
-        return full.person_name || 'Data not Entered';
+        return full.person_name || vm.dataNotEntered;
     }
 
     function renderDateOfBirth(data, type, full) {
-        return full.dob || 'Data not Entered';
+        return full.dob || vm.dataNotEntered;
     }
 
     function renderAge(data, type, full) {
-        return full.age || 'Data not Entered';
+        return full.age || vm.dataNotEntered;
+    }
+
+    function renderClosed(data, type, full) {
+        return full.closed ? 'Pregnancy terminated' : 'Pregnant';
     }
 
     function renderOpenedOn(data, type, full) {
-        return full.opened_on || 'Data not Entered';
+        return full.opened_on || vm.dataNotEntered;
     }
 
     function renderEdd(data, type, full) {
-        return full.edd || 'Data not Entered';
+        return full.edd || vm.dataNotEntered;
     }
 
     function renderTrimester(data, type, full) {
-        return full.trimester || 'Data not Entered';
+        return full.trimester || vm.dataNotEntered;
     }
 
     function renderAnemic(data, type, full) {
-        return full.anemic || 'Data not Entered';
+        return full.anemic || vm.dataNotEntered;
     }
 
     function renderNumAncComplete(data, type, full) {
-        return full.num_anc_complete || 'Data not Entered';
+        return full.num_anc_complete || vm.dataNotEntered;
     }
 
     function renderBeneficiary(data, type, full) {
-        return full.beneficiary || 'Data not Entered';
+        return full.beneficiary || vm.dataNotEntered;
     }
 
     function renderNumberOfThrsGiven(data, type, full) {
-        return full.number_of_thrs_given || 'Data not Entered';
+        return full.number_of_thrs_given || vm.dataNotEntered;
     }
 
     function renderLastDateThr(data, type, full) {
-        return full.last_date_thr || 'Data not Entered';
+        return full.last_date_thr || vm.dataNotEntered;
     }
 
     function renderAdd(data, type, full) {
-        return full.add || 'Data not Entered';
+        return full.add || vm.dataNotEntered;
     }
 
     function renderBreastfedAtBirth(data, type, full) {
-        return full.breastfed_at_birth || 'Data not Entered';
+        return full.breastfed_at_birth || vm.dataNotEntered;
     }
 
     function renderIsEbf(data, type, full) {
-        return full.is_ebf || 'Data not Entered';
+        return full.is_ebf || vm.dataNotEntered;
     }
 
     function renderInstitutionalDeliveryInMonth(data, type, full) {
-        return full.institutional_delivery_in_month || 'Data not Entered';
+        return full.institutional_delivery || vm.dataNotEntered;
     }
 
     function renderDeliveryNature(data, type, full) {
-        return full.delivery_nature || 'Data not Entered';
+        return full.delivery_nature || vm.dataNotEntered;
     }
 
     function renderNumPncVisits(data, type, full) {
-        return full.num_pnc_visits || 'Data not Entered';
+        return full.num_pnc_visits || vm.dataNotEntered;
     }
 
     function renderNumRationsDistributed(data, type, full) {
-        return full.num_rations_distributed || 'Data not Entered';
+        return full.num_rations_distributed || vm.dataNotEntered;
     }
 
     function renderFullyImmunizedDate(data, type, full) {
-        return full.fully_immunized || 'Data not Entered';
+        return full.fully_immunized || vm.dataNotEntered;
     }
 
     function renderWeightForAgeStatus(data, type, full) {
@@ -1876,7 +1884,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderPseDaysAttended(data, type, full) {
-        return full.pse_days_attended || 'Data not Entered';
+        return full.pse_days_attended || vm.dataNotEntered;
+    }
+
+    function renderAwwPhoneNumber(data, type, full) {
+        return full.aww_phone_number || vm.dataNotEntered;
+    }
+
+    function renderMotherPhoneNumber(data, type, full) {
+        return full.mother_phone_number || vm.dataNotEntered;
     }
 
     vm.showTable = true;
@@ -1969,9 +1985,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 
-        var recordedWeight = 'Data not Entered';
-        var recordedHeight = 'Data not Entered';
-        var age = 'Data not Entered';
+        var recordedWeight = vm.dataNotEntered;
+        var recordedHeight = vm.dataNotEntered;
+        var age = vm.dataNotEntered;
 
         if (weightRecorded) {
             recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
@@ -2185,12 +2201,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartTwoData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartTwoData.length; i++) {
+                        if (vm.lineChartTwoData[i].x === d.value) {
+                            tooltipData = vm.lineChartTwoData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
+                    if (tooltipData) {
+                        html = "<p>Height: <strong>" + tooltipData.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2245,12 +2264,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartOneData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartOneData.length; i++) {
+                        if (vm.lineChartOneData[i].x === d.value) {
+                            tooltipData = vm.lineChartOneData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2305,12 +2327,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartThreeData, function (x) {
-                        return x.x === d.value;
-                    });
+                    var tooltipData = void(0);
+                    for (var i = 0; i < vm.lineChartThreeData.length; i++) {
+                        if (vm.lineChartThreeData[i].x === d.value) {
+                            tooltipData = vm.lineChartThreeData[i];
+                        }
+                    }
 
-                    if (tooltip_data) {
-                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
+                    if (tooltipData) {
+                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2494,44 +2519,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             function (response) {
                 vm.pregnantData = response.data['data'];
                 vm.showTable = false;
-                var empty = {
-                    case_id: null,
-                    trimester: null,
-                    person_name: null,
-                    age: null,
-                    mobile_number: null,
-                    edd: null,
-                    opened_on: null,
-                    preg_order: null,
-                    home_visit_date: 'Not entered',
-                    bp: null,
-                    anc_weight: null,
-                    anc_hemoglobin: null,
-                    anc_abnormalities: null,
-                    anemic: null,
-                    symptoms: null,
-                    counseling: null,
-                    using_ifa: null,
-                    ifa_consumed_last_seven_days: null,
-                    tt_taken: null,
-                    tt_date: null,
-                };
-                if (vm.pregnantData[0].length > 0) {
-                    vm.pregnant = vm.pregnantData[0][0];
-                } else if (vm.pregnantData[1].length > 0) {
-                    vm.pregnantData[0].push(empty);
-                    vm.pregnant = vm.pregnantData[1][0];
-                } else {
-                    vm.pregnantData[0].push(empty);
-                    vm.pregnantData[1].push(empty);
-                    vm.pregnant = vm.pregnantData[2][0];
-                }
-                if (vm.pregnantData[0].length === 1) {
-                    vm.pregnantData[0].push(empty);
-                }
-                if (vm.pregnantData[2].length === 0) {
-                    vm.pregnantData[2].push(empty);
-                }
+                vm.pregnant = response.data['pregnant'];
                 vm.showPregnant = true;
             },
             function (error) {
@@ -2577,9 +2565,12 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         demographics: {route: "/awc_reports/demographics", label: "Demographics"},
         awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
-        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
-        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
     };
+
+    if (haveAccessToFeatures) {
+        vm.steps.pregnant = {route: "/awc_reports/pregnant", label: "Pregnant Women"};
+        vm.steps.lactating = {route: "/awc_reports/lactating", label: "Lactating Women"};
+    }
 
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
@@ -2640,7 +2631,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

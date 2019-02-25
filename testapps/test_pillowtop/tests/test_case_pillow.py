@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.test import TestCase
 import uuid
 
-from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 
 from corehq.apps.es import CaseES
@@ -54,7 +54,7 @@ class CasePillowTest(TestCase):
         self.assertEqual(1, results.total)
 
         # soft delete the case
-        with process_pillow_changes('CaseToElasticsearchPillow'):
+        with process_pillow_changes('case-pillow', {'skip_ucr': True}):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 CaseAccessors(self.domain).soft_delete_cases([case_id])
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
@@ -66,7 +66,7 @@ class CasePillowTest(TestCase):
     def _create_case_and_sync_to_es(self):
         case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        with process_pillow_changes('CaseToElasticsearchPillow'):
+        with process_pillow_changes('case-pillow'):
             with process_pillow_changes('DefaultChangeFeedPillow'):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)

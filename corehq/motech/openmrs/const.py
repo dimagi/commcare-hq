@@ -34,6 +34,13 @@ OPENMRS_ATOM_FEED_POLL_INTERVAL = {'minute': '*/10'}
 # OpenmrsRepeater ID is appended to this.
 OPENMRS_ATOM_FEED_DEVICE_ID = 'openmrs-atomfeed-'
 
+ATOM_FEED_NAME_PATIENT = 'patient'
+ATOM_FEED_NAME_ENCOUNTER = 'encounter'
+ATOM_FEED_NAMES = (
+    ATOM_FEED_NAME_PATIENT,
+    ATOM_FEED_NAME_ENCOUNTER,
+)
+
 # The Location property to store the OpenMRS location UUID in
 LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 

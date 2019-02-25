@@ -11,6 +11,7 @@ from corehq.apps.data_interfaces.models import (
     UpdateCaseDefinition,
     CustomActionDefinition,
 )
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from couchdbkit import ResourceNotFound
@@ -45,6 +46,16 @@ def remove_quotes(value):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
     return value
+
+
+def is_valid_case_property_name(value):
+    if not isinstance(value, six.string_types):
+        return False
+    try:
+        validate_case_property_characters(value)
+        return True
+    except ValidationError:
+        return False
 
 
 def validate_case_property_characters(value):
@@ -86,11 +97,11 @@ def validate_case_property_name(value, allow_parent_case_references=True):
     return value
 
 
-def hidden_bound_field(field_name):
+def hidden_bound_field(field_name, data_value):
     return Field(
         field_name,
         type='hidden',
-        data_bind='value: %s' % field_name,
+        data_bind='value: %s' % data_value,
     )
 
 
@@ -128,8 +139,8 @@ class AddCaseGroupForm(forms.Form):
         self.helper.layout = Layout(
             InlineField('name'),
             StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % _("Create Group")),
-                css_class='btn-success',
+                mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Group")),
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -198,7 +209,7 @@ class AddCaseToGroupForm(forms.Form):
             ),
             StrictButton(
                 mark_safe('<i class="fa fa-plus"></i> %s' % _("Add Case")),
-                css_class='btn-success',
+                css_class='btn-primary',
                 type="submit"
             )
         )
@@ -232,9 +243,7 @@ class CaseUpdateRuleForm(forms.Form):
         super(CaseUpdateRuleForm, self).__init__(*args, **kwargs)
 
         self.domain = domain
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
 
         self.helper.layout = Layout(
@@ -359,31 +368,32 @@ class CaseRuleCriteriaForm(forms.Form):
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
                 _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
+                    '<p class="help-block alert alert-info"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
-                hidden_bound_field('filter_on_server_modified'),
-                hidden_bound_field('server_modified_boundary'),
-                hidden_bound_field('custom_match_definitions'),
-                hidden_bound_field('property_match_definitions'),
-                hidden_bound_field('filter_on_closed_parent'),
+                hidden_bound_field('filter_on_server_modified', 'filterOnServerModified'),
+                hidden_bound_field('server_modified_boundary', 'serverModifiedBoundary'),
+                hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
+                hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
+                hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria",
             ),
         )
 
-        self.case_type_helper = FormHelper()
-        self.case_type_helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.case_type_helper.field_class = 'col-xs-2'
+        self.case_type_helper = HQFormHelper()
         self.case_type_helper.form_tag = False
-        self.case_type_helper.layout = Layout(Field('case_type'))
+        self.case_type_helper.layout = Layout(
+            Fieldset(
+                _("Rule Criteria"),
+                Field('case_type')
+            )
+        )
 
     @property
     @memoized
@@ -624,17 +634,15 @@ class CaseRuleActionsForm(forms.Form):
 
         self.domain = domain
 
-        self.helper = FormHelper()
-        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
-        self.helper.field_class = 'col-xs-2'
+        self.helper = HQFormHelper()
         self.helper.form_tag = False
         self.helper.form_show_errors = False
         self.helper.layout = Layout(
             Fieldset(
                 _("Actions"),
-                hidden_bound_field('close_case'),
-                hidden_bound_field('properties_to_update'),
-                hidden_bound_field('custom_action_definitions'),
+                hidden_bound_field('close_case', 'closeCase'),
+                hidden_bound_field('properties_to_update', 'propertiesToUpdate'),
+                hidden_bound_field('custom_action_definitions', 'customActionDefinitions'),
                 Div(data_bind="template: {name: 'case-actions'}"),
                 css_id="rule-actions",
             ),

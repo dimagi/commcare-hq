@@ -111,7 +111,7 @@
                 </div>
                 <!-- /ko -->
                 {% for namespace in namespaces %}
-                    <button class="btn btn-success" data-bind="click: function (){ addItem('{{ namespace }}') }">
+                    <button class="btn btn-primary" data-bind="click: function (){ addItem('{{ namespace }}') }">
                         <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
                     </button>
                 {% endfor %}

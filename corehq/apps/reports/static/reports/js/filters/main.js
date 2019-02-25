@@ -10,7 +10,7 @@ hqDefine("reports/js/filters/main", [
     'locations/js/location_drilldown',
     'reports/js/filters/advanced_forms_options',
     'reports/js/filters/drilldown_options',
-    'reports_core/js/choice_list_utils',
+    'reports_core/js/choice_list_utils_v3',
     'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
     'reports/js/filters/case_list_explorer_knockout_bindings',
@@ -192,7 +192,7 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el), data = $el.data();
             var model = locationDrilldown.locationSelectViewModel({
                 "hierarchy": data.hierarchy,
-                "show_location_filter": data.makeOptional && !data.locId ? "n" : "y",
+                "show_location_filter": data.makeOptional && (data.locId === 'None' || !data.locId) ? "n" : "y",
                 "loc_url": data.locationUrl,
                 "auto_drill": data.autoDrill,
                 "max_drilldown_length": data.maxDrilldownLength,

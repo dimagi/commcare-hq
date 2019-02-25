@@ -20,7 +20,7 @@ class TestAWCInfrastructure(TestCase):
                 }
             )['records'][0][0],
             {
-                "redirect": "clean_water",
+                "redirect": "awc_infrastructure/clean_water",
                 "all": 30,
                 "format": "percent_and_div",
                 "color": "red",
@@ -43,7 +43,7 @@ class TestAWCInfrastructure(TestCase):
                 }
             )['records'][0][1],
             {
-                "redirect": "functional_toilet",
+                "redirect": "awc_infrastructure/functional_toilet",
                 "all": 30,
                 "format": "percent_and_div",
                 "color": "red",
@@ -66,7 +66,7 @@ class TestAWCInfrastructure(TestCase):
                 }
             )['records'][1][0],
             {
-                "redirect": "infants_weight_scale",
+                "redirect": "awc_infrastructure/infants_weight_scale",
                 "all": 30,
                 "format": "percent_and_div",
                 "color": "green",
@@ -89,7 +89,7 @@ class TestAWCInfrastructure(TestCase):
                 }
             )['records'][1][1],
             {
-                "redirect": "adult_weight_scale",
+                "redirect": "awc_infrastructure/adult_weight_scale",
                 "all": 30,
                 "format": "percent_and_div",
                 "color": "green",
@@ -112,7 +112,7 @@ class TestAWCInfrastructure(TestCase):
                 }
             )['records'][2][0],
             {
-                "redirect": "medicine_kit",
+                "redirect": "awc_infrastructure/medicine_kit",
                 "all": 30,
                 "format": "percent_and_div",
                 "color": "red",

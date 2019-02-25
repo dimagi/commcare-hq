@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
+from dimagi.utils.parsing import json_format_datetime
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -63,33 +64,44 @@ def get_form_inferred_schema(domain, app_id, xmlns):
     return FormInferredSchema.wrap(result['doc']) if result else None
 
 
-def get_form_export_instances(domain):
+def get_form_export_instances(domain, include_docs=True):
     from .models import FormExportInstance
-
     key = [domain, 'FormExportInstance']
-    return _get_export_instance(FormExportInstance, key)
+    return _get_export_instance(FormExportInstance, key, include_docs=include_docs)
 
 
-def get_case_export_instances(domain):
+def get_case_export_instances(domain, include_docs=True):
     from .models import CaseExportInstance
-
     key = [domain, 'CaseExportInstance']
-    return _get_export_instance(CaseExportInstance, key)
+    return _get_export_instance(CaseExportInstance, key, include_docs=include_docs)
 
 
-def _get_saved_exports(domain, has_deid_permissions, new_exports_getter):
-    exports = new_exports_getter(domain)
+def _get_saved_exports(domain, has_deid_permissions, new_exports_getter, include_docs=True):
+    exports = new_exports_getter(domain, include_docs=include_docs)
+    if not include_docs:
+        return _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter)
     if not has_deid_permissions:
         exports = [e for e in exports if not e.is_safe]
-    return sorted(exports, key=lambda x: x.name)
+    return exports
 
 
-def get_case_exports_by_domain(domain, has_deid_permissions):
-    return _get_saved_exports(domain, has_deid_permissions, get_case_export_instances)
+def _get_brief_saved_exports(domain, has_deid_permissions, new_exports_getter):
+    exports = new_exports_getter(domain)
+    if not has_deid_permissions:
+        exports = [e for e in exports if not e['is_deidentified']]
+    return exports
 
 
-def get_form_exports_by_domain(domain, has_deid_permissions):
-    return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances)
+# Note that if include_docs is True, this will return wrapped documents, but
+# if False, it will return dicts (the value from export_instances_by_domain's map.js)
+def get_case_exports_by_domain(domain, has_deid_permissions, include_docs=True):
+    return _get_saved_exports(domain, has_deid_permissions, get_case_export_instances, include_docs=include_docs)
+
+
+# Note that if include_docs is True, this will return wrapped documents, but
+# if False, it will return dicts (the value from export_instances_by_domain's map.js)
+def get_form_exports_by_domain(domain, has_deid_permissions, include_docs=True):
+    return _get_saved_exports(domain, has_deid_permissions, get_form_export_instances, include_docs=include_docs)
 
 
 def get_export_count_by_domain(domain):
@@ -116,27 +128,43 @@ def get_deid_export_count(domain):
     ).all())
 
 
-def _get_export_instance(cls, key):
+def _get_export_instance(cls, key, include_docs=True):
     results = cls.get_db().view(
         'export_instances_by_domain/view',
         startkey=key,
         endkey=key + [{}],
-        include_docs=True,
+        include_docs=include_docs,
         reduce=False,
     ).all()
-    return [cls.wrap(result['doc']) for result in results]
+    if include_docs:
+        return [cls.wrap(result['doc']) for result in results]
+    return [result['value'] for result in results]
 
 
-def get_all_daily_saved_export_instance_ids():
+def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
+    """
+    get all saved exports accessed after the timestamp
+    :param accessed_after: datetime to get reports that have been accessed after this timestamp
+    """
     from .models import ExportInstance
-    results = ExportInstance.get_db().view(
+    # get exports that have not been accessed yet
+    new_exports = ExportInstance.get_db().view(
         "export_instances_by_is_daily_saved/view",
-        startkey=[True],
-        endkey=[True, {}],
         include_docs=False,
+        key=[None],
         reduce=False,
     ).all()
-    return [result['id'] for result in results]
+    export_ids = [export['id'] for export in new_exports]
+
+    # get exports that have last_accessed set after the cutoff requested
+    accessed_reports = ExportInstance.get_db().view(
+        "export_instances_by_is_daily_saved/view",
+        include_docs=False,
+        startkey=[json_format_datetime(accessed_after)],
+        reduce=False,
+    ).all()
+    export_ids.extend([result['id'] for result in accessed_reports])
+    return export_ids
 
 
 def get_properly_wrapped_export_instance(doc_id):
