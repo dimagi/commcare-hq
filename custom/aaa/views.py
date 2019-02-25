@@ -29,6 +29,7 @@ from custom.aaa.tasks import (
     update_ccs_record_table,
     update_child_table,
     update_woman_table,
+    update_woman_history_table,
 )
 from custom.aaa.utils import build_location_filters
 
@@ -196,7 +197,9 @@ class UnifiedBeneficiaryReportAPI(View):
                     where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
                 )
-                .values('person_case_id', 'name', 'age', 'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
+                .values(
+                    'person_case_id', 'name', 'age',
+                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
             )[:10]
             data = list(data)
         elif beneficiary_type == 'pregnant_women':
