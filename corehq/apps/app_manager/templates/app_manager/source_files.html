@@ -5,7 +5,7 @@
 
 {% block page_content %}
     {% registerurl 'diff' app.domain app.id '---' %}
-    {% initial_page_data 'built_versions' built_versions %}
+    {% registerurl 'paginate_releases' app.domain app.copy_of %}
     {% initial_page_data 'current_version' app.built_with.build_number %}
 
     <p class="form-inline" id="compare-form">
@@ -16,7 +16,7 @@
 
     {% if not other_app %}
         Or compare with another version:
-        <input type="text" class="form-control input-sm" placeholder="version" />
+        <select class="app-manager-version-dropdown form-control"></select>
         <button class="btn btn-primary btn-sm">Compare</button>
     {% endif %}
     </p>

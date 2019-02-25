@@ -723,7 +723,6 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 1.7
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -2159,7 +2158,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-RESTORE_TIMING_DOMAINS = {
+# Domains that we want to tag in datadog
+DATADOG_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),

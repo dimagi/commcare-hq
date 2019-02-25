@@ -30,7 +30,7 @@ module.exports = function(grunt) {
     var customApps = [
         'icds_reports',
         'champ',
-        'reach'
+        'aaa'
     ];
 
     var mochaConfig = {},

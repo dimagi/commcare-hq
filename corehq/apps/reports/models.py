@@ -655,6 +655,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
     uuid = StringProperty()
+    start_date = DateProperty(default=None)
 
     @property
     def is_editable(self):

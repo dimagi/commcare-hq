@@ -316,7 +316,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     page: page,
                     limit: self.fetchLimit,
                     only_show_released: self.onlyShowReleased(),
-                    build_comment: self.buildComment(),
+                    query: self.buildComment(),
                 },
                 success: function (data) {
                     self.savedApps(

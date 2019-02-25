@@ -22,6 +22,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq.util.datadog.utils import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
@@ -258,6 +259,10 @@ class FormProcessorSQL(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True):
+        if lock:
+            # only record metric if locking since otherwise it has been
+            # (most likley) recorded elsewhere
+            case_load_counter("rebuild_case", domain)()
         case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
         found = bool(case)
         if not found:

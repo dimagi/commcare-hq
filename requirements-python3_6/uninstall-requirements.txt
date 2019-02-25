@@ -9,3 +9,4 @@ http-parser
 zeep
 cython
 django-celery-results
+numpy
