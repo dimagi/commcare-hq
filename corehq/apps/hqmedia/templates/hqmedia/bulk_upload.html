@@ -1,4 +1,4 @@
-{% extends "hqmedia/uploader_base.html" %}
+{% extends "hqwebapp/base_page.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
@@ -12,6 +12,8 @@
         }
     </style>
 {% endblock %}
+
+{% requirejs_main 'hqmedia/js/hqmediauploaders' %}
 
 {% block page_content %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
