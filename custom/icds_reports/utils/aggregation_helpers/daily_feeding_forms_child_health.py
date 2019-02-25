@@ -33,9 +33,9 @@ class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
             LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
             %(month)s AS month,
             DISTINCT child_health_case_id AS case_id,
-            MAX(timeend) AS latest_time_end_processed,
-            SUM(attended_child_ids) AS sum_attended_child_ids,
-            SUM(lunch) AS lunch_count
+            MAX(timeend) OVER w AS latest_time_end_processed,
+            SUM(attended_child_ids) OVER w AS sum_attended_child_ids,
+            SUM(lunch) OVER w AS lunch_count
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
