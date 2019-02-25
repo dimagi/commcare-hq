@@ -232,6 +232,22 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initMenuItemSorting = function () {
+        initDragHandles();
+        $('.sortable').each(function () {
+            initSortable($(this));
+        });
+        $('.sort-action').hide();
+
+        function initDragHandles() {
+            $('.sortable .sort-action').addClass('sort-disabled');
+            $('.drag_handle').addClass('fa fa-arrows-v');
+            $('.js-appnav-drag-module').on('mouseenter', function () {
+                $(this).closest('.js-sorted-li').addClass('appnav-highlight');
+            }).on('mouseleave', function () {
+                $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
+            });
+        }
+
         function updateRelatedTags($elem, name, value) {
             var relatedTags = $elem.find("[data-" + name + "]");
             _.each(relatedTags, function (related) {
@@ -252,18 +268,7 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         }
 
-        $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass('fa fa-arrows-v');
-
-        $('.js-appnav-drag-module').on('mouseenter', function () {
-            $(this).closest('.js-sorted-li').addClass('appnav-highlight');
-        }).on('mouseleave', function () {
-            $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
-        });
-
-        // Initialize sorting behavior for both modules and forms
-        $('.sortable').each(function () {
-            var $sortable = $(this);
+        function initSortable($sortable) {
             var sortingForms = $sortable.hasClass('sortable-forms');
             var options = {
                 handle: '.drag_handle ',
@@ -283,8 +288,9 @@ hqDefine('app_manager/js/app_manager', function () {
 
                     // if you're moving modules or moving forms within the same module, use this logic to find to and from
                     if (!sortingForms || toModuleUid === ui.item.data('moduleuid')) {
-                        $(this).children().not('.sort-disabled').each(function (i) {
+                        $sortable.children().not('.sort-disabled').each(function (i) {
                             var index = parseInt($(this).data('index'), 10);
+                            console.log(index);
                             if (from !== -1) {
                                 if (from === index) {
                                     to = i;
@@ -302,7 +308,7 @@ hqDefine('app_manager/js/app_manager', function () {
                             }
                         });
                     } else { //moving forms to a new submodule
-                        $(this).children().not('.sort-disabled').each(function (i) {
+                        $sortable.children().not('.sort-disabled').each(function (i) {
                             if ($(this).data('moduleuid') !== toModuleUid) {
                                 movingToNewModule = true;
                                 to = i;
@@ -314,7 +320,7 @@ hqDefine('app_manager/js/app_manager', function () {
 
                     if (movingToNewModule || to !== from) {
                         var fromModuleUid = ui.item.data('moduleuid');
-                        $form = $(this).find('> .sort-action form');
+                        $form = $sortable.find('> .sort-action form');
                         $form.find('[name="from"], [name="to"]').remove();
                         $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
                         $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
@@ -346,9 +352,8 @@ hqDefine('app_manager/js/app_manager', function () {
             if (sortingForms) {
                 options["connectWith"] = '.sortable-forms';
             }
-            $(this).sortable(options);
-        });
-        $('.sort-action').hide();
+            $sortable.sortable(options);
+        }
     };
 
     /**
