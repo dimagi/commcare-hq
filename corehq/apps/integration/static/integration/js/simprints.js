@@ -8,7 +8,7 @@ hqDefine('integration/js/simprints', [
     'use strict';
 
     return {
-        simprintsFormModel: function(formData) {
+        simprintsFormModel: function (formData) {
             var self = {};
 
             self.isEnabled = ko.observable(formData.is_enabled);
