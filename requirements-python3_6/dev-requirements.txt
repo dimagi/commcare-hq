@@ -19,8 +19,8 @@ backports.shutil-get-terminal-size==1.0.0  # via ipython
 bcrypt==3.1.6             # via paramiko
 beautifulsoup4==4.7.1
 billiard==3.3.0.23
-boto3==1.9.97
-botocore==1.12.97
+boto3==1.9.101
+botocore==1.12.101
 celery==3.1.25
 certifi==2018.11.29
 cffi==1.12.1
@@ -103,7 +103,7 @@ iso8601==0.1.12
 jdcal==1.4
 jenkinsapi==0.2.28
 jinja2==2.10
-jmespath==0.9.3
+jmespath==0.9.4
 json-delta==2.0
 jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.16
@@ -117,7 +117,7 @@ linecache2==1.0.0
 lxml==4.3.1
 mako==1.0.7
 markdown==2.2.1
-markupsafe==1.1.0
+markupsafe==1.1.1
 mock==2.0.0
 modernize==0.6
 msgpack-python==0.5.6
@@ -128,7 +128,7 @@ paramiko==2.4.2           # via fabric
 pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.2
 pexpect==4.6.0            # via ipython
-phonenumberslite==8.10.5
+phonenumberslite==8.10.6
 pickleshare==0.7.5        # via ipython
 pillow==5.4.1
 pip-tools==2.0.2

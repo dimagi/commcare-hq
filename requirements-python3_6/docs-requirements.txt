@@ -13,8 +13,8 @@ asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 billiard==3.3.0.23
-boto3==1.9.97
-botocore==1.12.97
+boto3==1.9.101
+botocore==1.12.101
 celery==3.1.25
 certifi==2018.11.29
 cffi==1.12.1
@@ -82,7 +82,7 @@ ipaddress==1.0.22
 iso8601==0.1.12
 jdcal==1.4
 jinja2==2.10
-jmespath==0.9.3
+jmespath==0.9.4
 json-delta==2.0
 jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.16
@@ -94,13 +94,13 @@ laboratory==0.2.0
 lxml==4.3.1
 mako==1.0.7
 markdown==2.2.1
-markupsafe==1.1.0
+markupsafe==1.1.1
 mock==2.0.0
 msgpack-python==0.5.6
 openpyxl==2.6.0
 packaging==19.0           # via sphinx
 pbr==5.1.2
-phonenumberslite==8.10.5
+phonenumberslite==8.10.6
 pillow==5.4.1
 ply==3.11
 polib==1.1.0
