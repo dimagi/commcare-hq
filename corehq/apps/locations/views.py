@@ -910,8 +910,7 @@ class LocationImportView(BaseLocationView):
 
 @require_can_edit_locations
 @location_safe
-def location_importer_job_poll(request, domain, download_id,
-                               template="hqwebapp/partials/download_status.html"):
+def location_importer_job_poll(request, domain, download_id):
     template = "locations/manage/partials/locations_upload_status.html"
     try:
         context = get_download_context(download_id)
