@@ -178,6 +178,7 @@ domain_settings = [
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
+    url(r'^integration/', include('corehq.apps.integration.urls')),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
