@@ -691,14 +691,14 @@ class ChildHistory(models.Model):
                    array_agg(zscore_grading_wfa) AS zscore_grading_wfa_history
             FROM (
                 SELECT child_health_case_id,
-                       ARRAY[timeend::text, weight_child] AS weight_child,
-                       ARRAY[timeend::text, height_child] AS height_child,
+                       ARRAY[timeend::text, weight_child::text] AS weight_child,
+                       ARRAY[timeend::text, height_child::text] AS height_child,
                        ARRAY[timeend::text, zscore_grading_wfh] AS zscore_grading_wfh,
                        ARRAY[timeend::text, zscore_grading_hfa] AS zscore_grading_hfa,
                        ARRAY[timeend::text, zscore_grading_wfa] AS zscore_grading_wfa
                 FROM "{growth_monitoring_ucr_tablename}"
             ) growth_monitoring
-            GROUP BY person_case_id
+            GROUP BY child_health_case_id
         )
         ON CONFLICT (child_health_case_id) DO UPDATE SET
            weight_child_history = EXCLUDED.weight_child_history,
