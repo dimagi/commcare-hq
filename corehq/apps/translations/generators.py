@@ -100,17 +100,17 @@ class AppTranslationsGenerator:
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.translations.app_translations import expected_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations import get_bulk_app_sheet_rows
         # simply the rows of data per sheet name
-        rows = expected_bulk_app_sheet_rows(
+        rows = get_bulk_app_sheet_rows(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )
 
         # get the translation data headers
-        from corehq.apps.translations.app_translations import expected_bulk_app_sheet_headers
-        headers = expected_bulk_app_sheet_headers(
+        from corehq.apps.translations.app_translations import get_bulk_app_sheet_headers
+        headers = get_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
