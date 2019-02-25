@@ -35,6 +35,7 @@ from corehq.apps.translations.forms import (
 )
 from corehq.apps.translations.generators import Translation, PoFileGenerator
 from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from corehq.apps.translations.models import TransifexBlacklist
 from corehq.apps.translations.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
@@ -329,6 +330,7 @@ class AppTranslations(BaseTranslationsView):
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
+        context['blacklisted_translations'] = TransifexBlacklist.objects.filter(domain=self.domain).all()
         return context
 
     def section_url(self):
