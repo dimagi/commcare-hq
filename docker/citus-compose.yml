@@ -4,26 +4,24 @@ services:
   master:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_master"
     image: 'citusdata/citus:8.1.1'
-    ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5433}:5432"]
+    ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5600}:5432"]
     labels: ['com.citusdata.role=Master']
-    environment:
-      POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
-      POSTGRES_DB: commcarehq_citus_ucr
-  worker:
-    image: 'citusdata/citus:8.1.1'
-    labels: ['com.citusdata.role=Worker']
-    depends_on: { manager: { condition: service_healthy } }
-    environment:
-      POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
-      POSTGRES_DB: commcarehq_citus_ucr
   manager:
     container_name: "${COMPOSE_PROJECT_NAME:-citus}_manager"
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ['/var/run/docker.sock:/var/run/docker.sock']
     depends_on: { master: { condition: service_healthy } }
-    environment:
-      POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
-      POSTGRES_DB: commcarehq_citus_ucr
+  worker1:
+    image: 'citusdata/citus:8.1.1'
+    labels: ['com.citusdata.role=Worker']
+    depends_on: { manager: { condition: service_healthy } }
+  worker2:
+    image: 'citusdata/citus:8.1.1'
+    ports: ['5602:5432']
+    labels: ['com.citusdata.role=Worker']
+    depends_on: { manager: { condition: service_healthy } }
+  healthcheck:
+    image: busybox
+    depends_on:
+      worker1: { condition: service_healthy }
+      worker2: { condition: service_healthy }
