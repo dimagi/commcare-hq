@@ -55,4 +55,22 @@
             </div>
         </div>
     </div>
+    {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+        <div id="delete-exploded">
+            <h1>Delete exploded cases</h1>
+            <h2><small>Delete all cases created by previous explosions</small></h2>
+            <p>Find this ID on one of your exploded cases under the property 'cc_explosion_id'</p>
+            <div class="row">
+                <div class="col-sm-8">
+                    <form class="form" action="" method="POST">
+                        {% csrf_token %}
+                        <input id="explosion_id" name="explosion_id" type="text" value="{{ explosion_id }}" placeholder="cc_explosion_id" />
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
