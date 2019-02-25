@@ -295,7 +295,8 @@ def prepare_custom_export(request, domain):
     export_filters = filter_form.get_export_filters(request, filter_form_data)
 
     export_specs = json.loads(request.POST.get('exports'))
-    export_instances = [view_helper.get_export(spec['export_id']) for spec in export_specs]
+    export_ids = [spec['export_id'] for spec in export_specs]
+    export_instances = [view_helper.get_export(export_id) for export_id in export_ids]
 
     try:
         _check_deid_permissions(permissions, export_instances)
@@ -313,7 +314,10 @@ def prepare_custom_export(request, domain):
 
     try:
         download = get_export_download(
-            export_instances=export_instances,
+            domain,
+            export_ids,
+            view_helper.model,
+            request.couch_user.username,
             filters=export_filters,
             filename=filename,
         )

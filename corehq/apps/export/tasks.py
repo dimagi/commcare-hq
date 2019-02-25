@@ -9,6 +9,7 @@ from soil import DownloadBase
 from soil.progress import get_task_status
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.utils import get_export
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
@@ -37,11 +38,13 @@ logger = logging.getLogger('export_migration')
 
 
 @task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60):
+def populate_export_download_task(domain, export_ids, exports_type, username, filters, download_id,
+                                  filename=None,expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
-    domain = export_instances[0].domain
+    export_instances = [get_export(exports_type, domain, export_id, username)
+                        for export_id in export_ids]
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
