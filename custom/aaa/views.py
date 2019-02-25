@@ -160,6 +160,7 @@ class UnifiedBeneficiaryReportAPI(View):
 
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
+        selected_date = date(selected_year, selected_month, 1)
         selected_location = self.request.POST.get('selectedLocation')
         beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
         draw = self.request.POST.get('draw', 0)
@@ -184,13 +185,17 @@ class UnifiedBeneficiaryReportAPI(View):
                     age=ExtractYear(Func(F('dob'), function='age')),
                 )
                 .filter(
-                    # should filter for date
                     # should filter for location
+                    domain=request.domain,
                     age__range=(19, 49),
                     marital_status='married',
                 )
                 .exclude(migration_status='yes')
-                .extra(select={'currentFamilyPlanningMethod': 0, 'adoptionDateOfFamilyPlaning': '2018-03-01'})
+                .extra(
+                    select={'currentFamilyPlanningMethod': 0, 'adoptionDateOfFamilyPlaning': '2018-03-01'},
+                    where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
+                    params=[selected_date, selected_date + relativedelta(months=1)]
+                )
                 .values('person_case_id', 'name', 'age', 'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
             )[:10]
             data = list(data)
