@@ -168,3 +168,4 @@ class TransifexProject(models.Model):
 
 
 admin.site.register(TransifexProject)
+admin.site.register(TransifexBlacklist)
