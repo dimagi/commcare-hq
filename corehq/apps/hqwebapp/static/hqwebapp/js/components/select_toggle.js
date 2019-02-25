@@ -39,8 +39,11 @@ hqDefine('hqwebapp/js/components/select_toggle', [
                     selected: ko.computed(function () {
                         return id === self.value();
                     }),
-                    click: function (model) {
-                        self.value(model.id);
+                    click: function (model, e) {
+                        if (model.id !== self.value()) {
+                            self.value(model.id);
+                            $(e.currentTarget).closest(".ko-select-toggle").find("select").trigger("change");
+                        }
                     },
                 };
             }));
