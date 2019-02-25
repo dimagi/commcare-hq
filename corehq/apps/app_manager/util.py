@@ -8,7 +8,7 @@ import re
 import logging
 import yaml
 import six
-from collections import namedtuple, OrderedDict
+from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy, copy
 from io import open
 
@@ -39,7 +39,8 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX,
 )
-from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
@@ -507,84 +508,102 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-def get_form_data(domain, app, include_shadow_forms=True):
-    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-    from corehq.apps.app_manager.models import ShadowForm
+class FormDataGenerator(object):
+    def __init__(self, domain, app, include_shadow_forms=True):
+        self.domain = domain
+        self.app = app
+        self.include_shadow_forms = include_shadow_forms
 
-    case_meta = app.get_case_metadata()
-    modules = []
-    errors = []
-    for module in app.get_modules():
-        forms = []
-        module_meta = {
+        self.errors = []
+
+        self._seen_save_to_case = defaultdict(list)
+        self._case_meta = self.app.get_case_metadata()
+
+    def get_app_data(self):
+        return [self._compile_module(module) for module in self.app.get_modules()], self.errors
+
+    def _compile_module(self, module):
+        return {
             'id': module.unique_id,
             'name': module.name,
             'short_comment': module.short_comment,
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
             'module_filter': module.module_filter,
+            'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
         }
 
-        form_list = module.get_forms()
-        if not include_shadow_forms:
-            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
-        for form in form_list:
-            form_meta = {
-                'id': form.unique_id,
-                'name': form.name,
-                'short_comment': form.short_comment,
-                'action_type': form.get_action_type(),
-                'form_filter': form.form_filter,
-                'questions': [],
+    def _get_pertinent_forms(self, module):
+        from corehq.apps.app_manager.models import ShadowForm
+        if not self.include_shadow_forms:
+            return [form for form in module.get_forms() if not isinstance(form, ShadowForm)]
+        return module.get_forms()
+
+    def _compile_form(self, form):
+        form_meta = {
+            'id': form.unique_id,
+            'name': form.name,
+            'short_comment': form.short_comment,
+            'action_type': form.get_action_type(),
+            'form_filter': form.form_filter,
+        }
+        try:
+            form_meta['questions'] = [
+                compiled_question
+                for question in form.get_questions(self.app.langs, include_triggers=True,
+                                                   include_groups=True, include_translations=True)
+                for compiled_question in self._compile_form_questions(form.unique_id, question)
+            ]
+        except XFormException as exception:
+            form_meta['questions'] = []
+            form_meta['error'] = {
+                'details': six.text_type(exception),
+                'edit_url': reverse('form_source', args=[self.domain, self.app._id, form.unique_id]),
             }
-            try:
-                questions = form.get_questions(
-                    app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-                seen_save_to_case = set()
-                for question in questions:
-                    is_save_to_case = '/case/' in question['value']
-                    response = FormQuestionResponse(question).to_json()
-                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, question['value'])
-                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, question['value'])
-                    if is_save_to_case:
-                        response['type'] = 'SaveToCase'
-                    form_meta['questions'].append(response)
+            self.errors.append(form_meta)
+        return form_meta
 
-                    if is_save_to_case:
-                        question_path = question['value'].split('/case/')[0]
-                        if question_path not in seen_save_to_case:
-                            response = FormQuestionResponse(question).to_json()
-                            response['load_properties'] = case_meta.get_load_properties(form.unique_id, question_path)
-                            response['save_properties'] = case_meta.get_save_properties(form.unique_id, question_path)
-                            response['value'] = question_path
-                            response['label'] = response['label'].split('/case/')[0]
-                            response['type'] = 'SaveToCase'
-                            form_meta['questions'].append(response)
-                        seen_save_to_case.add(question_path)
+    def _compile_form_questions(self, form_unique_id, question):
+        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+
+        is_save_to_case = '/case/' in question['value']
+        question_path = question['value'].split('/case/')[0]
+        if is_save_to_case and question_path not in self._seen_save_to_case[form_unique_id]:
+            yield self._get_save_to_case_root_node(form_unique_id, question)
+        else:
+            response = FormQuestionResponse(question).to_json()
+            response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question['value'])
+            response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question['value'])
+            if is_save_to_case:
+                response['type'] = 'SaveToCase'
+            yield response
+
+    def _get_save_to_case_root_node(self, form_unique_id, question):
+        """Add an extra node with the root path of the save to case to attach case properties to
+        """
+        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+        question_path = question['value'].split('/case/')[0]
+        response = FormQuestionResponse({
+            "label": question_path,
+            "tag": question_path,
+            "value": question_path,
+            "repeat": question['repeat'],
+            "group": question['group'],
+            "type": 'SaveToCase',
+            "hashtagValue": question['hashtagValue'],
+            "relevant": None,
+            "required": False,
+            "comment": None,
+            "constraint": None,
+        }).to_json()
+        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question_path)
+        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question_path)
+        self._seen_save_to_case[form_unique_id].append(question_path)
+        return response
 
 
-
-
-            except XFormException as e:
-                form_meta['error'] = {
-                    'details': six.text_type(e),
-                    'edit_url': reverse(
-                        'form_source',
-                        args=[domain, app._id, form.unique_id]
-                    ),
-                }
-                form_meta['module'] = copy(module_meta)
-                errors.append(form_meta)
-            else:
-                forms.append(form_meta)
-
-        module_meta['forms'] = forms
-        modules.append(module_meta)
-    return modules, errors
+def get_form_data(domain, app, include_shadow_forms=True):
+    return FormDataGenerator(domain, app, include_shadow_forms).get_app_data()
 
 
 def get_and_assert_practice_user_in_domain(practice_user_id, domain):
