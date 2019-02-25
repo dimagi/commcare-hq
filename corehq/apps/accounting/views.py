@@ -223,7 +223,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                 if self.account.auto_pay_enabled else None
             ),
             'credit_form': self.credit_form,
-            'credit_list': CreditLine.objects.filter(account=self.account),
+            'credit_list': CreditLine.objects.filter(account=self.account, is_active=True),
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
             'subscription_list': [
@@ -448,7 +448,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_form': self.credit_form,
             'can_change_subscription': self.subscription.is_active,
             'change_subscription_form': self.change_subscription_form,
-            'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'credit_list': CreditLine.objects.filter(subscription=self.subscription, is_active=True),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
             "subscription_has_ended": (
