@@ -1677,7 +1677,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, e.message),
+                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
                 show_stack_trace=True,
             )
             return False

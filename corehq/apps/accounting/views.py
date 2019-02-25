@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date
 import json
+import six
 
 from django.conf import settings
 from django.contrib import messages
@@ -329,7 +330,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
-                errors.extend([e.message])
+                errors.extend([six.text_type(e)])
                 self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 

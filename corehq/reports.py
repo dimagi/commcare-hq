@@ -212,7 +212,7 @@ def _safely_get_report_configs(project_name):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
-                logging.error("%s with report config %s" % (e.message, config_id))
+                logging.error("%s with report config %s" % (six.text_type(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))

@@ -425,10 +425,7 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
-                    message = e.message
-                    if isinstance(message, bytes):
-                        # TODO - figure out where these are coming from and use unicode message from the start
-                        message = repr(message)
+                    message = six.text_type(e)
                     notify_exception(None,
                         "Exception bulk saving async indicators:{}".format(message))
                 else:

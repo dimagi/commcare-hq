@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from itertools import chain
 
+import six
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -92,7 +93,7 @@ class Command(BaseCommand):
                 except MultiplePreviouslyFixedForms as e:
                     if xform_instance.build_id not in unfixable_builds:
                         unfixable_builds.add(xform_instance.build_id)
-                        print(e.message)
+                        print(six.text_type(e))
                     _log(log_file, WARNING, MULTI_MATCH, xform_instance)
                     continue
                 except CantMatchAForm as e:
