@@ -619,7 +619,7 @@ class AdminFacetedReport(AdminReport, ElasticTabularReport):
     @property
     def shared_pagination_GET_params(self):
         ret = super(AdminFacetedReport, self).shared_pagination_GET_params
-        for param in self.request.GET.iterlists():
+        for param in six.iterlists(self.request.GET):
             if self.is_custom_param(param[0]):
                 for val in param[1]:
                     ret.append(dict(name=param[0], value=val))
