@@ -363,6 +363,7 @@ class CcsRecord(LocationDenormalizedModel):
     child_birth_location = models.TextField(null=True)
     edd = models.DateField(null=True)
     add = models.DateField(null=True)
+    lmp = models.DateField(null=True)
 
     @classmethod
     def agg_from_ccs_record_case_ucr(cls, domain, window_start, window_end):
@@ -373,7 +374,7 @@ class CcsRecord(LocationDenormalizedModel):
         return """
         INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
-            hrp, child_birth_location, add, edd
+            hrp, child_birth_location, add, edd, lmp
         ) (
             SELECT
                 %(domain)s,
@@ -384,7 +385,8 @@ class CcsRecord(LocationDenormalizedModel):
                 hrp,
                 child_birth_location,
                 add,
-                edd
+                edd,
+                lmp
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
@@ -392,7 +394,8 @@ class CcsRecord(LocationDenormalizedModel):
            hrp = EXCLUDED.hrp,
            child_birth_location = EXCLUDED.child_birth_location,
            add = EXCLUDED.add,
-           edd = EXCLUDED.edd
+           edd = EXCLUDED.edd,
+           lmp = EXCLUDED.lmp
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
