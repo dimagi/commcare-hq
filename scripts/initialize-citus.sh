@@ -7,7 +7,7 @@ function exec_sql() {
     HOST=$1
     DB=$2
     SQL=$3
-    docker exec -it $HOST psql -U postgres $DB -c "$SQL"
+    docker exec -it $HOST psql -U commcarehq $DB -c "$SQL"
 }
 
 function get_worker_status() {
@@ -29,14 +29,4 @@ if [ "`get_worker_status`" != "healthy" ]; then
     exit 1
 fi
 
-echo "## Creating database: $DATABASE"
-exec_sql citus_worker_1 postgres "create database commcarehq_citus;"
-exec_sql citus_master postgres "create database commcarehq_citus;"
-
-echo "## Creating citus extension"
-exec_sql citus_worker_1 $DATABASE "create extension citus;"
-exec_sql citus_master $DATABASE "create extension citus;"
-
-echo "## Adding worker node to master"
-exec_sql citus_master $DATABASE "select master_add_node('citus_worker_1', 5432);"
 exec_sql citus_master $DATABASE "select * from master_get_active_worker_nodes();"
