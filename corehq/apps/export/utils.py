@@ -5,12 +5,6 @@ from couchdbkit import ResourceNotFound
 from django.http import Http404
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.export.models import (
-    FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
-    SMSExportDataSchema,
-)
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 
 import six
@@ -37,6 +31,12 @@ def domain_has_daily_saved_export_access(domain):
 
 
 def get_export(export_type, domain, export_id=None, username=None):
+    from corehq.apps.export.models import (
+        FormExportInstance,
+        CaseExportInstance,
+        SMSExportInstance,
+        SMSExportDataSchema
+    )
     if export_type == 'form':
         try:
             return FormExportInstance.get(export_id)
