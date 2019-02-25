@@ -39,7 +39,7 @@ logger = logging.getLogger('export_migration')
 
 @task(serializer='pickle', queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username, filters, download_id,
-                                  filename=None,expiry=10 * 60):
+                                  filename=None, expiry=10 * 60):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
