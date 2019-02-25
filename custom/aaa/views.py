@@ -28,6 +28,7 @@ from custom.aaa.tasks import (
     update_agg_village_table,
     update_ccs_record_table,
     update_child_table,
+    update_child_history_table,
     update_woman_table,
     update_woman_history_table,
 )
@@ -269,6 +270,7 @@ class AggregationScriptPage(BaseDomainView):
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
         update_child_table(self.domain)
+        update_child_history_table(self.domain)
         update_ccs_record_table(self.domain)
         update_woman_table(self.domain)
         update_woman_history_table(self.domain)

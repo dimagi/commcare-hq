@@ -28,6 +28,7 @@ from custom.aaa.tasks import (
     update_agg_village_table,
     update_ccs_record_table,
     update_child_table,
+    update_child_history_table,
     update_woman_table,
     update_woman_history_table,
 )
@@ -58,6 +59,7 @@ class AggregationScriptTestBase(CSVTestCase):
         super(AggregationScriptTestBase, cls).setUpClass()
         _setup_ucr_tables()
         update_child_table(TEST_DOMAIN)
+        update_child_history_table(TEST_DOMAIN)
         update_woman_table(TEST_DOMAIN)
         update_woman_history_table(TEST_DOMAIN)
         update_ccs_record_table(TEST_DOMAIN)
