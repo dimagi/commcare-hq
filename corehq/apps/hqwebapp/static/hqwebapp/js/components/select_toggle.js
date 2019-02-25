@@ -29,7 +29,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             self.id = params.id || '';
 
             // Data
-            self.value = ko.observable(params.value || '');
+            self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
             self.options = ko.observableArray(_.map(params.options, function (o) {
                 var id = _.isString(o) ? o : o.id,
                     text = _.isString(o) ? o : o.text;
