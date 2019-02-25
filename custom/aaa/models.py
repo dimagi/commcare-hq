@@ -121,6 +121,7 @@ class Woman(LocationDenormalizedModel):
     contact_phone_number = models.TextField(null=True)
     num_male_children_died = models.TextField(null=True)
     num_female_children_died = models.TextField(null=True)
+    blood_group = models.TextField(null=True)
 
     # household properties
     hh_address = models.TextField(null=True)
@@ -145,7 +146,7 @@ class Woman(LocationDenormalizedModel):
             domain, household_case_id, person_case_id, opened_on, closed_on,
             name, dob, marital_status, sex, migration_status, age_marriage,
             has_aadhar_number, husband_name, contact_phone_number,
-            num_male_children_died, num_female_children_died
+            num_male_children_died, num_female_children_died, blood_group
         ) (
             SELECT
                 %(domain)s,
@@ -163,7 +164,8 @@ class Woman(LocationDenormalizedModel):
                 husband_name,
                 contact_phone_number,
                 num_male_children_died,
-                num_female_children_died
+                num_female_children_died,
+                blood_group
             FROM "{person_cases_ucr_tablename}" person
             WHERE sex = 'F' AND date_part('year', age(dob)) BETWEEN 15 AND 49
         )
@@ -179,7 +181,8 @@ class Woman(LocationDenormalizedModel):
            husband_name = EXCLUDED.husband_name,
            contact_phone_number = EXCLUDED.contact_phone_number,
            num_male_children_died = EXCLUDED.num_male_children_died,
-           num_female_children_died = EXCLUDED.num_female_children_died
+           num_female_children_died = EXCLUDED.num_female_children_died,
+           blood_group = EXCLUDED.blood_group
         """.format(
             woman_tablename=cls._meta.db_table,
             person_cases_ucr_tablename=ucr_tablename,
@@ -364,6 +367,8 @@ class CcsRecord(LocationDenormalizedModel):
     edd = models.DateField(null=True)
     add = models.DateField(null=True)
     lmp = models.DateField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    woman_weight_at_preg_reg = models.DecimalField(null=True, max_digits=6, decimal_places=2)
 
     @classmethod
     def agg_from_ccs_record_case_ucr(cls, domain, window_start, window_end):
@@ -374,7 +379,7 @@ class CcsRecord(LocationDenormalizedModel):
         return """
         INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
-            hrp, child_birth_location, add, edd, lmp
+            hrp, child_birth_location, add, edd, lmp, preg_reg_date, woman_weight_at_preg_reg
         ) (
             SELECT
                 %(domain)s,
@@ -386,7 +391,9 @@ class CcsRecord(LocationDenormalizedModel):
                 child_birth_location,
                 add,
                 edd,
-                lmp
+                lmp,
+                preg_reg_date,
+                woman_weight_at_preg_reg
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
@@ -395,7 +402,9 @@ class CcsRecord(LocationDenormalizedModel):
            child_birth_location = EXCLUDED.child_birth_location,
            add = EXCLUDED.add,
            edd = EXCLUDED.edd,
-           lmp = EXCLUDED.lmp
+           lmp = EXCLUDED.lmp,
+           preg_reg_date = EXCLUDED.preg_reg_date,
+           woman_weight_at_preg_reg = EXCLUDED.woman_weight_at_preg_reg
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
