@@ -240,6 +240,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
