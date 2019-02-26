@@ -16,14 +16,12 @@ from couchexport.export import export_raw
 
 EXPECTED_TRANSLATIONS = {
     'en': {
-        'key.manage.title': 'Taylor',
-        'bulk.send.dialog.progress': 'Kanye',
-        'specific.item.to.translate': 'Miley',
+        'translation.always.upload': 'Taylor',
+        'translation.sometimes.upload': 'Kanye',
     },
     'fra': {
-        'key.manage.title': 'Swift',
-        'bulk.send.dialog.progress': 'West',
-        'specific.item.to.translate': 'Cyrus',
+        'translation.always.upload': 'Swift',
+        'translation.sometimes.upload': 'West',
     }
 }
 
@@ -51,7 +49,19 @@ class TestBulkUiTranslation(SimpleTestCase):
 
     def test_not_upload_all_properties(self):
         headers = (('translations', ('property', 'en', 'fra')),)
-        data = (('key.manage.title', 'Taylor', 'Swift'),)
+        data = (('translation.always.upload', 'Taylor', 'Swift'),)
+        f = self._build_translation_download_file(headers, data)
+
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        update_app_translations_from_trans_dict(self.app, translations)
+
+        self.assertDictEqual(self.app.translations['en'], {'translation.always.upload': 'Taylor'})
+        self.assertDictEqual(self.app.translations['fra'], {'translation.always.upload': 'Swift'})
+
+    def test_not_upload_all_properties_with_parital_ui_translations(self):
+        self.app.add_ons['partial_commcare_translations'] = True
+        headers = (('translations', ('property', 'en', 'fra')),)
+        data = (('translation.always.upload', 'Taylor', 'Swift'),)
         f = self._build_translation_download_file(headers, data)
 
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
@@ -62,9 +72,8 @@ class TestBulkUiTranslation(SimpleTestCase):
     def test_not_upload_all_languages(self):
         headers = (('translations', ('property', 'en')),)
         data = (
-            ('key.manage.title', 'Taylor'),
-            ('bulk.send.dialog.progress', 'Kanye'),
-            ('specific.item.to.translate', 'Miley'),
+            ('translation.always.upload', 'Taylor'),
+            ('translation.sometimes.upload', 'Kanye'),
         )
         f = self._build_translation_download_file(headers, data)
 
@@ -74,7 +83,22 @@ class TestBulkUiTranslation(SimpleTestCase):
 
     def test_partial_property_and_language(self):
         headers = (('translations', ('property', 'en')),)
-        data = (('key.manage.title', 'Taylor'),)
+        data = (('translation.always.upload', 'Taylor'),)
+        f = self._build_translation_download_file(headers, data)
+
+        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
+        update_app_translations_from_trans_dict(self.app, translations)
+
+        self.assertDictEqual(self.app.translations['en'], {'translation.always.upload': 'Taylor'})
+        self.assertDictEqual(self.app.translations['fra'], {
+            'translation.always.upload': 'Swift',
+            'translation.sometimes.upload': 'West',
+        })
+
+    def test_partial_property_and_language_with_partial_ui_translations(self):
+        self.app.add_ons['partial_commcare_translations'] = True
+        headers = (('translations', ('property', 'en')),)
+        data = (('translation.always.upload', 'Taylor'),)
         f = self._build_translation_download_file(headers, data)
 
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
