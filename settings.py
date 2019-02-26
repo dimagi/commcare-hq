@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -189,7 +184,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
     'django_prbac',
     'djangular',
     'captcha',
