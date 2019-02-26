@@ -57,8 +57,7 @@ def test_generator(skip=False, **test):
 @nottest
 def assert_each_test_is_unique(tests_to_run):
     def make_signature(test):
-        def rename(names, map=None, number=count()):
-            map = map or {}
+        def rename(names, map={}, number=count()):
             for name in names:
                 if name not in map:
                     map[name] = next(number)
@@ -98,7 +97,7 @@ class TestSequenceMeta(type):
             tests_to_run = run_single_tests
 
         for test in tests_to_run:
-            # continue
+            continue
             # Create a new testcase that the test runner is able to find
             test_name = get_test_name(test['name'])
             assert test_name not in dict, "duplicate test name: %s" % test_name
