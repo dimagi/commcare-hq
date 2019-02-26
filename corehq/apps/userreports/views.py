@@ -7,7 +7,6 @@ import functools
 import json
 import os
 import tempfile
-import uuid
 import re
 
 from django.conf import settings
@@ -50,9 +49,9 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic, api_auth
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
