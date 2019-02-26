@@ -25,6 +25,7 @@ from memoized import memoized
 from openpyxl import Workbook
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
@@ -330,8 +331,19 @@ class AppTranslations(BaseTranslationsView):
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
-        context['blacklisted_translations'] = TransifexBlacklist.objects.filter(domain=self.domain).all()
+        context['blacklisted_translations'] = self._blacklisted_translations
         return context
+
+    @property
+    def _blacklisted_translations(self):
+        blacklisted = TransifexBlacklist.objects.filter(domain=self.domain).all().values()
+        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(self.domain)}
+        ret = []
+        for trans in blacklisted:
+            r = trans.copy()
+            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
+            ret.append(r)
+        return ret
 
     def section_url(self):
         return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
