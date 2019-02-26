@@ -1,5 +1,6 @@
 {% extends 'aaa/dashboard.html' %}
 {% load hq_shared_tags %}
+{% load i18n %}
 {% load menu_tags %}
 
 {% block js %}
@@ -41,13 +42,13 @@
                 <div class="col-md-12 no-padding">
                     <ul class="nav nav-tabs" id="myTab" role="tablist">
                         <li class="nav-item active">
-                            <a class="padding-15 nav-link active" id="person-details-tab" data-toggle="tab" href="#person-details" role="tab" aria-controls="person-details" aria-selected="true">PERSONAL DETAILS</a>
+                            <a class="padding-15 nav-link active" id="person-details-tab" data-toggle="tab" href="#person-details" role="tab" aria-controls="person-details" aria-selected="true">{% trans 'PERSONAL DETAILS' %}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="padding-15 nav-link" id="husband-details-tab" data-toggle="tab" href="#husband-details" role="tab" aria-controls="husband-details" aria-selected="false">HUSBAND DETAILS</a>
+                            <a class="padding-15 nav-link" id="husband-details-tab" data-toggle="tab" href="#husband-details" role="tab" aria-controls="husband-details" aria-selected="false">{% trans 'HUSBAND DETAILS' %}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="padding-15 nav-link" id="other-details-tab" data-toggle="tab" href="#other-details" role="tab" aria-controls="other-details" aria-selected="false">OTHER DETAILS</a>
+                            <a class="padding-15 nav-link" id="other-details-tab" data-toggle="tab" href="#other-details" role="tab" aria-controls="other-details" aria-selected="false">{% trans 'OTHER DETAILS' %}</a>
                         </li>
                     </ul>
                     <div class="tab-content" id="myTabContent">
@@ -55,7 +56,7 @@
                             <div class="row no-margin details-table">
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Gender:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Gender' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().gender"></span>
                                         </div>
@@ -63,7 +64,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Status:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Status' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().status"></span>
                                         </div>
@@ -71,7 +72,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Date of Birth:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Date of Birth' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().dob"></span>
                                         </div>
@@ -79,7 +80,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Married At:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Married At' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().marriedAt"></span>
                                         </div>
@@ -87,7 +88,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Age:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Age' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().age"></span>
                                         </div>
@@ -95,7 +96,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Aadhaar No:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Aadhaar No' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.person().aadhaarNo"></span>
                                         </div>
@@ -107,7 +108,7 @@
                             <div class="row no-margin details-table">
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Name:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Name' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().name"></span>
                                         </div>
@@ -115,7 +116,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Gender:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Gender' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().gender"></span>
                                         </div>
@@ -123,7 +124,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Date of Birth:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Date of Birth' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().dob"></span>
                                         </div>
@@ -131,7 +132,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Age husband:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Age husband' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().age"></span>
                                         </div>
@@ -139,7 +140,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Married at:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Married at' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().marriedAt"></span>
                                         </div>
@@ -147,7 +148,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Aadhaar no:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Aadhaar no' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.husband().aadhaarNo"></span>
                                         </div>
@@ -159,7 +160,7 @@
                             <div class="row no-margin details-table">
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Address:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Address' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().address"></span>
                                         </div>
@@ -167,7 +168,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Subcentre:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Subcentre' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().subcentre"></span>
                                         </div>
@@ -175,7 +176,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Village:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Village' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().village"></span>
                                         </div>
@@ -183,7 +184,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Anganwadi Centre:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Anganwadi Centre' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().anganwadiCentre"></span>
                                         </div>
@@ -191,7 +192,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Phone no:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Phone no' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().phone"></span>
                                         </div>
@@ -199,7 +200,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Religion household:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Religion household' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().religion"></span>
                                         </div>
@@ -207,7 +208,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">Caste household:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'Caste household' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().caste"></span>
                                         </div>
@@ -215,7 +216,7 @@
                                 </div>
                                 <div class="col-md-6 row-content">
                                     <div class="padding-15 row">
-                                        <label for="staticEmail" class="col-md-5 col-form-label">BPL/APL:</label>
+                                        <label for="staticEmail" class="col-md-5 col-form-label">{% trans 'BPL/APL' %}:</label>
                                         <div class="col-md-7">
                                             <span data-bind="text: detailsModel.personDetails.other().bplOrApl"></span>
                                         </div>
@@ -230,7 +231,7 @@
             <br/>
             <div class="row shadow">
                 <div class="col-md-12 secondary-title">
-                    <h4>Children</h4>
+                    <h4>{% trans 'Children' %}</h4>
                 </div>
                 <!-- ko foreach: {data: detailsModel.childDetails, as: 'child'} -->
                     <div class="table-item col-md-3">
@@ -247,11 +248,11 @@
             <br/>
             <div class="row shadow">
                 <div class="col-md-12 secondary-title">
-                    <h4>Eligible Couple Details</h4>
+                    <h4>{% trans 'Eligible Couple Details' %}</h4>
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Children born:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Children born' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().childrenBorn"></span>
                         </div>
@@ -259,7 +260,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Current Family Planning Method used:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Current Family Planning Method used' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().familyPlaningMethod"></span>
                         </div>
@@ -267,7 +268,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Children alive:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Children alive' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().childrenAlive"></span>
                         </div>
@@ -275,7 +276,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Adoption date of Family Planing method:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Adoption date of Family Planing method' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().familyPlanningMethodDate"></span>
                         </div>
@@ -283,7 +284,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Date ASHA visit this month:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Date ASHA visit this month' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().ashaVisit"></span>
                         </div>
@@ -291,7 +292,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Family Planing Method used previously:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Family Planing Method used previously' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().previousFamilyPlanningMethod"></span>
                         </div>
@@ -307,7 +308,7 @@
                 </div>
                 <div class="col-md-6 table-item">
                     <div class="row">
-                        <label for="staticEmail" class="col-md-6 col-form-label">Preferred Method of Family Planning:</label>
+                        <label for="staticEmail" class="col-md-6 col-form-label">{% trans 'Preferred Method of Family Planning' %}:</label>
                         <div class="col-md-6">
                             <span data-bind="text: detailsModel.eligibleCoupleDetails().preferredFamilyPlaningMethod"></span>
                         </div>
