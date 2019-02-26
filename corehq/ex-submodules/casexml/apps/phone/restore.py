@@ -29,7 +29,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
-from corehq.util.datadog.utils import bucket_value
+from corehq.util.datadog.utils import bucket_value, maybe_add_domain_tag
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
@@ -306,7 +306,7 @@ class RestoreParams(object):
 
     @property
     def app_id(self):
-        return self.app._id if self.app else None
+        return self.app.get_id if self.app else None
 
 
 class RestoreCacheSettings(object):
@@ -548,7 +548,7 @@ class RestoreConfig(object):
                               (type(e).__name__, self.restore_user.username, str(e)))
             is_async = False
             response = get_simple_response_xml(
-                e.message,
+                six.text_type(e),
                 ResponseNature.OTA_RESTORE_ERROR
             )
             response = HttpResponse(response, content_type="text/xml; charset=utf-8",
@@ -622,8 +622,12 @@ class RestoreConfig(object):
         new_task = False
         # fetch the task from celery
         task_id = self.async_restore_task_id_cache.get_value()
-        task = AsyncResult(task_id)
-        task_exists = task.status == ASYNC_RESTORE_SENT
+        if task_id:
+            task = AsyncResult(task_id)
+            task_exists = task.status == ASYNC_RESTORE_SENT
+        else:
+            task = None
+            task_exists = False
 
         if not task_exists:
             # start a new task
@@ -672,7 +676,7 @@ class RestoreConfig(object):
             return content.get_fileobj()
 
     def set_cached_payload_if_necessary(self, fileobj, duration, is_async):
-        # only cache if the duration was longer than the threshold
+        # must cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
         if is_async or self.force_cache or is_long_restore:
             type_ = 'unknown'
@@ -698,7 +702,7 @@ class RestoreConfig(object):
         return None
 
     def delete_cached_payload_if_necessary(self):
-        if self.overwrite_cache and self.restore_payload_path_cache.get_value():
+        if self.overwrite_cache and self.restore_payload_path_cache.exists():
             self.restore_payload_path_cache.invalidate()
 
     def delete_initial_cached_payload_if_necessary(self):
@@ -713,7 +717,7 @@ class RestoreConfig(object):
     def _record_timing(self, status):
         timing = self.timing_context
         assert timing.is_finished()
-        duration = timing.duration if timing is not None else -1
+        duration = timing.duration
         device_id = self.params.device_id
         if duration > 20 or status == 412:
             if status == 412:
@@ -737,29 +741,26 @@ class RestoreConfig(object):
             'status_code:{}'.format(status),
             'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
-        env = settings.SERVER_ENVIRONMENT
-        if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append('domain:{}'.format(self.domain))
-        if timing is not None:
-            timer_buckets = (5, 20, 60, 120)
-            for timer in timing.to_list(exclude_root=True):
-                if timer.name in RESTORE_SEGMENTS:
-                    segment = RESTORE_SEGMENTS[timer.name]
-                    bucket = bucket_value(timer.duration, timer_buckets, 's')
-                    datadog_counter(
-                        'commcare.restores.{}'.format(segment),
-                        tags=tags + ['duration:%s' % bucket],
-                    )
-                elif timer.name.startswith('fixture:'):
-                    bucket = bucket_value(timer.duration, timer_buckets, 's')
-                    datadog_counter(
-                        'commcare.restores.fixture',
-                        tags=tags + [
-                            'duration:%s' % bucket,
-                            timer.name,
-                        ],
-                    )
-            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+        maybe_add_domain_tag(self.domain, tags)
+        timer_buckets = (5, 20, 60, 120)
+        for timer in timing.to_list(exclude_root=True):
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = bucket_value(timer.duration, timer_buckets, 's')
+                datadog_counter(
+                    'commcare.restores.{}'.format(segment),
+                    tags=tags + ['duration:%s' % bucket],
+                )
+            elif timer.name.startswith('fixture:'):
+                bucket = bucket_value(timer.duration, timer_buckets, 's')
+                datadog_counter(
+                    'commcare.restores.fixture',
+                    tags=tags + [
+                        'duration:%s' % bucket,
+                        timer.name,
+                    ],
+                )
+        tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
 
         if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
             app_name = slugify(self.params.app.name)

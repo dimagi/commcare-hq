@@ -12,7 +12,7 @@ describe('App Releases', function () {
                     id: version,
                     version: version,
                     doc_type: 'Application',
-                    build_comment: '',
+                    query: '',
                     build_broken: false,
                     is_released: false,
                     domain: 'test-domain',

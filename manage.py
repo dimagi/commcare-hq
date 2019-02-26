@@ -123,6 +123,18 @@ def patch_pickle_version():
     pickle.HIGHEST_PROTOCOL = 2
 
 
+def run_patches():
+    # workaround for https://github.com/smore-inc/tinys3/issues/33
+    mimetypes.init()
+
+    patch_jsonfield()
+
+    patch_assertItemsEqual()
+
+    # After PY3 migration: remove
+    patch_pickle_version()
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -132,7 +144,6 @@ if __name__ == "__main__":
     # ('module' object has no attribute 'poll' which has to do with
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
-        GeventCommand('mvp_force_update'),
         GeventCommand('run_gunicorn'),
         GeventCommand('run_sql'),
         GeventCommand('run_blob_migration'),
@@ -152,13 +163,7 @@ if __name__ == "__main__":
         from gevent.monkey import patch_all; patch_all(subprocess=True)
         from psycogreen.gevent import patch_psycopg; patch_psycopg()
 
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    mimetypes.init()
-    patch_jsonfield()
-
-    patch_assertItemsEqual()
-
-    patch_pickle_version()
+    run_patches()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line

@@ -271,7 +271,6 @@ class RegisterDomainView(TemplateView):
         user = self.request.user
         return not (Domain.active_for_user(user) or user.is_superuser)
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')

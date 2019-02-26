@@ -45,15 +45,11 @@ class HqRunPython(HqOpMixin, RunPython):
     pass
 
 
-def noop_migration_fn(apps, schema_editor):
-    pass
-
-
 def noop_migration():
     """
     A migration that does nothing. Used to replace old migrations that are no longer required e.g moved.
     """
-    return RunPython(noop_migration_fn, noop_migration_fn)
+    return RunPython(RunPython.noop, RunPython.noop)
 
 
 class RunSqlLazy(RunSQL):
@@ -167,7 +163,7 @@ def _validate_old_index_name(index_name, table_name):
 
 
 def _validate_identifier(name):
-    allowed_chars = re.compile('^[\w\$]+$')
+    allowed_chars = re.compile(r'^[\w\$]+$')
     if not allowed_chars.match(name):
         raise IndexRenameOperationException("Invalid identifier given: %s" % name)
 

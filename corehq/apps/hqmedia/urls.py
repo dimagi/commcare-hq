@@ -17,6 +17,7 @@ from corehq.apps.hqmedia.views import (
     RemoveLogoView,
     RemoveDetailPrintTemplateView,
     ManageMultimediaPathsView,
+    MultimediaTranslationsCoverageView,
     download_multimedia_paths,
     update_multimedia_paths,
 )
@@ -32,6 +33,8 @@ application_urls = [
     url(r'^paths/$', ManageMultimediaPathsView.as_view(), name=ManageMultimediaPathsView.urlname),
     url(r'^paths/download/$', download_multimedia_paths, name='download_multimedia_paths'),
     url(r'^paths/update/$', update_multimedia_paths, name='update_multimedia_paths'),
+    url(r'^translations/$', MultimediaTranslationsCoverageView.as_view(),
+        name=MultimediaTranslationsCoverageView.urlname),
     url(r'^uploaded/bulk/$', ProcessBulkUploadView.as_view(), name=ProcessBulkUploadView.urlname),
     url(r'^uploaded/image/$', ProcessImageFileUploadView.as_view(), name=ProcessImageFileUploadView.urlname),
     url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', ProcessLogoFileUploadView.as_view(),

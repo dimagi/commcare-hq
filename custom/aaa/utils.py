@@ -21,7 +21,11 @@ def build_location_filters(location_id):
     }
 
     location_type = location.location_type
-    child_location_type = LocationType.objects.filter(domain=location_type.domain, parent_type=location_type)
+    # currently gets the first location type returned
+    # should pick between the MWCD and MoH hierarchy when different users types are implemented
+    child_location_type = LocationType.objects.filter(
+        domain=location_type.domain, parent_type=location_type
+    ).first()
     filters["{}_id".format(child_location_type.code)] = 'All'
 
     return filters

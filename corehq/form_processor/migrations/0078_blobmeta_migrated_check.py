@@ -10,7 +10,7 @@ import traceback
 from django.core.management import call_command
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython, noop_migration_fn
+from corehq.sql_db.operations import HqRunPython
 
 
 BLOBMETAS_NOT_MIGRATED_ERROR = """
@@ -72,5 +72,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_assert_blobmetas_migrated, noop_migration_fn)
+        HqRunPython(_assert_blobmetas_migrated, migrations.RunPython.noop)
     ]

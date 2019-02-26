@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+import six
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
@@ -188,7 +189,7 @@ def get_form_data_schema(request, domain, form_unique_id):
             "Please fix the error to see case properties in this tree")
         )
     except Exception as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=six.text_type(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(

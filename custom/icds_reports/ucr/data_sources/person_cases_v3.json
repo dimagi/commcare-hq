@@ -2,8 +2,16 @@
   "domains": [
     "reach-test",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "cas-lab",
     "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
     "icds-cas"
   ],
   "server_environment": [

@@ -27,6 +27,17 @@ DATABASES = {
             'SERIALIZE': False,
         },
     },
+    'aaa-data': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'aaa_commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
 }
 
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
@@ -112,7 +123,9 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
-    'OPTIONS': {},
+    'OPTIONS': {
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
+    },
 }
 
 CACHES = {
@@ -123,6 +136,8 @@ CACHES = {
 WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
+
+CELERY_RESULT_BACKEND = redis_cache['LOCATION']
 
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
@@ -224,8 +239,6 @@ SKIP_TOUCHFORMS_TESTS = True
 UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
-
-ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 

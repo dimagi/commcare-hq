@@ -412,7 +412,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(e.message)
+            logging.exception(six.text_type(e))
             return "#"
 
     @property
@@ -655,6 +655,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
     uuid = StringProperty()
+    start_date = DateProperty(default=None)
 
     @property
     def is_editable(self):

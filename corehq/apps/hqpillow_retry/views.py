@@ -251,7 +251,7 @@ class EditPillowError(BasePageView):
         )
 
         # only fake the from email if it's an @dimagi.com account
-        if re.search('@dimagi\.com$', couch_user.username):
+        if re.search(r'@dimagi\.com$', couch_user.username):
             email.from_email = couch_user.username
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL

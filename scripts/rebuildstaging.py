@@ -71,7 +71,7 @@ class BranchConfig(jsonobject.JsonObject):
 
     def check_trunk_is_recent(self):
         # if it doesn't match our tag format
-        if re.match('[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
+        if re.match(r'[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
             return True
 
         return self.trunk in git_recent_tags()
@@ -306,7 +306,7 @@ def force_push(git, branch):
         # oops we're using a read-only URL, so change to the suggested url
         try:
             line = sh.grep(git.remote("-v"),
-                           '-E', '^origin.(https|git)://github\.com/.*\(push\)$')
+                           '-E', r'^origin.(https|git)://github\.com/.*\(push\)$')
         except sh.ErrorReturnCode_1:
             raise e
         old_url = line.strip().split()[1]

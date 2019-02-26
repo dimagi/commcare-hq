@@ -19,7 +19,7 @@ from corehq.util.log import send_HTML_email
 from dimagi.utils.dates import add_months_to_date
 
 
-@periodic_task(serializer='pickle', run_every=crontab(day_of_month='1', hour=13, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(day_of_month='1', hour=13, minute=0), queue='background_queue', acks_late=True)
 def send_gateway_fee_report_out():
     backend_api_ids = SmsGatewayFeeCriteria.objects.values_list('backend_api_id', flat=True).distinct()
     first_day_previous_month = add_months_to_date(date.today(), -1)

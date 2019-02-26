@@ -92,7 +92,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -179,6 +178,7 @@ ATTACHMENT_REGEX = r'[^/]*\.xml'
 ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
+    'hq_logo_android_demo': 'brand-banner-home-demo',
 }
 
 
@@ -478,15 +478,17 @@ class AutoSelectCase(DocumentSchema):
 
 class LoadCaseFromFixture(DocumentSchema):
     """
-    fixture_nodeset:    FixtureDataType.tag
-    fixture_tag:        name of the column to display in the list
-    fixture_variable:   boolean if display_column actually contains the key for the localized string
-    case_property:      name of the column whose value should be saved when the user selects an item
-    arbitrary_datum_*:  adds an arbitrary datum with function before the action
+    fixture_nodeset:     nodeset that returns the fixture options to display
+    fixture_tag:         id of session datum where the result of user selection will be stored
+    fixture_variable:    value from the fixture to store from the selection
+    auto_select_fixture: boolean to autoselect the value if the nodeset only returns 1 result
+    case_property:       case property to filter on
+    arbitrary_datum_*:   adds an arbitrary datum with function before the action
     """
     fixture_nodeset = StringProperty()
     fixture_tag = StringProperty()
     fixture_variable = StringProperty()
+    auto_select_fixture = BooleanProperty(default=False)
     case_property = StringProperty(default='')
     auto_select = BooleanProperty(default=False)
     arbitrary_datum_id = StringProperty()

@@ -12,13 +12,13 @@ asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
-boto3==1.9.96
-botocore==1.12.96         # via boto3, s3transfer
+boto3==1.9.101
+botocore==1.12.101        # via boto3, s3transfer
 celery==3.1.25
 certifi==2018.11.29       # via requests
 cffi==1.12.1              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
-cloudant==2.7.0
+cloudant==2.11.0          # via jsonobject-couchdbkit
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 cryptography==2.5         # via pyopenssl, requests
@@ -80,7 +80,7 @@ ipaddress==1.0.22         # via cryptography, faker
 iso8601==0.1.12
 jdcal==1.4                # via openpyxl
 jinja2==2.10
-jmespath==0.9.3           # via boto3, botocore
+jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
 jsonobject-couchdbkit==0.9.16
@@ -92,13 +92,12 @@ laboratory==0.2.0
 lxml==4.3.1
 mako==1.0.7               # via alembic
 markdown==2.2.1
-markupsafe==1.1.0         # via jinja2, mako
+markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
-numpy==1.7.1
 openpyxl==2.6.0
 pbr==5.1.2                # via mock
-phonenumberslite==8.10.5
+phonenumberslite==8.10.6
 pillow==5.4.1
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0

@@ -60,6 +60,7 @@ from corehq.form_processor.utils.sql import (
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write, get_cursor
 from corehq.sql_db.util import split_list_by_db_partition
+from corehq.util.datadog.utils import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
@@ -1242,6 +1243,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         updated_xform_ids = set(updated_xforms_map)
         form_ids_to_fetch = list(form_ids - updated_xform_ids)
+        form_load_counter("rebuild_case", case.domain)(len(form_ids_to_fetch))
         xform_map = {
             form.form_id: form
             for form in FormAccessorSQL.get_forms_with_attachments_meta(form_ids_to_fetch)

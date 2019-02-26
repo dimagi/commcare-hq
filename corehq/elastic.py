@@ -69,7 +69,7 @@ def get_es_export():
         retry_on_timeout=True,
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
-        timeout=30,
+        timeout=300,
     )
 
 ES_DEFAULT_INSTANCE = 'default'
@@ -475,7 +475,7 @@ def parse_args_for_es(request, prefix=None):
         return str[:-2] if str.endswith('[]') else str
 
     params, facets = {}, []
-    for attr in request.GET.iterlists():
+    for attr in six.iterlists(request.GET):
         param, vals = attr[0], attr[1]
         if param == 'facets':
             facets = vals[0].split()
