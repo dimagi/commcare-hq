@@ -948,7 +948,7 @@ class BackendForm(Form):
             value = value.strip().upper()
         if value is None or value == "":
             raise ValidationError(_("This field is required."))
-        if re.compile("\s").search(value) is not None:
+        if re.compile(r"\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
         if self.is_global_backend:

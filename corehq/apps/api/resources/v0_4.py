@@ -135,7 +135,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         try:
             es_query = es_search(bundle.request, domain, ['include_archived'])
         except Http400 as e:
-            raise BadRequest(e.message)
+            raise BadRequest(six.text_type(e))
         if include_archived:
             es_query['filter']['and'].append({'or': [
                 {'term': {'doc_type': 'xforminstance'}},

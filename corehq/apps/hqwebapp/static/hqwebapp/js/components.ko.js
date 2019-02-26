@@ -4,16 +4,19 @@ hqDefine("hqwebapp/js/components.ko", [
     'underscore',
     'hqwebapp/js/components/inline_edit',
     'hqwebapp/js/components/pagination',
+    'hqwebapp/js/components/select_toggle',
 ], function (
     $,
     ko,
     _,
     inlineEdit,
-    pagination
+    pagination,
+    selectToggle
 ) {
     var components = {
         'inline-edit': inlineEdit,
         'pagination': pagination,
+        'select-toggle': selectToggle,
     };
 
     _.each(components, function (moduleName, elementName) {

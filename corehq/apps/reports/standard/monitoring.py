@@ -1181,8 +1181,8 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         if isinstance(td, int):
             td = datetime.timedelta(seconds=td)
         if isinstance(td, datetime.timedelta):
-            hours = td.seconds//3600
-            minutes = (td.seconds//60)%60
+            hours = td.seconds // 3600
+            minutes = (td.seconds // 60) % 60
             vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
             names = [_("day"), _("hour"), _("minute"), _("second")]
             status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]

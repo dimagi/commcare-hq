@@ -104,7 +104,7 @@ class DebugViewResults64(ViewResults):
         fetch results and cache them
         """
         # reset dynamic keys
-        for key in  self._dynamic_keys:
+        for key in self._dynamic_keys:
             try:
                 delattr(self, key)
             except:
@@ -170,7 +170,7 @@ class DebugViewResults57(ViewResults):
         fetch results and cache them
         """
         # reset dynamic keys
-        for key in  self._dynamic_keys:
+        for key in self._dynamic_keys:
             try:
                 delattr(self, key)
             except:

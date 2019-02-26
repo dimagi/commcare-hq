@@ -419,7 +419,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(e.message)
+            self.errors.append(six.text_type(e))
         response.update({
             'errors': self.errors,
         })
@@ -734,7 +734,7 @@ def iter_media_files(media_objects):
                     'error': e,
                 }
                 errors.append(message)
-                notify_exception(None, message)
+                notify_exception(None, "[ICDS-291] {}".format(message))
     return _media_files(), errors
 
 
@@ -935,7 +935,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        notify_exception(None, e.message)
+        notify_exception(None, "[ICDS-291] {}".format(six.text_type(e)))
         errors = [six.text_type(e)]
 
     return _files(files), errors, len(files)

@@ -286,7 +286,7 @@ class ArchiveFormView(DataInterfaceSection):
             except UnicodeDecodeError:
                 raise BulkUploadCasesException(_("Unrecognized format"))
         except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % e.message)
+            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
 
     def process(self):
         try:
@@ -434,7 +434,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
                 messages.success(self.request, _("We received your file and are processing it..."))
                 return upload_id
         except BulkUploadCasesException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
         return None
 
     @property
@@ -456,7 +456,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             except UnicodeDecodeError:
                 raise BulkUploadCasesException(_("Unrecognized format"))
         except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % e.message)
+            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
 
     def _get_item_data(self, case):
         return {

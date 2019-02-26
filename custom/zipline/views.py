@@ -115,7 +115,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
 
-        if not re.match('^\d\d?:\d\d$', value):
+        if not re.match(r'^\d\d?:\d\d$', value):
             raise OrderStatusValidationError(error_msg)
 
         try:

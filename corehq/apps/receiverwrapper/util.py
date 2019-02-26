@@ -119,7 +119,7 @@ def get_version_from_appversion_text(appversion_text):
     """
     patterns = [
         r' #(\d+) ',
-        'b\[(\d+)\]',
+        r'b\[(\d+)\]',
         r'App v(\d+).',
     ]
     version_string = _first_group_match(appversion_text, patterns)

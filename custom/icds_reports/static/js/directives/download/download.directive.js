@@ -303,20 +303,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 if ($item.user_have_access) {
                     locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                     vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
-                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                 } else {
                     locationsCache[$item.location_id] = data.locations;
                     vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                     if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
                         vm.onSelectForISSNIP(data.locations[0], level + 1);
                     } else {
                         vm.onSelect(data.locations[0], level + 1);
                     }
-
                 }
             });
         }
+        vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
         var levels = [];
         vm.selectedLevel = selectedLocationIndex() + 1;
         window.angular.forEach(vm.levels, function (value) {

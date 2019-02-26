@@ -59,7 +59,7 @@ class ErrorsOnlyField(OldField):
 
 def _get_offsets(context):
     label_class = context.get('label_class', '')
-    return re.sub(r'(xs|sm|md|lg)-', '\g<1>-offset-', label_class)
+    return re.sub(r'(xs|sm|md|lg)-', r'\g<1>-offset-', label_class)
 
 
 class FormActions(OriginalFormActions):

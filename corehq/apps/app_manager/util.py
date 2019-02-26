@@ -7,9 +7,8 @@ import uuid
 import re
 import logging
 import yaml
-import six
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
+from collections import OrderedDict, namedtuple
+from copy import deepcopy
 from io import open
 
 
@@ -39,7 +38,8 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX,
 )
-from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
@@ -77,7 +77,7 @@ def app_doc_types():
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
-    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    prepared_xpath = re.compile(r'\s').sub('', prepared_xpath)
     return prepared_xpath
 
 
@@ -505,68 +505,6 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
         for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
-
-
-def get_form_data(domain, app, include_shadow_forms=True):
-    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-    from corehq.apps.app_manager.models import ShadowForm
-
-    case_meta = app.get_case_metadata()
-    modules = []
-    errors = []
-    for module in app.get_modules():
-        forms = []
-        module_meta = {
-            'id': module.unique_id,
-            'name': module.name,
-            'short_comment': module.short_comment,
-            'module_type': module.module_type,
-            'is_surveys': module.is_surveys,
-            'module_filter': module.module_filter,
-        }
-
-        form_list = module.get_forms()
-        if not include_shadow_forms:
-            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
-        for form in form_list:
-            form_meta = {
-                'id': form.unique_id,
-                'name': form.name,
-                'short_comment': form.short_comment,
-                'action_type': form.get_action_type(),
-                'form_filter': form.form_filter,
-                'questions': [],
-            }
-            try:
-                questions = form.get_questions(
-                    app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-
-                for q in questions:
-                    response = FormQuestionResponse(q).to_json()
-                    response['load_properties'] = case_meta.get_load_properties(form.unique_id, q['value'])
-                    response['save_properties'] = case_meta.get_save_properties(form.unique_id, q['value'])
-                    form_meta['questions'].append(response)
-
-            except XFormException as e:
-                form_meta['error'] = {
-                    'details': six.text_type(e),
-                    'edit_url': reverse(
-                        'form_source',
-                        args=[domain, app._id, form.unique_id]
-                    ),
-                }
-                form_meta['module'] = copy(module_meta)
-                errors.append(form_meta)
-            else:
-                forms.append(form_meta)
-
-        module_meta['forms'] = forms
-        modules.append(module_meta)
-    return modules, errors
 
 
 def get_and_assert_practice_user_in_domain(practice_user_id, domain):

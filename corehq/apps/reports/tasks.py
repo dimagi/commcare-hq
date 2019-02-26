@@ -246,7 +246,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     else:
         config.date_range = 'since'
 
-    GET = dict(request_data['GET'].iterlists())
+    GET = dict(six.iterlists(request_data['GET']))
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:

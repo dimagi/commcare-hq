@@ -7,7 +7,8 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import F, Func, Q
+from django.db.models.functions import ExtractYear
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -21,13 +22,15 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import AggVillage
+from custom.aaa.models import AggVillage, Woman
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
     update_ccs_record_table,
     update_child_table,
+    update_child_history_table,
     update_woman_table,
+    update_woman_history_table,
 )
 from custom.aaa.utils import build_location_filters
 
@@ -160,6 +163,7 @@ class UnifiedBeneficiaryReportAPI(View):
 
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
+        selected_date = date(selected_year, selected_month, 1)
         selected_location = self.request.POST.get('selectedLocation')
         beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
         draw = self.request.POST.get('draw', 0)
@@ -169,7 +173,7 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-             data = [
+            data = [
                 dict(name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
@@ -178,14 +182,28 @@ class UnifiedBeneficiaryReportAPI(View):
                 dict(name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
             ]
         elif beneficiary_type == 'eligible_couple':
-            data = [
-                dict(name='test 1', age='17', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 2', age='57', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 3', age='25', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 4', age='16', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 5', age='22', currentFamilyPlanningMethod=0, adoptionDateOfFamilyPlaning='2018-03-03'),
-                dict(name='test 6', age='31', currentFamilyPlanningMethod=1, adoptionDateOfFamilyPlaning='2018-03-03'),
-            ]
+            data = (
+                Woman.objects
+                .annotate(
+                    age=ExtractYear(Func(F('dob'), function='age')),
+                )
+                .filter(
+                    # should filter for location
+                    domain=request.domain,
+                    age__range=(19, 49),
+                    marital_status='married',
+                )
+                .exclude(migration_status='yes')
+                .extra(
+                    select={'currentFamilyPlanningMethod': 0, 'adoptionDateOfFamilyPlaning': '2018-03-01'},
+                    where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
+                    params=[selected_date, selected_date + relativedelta(months=1)]
+                )
+                .values(
+                    'person_case_id', 'name', 'age',
+                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
+            )[:10]
+            data = list(data)
         elif beneficiary_type == 'pregnant_women':
             data = [
                 dict(name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
@@ -253,8 +271,10 @@ class AggregationScriptPage(BaseDomainView):
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
         update_child_table(self.domain)
+        update_child_history_table(self.domain)
         update_ccs_record_table(self.domain)
         update_woman_table(self.domain)
+        update_woman_history_table(self.domain)
         update_agg_awc_table(self.domain, date)
         update_agg_village_table(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
