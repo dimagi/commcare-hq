@@ -8,11 +8,10 @@ import tempfile
 from collections import namedtuple, OrderedDict, defaultdict
 
 import polib
-from django.conf import settings
 from django.utils.functional import cached_property
 from memoized import memoized
 
-from corehq.apps.app_manager.util import get_form_data
+from corehq.apps.reports.formdetails.readable import get_app_summary_formdata
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.models import TransifexBlacklist
 
@@ -81,7 +80,7 @@ class AppTranslationsGenerator:
 
         labels_to_skip = defaultdict(set)
         necessary_labels = defaultdict(set)
-        module_data, errors = get_form_data(self.domain, self.app)
+        module_data, errors = get_app_summary_formdata(self.domain, self.app)
 
         for module in module_data:
             for form in module['forms']:
