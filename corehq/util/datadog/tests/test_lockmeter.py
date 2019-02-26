@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from unittest import TestCase
 
+import attr
 from mock import patch, call, ANY
 
 from ..lockmeter import LockMeter
@@ -71,10 +72,26 @@ class TestLockMeter(TestCase):
             lock.degraded()
         counter.assert_called_once_with("commcare.lock.degraded", tags=["name:test"])
 
+    def test_released_after_timeout(self):
+        lock = LockMeter(FakeLock(timeout=-1), "test")
+        lock.acquire()
+        with patch("corehq.util.datadog.lockmeter.datadog_counter") as counter:
+            lock.release()
+        counter.assert_called_once_with("commcare.lock.released_after_timeout", tags=["name:test"])
 
+    def test_lock_without_timeout(self):
+        fake = FakeLock()
+        del fake.timeout
+        assert not hasattr(fake, "timeout")
+        lock = LockMeter(fake, "test")
+        lock.acquire()  # should not raise
+
+
+@attr.s
 class FakeLock(object):
 
     locked = False
+    timeout = attr.ib(default=None)
 
     def acquire(self, blocking=True):
         self.locked = True

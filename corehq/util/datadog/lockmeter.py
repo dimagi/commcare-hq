@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import time
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 
 
@@ -19,6 +21,7 @@ class LockMeter(object):
         self.lock_timer = datadog_bucket_timer(
             "commcare.lock.locked_time", self.tags, self.timing_buckets)
         self.track_unreleased = track_unreleased
+        self.end_time = None
 
     def acquire(self, *args, **kw):
         tags = self.tags
@@ -26,6 +29,9 @@ class LockMeter(object):
         with datadog_bucket_timer("commcare.lock.acquire_time", tags, buckets):
             acquired = self.lock.acquire(*args, **kw)
         if acquired:
+            timeout = getattr(self.lock, "timeout", None)
+            if timeout:
+                self.end_time = time.time() + timeout
             self.lock_timer.start()
         return acquired
 
@@ -33,6 +39,8 @@ class LockMeter(object):
         self.lock.release()
         if self.lock_timer.is_started():
             self.lock_timer.stop()
+        if self.end_time and time.time() > self.end_time:
+            datadog_counter("commcare.lock.released_after_timeout", tags=self.tags)
 
     def __enter__(self):
         self.acquire(blocking=True)
