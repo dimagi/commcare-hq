@@ -412,7 +412,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(e.message)
+            logging.exception(six.text_type(e))
             return "#"
 
     @property

@@ -28,7 +28,7 @@ class ThreadLocals(object):
 
 
 # this is not intended to be an all-knowing IP address regex
-IP_RE = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+IP_RE = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
 def get_ip(request):
     """

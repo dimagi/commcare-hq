@@ -5,6 +5,7 @@ import sys
 import datetime
 from functools import cmp_to_key
 
+import six
 from iso8601 import iso8601
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
@@ -323,7 +324,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
 
         return True
 

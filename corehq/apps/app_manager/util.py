@@ -77,7 +77,7 @@ def app_doc_types():
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
-    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    prepared_xpath = re.compile(r'\s').sub('', prepared_xpath)
     return prepared_xpath
 
 

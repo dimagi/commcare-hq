@@ -180,7 +180,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            e.message, res['_source']['_id'])
+                            six.text_type(e), res['_source']['_id'])
                     )
                 )
 
