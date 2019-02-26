@@ -19,9 +19,8 @@ from corehq.messaging.scheduling.tasks import (
 )
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
-from corehq.util.datadog.lockmeter import LockMeter
 from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
 from django.core.management.base import BaseCommand
 from time import sleep
@@ -58,15 +57,15 @@ class Command(BaseCommand):
         raise ValueError("Unexpected class: %s" % cls)
 
     def get_enqueue_lock(self, cls, schedule_instance_id, next_event_due):
-        client = get_redis_client()
         key = "create-task-for-%s-%s-%s" % (
             cls.__name__,
             schedule_instance_id.hex,
             next_event_due.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return LockMeter(
-            client.lock(key, timeout=60 * 60),
-            "create_task_for_%s" % cls.__name__,
+        return get_redis_lock(
+            key,
+            timeout=60 * 60,
+            name="create_task_for_%s" % cls.__name__,
             track_unreleased=False,
         )
 

@@ -35,10 +35,8 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import download_locations_async, import_locations_async
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
-from corehq.util.datadog.lockmeter import LockMeter
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_lock, release_lock
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
@@ -77,10 +75,10 @@ def lock_locations(func):
     # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
     def func_wrapper(request, *args, **kwargs):
         key = "import_locations_async-{domain}".format(domain=request.domain)
-        client = get_redis_client()
-        lock = LockMeter(
-            client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT),
-            "import_locations_async",
+        lock = get_redis_lock(
+            key,
+            timeout=LOCK_LOCATIONS_TIMEOUT,
+            name="import_locations_async",
         )
         if lock.acquire(blocking=False):
             try:

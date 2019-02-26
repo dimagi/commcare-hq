@@ -77,6 +77,27 @@ class ReleaseOnError(object):
             release_lock(self.lock, degrade_gracefully=True)
 
 
+def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
+    """Get redis lock with datadog timing metrics
+
+    :param key: Redis lock name.
+    :param timeout: Timeout passed through to redis lock.
+    :param name: Datadog tag name. This should be just specific enough
+    to identify the area of code that acquired the lock, but not so
+    specific that it will multiply the number of tags in datadog
+    unnecessarily.
+    :param track_unreleased: When true (the default), increase the count
+    of unreleased locks if a lock object is garbage-collected before it
+    is released.
+    :param **kw: Keyword arguments to be passed through to redis when
+    creating the new lock.
+    """
+    if name is None:
+        raise ValueError("'name' (DataDog 'name' tag value) is required")
+    lock = get_redis_client().lock(key, timeout=timeout, **kw)
+    return LockMeter(lock, name, track_unreleased)
+
+
 def acquire_lock(lock, degrade_gracefully, **kwargs):
     acquired = False
     try:
@@ -187,11 +208,8 @@ class RedisLockableMixIn(object):
 
     @classmethod
     def get_redis_lock(cls, key, timeout_seconds, obj_id=None):
-        client = get_redis_client()
-        return LockMeter(
-            client.lock(key, timeout=timeout_seconds),
-            "%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj")),
-        )
+        name = "%s_%s" % (cls.__name__, ("cls" if obj_id is None else "obj"))
+        return get_redis_lock(key, timeout=timeout_seconds, name=name)
 
     @classmethod
     def get_class_lock(cls, timeout_seconds=120):
@@ -358,11 +376,10 @@ class CriticalSection(object):
 
     def __enter__(self):
         try:
-            client = get_redis_client()
             for key in self.keys:
                 sep = "-" if "-" in key else "_"
                 name = "_".join(key.split(sep, 2)[:2])
-                lock = LockMeter(client.lock(key, timeout=self.timeout), name)
+                lock = get_redis_lock(key, timeout=self.timeout, name=name)
                 self.locks.append(lock)
             for lock in self.locks:
                 self.status.append(lock.acquire(blocking=self.block))

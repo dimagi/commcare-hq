@@ -2,12 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import attr
 from corehq.sql_db.util import handle_connection_failure
-from corehq.util.datadog.lockmeter import LockMeter
 from datetime import datetime
 from time import sleep
 from django.core.management.base import BaseCommand
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
+from dimagi.utils.couch import get_redis_lock, release_lock
+from dimagi.utils.couch.cache.cache_core import RedisClientError
 from dimagi.utils.logging import notify_exception
 
 
@@ -50,16 +49,14 @@ class GenericEnqueuingOperation(BaseCommand):
 
     @handle_connection_failure()
     def populate_queue(self):
-        client = get_redis_client()
         utcnow = datetime.utcnow()
         items = self.get_items_to_be_processed(utcnow)
         for item in items:
-            self.enqueue(item, redis_client=client)
+            self.enqueue(item)
 
-    def enqueue(self, item, redis_client=None):
-        client = redis_client or get_redis_client()
+    def enqueue(self, item):
         queue_name = self.get_queue_name()
-        enqueuing_lock = self.get_enqueuing_lock(client,
+        enqueuing_lock = self.get_enqueuing_lock(
             "%s-enqueuing-%s-%s" % (queue_name, item.id, item.key))
         if enqueuing_lock.acquire(blocking=False):
             try:
@@ -68,11 +65,12 @@ class GenericEnqueuingOperation(BaseCommand):
                 # We couldn't enqueue, so release the lock
                 release_lock(enqueuing_lock, True)
 
-    def get_enqueuing_lock(self, client, key):
+    def get_enqueuing_lock(self, key):
         lock_timeout = self.get_enqueuing_timeout() * 60
-        return LockMeter(
-            client.lock(key, timeout=lock_timeout),
-            self.get_queue_name(),
+        return get_redis_lock(
+            key,
+            timeout=lock_timeout,
+            name=self.get_queue_name(),
             track_unreleased=False,
         )
 
