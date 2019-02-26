@@ -139,7 +139,7 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
-            supervisor_id AS supervisor_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(
