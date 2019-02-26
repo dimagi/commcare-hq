@@ -73,9 +73,13 @@ def get_task_progress(task):
 
 
 def set_task_progress(task, current, total):
+    update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+
+
+def update_task_state(task, state, meta):
     try:
         if task:
-            task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+            task.update_state(state=state, meta=meta)
     except (TypeError, NotImplementedError):
         pass
     except IntegrityError:

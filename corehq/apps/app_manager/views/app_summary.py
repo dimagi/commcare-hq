@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_noop, ugettext_lazy as _
 from django.views.generic import View
 from dimagi.utils.web import json_response
 
-from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.const import WORKFLOW_FORM
@@ -18,7 +17,7 @@ from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+from corehq.apps.reports.formdetails.readable import FormQuestionResponse, get_app_summary_formdata
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -109,7 +108,7 @@ class AppFormSummaryView(AppSummaryView):
     @property
     def page_context(self):
         context = super(AppFormSummaryView, self).page_context
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
             'is_form_summary': True,
             'modules': modules,
@@ -123,7 +122,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
     urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         return json_response({
             'response': {
                 'form_data': {

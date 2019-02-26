@@ -95,6 +95,12 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "hand_wash"
+      },
+      {
+        "column_id": "birth_weight",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "birth_weight"
       }
     ],
     "named_expressions": {

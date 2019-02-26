@@ -27,6 +27,17 @@ DATABASES = {
             'SERIALIZE': False,
         },
     },
+    'aaa-data': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'aaa_commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
 }
 
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
@@ -125,6 +136,8 @@ CACHES = {
 WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
+
+CELERY_RESULT_BACKEND = redis_cache['LOCATION']
 
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
