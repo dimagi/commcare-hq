@@ -21,6 +21,8 @@ from dimagi.utils.logging import notify_exception
 from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
+
+from soil.progress import update_task_state
 from soil.util import expose_file_download, expose_cached_download
 
 logging = get_task_logger(__name__)
@@ -209,7 +211,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
         if errors:
             os.remove(fpath)
-            build_application_zip.update_state(state=states.FAILURE, meta={'errors': errors})
+            update_task_state(build_application_zip, states.FAILURE, {'errors': errors})
             raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)

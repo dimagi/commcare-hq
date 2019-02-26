@@ -15,7 +15,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
-from soil.progress import get_task_progress, get_multiple_task_progress
+from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
 from corehq.blobs import get_blob_db
 import six
 from io import open
@@ -163,14 +163,7 @@ class DownloadBase(object):
 
     @classmethod
     def set_progress(cls, task, current, total):
-        try:
-            if task:
-                task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
-        except (TypeError, NotImplementedError):
-            pass
-        except IntegrityError:
-            # Not called in task context just pass
-            pass
+        set_task_progress(task, current, total)
 
     @classmethod
     def create(cls, payload, **kwargs):
