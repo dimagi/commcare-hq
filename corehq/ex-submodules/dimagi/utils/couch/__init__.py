@@ -83,13 +83,15 @@ def acquire_lock(lock, degrade_gracefully, **kwargs):
         acquired = lock.acquire(**kwargs)
     except RedisError:
         if degrade_gracefully:
-            lock.degraded()
+            if hasattr(lock, "degraded"):
+                lock.degraded()
             lock = None
         else:
             raise
     if lock and not acquired:
         if degrade_gracefully:
-            lock.degraded()
+            if hasattr(lock, "degraded"):
+                lock.degraded()
         else:
             raise RedisError("Unable to acquire lock")
     return lock
@@ -115,7 +117,8 @@ def release_lock(lock, degrade_gracefully):
                 six.reraise(*exc)
         except RedisError:
             if degrade_gracefully:
-                lock.release_failed()
+                if hasattr(lock, "release_failed"):
+                    lock.release_failed()
             else:
                 raise
 
@@ -367,7 +370,7 @@ class CriticalSection(object):
             if self.fail_hard:
                 raise
         for lock, status in zip_longest(self.locks, self.status):
-            if not status:
+            if not status and hasattr(lock, "degraded"):
                 lock.degraded()
         return self
 
