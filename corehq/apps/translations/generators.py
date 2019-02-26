@@ -24,7 +24,7 @@ POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
 
-class AppTranslationsGenerator:
+class AppTranslationsGenerator(object):
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False, use_version_postfix=True):
         """
