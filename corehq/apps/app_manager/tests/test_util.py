@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from django.http import Http404
 from django.test.testcases import TestCase
 
-import corehq.apps.app_manager.util as util
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -30,10 +29,11 @@ class TestGetDefaultFollowupForm(TestCase):
         attachment = get_default_followup_form_xml(context=context)
         followup = app.new_form(0, "Followup Form", None, attachment=attachment)
 
-        modules, _ = util.get_form_data('domain', app)
         self.assertEqual(followup.name['en'], "Followup Form")
-        self.assertEqual(modules[0]['forms'][0]['name']['en'], "Followup Form")
-        self.assertEqual(modules[0]['forms'][0]['questions'][0]['label'], " Default label message ")
+        self.assertEqual(app.modules[0].forms[0].name['en'], "Followup Form")
+
+        first_question = app.modules[0].forms[0].get_questions([], include_triggers=True, include_groups=True)[0]
+        self.assertEqual(first_question['label'], " Default label message ")
 
 
 class TestLatestAppInfo(TestCase):
