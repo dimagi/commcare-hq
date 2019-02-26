@@ -435,7 +435,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, e.message)
+                messages.error(request, six.text_type(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -1312,7 +1312,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(e.message, status=400)
+        return HttpResponse(six.text_type(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

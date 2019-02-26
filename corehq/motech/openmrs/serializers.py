@@ -26,7 +26,7 @@ def to_omrs_date(value):
 
     """
     if isinstance(value, six.string_types):
-        if not re.match('\d{4}-\d{2}-\d{2}', value):
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)
     if isinstance(value, (datetime.date, datetime.datetime)):
@@ -42,7 +42,7 @@ def to_omrs_datetime(value):
 
     """
     if isinstance(value, six.string_types):
-        if not re.match('\d{4}-\d{2}-\d{2}', value):
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)
     if isinstance(value, (datetime.date, datetime.datetime)):

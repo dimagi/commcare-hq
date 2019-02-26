@@ -41,9 +41,9 @@ def process_ui_translation_upload(app, trans_file):
             warnings.append(row["property"] + " is not a known CommCare UI string, but we added it anyway")
         for lang in app.langs:
             if row.get(lang):
-                all_parameters = re.findall("\$.*?}", row[lang])
+                all_parameters = re.findall(r"\$.*?}", row[lang])
                 for param in all_parameters:
-                    if not re.match("\$\{[0-9]+}", param):
+                    if not re.match(r"\$\{[0-9]+}", param):
                         error_properties.append(row["property"] + ' - ' + row[lang])
                 if not (lang_with_defaults == lang and
                         row[lang] == default_trans.get(row["property"], "")):

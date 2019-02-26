@@ -25,7 +25,7 @@ import six
 from six.moves import range
 from six.moves import filter
 
-dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
+dt_no_Z_re = re.compile(r'^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
 class Group(QuickCachedDocumentMixin, UndoableDocument):

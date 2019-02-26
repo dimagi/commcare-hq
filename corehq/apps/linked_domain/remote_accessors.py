@@ -6,6 +6,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
@@ -58,11 +59,11 @@ def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
-    if app.domain in {'icds-cas', 'icds-test'}:
+    if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(
-                False, "Multimedia still missing", json.dumps({
+                False, "[ICDS-291] Multimedia still missing", json.dumps({
                     'domain': app.domain,
                     'app_id': app.get_id,
                     'fetched-attempted': missing_media,
@@ -70,6 +71,18 @@ def pull_missing_multimedia_for_app(app):
                 }, indent=4)
             )
             return False
+        else:
+            soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
+                False, "[ICDS-291] Multimedia pull successful", json.dumps([{
+                    'domain': app.domain,
+                    'app_id': app.get_id,
+                    'version': app.version,
+                    'length of multimedia_map': len(app.multimedia_map),
+                    'number of missing files pulled': len(missing_media),
+                }, {
+                    'missing': missing_media,
+                }], indent=4)
+            )
     return True
 
 

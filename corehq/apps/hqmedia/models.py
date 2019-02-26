@@ -157,10 +157,8 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
             else:
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
-                soft_assert(notify_admins=True)(False, 'someone is uploading a file that should have existed for multimedia', {
-                    'media_id': self._id,
-                    'attachment_id': attachment_id
-                })
+                soft_assert(notify_admins=True)(False, '[ICDS-291] someone is uploading a file that should '
+                    'have existed for multimedia', {'media_id': self._id, 'attachment_id': attachment_id})
             self.put_attachment(
                 data,
                 attachment_id,
@@ -554,7 +552,7 @@ def _log_media_deletion(app, deleted_media):
         for path, map_item, media in deleted_media
     ]
     soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-        False, "path deleted from multimedia map", json.dumps({
+        False, "[ICDS-291] path deleted from multimedia map", json.dumps({
             'domain': app.domain,
             'app_id': app._id,
             'deleted_media': list(formatted_media),
@@ -972,7 +970,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
             if retry_successes or retry_failures:
                 soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
-                    False, "get_media_objects failed to find multimedia", json.dumps([{
+                    False, "[ICDS-291] get_media_objects failed to find multimedia", json.dumps([{
                         'domain': self.domain,
                         'app_id': self._id,
                         'retry_successes_count': len(retry_successes),

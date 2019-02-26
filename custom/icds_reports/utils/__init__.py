@@ -44,6 +44,7 @@ from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
 from io import open
 from pillowtop.models import KafkaCheckpoint
+from six.moves import zip
 
 
 OPERATORS = {
@@ -951,16 +952,9 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     # export info
     worksheet2 = workbook.create_sheet("Export Info")
     worksheet2.column_dimensions['A'].width = 14
-    worksheet2['A1'].value = export_info[0][0]
-    worksheet2['B1'].value = export_info[0][1]
-    worksheet2['A2'].value = export_info[1][0]
-    worksheet2['B2'].value = export_info[1][1]
-    worksheet2['A3'].value = export_info[2][0]
-    worksheet2['B3'].value = export_info[2][1]
-    worksheet2['A4'].value = export_info[3][0]
-    worksheet2['B4'].value = export_info[3][1]
-    worksheet2['A4'].value = export_info[4][0]
-    worksheet2['B4'].value = export_info[4][1]
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
 
     # saving file
     file_hash = uuid.uuid4().hex

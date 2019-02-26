@@ -163,7 +163,7 @@ def _validate_old_index_name(index_name, table_name):
 
 
 def _validate_identifier(name):
-    allowed_chars = re.compile('^[\w\$]+$')
+    allowed_chars = re.compile(r'^[\w\$]+$')
     if not allowed_chars.match(name):
         raise IndexRenameOperationException("Invalid identifier given: %s" % name)
 

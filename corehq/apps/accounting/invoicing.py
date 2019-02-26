@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import unicode_literals
 import calendar
 import datetime
+
+import six
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 
@@ -163,7 +165,7 @@ class DomainInvoiceFactory(object):
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(six.text_type(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True
@@ -308,7 +310,7 @@ class DomainWireInvoiceFactory(object):
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
-                    log_accounting_error(e.message)
+                    log_accounting_error(six.text_type(e))
                     self.logged_throttle_error = True
         else:
             record.skipped_email = True

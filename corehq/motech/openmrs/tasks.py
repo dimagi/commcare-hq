@@ -248,7 +248,6 @@ def import_patients_to_domain(domain_name, force=False):
 
 
 @periodic_task(
-    serializer='pickle',
     run_every=crontab(minute=4, hour=4),
     queue='background_queue'
 )
@@ -273,7 +272,6 @@ def poll_openmrs_atom_feeds(domain_name):
 
 
 @periodic_task(
-    serializer='pickle',
     run_every=crontab(**OPENMRS_ATOM_FEED_POLL_INTERVAL),
     queue='background_queue'
 )
