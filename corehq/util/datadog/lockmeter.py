@@ -6,7 +6,7 @@ import time
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 
 
-class LockMeter(object):
+class MeteredLock(object):
     """A lock wrapper that measures various lock characteristics
 
     This was built for profiling Redis locks, but will for any type of

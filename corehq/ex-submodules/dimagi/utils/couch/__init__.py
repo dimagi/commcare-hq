@@ -11,7 +11,7 @@ import json
 import six
 import sys
 
-from corehq.util.datadog.lockmeter import LockMeter
+from corehq.util.datadog.lockmeter import MeteredLock
 
 LOCK_EXPIRATION = timedelta(hours=1)
 
@@ -95,7 +95,7 @@ def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
     if name is None:
         raise ValueError("'name' (DataDog 'name' tag value) is required")
     lock = get_redis_client().lock(key, timeout=timeout, **kw)
-    return LockMeter(lock, name, track_unreleased)
+    return MeteredLock(lock, name, track_unreleased)
 
 
 def acquire_lock(lock, degrade_gracefully, **kwargs):
