@@ -2,7 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-<ul class="sortable appmanager-main-menu appnav-menu appnav-module js-sortable-module">
+<ul class="sortable appmanager-main-menu appnav-menu appnav-module sortable-modules">
     <li class="sort-action">
         <form method="post"
               action="{% url "rearrange" domain app.id 'modules' %}">
@@ -12,11 +12,18 @@
     </li>
     {% with module as selected_module %}
         {% for module in app.get_modules %}
-            <li class="edit-module-li js-sorted-li {% if module.root_module_id %}child-module{% endif %}" data-index="{{ module.id }}" data-uid="{{ module.unique_id }}" data-indexvar="moduleid">
+            <li class="edit-module-li js-sorted-li module"
+                data-index="{{ module.id }}"
+                data-uid="{{ module.unique_id }}"
+                data-rootModuleId="{{ module.root_module_id|default:"" }}"
+                data-indexvar="moduleid">
 
                 {% include 'app_manager/partials/menu/module_link.html' %}
 
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
+                <ul class="appnav-menu appnav-menu-nested see sortable sortable-forms
+                           {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %}
+                           {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}"
+                    data-parentvar="moduleid">
                     <li class="sort-action">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">

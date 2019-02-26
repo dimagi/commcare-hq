@@ -232,6 +232,7 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initMenuItemSorting = function () {
+        nestChildModules();
         initDragHandles();
         $('.sortable').each(function () {
             initSortable($(this));
@@ -247,7 +248,34 @@ hqDefine('app_manager/js/app_manager', function () {
                 $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
             });
         }
-
+        function nestChildModules() {
+            var modulesByUid = {},
+                childModules = [];
+            $(".module").each(function (index, element) {
+                $(element).data('index', index);
+                modulesByUid[ $(element).data('uid') ] = element;
+                if ( $(element).data('rootmoduleid') ) {
+                    childModules.push(element);
+                }
+            });
+            _.each(childModules, function (childModule) {
+                var parent = modulesByUid[$(childModule).data('rootmoduleid')];
+                if (!parent) {
+                    // This child module is orphaned, throw it at the end
+                    $("ul.appnav-module").append(childModule);
+                } else {
+                    addChildModuleToParent(childModule, parent);
+                }
+            });
+        }
+        function addChildModuleToParent(childModule, parent) {
+            var childList = $(parent).find("ul.child-modules");
+            if ( childList.length === 0 ) {
+                childList = $('<ul class="appnav-menu appnav-menu-nested child-modules sortable"></ul>');
+                $(parent).append(childList);
+            }
+            childList.append(childModule);
+        }
         function updateRelatedTags($elem, name, value) {
             var relatedTags = $elem.find("[data-" + name + "]");
             _.each(relatedTags, function (related) {
