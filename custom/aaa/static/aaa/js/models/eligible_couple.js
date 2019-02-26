@@ -5,13 +5,15 @@ hqDefine("aaa/js/models/eligible_couple", [
     'moment/moment',
     'hqwebapp/js/initial_page_data',
     'aaa/js/models/child',
+    'aaa/js/models/person',
 ], function (
     $,
     ko,
     _,
     moment,
     initialPageData,
-    childUtils
+    childUtils,
+    personUtils,
 ) {
     var eligibleCoupleList = function (options, postData) {
         var self = {};
@@ -47,34 +49,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         return self;
     };
 
-    var personModel = function (data) {
-        var self = {};
-        self.name = data.name;
-        self.gender = data.gender;
-        self.status = data.status;
-        self.dob = data.dob;
-        self.marriedAt = data.marriedAt;
-        self.aadhaarNo = data.aadhaarNo;
-
-        self.age = ko.computed(function () {
-            return Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'years',true)) + ' Yrs';
-        });
-        return self;
-    };
-
-    var personOtherInfoModel = function (data) {
-        var self = {};
-        self.address = data.address;
-        self.subcentre = data.subcentre;
-        self.village = data.village;
-        self.anganwadiCentre = data.anganwadiCentre;
-        self.phone = data.phone;
-        self.religion = data.religion;
-        self.caste = data.caste;
-        self.bplOrApl = data.bplOrApl;
-        return self;
-    };
-
     var eligibleCoupleModel = function (data) {
         var self = {};
         self.maleChildrenBorn = data.maleChildrenBorn;
@@ -97,14 +71,13 @@ hqDefine("aaa/js/models/eligible_couple", [
 
         return self;
     };
-
     
     var eligibleCoupleDetailsView = function (postData) {
         var self = {};
         self.personDetails = {
-            person: ko.observable(personModel),
-            husband: ko.observable(personModel),
-            other: ko.observable(personOtherInfoModel),
+            person: ko.observable(personUtils.personModel),
+            husband: ko.observable(personUtils.personModel),
+            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
         self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
@@ -118,9 +91,9 @@ hqDefine("aaa/js/models/eligible_couple", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.personDetails.person(personModel(data.person));
-                self.personDetails.husband(personModel(data.husband));
-                self.personDetails.other(personOtherInfoModel(data.other));
+                self.personDetails.person(personUtils.personModel(data.person));
+                self.personDetails.husband(personUtils.personModel(data.husband));
+                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             })
         };
 
