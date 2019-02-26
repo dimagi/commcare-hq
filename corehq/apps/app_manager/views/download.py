@@ -372,7 +372,7 @@ def download_index(request, domain, app_id):
     files = defaultdict(list)
     try:
         for file_ in source_files(request.app):
-            form_filename = re.search('modules-(\d+)\/forms-(\d+)', file_[0])
+            form_filename = re.search(r'modules-(\d+)\/forms-(\d+)', file_[0])
             if form_filename:
                 module_id, form_id = form_filename.groups()
                 module = request.app.get_module(module_id)

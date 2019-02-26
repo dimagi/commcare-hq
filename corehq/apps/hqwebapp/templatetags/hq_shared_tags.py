@@ -45,7 +45,7 @@ def JSON(obj):
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
-               "{}".format(e.message))
+               "{}".format(six.text_type(e)))
         soft_assert(notify_admins=True)(False, msg)
         raise e
 

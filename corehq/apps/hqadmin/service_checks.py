@@ -127,6 +127,16 @@ def check_blobdb():
 
 
 def check_celery():
+    celery_status = _check_celery()
+    celery_worker_status = _check_celery_workers()
+    if celery_status.success and celery_worker_status.success:
+        return celery_status
+    else:
+        message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
+        return ServiceStatus(False, message)
+
+
+def _check_celery():
     from celery import Celery
     from django.conf import settings
     celery = Celery()
@@ -135,11 +145,10 @@ def check_celery():
     if not worker_responses:
         return ServiceStatus(False, 'No running Celery workers were found.')
     else:
-        msg = 'Successfully pinged {} workers'.format(len(worker_responses))
-        return ServiceStatus(True, msg)
+        return ServiceStatus(True, 'Successfully pinged {} workers'.format(len(worker_responses)))
 
 
-def check_heartbeat():
+def _check_celery_workers():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
         all_workers = requests.get(
@@ -167,7 +176,10 @@ def check_heartbeat():
 
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
+    return ServiceStatus(True, "OK")
 
+
+def check_heartbeat():
     is_alive = heartbeat.is_alive()
     return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
 
@@ -259,7 +271,7 @@ CHECKS = {
         "check_func": check_couch,
     },
     'celery': {
-        "always_check": True,
+        "always_check": False,
         "check_func": check_celery,
     },
     'heartbeat': {

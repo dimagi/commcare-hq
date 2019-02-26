@@ -111,7 +111,7 @@ if os.path.exists(_formdesigner_path):
 del _formdesigner_path
 
 LOG_HOME = FILEPATH
-COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
@@ -2089,6 +2089,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
+    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 

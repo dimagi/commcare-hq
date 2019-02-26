@@ -74,7 +74,7 @@ from dimagi.utils.modules import to_function
 from io import open
 
 
-ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
+ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
 
 def _check_ids(value):

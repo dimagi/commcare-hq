@@ -33,14 +33,14 @@ class DateFormat(object):
 # A project can specify the expected format of answers to date questions
 # in SMS Surveys. These are the available choices.
 ALLOWED_SURVEY_DATE_FORMATS = (
-    DateFormat('YYYYMMDD', '%Y%m%d', '^\d{8}$'),
-    DateFormat('MMDDYYYY', '%m%d%Y', '^\d{8}$'),
-    DateFormat('DDMMYYYY', '%d%m%Y', '^\d{8}$'),
+    DateFormat('YYYYMMDD', '%Y%m%d', r'^\d{8}$'),
+    DateFormat('MMDDYYYY', '%m%d%Y', r'^\d{8}$'),
+    DateFormat('DDMMYYYY', '%d%m%Y', r'^\d{8}$'),
 )
 
 SURVEY_DATE_FORMAT_LOOKUP = {df.human_readable_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
 
-phone_number_plus_re = re.compile("^\+{0,1}\d+$")
+phone_number_plus_re = re.compile(r"^\+{0,1}\d+$")
 
 
 class ContactNotFoundException(Exception):

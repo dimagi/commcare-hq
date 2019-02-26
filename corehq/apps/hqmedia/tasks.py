@@ -187,7 +187,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if len(media_suites) != 1:
                         message = _('Could not identify media_suite.xml in CCZ')
                         errors.append(message)
-                        notify_exception(None, "[ICDS-291] ".format(message))
+                        notify_exception(None, "[ICDS-291] {}".format(message))
                     else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
