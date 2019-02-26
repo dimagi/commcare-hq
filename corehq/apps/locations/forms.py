@@ -249,7 +249,7 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
-            slug_regex = re.compile('^[-_\w\d]+$')
+            slug_regex = re.compile(r'^[-_\w\d]+$')
             if not slug_regex.match(site_code):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'

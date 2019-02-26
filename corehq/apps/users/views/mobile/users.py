@@ -273,7 +273,7 @@ class EditCommCareUserView(BaseEditUserView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
-            phone_number = re.sub('\s', '', phone_number)
+            phone_number = re.sub(r'\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)

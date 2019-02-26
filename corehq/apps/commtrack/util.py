@@ -220,7 +220,7 @@ def encode_if_needed(val):
 
 
 def _fetch_ending_numbers(s):
-    matcher = re.compile("\d*$")
+    matcher = re.compile(r"\d*$")
     return matcher.search(s).group()
 
 
@@ -228,7 +228,7 @@ def generate_code(object_name, existing_codes):
     if not object_name:
         object_name = 'no name'
 
-    matcher = re.compile("[\W\d]+")
+    matcher = re.compile(r"[\W\d]+")
     name_slug = matcher.sub(
         '_',
         unicode_slug(object_name.lower())
