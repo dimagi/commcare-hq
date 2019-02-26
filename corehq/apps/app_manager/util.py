@@ -508,7 +508,7 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
     return sort_only_elements, sort_columns
 
 
-class FormDataGenerator(object):
+class _FormDataGenerator(object):
     def __init__(self, domain, app, include_shadow_forms=True):
         self.domain = domain
         self.app = app
@@ -519,7 +519,7 @@ class FormDataGenerator(object):
         self._seen_save_to_case = defaultdict(list)
         self._case_meta = self.app.get_case_metadata()
 
-    def get_app_data(self):
+    def compile_app_data(self):
         return [self._compile_module(module) for module in self.app.get_modules()], self.errors
 
     def _compile_module(self, module):
@@ -549,10 +549,10 @@ class FormDataGenerator(object):
         }
         try:
             form_meta['questions'] = [
-                compiled_question
-                for question in form.get_questions(self.app.langs, include_triggers=True,
-                                                   include_groups=True, include_translations=True)
-                for compiled_question in self._compile_form_questions(form.unique_id, question)
+                question
+                for raw_question in form.get_questions(self.app.langs, include_triggers=True,
+                                                       include_groups=True, include_translations=True)
+                for question in self._get_question(form.unique_id, raw_question)
             ]
         except XFormException as exception:
             form_meta['questions'] = []
@@ -563,26 +563,30 @@ class FormDataGenerator(object):
             self.errors.append(form_meta)
         return form_meta
 
-    def _compile_form_questions(self, form_unique_id, question):
-        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+    def _get_question(self, form_unique_id, question):
+        if self._needs_save_to_case_root_node(question, form_unique_id):
+            yield self._save_to_case_root_node(form_unique_id, question)
+        yield self._serialized_question(form_unique_id, question)
 
-        is_save_to_case = '/case/' in question['value']
-        question_path = question['value'].split('/case/')[0]
-        if is_save_to_case and question_path not in self._seen_save_to_case[form_unique_id]:
-            yield self._get_save_to_case_root_node(form_unique_id, question)
-        else:
-            response = FormQuestionResponse(question).to_json()
-            response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question['value'])
-            response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question['value'])
-            if is_save_to_case:
-                response['type'] = 'SaveToCase'
-            yield response
+    def _needs_save_to_case_root_node(self, question, form_unique_id):
+        return (
+            self._is_save_to_case(question)
+            and self._save_to_case_root_path(question) not in self._seen_save_to_case[form_unique_id]
+        )
 
-    def _get_save_to_case_root_node(self, form_unique_id, question):
+    @staticmethod
+    def _is_save_to_case(question):
+        return '/case/' in question['value']
+
+    @staticmethod
+    def _save_to_case_root_path(question):
+        return question['value'].split('/case/')[0]
+
+    def _save_to_case_root_node(self, form_unique_id, question):
         """Add an extra node with the root path of the save to case to attach case properties to
         """
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        question_path = question['value'].split('/case/')[0]
+        question_path = self._save_to_case_root_path(question)
         response = FormQuestionResponse({
             "label": question_path,
             "tag": question_path,
@@ -601,9 +605,18 @@ class FormDataGenerator(object):
         self._seen_save_to_case[form_unique_id].append(question_path)
         return response
 
+    def _serialized_question(self, form_unique_id, question):
+        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+        response = FormQuestionResponse(question).to_json()
+        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question['value'])
+        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question['value'])
+        if self._is_save_to_case(question):
+            response['type'] = 'SaveToCase'
+        return response
+
 
 def get_form_data(domain, app, include_shadow_forms=True):
-    return FormDataGenerator(domain, app, include_shadow_forms).get_app_data()
+    return _FormDataGenerator(domain, app, include_shadow_forms).compile_app_data()
 
 
 def get_and_assert_practice_user_in_domain(practice_user_id, domain):
