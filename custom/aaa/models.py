@@ -145,7 +145,11 @@ class Woman(LocationDenormalizedModel):
             WHERE sex = 'F' AND date_part('year', age(dob)) BETWEEN 15 AND 49
         )
         ON CONFLICT (person_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           dob = EXCLUDED.dob,
+           marital_status = EXCLUDED.marital_status,
+           sex = EXCLUDED.sex,
+           migration_status = EXCLUDED.migration_status
         """.format(
             woman_tablename=cls._meta.db_table,
             person_cases_ucr_tablename=ucr_tablename,
@@ -182,15 +186,15 @@ class Woman(LocationDenormalizedModel):
 
         return """
         UPDATE "{woman_tablename}" AS woman SET
-            pregnant_ranges = pregnant_ranges
+            pregnant_ranges = ccs_record.pregnant_ranges
         FROM (
-            SELECT person_case_id, array_agg(pregnancy_range) as pregnancy_ranges
+            SELECT person_case_id, array_agg(pregnant_range) as pregnant_ranges
             FROM(
                 SELECT person_case_id,
-                       daterange(opened_on::date, add, '[]') as pregnancy_range
+                       daterange(opened_on::date, add, '[]') as pregnant_range
                 FROM "{ccs_record_cases_ucr_tablename}"
-                WHERE opened_on < add
-                GROUP BY person_case_id, pregnancy_range
+                WHERE opened_on < add OR add IS NULL
+                GROUP BY person_case_id, pregnant_range
             ) AS _tmp_table
             GROUP BY person_case_id
         ) ccs_record
@@ -200,12 +204,45 @@ class Woman(LocationDenormalizedModel):
             ccs_record_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_eligible_couple_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-eligible_couple_forms')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{woman_tablename}" AS woman SET
+            fp_current_method_ranges = eligible_couple_fp.fp_current_method_ranges
+        FROM (
+            SELECT person_case_id, array_agg(fp_current_method_range) AS fp_current_method_ranges
+            FROM (
+                SELECT person_case_id, fp_current_method, daterange(timeend::date, next_timeend::date) AS fp_current_method_range
+                FROM(
+                    SELECT person_case_id,
+                           fp_current_method,
+                           timeend,
+                           LEAD(fp_current_method) OVER w AS next_fp_current_method,
+                           LEAD(timeend) OVER w AS next_timeend
+                    FROM "{eligible_couple_ucr_tablename}"
+                    WINDOW w AS (PARTITION BY person_case_id ORDER BY timeend DESC)
+                ) AS _tmp_table
+            ) eligible_couple
+            WHERE fp_current_method != 'none'
+            GROUP BY person_case_id
+        ) AS eligible_couple_fp
+        WHERE woman.person_case_id = eligible_couple_fp.person_case_id
+        """.format(
+            woman_tablename=cls._meta.db_table,
+            eligible_couple_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
     @classproperty
     def aggregation_queries(self):
         return [
             self.agg_from_person_case_ucr,
             self.agg_from_household_case_ucr,
             self.agg_from_ccs_record_case_ucr,
+            self.agg_from_eligible_couple_forms_ucr,
             self.agg_from_village_ucr,
             self.agg_from_awc_ucr,
         ]
@@ -265,12 +302,16 @@ class CcsRecord(LocationDenormalizedModel):
                 closed_on,
                 hrp,
                 child_birth_location,
-                edd,
-                add
+                add,
+                edd
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
-           closed_on = EXCLUDED.closed_on
+           closed_on = EXCLUDED.closed_on,
+           hrp = EXCLUDED.hrp,
+           child_birth_location = EXCLUDED.child_birth_location,
+           add = EXCLUDED.add,
+           edd = EXCLUDED.edd
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
@@ -469,22 +510,22 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {location_levels}, %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE
-                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges))
+                COALESCE(COUNT(*) FILTER (WHERE
+                    (NOT daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges) OR pregnant_ranges IS NULL)
                     AND migration_status IS DISTINCT FROM 'migrated'
                     AND marital_status = 'married'
-                ) as registered_eligible_couples,
-                COUNT(*) FILTER (WHERE
+                ), 0) as registered_eligible_couples,
+                COALESCE(COUNT(*) FILTER (WHERE
                     daterange(%(window_start)s, %(window_end)s) && any(pregnant_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
-                ) as registered_pregnancies,
-                COUNT(*) FILTER (WHERE
+                ), 0) as registered_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
                     daterange(%(window_start)s, %(window_end)s) && any(fp_current_method_ranges)
                     AND migration_status IS DISTINCT FROM 'migrated'
-                ) as eligible_couples_using_fp_method
+                ), 0) as eligible_couples_using_fp_method
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
@@ -511,15 +552,18 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {location_levels}, %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE hrp = 'yes') as high_risk_pregnancies,
-                COUNT(*) FILTER (WHERE child_birth_location = 'hospital') as institutional_deliveries,
-                COUNT(*) FILTER (WHERE
-                    child_birth_location IS NOT NULL OR child_birth_location != ''
-                ) as total_deliveries
+                COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    add <@ daterange(%(window_start)s, %(window_end)s)
+                    AND child_birth_location = 'hospital'
+                ), 0) as institutional_deliveries,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    add <@ daterange(%(window_start)s, %(window_end)s)
+                ), 0) as total_deliveries
             FROM "{woman_tablename}" woman
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on AND opened_on < add
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )
@@ -546,10 +590,10 @@ class AggLocation(models.Model):
                 %(domain)s,
                 {location_levels},
                 %(window_start)s AS month,
-                COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5) as registered_children
+                COALESCE(COUNT(*) FILTER (WHERE EXTRACT(YEAR FROM age(%(window_end)s, dob)) < 5), 0) as registered_children
             FROM "{child_tablename}" child
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND opened_on < closed_on
+                  AND (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
             GROUP BY {location_levels}
         )

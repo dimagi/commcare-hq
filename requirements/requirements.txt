@@ -95,7 +95,6 @@ markdown==2.2.1
 markupsafe==1.1.0         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
-numpy==1.7.1
 openpyxl==2.6.0
 pbr==5.1.2                # via mock
 phonenumberslite==8.10.5

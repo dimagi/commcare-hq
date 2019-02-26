@@ -12,13 +12,29 @@
   </div>
 </script>
 
+<script type="text/template" id="maybe-custom-badge-template">
+        <% /*
+            Ensure backwards compatibility with formplayer backend
+            before it added the badgeText field.
+            typeof x !== 'undefined' means "the variable hasn't been defined",
+            and is different from x === undefined.
+        */ %>
+        <% if (typeof badgeText !== 'undefined' && badgeText) { %>
+        <span class="badge"><%- badgeText %></span>
+        <% } %>
+
+</script>
+
 <script type="text/template" id="menu-view-row-audio-template">
     <td class="module-column module-column-icon">
         <% if (imageUrl) { %>
-          <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
+          <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+          </div>
         <% } else { %>
-          <div class="module-icon-container">
+          <div class="module-icon-container badge-container">
             <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
           </div>
         <% } %>
     </td>
@@ -37,24 +53,18 @@
 <script type="text/template" id="menu-view-row-template">
     <td class="module-column module-column-icon">
         <% if (imageUrl) { %>
-        <div class="module-icon-image" style="background-image: url('<%- imageUrl %>');"></div>
+        <div class="module-icon-image badge-container" style="background-image: url('<%- imageUrl %>');">
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+        </div>
         <% } else { %>
-          <div class="module-icon-container">
+          <div class="module-icon-container badge-container">
             <% if (navState === "JUMP") { %>
                 <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
             <% } else { %>
                 <i class="fa fa-folder module-icon" aria-hidden="true"></i>
             <% } %>
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
           </div>
-        <% } %>
-        <% /*
-            Ensure backwards compatibility with formplayer backend
-            before it added the badgeText field.
-            typeof x !== 'undefined' means "the variable hasn't been defined",
-            and is different from x === undefined.
-        */ %>
-        <% if (typeof badgeText !== 'undefined' && badgeText) { %>
-        <span class="badge badge-info"><%- badgeText %></span>
         <% } %>
     </td>
     <td class="module-column module-column-name">
@@ -65,14 +75,17 @@
 <script type="text/template" id="menu-view-grid-item-template">
     <div class="col-xs-6 col-sm-4 col-lg-3">
         <% if (imageUrl) { %>
-          <div class="gridicon" style="background-image: url('<%- imageUrl %>');"></div>
+          <div class="gridicon badge-container" style="background-image: url('<%- imageUrl %>');">
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
+          </div>
         <% } else { %>
-          <div class="gridicon gridicon-circle">
+          <div class="gridicon gridicon-circle badge-container">
             <% if (navState === "JUMP") { %>
                 <i class="fa fa-pencil gridicon-icon" aria-hidden="true"></i>
             <% } else { %>
                 <i class="fa fa-folder gridicon-icon" aria-hidden="true"></i>
             <% } %>
+            <%= _.template($('#maybe-custom-badge-template').text())(arguments[0]) %>
           </div>
         <% } %>
         <div class="module-column-name text-center">
