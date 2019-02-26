@@ -54,10 +54,6 @@
                 </form>
             </div>
             <div id="blacklist-trans-form" class="tab-pane">
-                <form class="form form-horizontal" name="product" method="post">
-                    <legend>{% trans "BlackList Translations" %}</legend>
-                    {% crispy blacklist_form %}
-                </form>
                 <table class="table table-striped table-hover">
                     <thead>
                         <th class="col-sm-2">App</th>
@@ -78,6 +74,10 @@
                     {% endfor %}
                     </tbody>
                 </table>
+                <form class="form form-horizontal" name="product" method="post">
+                    <legend>{% trans "BlackList Translations" %}</legend>
+                    {% crispy blacklist_form %}
+                </form>
             </div>
             <div id="del-trans-form" class="tab-pane">
                 {% if delete_form %}
