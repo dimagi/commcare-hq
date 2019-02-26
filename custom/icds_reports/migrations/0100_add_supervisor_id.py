@@ -3,6 +3,9 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from corehq.sql_db.operations import RawSQLMigration
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
 
 class Migration(migrations.Migration):
@@ -42,4 +45,5 @@ class Migration(migrations.Migration):
             name='supervisor_id',
             field=models.CharField(max_length=40, null=True),
         ),
+        migrator.get_migration('update_tables43.sql')
     ]
