@@ -269,91 +269,94 @@ hqDefine('app_manager/js/app_manager', function () {
         }
 
         function initSortable($sortable) {
-            var sortingForms = $sortable.hasClass('sortable-forms');
             var options = {
                 handle: '.drag_handle ',
                 items: ">*:not(.sort-disabled)",
-                update: function (e, ui) {
-                    // because the event is triggered on both sortables when moving between one sortable list to
-                    // another, do a check to see if this is the sortable list we're moving the item to
-                    if ($sortable.find(ui.item).length < 1) {
-                        return;
-                    }
-
-                    var to = -1,
-                        from = -1,
-                        toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
-                        movingToNewModule = false,
-                        $form;
-
-                    // if you're moving modules or moving forms within the same module, use this logic to find to and from
-                    if (!sortingForms || toModuleUid === ui.item.data('moduleuid')) {
-                        $sortable.children().not('.sort-disabled').each(function (i) {
-                            var index = parseInt($(this).data('index'), 10);
-                            console.log(index);
-                            if (from !== -1) {
-                                if (from === index) {
-                                    to = i;
-                                    return false;
-                                }
-                            }
-                            if (i !== index) {
-                                if (i + 1 === index) {
-                                    from = i;
-                                } else {
-                                    to = i;
-                                    from = index;
-                                    return false;
-                                }
-                            }
-                        });
-                    } else { //moving forms to a new submodule
-                        $sortable.children().not('.sort-disabled').each(function (i) {
-                            if ($(this).data('moduleuid') !== toModuleUid) {
-                                movingToNewModule = true;
-                                to = i;
-                                from = parseInt(ui.item.data('index'), 10);
-                                return false;
-                            }
-                        });
-                    }
-
-                    if (movingToNewModule || to !== from) {
-                        var fromModuleUid = ui.item.data('moduleuid');
-                        $form = $sortable.find('> .sort-action form');
-                        $form.find('[name="from"], [name="to"]').remove();
-                        $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-                        $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
-                        if (sortingForms) {
-                            $form.append('<input type="hidden" name="from_module_uid" value="' + fromModuleUid + '" />');
-                            $form.append('<input type="hidden" name="to_module_uid"   value="' + toModuleUid + '" />');
-                        }
-
-                        resetIndexes($sortable);
-                        if (fromModuleUid !== toModuleUid) {
-                            var $parentSortable = $sortable.parents(".sortable"),
-                                $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
-                            resetIndexes($fromSortable);
-                        }
-                        $.ajax($form.attr('action'), {
-                            method: 'POST',
-                            data: $form.serialize(),
-                            success: function () {
-                                hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
-                            },
-                            error: function (xhr) {
-                                hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
-                            },
-                        });
-                        hqImport("app_manager/js/menu").setPublishStatus(true);
-                    }
-                },
+                update: function (e, ui) { updateAfterMove(e, ui, $sortable); },
             };
-            if (sortingForms) {
+            if ($sortable.hasClass('sortable-forms')) {
                 options["connectWith"] = '.sortable-forms';
             }
             $sortable.sortable(options);
         }
+
+        function updateAfterMove(e, ui, $sortable) {
+            // because the event is triggered on both sortables when moving between one sortable list to
+            // another, do a check to see if this is the sortable list we're moving the item to
+            if ($sortable.find(ui.item).length < 1) {
+                return;
+            }
+
+            var to = -1,
+                from = -1,
+                toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
+                movingToNewModule = false,
+                sortingForms = $sortable.hasClass('sortable-forms'),
+                $form;
+
+            // if you're moving modules or moving forms within the same module, use this logic to find to and from
+            if (!sortingForms || toModuleUid === ui.item.data('moduleuid')) {
+                $sortable.children().not('.sort-disabled').each(function (i) {
+                    var index = parseInt($(this).data('index'), 10);
+                    if (from !== -1) {
+                        if (from === index) {
+                            to = i;
+                            return false;
+                        }
+                    }
+                    if (i !== index) {
+                        if (i + 1 === index) {
+                            from = i;
+                        } else {
+                            to = i;
+                            from = index;
+                            return false;
+                        }
+                    }
+                });
+            } else { //moving forms to a new submodule
+                $sortable.children().not('.sort-disabled').each(function (i) {
+                    if ($(this).data('moduleuid') !== toModuleUid) {
+                        movingToNewModule = true;
+                        to = i;
+                        from = parseInt(ui.item.data('index'), 10);
+                        return false;
+                    }
+                });
+            }
+
+            if (movingToNewModule || to !== from) {
+                var fromModuleUid = ui.item.data('moduleuid');
+                $form = $sortable.find('> .sort-action form');
+                $form.find('[name="from"], [name="to"]').remove();
+                $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
+                $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
+                if (sortingForms) {
+                    $form.append('<input type="hidden" name="from_module_uid" value="' + fromModuleUid + '" />');
+                    $form.append('<input type="hidden" name="to_module_uid"   value="' + toModuleUid + '" />');
+                }
+
+                resetIndexes($sortable);
+                if (fromModuleUid !== toModuleUid) {
+                    var $parentSortable = $sortable.parents(".sortable"),
+                        $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
+                    resetIndexes($fromSortable);
+                }
+                $.ajax($form.attr('action'), {
+                    method: 'POST',
+                    data: $form.serialize(),
+                    success: function () {
+                        hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                    },
+                    error: function (xhr) {
+                        hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                    },
+                });
+                hqImport("app_manager/js/menu").setPublishStatus(true);
+            }
+        }
+
+
     };
 
     /**
