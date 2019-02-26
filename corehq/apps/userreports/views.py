@@ -52,7 +52,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic, api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -1286,7 +1286,7 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@login_or_basic
+@api_auth
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
