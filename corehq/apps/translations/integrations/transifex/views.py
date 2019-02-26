@@ -30,9 +30,10 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.translations.forms import (
+    AddTransifexBlacklistForm,
+    AppTranslationsForm,
     ConvertTranslationsForm,
     PullResourceForm,
-    AppTranslationsForm,
 )
 from corehq.apps.translations.generators import Translation, PoFileGenerator
 from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
@@ -328,10 +329,11 @@ class AppTranslations(BaseTranslationsView):
             context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
             if self.request.user.is_staff:
                 context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
+            context['blacklisted_translations'] = self._blacklisted_translations
+            context['blacklist_form'] = AddTransifexBlacklistForm(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
-        context['blacklisted_translations'] = self._blacklisted_translations
         return context
 
     @property
@@ -430,6 +432,8 @@ class AppTranslations(BaseTranslationsView):
                 return self.perform_backup_request(request, form_data)
             elif form_data['action'] == 'delete':
                 return self.perform_delete_request(request, form_data)
+            elif form_data['action'] == 'blacklist':
+                return self.translations_form.save()
 
     def post(self, request, *args, **kwargs):
         if self.transifex_integration_enabled(request):

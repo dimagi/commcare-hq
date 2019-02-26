@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.translations.models import TransifexProject
+from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
 from corehq.motech.utils import b64_aes_decrypt
 
 
@@ -194,6 +194,8 @@ class AppTranslationsForm(forms.Form):
             return BackUpAppTranslationsForm
         elif form_action == 'delete':
             return DeleteAppTranslationsForm
+        elif form_action == 'blacklist':
+            return AddTransifexBlacklistForm
 
 
 class CreateAppTranslationsForm(AppTranslationsForm):
@@ -258,3 +260,41 @@ class TransifexOrganizationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TransifexOrganizationForm, self).__init__(*args, **kwargs)
         self.initial['api_token'] = b64_aes_decrypt(self.instance.api_token)
+
+
+class AddTransifexBlacklistForm(forms.ModelForm):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    action = forms.CharField(widget=forms.HiddenInput)
+    domain = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, domain, *args, **kwargs):
+        super(AddTransifexBlacklistForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4 col-md-4 col-lg-3'
+        self.helper.field_class = 'col-sm-6 col-md-6 col-lg-5'
+
+        self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
+        form_fields = [
+            hqcrispy.Field('app_id'),
+            hqcrispy.Field('module_id'),
+            hqcrispy.Field('field_type'),
+            hqcrispy.Field('field_name'),
+            hqcrispy.Field('display_text'),
+            hqcrispy.Field('domain'),
+            hqcrispy.Field('action'),
+        ]
+        form_fields.append(hqcrispy.Field(StrictButton(
+            ugettext_lazy("Add"),
+            type="submit",
+            css_class="btn btn-primary btn-lg disable-on-submit",
+        )))
+        self.helper.layout = crispy.Layout(
+            *form_fields
+        )
+        self.fields['action'].initial = 'blacklist'
+        self.fields['domain'].initial = domain
+
+    class Meta(object):
+        model = TransifexBlacklist
+        fields = '__all__'
