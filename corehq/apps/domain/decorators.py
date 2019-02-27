@@ -18,6 +18,7 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
 # External imports
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
@@ -480,11 +481,14 @@ def track_domain_request(calculated_prop):
     """
         Use this decorator to audit request.
     """
+    norman = ''.join(reversed('moc.igamid@repoohn'))
+    _soft_assert = soft_assert(to=norman)
+
     def _dec(view_func):
         @wraps(view_func)
         def _wrapped(class_based_view, request, *args, **kwargs):
             domain = kwargs.get("domain", None)
-            if domain:
+            if _soft_assert(domain, 'Unable to track_domain_request() without a domain'):
                 DomainAuditRecordEntry.update_calculations(domain, calculated_prop)
             return view_func(class_based_view, request, *args, **kwargs)
         return _wrapped
