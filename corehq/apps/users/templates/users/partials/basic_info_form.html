@@ -16,11 +16,13 @@
         {% if data_fields_form.fields or data_fields_form.data %}
             {% crispy data_fields_form %}
         {% endif %}
-        <div class="form-actions">
-            <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
+        {% if not request.is_view_only %}
+            <div class="form-actions">
+                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                    <button type="submit" class="btn btn-primary disable-on-submit" disabled>{% trans 'Update Information' %}</button>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </fieldset>
 </form>
 
