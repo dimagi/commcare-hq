@@ -211,7 +211,6 @@ LOCAL_APPS = (
 #    'dimagi.utils',
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
-#    'kombu.transport.django', # required for celery
 )
 
 LOCAL_MIDDLEWARE = [
