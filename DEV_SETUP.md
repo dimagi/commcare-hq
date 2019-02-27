@@ -78,7 +78,6 @@ First create your `localsettings.py` file:
 
 Enter `localsettings.py` and do the following:
 - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist and are writeable. If they do not exist, create them.
-- Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
 - You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
 Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then run:
