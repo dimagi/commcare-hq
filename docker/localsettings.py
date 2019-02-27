@@ -137,8 +137,6 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-CELERY_RESULT_BACKEND = redis_cache['LOCATION']
-
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
@@ -162,7 +160,7 @@ ALLOWED_HOSTS = ['*']
 
 # faster compressor that doesn't do source maps
 COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 SHARED_DRIVE_ROOT = '/sharedfiles'
@@ -259,6 +257,4 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = (
-    'kombu.transport.django',  # required for celery
-)
+LOCAL_APPS = ()

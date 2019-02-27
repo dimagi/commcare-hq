@@ -213,7 +213,6 @@ LOCAL_APPS = (
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
 #    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
-#    'kombu.transport.django', # required for celery
 #    'package_monitor',
 )
 
@@ -277,7 +276,7 @@ CCHQ_API_THROTTLE_TIMEFRAME = 10  # seconds
 COVERAGE_REPORT_HTML_OUTPUT_DIR='coverage-html'
 COVERAGE_MODULE_EXCLUDES= ['tests$', 'settings$', 'urls$', 'locale$',
                            'common.views.test', '^django', 'management', 'migrations',
-                           '^south', '^djcelery', '^debug_toolbar']
+                           '^south', '^debug_toolbar']
 
 INTERNAL_DATA = {
     "business_unit": [],
