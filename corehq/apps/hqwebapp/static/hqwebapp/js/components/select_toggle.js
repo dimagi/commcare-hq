@@ -34,7 +34,7 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             // Data
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
             var optionsData = ko.isObservable(params.options) ? params.options() : params.options;
-                self.options = ko.observableArray(_.map(optionsData, function (o) {
+            self.options = ko.observableArray(_.map(optionsData, function (o) {
                 var id = _.isString(o) ? o : o.id,
                     text = _.isString(o) ? o : o.text;
 
