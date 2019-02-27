@@ -1027,10 +1027,12 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         :return: set of filters
         """
         filter_builder = CaseExportFilterBuilder(self.domain_object, self.timezone)
+        show_all_data = self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs) or \
+            self.dynamic_filter_class.no_filters_selected(mobile_user_and_group_slugs)
         return filter_builder.get_filters(
             can_access_all_locations,
             accessible_location_ids,
-            self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
+            show_all_data,
             self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.show_deactivated_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
