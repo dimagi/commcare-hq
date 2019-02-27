@@ -28,7 +28,7 @@ services:
       - riakcs
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
-      - ${VOLUME_PREFIX}lib:/mnt/lib
+      - lib:/mnt/lib
 
   formplayer:
     image: dimagi/formplayer
@@ -46,7 +46,7 @@ services:
     expose:
       - "5432"
     volumes:
-      - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
+      - postgresql:/var/lib/postgresql/data
 
   couch:
     image: klaemo/couchdb:2.0-dev
@@ -60,14 +60,14 @@ services:
     expose:
       - "5984"
     volumes:
-      - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
+      - couchdb2:/usr/src/couchdb/dev/lib/node1/data
 
   redis:
     image: redis
     expose:
       - "6379"
     volumes:
-      - ${VOLUME_PREFIX}redis:/data
+      - redis:/data
 
   elasticsearch:
     image: elasticsearch:1.7.4
@@ -76,7 +76,7 @@ services:
     expose:
       - "9200"
     volumes:
-      - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
+      - elasticsearch:/usr/share/elasticsearch/data
 
   kafka:
     image: spotify/kafka
@@ -86,12 +86,30 @@ services:
       - "2181"
       - "9092"
     volumes:
-      - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
-      - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
+      - kafka:/tmp/kafka-logs
+      - zookeeper:/var/lib/zookeeper
 
   riakcs:
     image: dimagi/riak-cs
     expose:
       - "9980"
     volumes:
-      - ${DATA_VOLUME_PREFIX}riakcs:/var/lib/riak-data
+      - riakcs:/var/lib/riak-data
+
+volumes:
+  lib:
+    name: ${VOLUME_PREFIX}lib
+  postgresql:
+    name: ${VOLUME_PREFIX}postgresql
+  couchdb2:
+    name: ${VOLUME_PREFIX}couchdb2
+  redis:
+    name: ${VOLUME_PREFIX}redis
+  kafka:
+    name: ${VOLUME_PREFIX}kafka
+  zookeeper:
+    name: ${VOLUME_PREFIX}zookeeper
+  riakcs:
+    name: ${DATA_VOLUME_PREFIX}riakcs
+  elasticsearch:
+    name: ${DATA_VOLUME_PREFIX}elasticsearch
