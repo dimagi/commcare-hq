@@ -13,6 +13,11 @@ class ESRestorePillowCheckpointsAdmin(admin.ModelAdmin):
         'seq',
         'seq_int',
     ]
+    search_fields = [
+        'checkpoint_id',
+    ]
+
+    ordering = ['-date_updated']
 
 
 admin.site.register(HistoricalPillowCheckpoint, ESRestorePillowCheckpointsAdmin)
