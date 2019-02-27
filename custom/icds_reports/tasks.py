@@ -257,7 +257,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
-            _bust_awc_cache.delay()
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -268,6 +267,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
+        _bust_awc_cache.delay()
 
 
 def _create_aggregate_functions(cursor):
@@ -986,4 +986,5 @@ def create_mbt_for_month(state_id, month):
 @task(queue='background_queue')
 def _bust_awc_cache():
     reach_keys = cache.keys('*cas_reach_data*')
-    cache.delete_many(reach_keys)
+    for key in reach_keys:
+        cache.delete(key)
