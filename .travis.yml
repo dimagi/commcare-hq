@@ -43,7 +43,7 @@ script:
 #    then
 #      bash scripts/initialize-citus.sh
 #    fi
-  - bash scripts/initialize-citus.sh
+  - bash scripts/initialize-citus.sh hqtest_default
   - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
 after_success:
   # create symlink so artifacts are available
