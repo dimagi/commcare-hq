@@ -43,7 +43,7 @@ Unidecode==0.04.20
 xlrd==1.0.0
 simplejson~=3.11
 sh==1.09
-gevent
+gevent==1.3.7
 greenlet
 openpyxl~=2.6
 six~=1.11
