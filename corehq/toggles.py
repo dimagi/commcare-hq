@@ -460,6 +460,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BIOMETRIC_INTEGRATION = StaticToggle(
+    'biometric_integration',
+    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
