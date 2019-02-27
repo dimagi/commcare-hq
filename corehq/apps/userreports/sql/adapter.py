@@ -57,23 +57,49 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
         return type_
 
-    def _install_partition(self):
+    def _apply_sql_addons(self):
         if self.config.sql_settings.partition_config:
-            config = self.config.sql_settings.partition_config[0]
-            partition = install(
-                'partition', type='range', subtype=config.subtype,
-                constraint=config.constraint, column=config.column, db=self.engine.url,
-                orm='sqlalchemy', return_null=True
-            )
-            mapping = self.get_sqlalchemy_mapping()
-            partition(mapping)
-            mapping.architect.partition.get_partition().prepare()
+            self._install_partition()
+
+        if self.config.sql_settings.citus_config.distribution_type:
+            self._distribute_table()
+
+    def _distribute_table(self):
+        config = self.config.sql_settings.citus_config
+        self.session_helper.Session.remove()
+        with self.engine.begin() as connection:
+            # only do this if the database contains the citus extension
+            citus = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
+            if not list(citus):
+                return
+
+            if config.distribution_type == 'hash':
+                if config.distribution_column not in self.get_table().columns:
+                    raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
+                connection.execute("select create_distributed_table('{}', '{}')".format(
+                    self.get_table().name, config.distribution_column
+                ))
+            elif config.distribution_type == 'reference':
+                connection.execute("select create_reference_table('{}')".format(
+                    self.get_table().name
+                ))
+
+    def _install_partition(self):
+        config = self.config.sql_settings.partition_config[0]
+        partition = install(
+            'partition', type='range', subtype=config.subtype,
+            constraint=config.constraint, column=config.column, db=self.engine.url,
+            orm='sqlalchemy', return_null=True
+        )
+        mapping = self.get_sqlalchemy_mapping()
+        partition(mapping)
+        mapping.architect.partition.get_partition().prepare()
 
     def rebuild_table(self):
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
-            self._install_partition()
+            self._apply_sql_addons()
         except ProgrammingError as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
@@ -83,7 +109,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
-            self._install_partition()
+            self._apply_sql_addons()
         except ProgrammingError as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
