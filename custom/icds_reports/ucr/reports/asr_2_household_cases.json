@@ -19,7 +19,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "data_source_table": "static-household_cases",

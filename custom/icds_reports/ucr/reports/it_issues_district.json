@@ -18,7 +18,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-it_issues_district",
