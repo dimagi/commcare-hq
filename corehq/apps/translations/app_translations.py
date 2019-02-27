@@ -368,35 +368,35 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
 
-        sheet_name = get_module_sheet_name(module)
+        module_sheet_name = get_module_sheet_name(module)
         rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
             row_type="Module",
-            sheet_name=sheet_name,
+            sheet_name=module_sheet_name,
             languages=[module.name.get(lang) for lang in app.langs],
             media_image=[module.icon_by_language(lang) for lang in app.langs],
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         ))
 
-        rows[sheet_name] = []
+        rows[module_sheet_name] = []
         if not isinstance(module, ReportModule):
-            rows[sheet_name] += get_module_rows(app.langs, module)
+            rows[module_sheet_name] += get_module_rows(app.langs, module)
 
             for form_index, form in enumerate(module.get_forms()):
                 if exclude_form is not None and exclude_form(form):
                     continue
 
-                sheet_name = get_form_sheet_name(form)
+                form_sheet_name = get_form_sheet_name(form)
                 rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
                     row_type="Form",
-                    sheet_name=sheet_name,
+                    sheet_name=form_sheet_name,
                     languages=[form.name.get(lang) for lang in app.langs],
                     media_image=[form.icon_by_language(lang) for lang in app.langs],
                     media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
                 ))
 
-                rows[sheet_name] = get_form_question_rows(app.langs, form)
+                rows[form_sheet_name] = get_form_question_rows(app.langs, form)
 
     return rows
 
