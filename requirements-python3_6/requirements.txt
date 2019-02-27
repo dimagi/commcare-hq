@@ -6,17 +6,16 @@
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
-amqp==1.4.9               # via kombu
-anyjson==0.3.3            # via kombu
+amqp==2.4.1               # via kombu
 asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
-billiard==3.3.0.23        # via celery
+billiard==3.5.0.5         # via celery
 boto3==1.9.101
 botocore==1.12.101        # via boto3, s3transfer
 cairocffi==0.9.0          # via cairosvg, weasyprint
 cairosvg==1.0.22          # via weasyprint
-celery==3.1.25
+celery==4.2.1
 certifi==2018.11.29       # via requests
 cffi==1.12.1              # via cairocffi, cryptography, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
@@ -37,7 +36,7 @@ django-angular==0.7.16
 django-appconf==1.0.2     # via django-compressor, django-statici18n
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -89,7 +88,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37             # via celery
+kombu==4.2.2.post1
 laboratory==0.2.0
 lxml==4.3.1
 mako==1.0.7               # via alembic
@@ -154,6 +153,7 @@ ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
 urllib3==1.24.1           # via botocore, dropbox, elasticsearch, py-kissmetrics, requests
 user-agents==1.1.0        # via django-user-agents
+vine==1.2.0               # via amqp
 weasyprint==0.42.3
 webencodings==0.5.1       # via html5lib, tinycss2
 werkzeug==0.11.15
