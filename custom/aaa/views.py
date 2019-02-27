@@ -23,7 +23,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import AggVillage, Woman
+from custom.aaa.models import Woman
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -33,7 +33,7 @@ from custom.aaa.tasks import (
     update_woman_table,
     update_woman_history_table,
 )
-from custom.aaa.utils import build_location_filters
+from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
 
 from dimagi.utils.dates import force_to_date
 
@@ -96,7 +96,7 @@ class ProgramOverviewReportAPI(View):
         prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
 
         location_filters = build_location_filters(selected_location)
-        data = AggVillage.objects.filter(
+        data = get_location_model_for_ministry(self.user_ministry).objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
             domain=self.request.domain,
             **location_filters
