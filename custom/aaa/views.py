@@ -52,13 +52,13 @@ class ReachDashboardView(TemplateView):
         kwargs['user_role_type'] = 'MoHFW'
         user_location = self.couch_user.get_sql_locations(self.domain).first()
         kwargs['user_location_id'] = user_location.location_id if user_location else None
-
         user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
             user_location, include_self=True
         ).distinct() if user_location else []
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
         kwargs['is_web_user'] = self.couch_user.is_web_user
+        kwargs['is_details'] = False
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 
@@ -173,13 +173,13 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-            data = [
-                dict(name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(name='test 4', age='5', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(name='test 5', age='16', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+             data = [
+                dict(id=1, name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(id=2, name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(id=3, name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(id=4, name='test 4', age='5', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(id=5, name='test 5', age='16', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
+                dict(id=6, name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
             ]
         elif beneficiary_type == 'eligible_couple':
             data = (
@@ -195,23 +195,27 @@ class UnifiedBeneficiaryReportAPI(View):
                 )
                 .exclude(migration_status='yes')
                 .extra(
-                    select={'currentFamilyPlanningMethod': 0, 'adoptionDateOfFamilyPlaning': '2018-03-01'},
+                    select={
+                        'currentFamilyPlanningMethod': 0,
+                        'adoptionDateOfFamilyPlaning': '2018-03-01',
+                        'id': 'person_case_id',
+                    },
                     where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
                 )
                 .values(
-                    'person_case_id', 'name', 'age',
+                    'id', 'name', 'age',
                     'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
             )[:10]
             data = list(data)
         elif beneficiary_type == 'pregnant_women':
             data = [
-                dict(name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(name='test 2', age='32', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(name='test 3', age='17', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(name='test 4', age='56', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(name='test 5', age='48', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(name='test 6', age='19', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(id=1, name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(id=2, name='test 2', age='32', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
+                dict(id=3, name='test 3', age='17', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(id=4, name='test 4', age='56', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
+                dict(id=5, name='test 5', age='48', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
+                dict(id=6, name='test 6', age='19', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
             ]
         return JsonResponse(data={
             'rows': data,
@@ -279,3 +283,97 @@ class AggregationScriptPage(BaseDomainView):
         update_agg_village_table(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
         return redirect(self.urlname, domain=self.domain)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
+    template_name = 'aaa/reports/unified_beneficiary_details.html'
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['is_details'] = True
+        context['beneficiary_id'] = kwargs.get('beneficiary_id')
+        context['selected_type'] = kwargs.get('details_type')
+        context['selected_month'] = int(request.GET.get('month'))
+        context['selected_year'] = int(request.GET.get('year'))
+        context['beneficiary_location_names'] = [
+            'Haryana',
+            'Ambala',
+            'Shahzadpur',
+            'PHC Shahzadpur',
+            'SC shahzadpur',
+            'Rasidpur'
+        ]
+        return self.render_to_response(context)
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class UnifiedBeneficiaryDetailsReportAPI(View):
+    def post(self, request, *args, **kwargs):
+        selected_month = int(self.request.POST.get('selectedMonth', 0))
+        selected_year = int(self.request.POST.get('selectedYear', 0))
+        section = self.request.POST.get('section', '')
+        sub_section = self.request.POST.get('subsection', '')
+        beneficiary_id = self.request.POST.get('beneficiaryId', '')
+        data = {}
+        if section == 'child':
+            data = {}
+        elif section == 'pregnant_women':
+            data = {}
+        elif section == 'eligible_couples':
+            if sub_section == 'person_details':
+                person = dict(
+                    name='Reena Kumar',
+                    gender='Female',
+                    status='Pregnant Woman',
+                    dob=date(1991, 5, 11),
+                    marriedAt=25,
+                    aadhaarNo='Yes'
+                )
+                husband = dict(
+                    name='Raju Kumar',
+                    gender='Female',
+                    dob=date(1991, 5, 11),
+                    marriedAt=26,
+                    aadhaarNo='Yes'
+                )
+                other = dict(
+                    address='J-142, Saket, New Delhi, Delhi',
+                    subcentre='Rasidpur',
+                    village='Rasidpur',
+                    anganwadiCentre='Aspataal Ward',
+                    phone='844-860-4774',
+                    religion='Hinduk',
+                    caste='Sudra',
+                    bplOrApl='BPL',
+
+                )
+                data = dict(
+                    person=person,
+                    husband=husband,
+                    other=other,
+                )
+            elif sub_section == 'child_details':
+                children = [
+                    dict(id=1, name='Ritu Kummar', age=8),
+                    dict(id=2, name='Rahul Kumar', age=6),
+                    dict(id=3, name='Jhanvi Kumar', age=3),
+                    dict(id=4, name='Rohit Kumar', age=1),
+                ]
+                data = dict(
+                    children=children
+                )
+            elif sub_section == 'eligible_couple_details':
+                data = dict(
+                    maleChildrenBorn=3,
+                    femaleChildrenBorn=2,
+                    maleChildrenAlive=2,
+                    femaleChildrenAlive=2,
+                    familyPlaningMethod='OC pills',
+                    familyPlanningMethodDate='2018-07-14',
+                    ashaVisit='2019-01-11',
+                    previousFamilyPlanningMethod='Condom',
+                    preferredFamilyPlaningMethod='Male sterilization'
+                )
+        return JsonResponse(data=data)
