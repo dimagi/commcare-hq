@@ -137,8 +137,6 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-CELERY_RESULT_BACKEND = redis_cache['LOCATION']
-
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
 
