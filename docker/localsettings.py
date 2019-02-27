@@ -101,12 +101,13 @@ if USE_CITUSDB:
     DATABASES['citus_ucr'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcarehq_citus_ucr',
-        'USER': '',
+        'NAME': 'postgres',  # use postgres DB since otherwise we'd need to create the database on the workers
+        'USER': 'postgres',
         'PASSWORD': '',
-        'HOST': 'postgres',
+        'HOST': 'citus_master',
         'PORT': '5600',
         'TEST': {
+            'NAME': 'postgres',  # use the same DB for tests (without the 'test_' prefix
             'SERIALIZE': False,
         },
     }
