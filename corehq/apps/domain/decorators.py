@@ -4,18 +4,21 @@ from __future__ import unicode_literals
 from functools import wraps
 import logging
 
+import six
+
 # Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.urls import reverse
 from django.http import (
-    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
+    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse, HttpRequest,
 )
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator, available_attrs
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
+from django.views import View
 
 # External imports
 from dimagi.utils.django.request import mutable_querydict
@@ -37,6 +40,7 @@ from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.util.soft_assert import soft_assert
 
 ########################################################################################################
 from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
@@ -478,15 +482,42 @@ def check_domain_migration(view_func):
 
 def track_domain_request(calculated_prop):
     """
-        Use this decorator to audit request.
+    Use this decorator to audit requests by domain.
     """
+    norman = ''.join(reversed('moc.igamid@repoohn'))
+    _soft_assert = soft_assert(to=norman)
+
     def _dec(view_func):
+
         @wraps(view_func)
-        def _wrapped(class_based_view, request, *args, **kwargs):
-            domain = kwargs.get("domain", None)
-            if domain:
+        def _wrapped(*args, **kwargs):
+            if 'domain' in kwargs:
+                domain = kwargs['domain']
+            elif (
+                    len(args) > 2 and
+                    isinstance(args[0], View) and
+                    isinstance(args[1], HttpRequest) and
+                    isinstance(args[2], six.string_types)
+            ):
+                # class-based view; args == (self, request, domain, ...)
+                domain = args[2]
+            elif (
+                    len(args) > 1 and
+                    isinstance(args[0], HttpRequest) and
+                    isinstance(args[1], six.string_types)
+            ):
+                # view function; args == (request, domain, ...)
+                domain = args[1]
+            else:
+                domain = None
+            if _soft_assert(
+                    domain,
+                    'Unable to track_domain_request("{prop}") on view "{view}". Unable to determine domain from '
+                    'args {args}.'.format(prop=calculated_prop, view=view_func.__name__, args=args)
+            ):
                 DomainAuditRecordEntry.update_calculations(domain, calculated_prop)
-            return view_func(class_based_view, request, *args, **kwargs)
+            return view_func(*args, **kwargs)
+
         return _wrapped
 
     return _dec
