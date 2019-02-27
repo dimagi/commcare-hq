@@ -285,12 +285,15 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(export_instances, filters, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        domain,
+        export_ids,
+        exports_type,
+        username,
         filters,
         download.download_id,
         filename=filename
