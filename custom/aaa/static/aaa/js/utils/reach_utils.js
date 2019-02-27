@@ -41,7 +41,7 @@ hqDefine("aaa/js/utils/reach_utils", [
         self.toTitleCase = function (string) {
             if (string !== null && string !== void(0) && string.length > 0) {
                 return _.map(string.split('_'), function (word) {
-                    return word[0].toUpperCase() + w.substr(1).toLowerCase();
+                    return word[0].toUpperCase() + word.substr(1).toLowerCase();
                 }).join(' ')
             }
             return string;
