@@ -10,4 +10,3 @@ zeep
 cython
 django-celery-results
 numpy
-xhtml2pdf
