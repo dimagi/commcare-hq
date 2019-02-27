@@ -17,7 +17,6 @@
   "server_environment": [
     "softlayer",
     "icds",
-    "icds-new"
   ],
   "config": {
     "table_id": "static-person_cases_v3",
