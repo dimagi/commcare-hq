@@ -185,6 +185,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
