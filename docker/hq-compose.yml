@@ -26,6 +26,9 @@ services:
       - elasticsearch
       - kafka
       - riakcs
+    depends_on:
+      citus_worker1: { condition: service_healthy }
+      citus_worker2: { condition: service_healthy }
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
       - lib:/mnt/lib
@@ -120,12 +123,6 @@ services:
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - citus_worker2:/var/lib/postgresql/data
-  citus_healthcheck:
-    image: busybox
-    depends_on:
-      citus_worker1: { condition: service_healthy }
-      citus_worker2: { condition: service_healthy }
-
 
 volumes:
   lib:
