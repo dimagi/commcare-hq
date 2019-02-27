@@ -622,9 +622,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertListEqual(get_menu_row([form.name.get(lang)],
                                           [form.icon_by_language(lang)],
                                           [form.audio_by_language(lang)]),
-                                          ['Stethoscope Form',
-                                           'jr://file/commcare/image/module0_form0.png',
-                                           None])
+                             ['Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None])
 
         self.assertListEqual(get_form_question_rows([lang], form), [
             ['What_does_this_look_like-label', 'What does this look like?',
