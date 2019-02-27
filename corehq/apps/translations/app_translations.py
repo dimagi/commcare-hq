@@ -237,6 +237,7 @@ def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, medi
              get_menu_row(languages, media_image, media_audio) +
              [unique_id])]
 
+
 def get_module_sheet_name(module):
     return "module{}".format(module.get_app().get_module_index(module.unique_id) + 1)
 
@@ -534,7 +535,11 @@ def get_form_question_rows(langs, form):
                     if isinstance(part, ItextOutput):
                         value += "<output value=\"" + part.ref + "\"/>"
                     else:
-                        value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
+                        part = force_text(part)
+                        part = part.replace('&', '&amp;')
+                        part = part.replace('<', '&lt;')
+                        part = part.replace('>', '&gt;')
+                        value += mark_safe(part)
                 itext_items[text_id][(lang, value_form)] = value
 
     app = form.get_app()

@@ -26,12 +26,6 @@ from corehq.apps.translations.app_translations import (
     get_menu_row,
     get_module_case_list_form_rows,
     get_module_rows,
-    get_module_detail_enum_rows,
-    get_module_detail_field_row,
-    get_module_detail_fields_rows,
-    get_module_detail_graph_rows,
-    get_module_detail_rows,
-    get_module_detail_tabs_rows,
     get_module_sheet_name,
     get_modules_and_forms_row,
     get_unicode_dicts,
@@ -574,7 +568,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
            'c480ace490edc870ae952765e8dfacec33c69fec'))),
         ('module1', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
         ('module1_form1',
-         (('What_does_this_look_like-label', 'What does this look like?', 'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
+         (('What_does_this_look_like-label', 'What does this look like?',
+           'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
           ('no_media-label', 'No media', '', '', ''),
           ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
@@ -614,7 +609,6 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_case_list_form_rows(app.langs, app.modules[0]),
                          [('case_list_form_label', 'list', 'New Case')])
 
-
     def test_module_rows(self):
         self.assertListEqual(get_module_rows(self.app.langs, self.app.modules[0]), [
             ('name', 'list', 'Name'),
@@ -628,11 +622,9 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertListEqual(get_menu_row([form.name.get(lang)],
                                           [form.icon_by_language(lang)],
                                           [form.audio_by_language(lang)]),
-                                          [
-                                            'Stethoscope Form',
-                                            'jr://file/commcare/image/module0_form0.png',
-                                            None,
-                                          ])
+                                          ['Stethoscope Form',
+                                           'jr://file/commcare/image/module0_form0.png',
+                                           None])
 
         self.assertListEqual(get_form_question_rows([lang], form), [
             ['What_does_this_look_like-label', 'What does this look like?',
