@@ -155,9 +155,9 @@ if settings.ENABLE_PRELOGIN_SITE:
 
 if settings.DEBUG:
     try:
-        from debug_toolbar import urls as debug_toolbar_urls
+        import debug_toolbar
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass
