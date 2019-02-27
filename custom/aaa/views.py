@@ -18,6 +18,7 @@ from django.views.generic.base import TemplateView, View
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
@@ -46,10 +47,27 @@ class ReachDashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
+    @property
+    def user_ministry(self):
+        return self.couch_user.user_data.get('ministry')
+
+    def dispatch(self, *args, **kwargs):
+        if (not self.couch_user.is_web_user()
+                and (self.user_ministry is None or self.user_ministry == '')):
+            return no_permissions(self.request)
+
+        return super(ReachDashboardView, self).dispatch(*args, **kwargs)
+
     def get_context_data(self, **kwargs):
         kwargs['domain'] = self.domain
-        # TODO add logic for user role type possible options should be MoHFW or MWCD
-        kwargs['user_role_type'] = 'MoHFW'
+
+        kwargs['is_web_user'] = self.couch_user.is_web_user()
+        kwargs['user_role_type'] = self.user_ministry
+
+        if (not kwargs['is_web_user']
+                and (kwargs['user_role_type'] is None or kwargs['user_role_type'] == '')):
+            return no_permissions(self.request)
+
         user_location = self.couch_user.get_sql_locations(self.domain).first()
         kwargs['user_location_id'] = user_location.location_id if user_location else None
         user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
@@ -57,7 +75,6 @@ class ReachDashboardView(TemplateView):
         ).distinct() if user_location else []
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
-        kwargs['is_web_user'] = self.couch_user.is_web_user
         kwargs['is_details'] = False
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
