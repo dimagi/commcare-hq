@@ -17,6 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
@@ -31,6 +32,9 @@ MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4',
 
 
 @task(serializer='pickle')
+@profile_prod('process_bulk_upload_zip.prof',
+              probability=float(os.getenv('PROFILE_BULK_MULTIMEDIA_UPLOAD', 0)),
+              limit=None)
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
