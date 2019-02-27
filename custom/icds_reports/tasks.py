@@ -986,8 +986,8 @@ def create_mbt_for_month(state_id, month):
 
 @task(queue='background_queue')
 def _bust_awc_cache():
-    create_datadog_event('Busting dashboard cache', 'start')
+    create_datadog_event('redis: delete dashboard keys', 'start')
     reach_keys = cache.keys('*cas_reach_data*')
     for key in reach_keys:
         cache.delete(key)
-    create_datadog_event('Busting dashboard cache', 'finish')
+    create_datadog_event('redis: delete dashboard keys', 'finish')
