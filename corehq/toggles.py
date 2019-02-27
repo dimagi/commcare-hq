@@ -1729,3 +1729,11 @@ DASHBOARD_REACH_REPORT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+
+PARTIAL_UI_TRANSLATIONS = StaticToggle(
+    'partial_ui_translations',
+    'Enable uploading a subset of translations in the UI Translations Excel upload',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)

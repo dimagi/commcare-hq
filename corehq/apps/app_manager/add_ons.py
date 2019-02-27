@@ -155,10 +155,6 @@ _ADD_ONS = {
         name=_("New Case Lists Created Empty"),
         description=_("When adding a new case list, don't include a registration and followup form."),
     ),
-    "partial_commcare_translations": AddOn(
-        name=_("Support Partial CommCare Translations"),
-        description=_("When uploading CommCare translations, do not remove non-included translations"),
-    ),
 }
 
 _LAYOUT = [
@@ -179,7 +175,6 @@ _LAYOUT = [
             "enum_image",
             "menu_mode",
             "register_from_case_list",
-            "partial_commcare_translations",
         ],
     },
     {

@@ -6,6 +6,7 @@ import tempfile
 import six
 
 from corehq.apps.app_manager.models import LinkedApplication
+from corehq import toggles
 
 
 def get_file_content_from_workbook(wb):
@@ -18,17 +19,16 @@ def get_file_content_from_workbook(wb):
 
 
 def update_app_translations_from_trans_dict(app, trans_dict):
-    if isinstance(app, LinkedApplication):
-        if app.add_ons.get('partial_commcare_translations') is True:
+    if toggles.PARTIAL_UI_TRANSLATIONS.enabled(app.domain):
+        if isinstance(app, LinkedApplication):
             for lang, trans in six.iteritems(app.translations):
                 if lang in trans_dict:
                     app.translations[lang].update(trans_dict[lang])
-        else:
-            app.linked_app_translations.update(trans_dict)
 
-    if app.add_ons.get('partial_commcare_translations') is True:
         for lang, trans in six.iteritems(app.translations):
             if lang in trans_dict:
                 app.translations[lang].update(trans_dict[lang])
     else:
+        if isinstance(app, LinkedApplication):
+            app.linked_app_translations.update(trans_dict)
         app.translations.update(trans_dict)

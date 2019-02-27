@@ -12,6 +12,7 @@ from corehq.apps.app_manager.ui_translations import (
     process_ui_translation_upload,
 )
 from corehq.apps.translations.utils import update_app_translations_from_trans_dict
+from corehq.util.test_utils import flag_enabled
 from couchexport.export import export_raw
 
 EXPECTED_TRANSLATIONS = {
@@ -58,8 +59,8 @@ class TestBulkUiTranslation(SimpleTestCase):
         self.assertDictEqual(self.app.translations['en'], {'translation.always.upload': 'Taylor'})
         self.assertDictEqual(self.app.translations['fra'], {'translation.always.upload': 'Swift'})
 
+    @flag_enabled('PARTIAL_UI_TRANSLATIONS')
     def test_not_upload_all_properties_with_parital_ui_translations(self):
-        self.app.add_ons['partial_commcare_translations'] = True
         headers = (('translations', ('property', 'en', 'fra')),)
         data = (('translation.always.upload', 'Taylor', 'Swift'),)
         f = self._build_translation_download_file(headers, data)
@@ -95,8 +96,8 @@ class TestBulkUiTranslation(SimpleTestCase):
             'translation.sometimes.upload': 'West',
         })
 
+    @flag_enabled('PARTIAL_UI_TRANSLATIONS')
     def test_partial_property_and_language_with_partial_ui_translations(self):
-        self.app.add_ons['partial_commcare_translations'] = True
         headers = (('translations', ('property', 'en')),)
         data = (('translation.always.upload', 'Taylor'),)
         f = self._build_translation_download_file(headers, data)
