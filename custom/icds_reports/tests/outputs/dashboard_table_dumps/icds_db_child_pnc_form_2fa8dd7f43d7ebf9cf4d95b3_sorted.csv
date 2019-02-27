@@ -1,0 +1,8 @@
+state_id,month,case_id,latest_time_end_processed,counsel_increase_food_bf,counsel_breast,skin_to_skin,is_ebf,water_or_milk,other_milk_to_child,tea_other,eating,counsel_exclusive_bf,counsel_only_milk,counsel_adequate_bf,not_breastfeeding
+st2,2017-04-01,2042a4be-b3bd-4558-8784-cebdfee9033c,2017-04-02,,,,,,1,,,1,,1,
+st2,2017-04-01,38b4f6d3-716f-4d97-a03d-5df38eb6f86e,2017-04-02,1,,,,1,,,,1,,,
+st2,2017-04-01,51b322f6-0485-4b78-8035-700972b11f8d,2017-04-02,,,,,,,,1,1,,1,
+st2,2017-04-01,a11bda5a-cb04-4a0c-bed4-efbf9ca0c0f7,2017-04-02,,,,,,,,1,1,,1,
+st2,2017-04-01,f3660fb2-bb13-4341-b1d3-8923ebe20520,2017-04-02,,,,1,,,,,1,,1,
+st2,2017-04-01,f8302451-fe5d-4f2c-ae61-4837db9cab25,2017-04-02,,,,,,,,1,1,,1,
+st2,2017-04-01,f8d7f25d-f299-4e2d-b4ee-365a2db1fa91,2017-04-02,1,,,1,,,,,1,,,

@@ -1,0 +1,8 @@
+state_id,month,case_id,latest_time_end_processed,counsel_methods,is_ebf,valid_visits
+st2,2017-04-01,ccs_record_14,2017-04-02,,1,0
+st2,2017-04-01,ccs_record_15,2017-04-02,,1,0
+st2,2017-04-01,ccs_record_16,2017-04-02,,,0
+st2,2017-04-01,ccs_record_17,2017-04-02,,,0
+st2,2017-04-01,ccs_record_18,2017-04-02,,,0
+st2,2017-04-01,ccs_record_26,2017-04-02,,,0
+st2,2017-04-01,ccs_record_8,2017-04-02,,,0

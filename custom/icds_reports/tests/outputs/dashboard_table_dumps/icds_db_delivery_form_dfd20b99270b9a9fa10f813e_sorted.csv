@@ -1,0 +1,4 @@
+state_id,month,case_id,latest_time_end_processed,breastfed_at_birth,valid_visits,where_born
+st1,2017-04-01,a29c5571-e48f-4812-be34-2469c3deac85,2017-04-01,,0,3
+st1,2017-04-01,e4c3c2ae-6732-4f6e-a7b0-9e674a177edb,2017-04-01,,0,3
+st1,2017-04-01,f136bec0-d495-4e97-83a0-80fdf84aac31,2017-04-01,,0,3

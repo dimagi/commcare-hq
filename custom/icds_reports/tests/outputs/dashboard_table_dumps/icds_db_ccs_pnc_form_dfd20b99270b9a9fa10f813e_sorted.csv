@@ -1,0 +1,13 @@
+state_id,month,case_id,latest_time_end_processed,counsel_methods,is_ebf,valid_visits
+st1,2017-04-01,ccs_record_10,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_11,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_12,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_13,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_21,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_22,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_23,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_24,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_25,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_6,2017-04-02,,1,0
+st1,2017-04-01,ccs_record_7,2017-04-02,,,0
+st1,2017-04-01,ccs_record_9,2017-04-02,,1,0
