@@ -12,6 +12,9 @@ class SystemUsageExport(ExportableMixin, SqlData):
     title = 'System Usage'
     table_name = 'agg_awc_monthly'
 
+    def phone_number_fucntion(self, x):
+        return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
+
     @property
     def get_columns_by_loc_level(self):
         columns = [
@@ -28,6 +31,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=self.phone_number_fucntion,
                 slug='contact_phone_number')
             )
         return columns

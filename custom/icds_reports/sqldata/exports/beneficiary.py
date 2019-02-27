@@ -84,7 +84,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             return format_decimal(x) if x else DATA_NOT_ENTERED
 
         def phone_number_fucntion(x):
-            return "{}".format(x) if x else x
+            return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
 
         columns = [
             DatabaseColumn(
