@@ -36,6 +36,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.datadog.utils import create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -985,6 +986,8 @@ def create_mbt_for_month(state_id, month):
 
 @task(queue='background_queue')
 def _bust_awc_cache():
+    create_datadog_event('Busting dashboard cache', 'start')
     reach_keys = cache.keys('*cas_reach_data*')
     for key in reach_keys:
         cache.delete(key)
+    create_datadog_event('Busting dashboard cache', 'finish')
