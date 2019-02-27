@@ -15,19 +15,19 @@ babel==2.6.0
 backports.functools-lru-cache==1.5  # via soupsieve
 beautifulsoup4==4.7.1
 billiard==3.5.0.5
-boto3==1.9.103
-botocore==1.12.103
+boto3==1.9.101
+botocore==1.12.101
 cairocffi==0.9.0
 cairosvg==1.0.22
 celery==4.2.1
 certifi==2018.11.29
-cffi==1.12.2
+cffi==1.12.1
 chardet==3.0.4
 cloudant==2.11.0
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
 coverage==4.5.1
-cryptography==2.6
+cryptography==2.5
 csiphash==0.0.5
 cssselect2==0.2.1
 csv342==1.0.0
@@ -77,9 +77,9 @@ faker==0.8.15
 freezegun==0.3.11
 funcsigs==1.0.2
 futures==3.2.0
-gevent==1.4.0
+gevent==1.2.2
 ghdiff==0.4
-greenlet==0.4.15
+greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1
