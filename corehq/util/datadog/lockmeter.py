@@ -9,8 +9,8 @@ from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 class MeteredLock(object):
     """A lock wrapper that measures various lock characteristics
 
-    This was built for profiling Redis locks, but will for any type of
-    lock that has `acquire()` and `release()` methods.
+    This was built for profiling Redis locks, but should work with any
+    type of lock that has `acquire()` and `release()` methods.
     """
 
     timing_buckets = (0.1, 1, 5, 10, 30, 60, 120, 60 * 5, 60 * 10, 60 * 15, 60 * 30)

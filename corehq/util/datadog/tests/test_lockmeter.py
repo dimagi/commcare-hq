@@ -18,47 +18,47 @@ class TestMeteredLock(TestCase):
     def test_acquire(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as timer:
+        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
             lock.acquire()
             self.assertTrue(fake.locked)
-        timer.assert_called_once_with("commcare.lock.acquire_time", tags=["name:test", ANY])
+        counter.assert_called_once_with("commcare.lock.acquire_time", tags=["name:test", ANY])
 
     def test_not_acquired(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as timer:
+        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
             self.assertFalse(lock.acquire(blocking=False))
-        timer.assert_called_once_with("commcare.lock.acquire_time", tags=["name:test", ANY])
+        counter.assert_called_once_with("commcare.lock.acquire_time", tags=["name:test", ANY])
 
     def test_release(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
         lock.acquire()
-        with patch("corehq.util.datadog.gauges.datadog_counter") as timer:
+        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
             lock.release()
             self.assertFalse(fake.locked)
-        timer.assert_called_once_with("commcare.lock.locked_time", tags=["name:test", ANY])
+        counter.assert_called_once_with("commcare.lock.locked_time", tags=["name:test", ANY])
 
     def test_release_not_locked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as timer:
+        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
             lock.release()
             self.assertFalse(fake.locked)
-        timer.assert_not_called()
+        counter.assert_not_called()
 
     def test_lock_as_context_manager(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as timer:
+        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
             with lock:
                 self.assertTrue(fake.locked)
             self.assertFalse(fake.locked)
-        timer.assert_has_calls([
+        counter.assert_has_calls([
             call("commcare.lock.acquire_time", tags=["name:test", ANY]),
             call("commcare.lock.locked_time", tags=["name:test", ANY]),
         ])
-        self.assertEqual(timer.call_count, 2, timer.call_args_list)
+        self.assertEqual(counter.call_count, 2, counter.call_args_list)
 
     def test_release_failed(self):
         lock = MeteredLock(FakeLock(), "test")
