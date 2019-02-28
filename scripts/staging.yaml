@@ -56,5 +56,4 @@ branches:
   - mk-21944-2 # MK Feb 25
   - fix-get_secret  # Nick Feb 28
   - cmp_to_key  # Nick Feb 28
-  - gevent-patch  # Nick Feb 23
 submodules: {}
