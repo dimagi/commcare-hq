@@ -1188,39 +1188,9 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'analytics': {
-            'handlers': ['analyticslog'],
-            'level': 'DEBUG',
-            'propagate': False
-        },
         'elasticsearch': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': True,
-        },
-        'formplayer_timing': {
-            'handlers': ['formplayer_timing'],
-            'level': 'INFO',
-            'propogate': True,
-        },
-        'formplayer_diff': {
-            'handlers': ['formplayer_diff'],
-            'level': 'INFO',
-            'propogate': True,
-        },
-        'ucr_timing': {
-            'handlers': ['ucr_timing'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_diff': {
-            'handlers': ['ucr_diff'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'ucr_exception': {
-            'handlers': ['ucr_exception'],
-            'level': 'INFO',
             'propagate': True,
         },
         'boto3': {
