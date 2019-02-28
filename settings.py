@@ -1058,54 +1058,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'analyticslog': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': ANALYTICS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'formplayer_diff': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_diff',
-            'filename': FORMPLAYER_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'formplayer_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_timing',
-            'filename': FORMPLAYER_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_diff': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_diff',
-            'filename': UCR_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_exception': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_exception',
-            'filename': UCR_EXCEPTION_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'ucr_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'ucr_timing',
-            'filename': UCR_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
