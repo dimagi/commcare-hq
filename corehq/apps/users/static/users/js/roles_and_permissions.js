@@ -67,6 +67,5 @@ hqDefine("users/js/roles_and_permissions",[
             isLocationSafetyExempt: initialPageData.get("is_location_safety_exempt"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
         });
-        $userRolesTable.show();
     });
 });
