@@ -18,32 +18,32 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aggregateawcinfrastructureforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregatechildhealthdailyfeedingforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregatechildhealthpostnatalcareforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregatechildhealththrforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregatecomplementaryfeedingforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregategrowthmonitoringforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrator.get_migration('update_tables43.sql')
     ]

@@ -837,7 +837,7 @@ class AggAwcDaily(models.Model):
 class DailyAttendance(models.Model):
     doc_id = models.TextField(primary_key=True)
     awc_id = models.TextField(null=True)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(null=True)
     pse_date = models.DateField(null=True)
     awc_open_count = models.IntegerField(null=True)
@@ -881,7 +881,7 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1009,7 +1009,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
 
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
@@ -1163,7 +1163,7 @@ class AggregateChildHealthTHRForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1244,7 +1244,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1562,7 +1562,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1606,7 +1606,7 @@ class AggregateAwcInfrastructureForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
-    supervisor_id = models.TextField(max_length=40, null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
