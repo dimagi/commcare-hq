@@ -250,7 +250,7 @@ class LSTimelyHomeVisitsUCR(ConfigurableReportCustomQueryProvider):
         filter_values = self.helper.sql_alchemy_filter_values
         query = (
             self.helper.adapter.session_helper.Session.query(
-                self.table.c.awc_id,
+                self.table.c.awc_id.label("owner_id"),
                 func.sum(self.table.c.count),
                 func.sum(self.table.c.visit_on_time),
             )
