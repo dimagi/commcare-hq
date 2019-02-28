@@ -144,8 +144,10 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
         # Making this work relies on a exploiting variable substitution:
         #     ${VARIABLE-default} evaluates to default only if VARIABLE is unset in the environment.
         # In normal operations we set VOLUME_PREFIX and leave BLANK_IF_TESTS unset which will cause
-        # this "${BLANK_IF_TESTS-vol1}" to evaluate to "vol1". During tests we set "BLANK_IF_TESTS"
+        # this "${BLANK_IF_TESTS-vol1:}" to evaluate to "vol1:" (note the ':'). During tests we set "BLANK_IF_TESTS"
         # to an empty string and the result of the above expression is an empty string.
+        # Note: I also tried using the long syntax for volume specification but wasn't able to get it to work.
+        # See https://docs.docker.com/compose/compose-file/compose-file-v2/#volumes
         export VOLUME_PREFIX=""
         export BLANK_IF_TESTS=""
     fi
