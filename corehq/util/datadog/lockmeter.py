@@ -19,7 +19,7 @@ class MeteredLock(object):
 
     def __init__(self, lock, name, track_unreleased=True):
         self.lock = lock
-        self.tags = ["name:%s" % name]
+        self.tags = ["lock_name:%s" % name]
         self.name = name
         self.key = lock.name
         self.lock_timer = datadog_bucket_timer(

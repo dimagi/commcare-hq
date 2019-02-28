@@ -83,10 +83,10 @@ def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
 
     :param key: Redis lock name.
     :param timeout: Timeout passed through to redis lock.
-    :param name: Datadog tag name. This should be just specific enough
-    to identify the area of code that acquired the lock, but not so
-    specific that it will multiply the number of tags in datadog
-    unnecessarily.
+    :param name: Datadog "lock_name" tag value. This should be just
+    specific enough to identify the area of code that acquired the lock,
+    but not so specific that it will multiply the number of tags in
+    datadog unnecessarily.
     :param track_unreleased: When true (the default), increase the count
     of unreleased locks if a lock object is garbage-collected before it
     is released.
