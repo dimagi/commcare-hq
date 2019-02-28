@@ -8,6 +8,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from django.utils.translation import ugettext as _
 from corehq.apps.users.dbaccessors.all_commcare_users import get_deleted_user_by_username
 
+
 def require_permission_raw(permission_check, login_decorator=login_and_domain_required):
     """
     A way to do more fine-grained permissions via decorator. The permission_check should be

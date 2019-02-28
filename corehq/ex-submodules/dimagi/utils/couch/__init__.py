@@ -417,8 +417,10 @@ class LooselyEqualDocumentSchema(DocumentSchema):
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))
 
+
 class IncompatibleDocument(Exception):
     pass
+
 
 def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
     """

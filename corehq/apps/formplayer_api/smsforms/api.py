@@ -33,11 +33,13 @@ class TouchformsAuth(object):
     def to_dict(self):
         return {'type': self.type, 'key': self.key}
 
+
 class DjangoAuth(TouchformsAuth):
     
     def __init__(self, key):
         super(DjangoAuth, self).__init__("django-session", key)
             
+
 class DigestAuth(TouchformsAuth):
     
     def __init__(self, username, password):
@@ -129,6 +131,7 @@ class XFormsConfig(object):
 
         return get_response(json.dumps(self.get_touchforms_dict()), auth=self.auth)
     
+
 class XformsEvent(object):
     """
     A wrapper for the json event object that comes back from touchforms, which 
@@ -177,6 +180,7 @@ class XformsEvent(object):
         else:
             return self.caption
 
+
 def select_to_text_compact(caption, choices):
     """
     A function to convert a select item to text in a compact format.
@@ -187,6 +191,7 @@ def select_to_text_compact(caption, choices):
     return "%s %s." % (caption,
                       ", ".join(["%s:%s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
+
 
 def select_to_text_vals_only(caption, choices):
     """
@@ -210,6 +215,7 @@ def select_to_text_readable(caption, choices):
                       ", ".join(["%s for %s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
 
+
 def select_to_text_caption_only(caption, choices):
     """
     A select choices => text function that ignores choice captions entirely.
@@ -217,6 +223,7 @@ def select_to_text_caption_only(caption, choices):
     A DRY violation, for sure, but gives the maximum flexibility
     """
     return caption
+
 
 class XformsResponse(object):
     """

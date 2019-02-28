@@ -6,8 +6,10 @@ from functools import reduce
 import six
 from six.moves import range
 
+
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
+
 
 def to_base(n, b):
     if not n:
@@ -17,6 +19,7 @@ def to_base(n, b):
         answer = to_base(rest, b)
         answer.append(digit)
         return answer
+
 
 class DeidGenerator(object):
 

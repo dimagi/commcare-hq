@@ -29,8 +29,10 @@ CACHED_VIEW_PREFIX = '#cached_view_'
 CACHED_DOC_PREFIX = '#cached_doc_'
 CACHED_DOC_PROP_PREFIX = '#cached_doc_helper_'
 
+
 class RedisClientError(Exception):
     pass
+
 
 def rcache():
     return MOCK_REDIS_CACHE or get_redis_default_cache()
