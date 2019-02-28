@@ -20,10 +20,10 @@
     "icds-new",
     "icds"
   ],
-  "report_id": "static-mpr_5_ccs_record_cases_v2",
+  "report_id": "static-custom_mpr_5_ccs_record_cases_v2",
   "data_source_table": "static-ccs_record_cases_monthly_v2",
   "config": {
-    "title": "MPR - 5 - CCS Record cases (Static) v2",
+    "title": "MPR - 5 - CCS Record cases (Static) v2 (CUSTOM)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
