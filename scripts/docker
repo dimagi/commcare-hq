@@ -139,7 +139,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
         # would dynamically create. From >v2 docker compose requires declaring named volumes
         # in the compose file which means we can't use the same compose file using named volumes
         # in one instance and unnamed in another.
-        # The solution was to specify a plank path in tests rather than a volume name. Docker compose
+        # The solution was to specify a blank path in tests rather than a volume name. Docker compose
         # will then create the volume as before.
         # Making this work relies on a exploiting variable substitution:
         #     ${VARIABLE-default} evaluates to default only if VARIABLE is unset in the environment.
