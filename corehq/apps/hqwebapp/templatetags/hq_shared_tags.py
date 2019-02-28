@@ -641,6 +641,13 @@ def registerurl(parser, token):
 
 
 @register.simple_tag
+def trans_html_attr(value):
+    if not isinstance(value, six.string_types):
+        value = JSON(value)
+    return escape(_(value))
+
+
+@register.simple_tag
 def html_attr(value):
     if not isinstance(value, six.string_types):
         value = JSON(value)
