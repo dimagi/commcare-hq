@@ -6,8 +6,8 @@ from memoized import memoized
 from six.moves import zip
 
 from corehq.apps.translations.app_translations import (
-    expected_bulk_app_sheet_headers,
-    expected_bulk_app_sheet_rows,
+    get_bulk_app_sheet_headers,
+    get_bulk_app_sheet_rows,
     get_unicode_dicts,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
@@ -39,8 +39,8 @@ class UploadedTranslationsValidator(object):
             self.lang_prefix)
 
     def _generate_expected_headers_and_rows(self):
-        self.headers = {h[0]: h[1] for h in expected_bulk_app_sheet_headers(self.app)}
-        self.expected_rows = expected_bulk_app_sheet_rows(
+        self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(self.app)}
+        self.expected_rows = get_bulk_app_sheet_rows(
             self.app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
