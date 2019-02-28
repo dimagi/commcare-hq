@@ -267,7 +267,7 @@ class LSTimelyHomeVisitsUCR(ConfigurableReportCustomQueryProvider):
         if limit:
             query_obj = query_obj.limit(limit)
         return OrderedDict([
-            (r.awc_id, r._asdict())
+            (r.owner_id, r._asdict())
             for r in query_obj.all()
         ])
 
