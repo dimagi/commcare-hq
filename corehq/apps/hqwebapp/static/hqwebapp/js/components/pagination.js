@@ -34,6 +34,9 @@ hqDefine('hqwebapp/js/components/pagination', [
                 self.goToPage(1);
             });
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
+            self.perPageOptionsText = function (num) {
+                return _.template(gettext('<%= num %> per page'))({ num: num });
+            };
             self.numPages = ko.computed(function () {
                 return Math.ceil(self.totalItems() / self.perPage());
             });

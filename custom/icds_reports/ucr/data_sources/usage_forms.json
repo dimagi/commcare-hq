@@ -70,7 +70,6 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "type": "expression",
         "expression":{
           "type": "location_parent_id",
           "location_id_expression": {

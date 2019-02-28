@@ -177,7 +177,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('pregnant_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_all)),
             ('lactating', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating)),
             ('lactating_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(lactating_all)),
-            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=3 AND {} THEN'
+            ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=2 AND {} THEN'
                                                 ' 1 ELSE 0 END'.format(delivered_in_month)),
             ('add', 'case_list.add'),
             ('caste', 'case_list.caste'),

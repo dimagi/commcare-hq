@@ -59,6 +59,7 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         }
 
     def dehydrate_calculated_properties(self, bundle):
+        calc_prop_prefix = 'cp_'
         domain_obj = _get_domain(bundle)
         try:
             es_data = (DomainES()
@@ -68,25 +69,19 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                        .hits[0])
             base_properties = {
                 prop_name: es_data[prop_name]
-                for prop_name in es_data if prop_name[:3] == 'cp_'
+                for prop_name in es_data
+                if prop_name.startswith(calc_prop_prefix)
             }
             try:
                 audit_record = DomainAuditRecordEntry.objects.get(domain=domain_obj.name)
             except DomainAuditRecordEntry.DoesNotExist:
                 audit_record = None
-            extra_properties = [
-                "cp_n_downloads_custom_exports",
-                "cp_n_viewed_ucr_reports",
-                "cp_n_viewed_non_ucr_reports",
-                "cp_n_reports_created",
-                "cp_n_reports_edited",
-                "cp_n_saved_scheduled_reports",
-                "cp_n_click_app_deploy",
-                "cp_n_form_builder_entered",
-                "cp_n_saved_app_changes",
-            ]
-            for prop in extra_properties:
-                base_properties.update({prop: getattr(audit_record, prop, 0)})
+            extra_properties = {
+                field.name: getattr(audit_record, field.name, 0)
+                for field in DomainAuditRecordEntry._meta.fields
+                if field.name.startswith(calc_prop_prefix)
+            }
+            base_properties.update(extra_properties)
             return base_properties
         except IndexError:
             logging.exception('Problem getting calculated properties for {}'.format(domain_obj.name))

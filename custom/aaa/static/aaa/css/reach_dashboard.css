@@ -1,10 +1,25 @@
+.border-right {
+    border-right: 1px solid #dcdcdc;
+}
+
 .center {
     text-align: center;
+}
+
+.details-table {
+    box-shadow: 2px 2px 5px 0 #00000036;
+    background: #ffffff;
 }
 
 .filter-title {
     text-align: left;
     color:#004ebc;
+}
+
+.filters-details {
+    padding: 20px;
+    background-color: #ffffff;
+    color: #004ebc;
 }
 
 .form-group,.modal-header {
@@ -90,6 +105,33 @@
     background:none;
 }
 
+.nav-item {
+    width: 33.33%;
+    text-align: center;
+}
+
+.nav-link {
+    padding: 15px;
+    background: #004ebc14;
+}
+
+.nav-item.active {
+    background-color: #ffffff;
+    color: #004ebc;
+}
+
+.nav-tabs {
+}
+
+.nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
+    color: #004ebc;
+    cursor: default;
+    background-color: inherit;
+    border: none;
+    border-bottom-color: transparent;
+    box-shadow: 2px 2px 5px 0 #00000036;
+}
+
 .navbar-default {
     background-color:#fff;
     border-radius:0;
@@ -107,8 +149,28 @@
     padding:10px;
 }
 
+.no-margin {
+    margin: 0 !important;
+}
+
+.padding-15 {
+    padding: 15px !important;
+}
+
 .pagination {
     margin: 0;
+}
+
+.main-title {
+    background-color: #004ebc;
+    color: #ffffff;
+}
+
+.secondary-title {
+    padding: 10px;
+    color: #004ebc;
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
 }
 
 .pointer {
@@ -129,6 +191,10 @@
 
 .required {
     color:#ce0500;
+}
+
+.row-content {
+   border: 1px solid #ddd;
 }
 
 .second-value {
@@ -178,6 +244,18 @@
     box-shadow:0 0 5px 0 #00000036;
 }
 
+.table-item {
+    padding: 15px;
+    border: 1px solid #dcdcdc;
+    background: #ffffff;
+    min-height: 60px;
+    line-height: 28px;
+}
+
+.table-item div {
+    vertical-align:middle;
+}
+
 .table_info {
     text-align: right;
 }
@@ -185,6 +263,10 @@
 .table_pagination {
     display: inline-block;
     margin: auto;
+}
+
+.text-middle {
+    vertical-align: text-bottom;
 }
 
 .wrapper {
@@ -203,6 +285,10 @@ html,body {
     background:#f5f5f5;
     margin:0;
     padding:0;
+}
+
+label {
+    margin-bottom: 0;
 }
 
 li.auto-width {
