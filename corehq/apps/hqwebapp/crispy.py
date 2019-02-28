@@ -319,3 +319,11 @@ class B3HiddenFieldWithErrors(Field):
 
 class RadioSelect(Field):
     template = "hqwebapp/crispy/radioselect.html"
+
+
+def make_form_readonly(form):
+    if form is None:
+        return
+
+    for field in form.fields.keys():
+        form.fields[field].widget.attrs['disabled'] = True
