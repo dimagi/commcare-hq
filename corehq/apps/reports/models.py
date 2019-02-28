@@ -787,7 +787,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def get_secret(self, email):
         uuid = self._get_or_create_uuid()
-        return hashlib.sha1(uuid + email).hexdigest()[:20]
+        return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
         # Scenario: user has been removed from the domain that they
