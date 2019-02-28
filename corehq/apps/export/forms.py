@@ -407,17 +407,13 @@ class DashboardFeedFilterForm(forms.Form):
             )
         ]
 
-    def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
+    def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids, export_type):
         """
         Serialize the bound form as an ExportInstanceFilters object.
         """
-        # Confirm that either form filter data or case filter data but not both has been submitted.
-        assert (
-            (self.cleaned_data['emwf_form_filter'] is not None) !=
-            (self.cleaned_data['emwf_case_filter'] is not None)
-        )
-        if self.cleaned_data['emwf_form_filter']:
-            # It's a form export
+        assert(export_type == 'form' or export_type == 'case')
+        if export_type == 'form':
+            # It's a form export # TODO: Remove redundant comments
             return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
             # it's a case export
