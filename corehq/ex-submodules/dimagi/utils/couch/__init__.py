@@ -8,6 +8,7 @@ from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 from redis.exceptions import RedisError, LockError
 import json
+import re
 import six
 import sys
 
@@ -377,8 +378,7 @@ class CriticalSection(object):
     def __enter__(self):
         try:
             for key in self.keys:
-                sep = "-" if "-" in key else "_"
-                name = "_".join(key.split(sep, 2)[:2])
+                name = "_".join(re.split(r"_|-", key)[:2])
                 lock = get_redis_lock(key, timeout=self.timeout, name=name)
                 self.locks.append(lock)
             for lock in self.locks:
