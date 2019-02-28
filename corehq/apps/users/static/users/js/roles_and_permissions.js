@@ -5,7 +5,6 @@ hqDefine("users/js/roles_and_permissions",[
     'underscore',
     "hqwebapp/js/initial_page_data",
     'users/js/roles',
-    'bootstrap', // for bootstrap modal
     'hqwebapp/js/knockout_bindings.ko', // for roles modal
 ], function ($, ko, _, initialPageData, userRoles) {
 
