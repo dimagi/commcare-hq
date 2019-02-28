@@ -1,4 +1,3 @@
-/* globals django */
 hqDefine("users/js/roles_and_permissions",[
     'jquery',
     'knockout',
@@ -28,7 +27,7 @@ hqDefine("users/js/roles_and_permissions",[
                 details.text("");
             } else if (isView) {
                 $icon.removeClass(iconEdit).removeClass(iconManage).addClass(iconView);
-                details.text(django.gettext("View Only"));
+                details.text(gettext("View Only"));
             } else if (isManage) {
                 $icon.removeClass(iconEdit).removeClass(iconView).addClass(iconManage);
                 details.text("");
