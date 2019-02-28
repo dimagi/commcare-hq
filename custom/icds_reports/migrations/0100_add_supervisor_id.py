@@ -15,31 +15,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='aggregatebirthpreparednesforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregateccsrecorddeliveryforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregateccsrecordpostnatalcareforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregateccsrecordthrforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='aggregatecomplementaryfeedingforms',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AddField(
             model_name='awwincentivereport',
             name='supervisor_id',
-            field=models.CharField(max_length=40, null=True),
+            field=models.TextField(null=True),
         ),
     ]
