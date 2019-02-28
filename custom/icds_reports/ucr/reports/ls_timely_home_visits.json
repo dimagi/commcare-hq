@@ -26,7 +26,6 @@
   "data_source_table": "static-home_visit_forms",
   "config": {
     "title": "LS - Timely Home Visits (Static)",
-    "custom_query_provider": "custom.icds_reports.reports.ucr.LSTimelyHomeVisitsUCR",
     "description": "",
     "visible": false,
     "aggregation_columns": [
