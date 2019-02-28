@@ -304,7 +304,32 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         return CcsRecordMonthlyViewAlchemy
 
     def _get_query_object(self, total_row=False):
-        pass
+        filters = self.helper.sql_alchemy_filters
+        filter_values = self.helper.sql_alchemy_filter_values
+        columns = (
+            func.count(self.table.c.case_id).filter(
+                (self.table.c.pregnant == 1)
+                & (self.table.c.caste == 'st')
+                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_st'),
+            func.count(self.table.c.case_id).filter(
+                (self.table.c.lactating == 1)
+                & (self.table.c.caste == 'st')
+                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_st'),
+        )
+
+        if not total_row:
+            columns = (self.table.c.awc_id.label("owner_id"),) + columns
+
+        query = (
+            self.helper.adapter.session_helper.Session.query(
+                *columns
+            )
+            .filter(*filters)
+            .params(filter_values)
+        )
+        if not total_row:
+            query = query.group_by(self.table.c.awc_id)
+        return query
 
     def get_data(self, start=None, limit=None):
         query_obj = self._get_query_object()
