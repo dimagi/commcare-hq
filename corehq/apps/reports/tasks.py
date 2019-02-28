@@ -71,6 +71,7 @@ from io import open
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
+LARGE_FILE_SIZE_ERROR_CODE = 552
 
 
 def send_delayed_report(report_id):
@@ -267,10 +268,10 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=[522])
+                            smtp_exception_skip_list=[LARGE_FILE_SIZE_ERROR_CODE])
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) == 522:
+        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = dict(request=request_data,
