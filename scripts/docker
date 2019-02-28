@@ -133,7 +133,21 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
-        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+        # Since we don't want to persist tests data beyond the lifecycle of the container
+        # we don't want to specify a volume path. Prior to v2 of docker compse this wasn't
+        # an issue since not specifying a path resulted in using named volumes which docker
+        # would dynamically create. From >v2 docker compose requires declaring named volumes
+        # in the compose file which means we can't use the same compose file using named volumes
+        # in one instance and unnamed in another.
+        # The solution was to specify a plank path in tests rather than a volume name. Docker compose
+        # will then create the volume as before.
+        # Making this work relies on a exploiting variable substitution:
+        #     ${VARIABLE-default} evaluates to default only if VARIABLE is unset in the environment.
+        # In normal operations we set VOLUME_PREFIX and leave BLANK_IF_TESTS unset which will cause
+        # this "${BLANK_IF_TESTS-vol1}" to evaluate to "vol1". During tests we set "BLANK_IF_TESTS"
+        # to an empty string and the result of the above expression is an empty string.
+        export VOLUME_PREFIX=""
+        export BLANK_IF_TESTS=""
     fi
 else
     if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then

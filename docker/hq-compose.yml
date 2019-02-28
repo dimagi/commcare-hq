@@ -1,4 +1,4 @@
-version: '2.1'
+version: '2.3'
 
 services:
   web:
@@ -31,7 +31,9 @@ services:
       citus_worker2: { condition: service_healthy }
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
-      - lib:/mnt/lib
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-lib}
+        target: /mnt/lib
 
   formplayer:
     image: dimagi/formplayer
@@ -49,7 +51,9 @@ services:
     expose:
       - "5432"
     volumes:
-      - postgresql:/var/lib/postgresql/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-postgresql}
+        target: /var/lib/postgresql/data
 
   couch:
     image: klaemo/couchdb:2.0-dev
@@ -63,14 +67,18 @@ services:
     expose:
       - "5984"
     volumes:
-      - couchdb2:/usr/src/couchdb/dev/lib/node1/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2}
+        target: /usr/src/couchdb/dev/lib/node1/data
 
   redis:
     image: redis
     expose:
       - "6379"
     volumes:
-      - redis:/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis}
+        target: /data
 
   elasticsearch:
     image: elasticsearch:1.7.4
@@ -79,7 +87,9 @@ services:
     expose:
       - "9200"
     volumes:
-      - elasticsearch:/usr/share/elasticsearch/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch}
+        target: /usr/share/elasticsearch/data
 
   kafka:
     image: spotify/kafka
@@ -89,22 +99,30 @@ services:
       - "2181"
       - "9092"
     volumes:
-      - kafka:/tmp/kafka-logs
-      - zookeeper:/var/lib/zookeeper
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka}
+        target: /tmp/kafka-logs
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper}
+        target: /var/lib/zookeeper
 
   riakcs:
     image: dimagi/riak-cs
     expose:
       - "9980"
     volumes:
-      - riakcs:/var/lib/riak-data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs}
+        target: /var/lib/riak-data
 
   citus_master:
     image: 'citusdata/citus:8.1.1'
     ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5600}:5432"]
     labels: ['com.citusdata.role=Master']
     volumes:
-      - citus_master:/var/lib/postgresql/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master}
+        target: /var/lib/postgresql/data
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ['/var/run/docker.sock:/var/run/docker.sock']
@@ -116,34 +134,14 @@ services:
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
-      - citus_worker1:/var/lib/postgresql/data
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1}
+        target: /var/lib/postgresql/data
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
-      - citus_worker2:/var/lib/postgresql/data
-
-volumes:
-  lib:
-    name: ${VOLUME_PREFIX}lib
-  postgresql:
-    name: ${VOLUME_PREFIX}postgresql
-  couchdb2:
-    name: ${VOLUME_PREFIX}couchdb2
-  redis:
-    name: ${VOLUME_PREFIX}redis
-  kafka:
-    name: ${VOLUME_PREFIX}kafka
-  zookeeper:
-    name: ${VOLUME_PREFIX}zookeeper
-  riakcs:
-    name: ${DATA_VOLUME_PREFIX}riakcs
-  elasticsearch:
-    name: ${DATA_VOLUME_PREFIX}elasticsearch
-  citus_master:
-    name: ${VOLUME_PREFIX}citus_master
-  citus_worker1:
-    name: ${VOLUME_PREFIX}citus_worker1
-  citus_worker2:
-    name: ${VOLUME_PREFIX}citus_worker2
+      - type: volume
+        source: ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2}
+        target: /var/lib/postgresql/data
