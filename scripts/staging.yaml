@@ -55,4 +55,5 @@ branches:
   - jls/download-mm-translations  # Jenny Feb 23
   - mk-21944-2 # MK Feb 25
   - fix-preview-report  # Nick Feb 28
+  - fix-get_secret  # Nick Feb 28
 submodules: {}
