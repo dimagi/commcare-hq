@@ -334,7 +334,7 @@ class ZippedExportWriter(OnDiskExportWriter):
             if isinstance(name, bytes):
                 name = name.decode('utf-8')
             path = self.tables[index].get_path()
-            archive.write(path, self._get_archive_filename(name).encode('utf-8'))
+            archive.write(path, self._get_archive_filename(name))
         archive.close()
         self.file.seek(0)
 
