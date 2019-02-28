@@ -118,9 +118,9 @@ if 'aaa-data' not in DATABASES:
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-ucr-non-dashboard': 'default',
-    'icds-test-ucr': 'default',
+    'icds-ucr': 'icds-ucr_commcarehq',
+    'icds-ucr-non-dashboard': 'icds-ucr_commcarehq',
+    'icds-test-ucr': 'icds-ucr_commcarehq',
     'aaa-data': 'aaa-data',
 }
 
