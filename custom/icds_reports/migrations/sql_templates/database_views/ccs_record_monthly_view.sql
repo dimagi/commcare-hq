@@ -73,7 +73,8 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."date_death" AS "date_death",
         "ccs_record_monthly"."eating_extra" AS "eating_extra",
         "ccs_record_monthly"."resting" AS "resting",
-        "ccs_record_monthly"."immediate_breastfeeding" AS "immediate_breastfeeding"
+        "ccs_record_monthly"."immediate_breastfeeding" AS "immediate_breastfeeding",
+        "ccs_record_monthly"."caste" AS "caste"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
         ("awc_location_months"."month" = "ccs_record_monthly"."month") AND
