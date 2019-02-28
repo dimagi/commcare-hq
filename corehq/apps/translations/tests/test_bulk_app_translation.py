@@ -602,7 +602,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         ])
 
         self.assertEqual(get_bulk_multimedia_sheet_headers('fra'),
-            (('translations', ('menu or form', '', '', 'fra', 'image', 'audio', 'video')),))
+            (('translations', ('menu or form', 'case_property', 'detail or label',
+                               'fra', 'image', 'audio', 'video')),))
 
     def test_module_case_list_form_rows(self):
         app = AppFactory.case_list_form_app_factory().app
