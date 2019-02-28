@@ -29,7 +29,7 @@ class THRFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           days_ration_given_mother
         ) (
-          SELECT  DISTINCT ON (ccs_record_case_id)
+          SELECT DISTINCT ON (ccs_record_case_id)
             %(state_id)s AS state_id,
             LAST_VALUE(supervisor_id) over w as supervisor_id,
             %(month)s AS month,
@@ -40,7 +40,10 @@ class THRFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 ccs_record_case_id IS NOT NULL
-          WINDOW w AS (PARTITION BY ccs_record_case_id)
+          WINDOW w AS (
+            PARTITION BY ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
