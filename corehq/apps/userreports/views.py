@@ -694,7 +694,9 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body).decode('utf-8'))
+        body = request.body
+        json_data = six.moves.urllib.parse.unquote(body)
+        report_data = json.loads(json_data)
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters
