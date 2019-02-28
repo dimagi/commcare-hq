@@ -286,3 +286,40 @@ class LSTimelyHomeVisitsUCR(ConfigurableReportCustomQueryProvider):
 
     def get_total_records(self):
         return self._get_query_object().count()
+
+
+CcsRecordMonthlyViewAlchemy = sqlalchemy.Table(
+    'ccs_record_monthly_view', metadata, autoload=True
+)
+
+
+class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
+    def __init__(self, report_data_source):
+        self.report_data_source = report_data_source
+        self.helper = self.report_data_source.helper
+        self.helper.set_table(CcsRecordMonthlyViewAlchemy)
+
+    @property
+    def table(self):
+        return CcsRecordMonthlyViewAlchemy
+
+    def _get_query_object(self, total_row=False):
+        pass
+
+    def get_data(self, start=None, limit=None):
+        query_obj = self._get_query_object()
+        if start:
+            query_obj = query_obj.start(start)
+        if limit:
+            query_obj = query_obj.limit(limit)
+        return OrderedDict([
+            (r.owner_id, r._asdict())
+            for r in query_obj.all()
+        ])
+
+    def get_total_row(self):
+        query_obj = self._get_query_object(total_row=True)
+        return ["Total"] + [r or 0 for r in query_obj.first()]
+
+    def get_total_records(self):
+        return self._get_query_object().count()

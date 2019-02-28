@@ -24,6 +24,7 @@
   "data_source_table": "static-ccs_record_cases_monthly_v2",
   "config": {
     "title": "MPR - 5 - CCS Record cases (Static) v2 (CUSTOM)",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.CcsRecordMonthlyUCR",
     "description": "",
     "visible": false,
     "aggregation_columns": [
