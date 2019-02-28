@@ -106,8 +106,6 @@ class AggregationScriptTestBase(CSVTestCase):
                     row[key] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[key] = self._convert_decimal_to_string(row[key])
-                elif isinstance(value, six.string_types):
-                    row[key] = value.encode('utf-8')
                 elif value is None:
                     row[key] = ''
             yield row

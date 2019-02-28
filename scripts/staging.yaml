@@ -55,4 +55,6 @@ branches:
   - fr/question-links   # Farid 20 Feb
   - jls/download-mm-translations  # Jenny Feb 23
   - mk-21944-2 # MK Feb 25
+  - fix-compressor  # Nick Feb 27
+  - patch-first  # Nick Feb 27
 submodules: {}
