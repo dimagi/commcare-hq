@@ -64,10 +64,6 @@ class ReachDashboardView(TemplateView):
         kwargs['is_web_user'] = self.couch_user.is_web_user()
         kwargs['user_role_type'] = self.user_ministry
 
-        if (not kwargs['is_web_user']
-                and (kwargs['user_role_type'] is None or kwargs['user_role_type'] == '')):
-            return no_permissions(self.request)
-
         user_location = self.couch_user.get_sql_locations(self.domain).first()
         kwargs['user_location_id'] = user_location.location_id if user_location else None
         user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
