@@ -49,7 +49,7 @@
 trunk: master
 name: autostaging
 branches:
-#  - bmb/users-perms-ui  # Biyeun Feb 20  # merge conflict with master
+  - bmb/users-perms-ui  # Biyeun Feb 20
   - vellum-staging      # Farid 20 Feb
   - fr/question-links   # Farid 20 Feb
   - jls/download-mm-translations  # Jenny Feb 23
