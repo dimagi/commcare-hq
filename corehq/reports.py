@@ -166,6 +166,7 @@ def _filter_reports(report_set, reports):
     else:
         return reports
 
+
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:

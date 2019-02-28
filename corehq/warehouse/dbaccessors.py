@@ -5,6 +5,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 
+
 def get_group_ids_by_last_modified(start_datetime, end_datetime):
     '''
     Returns all group ids that have been modified within a time range. The start date is
@@ -72,6 +73,7 @@ def get_synclogs_by_date(start_datetime, end_datetime):
 
     return SyncLogSQL.objects.filter(date__gt=start_datetime, date__lte=end_datetime).defer('doc').iterator()
 
+
 def get_forms_by_last_modified(start_datetime, end_datetime):
     '''
     Returns all form ids that have been modified within a time range. The start date is
@@ -80,6 +82,7 @@ def get_forms_by_last_modified(start_datetime, end_datetime):
     return FormAccessorSQL.iter_forms_by_last_modified(start_datetime, end_datetime)
 
     # TODO Couch forms
+
 
 def get_application_ids_by_last_modified(start_datetime, end_datetime):
     '''

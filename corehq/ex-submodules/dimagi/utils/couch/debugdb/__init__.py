@@ -36,6 +36,7 @@ def process_key(key_obj):
         key_obj = key_obj.encode('utf-8')
     return key_obj
 
+
 def tidy_stacktrace(strace):
     """
     Clean up stacktrace and remove all entries that:

@@ -2209,6 +2209,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def get_app(self):
         return self._module.get_app()
 
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
@@ -4795,6 +4796,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             return self.build_profiles[build_profile_id].langs
         else:
             return self.langs
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):

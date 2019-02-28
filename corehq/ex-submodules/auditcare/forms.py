@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from auditcare.signals import user_login_failed
 from django import forms
 
+
 class SignaledAuthenticationForm(AuthenticationForm):
     def clean(self):
         username = self.cleaned_data.get('username')
