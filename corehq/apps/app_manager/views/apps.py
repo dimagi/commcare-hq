@@ -342,6 +342,11 @@ def get_apps_base_context(request, domain, app):
             or getattr(app, 'commtrack_enabled', False)
         )
 
+        show_biometric = (
+            toggles.BIOMETRIC_INTEGRATION.enabled(domain)
+            and app.is_biometric_enabled
+        )
+
         disable_report_modules = (
             is_master_linked_domain(domain)
             and not toggles.MOBILE_UCR_LINKED_DOMAIN.enabled(domain)
@@ -361,6 +366,7 @@ def get_apps_base_context(request, domain, app):
 
         context.update({
             'show_advanced': show_advanced,
+            'show_biometric': show_biometric,
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'disable_report_modules': disable_report_modules,
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
