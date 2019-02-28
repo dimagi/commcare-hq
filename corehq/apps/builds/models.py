@@ -294,6 +294,7 @@ class CommCareBuildConfig(Document):
     def latest_j2me_enabled_config(cls):
         return cls.j2me_enabled_configs()[-1]
 
+
 class BuildRecord(BuildSpec):
     signed = BooleanProperty(default=True)
     datetime = DateTimeProperty(required=False)

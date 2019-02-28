@@ -45,6 +45,7 @@ def _get_profile(request):
     else:
         return None
 
+
 @safe_download
 def download_odk_profile(request, domain, app_id):
     """

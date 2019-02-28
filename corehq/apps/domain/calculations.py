@@ -38,6 +38,7 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.messaging.scheduling.util import domain_has_reminders
 
+
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
 

@@ -74,8 +74,8 @@
                 <a style="cursor: pointer" data-bind="
                     text: upload_file_name,
                     popover: {
-                        title: django.gettext('You may not download this file yourself'),
-                        content: django.gettext('Please ask an administrator or the user who uploaded the file for their help'),
+                        title: '{% trans_html_attr 'You may not download this file yourself' %}',
+                        content: '{% trans_html_attr 'Please ask an administrator or the user who uploaded the file for their help' %}',
                         placement: 'top'
                     }
                 "></a>

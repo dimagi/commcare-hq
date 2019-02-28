@@ -49,10 +49,11 @@
 trunk: master
 name: autostaging
 branches:
-  - ns/update_uwsgi  # Nitigya Feb 12
-  - bmb/users-perms-ui  # Biyeun Feb 20
+#  - bmb/users-perms-ui  # Biyeun Feb 20  # merge conflict with master
   - vellum-staging      # Farid 20 Feb
   - fr/question-links   # Farid 20 Feb
   - jls/download-mm-translations  # Jenny Feb 23
   - mk-21944-2 # MK Feb 25
+  - fix-edit-case-data  # Nick Feb 28
+  - fix-preview-report  # Nick Feb 28
 submodules: {}

@@ -12,6 +12,7 @@ import six
 
 logger = logging.getLogger('soft_asserts')
 
+
 def _send_message(info, backend):
     request = get_request()
     request_repr = get_sanitized_request_repr(request)
