@@ -472,12 +472,12 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
 
-        process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
-                                      username=self.username,
-                                      share_media=self.share_media,
-                                      license_name=self.license_used,
-                                      author=self.author,
-                                      attribution_notes=self.attribution_notes)
+        process_bulk_upload_zip(processing_id, self.domain, self.app_id,
+                                username=self.username,
+                                share_media=self.share_media,
+                                license_name=self.license_used,
+                                author=self.author,
+                                attribution_notes=self.attribution_notes)
         return status.get_response()
 
     @classmethod

@@ -32,9 +32,7 @@ MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4',
 
 
 @task(serializer='pickle')
-@profile_prod('process_bulk_upload_zip.prof',
-              probability=float(os.getenv('PROFILE_BULK_MULTIMEDIA_UPLOAD', 0)),
-              limit=None)
+@profile_prod('process_bulk_upload_zip.prof', probability=1, limit=None)
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
