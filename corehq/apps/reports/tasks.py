@@ -274,10 +274,12 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
-            report_state = dict(request=request_data,
-                                request_params=json_request(request_data['GET']),
-                                domain=domain,
-                                context={})
+            report_state = {
+                'request': request_data,
+                'request_params': json_request(request_data['GET']),
+                'domain': domain,
+                'context': {},
+            }
             export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
         else:
             self.retry(exc=er)
