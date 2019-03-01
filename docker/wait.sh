@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO convert to using docker compose'depends_on' feature with health checks
 
 set -e
 
@@ -16,16 +17,11 @@ echo "Waiting for services: $SERVICES"
 for service in $SERVICES; do
     svc=$(echo $service | cut -d : -f 1)
     port=$(echo $service | cut -d : -f 2)
-    while [ -z "$host" ]; do
-        host=$(env | grep -E "${svc}_PORT_${port}_TCP_ADDR" | cut -d = -f 2 | head -n1)
 
-        [ -z "$host" ] && echo "Waiting for link to $svc" && sleep 1
-    done
-
-    echo -n "Waiting for TCP connection to $svc @ $host:$port..."
+    echo -n "Waiting for TCP connection to $svc:$port..."
 
     counter=0
-    while ! { exec 6<>/dev/tcp/${host}/${port}; } 2>/dev/null
+    while ! { exec 6<>/dev/tcp/${svc}/${port}; } 2>/dev/null
     do
       echo -n .
       sleep 1
@@ -37,7 +33,6 @@ for service in $SERVICES; do
     done
 
     echo "$svc ok"
-    host=
 done
 
 echo "Services ready!"
