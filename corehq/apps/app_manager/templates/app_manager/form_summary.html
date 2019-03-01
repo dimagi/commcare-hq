@@ -45,6 +45,14 @@
              </div>
         </div>
     </div>
+    <!-- ko if: errors.length -->
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-circle"></i>
+        {% blocktrans %}
+            Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.
+        {% endblocktrans %}
+    </div>
+    <!-- /ko -->
 
     <!-- ko foreach: errors -->
         <div class="alert alert-danger">
