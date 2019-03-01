@@ -115,12 +115,13 @@ if 'aaa-data' not in DATABASES:
         }
     }
 
+citus_ucr_db = 'citus-ucr' if 'citus-ucr' in DATABASES else 'default'
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-ucr-non-dashboard': 'default',
-    'icds-test-ucr': 'default',
+    'icds-ucr': citus_ucr_db,
+    'icds-ucr-non-dashboard': citus_ucr_db,
+    'icds-test-ucr': citus_ucr_db,
     'aaa-data': 'aaa-data',
 }
 
