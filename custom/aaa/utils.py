@@ -46,3 +46,13 @@ def _explain_query(cls, method, domain, window_start, window_end):
     with connections['aaa-data'].cursor() as cursor:
         cursor.execute('explain ' + agg_query, agg_params)
         return cls.__name__ + method.__name__, cursor.fetchall()
+
+
+def get_location_model_for_ministry(ministry):
+    if ministry == 'MoHFW':
+        return AggVillage
+    elif ministry == 'MWCD':
+        return AggAwc
+
+    # This should be removed eventually once ministry is reliably being passed back from front end
+    return AggVillage
