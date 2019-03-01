@@ -402,6 +402,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         kwargs.update(self.storage.validated_step_data.get('method', {}))
         return PhoneDevice(key=self.get_key(), **kwargs)
 
+
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 
     def get_success_url(self):

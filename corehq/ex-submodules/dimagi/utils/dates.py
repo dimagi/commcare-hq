@@ -408,6 +408,7 @@ def get_day_of_month(year, month, count):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 
+
 def get_business_day_of_month(year, month, count):
     """
     For a given month get the Nth business day by count.

@@ -386,6 +386,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
     def tearDown(self):
         for user_history in DomainUserHistory.objects.all():
             user_history.delete()
+        super(TestQuarterlyInvoicing, self).tearDown()
 
     def initialize_domain_user_history_objects(self):
         record_dates = []

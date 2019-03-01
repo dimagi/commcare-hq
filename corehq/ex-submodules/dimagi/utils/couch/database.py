@@ -123,6 +123,7 @@ def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
     return 'cloudant' in settings.COUCH_DATABASE or getattr(settings, 'BIGCOUCH', False)
 
+
 def bigcouch_quorum_count():
     """
     The number of nodes to force an update/read in bigcouch to make sure
@@ -132,8 +133,10 @@ def bigcouch_quorum_count():
     return (3 if not hasattr(settings, 'BIGCOUCH_QUORUM_COUNT')
             else settings.BIGCOUCH_QUORUM_COUNT)
 
+
 def get_safe_write_kwargs():
     return {'w': bigcouch_quorum_count()} if is_bigcouch() else {}
+
 
 def get_safe_read_kwargs():
     return {'r': bigcouch_quorum_count()} if is_bigcouch() else {}

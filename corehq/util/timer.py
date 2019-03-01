@@ -123,7 +123,12 @@ class TimingContext(object):
         return not self.stack
 
     def is_started(self):
-        return self.peek().beginning is not None
+        """Check if the timer has been started
+
+        Returns false if the timer has not yet started or was started
+        and then stopped, otherwise true.
+        """
+        return bool(self.stack) and self.peek().beginning is not None
 
     def start(self):
         if self.is_started():

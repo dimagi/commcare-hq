@@ -248,7 +248,12 @@ class CSVTestCase(TestCase):
 
             for key in dict1.keys():
                 if key != 'id':
-                    value1 = dict1[key] if isinstance(dict1[key], six.text_type) else dict1[key].decode('utf-8')
+                    if isinstance(dict1[key], six.text_type):
+                        value1 = dict1[key]
+                    elif isinstance(dict1[key], list):
+                        value1 = str(dict1[key])
+                    else:
+                        value1 = dict1[key].decode('utf-8')
                     value1 = value1.replace('\r\n', '\n')
                     value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
@@ -264,7 +269,7 @@ class CSVTestCase(TestCase):
                 """.format(
                     idx + 1,
                     ', '.join(['{}: {}'.format(
-                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                        difference, str(dict1[difference])) for difference in differences]
                     ),
                     ', '.join(['{}: {}'.format(
                         difference, dict2.get(difference, '')) for difference in differences]

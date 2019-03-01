@@ -5,7 +5,7 @@ from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.tasks import handle_due_survey_action
 from corehq.sql_db.util import handle_connection_failure
 from datetime import datetime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
 from django.core.management.base import BaseCommand
 from time import sleep
@@ -26,12 +26,16 @@ class Command(BaseCommand):
     help = "Spawns tasks to handle the next actions due in SMS surveys"
 
     def get_enqueue_lock(self, session_id, current_action_due):
-        client = get_redis_client()
         key = "create-task-for-smsforms-session-%s-%s" % (
             session_id,
             current_action_due.strftime('%Y-%m-%d %H:%M:%S')
         )
-        return client.lock(key, timeout=60 * 60)
+        return get_redis_lock(
+            key,
+            timeout=60 * 60,
+            name="smsforms_task",
+            track_unreleased=False,
+        )
 
     def get_survey_sessions_due_for_action(self):
         return SQLXFormsSession.objects.filter(

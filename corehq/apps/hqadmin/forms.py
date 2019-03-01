@@ -18,6 +18,7 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
+
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
     domain = forms.CharField(label="Domain", max_length=255, required=False)
