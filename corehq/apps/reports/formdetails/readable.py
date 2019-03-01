@@ -764,7 +764,7 @@ class _AppSummaryFormDataGenerator(object):
         except XFormException as exception:
             form_meta['questions'] = []
             form_meta['error'] = {
-                'details': six.text_type(exception[0]),
+                'details': six.text_type(exception.args[0]),
             }
             self.errors.append(form_meta)
         return form_meta
