@@ -269,7 +269,7 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        if settings.SERVER_ENVIRONMENT != 'softlayer':
+        if settings.SERVER_ENVIRONMENT != 'india':
             return HttpResponse("This page is only available for QA and not available for production instances.")
 
         couch_user = self.request.couch_user

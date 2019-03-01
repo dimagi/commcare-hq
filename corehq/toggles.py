@@ -1326,10 +1326,10 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 
 ICDS = StaticToggle(
     'icds',
-    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",

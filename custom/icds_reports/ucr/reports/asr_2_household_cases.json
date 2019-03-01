@@ -18,7 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "data_source_table": "static-household_cases",
