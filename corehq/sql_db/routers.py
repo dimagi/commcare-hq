@@ -10,7 +10,7 @@ from corehq.sql_db.connections import (
     connection_manager,
     get_aaa_db_alias,
     get_icds_ucr_db_alias,
-    get_citus_alias)
+)
 
 from .config import partition_config
 
@@ -24,7 +24,6 @@ SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
 AAA_APP = 'aaa'
-CITUS_SETUP = 'citus_setup'
 
 
 class MultiDBRouter(object):
@@ -72,8 +71,6 @@ def allow_migrate(db, app_label):
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == WAREHOUSE_APP:
         return db == settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == CITUS_SETUP and settings.USE_CITUSDB and settings.UNIT_TESTING:
-        return db == get_citus_alias()
 
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP and db in ('default', None)

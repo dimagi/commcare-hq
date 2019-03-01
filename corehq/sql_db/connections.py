@@ -20,7 +20,6 @@ from .util import select_db_for_read
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
-CITUS_ENGINE_ID = 'citus'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
 AAA_DB_ENGINE_ID = 'aaa-data'
@@ -29,13 +28,6 @@ AAA_DB_ENGINE_ID = 'aaa-data'
 def get_icds_ucr_db_alias():
     try:
         return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
-    except KeyError:
-        return None
-
-
-def get_citus_alias():
-    try:
-        return connection_manager.get_django_db_alias(CITUS_ENGINE_ID)
     except KeyError:
         return None
 

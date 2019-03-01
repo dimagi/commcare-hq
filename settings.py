@@ -795,7 +795,6 @@ REPORTING_DATABASES = {
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
 
 USE_PARTITIONED_DATABASE = False
-USE_CITUSDB = False
 
 # number of days since last access after which a saved export is considered unused
 SAVED_EXPORT_ACCESS_CUTOFF = 35

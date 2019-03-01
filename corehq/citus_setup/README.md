@@ -1,1 +1,0 @@
-This app exists solely to setup CitusDB during tests.
