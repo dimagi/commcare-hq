@@ -18,13 +18,16 @@
     <!--ko foreach: case_uploads-->
     <tr>
         <td class="col-md-1">
-            <!--ko if: task_status().state == $root.states.SUCCESS-->
+            <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
                 <!--ko if: _.isEmpty(task_status().result.errors)-->
                 <span class="label label-success">{% trans "Success" %}</span>
                 <!--/ko-->
                 <!--ko if: !_.isEmpty(task_status().result.errors)-->
                 <span class="label label-warning">{% trans "Success with warnings" %}</span>
                 <!--/ko-->
+            <!--/ko-->
+            <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
+            <span class="label label-danger">{% trans "Failed" %}</span>
             <!--/ko-->
             <!--ko if: task_status().state == $root.states.FAILED-->
             <span class="label label-danger">{% trans "Failed" %}</span>
