@@ -123,7 +123,7 @@ def get_commcare_settings_lookup():
 
 
 def parse_condition_string(condition_str):
-    pattern = re.compile("{(?P<type>[\w-]+?)\.(?P<id>[\w-]+?)}=(?P<equals>true|false|'[\w-]+')")
+    pattern = re.compile(r"{(?P<type>[\w-]+?)\.(?P<id>[\w-]+?)}=(?P<equals>true|false|'[\w-]+')")
     match = pattern.match(condition_str).groupdict()
     if match["equals"] == 'true':
         match["equals"] = True

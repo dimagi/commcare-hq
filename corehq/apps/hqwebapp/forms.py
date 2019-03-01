@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 
+import six
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -197,7 +198,7 @@ class FormListForm(object):
                 rows = json.loads(self.data.get('child_form_data', ""))
             except ValueError as e:
                 raise ValidationError("POST request poorly formatted. {}"
-                                      .format(e.message))
+                                      .format(six.text_type(e)))
         else:
             rows = self.data
         return [

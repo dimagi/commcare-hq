@@ -111,7 +111,7 @@ if os.path.exists(_formdesigner_path):
 del _formdesigner_path
 
 LOG_HOME = FILEPATH
-COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
@@ -240,6 +240,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -259,7 +260,6 @@ HQ_APPS = (
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
-    'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
@@ -311,7 +311,6 @@ HQ_APPS = (
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
-    'corehq.apps.indicators',
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
@@ -346,9 +345,6 @@ HQ_APPS = (
 
     # custom reports
     'hsph',
-    'mvp',
-    'mvp_docs',
-    'mvp_indicators',
     'pact',
 
     'custom.reports.mc',
@@ -728,7 +724,6 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 1.7
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -1286,11 +1281,7 @@ if helper.is_testing():
 
 DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
-MVP_INDICATOR_DB = 'mvp-indicators'
-
 INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
 }
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
@@ -1378,8 +1369,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'hsph',
-    'mvp',
-    ('mvp_docs', MVP_INDICATOR_DB),
     'pact',
     'accounting',
     'succeed',
@@ -2094,16 +2083,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mvp-potou': 'mvp',
-    'mvp-sauri': 'mvp',
-    'mvp-bonsaaso': 'mvp',
-    'mvp-ruhiira': 'mvp',
-    'mvp-mwandama': 'mvp',
-    'mvp-sada': 'mvp',
-    'mvp-tiby': 'mvp',
-    'mvp-mbola': 'mvp',
-    'mvp-koraro': 'mvp',
-    'mvp-pampaida': 'mvp',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -2111,6 +2090,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
+    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -2140,7 +2120,6 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-full-test': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
-    'mvp-mayange': 'mvp',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
@@ -2181,7 +2160,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-RESTORE_TIMING_DOMAINS = {
+# Domains that we want to tag in datadog
+DATADOG_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),

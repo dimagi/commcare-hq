@@ -412,7 +412,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(e.message)
+            logging.exception(six.text_type(e))
             return "#"
 
     @property
@@ -655,6 +655,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     day = IntegerProperty(default=1)
     interval = StringProperty(choices=["daily", "weekly", "monthly"])
     uuid = StringProperty()
+    start_date = DateProperty(default=None)
 
     @property
     def is_editable(self):
@@ -786,7 +787,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def get_secret(self, email):
         uuid = self._get_or_create_uuid()
-        return hashlib.sha1(uuid + email).hexdigest()[:20]
+        return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
         # Scenario: user has been removed from the domain that they

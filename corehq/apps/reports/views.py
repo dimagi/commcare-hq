@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 import copy
 from datetime import datetime, timedelta, date
-from functools import partial
+from functools import cmp_to_key, partial
 import itertools
 import json
 import csv342 as csv
@@ -1546,7 +1546,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1861,7 +1861,7 @@ def _sorted_form_metadata_keys(keys):
             return 0
 
         return cmp(x, y)
-    return sorted(keys, cmp=mycmp)
+    return sorted(keys, key=cmp_to_key(mycmp))
 
 
 def _get_edit_info(instance):

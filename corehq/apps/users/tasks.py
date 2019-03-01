@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+
+import six
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task
@@ -230,7 +232,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             )
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour=23, minute=55),
     queue='background_queue',
 )
@@ -275,7 +277,7 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
         reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
-        notify_exception(None, message=e.message)
+        notify_exception(None, message=six.text_type(e))
         results = {'errors': [
             _("Something went wrong in creating restore for the user. Please try again or report an issue")
         ]}

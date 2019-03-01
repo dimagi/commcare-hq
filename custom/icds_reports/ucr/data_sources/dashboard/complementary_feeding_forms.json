@@ -9,13 +9,13 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "config": {
@@ -62,32 +62,30 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
           },
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "type": "icds_user_location",
-              "user_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "meta",
-                    "userID"
-                  ]
-                },
-                "type": "root_doc"
-              }
-            },
-            "location_type": "state"
-          }
+          "location_type": "state",
+          "location_property": "_id"
         },
         "create_index": true
+      },
+      {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "column_id": "supervisor_id",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        }
       },
       {
         "column_id": "received_on",
@@ -299,6 +297,20 @@
       }
     ],
     "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      },
       "deworming": {
         "type": "nested",
         "argument_expression": {

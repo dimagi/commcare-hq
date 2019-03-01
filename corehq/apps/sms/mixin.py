@@ -8,7 +8,7 @@ from collections import namedtuple
 import six
 
 
-phone_number_re = re.compile("^\d+$")
+phone_number_re = re.compile(r"^\d+$")
 
 
 class PhoneNumberException(Exception):

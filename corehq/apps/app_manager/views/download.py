@@ -45,6 +45,7 @@ def _get_profile(request):
     else:
         return None
 
+
 @safe_download
 def download_odk_profile(request, domain, app_id):
     """
@@ -372,7 +373,7 @@ def download_index(request, domain, app_id):
     files = defaultdict(list)
     try:
         for file_ in source_files(request.app):
-            form_filename = re.search('modules-(\d+)\/forms-(\d+)', file_[0])
+            form_filename = re.search(r'modules-(\d+)\/forms-(\d+)', file_[0])
             if form_filename:
                 module_id, form_id = form_filename.groups()
                 module = request.app.get_module(module_id)
@@ -408,7 +409,6 @@ def download_index(request, domain, app_id):
             ),
             extra_tags='html'
         )
-    built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     enabled_build_profiles = []
     if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.get_id, request.app.version)
@@ -417,12 +417,6 @@ def download_index(request, domain, app_id):
         'app': request.app,
         'files': OrderedDict(sorted(six.iteritems(files), key=lambda x: x[0])),
         'supports_j2me': request.app.build_spec.supports_j2me(),
-        'built_versions': [{
-            'app_id': _app_id,
-            'build_id': build_id,
-            'version': version,
-            'comment': comment,
-        } for _app_id, build_id, version, comment in built_versions],
         'enabled_build_profiles': enabled_build_profiles
     })
 

@@ -141,7 +141,7 @@ def print_one_way_merge_details(branch1, branch2, git, known_branches=None):
         branches = git.branch('--remote', '--contains', commit)
         other_branches = [
             format_branch(*b)
-            for b in re.findall('([a-zA-Z0-9-]*)/([\w+-]*)', str(branches))
+            for b in re.findall(r'([a-zA-Z0-9-]*)/([\w+-]*)', str(branches))
             if b[0] != 'origin' or (b[1] != branch2 and b[1] in known_branches
                                     and b[1] != 'HEAD')
         ]

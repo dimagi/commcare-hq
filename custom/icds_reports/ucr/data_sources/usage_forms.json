@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -18,7 +19,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "config": {
@@ -69,7 +69,6 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "type": "expression",
         "expression":{
           "type": "location_parent_id",
           "location_id_expression": {

@@ -198,6 +198,7 @@ class StockExportColumnTest(SimpleTestCase):
             headers = list(column.get_headers())
             self.assertEqual(headers, ['water (123)', 'water (abc)'])
 
+
 class TestRowNumberColumn(SimpleTestCase):
 
     def test_get_headers(self):

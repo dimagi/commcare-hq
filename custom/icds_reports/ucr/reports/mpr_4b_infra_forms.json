@@ -9,13 +9,13 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-mpr_4b_infra_forms",

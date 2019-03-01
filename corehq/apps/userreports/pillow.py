@@ -68,7 +68,7 @@ def _filter_by_hash(configs, ucr_division):
     ucr_end = ucr_division[-1]
     filtered_configs = []
     for config in configs:
-        table_hash = hashlib.md5(config.table_id).hexdigest()[0]
+        table_hash = hashlib.md5(config.table_id.encode('utf-8')).hexdigest()[0]
         if ucr_start <= table_hash <= ucr_end:
             filtered_configs.append(config)
     return filtered_configs
@@ -466,6 +466,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         retry_errors=True,
         processor_chunk_size=processor_chunk_size,
     )
+
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, ucr_configs=None, **kwargs):

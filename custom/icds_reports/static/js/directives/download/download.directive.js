@@ -10,6 +10,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.yearsCopy = [];
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
+    vm.previousTaskFailed = null;
     $rootScope.report_link = '';
 
     var getTaskStatus = function () {
@@ -17,7 +18,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (resp.task_ready) {
                 clearInterval(vm.statusCheck);
                 $rootScope.task_id = '';
-                $rootScope.report_link = resp.task_result.link;
+                vm.previousTaskFailed = !resp.task_successful;
+                $rootScope.report_link = resp.task_successful ? resp.task_result.link : '';
                 vm.queuedTask = false;
             }
         });
@@ -301,20 +303,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 if ($item.user_have_access) {
                     locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                     vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
-                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                 } else {
                     locationsCache[$item.location_id] = data.locations;
                     vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
                     if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
                         vm.onSelectForISSNIP(data.locations[0], level + 1);
                     } else {
                         vm.onSelect(data.locations[0], level + 1);
                     }
-
                 }
             });
         }
+        vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
         var levels = [];
         vm.selectedLevel = selectedLocationIndex() + 1;
         window.angular.forEach(vm.levels, function (value) {
@@ -420,6 +420,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
         vm.queuedTask = true;
         vm.downloaded = false;
+        vm.previousTaskFailed = null;
     };
 
     vm.resetForm = function() {
@@ -437,10 +438,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function() {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        var incentiveReportErrors = vm.isIncentiveReportSelected() && (
-            (vm.haveAccessToFeatures && !vm.isStateSelected()) ||
-            (!vm.haveAccessToFeatures && !vm.isBlockSelected())
-        );
+        var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         return beneficiaryListErrors || incentiveReportErrors;
     };
 
@@ -514,7 +512,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.readyToDownload = function () {
-        return $rootScope.report_link;
+        return vm.previousTaskFailed ? false : $rootScope.report_link;
     };
 
     vm.goToLink = function () {

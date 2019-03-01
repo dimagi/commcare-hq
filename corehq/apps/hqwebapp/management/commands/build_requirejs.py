@@ -80,9 +80,10 @@ class Command(ResourceStaticCommand):
             '''
             dirs = defaultdict(set)
             for filename in html_files:
-                proc = subprocess.Popen(["grep", "^\s*{% requirejs_main [^%]* %}\s*$", filename],
+                proc = subprocess.Popen(["grep", r"^\s*{% requirejs_main [^%]* %}\s*$", filename],
                                         stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
+                out = out.decode('utf-8')
                 if out:
                     match = re.search(r"{% requirejs_main .(([^%]*)/[^/%]*). %}", out)
                     if match:
@@ -120,6 +121,7 @@ class Command(ResourceStaticCommand):
             proc = subprocess.Popen(["git", "diff-files", "--ignore-submodules", "--name-only"],
                                     stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
+            out = out.decode('utf-8')
             if out:
                 confirm = six.moves.input("You have unstaged changes to the following files: \n{} "
                                     "This script overwrites some static files. "

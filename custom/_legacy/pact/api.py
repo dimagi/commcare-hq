@@ -421,5 +421,5 @@ class PactAPI(DomainAPI):
     def dispatch(self, *args, **kwargs):
         req = args[0]
         self.method = req.GET.get('method', None)
-        ret =  super(PactAPI, self).dispatch(*args, **kwargs)
+        ret = super(PactAPI, self).dispatch(*args, **kwargs)
         return ret

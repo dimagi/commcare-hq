@@ -460,6 +460,13 @@ CASE_LIST_LOOKUP = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BIOMETRIC_INTEGRATION = StaticToggle(
+    'biometric_integration',
+    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
@@ -1282,9 +1289,16 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
+PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
+    'profile_bulk_multimedia_upload',
+    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
-    'Add a page to update multimedia paths in bulk',
+    'Bulk multimedia path management',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/ICDS/Multimedia+Path+Manager"
@@ -1548,6 +1562,7 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Project+Spaces',
+    notification_emails=['aking'],
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(

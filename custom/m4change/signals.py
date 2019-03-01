@@ -4,8 +4,7 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.models import XFormInstance
 from fluff.signals import indicator_document_updated
 import json
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_client, get_redis_lock, release_lock
 from django.core.exceptions import ObjectDoesNotExist
 from custom.m4change.constants import M4CHANGE_DOMAINS, ALL_M4CHANGE_FORMS, IMMUNIZATION_FORMS, \
     BOOKED_DELIVERY_FORMS, UNBOOKED_DELIVERY_FORMS, BOOKING_FORMS, FOLLOW_UP_FORMS, REDIS_FIXTURE_KEYS, \
@@ -103,11 +102,11 @@ def _filter_forms(xform, cases):
 
 
 def handle_m4change_forms(sender, xform, cases, **kwargs):
-     if hasattr(xform, "domain") and xform.domain in M4CHANGE_DOMAINS and hasattr(xform, "xmlns"):
-         if xform.xmlns in ALL_M4CHANGE_FORMS:
+    if hasattr(xform, "domain") and xform.domain in M4CHANGE_DOMAINS and hasattr(xform, "xmlns"):
+        if xform.xmlns in ALL_M4CHANGE_FORMS:
             _handle_duplicate_form(xform, cases)
-         if xform.xmlns in BOOKING_FORMS + BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS +\
-                 IMMUNIZATION_FORMS + FOLLOW_UP_FORMS:
+        if xform.xmlns in BOOKING_FORMS + BOOKED_DELIVERY_FORMS + UNBOOKED_DELIVERY_FORMS +\
+                IMMUNIZATION_FORMS + FOLLOW_UP_FORMS:
             _filter_forms(xform, cases)
 
 
@@ -124,7 +123,7 @@ def handle_fixture_location_update(sender, doc, diff, backend, **kwargs):
             client = get_redis_client()
             redis_key = REDIS_FIXTURE_KEYS[xform.domain]
             redis_lock_key = REDIS_FIXTURE_LOCK_KEYS[xform.domain]
-            lock = client.lock(redis_lock_key, timeout=5)
+            lock = get_redis_lock(redis_lock_key, timeout=5, name=redis_lock_key)
             if lock.acquire(blocking=True):
                 try:
                     location_ids_str = client.get(redis_key)

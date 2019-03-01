@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from django.http import Http404
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -27,5 +29,5 @@ class ApplicationViewMixin(DomainViewMixin):
         except Http404 as e:
             raise e
         except Exception as e:
-            notify_exception(self.request, message=e.message)
+            notify_exception(self.request, message=six.text_type(e))
         return None

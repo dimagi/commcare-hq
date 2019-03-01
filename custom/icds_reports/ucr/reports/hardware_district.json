@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-test",
     "icds-sql",
@@ -17,7 +18,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-hardware_district",

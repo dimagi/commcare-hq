@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -227,24 +228,17 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "property_name": "owner_id",
-                    "type": "property_name"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -256,21 +250,17 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "property_name": "owner_id",
-                  "type": "property_name"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -282,18 +272,17 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "property_name": "owner_id",
-                "type": "property_name"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -306,15 +295,17 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
-              "property_name": "owner_id",
-              "type": "property_name"
+              "type": "property_name",
+              "property_name": "owner_id"
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "is_nullable": true,
         "is_primary_key": false,

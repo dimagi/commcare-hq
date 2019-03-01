@@ -38,6 +38,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
+from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
@@ -92,7 +93,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -2208,6 +2208,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
     def get_app(self):
         return self._module.get_app()
+
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -4796,6 +4797,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return self.langs
 
+
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
@@ -4833,7 +4835,8 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
+class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
+                  ApplicationIntegrationMixin):
     """
     An Application that can be created entirely through the online interface
 

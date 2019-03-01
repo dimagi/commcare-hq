@@ -47,7 +47,6 @@ from dimagi.utils.modules import to_function
 import logging
 from . import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
-from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
 from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.accounting.interface import (
@@ -167,6 +166,7 @@ def _filter_reports(report_set, reports):
     else:
         return reports
 
+
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
@@ -213,7 +213,7 @@ def _safely_get_report_configs(project_name):
             try:
                 configs.append(ReportConfiguration.get(config_id))
             except BadSpecError as e:
-                logging.error("%s with report config %s" % (e.message, config_id))
+                logging.error("%s with report config %s" % (six.text_type(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))
@@ -247,8 +247,11 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
             )
         return show_item
 
-    bytes_config_id = config._id.encode('utf-8') if isinstance(config._id, six.text_type) else config._id
-    return type(str(b'DynamicReport{}'.format(bytes_config_id)), (GenericReportView,), {
+    config_id = config._id.decode('utf-8') if isinstance(config._id, bytes) else config._id
+    type_name = 'DynamicReport{}'.format(config_id)
+    if six.PY2:
+        type_name = type_name.encode('utf-8')
+    return type(type_name, (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,
         'get_url': get_url,
@@ -318,28 +321,6 @@ FIXTURE_INTERFACES = (
         FixtureViewInterface,
     )),
 )
-
-
-INDICATOR_ADMIN_INTERFACES = (
-    (_("Form Based Indicators"), (
-        document_indicators.FormLabelIndicatorDefinitionAdminInterface,
-        document_indicators.FormAliasIndicatorDefinitionAdminInterface,
-        document_indicators.CaseDataInFormAdminInterface,
-    )),
-    (_("Case Based Indicators"), (
-        document_indicators.FormDataInCaseAdminInterface,
-    )),
-    (_("Dynamic Indicators"), (
-        dynamic_indicators.CombinedIndicatorAdminInterface,
-    )),
-    (_("Couch Based Indicators"), (
-        couch_indicators.CouchIndicatorAdminInterface,
-        couch_indicators.CountUniqueCouchIndicatorAdminInterface,
-        couch_indicators.MedianCouchIndicatorAdminInterface,
-        couch_indicators.SumLastEmittedCouchIndicatorAdminInterface,
-    )),
-)
-
 
 ACCOUNTING_ADMIN_INTERFACES = (
     (_("Accounting Admin"), (

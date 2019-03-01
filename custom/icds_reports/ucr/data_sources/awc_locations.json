@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -601,32 +602,40 @@
         "property_name": "_id"
       },
       "supervisor_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
           "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "supervisor",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "block_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "supervisor_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "block",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "district_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "block_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "district",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "state_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "district_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": "state",
+        "location_property": "_id",
+        "type": "ancestor_location"
       },
       "is_test": {
         "type": "conditional",

@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-sql",
     "icds-test",
@@ -183,7 +184,7 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -191,7 +192,9 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "supervisor_id"
       },
@@ -203,18 +206,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
       },
@@ -226,21 +228,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "district_id"
       },
@@ -252,24 +250,17 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
         },
         "column_id": "state_id"
       },

@@ -137,6 +137,7 @@ def default_new_app(request, domain):
     annoying for the Dashboard.
     """
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created a new blank application")
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -192,7 +193,9 @@ def get_app_view_context(request, app):
         'values': get_settings_values(app),
         'warning': _("This is not an allowed value for this field"),
     }
-    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
+    if (app.get_doc_type() == 'Application'
+            and toggles.CUSTOM_PROPERTIES.enabled(request.domain)
+            and 'custom_properties' in getattr(app, 'profile', {})):
         custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
@@ -440,6 +443,7 @@ def copy_app(request, domain):
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
+    track_workflow(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
