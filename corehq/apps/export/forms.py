@@ -411,6 +411,11 @@ class DashboardFeedFilterForm(forms.Form):
         """
         Serialize the bound form as an ExportInstanceFilters object.
         """
+        # Confirm that either form filter data or case filter data but not both has been submitted.
+        assert (
+            (self.cleaned_data['emwf_form_filter'] is not None) !=
+            (self.cleaned_data['emwf_case_filter'] is not None)
+        )
         assert(export_type == 'form' or export_type == 'case')
         if export_type == 'form':
             # It's a form export # TODO: Remove redundant comments
