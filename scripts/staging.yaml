@@ -54,6 +54,4 @@ branches:
   - fr/question-links   # Farid 20 Feb
   - jls/download-mm-translations  # Jenny Feb 23
   - mk-21944-2 # MK Feb 25
-  - fix-get_secret  # Nick Feb 28
-  - cmp_to_key  # Nick Feb 28
 submodules: {}
