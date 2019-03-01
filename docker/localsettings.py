@@ -102,7 +102,7 @@ DATABASES['citus_ucr'] = {
     'USER': 'postgres',
     'PASSWORD': '',
     'HOST': 'citus_master',
-    'PORT': '5600',
+    'PORT': '5432',
     'TEST': {
         'NAME': 'postgres',  # use the same DB for tests (without the 'test_' prefix
         'SERIALIZE': False,
