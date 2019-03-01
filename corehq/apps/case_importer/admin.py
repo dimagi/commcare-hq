@@ -18,5 +18,4 @@ class CaseUploadRecordAdmin(admin.ModelAdmin):
         return False
 
 
-
 admin.site.register(CaseUploadRecord, CaseUploadRecordAdmin)
