@@ -13,13 +13,13 @@ migrator = RawSQLMigration(('corehq', 'form_processor', 'migrations', 'sql_templ
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0079_migrate_delta_add_new_delta'),
+        ('form_processor', '0078_blobmeta_migrated_check'),
     ]
 
     operations = [
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                migrator.get_migration('migrate_delta_create_trigger.sql'),
+                migrator.get_migration('migrate_delta_1_add_column.sql'),
             ]
         ),
     ]

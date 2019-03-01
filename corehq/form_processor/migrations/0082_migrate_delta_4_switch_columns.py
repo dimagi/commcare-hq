@@ -13,13 +13,13 @@ migrator = RawSQLMigration(('corehq', 'form_processor', 'migrations', 'sql_templ
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0081_migrate_delta_backfill_notnull'),
+        ('form_processor', '0081_migrate_delta_3_backfill_notnull'),
     ]
 
     operations = [
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                migrator.get_migration('migrate_delta_switch_columns.sql'),
+                migrator.get_migration('migrate_delta_4_switch_columns.sql'),
             ]
         ),
     ]
