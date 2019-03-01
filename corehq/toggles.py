@@ -1650,7 +1650,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
