@@ -95,7 +95,19 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
-
+# CitusDB in tests
+# ================
+# 1. Citus containers added directly to the hq-compose.yml file
+#    to make the setup simpler rather than having separate compose files
+#    and having to join the networks or use host networking
+# 2. Use the `postgres` database since that is already set up for CitusDB
+#    by the docker containers. We could have docker use a different DB name
+#    but Django tries to connect to the `postgres` database anyway in order to
+#    create test databases.
+#    We can't get Django to create the database since it would need to create
+#    `citus` extension on the controller and workers as well as add the workers
+#    as worker nodes on the controller DB. This would need to be done during DB
+#    setup would be difficult to do without managing the databases ourselves.
 DATABASES['citus-ucr'] = {
     'ENGINE': 'django.db.backends.postgresql_psycopg2',
     'DISABLE_SERVER_SIDE_CURSORS': True,
@@ -105,7 +117,7 @@ DATABASES['citus-ucr'] = {
     'HOST': 'citus_master',
     'PORT': '5432',
     'TEST': {
-        'NAME': 'postgres',  # use the same DB for tests (without the 'test_' prefix
+        'NAME': 'postgres',  # use the same DB for tests (without the 'test_' prefix)
         'SERIALIZE': False,
     },
 }
