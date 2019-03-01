@@ -18,7 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-ls_children_weighed",

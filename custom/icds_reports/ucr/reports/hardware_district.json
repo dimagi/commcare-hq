@@ -17,7 +17,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-hardware_district",

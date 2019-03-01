@@ -15,7 +15,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-custom_sql_mpr_6b_child_health_cases_v2",
