@@ -122,14 +122,14 @@ def get_task_status(task, is_multiple_download_task=False):
             pass
         else:
             result = task.result
-            if task.successful():
+            if result and result.get('errors'):
+                failed = True
+                context_error = result.get('errors')
+            elif task.successful():
                 is_ready = True
                 context_result = result and result.get('messages')
             elif result and isinstance(result, Exception):
                 context_error = six.text_type(result)
-            elif result and result.get('errors'):
-                failed = True
-                context_error = result.get('errors')
         progress = get_task_progress(task)
 
     def progress_complete():
