@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.users.models import CouchUser
@@ -49,17 +48,12 @@ def is_icds_dashboard_view(request):
 
 class ICDSAuditMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and is_icds_dashboard_view(request):
+        if is_icds_dashboard_view(request):
             ICDSAuditEntryRecord.create_entry(request)
             return None
 
     def process_response(self, request, response):
-        should_audit = (
-            settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and
-            is_login_page(request) and request.user.is_authenticated
-            and is_icds_domain(request)
-        )
-        if should_audit:
+        if is_login_page(request) and request.user.is_authenticated and is_icds_domain(request):
             couch_user = CouchUser.get_by_username(request.user.username)
             ICDSAuditEntryRecord.create_entry(request, couch_user, is_login_page=True)
         return response
