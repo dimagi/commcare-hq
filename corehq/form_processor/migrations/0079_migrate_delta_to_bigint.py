@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import migrations
+from django.db import migrations, models
 
 from corehq.sql_db.operations import RawSQLMigration
 
@@ -17,5 +17,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('migrate_to_bigint.sql')
+        migrator.get_migration('migrate_delta_to_bigint.sql'),
+        migrations.SeparateDatabaseAndState(state_operations=[
+            migrations.AlterField(
+                model_name='ledgertransaction',
+                name='delta',
+                field=models.BigIntegerField(),
+            ),
+        ]),
     ]
