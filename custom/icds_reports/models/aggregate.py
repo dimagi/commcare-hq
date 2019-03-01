@@ -880,6 +880,7 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -923,6 +924,7 @@ class AggregateComplementaryFeedingForms(models.Model):
         null=True,
         help_text="Hand washing occurred for this case in the latest form"
     )
+
 
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
@@ -1105,6 +1107,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1199,6 +1202,7 @@ class AggregateCcsRecordTHRForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1321,6 +1325,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 class AggregateBirthPreparednesForms(models.Model):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1465,6 +1470,8 @@ class AggregateCcsRecordDeliveryForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1485,6 +1492,7 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         null=True,
         help_text="Where the child is born"
     )
+
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
@@ -1650,6 +1658,7 @@ class AWWIncentiveReport(models.Model):
     # primary key as it's unique for every partition
     awc_id = models.CharField(max_length=40, primary_key=True)
     block_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     state_name = models.TextField(null=True)
     district_name = models.TextField(null=True)
     block_name = models.TextField(null=True)
