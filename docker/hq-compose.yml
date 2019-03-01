@@ -32,7 +32,6 @@ services:
   formplayer:
     image: dimagi/formplayer
     environment:
-      DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
       WEB_HOST: "dockerhost"
     expose:
       - "8010"
