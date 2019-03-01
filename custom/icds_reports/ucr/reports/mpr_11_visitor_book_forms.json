@@ -19,7 +19,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-mpr_11_visitor_book_forms",
