@@ -12,8 +12,8 @@ asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
-boto3==1.9.103
-botocore==1.12.103        # via boto3, s3transfer
+boto3==1.9.105
+botocore==1.12.105        # via boto3, s3transfer
 celery==3.1.25
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography, csiphash
@@ -21,7 +21,7 @@ chardet==3.0.4            # via ghdiff, requests
 cloudant==2.11.0          # via jsonobject-couchdbkit
 concurrentloghandler==0.9.1
 contextlib2==0.5.5
-cryptography==2.5         # via pyopenssl, requests
+cryptography==2.6.1       # via pyopenssl, requests
 csiphash==0.0.5
 csv342==1.0.0
 datadog==0.15.0
@@ -88,14 +88,14 @@ jsonpath-rw==1.4.0
 kafka-python==1.4.4
 kombu==3.0.37             # via celery
 laboratory==0.2.0
-lxml==4.3.1
+lxml==4.3.2
 mako==1.0.7               # via alembic
 markdown==2.2.1
 markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
 openpyxl==2.6.0
-pbr==5.1.2                # via mock
+pbr==5.1.3                # via mock
 phonenumberslite==8.10.6
 pillow==5.4.1
 ply==3.11                 # via eulxml, jsonpath-rw
