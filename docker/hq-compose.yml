@@ -1,93 +1,96 @@
-web:
-  build: .
-  dockerfile: "${DOCKERFILE}"
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
-    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-    JS_SETUP: "${JS_SETUP}"
-    PYTHON_VERSION: "${PYTHON_VERSION}"
-    NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
-    REUSE_DB: "${REUSE_DB}"
-    TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
-    TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
-    DATADOG_API_KEY: "${DATADOG_API_KEY}"
-    TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
-    TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
-    TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
-  privileged: true  # allows mount inside container
-  links:
-    - postgres
-    - couch
-    - redis
-    - elasticsearch
-    - kafka
-    - riakcs
-  volumes:
-    - ..:/mnt/commcare-hq-ro${RO}
-    - ${VOLUME_PREFIX}lib:/mnt/lib
+version: '2.3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: "${DOCKERFILE}"
+    environment:
+      DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
+      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+      JS_SETUP: "${JS_SETUP}"
+      PYTHON_VERSION: "${PYTHON_VERSION}"
+      NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
+      REUSE_DB: "${REUSE_DB}"
+      TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
+      TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
+      DATADOG_API_KEY: "${DATADOG_API_KEY}"
+      TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
+      TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
+      TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+    privileged: true  # allows mount inside container
+    links:
+      - postgres
+      - couch
+      - redis
+      - elasticsearch
+      - kafka
+      - riakcs
+    volumes:
+      - ..:/mnt/commcare-hq-ro${RO}
+      - ${VOLUME_PREFIX}lib:/mnt/lib
 
-formplayer:
-  image: dimagi/formplayer
-  environment:
-    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
-    WEB_HOST: "dockerhost"
-  expose:
-    - "8010"
+  formplayer:
+    image: dimagi/formplayer
+    environment:
+      DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
+      WEB_HOST: "dockerhost"
+    expose:
+      - "8010"
 
-postgres:
-  image: dimagi/docker-postgresql
-  environment:
-    POSTGRES_USER: commcarehq
-    POSTGRES_PASSWORD: commcarehq
-  expose:
-    - "5432"
-  volumes:
-    - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
+  postgres:
+    image: dimagi/docker-postgresql
+    environment:
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
+    expose:
+      - "5432"
+    volumes:
+      - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
-couch:
-  image: klaemo/couchdb:2.0-dev
-  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
-  ulimits:
-    # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
-    # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
-    nofile:
-      soft: 1024
-      hard: 1048576
-  expose:
-    - "5984"
-  volumes:
-    - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
+  couch:
+    image: klaemo/couchdb:2.0-dev
+    command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
+    ulimits:
+      # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
+      # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
+      nofile:
+        soft: 1024
+        hard: 1048576
+    expose:
+      - "5984"
+    volumes:
+      - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
 
-redis:
-  image: redis
-  expose:
-    - "6379"
-  volumes:
-    - ${VOLUME_PREFIX}redis:/data
+  redis:
+    image: redis
+    expose:
+      - "6379"
+    volumes:
+      - ${VOLUME_PREFIX}redis:/data
 
-elasticsearch:
-  image: elasticsearch:1.7.4
-  environment:
-    ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-  expose:
-    - "9200"
-  volumes:
-    - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
+  elasticsearch:
+    image: elasticsearch:1.7.4
+    environment:
+      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
 
-kafka:
-  image: spotify/kafka
-  environment:
-    ADVERTISED_PORT: 9092
-  expose:
-    - "2181"
-    - "9092"
-  volumes:
-    - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
-    - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
+  kafka:
+    image: spotify/kafka
+    environment:
+      ADVERTISED_PORT: 9092
+    expose:
+      - "2181"
+      - "9092"
+    volumes:
+      - ${VOLUME_PREFIX}kafka:/tmp/kafka-logs
+      - ${VOLUME_PREFIX}zookeeper:/var/lib/zookeeper
 
-riakcs:
-  image: dimagi/riak-cs
-  expose:
-    - "9980"
-  volumes:
-    - ${DATA_VOLUME_PREFIX}riakcs:/var/lib/riak-data
+  riakcs:
+    image: dimagi/riak-cs
+    expose:
+      - "9980"
+    volumes:
+      - ${DATA_VOLUME_PREFIX}riakcs:/var/lib/riak-data
