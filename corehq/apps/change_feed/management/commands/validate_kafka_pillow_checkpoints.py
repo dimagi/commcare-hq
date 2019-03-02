@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
+from django.conf import settings
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.topics import validate_offsets
@@ -30,7 +31,8 @@ class Command(BaseCommand):
 def validate_checkpoints(print_only):
 
     for pillow in get_all_pillow_instances():
-        if isinstance(pillow.get_change_feed(), KafkaChangeFeed):
+        if (pillow.pillow_id in getattr(settings, 'ACTIVE_PILLOW_NAMES', None) and
+           isinstance(pillow.get_change_feed(), KafkaChangeFeed)):
             checkpoint_dict = _get_checkpoint_dict(pillow)
             try:
                 validate_offsets(checkpoint_dict)
