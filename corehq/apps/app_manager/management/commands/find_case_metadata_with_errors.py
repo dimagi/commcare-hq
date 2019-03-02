@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import Application
 logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
+
 def log_excessive_parents(app, action):
     hierarchy = action.split('/')
     if len(hierarchy) > 3:

@@ -182,7 +182,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     DownloadBase.set_progress(build_application_zip, progress, 100)
 
         # Integrity check that all media files present in media_suite.xml were added to the zip
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
+        if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
             with open(fpath, 'rb') as tmp:
                 with zipfile.ZipFile(tmp, "r") as z:
                     media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]

@@ -1575,6 +1575,13 @@ def _get_integration_section(domain):
         }
     ]
 
+    if toggles.BIOMETRIC_INTEGRATION.enabled(domain):
+        from corehq.apps.integration.views import BiometricIntegrationView
+        integration.append({
+            'title': _(BiometricIntegrationView.page_title),
+            'url': reverse(BiometricIntegrationView.urlname, args=[domain])
+        })
+
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.extend([{
             'title': _(Dhis2ConnectionView.page_title),

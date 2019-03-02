@@ -1239,7 +1239,7 @@ def redirect_to_dimagi(endpoint):
     def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
-            'softlayer',
+            'india',
             'staging',
             'changeme',
             'localdev',

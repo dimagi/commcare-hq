@@ -16,14 +16,16 @@
                 <span class="navbar-brand" data-bind="text: title"></span>
             </div>
             <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <filters-modal params="
-                        postData: postData,
-                        callback: callback,
-                        filters: filters,
-                        localStorage: localStorage"
-                    ></filters-modal>
-                </li>
+                {% if not is_details %}
+                    <li>
+                        <filters-modal params="
+                            postData: postData,
+                            callback: callback,
+                            filters: filters,
+                            localStorage: localStorage"
+                        ></filters-modal>
+                    </li>
+                {% endif %}
                 <li class="no-padding auto-width">
                     <form class="navbar-form">
                         <div class="input-group">

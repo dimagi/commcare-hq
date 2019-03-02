@@ -18,6 +18,7 @@ def _grandfather_login_as(apps, schema_editor):
         noinput=True,
     )
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

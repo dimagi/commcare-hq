@@ -240,6 +240,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -541,7 +542,7 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 
 CELERY_ANNOTATIONS = {
     '*': {

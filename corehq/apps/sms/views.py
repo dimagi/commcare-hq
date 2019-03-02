@@ -116,6 +116,7 @@ SMS_CHAT_HISTORY_CHOICES = (
     (ugettext_noop("30 Days"), 30),
 )
 
+
 @login_and_domain_required
 def default(request, domain):
     if show_messaging_dashboard(domain, request.couch_user):
