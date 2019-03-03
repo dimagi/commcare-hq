@@ -407,7 +407,7 @@ class DashboardFeedFilterForm(forms.Form):
             )
         ]
 
-    def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
+    def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids, export_type):
         """
         Serialize the bound form as an ExportInstanceFilters object.
         """
@@ -416,8 +416,9 @@ class DashboardFeedFilterForm(forms.Form):
             (self.cleaned_data['emwf_form_filter'] is not None) !=
             (self.cleaned_data['emwf_case_filter'] is not None)
         )
-        if self.cleaned_data['emwf_form_filter']:
-            # It's a form export
+        assert(export_type == 'form' or export_type == 'case')
+        if export_type == 'form':
+            # It's a form export # TODO: Remove redundant comments
             return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
             # it's a case export
@@ -1027,10 +1028,12 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, BaseFilterExportDown
         :return: set of filters
         """
         filter_builder = CaseExportFilterBuilder(self.domain_object, self.timezone)
+        show_all_data = self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs) or \
+            self.dynamic_filter_class.no_filters_selected(mobile_user_and_group_slugs)
         return filter_builder.get_filters(
             can_access_all_locations,
             accessible_location_ids,
-            self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
+            show_all_data,
             self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.show_deactivated_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
