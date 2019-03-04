@@ -846,6 +846,16 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         except ValueError:
             pass
 
+    def update_attributes(self, items):
+        for k, v in items:
+            if k == 'start_date':
+                self.verify_start_date(v)
+            self.__setattr__(k, v)
+
+    def verify_start_date(self, start_date):
+        if start_date != self.start_date and start_date < datetime.today().date():
+            raise ValidationError("You can not specify a start date in the past.")
+
 
 class AppNotFound(Exception):
     pass

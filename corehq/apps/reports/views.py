@@ -990,9 +990,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
-            for k, v in self.scheduled_report_form.cleaned_data.items():
-                setattr(self.report_notification, k, v)
-
+            try:
+                self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
+            except ValidationError as err:
+                kwargs['error'] = err.message
+                messages.error(request, ugettext_lazy(kwargs['error']))
+                return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
                 self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
