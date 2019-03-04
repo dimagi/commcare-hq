@@ -31,13 +31,19 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
-@task(serializer='pickle')
 @profile_prod('process_bulk_upload_zip.prof', probability=1, limit=None)
+@task(serializer='pickle')
+def profile_and_process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
+                                        license_name=None, author=None, attribution_notes=None):
+    return process_bulk_upload_zip(processing_id, domain, app_id, username, share_media, license_name, author, attribution_notes)
+
+@task(serializer='pickle')
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
         Responsible for processing the uploaded zip from Bulk Upload.
     """
+
     status = BulkMultimediaStatusCache.get(processing_id)
 
     if not status:
