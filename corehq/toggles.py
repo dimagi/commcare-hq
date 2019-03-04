@@ -1289,6 +1289,13 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     always_enabled={'icds', 'icds-cas'},
 )
 
+PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
+    'profile_bulk_multimedia_upload',
+    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+)
+
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
     'bulk_update_multimedia_paths',
     'Bulk multimedia path management',

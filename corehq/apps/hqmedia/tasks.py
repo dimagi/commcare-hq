@@ -17,6 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
@@ -30,12 +31,21 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
+@profile_prod('process_bulk_upload_zip.prof', probability=1, limit=None)
+@task(serializer='pickle')
+def profile_and_process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
+                                        license_name=None, author=None, attribution_notes=None):
+    return process_bulk_upload_zip(processing_id, domain, app_id, username, share_media,
+                                   license_name, author, attribution_notes)
+
+
 @task(serializer='pickle')
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
         Responsible for processing the uploaded zip from Bulk Upload.
     """
+
     status = BulkMultimediaStatusCache.get(processing_id)
 
     if not status:
