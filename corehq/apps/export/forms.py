@@ -418,10 +418,8 @@ class DashboardFeedFilterForm(forms.Form):
         )
         assert(export_type == 'form' or export_type == 'case')
         if export_type == 'form':
-            # It's a form export # TODO: Remove redundant comments
             return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
-            # it's a case export
             return self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
 
     def _to_case_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
