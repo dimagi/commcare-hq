@@ -337,17 +337,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             raise CaseNotFound
 
     @classmethod
-    def get_lite(cls, id, wrap=True):
-        from corehq.apps.hqcase.dbaccessors import get_lite_case_json
-        results = get_lite_case_json(id)
-        if results is None:
-            raise ResourceNotFound('no case with id %s exists' % id)
-        if wrap:
-            return cls.wrap(results['value'])
-        else:
-            return results['value']
-
-    @classmethod
     def get_wrap_class(cls, data):
         try:
             settings.CASE_WRAPPER
