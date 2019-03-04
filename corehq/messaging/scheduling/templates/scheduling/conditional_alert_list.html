@@ -30,11 +30,13 @@
             <thead>
                 <tr>
                     <th class="col-md-1">{% trans 'Delete' %}</th>
-                    <th class="col-md-5">{% trans 'Name' %}</th>
+                    <th class="{% if allow_copy %}col-md-2{% else %}col-md-5{% endif %}">{% trans 'Name' %}</th>
                     <th class="col-md-2">{% trans 'Case Type' %}</th>
                     <th class="col-md-2">{% trans 'Status' %}</th>
                     <th class="col-md-2">{% trans 'Action' %}</th>
-                    <th class="col-md-2">{% trans 'Copy To' %}</th>
+                    {% if allow_copy %}
+                        <th class="col-md-3">{% trans 'Copy To' %}</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody data-bind="foreach: rules">
@@ -70,7 +72,20 @@
                             </button>
                         </div>
                     </td>
-                    <td>TODO</td>
+                    {% if allow_copy %}
+                        <td>
+                            <div class="form-inline">
+                                <input type="text" placeholder="{% trans_html_attr "Project" %}" class="form-control copy-project-name" data-bind="value: projectName" />
+                                <button class="btn btn-default"
+                                        data-bind="attr: {id: 'copy-button-for-' + id()},
+                                                  disable: locked_for_editing() || !editable(),
+                                                  click: copy,">
+                                    <i class="fa fa-copy"></i>
+                                    {% trans "Copy" %}
+                                </button>
+                            </div>
+                        </td>
+                    {% endif %}
                 </tr>
             </tbody>
         </table>

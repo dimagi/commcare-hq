@@ -50,7 +50,19 @@ hqDefine("scheduling/js/conditional_alert_list", [
             if (confirm(prompt)) {
                 alertAction('restart', self.id());
             }
-        }
+        };
+
+        self.projectName = ko.observable('');
+        self.copy = function () {
+            if (self.projectName() === '') {
+                alert(gettext("Please enter a project name first."));
+                return;
+            }
+
+            if (confirm(interpolate(gettext("Copy this alert to project %s?"), [self.projectName()]))) {
+                alertAction('copy', self.id(), self.projectName());
+            }
+        };
 
         return self;
     };
@@ -111,21 +123,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 {"data": "active"},
                 {"data": ""},
             ],
-            "columnDefs": [
-                {
-                    "targets": [5],
-                    "visible": initialPageData.get("allow_copy"),
-                    "render": function (data, type, row) {
-                        var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
-                        var html = '<input type="text" id="copy-to-project-for-' + row.id + '" placeholder="' + gettext("Project") + '" class="textinput textInput form-control copy-project-name" />';
-                        html += ' <button ' + disabled + ' id="copy-button-for-' + row.id + '" class="btn btn-default alert-copy" data-id="' + row.id + '" >' + gettext("Copy") + '</button>';
-                        return html;
-                    },
-                },
-            ],
         });
-
-        $(document).on('click', '.alert-copy', copyRule);
 
         function reloadTable() {
             // Don't redraw the table if someone is typing a project name in the copy input
@@ -202,19 +200,5 @@ hqDefine("scheduling/js/conditional_alert_list", [
             .always(function () {
                 table.fnDraw(false);
             });
-    }
-
-    function copyRule() {
-        var ruleId = $(this).data("id");
-        var projectName = $.trim($("#copy-to-project-for-" + ruleId).val());
-
-        if (projectName === '') {
-            alert(gettext("Please enter a project name first."));
-            return;
-        }
-
-        if (confirm(interpolate(gettext("Copy this alert to project %s?"), [projectName]))) {
-            alertAction('copy', ruleId, projectName);
-        }
     }
 });
