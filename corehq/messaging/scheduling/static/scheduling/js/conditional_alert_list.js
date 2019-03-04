@@ -16,9 +16,17 @@ hqDefine("scheduling/js/conditional_alert_list", [
     var table = null;
 
     var rule = function (options) {
-        var self = _.extend({}, options);
+        var self = ko.mapping.fromJS(options);
 
-        self.editUrl = initialPageData.reverse("edit_conditional_alert", self.id);
+        self.editUrl = ko.computed(function () {
+            return initialPageData.reverse("edit_conditional_alert", self.id());
+        });
+
+        self.remove = function () {
+            if (confirm(gettext("Are you sure you want to remove this conditional message?"))) {
+                alertAction('delete', self.id());
+            }
+        };
 
         return self;
     };
@@ -81,19 +89,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             ],
             "columnDefs": [
                 {
-                    "targets": [0],
-                    "className": "text-center",
-                    "render": function (data, type, row) {
-                        var button_id = 'delete-button-for-' + row.id;
-                        var disabled = row.locked_for_editing ? 'disabled' : '';
-                        return '<button id="' + button_id + '" \
-                                        class="btn btn-danger alert-delete" \
-                                        data-id="' + row.id + '"\
-                                        ' + disabled + '> \
-                                <i class="fa fa-remove"></i></button>';
-                    },
-                },
-                {
                     "targets": [3],
                     "render": function (data, type, row) {
                         var active_text = '';
@@ -154,7 +149,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             ],
         });
 
-        $(document).on('click', '.alert-delete', deleteAlert);
         $(document).on('click', '.alert-activate', activateAlert);
         $(document).on('click', '.alert-restart', restartRule);
         $(document).on('click', '.alert-copy', copyRule);
@@ -238,13 +232,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
     function activateAlert() {
         alertAction($(this).data("action"), $(this).data("id"));
-    }
-
-
-    function deleteAlert() {
-        if (confirm(gettext("Are you sure you want to delete this conditional message?"))) {
-            alertAction('delete', $(this).data("id"));
-        }
     }
 
     function restartRule(rule_id) {

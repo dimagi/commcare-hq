@@ -39,9 +39,16 @@
             </thead>
             <tbody data-bind="foreach: rules">
                 <tr>
-                    <td>TODO</td>
+                    <td class="text-center">
+                        <button data-bind="attr: {id: 'delete-button-for-' + id()},
+                                           disable: locked_for_editing,
+                                           click: remove"
+                                class="btn btn-danger">
+                                <i class="fa fa-remove"></i>
+                        </button>
+                    </td>
                     <td><a data-bind="attr: {href: editUrl}, text: name"></a></td>
-                    <td>TODO</td>
+                    <td data-bind="text: case_type"></td>
                     <td>TODO</td>
                     <td>TODO</td>
                     <td>TODO</td>
