@@ -258,7 +258,7 @@ hqDefine('app_manager/js/app_manager', function () {
             $(".module").each(function (index, element) {
                 $(element).data('index', index);
                 modulesByUid[ $(element).data('uid') ] = element;
-                if ( $(element).data('rootmoduleid') ) {
+                if ($(element).data('rootmoduleid')) {
                     childModules.push(element);
                 }
             });
@@ -269,8 +269,8 @@ hqDefine('app_manager/js/app_manager', function () {
                     $("ul.appnav-module").append(childModule);
                     var moduleName = $(childModule).data('modulename'),
                         alertText = _.template(gettext(
-                        'Menu "<%= moduleName %>" references a parent menu that no longer exists'
-                    ))({moduleName: moduleName});
+                            'Menu "<%= moduleName %>" references a parent menu that no longer exists'
+                        ))({moduleName: moduleName});
                     hqImport('hqwebapp/js/alert_user').alert_user(alertText, "danger");
                 } else {
                     addChildModuleToParent(childModule, parent);
@@ -279,7 +279,7 @@ hqDefine('app_manager/js/app_manager', function () {
         }
         function addChildModuleToParent(childModule, parent) {
             var childList = $(parent).find("ul.child-modules");
-            if ( childList.length === 0 ) {
+            if (childList.length === 0) {
                 childList = $('<ul class="appnav-menu child-modules sortable"></ul>');
                 $(parent).append(childList);
             }
