@@ -548,9 +548,8 @@ def _agg_ls_table(day):
 
 @track_time
 def _agg_awc_table_weekly(day):
-    _run_custom_sql_script([
-        "SELECT update_aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
+        AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
