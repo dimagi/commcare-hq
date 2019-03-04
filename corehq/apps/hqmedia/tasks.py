@@ -17,6 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
