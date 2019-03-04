@@ -259,7 +259,7 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
-            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
+            'can_validate_app_translations': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
         },
     })
     context.update({
