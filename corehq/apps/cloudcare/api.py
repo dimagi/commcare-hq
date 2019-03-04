@@ -1,40 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
-import json
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-
-from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 
-from casexml.apps.case.models import CommCareCase, CASE_STATUS_ALL, CASE_STATUS_CLOSED, CASE_STATUS_OPEN
-from casexml.apps.case.util import iter_cases
-from casexml.apps.phone.cleanliness import get_dependent_case_info
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils.general import should_use_sql_backend
-from dimagi.utils.couch.safe_index import safe_index
+from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
-from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
-from six.moves import filter
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
-
-
-def api_closed_to_status(closed_string):
-    # legacy api support
-    return {
-        'any': CASE_STATUS_ALL,
-        'true': CASE_STATUS_CLOSED,
-        'false': CASE_STATUS_OPEN,
-    }[closed_string]
 
 
 class ElasticCaseQuery(object):
@@ -144,30 +124,6 @@ def es_filter_cases(domain, filters=None):
     # this is ugly, but for consistency / ease of deployment just
     # use this to return everything in the expected format for now
     return [CommCareCase.wrap(r["_source"]) for r in res['hits']['hits'] if r["_source"]]
-
-
-def get_filters_from_request_params(request_params, limit_top_level=None):
-    """
-    limit_top_level lets you specify a whitelist of top-level properties you can include in the filters,
-    properties with a / in them are always included in the filters
-    """
-    def _decode(thing):
-        try:
-            return six.moves.urllib.parse.unquote(thing)
-        except Exception:
-            return thing
-    
-    # super weird hack: force decoding keys because sometimes (only seen in 
-    # production) django doesn't do this for us.
-    filters = dict((_decode(k), v) for k, v in request_params.items())
-    if limit_top_level is not None:
-        filters = dict([(key, val) for key, val in filters.items() if '/' in key or key in limit_top_level])
-
-    for system_property in ['user_id', 'closed', 'format', 'footprint',
-                            'ids_only', 'use_cache', 'hsph_hack']:
-        if system_property in filters:
-            del filters[system_property]
-    return filters
 
 
 def get_app_json(app):
