@@ -388,56 +388,56 @@ def copy_app(request, domain):
         domain, app, request.POST,
         export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
-    if form.is_valid():
-        gzip = request.FILES.get('gzip')
-        if gzip:
-            with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
-                source = z.read(z.filelist[0].filename)
-            app_id_or_source = source
-        else:
-            app_id_or_source = app_id
-
-        def _inner(request, link_domain, data, master_domain=domain):
-            clear_app_cache(request, link_domain)
-            if data['toggles']:
-                for slug in data['toggles'].split(","):
-                    set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            linked = data.get('linked')
-            if linked:
-                master_version = get_latest_released_app_version(app.domain, app_id)
-                if not master_version:
-                    messages.error(request, _("Creating linked app failed."
-                                              " Unable to get latest released version of your app."
-                                              " Make sure you have at least one released build."))
-                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-                linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
-                try:
-                    update_linked_app(linked_app, request.couch_user.get_id)
-                except AppLinkError as e:
-                    linked_app.delete()
-                    messages.error(request, str(e))
-                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-                messages.success(request, _('Application successfully copied and linked.'))
-                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
-            else:
-                extra_properties = {'name': data['name']}
-                try:
-                    app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
-                except ReportConfigurationNotFoundError:
-                    messages.error(request, _("Copying the application failed because "
-                                              "your application contains a Report Module "
-                                              "that references a static UCR configuration."))
-                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-                return back_to_main(request, app_copy.domain, app_id=app_copy._id)
-
-        # having login_and_domain_required validates that the user
-        # has access to the domain we're copying the app to
-        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
-    else:
+    if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
+
+    gzip = request.FILES.get('gzip')
+    if gzip:
+        with zipfile.ZipFile(gzip, 'r', zipfile.ZIP_DEFLATED) as z:
+            source = z.read(z.filelist[0].filename)
+        app_id_or_source = source
+    else:
+        app_id_or_source = app_id
+
+    def _inner(request, link_domain, data, master_domain=domain):
+        clear_app_cache(request, link_domain)
+        if data['toggles']:
+            for slug in data['toggles'].split(","):
+                set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+        linked = data.get('linked')
+        if linked:
+            master_version = get_latest_released_app_version(app.domain, app_id)
+            if not master_version:
+                messages.error(request, _("Creating linked app failed."
+                                          " Unable to get latest released version of your app."
+                                          " Make sure you have at least one released build."))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+            linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
+            try:
+                update_linked_app(linked_app, request.couch_user.get_id)
+            except AppLinkError as e:
+                linked_app.delete()
+                messages.error(request, str(e))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+            messages.success(request, _('Application successfully copied and linked.'))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
+        else:
+            extra_properties = {'name': data['name']}
+            try:
+                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+            except ReportConfigurationNotFoundError:
+                messages.error(request, _("Copying the application failed because "
+                                          "your application contains a Report Module "
+                                          "that references a static UCR configuration."))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+
+    # having login_and_domain_required validates that the user
+    # has access to the domain we're copying the app to
+    return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
 
 
 @require_can_edit_apps
