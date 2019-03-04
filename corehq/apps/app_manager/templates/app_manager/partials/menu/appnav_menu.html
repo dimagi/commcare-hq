@@ -67,3 +67,35 @@
         </li>
     {% endif %}
 </ul>
+
+<div id="reorder_modules_modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    {% trans "Your modules were reordered" %}
+                </h4>
+            </div>
+            <form action="{% url "reorder_child_modules" domain app.id %}"
+                  method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="lead">
+                        {% trans "Your modules were reordered" %}
+                    </p>
+                    <p>
+                        Click below to move these child modules under their parents.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="disable-on-submit btn btn-danger">
+                        Rearrange
+                    </button>
+                </div>
+            </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

@@ -234,10 +234,14 @@ hqDefine('app_manager/js/app_manager', function () {
     var _initMenuItemSorting = function () {
         nestChildModules();
         initDragHandles();
-        $('.sortable').each(function () {
-            initSortable($(this));
-        });
-        $('.sort-action').hide();
+        if (modulesWereReordered()) {
+            promptToSaveOrdering();
+        } else {
+            $('.sortable').each(function () {
+                initSortable($(this));
+            });
+            $('.sort-action').hide();
+        }
 
         function initDragHandles() {
             $('.sortable .sort-action').addClass('sort-disabled');
@@ -271,10 +275,18 @@ hqDefine('app_manager/js/app_manager', function () {
         function addChildModuleToParent(childModule, parent) {
             var childList = $(parent).find("ul.child-modules");
             if ( childList.length === 0 ) {
-                childList = $('<ul class="appnav-menu appnav-menu-nested child-modules sortable"></ul>');
+                childList = $('<ul class="appnav-menu child-modules sortable"></ul>');
                 $(parent).append(childList);
             }
             childList.append(childModule);
+        }
+        function modulesWereReordered() {
+            return _.some($(".module"), function (element, index) {
+                return index !== $(element).data('index');
+            });
+        }
+        function promptToSaveOrdering() {
+            $("#reorder_modules_modal").modal('show');
         }
         function updateRelatedTags($elem, name, value) {
             var relatedTags = $elem.find("[data-" + name + "]");
