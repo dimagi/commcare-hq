@@ -60,6 +60,7 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -5811,13 +5812,15 @@ def import_app(app_id_or_source, domain, source_properties=None):
     if isinstance(app_id_or_source, six.string_types):
         app_id = app_id_or_source
         source = get_app(None, app_id)
-        src_dom = source['domain']
+        source_domain = source['domain']
         source = source.export_json(dump_json=False)
+        report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
+        report_map = {}
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5834,6 +5837,17 @@ def import_app(app_id_or_source, domain, source_properties=None):
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    if report_map:
+        for module in app.modules:
+            if isinstance(module, ReportModule):
+                for config in module.report_configs:
+                    try:
+                        config.report_id = report_map[config.report_id]
+                    except KeyError:
+                        raise AppEditingError(
+                            "Report {} not found in {}".format(config.report_id, domain)
+                        )
 
     app.save_attachments(attachments)
 
