@@ -66,8 +66,6 @@ def get_sql_scripts(state_id):
         'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
         # some forms are from deleted locations, so loc table doesn't have data on some rows
         'config_report_icds-cas_static-usage_forms_92fbe2aa',
-        # some awc_id of this UCR are null
-        'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0'
     ]
 
     child_health_ucrs = [
