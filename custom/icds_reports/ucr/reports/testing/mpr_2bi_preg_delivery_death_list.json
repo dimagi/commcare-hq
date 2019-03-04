@@ -23,6 +23,7 @@
   "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 2bi - Preg & Delivery Death List (Static)",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.MPR2BIPregDeliveryDeathList",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -98,7 +99,6 @@
         "column_id": "dead_preg_count",
         "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true,
         "whens": {
           "female_death_type IS NOT NULL AND age_at_death_yrs >= 11": 1
         },
