@@ -5306,6 +5306,11 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
+    def get_report_modules(self):
+        for module in self.modules:
+            if isinstance(module, ReportModule):
+                yield module
+
     def get_forms(self, bare=True):
         for module in self.get_modules():
             for form in module.get_forms():
@@ -5839,15 +5844,14 @@ def import_app(app_id_or_source, domain, source_properties=None):
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     if report_map:
-        for module in app.modules:
-            if isinstance(module, ReportModule):
-                for config in module.report_configs:
-                    try:
-                        config.report_id = report_map[config.report_id]
-                    except KeyError:
-                        raise AppEditingError(
-                            "Report {} not found in {}".format(config.report_id, domain)
-                        )
+        for module in app.get_report_modules():
+            for config in module.report_configs:
+                try:
+                    config.report_id = report_map[config.report_id]
+                except KeyError:
+                    raise AppEditingError(
+                        "Report {} not found in {}".format(config.report_id, domain)
+                    )
 
     app.save_attachments(attachments)
 
