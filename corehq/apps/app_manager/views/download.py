@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from cgorehq.apps.app_manager.decorators import safe_download, safe_cached_download
+from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
