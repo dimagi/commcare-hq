@@ -47,8 +47,7 @@
             <tbody data-bind="foreach: rules">
                 <tr>
                     <td class="text-center">
-                        <button data-bind="attr: {id: 'delete-button-for-' + id()},
-                                           disable: locked_for_editing,
+                        <button data-bind="disable: locked_for_editing() || requestInProgress(),
                                            click: remove"
                                 class="btn btn-danger">
                                 <i class="fa fa-remove"></i>
@@ -65,15 +64,15 @@
                     </td>
                     <td>
                         <button class="btn btn-default"
-                                data-bind="attr: {id: 'activate-button-for-' + id()},
-                                           disable: locked_for_editing() || !editable(),
+                                data-bind="disable: locked_for_editing() || !editable() || requestInProgress(),
                                            click: toggleStatus">
                             <span data-bind="visible: active()">{% trans "Deactivate" %}</span>
                             <span data-bind="visible: !active()">{% trans "Activate" %}</span>
                         </button>
                         <div data-bind="visible: locked_for_editing">
                             <button class="btn btn-default" data-bind="click: restart">
-                                <i class="fa fa-refresh"></i> {% trans "Restart Rule" %}
+                                <i class="fa fa-refresh"></i>
+                                {% trans "Restart Rule" %}
                             </button>
                         </div>
                     </td>
@@ -85,8 +84,7 @@
                                        placeholder="{% trans_html_attr "Project" %}"
                                        data-bind="value: projectName, valueUpdate: 'afterkeydown'" />
                                 <button class="btn btn-default"
-                                        data-bind="attr: {id: 'copy-button-for-' + id()},
-                                                  disable: locked_for_editing() || !editable(),
+                                        data-bind="disable: locked_for_editing() || !editable() || requestInProgress(),
                                                   click: copy,">
                                     <i class="fa fa-copy"></i>
                                     {% trans "Copy" %}

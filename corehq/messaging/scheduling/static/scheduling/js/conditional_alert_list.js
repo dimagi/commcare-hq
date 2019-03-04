@@ -16,23 +16,72 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
     var rule = function (options) {
         var self = ko.mapping.fromJS(options);
+        self.projectName = ko.observable('');
+        self.requestInProgress = ko.observable(false);
+
+        self.init = function (options) {
+            ko.mapping.fromJS(options, self);
+            self.projectName('');
+            self.requestInProgress(false);
+        };
+        self.init(options);
 
         self.editUrl = ko.computed(function () {
             return initialPageData.reverse("edit_conditional_alert", self.id());
         });
 
-        self.remove = function () {
+        self.action = function (action, e) {
+            $(e.currentTarget).disableButton();
+            self.requestInProgress(true);
+            $.ajax({
+                url: '',
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    action: action,
+                    rule_id: self.id(),
+                    project: self.projectName(),   // only used in copy
+                },
+            })
+                .done(function (result) {
+                    $(e.currentTarget).enableButton();
+                    self.requestInProgress(false);
+                    self.init(result.rule);
+                    if (action === 'restart') {
+                        if (result.status === 'success') {
+                            alert(gettext("This rule has been restarted."));
+                        } else if (result.status === 'error') {
+                            var text = gettext(
+                                "Unable to restart rule. Rules can only be started every two hours and there are " +
+                                "%s minute(s) remaining before this rule can be started again."
+                            );
+                            text = interpolate(text, [result.minutes_remaining]);
+                            alert(text);
+                        }
+                    } else if (action === 'copy') {
+                        if (result.status === 'success') {
+                            alert(gettext("Copy successful."));
+                        } else if (result.status === 'error') {
+                            alert(interpolate(gettext("Error: %s"), [result.error_msg]));
+                        }
+                        self.projectName('');
+                    }
+                });
+        };
+
+        self.remove = function (model, e) {
+            debugger;
             if (confirm(gettext("Are you sure you want to remove this conditional message?"))) {
-                alertAction('delete', self.id());
+                self.action('delete', e);
             }
         };
 
-        self.toggleStatus = function () {
+        self.toggleStatus = function (model, e) {
             var action = self.active() ? "deactivate" : "activate";
-            alertAction(action, self.id());
+            self.action(action, e);
         };
 
-        self.restart = function () {
+        self.restart = function (model, e) {
             var prompt = null;
             if (initialPageData.get("limit_rule_restarts")) {
                 prompt = gettext(
@@ -47,19 +96,18 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 );
             }
             if (confirm(prompt)) {
-                alertAction('restart', self.id());
+                self.action('restart', e);
             }
         };
 
-        self.projectName = ko.observable('');
-        self.copy = function () {
+        self.copy = function (model, e) {
             if (self.projectName() === '') {
                 alert(gettext("Please enter a project name first."));
                 return;
             }
 
             if (confirm(interpolate(gettext("Copy this alert to project %s?"), [self.projectName()]))) {
-                alertAction('copy', self.id(), self.projectName());
+                self.action('copy', e);
             }
         };
 
@@ -114,62 +162,4 @@ hqDefine("scheduling/js/conditional_alert_list", [
             listUrl: initialPageData.reverse("conditional_alert_list"),
         }));
     });
-
-    function alertAction(action, rule_id, projectName) {    // TODO
-        var activateButton = $('#activate-button-for-' + rule_id);
-        var deleteButton = $('#delete-button-for-' + rule_id);
-        var copyButton = $('#copy-button-for-' + rule_id);
-        if (action === 'delete') {
-            deleteButton.disableButton();
-            activateButton.prop('disabled', true);
-            copyButton.prop('disabled', true);
-        } else if (action === 'activate' || action === 'deactivate') {
-            activateButton.disableButton();
-            deleteButton.prop('disabled', true);
-            copyButton.prop('disabled', true);
-        } else if (action === 'copy') {
-            copyButton.disableButton();
-            deleteButton.prop('disabled', true);
-            activateButton.prop('disabled', true);
-        }
-
-        var payload = {
-            action: action,
-            rule_id: rule_id,
-        };
-
-        if (action === 'copy') {
-            payload['project'] = projectName;
-        }
-
-        $.ajax({
-            url: '',
-            type: 'post',
-            dataType: 'json',
-            data: payload,
-        })
-            .done(function (result) {
-                if (action === 'restart') {
-                    if (result.status === 'success') {
-                        alert(gettext("This rule has been restarted."));
-                    } else if (result.status === 'error') {
-                        var text = gettext(
-                            "Unable to restart rule. Rules can only be started every two hours and there are " +
-                            "%s minute(s) remaining before this rule can be started again."
-                        );
-                        text = interpolate(text, [result.minutes_remaining]);
-                        alert(text);
-                    }
-                } else if (action === 'copy') {
-                    if (result.status === 'success') {
-                        alert(gettext("Copy successful."));
-                    } else if (result.status === 'error') {
-                        alert(interpolate(gettext("Error: %s"), [result.error_msg]));
-                    }
-                }
-            })
-            .always(function () {
-                table.fnDraw(false);
-            });
-    }
 });

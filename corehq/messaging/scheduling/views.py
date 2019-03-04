@@ -16,7 +16,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.web import json_response
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -586,6 +585,18 @@ class ConditionalAlertListView(BaseMessagingSectionView):
             not schedule.memoized_uses_sms_callback
         )
 
+    def _format_rule_for_json(self, rule):
+        schedule = rule.get_messaging_rule_schedule()
+        return {
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': schedule.active,
+            'editable': self.schedule_is_editable(schedule),
+            'locked_for_editing': rule.locked_for_editing,
+            'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
+            'id': rule.pk,
+        }
+
     def get_conditional_alerts_ajax_response(self, request):
         query = self.get_conditional_alerts_queryset()
         total_records = query.count()
@@ -595,20 +606,9 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         skip = (page - 1) * limit
 
         rules = query[skip:skip + limit]
-        data = []
-        for rule in rules:
-            schedule = rule.get_messaging_rule_schedule()
-            data.append({
-                'name': rule.name,
-                'case_type': rule.case_type,
-                'active': schedule.active,
-                'editable': self.schedule_is_editable(schedule),
-                'locked_for_editing': rule.locked_for_editing,
-                'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
-                'id': rule.pk,
-            })
+        data = [self._format_rule_for_json(rule) for rule in rules]
 
-        return json_response({
+        return JsonResponse({
             'rules': data,
             'total': total_records,
         })
@@ -663,11 +663,17 @@ class ConditionalAlertListView(BaseMessagingSectionView):
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
 
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_delete_ajax_response(self, rule):
         rule.soft_delete()
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_restart_ajax_response(self, rule):
         helper = MessagingRuleProgressHelper(rule.pk)
@@ -676,7 +682,10 @@ class ConditionalAlertListView(BaseMessagingSectionView):
             return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
 
         initiate_messaging_rule_run(rule.domain, rule.pk)
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_copy_ajax_response(self, rule, copy_to_project_name):
         if not self.allow_copy:
@@ -707,7 +716,10 @@ class ConditionalAlertListView(BaseMessagingSectionView):
             })
 
         initiate_messaging_rule_run(copied_rule.domain, copied_rule.pk)
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
