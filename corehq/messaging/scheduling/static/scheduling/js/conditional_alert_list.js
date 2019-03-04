@@ -1,13 +1,59 @@
 hqDefine("scheduling/js/conditional_alert_list", [
     'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'datatables',
     'datatables.bootstrap',
-], function ($, initialPageData) {
+], function (
+    $,
+    ko,
+    _,
+    assertProperties,
+    initialPageData
+) {
     var table = null;
 
+    var rule = function (options) {
+        var self = _.extend({}, options);
+
+        self.editUrl = initialPageData.reverse("edit_conditional_alert", self.id);
+
+        return self;
+    };
+
+    var ruleList = function (options) {
+        assertProperties.assert(options, ['listUrl']);
+        var self = {};
+
+        self.rules = ko.observableArray();
+
+        self.goToPage = function (page) {
+            $.ajax({
+                url: options.listUrl,
+                data: {
+                    action: 'list_conditional_alerts',
+                    page: page,
+                    limit: 10,  // TODO
+                },
+                success: function (data) {
+                    self.rules(_.map(data.rules, function (r) { return rule(r); }));
+                },
+            });
+        };
+
+        self.goToPage(1);
+
+        return self;
+    };
+
     $(function () {
-        var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
+        $("#conditional-alert-list").koApplyBindings(ruleList({
+            listUrl: initialPageData.reverse("conditional_alert_list"),
+        }));
+
+        /*var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
 
         table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
@@ -45,13 +91,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
                                         data-id="' + row.id + '"\
                                         ' + disabled + '> \
                                 <i class="fa fa-remove"></i></button>';
-                    },
-                },
-                {
-                    "targets": [1],
-                    "render": function (data, type, row) {
-                        var url = initialPageData.reverse('edit_conditional_alert', row.id);
-                        return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
                 {
@@ -136,8 +175,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             setTimeout(reloadTable, 10000);
         }
 
-        setTimeout(reloadTable, 10000);
-
+        setTimeout(reloadTable, 10000);*/
     });
 
     function alertAction(action, rule_id, projectName) {
@@ -241,5 +279,4 @@ hqDefine("scheduling/js/conditional_alert_list", [
             alertAction('copy', ruleId, projectName);
         }
     }
-
 });

@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-
 {% requirejs_main "scheduling/js/conditional_alert_list" %}
-
 
 {% block stylesheets %}{{ block.super }}
 <style>
@@ -39,6 +37,16 @@
                     <th class="col-md-2">{% trans 'Copy To' %}</th>
                 </tr>
             </thead>
+            <tbody data-bind="foreach: rules">
+                <tr>
+                    <td>TODO</td>
+                    <td><a data-bind="attr: {href: editUrl}, text: name"></a></td>
+                    <td>TODO</td>
+                    <td>TODO</td>
+                    <td>TODO</td>
+                    <td>TODO</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 {% endblock %}

@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
+from dimagi.utils.web import json_response
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -532,7 +533,7 @@ class EditScheduleView(CreateScheduleView):
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
-class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+class ConditionalAlertListView(BaseMessagingSectionView):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
@@ -585,11 +586,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             not schedule.memoized_uses_sms_callback
         )
 
-    def get_conditional_alerts_ajax_response(self):
+    def get_conditional_alerts_ajax_response(self, request):
         query = self.get_conditional_alerts_queryset()
         total_records = query.count()
 
-        rules = query[self.display_start:self.display_start + self.display_length]
+        limit = int(request.GET.get('limit'))
+        page = int(request.GET.get('page', 1))
+        skip = (page - 1) * limit
+
+        rules = query[skip:skip + limit]
         data = []
         for rule in rules:
             schedule = rule.get_messaging_rule_schedule()
@@ -603,12 +608,12 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 'id': rule.pk,
             })
 
-        return self.datatables_ajax_response(data, total_records)
+        return json_response({'rules': data})
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
         if action == self.LIST_CONDITIONAL_ALERTS:
-            return self.get_conditional_alerts_ajax_response()
+            return self.get_conditional_alerts_ajax_response(request)
 
         return super(ConditionalAlertListView, self).get(*args, **kwargs)
 
