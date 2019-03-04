@@ -330,10 +330,8 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return ret
 
     @classmethod
-    def get(cls, id, strip_history=False, **kwargs):
+    def get(cls, id, **kwargs):
         try:
-            if strip_history:
-                return cls.get_lite(id)
             return super(CommCareCase, cls).get(id, **kwargs)
         except ResourceNotFound:
             raise CaseNotFound
