@@ -590,7 +590,7 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         query = self.get_conditional_alerts_queryset()
         total_records = query.count()
 
-        limit = int(request.GET.get('limit'))
+        limit = int(request.GET.get('limit', 25))
         page = int(request.GET.get('page', 1))
         skip = (page - 1) * limit
 
@@ -608,7 +608,10 @@ class ConditionalAlertListView(BaseMessagingSectionView):
                 'id': rule.pk,
             })
 
-        return json_response({'rules': data})
+        return json_response({
+            'rules': data,
+            'total': total_records,
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')

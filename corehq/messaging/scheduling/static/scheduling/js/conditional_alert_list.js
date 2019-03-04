@@ -4,8 +4,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'datatables',
-    'datatables.bootstrap',
+    'hqwebapp/js/components.ko',    // pagination widget
 ], function (
     $,
     ko,
@@ -73,16 +72,23 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
         self.rules = ko.observableArray();
 
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.observable();
+        self.showPaginationSpinner = ko.observable(false);
+
         self.goToPage = function (page) {
+            self.showPaginationSpinner(true);
             $.ajax({
                 url: options.listUrl,
                 data: {
                     action: 'list_conditional_alerts',
                     page: page,
-                    limit: 10,  // TODO
+                    limit: self.itemsPerPage(),
                 },
                 success: function (data) {
+                    self.showPaginationSpinner(false);
                     self.rules(_.map(data.rules, function (r) { return rule(r); }));
+                    self.totalItems(data.total);
                 },
             });
         };
@@ -97,9 +103,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             listUrl: initialPageData.reverse("conditional_alert_list"),
         }));
 
-        /*var conditonalAlterListUrl = initialPageData.reverse("conditional_alert_list");
-
-        table = $("#conditional-alert-list").dataTable({
+        /*table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
@@ -116,13 +120,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 "infoEmpty": gettext('There are no alerts to display.'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ alerts'),
             },
-            "columns": [
-                {"data": ""},
-                {"data": "name"},
-                {"data": "case_type"},
-                {"data": "active"},
-                {"data": ""},
-            ],
         });
 
         function reloadTable() {
