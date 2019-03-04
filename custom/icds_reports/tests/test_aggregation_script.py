@@ -11,7 +11,7 @@ import sqlalchemy
 
 from django.test.testcases import TestCase, override_settings
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, get_icds_ucr_db_alias
 from six.moves import zip
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
@@ -51,7 +51,7 @@ class AggregationScriptTestBase(CSVTestCase):
             return value_str
 
     def _load_data_from_db(self, table_name, sort_key):
-        engine = connection_manager.get_session_helper('default').engine
+        engine = connection_manager.get_session_helper('icds-ucr').engine
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
         table = metadata.tables[table_name]
