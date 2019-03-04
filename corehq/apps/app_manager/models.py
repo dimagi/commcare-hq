@@ -5807,13 +5807,11 @@ class LinkedApplication(Application):
         self.save()
 
 
-def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None):
     if isinstance(app_id_or_source, six.string_types):
         app_id = app_id_or_source
         source = get_app(None, app_id)
         src_dom = source['domain']
-        if validate_source_domain:
-            validate_source_domain(src_dom)
         source = source.export_json(dump_json=False)
     else:
         cls = get_correct_app_class(app_id_or_source)
