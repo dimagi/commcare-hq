@@ -37,58 +37,6 @@ def api_closed_to_status(closed_string):
     }[closed_string]
 
 
-class CaseAPIResult(object):
-    """
-    The result of a case API query. Useful for abstracting out the difference
-    between an id-only representation and a full_blown one.
-    """
-
-    def __init__(self, domain, id=None, couch_doc=None, id_only=False, lite=True, sanitize=True):
-        self.domain = domain
-        self._id = id
-        self._couch_doc = couch_doc
-        self.id_only = id_only
-        self.lite = lite
-        self.sanitize = sanitize
-
-    def __getitem__(self, key):
-        if key == 'case_id':
-            return self.id
-        else:
-            return self.case_json.__getitem__(key)
-
-    @property
-    def id(self):
-        if self._id is None:
-            self._id = self._couch_doc['_id'] if isinstance(self._couch_doc, dict) else self._couch_doc.case_id
-        return self._id
-
-    @property
-    def couch_doc(self):
-        if self._couch_doc is None:
-            self._couch_doc = CaseAccessors(self.domain).get_case(self._id)
-        return self._couch_doc
-
-    @property
-    def case_json(self):
-        json = self.couch_doc.to_api_json(lite=self.lite)
-        if self.sanitize:
-            # This ensures that any None value will be encoded as "" instead of null
-            # This fixes http://manage.dimagi.com/default.asp?158655 because mobile chokes on null
-            def _sanitize(props):
-                for key, val in props.items():
-                    if val is None:
-                        props[key] = ''
-                    elif isinstance(val, dict):
-                        props[key] = _sanitize(val)
-                return props
-            json = _sanitize(dict(json))
-        return json
-
-    def to_json(self):
-        return self.id if self.id_only else self.case_json
-
-
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly
     # this API. one day it may be worth reconciling our ES interfaces

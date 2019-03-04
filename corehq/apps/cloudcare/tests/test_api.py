@@ -8,57 +8,15 @@ from django.test import TestCase
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.cloudcare.api import CaseAPIResult
 from corehq.apps.cloudcare.views import ReadableQuestions
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 TEST_DOMAIN = "test-cloudcare-domain"
-
-
-class CaseAPIMiscTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(CaseAPIMiscTests, cls).setUpClass()
-        cls.domain = uuid.uuid4().hex
-        cls.project = create_domain(cls.domain)
-        cls.username = uuid.uuid4().hex
-        cls.password = "****"
-
-        cls.user = CommCareUser.create(
-            cls.domain,
-            format_username(cls.username, cls.domain),
-            cls.password
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        cls.project.delete()
-        super(CaseAPIMiscTests, cls).tearDownClass()
-
-    def testCaseAPIResultJSON(self):
-        case = CommCareCase()
-        # because of how setattr is overridden you have to set it to None in this wacky way
-        case._doc['type'] = None
-        case.save()
-        self.addCleanup(case.delete)
-        self.assertEqual(None, CommCareCase.get(case.case_id).type)
-        res_sanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=True)
-        res_unsanitized = CaseAPIResult(domain=TEST_DOMAIN, id=case.case_id, couch_doc=case, sanitize=False)
-
-        json = res_sanitized.case_json
-        self.assertEqual(json['properties']['case_type'], '')
-
-        json = res_unsanitized.case_json
-        self.assertEqual(json['properties']['case_type'], None)
 
 
 def _child_case_type(type):
