@@ -360,13 +360,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             return CASE_WRAPPER(data) or cls
         return cls
 
-    @classmethod
-    def bulk_get_lite(cls, ids, wrap=True, chunksize=100):
-        from corehq.apps.hqcase.dbaccessors import iter_lite_cases_json
-        wrapper = lambda doc: cls.get_wrap_class(doc).wrap(doc) if wrap else doc
-        for lite_case_json in iter_lite_cases_json(ids, chunksize=chunksize):
-            yield wrapper(lite_case_json)
-
     def get_server_modified_date(self):
         # gets (or adds) the server modified timestamp
         if not self.server_modified_on:
