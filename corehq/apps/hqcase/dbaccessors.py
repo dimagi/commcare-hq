@@ -112,14 +112,6 @@ def iter_lite_cases_json(case_ids, chunksize=100):
             yield row['value']
 
 
-def get_lite_case_json(case_id):
-    return CommCareCase.get_db().view(
-        "cases_get_lite/get_lite",
-        key=case_id,
-        include_docs=False,
-    ).one()
-
-
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
         'cases_by_domain_external_id/view',
