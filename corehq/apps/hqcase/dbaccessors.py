@@ -101,17 +101,6 @@ def _get_case_ids(domain, owner_id, is_closed):
     )]
 
 
-def iter_lite_cases_json(case_ids, chunksize=100):
-    for case_id_chunk in chunked(case_ids, chunksize):
-        rows = CommCareCase.get_db().view(
-            'cases_get_lite/get_lite',
-            keys=case_id_chunk,
-            reduce=False,
-        )
-        for row in rows:
-            yield row['value']
-
-
 def get_cases_in_domain_by_external_id(domain, external_id):
     return CommCareCase.view(
         'cases_by_domain_external_id/view',
