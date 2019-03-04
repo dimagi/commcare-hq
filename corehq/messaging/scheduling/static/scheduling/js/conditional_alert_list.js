@@ -89,24 +89,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             ],
             "columnDefs": [
                 {
-                    "targets": [3],
-                    "render": function (data, type, row) {
-                        var active_text = '';
-                        if (row.active) {
-                            active_text = '<span class="label label-success">' + gettext("Active") + '</span> ';
-                        } else {
-                            active_text = '<span class="label label-danger">' + gettext("Inactive") + '</span> ';
-                        }
-
-                        var processing_text = '';
-                        if (row.locked_for_editing) {
-                            processing_text = '<span class="label label-default">' + gettext("Processing") + ': ' + row.progress_pct + '%</span> ';
-                        }
-
-                        return active_text + processing_text;
-                    },
-                },
-                {
                     "targets": [4],
                     "render": function (data, type, row) {
                         var html = null;

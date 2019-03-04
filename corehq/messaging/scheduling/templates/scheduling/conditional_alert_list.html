@@ -49,7 +49,13 @@
                     </td>
                     <td><a data-bind="attr: {href: editUrl}, text: name"></a></td>
                     <td data-bind="text: case_type"></td>
-                    <td>TODO</td>
+                    <td>
+                        <span class="label label-success" data-bind="visible: active()">{% trans "Active" %}</span>
+                        <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
+                        <span class="label label-default" data-bind="visible: locked_for_editing()">
+                            {% trans "Processing" %}: <span data-bind="text: progress_pct"></span>%
+                        </span>
+                    </td>
                     <td>TODO</td>
                     <td>TODO</td>
                 </tr>
