@@ -387,7 +387,7 @@ def copy_snapshot(request, snapshot):
 def project_image(request, snapshot):
     project = Domain.get(snapshot)
     if project.image_path:
-        image = project.fetch_attachment(project.image_path)
+        image = project.fetch_attachment(project.image_path, return_bytes=True)
         return HttpResponse(image, content_type=project.image_type)
     else:
         raise Http404()
@@ -396,7 +396,7 @@ def project_image(request, snapshot):
 def project_documentation_file(request, snapshot):
     project = Domain.get(snapshot)
     if project.documentation_file_path:
-        documentation_file = project.fetch_attachment(project.documentation_file_path)
+        documentation_file = project.fetch_attachment(project.documentation_file_path, return_bytes=True)
         return HttpResponse(documentation_file, content_type=project.documentation_file_type)
     else:
         raise Http404()
