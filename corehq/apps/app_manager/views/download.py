@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
+from cgorehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
@@ -410,6 +410,7 @@ def download_index(request, domain, app_id):
             extra_tags='html'
         )
     enabled_build_profiles = []
+    latest_enabled_build_profiles = {}
     if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
         enabled_build_profiles = [id for id, version in latest_enabled_build_profiles.items()
