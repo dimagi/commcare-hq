@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import settingshelper as helper
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
@@ -114,6 +115,7 @@ if 'aaa-data' not in DATABASES:
             'SERIALIZE': False,
         }
     }
+helper.assign_test_db_names(DATABASES)
 
 REPORTING_DATABASES = {
     'default': 'default',
