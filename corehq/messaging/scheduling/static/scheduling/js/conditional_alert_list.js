@@ -119,7 +119,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
         self.rules = ko.observableArray();
 
-        self.itemsPerPage = ko.observable();
+        self.itemsPerPage = ko.observable(25);
         self.totalItems = ko.observable();
         self.showPaginationSpinner = ko.observable(false);
 

@@ -601,7 +601,7 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         query = self.get_conditional_alerts_queryset()
         total_records = query.count()
 
-        limit = int(request.GET.get('limit', 25))
+        limit = int(request.GET.get('limit'))
         page = int(request.GET.get('page', 1))
         skip = (page - 1) * limit
 
