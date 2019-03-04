@@ -171,7 +171,7 @@ class CaseAPITestMixin(object):
                                   ids_only=True)
         self.assertEqual(self.expectedAll, len(list))
         self.assertListMatches(list, lambda c: c._couch_doc is None)
-        self.assertListMatches(list, lambda c: isinstance(c.to_json(), six.string_types))
+        self.assertListMatches(list, lambda c: isinstance(c.to_json(), six.text_type))
 
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,
