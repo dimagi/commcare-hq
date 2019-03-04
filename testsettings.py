@@ -108,7 +108,7 @@ if 'aaa-data' not in DATABASES:
         'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
+        'HOST': 'localhost',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
