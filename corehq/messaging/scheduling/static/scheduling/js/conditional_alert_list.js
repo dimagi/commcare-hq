@@ -70,7 +70,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
         };
 
         self.remove = function (model, e) {
-            debugger;
             if (confirm(gettext("Are you sure you want to remove this conditional message?"))) {
                 self.action('delete', e);
             }
