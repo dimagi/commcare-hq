@@ -29,6 +29,9 @@ class ChildHealthMonthlyUCR(ConfigurableReportCustomQueryProvider):
         self.helper = self.report_data_source.helper
         self.helper.set_table(ChildHealthMonthlyViewAlchemy)
 
+    def _get_query_object(self, total_row=False):
+        raise NotImplementedError()
+
     @property
     def table(self):
         return ChildHealthMonthlyViewAlchemy
