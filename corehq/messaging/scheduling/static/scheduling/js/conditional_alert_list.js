@@ -76,8 +76,10 @@ hqDefine("scheduling/js/conditional_alert_list", [
         self.totalItems = ko.observable();
         self.showPaginationSpinner = ko.observable(false);
 
+        self.currentPage = ko.observable(1);
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
+            self.currentPage(page);
             $.ajax({
                 url: options.listUrl,
                 data: {
@@ -93,7 +95,13 @@ hqDefine("scheduling/js/conditional_alert_list", [
             });
         };
 
-        self.goToPage(1);
+        self.goToPage(self.currentPage());
+        // Refresh table periodically, unless someone is typing a project name in the copy input
+        setInterval(function () {
+            if (!_.find(self.rules(), function (r) { return r.projectName(); })) {
+                self.goToPage(self.currentPage());
+            }
+        }, 10000);
 
         return self;
     };
@@ -103,6 +111,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             listUrl: initialPageData.reverse("conditional_alert_list"),
         }));
 
+        // TODO
         /*table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
             "filter": false,
@@ -120,28 +129,10 @@ hqDefine("scheduling/js/conditional_alert_list", [
                 "infoEmpty": gettext('There are no alerts to display.'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ alerts'),
             },
-        });
-
-        function reloadTable() {
-            // Don't redraw the table if someone is typing a project name in the copy input
-            var canDraw = true;
-            $('.copy-project-name').each(function () {
-                if ($(this).val()) {
-                    canDraw = false;
-                }
-            });
-
-            if (canDraw) {
-                table.fnDraw(false);
-            }
-
-            setTimeout(reloadTable, 10000);
-        }
-
-        setTimeout(reloadTable, 10000);*/
+        });*/
     });
 
-    function alertAction(action, rule_id, projectName) {
+    function alertAction(action, rule_id, projectName) {    // TODO
         var activateButton = $('#activate-button-for-' + rule_id);
         var deleteButton = $('#delete-button-for-' + rule_id);
         var copyButton = $('#copy-button-for-' + rule_id);

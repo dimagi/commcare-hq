@@ -75,7 +75,10 @@
                     {% if allow_copy %}
                         <td>
                             <div class="form-inline">
-                                <input type="text" placeholder="{% trans_html_attr "Project" %}" class="form-control copy-project-name" data-bind="value: projectName" />
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="{% trans_html_attr "Project" %}"
+                                       data-bind="value: projectName, valueUpdate: 'afterkeydown'" />
                                 <button class="btn btn-default"
                                         data-bind="attr: {id: 'copy-button-for-' + id()},
                                                   disable: locked_for_editing() || !editable(),
