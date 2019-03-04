@@ -28,6 +28,30 @@ hqDefine("scheduling/js/conditional_alert_list", [
             }
         };
 
+        self.toggleStatus = function () {
+            var action = self.active() ? "deactivate" : "activate";
+            alertAction(action, self.id());
+        };
+
+        self.restart = function () {
+            var prompt = null;
+            if (initialPageData.get("limit_rule_restarts")) {
+                prompt = gettext(
+                    "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                    "You will only be able to restart this rule once every two hours. Restart this rule?"
+                );
+            } else {
+                prompt = gettext(
+                    "A rule should only be restarted when you believe it is stuck and is not progressing. " +
+                    "Your user is able to restart as many times as you like, but restarting too many times without " +
+                    "finishing can place a burden on the system. Restart this rule?"
+                );
+            }
+            if (confirm(prompt)) {
+                alertAction('restart', self.id());
+            }
+        }
+
         return self;
     };
 
@@ -89,36 +113,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             ],
             "columnDefs": [
                 {
-                    "targets": [4],
-                    "render": function (data, type, row) {
-                        var html = null;
-                        var button_id = 'activate-button-for-' + row.id;
-                        var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
-                        if (row.active) {
-                            html = '<button id="' + button_id + '" \
-                                            class="btn btn-default alert-activate" \
-                                            data-id="' + row.id + '"\
-                                            data-action="deactivate"\
-                                            ' + disabled + '> \
-                                   ' + gettext("Deactivate") + '</button>';
-                        } else {
-                            html = '<button id="' + button_id + '" + \
-                                            class="btn btn-default alert-activate" + \
-                                            data-action="activate"\
-                                            data-id="' + row.id + '"\
-                                            ' + disabled + '> \
-                                   ' + gettext("Activate") + '</button>';
-                        }
-
-                        if (row.locked_for_editing) {
-                            html += ' <button class="btn btn-default alert-restart" data-id="' + row.id + '" >';
-                            html += '<i class="fa fa-refresh"></i> ' + gettext("Restart Rule") + '</button>';
-                        }
-
-                        return html;
-                    },
-                },
-                {
                     "targets": [5],
                     "visible": initialPageData.get("allow_copy"),
                     "render": function (data, type, row) {
@@ -131,8 +125,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             ],
         });
 
-        $(document).on('click', '.alert-activate', activateAlert);
-        $(document).on('click', '.alert-restart', restartRule);
         $(document).on('click', '.alert-copy', copyRule);
 
         function reloadTable() {
@@ -210,29 +202,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
             .always(function () {
                 table.fnDraw(false);
             });
-    }
-
-    function activateAlert() {
-        alertAction($(this).data("action"), $(this).data("id"));
-    }
-
-    function restartRule(rule_id) {
-        var prompt = null;
-        if (initialPageData.get("limit_rule_restarts")) {
-            prompt = gettext(
-                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
-                "You will only be able to restart this rule once every two hours. Restart this rule?"
-            );
-        } else {
-            prompt = gettext(
-                "A rule should only be restarted when you believe it is stuck and is not progressing. " +
-                "Your user is able to restart as many times as you like, but restarting too many times without " +
-                "finishing can place a burden on the system. Restart this rule?"
-            );
-        }
-        if (confirm(prompt)) {
-            alertAction('restart', $(this).data("id"));
-        }
     }
 
     function copyRule() {

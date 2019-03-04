@@ -56,7 +56,20 @@
                             {% trans "Processing" %}: <span data-bind="text: progress_pct"></span>%
                         </span>
                     </td>
-                    <td>TODO</td>
+                    <td>
+                        <button class="btn btn-default"
+                                data-bind="attr: {id: 'activate-button-for-' + id()},
+                                           disable: locked_for_editing() || !editable(),
+                                           click: toggleStatus">
+                            <span data-bind="visible: active()">{% trans "Deactivate" %}</span>
+                            <span data-bind="visible: !active()">{% trans "Activate" %}</span>
+                        </button>
+                        <div data-bind="visible: locked_for_editing">
+                            <button class="btn btn-default" data-bind="click: restart">
+                                <i class="fa fa-refresh"></i> {% trans "Restart Rule" %}
+                            </button>
+                        </div>
+                    </td>
                     <td>TODO</td>
                 </tr>
             </tbody>
