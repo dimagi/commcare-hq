@@ -5,7 +5,7 @@ from django.dispatch.dispatcher import Signal
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile
-from corehq.apps.app_manager.util import get_enabled_build_profiles_for_version
+from corehq.apps.app_manager.util import get_latest_enabled_versions_per_profile
 from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
@@ -41,7 +41,7 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
     if application.copy_of and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(application.domain):
         for build_profile_id in application.build_profiles:
             get_latest_enabled_build_for_profile.clear(application.domain, build_profile_id)
-        get_enabled_build_profiles_for_version.clear(application.get_id, application.version)
+        get_latest_enabled_versions_per_profile.clear(application.get_id, application.version)
 
 
 app_post_save = Signal(providing_args=['application'])
