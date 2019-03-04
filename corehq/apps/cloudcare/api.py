@@ -178,29 +178,6 @@ class _CaseAPIHelper(object):
         return self._case_results(ids)
 
 
-# todo: Make these api functions use generators for streaming
-# so that a limit call won't fetch more docs than it needs to
-# This could be achieved with something like CommCareCase.paging_view that
-# returns a generator but internally batches couch requests
-# potentially doubling the batch-size each time in case it really is a lot of data
-
-
-def get_filtered_cases(domain, status, user_id=None, case_type=None,
-                       filters=None, footprint=False, ids_only=False,
-                       strip_history=True):
-
-    # NOTE: filters get ignored if footprint=True
-    # a filter value of None means don't filter
-    filters = dict((k, v) for k, v in (filters or {}).items() if v is not None)
-    helper = _CaseAPIHelper(domain, status, case_type=case_type, ids_only=ids_only,
-                            footprint=footprint, strip_history=strip_history,
-                            filters=filters)
-    if user_id:
-        return helper.get_owned(user_id)
-    else:
-        return helper.get_all()
-
-
 class ElasticCaseQuery(object):
     # this class is currently pretty customized to serve exactly
     # this API. one day it may be worth reconciling our ES interfaces
