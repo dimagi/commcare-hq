@@ -409,15 +409,8 @@ def copy_app(request, domain):
         if linked:
             return _create_linked_app(request, app, link_domain, data['name'])
         else:
-            extra_properties = {'name': data['name']}
-            try:
-                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
-            except ReportConfigurationNotFoundError:
-                messages.error(request, _("Copying the application failed because "
-                                          "your application contains a Report Module "
-                                          "that references a static UCR configuration."))
-                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+            return _copy_app_helper(
+                request, master_domain, app_id_or_source, link_domain, data['name'], app_id)
 
     # having login_and_domain_required validates that the user
     # has access to the domain we're copying the app to
@@ -443,6 +436,18 @@ def _create_linked_app(request, master_app, link_domain, link_app_name):
 
     messages.success(request, _('Application successfully copied and linked.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
+
+
+def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
+    extra_properties = {'name': copy_to_app_name}
+    try:
+        app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties)
+    except ReportConfigurationNotFoundError:
+        messages.error(request, _("Copying the application failed because "
+                                  "your application contains a Report Module "
+                                  "that references a static UCR configuration."))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, app_id]))
+    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
 @require_can_edit_apps
