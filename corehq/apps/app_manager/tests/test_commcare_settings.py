@@ -121,7 +121,7 @@ class CommCareSettingsTest(SimpleTestCase):
                         value = setting.get(key)
                         if not value:
                             continue
-                        if not isinstance(value, six.text_type):
+                        if not isinstance(value, six.string_types):
                             for v in value:
                                 self.assertIn(
                                     v,
