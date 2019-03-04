@@ -26,7 +26,12 @@
     </div>
     <h4>{% trans 'Conditional Alerts' %}</h4>
     <div id="conditional-alert-list" class="ko-template">
-        <table class="table table-striped table-bordered">
+        <div class="alert alert-info" data-bind="visible: emptyTable()">
+            {% blocktrans %}
+                There are no alerts to display.
+            {% endblocktrans %}
+        </div>
+        <table class="table table-striped table-bordered" data-bind="visible: !emptyTable()">
             <thead>
                 <tr>
                     <th class="col-md-1">{% trans 'Delete' %}</th>
@@ -93,6 +98,7 @@
             </tbody>
         </table>
         <pagination data-apply-bindings="false"
+                    data-bind="visible: !emptyTable()"
                     params="goToPage: goToPage,
                             perPage: itemsPerPage,
                             totalItems: totalItems,

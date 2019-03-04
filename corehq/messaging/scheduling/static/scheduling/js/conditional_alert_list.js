@@ -76,6 +76,9 @@ hqDefine("scheduling/js/conditional_alert_list", [
         self.totalItems = ko.observable();
         self.showPaginationSpinner = ko.observable(false);
 
+        self.emptyTable = ko.computed(function () {
+            return self.totalItems() === 0;
+        });
         self.currentPage = ko.observable(1);
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
@@ -110,26 +113,6 @@ hqDefine("scheduling/js/conditional_alert_list", [
         $("#conditional-alert-list").koApplyBindings(ruleList({
             listUrl: initialPageData.reverse("conditional_alert_list"),
         }));
-
-        // TODO
-        /*table = $("#conditional-alert-list").dataTable({
-            "lengthChange": false,
-            "filter": false,
-            "sort": false,
-            "displayLength": 10,
-            "processing": false,
-            "serverSide": true,
-            "ajaxSource": conditonalAlterListUrl,
-            "fnServerParams": function (aoData) {
-                aoData.push({"name": "action", "value": "list_conditional_alerts"});
-            },
-            "sDom": "rtp",
-            "language": {
-                "emptyTable": gettext('There are no alerts to display.'),
-                "infoEmpty": gettext('There are no alerts to display.'),
-                "info": gettext('Showing _START_ to _END_ of _TOTAL_ alerts'),
-            },
-        });*/
     });
 
     function alertAction(action, rule_id, projectName) {    // TODO
