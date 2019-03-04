@@ -205,7 +205,8 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'qualifier': 'case_list-menu_item_',
             })
             if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
-                    toggles.CASE_LIST_LOOKUP.enabled(app.domain)):
+                    toggles.CASE_LIST_LOOKUP.enabled(app.domain) or
+                    toggles.BIOMETRIC_INTEGRATION.enabled(app.domain)):
                 specific_media.append({
                     'menu_refs': app.get_case_list_lookup_image(module, module_id),
                     'default_file_name': '{}_case_list_lookup'.format(default_file_name),
