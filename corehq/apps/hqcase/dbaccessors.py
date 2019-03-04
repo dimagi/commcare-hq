@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.util.soft_assert.api import soft_assert
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from casexml.apps.case.models import CommCareCase
 import six
@@ -108,18 +107,6 @@ def get_cases_in_domain_by_external_id(domain, external_id):
         reduce=False,
         include_docs=True,
     ).all()
-
-
-def get_supply_point_case_in_domain_by_id(
-        domain, supply_point_integer_id):
-    from corehq.apps.commtrack.models import SupplyPointCase
-    return SupplyPointCase.view(
-        'cases_by_domain_external_id/view',
-        key=[domain, str(supply_point_integer_id)],
-        reduce=False,
-        include_docs=True,
-        limit=1,
-    ).first()
 
 
 def get_all_case_owner_ids(domain):
