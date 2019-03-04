@@ -39,10 +39,6 @@ from dimagi.utils.couch import (
 import six
 from six.moves import filter
 
-CASE_STATUS_OPEN = 'open'
-CASE_STATUS_CLOSED = 'closed'
-CASE_STATUS_ALL = 'all'
-
 INDEX_RELATIONSHIP_CHILD = 'child'
 INDEX_RELATIONSHIP_EXTENSION = 'extension'
 
