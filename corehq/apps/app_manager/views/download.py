@@ -20,7 +20,6 @@ from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import (
     add_odk_profile_after_build,
-    get_enabled_build_profiles_for_version,
     get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
@@ -412,8 +411,9 @@ def download_index(request, domain, app_id):
         )
     enabled_build_profiles = []
     if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        enabled_build_profiles = get_enabled_build_profiles_for_version(request.app.get_id, request.app.version)
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
+        enabled_build_profiles = [id for id, version in latest_enabled_build_profiles.items()
+                                  if version == request.app.version]
 
     return render(request, "app_manager/download_index.html", {
         'app': request.app,

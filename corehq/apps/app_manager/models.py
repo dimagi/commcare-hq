@@ -142,7 +142,7 @@ from corehq.apps.app_manager.util import (
     update_report_module_ids,
     module_offers_search,
     get_latest_enabled_build_for_profile,
-    get_enabled_build_profiles_for_version,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5958,7 +5958,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
+        get_latest_enabled_versions_per_profile.clear(self.build_id, self.version)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
