@@ -32,9 +32,14 @@ from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):
 
+    is_using_test_plans = False
+
     @classmethod
     def setUpClass(cls):
         super(BaseCustomerInvoiceCase, cls).setUpClass()
+
+        if cls.is_using_test_plans:
+            generator.bootstrap_test_software_plan_versions()
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
@@ -365,6 +370,8 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
 
 
 class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
 
     def setUp(self):
         super(TestQuarterlyInvoicing, self).setUp()
