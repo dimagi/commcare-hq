@@ -88,7 +88,9 @@
   <div class="row">
     <div class="col-xs-12">
 
-      {% include 'registration/partials/start_options.html' %}
+      {% if is_saas_environment %}
+        {% include 'registration/partials/start_options.html' %}
+      {% endif %}
 
       <div id="registration-form-container"
            class="reg-form-container"
