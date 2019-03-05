@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import F, Func, Q
 from django.db.models.functions import ExtractYear
 from django.http import HttpResponse, JsonResponse
+from django.http.response import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -84,6 +85,14 @@ class ProgramOverviewReport(ReachDashboardView):
 @location_safe
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class ProgramOverviewReportAPI(View):
+    @property
+    def couch_user(self):
+        return self.request.couch_user
+
+    @property
+    def user_ministry(self):
+        return self.couch_user.user_data.get('ministry')
+
     def post(self, request, *args, **kwargs):
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
@@ -186,7 +195,7 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-             data = [
+            data = [
                 dict(id=1, name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(id=2, name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(id=3, name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
@@ -330,54 +339,175 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         sub_section = self.request.POST.get('subsection', '')
         beneficiary_id = self.request.POST.get('beneficiaryId', '')
         data = {}
+
+        if sub_section == 'person_details':
+            person = dict(
+                name='Reena Kumar',
+                gender='Female',
+                status='Pregnant Woman',
+                dob=date(1991, 5, 11),
+                marriedAt=25,
+                aadhaarNo='Yes'
+            )
+            husband = dict(
+                name='Raju Kumar',
+                gender='Female',
+                dob=date(1991, 5, 11),
+                marriedAt=26,
+                aadhaarNo='Yes'
+            )
+            other = dict(
+                address='J-142, Saket, New Delhi, Delhi',
+                subcentre='Rasidpur',
+                village='Rasidpur',
+                anganwadiCentre='Aspataal Ward',
+                phone='844-860-4774',
+                religion='Hinduk',
+                caste='Sudra',
+                bplOrApl='BPL',
+
+            )
+            data = dict(
+                person=person,
+                husband=husband,
+                other=other,
+            )
+        elif sub_section == 'child_details':
+            children = [
+                dict(id=1, name='Ritu Kummar', age=8),
+                dict(id=2, name='Rahul Kumar', age=6),
+                dict(id=3, name='Jhanvi Kumar', age=3),
+                dict(id=4, name='Rohit Kumar', age=1),
+            ]
+            data = dict(
+                children=children
+            )
+
         if section == 'child':
             data = {}
         elif section == 'pregnant_women':
-            data = {}
-        elif section == 'eligible_couples':
-            if sub_section == 'person_details':
-                person = dict(
-                    name='Reena Kumar',
-                    gender='Female',
-                    status='Pregnant Woman',
-                    dob=date(1991, 5, 11),
-                    marriedAt=25,
-                    aadhaarNo='Yes'
+            if sub_section == 'pregnancy_details':
+                data = dict(
+                    dateOfLmp='2018-11-10',
+                    weightOfPw=55,
+                    dateOfRegistration='2019-01-01',
+                    edd='2019-08-10',
+                    twelveWeeksPregnancyRegistration='Yes',
+                    bloodGroup='B+',
+                    pregnancyStatus=2
                 )
-                husband = dict(
-                    name='Raju Kumar',
-                    gender='Female',
-                    dob=date(1991, 5, 11),
-                    marriedAt=26,
-                    aadhaarNo='Yes'
+            elif sub_section == 'pregnancy_risk':
+                data = dict(
+                    riskPregnancy='Yes',
+                    referralDate='2019-06-17',
+                    hrpSymptoms='Bleeding',
+                    illnessHistory='Yes',
+                    referredOutFacilityType='CHC',
+                    pastIllnessDetails='Tuberculosis',
                 )
-                other = dict(
-                    address='J-142, Saket, New Delhi, Delhi',
-                    subcentre='Rasidpur',
-                    village='Rasidpur',
-                    anganwadiCentre='Aspataal Ward',
-                    phone='844-860-4774',
-                    religion='Hinduk',
-                    caste='Sudra',
-                    bplOrApl='BPL',
+            elif sub_section == 'consumables_disbursed':
+                data = dict(
+                    ifaTablets='180',
+                    thrDisbursed='Yes',
+                )
+            elif sub_section == 'immunization_counseling_details':
+                data = dict(
+                    ttDoseOne='2019-01-10',
+                    ttDoseTwo='2019-02-10',
+                    ttBooster='Not Done',
+                    birthPreparednessVisitsByAsha=2,
+                    birthPreparednessVisitsByAww=1,
+                    counsellingOnMaternal='Yes',
+                    counsellingOnEbf='Yes',
+                )
+            elif sub_section == 'abortion_details':
+                data = dict(
+                    abortionDate='2019-03-18',
+                    abortionType='Spontaneous',
+                    abortionDays=27,
+                )
+            elif sub_section == 'maternal_death_details':
+                data = dict(
+                    maternalDeathOccurred='Yes',
+                    maternalDeathPlace='Rasidpur',
+                    maternalDeathDate='2019-04-19',
+                    authoritiesInformed='Yes',
+                )
+            elif sub_section == 'delivery_details':
+                data = dict(
+                    dod='2019-08-15',
+                    assistanceOfDelivery='Midwife',
+                    timeOfDelivery='08:25',
+                    dateOfDischarge='2019-08-17',
+                    typeOfDelivery='Caesarean',
+                    timeOfDischarge='17:11',
+                    placeOfBirth='Rasidpur',
+                    deliveryComplications='Yes',
+                    placeOfDelivery='Hospital',
+                    complicationDetails='Postpartum Haemorrhage',
+                    hospitalType='Private',
+                )
+            elif sub_section == 'postnatal_care_details':
+                data = dict(
+                    visits=[
+                        dict(
+                            pncDate='2019-08-20',
+                            postpartumHeamorrhage=0,
+                            fever=1,
+                            convulsions=0,
+                            abdominalPain=0,
+                            painfulUrination=0,
+                            congestedBreasts=1,
+                            painfulNipples=0,
+                            otherBreastsIssues=0,
+                            managingBreastProblems=0,
+                            increasingFoodIntake=1,
+                            possibleMaternalComplications=1,
+                            beneficiaryStartedEating=0,
+                        ),
+                        dict(
+                            pncDate='2019-08-22',
+                            postpartumHeamorrhage=0,
+                            fever=1,
+                            convulsions=0,
+                            abdominalPain=0,
+                            painfulUrination=0,
+                            congestedBreasts=1,
+                            painfulNipples=0,
+                            otherBreastsIssues=0,
+                            managingBreastProblems=0,
+                            increasingFoodIntake=1,
+                            possibleMaternalComplications=1,
+                            beneficiaryStartedEating=0,
+                        )
+                    ]
+                )
+            elif sub_section == 'antenatal_care_details':
+                data = dict(
+                    visits=[
+                        dict(
+                            ancDate='2019-01-10',
+                            ancLocation='PHC Shahzadpur',
+                            pwWeight=55,
+                            bloodPressure='118/76',
+                            hb=13.1,
+                            abdominalExamination='Yes',
+                            abnormalitiesDetected='Yes',
+                        ),
+                        dict(
+                            ancDate='2019-03-19',
+                            ancLocation='PHC Shahzadpur',
+                            pwWeight=57,
+                            bloodPressure='117/74',
+                            hb=14,
+                            abdominalExamination='No',
+                            abnormalitiesDetected='No',
+                        )
+                    ]
+                )
 
-                )
-                data = dict(
-                    person=person,
-                    husband=husband,
-                    other=other,
-                )
-            elif sub_section == 'child_details':
-                children = [
-                    dict(id=1, name='Ritu Kummar', age=8),
-                    dict(id=2, name='Rahul Kumar', age=6),
-                    dict(id=3, name='Jhanvi Kumar', age=3),
-                    dict(id=4, name='Rohit Kumar', age=1),
-                ]
-                data = dict(
-                    children=children
-                )
-            elif sub_section == 'eligible_couple_details':
+        elif section == 'eligible_couples':
+            if sub_section == 'eligible_couple_details':
                 data = dict(
                     maleChildrenBorn=3,
                     femaleChildrenBorn=2,
@@ -389,4 +519,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     previousFamilyPlanningMethod='Condom',
                     preferredFamilyPlaningMethod='Male sterilization'
                 )
+
+        if not data:
+            raise Http404()
         return JsonResponse(data=data)

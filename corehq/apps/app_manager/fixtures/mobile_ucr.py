@@ -91,7 +91,7 @@ class BaseReportFixturesProvider(FixtureProvider):
         return {
             report_config.uuid: report_config
             for app_ in apps
-            for module in app_.modules if isinstance(module, ReportModule)
+            for module in app_.get_report_modules()
             for report_config in module.report_configs
         }
 

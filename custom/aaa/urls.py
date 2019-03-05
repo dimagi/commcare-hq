@@ -14,10 +14,11 @@ from custom.aaa.views import (
 )
 
 dashboardurls = [
+    url('^$', ProgramOverviewReport.as_view(), name='program_overview'),
     url('^program_overview/', ProgramOverviewReport.as_view(), name='program_overview'),
     url('^unified_beneficiary/$', UnifiedBeneficiaryReport.as_view(), name='unified_beneficiary'),
     url(
-        '^unified_beneficiary/(?P<details_type>[\w-]+)/(?P<beneficiary_id>[\w-]+)/$',
+        r'^unified_beneficiary/(?P<details_type>[\w-]+)/(?P<beneficiary_id>[\w-]+)/$',
         UnifiedBeneficiaryDetailsReport.as_view(),
         name='unified_beneficiary_details'
     ),

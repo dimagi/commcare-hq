@@ -83,6 +83,12 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
         self.postData = postData;
 
+        self.sections = [
+            'person_details',
+            'children_list',
+            'eligible_couple_details'
+        ];
+
 
         self.getPersonDetails = function () {
             var params = Object.assign({
