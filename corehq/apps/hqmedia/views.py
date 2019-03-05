@@ -20,7 +20,7 @@ from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
-from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest, JsonResponse
 
 from django.shortcuts import render
 import shutil
@@ -153,11 +153,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "references": self.app.get_references(),
-            "multimedia_state": self.app.check_media_state(),
-            "object_map": self.app.get_object_map(),
-            "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),
+            "multimedia_state": self.app.check_media_state(),
         })
         return context
 
@@ -171,6 +168,15 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
         ]
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('json', None):
+            return JsonResponse({
+                "references": self.app.get_references(),
+                "object_map": self.app.get_object_map(),
+                "totals": self.app.get_reference_totals(),
+            })
+        return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
