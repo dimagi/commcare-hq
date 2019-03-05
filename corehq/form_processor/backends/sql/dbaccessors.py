@@ -875,7 +875,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    @tracer.wrap("form_processor.check_transaction_order_for_case")
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
         """ Returns whether the order of transactions needs to be reconciled by client_date
 
