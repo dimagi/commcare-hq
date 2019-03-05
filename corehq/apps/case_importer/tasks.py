@@ -1,30 +1,30 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+import uuid
 from collections import namedtuple
 
 from celery.schedules import crontab
 from celery.task import task
-from corehq.apps.case_importer.exceptions import ImporterError
-from corehq.apps.case_importer.tracking.analytics import \
-    get_case_upload_files_total_bytes
-from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
-from corehq.apps.case_importer.util import get_importer_error_message
-from corehq.util.datadog.gauges import datadog_gauge_task
+from couchdbkit.exceptions import ResourceNotFound
+
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.hqadmin.tasks import AbnormalUsageAlert, send_abnormal_usage_alert
-from corehq.apps.case_importer.const import LookupErrors, ImportErrors
 from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.const import ImportErrors, LookupErrors
+from corehq.apps.case_importer.exceptions import ImporterError
+from corehq.apps.case_importer.tracking.analytics import get_case_upload_files_total_bytes
+from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
+from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.apps.export.tasks import add_inferred_export_properties
+from corehq.apps.hqadmin.tasks import AbnormalUsageAlert, send_abnormal_usage_alert
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
-from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from couchdbkit.exceptions import ResourceNotFound
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED
+from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
-from corehq.toggles import BULK_UPLOAD_DATE_OPENED
-import uuid
 from soil.progress import set_task_progress
 
 POOL_SIZE = 10
