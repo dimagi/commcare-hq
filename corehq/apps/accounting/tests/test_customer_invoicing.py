@@ -229,6 +229,9 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
+
     def setUp(self):
         super(TestUserLineItem, self).setUp()
         self.user_rate = self.subscription.plan_version.feature_rates \
@@ -258,7 +261,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             self.assertIsNone(user_line_item.base_description)
             self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
             self.assertIsNone(user_line_item.unit_description)
-            self.assertEqual(user_line_item.unit_cost, Decimal('2.0000'))
+            self.assertEqual(user_line_item.unit_cost, Decimal('1.0000'))
 
     def test_over_limit(self):
         num_users = self.user_rate.monthly_limit + 1
