@@ -76,23 +76,32 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <h4 class="modal-title">
-                    {% trans "Your modules were reordered" %}
+                    {% trans "Your menus were reordered" %}
                 </h4>
             </div>
             <form action="{% url "reorder_child_modules" domain app.id %}"
                   method="post">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p class="lead">
-                        {% trans "Your modules were reordered" %}
+                    {% blocktrans %}
+                    <p>
+                        Child Menus are now displayed nested under their parent menu. The order
+                        of your menus has been changed to reflect that.
                     </p>
                     <p>
-                        Click below to move these child modules under their parents.
+                        Click "Rearrange" to make this change permanent.  You won't be able to modify the order of your menus until you do so.
                     </p>
+                    <p>
+                        Please contact support or report an issue if you have any concerns.
+                    </p>
+                    {% endblocktrans %}
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        {% trans "Not Now" %}
+                    </button>
                     <button type="submit" class="disable-on-submit btn btn-danger">
-                        Rearrange
+                        {% trans "Rearrange" %}
                     </button>
                 </div>
             </form>
