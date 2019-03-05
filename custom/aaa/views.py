@@ -18,11 +18,12 @@ from django.views.generic.base import TemplateView, View
 from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
+from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import AggVillage, Woman
+from custom.aaa.models import Woman
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -32,7 +33,7 @@ from custom.aaa.tasks import (
     update_woman_table,
     update_woman_history_table,
 )
-from custom.aaa.utils import build_location_filters
+from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
 
 from dimagi.utils.dates import force_to_date
 
@@ -46,10 +47,23 @@ class ReachDashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
+    @property
+    def user_ministry(self):
+        return self.couch_user.user_data.get('ministry')
+
+    def dispatch(self, *args, **kwargs):
+        if (not self.couch_user.is_web_user()
+                and (self.user_ministry is None or self.user_ministry == '')):
+            return no_permissions(self.request)
+
+        return super(ReachDashboardView, self).dispatch(*args, **kwargs)
+
     def get_context_data(self, **kwargs):
         kwargs['domain'] = self.domain
-        # TODO add logic for user role type possible options should be MoHFW or MWCD
-        kwargs['user_role_type'] = 'MoHFW'
+
+        kwargs['is_web_user'] = self.couch_user.is_web_user()
+        kwargs['user_role_type'] = self.user_ministry
+
         user_location = self.couch_user.get_sql_locations(self.domain).first()
         kwargs['user_location_id'] = user_location.location_id if user_location else None
         user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
@@ -57,7 +71,6 @@ class ReachDashboardView(TemplateView):
         ).distinct() if user_location else []
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
-        kwargs['is_web_user'] = self.couch_user.is_web_user
         kwargs['is_details'] = False
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
@@ -79,7 +92,7 @@ class ProgramOverviewReportAPI(View):
         prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
 
         location_filters = build_location_filters(selected_location)
-        data = AggVillage.objects.filter(
+        data = get_location_model_for_ministry(self.user_ministry).objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
             domain=self.request.domain,
             **location_filters
@@ -173,7 +186,7 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-             data = [
+            data = [
                 dict(id=1, name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(id=2, name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
                 dict(id=3, name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
@@ -256,7 +269,7 @@ class AggregationScriptPage(BaseDomainView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        if settings.SERVER_ENVIRONMENT != 'softlayer':
+        if settings.SERVER_ENVIRONMENT != 'india':
             return HttpResponse("This page is only available for QA and not available for production instances.")
 
         couch_user = self.request.couch_user
