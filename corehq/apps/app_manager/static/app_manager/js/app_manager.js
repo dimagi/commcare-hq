@@ -265,13 +265,8 @@ hqDefine('app_manager/js/app_manager', function () {
             _.each(childModules, function (childModule) {
                 var parent = modulesByUid[$(childModule).data('rootmoduleid')];
                 if (!parent) {
-                    // This child module is orphaned, throw it at the end and alert user
+                    // This child module is orphaned, throw it at the end
                     $("ul.appnav-module").append(childModule);
-                    var moduleName = $(childModule).data('modulename'),
-                        alertText = _.template(gettext(
-                            'Menu "<%= moduleName %>" references a parent menu that no longer exists'
-                        ))({moduleName: moduleName});
-                    hqImport('hqwebapp/js/alert_user').alert_user(alertText, "danger");
                 } else {
                     addChildModuleToParent(childModule, parent);
                 }

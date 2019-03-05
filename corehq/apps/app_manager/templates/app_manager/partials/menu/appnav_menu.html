@@ -15,8 +15,7 @@
             <li class="edit-module-li js-sorted-li module"
                 data-index="{{ module.id }}"
                 data-uid="{{ module.unique_id }}"
-                data-rootmoduleid="{{ module.root_module_id|default:"" }}"
-                data-modulename="{{ module.name|html_trans_prefix:langs }}"
+                data-rootModuleId="{{ module.root_module_id|default:"" }}"
                 data-indexvar="moduleid">
 
                 {% include 'app_manager/partials/menu/module_link.html' %}
