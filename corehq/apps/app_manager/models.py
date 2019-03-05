@@ -5958,7 +5958,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_latest_enabled_versions_per_profile.clear(self.build_id, self.version)
+        get_latest_enabled_versions_per_profile.clear(self.app_id)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
