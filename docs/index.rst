@@ -43,6 +43,7 @@ Welcome to CommCareHQ's documentation!
    caching_and_memoization
    restore-logic
    couchdb
+   celery
 
 Tips for documenting
 --------------------
