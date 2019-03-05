@@ -1,8 +1,13 @@
 /*
- * Component for TODO
+ * Component for displaying a search box. Almost certainly included within a a larger knockout template.
+ *
+ * Required parameters
+ *  - value: Observable for the query value
+ *  - action: Function to call on search
  *
  * Optional parameters
- *  - TODO
+ *  - placeholder: String.
+ *  - immediate: Boolean. If true, search on every keypress.
  */
 
 hqDefine('hqwebapp/js/components/search_box', [
