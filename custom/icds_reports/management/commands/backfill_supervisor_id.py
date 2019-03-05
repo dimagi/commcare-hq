@@ -118,7 +118,7 @@ def get_state_ids():
 
 
 class Command(BaseCommand):
-    help = "Backfill dashboard UCRs with supervisor_id"
+    help = "Backfill dashboard UCRs with supervisor_id one by one for each UCR/state_id"
 
     def add_arguments(self, parser):
         # can pass special value 'all' to backfill/show-status for all
@@ -139,8 +139,15 @@ class Command(BaseCommand):
         parser.add_argument(
             '--resetup_scripts',
             action='store_true',
-            dest='force_bootstrap',
-            help='Cleanup all progress and resetup the scripts'
+            dest='force_resetup',
+            help='Cleanup all progress and restart the scripts'
+        )
+
+        parser.add_argument(
+            '--setup_only',
+            action='store_true',
+            dest='setup_only',
+            help='Setup scripts but dont start running them'
         )
 
     def handle(self, *args, **options):
@@ -148,12 +155,14 @@ class Command(BaseCommand):
         ucr_id = options['ucr_id']
         if options['show_status']:
             return self.show_status(state_id, ucr_id)
-        if options['force_bootstrap']:
+        elif options['force_resetup']:
             assert not state_id, "state_id is not valid option with resetup_scripts"
             assert not ucr_id, "ucr_id is not valid option with resetup_scripts"
             self.show_status(None, None)
             self.boostrap_sql_scripts(force=True)
             self.start_scripts(None, None)
+        elif options['setup_only']:
+            self.boostrap_sql_scripts(force=False)
         else:
             self.boostrap_sql_scripts(force=False)
             self.start_scripts(state_id, ucr_id)
@@ -163,7 +172,10 @@ class Command(BaseCommand):
         ucr_ids = [ucr_id] if ucr_id else get_sql_scripts(state_id).keys()
         for ucr_id in ucr_ids:
             for state_id in state_ids:
-                self.run_sql_script(state_id, ucr_id)
+                rows = self.get_session().query(BackfillScriptStub).filter_by(state_id=state_id, ucr_id=ucr_id).all()
+                assert len(rows) == 1, "There should be just one row"
+                if rows[0].status in [Status.NOT_STARTED, Status.FAILED]:
+                    self.run_sql_script(state_id, ucr_id)
 
     @memoized
     def get_session(self):
@@ -178,9 +190,9 @@ class Command(BaseCommand):
             return
         query = self.get_session().query(BackfillScriptStub)
         if state_id:
-            query = query.filter(state_id=state_id)
+            query = query.filter_by(state_id=state_id)
         if ucr_id:
-            query = query.filter(ucr_id=ucr_id)
+            query = query.filter_by(ucr_id=ucr_id)
         for row in query.order_by('started_at').all():
             print(row.ucr_id, row.state_id, row.started_at, row.ended_at, row.status)
         return
@@ -194,7 +206,8 @@ class Command(BaseCommand):
             session.close()
             BackfillScriptStub.__table__.drop(engine)
         elif previous_table_exists:
-            raise Exception("Scripts are already setup, perhaps do --show_status and resetup!")
+            logging.info("Scripts are already setup. Skipping this step, use --resetup_scripts to force resetup")
+            return
         Base.metadata.create_all(engine)
         rows = []
         for state_id in get_state_ids():
