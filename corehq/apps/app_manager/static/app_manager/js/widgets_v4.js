@@ -11,7 +11,7 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assertRequired(options, [], ['url', 'width']);
+        assertProperties.assert(options, [], ['url', 'width']);
 
         $select.select2({
             ajax: {
