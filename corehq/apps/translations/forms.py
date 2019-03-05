@@ -28,9 +28,15 @@ class ConvertTranslationsForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'upload_file',
-                data_bind="value: file",
+            hqcrispy.B3MultiField(
+                "",
+                crispy.Div(
+                    crispy.Field(
+                        'upload_file',
+                        data_bind="value: file",
+                    ),
+                    css_class='col-sm-4'
+                ),
             ),
             StrictButton(
                 ugettext_lazy('Convert'),
