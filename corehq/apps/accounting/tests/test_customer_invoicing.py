@@ -229,6 +229,9 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
+
     def setUp(self):
         super(TestUserLineItem, self).setUp()
         self.user_rate = self.subscription.plan_version.feature_rates \
