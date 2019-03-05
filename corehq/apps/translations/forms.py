@@ -151,14 +151,19 @@ class AppTranslationsForm(forms.Form):
                 tuple((project.slug, project) for project in projects)
             )
         form_fields = self.form_fields()
-        form_fields.append(hqcrispy.Field(StrictButton(
-            ugettext_lazy("Submit"),
-            type="submit",
-            css_class="btn btn-primary btn-lg disable-on-submit",
-            onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
-        )))
         self.helper.layout = crispy.Layout(
-            *form_fields
+            crispy.Fieldset(
+                "",
+                *form_fields
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Submit"),
+                    type="submit",
+                    css_class="btn btn-primary disable-on-submit",
+                    onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
+                )
+            )
         )
         self.fields['action'].initial = self.form_action
 
