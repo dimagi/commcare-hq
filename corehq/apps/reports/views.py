@@ -993,7 +993,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             try:
                 self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
             except ValidationError as err:
-                kwargs['error'] = err.message
+                kwargs['error'] = six.text_type(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
