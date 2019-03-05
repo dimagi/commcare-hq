@@ -199,6 +199,8 @@ class UserRegistrationView(BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
+        if settings.IS_SAAS_ENVIRONMENT:
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -228,6 +230,8 @@ class UserRegistrationView(BasePageView):
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
+        if settings.IS_SAAS_ENVIRONMENT:
+            context['demo_workflow_ab'] = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, self.request).context
         return context
 
     @property

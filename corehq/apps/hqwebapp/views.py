@@ -393,7 +393,16 @@ def _login(req, domain_name):
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
 
+    demo_workflow_ab = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, req)
+
+    if settings.IS_SAAS_ENVIRONMENT:
+        context['demo_workflow_ab'] = demo_workflow_ab.context
+
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
+
+    if settings.IS_SAAS_ENVIRONMENT:
+        demo_workflow_ab.update_response(response)
+
     return response
 
 
