@@ -1,10 +1,14 @@
 <script type="text/html" id="ko-search-box-template">
     <div class="ko-search-box">
         <div class="input-group">
-            <input type="text" class="form-control" data-bind="value: value, attr: {placeholder: placeholder}" />
+            <input type="text" class="form-control"
+                   data-bind="value: value, valueUpdate: 'afterkeydown', attr: {placeholder: placeholder}, event: {keypress: keypressAction}" />
             <span class="input-group-btn">
-                <button type="button" class="btn btn-default" data-bind="click: action">
+                <button type="button" class="btn btn-default" data-bind="click: clickAction">
                     <i class="fa fa-search"></i>
+                </button>
+                <button class="btn btn-default" type="button" data-bind="click: clearQuery">
+                    <i class="fa fa-times"></i>
                 </button>
             </span>
         </div>

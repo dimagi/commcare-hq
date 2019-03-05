@@ -23,6 +23,19 @@ hqDefine('hqwebapp/js/components/search_box', [
             self.action = params.action;
             self.placeholder = params.placeholder || '';
 
+            self.clickAction = params.action;
+            self.keypressAction = function (model, e) {
+                if (event.keyCode === 13) {
+                    self.action();
+                }
+                return true;
+            };
+
+            self.clearQuery = function () {
+                self.value('');
+                self.action();
+            };
+
             return self;
         },
         template: '<div data-bind="template: { name: \'ko-search-box-template\' }"></div>',
