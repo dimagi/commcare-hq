@@ -176,6 +176,8 @@ class Command(BaseCommand):
                 assert len(rows) == 1, "There should be just one row"
                 if rows[0].status in [Status.NOT_STARTED, Status.FAILED]:
                     self.run_sql_script(state_id, ucr_id)
+                else:
+                    logger.info("{} is already backfilled for state:{}, skipping.".format(ucr_id, state_id))
 
     @memoized
     def get_session(self):
