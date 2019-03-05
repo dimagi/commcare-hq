@@ -12,10 +12,11 @@ from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
     CustomerInvoice,
     InvoicingPlan,
-    DomainUserHistory
+    DomainUserHistory,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -32,9 +33,14 @@ from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):
 
+    is_using_test_plans = False
+
     @classmethod
     def setUpClass(cls):
         super(BaseCustomerInvoiceCase, cls).setUpClass()
+
+        if cls.is_using_test_plans:
+            generator.bootstrap_test_software_plan_versions()
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
@@ -88,6 +94,10 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
         for user in self.domain3.all_users():
             user.delete()
+
+        if self.is_using_test_plans:
+            for software_plan in SoftwarePlan.objects.all():
+                SoftwarePlan.get_version.clear(software_plan)
 
         super(BaseAccountingTest, self).tearDown()
 
@@ -365,6 +375,8 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
 
 
 class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
 
     def setUp(self):
         super(TestQuarterlyInvoicing, self).setUp()
