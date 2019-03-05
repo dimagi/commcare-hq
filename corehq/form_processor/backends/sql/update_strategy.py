@@ -33,6 +33,7 @@ from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL
 )
+from ddtrace import tracer
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
@@ -328,6 +329,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         return True
 
+    @tracer.wrap(name='form_processor.reconcile_transactions')
     def reconcile_transactions(self):
         transactions = self.case.transactions
         sorted_transactions = sorted(
