@@ -713,13 +713,6 @@ class RemoveLogoView(BaseMultimediaView):
         return HttpResponse()
 
 
-class CheckOnProcessingFile(BaseMultimediaView):
-    urlname = "hqmedia_check_processing"
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponse("workin on it")
-
-
 def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
