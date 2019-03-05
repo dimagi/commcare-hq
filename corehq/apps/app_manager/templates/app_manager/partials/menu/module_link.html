@@ -2,10 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-{# For APP BUILDER PROTOTYPE use only #}
-
-
-<div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
+<div class="appnav-item {% if module.unique_id == selected_module.unique_id %}{% if not form %}active{% endif %}{% endif %}">
 
     <a href="#module_confirm_delete_{{ module.unique_id }}"
        data-toggle="modal"

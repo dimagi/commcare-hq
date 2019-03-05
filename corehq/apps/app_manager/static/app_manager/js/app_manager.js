@@ -258,12 +258,12 @@ hqDefine('app_manager/js/app_manager', function () {
             $(".module").each(function (index, element) {
                 $(element).data('index', index);
                 modulesByUid[ $(element).data('uid') ] = element;
-                if ($(element).data('rootmoduleid')) {
+                if ($(element).data('rootmoduleuid')) {
                     childModules.push(element);
                 }
             });
             _.each(childModules, function (childModule) {
-                var parent = modulesByUid[$(childModule).data('rootmoduleid')];
+                var parent = modulesByUid[$(childModule).data('rootmoduleuid')];
                 if (!parent) {
                     // This child module is orphaned, throw it at the end
                     $("ul.appnav-module").append(childModule);
@@ -326,7 +326,7 @@ hqDefine('app_manager/js/app_manager', function () {
 
             if (to !== from || movingFormToNewModule) {
                 var $form = $sortable.find('> .sort-action form');
-                saveDataToForm($form, from, to, fromModuleUid, toModuleUid, sortingForms);
+                storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms);
                 resetIndexes($sortable);
                 if (movingFormToNewModule) {
                     resetOldModuleIndices($sortable, fromModuleUid);
@@ -368,7 +368,7 @@ hqDefine('app_manager/js/app_manager', function () {
             });
             return [from, to];
         }
-        function saveDataToForm($form, from, to, fromModuleUid, toModuleUid, sortingForms) {
+        function storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms) {
             $form.find('[name="from"], [name="to"]').remove();
             $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
             $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
