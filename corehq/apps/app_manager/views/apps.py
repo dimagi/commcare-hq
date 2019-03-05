@@ -868,7 +868,7 @@ def rearrange(request, domain, app_id, key):
     """
     app = get_app(domain, app_id)
     ajax = json.loads(request.POST.get('ajax', 'false'))
-    i, j = (int(x) for x in (request.POST['to'], request.POST['from']))
+    to_index, from_index = (int(x) for x in (request.POST['to'], request.POST['from']))
     resp = {}
     module_id = None
 
@@ -876,9 +876,9 @@ def rearrange(request, domain, app_id, key):
         if "forms" == key:
             to_module_uid = request.POST['to_module_uid']
             from_module_uid = request.POST['from_module_uid']
-            app.rearrange_forms(to_module_uid, from_module_uid, i, j)
+            app.rearrange_forms(to_module_uid, from_module_uid, to_index, from_index)
         elif "modules" == key:
-            app.rearrange_modules(i, j)
+            app.rearrange_modules(to_index, from_index)
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
