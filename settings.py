@@ -371,35 +371,6 @@ HQ_APPS = (
     'custom.aaa',
 )
 
-# also excludes any app starting with 'django.'
-APPS_TO_EXCLUDE_FROM_TESTS = (
-    'captcha',
-    'couchdbkit.ext.django',
-    'corehq.apps.ivr',
-    'corehq.messaging.smsbackends.mach',
-    'corehq.messaging.smsbackends.http',
-    'corehq.apps.settings',
-    'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.yo',
-    'corehq.messaging.smsbackends.smsgh',
-    'corehq.messaging.smsbackends.push',
-    'corehq.messaging.smsbackends.apposit',
-    'crispy_forms',
-    'django_extensions',
-    'django_prbac',
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'djcelery',
-    'gunicorn',
-    'langcodes',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'two_factor',
-    'custom.apps.crs_reports',
-    'custom.m4change',
-)
-
 # any built-in management commands we want to override should go in hqscripts
 INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
 
