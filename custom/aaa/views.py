@@ -85,6 +85,14 @@ class ProgramOverviewReport(ReachDashboardView):
 @location_safe
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class ProgramOverviewReportAPI(View):
+    @property
+    def couch_user(self):
+        return self.request.couch_user
+
+    @property
+    def user_ministry(self):
+        return self.couch_user.user_data.get('ministry')
+
     def post(self, request, *args, **kwargs):
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
