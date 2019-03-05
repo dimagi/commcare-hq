@@ -12,10 +12,11 @@ from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
     CustomerInvoice,
     InvoicingPlan,
-    DomainUserHistory
+    DomainUserHistory,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -93,6 +94,10 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
         for user in self.domain3.all_users():
             user.delete()
+
+        if self.is_using_test_plans:
+            for software_plan in SoftwarePlan.objects.all():
+                SoftwarePlan.get_version.clear(software_plan)
 
         super(BaseAccountingTest, self).tearDown()
 
