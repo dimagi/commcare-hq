@@ -323,6 +323,16 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
                 (self.table.c.lactating == 1)
                 & (self.table.c.caste == 'sc')
                 & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_sc'),
+            func.count(self.table.c.case_id).filter(
+                (self.table.c.pregnant == 1)
+                & (self.table.c.caste != 'sc')
+                & (self.table.c.caste != 'st')
+                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_others'),
+            func.count(self.table.c.case_id).filter(
+                (self.table.c.lactating == 1)
+                & (self.table.c.caste != 'sc')
+                & (self.table.c.caste != 'st')
+                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_others'),
         )
 
         if not total_row:
