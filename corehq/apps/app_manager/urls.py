@@ -29,6 +29,7 @@ from corehq.apps.app_manager.views import (
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings, toggle_build_profile,
 )
+from corehq.apps.app_manager.views.apps import reorder_child_modules
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, upload_bulk_ui_translations,
@@ -169,6 +170,7 @@ urlpatterns = [
         name='edit_app_ui_translations'),
     url(r'^get_app_ui_translations/$', get_app_ui_translations, name='get_app_ui_translations'),
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', rearrange, name='rearrange'),
+    url(r'^reorder_child_modules/(?P<app_id>[\w-]+)/$', reorder_child_modules, name='reorder_child_modules'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', odk_qr_code, name='odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', odk_media_qr_code, name='odk_media_qr_code'),

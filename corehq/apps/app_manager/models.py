@@ -5405,19 +5405,30 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def rearrange_modules(self, i, j):
         modules = self.modules
         try:
-            modules.insert(i, modules.pop(j))
+            moving_module = modules.pop(j)
+            module_id = moving_module.unique_id
+            modules.insert(i, moving_module)
+
+            non_children = [m for m in modules if m.root_module_id != module_id]
+            children = [m for m in modules if m.root_module_id == module_id]
+            modules = []
+            for module in non_children:
+                modules.append(module)
+                if module.unique_id == module_id:
+                    modules.extend(children)
+
         except IndexError:
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, to_module_uid, from_module_uid, i, j):
         """
         The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
-        to_module = self.get_module(to_module_id)
-        from_module = self.get_module(from_module_id)
+        to_module = self.get_module_by_unique_id(to_module_uid)
+        from_module = self.get_module_by_unique_id(from_module_uid)
         try:
             from_module.forms[j].pre_move_hook(from_module, to_module)
         except NotImplementedError:
