@@ -18,14 +18,33 @@
     {% initial_page_data 'limit_rule_restarts' limit_rule_restarts %}
     {% initial_page_data 'allow_copy' allow_copy %}
 
-    <div class="btn-group">
-        <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-primary">
-            <i class="fa fa-plus"></i>
-            {% trans "New Conditional Alert" %}
-        </a>
-    </div>
-    <h4>{% trans 'Conditional Alerts' %}</h4>
+    <p class="lead">{% trans 'Conditional Alerts' %}</p>
+
+    <p>
+        {% blocktrans %}
+            Conditional alerts allow you to send messaging content on a specific schedule.
+            Read more about conditional alerts on the
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts" target="_blank">Help Site</a>.
+        {% endblocktrans %}
+    </p>
+
     <div id="conditional-alert-list" class="ko-template">
+        <div class="row">
+            <div class="col-sm-8 col-md-9">
+                <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i>
+                    {% trans "New Conditional Alert" %}
+                </a>
+            </div>
+            <div class="col-sm-4 col-md-3">
+                <search-box data-apply-bindings="false"
+                            params="value: query,
+                                    action: function() { goToPage(1); }"></search-box>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+
         <div class="alert alert-info" data-bind="visible: emptyTable()">
             {% blocktrans %}
                 There are no alerts to display.
