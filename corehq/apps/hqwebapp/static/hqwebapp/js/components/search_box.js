@@ -18,10 +18,10 @@ hqDefine('hqwebapp/js/components/search_box', [
         viewModel: function (params) {
             var self = {};
 
-            // Attributes passed on to the input
             self.value = params.value;
             self.action = params.action;
             self.placeholder = params.placeholder || '';
+            self.immediate = params.immediate;
 
             self.clickAction = params.action;
             self.keypressAction = function (model, e) {
@@ -30,6 +30,11 @@ hqDefine('hqwebapp/js/components/search_box', [
                 }
                 return true;
             };
+            if (self.immediate) {
+                self.value.subscribe(_.debounce(function () {
+                    self.action();
+                }, 200));
+            }
 
             self.clearQuery = function () {
                 self.value('');
