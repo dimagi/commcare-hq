@@ -320,12 +320,14 @@ hqDefine('app_manager/js/app_manager', function () {
                 sortingForms = $sortable.hasClass('sortable-forms'),
                 movingFormToNewModule = sortingForms && toModuleUid !== fromModuleUid;
 
-            var from, to;
+            var move;
             if (movingFormToNewModule) {
-                [from, to] = calculateMoveFormToNewModule($sortable, ui, toModuleUid);
+                move = calculateMoveFormToNewModule($sortable, ui, toModuleUid);
             } else {
-                [from, to] = calculateMoveWithinScope($sortable);
+                move = calculateMoveWithinScope($sortable);
             }
+            var from = move[0],
+                to = move[1];
 
             if (to !== from || movingFormToNewModule) {
                 var $form = $sortable.find('> .sort-action form');
