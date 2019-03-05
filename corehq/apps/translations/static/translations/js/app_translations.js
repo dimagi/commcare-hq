@@ -6,7 +6,7 @@ hqDefine("translations/js/app_translations", [
 ], function (
     $,
     initialPageData,
-    appManagerWidgets,
+    appManagerWidgets
 ) {
     $(function () {
         // Application version select2: pagination, display comment
