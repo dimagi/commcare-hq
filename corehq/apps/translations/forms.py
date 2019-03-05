@@ -95,7 +95,7 @@ class PullResourceForm(forms.Form):
                 tuple((project.slug, project) for project in projects)
             )
         self.helper.layout = crispy.Layout(
-            'transifex_project_slug',
+            crispy.Field('transifex_project_slug', css_class="ko-select2"),
             crispy.Field('target_lang', css_class="ko-select2"),
             'resource_slug',
             hqcrispy.FormActions(
@@ -164,10 +164,10 @@ class AppTranslationsForm(forms.Form):
 
     def form_fields(self):
         return [
-            hqcrispy.Field('app_id'),
+            hqcrispy.Field('app_id', css_class="ko-select2"),
             hqcrispy.Field('version'),
             hqcrispy.Field('use_version_postfix'),
-            hqcrispy.Field('transifex_project_slug'),
+            hqcrispy.Field('transifex_project_slug', css_class="ko-select2"),
             hqcrispy.Field('action')
         ]
 
