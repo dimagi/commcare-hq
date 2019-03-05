@@ -36,6 +36,7 @@ hqDefine("reports/js/data_corrections", [
     "analytix/js/kissmetrix",
     "hqwebapp/js/components.ko",     // pagination
     "select2/dist/js/select2.full.min",
+    "hqwebapp/js/components.ko",    // search box
 ], function (
     $,
     ko,
@@ -130,7 +131,7 @@ hqDefine("reports/js/data_corrections", [
         self.displayProperty = ko.observable(_.first(self.displayProperties).property);
         self.updateDisplayProperty = function (newValue) {
             self.displayProperty(newValue);
-            self.initQuery();
+            self.clearQuery();
             self.generateSearchableNames();
         };
         self.breakWord = function (str) {
@@ -193,14 +194,15 @@ hqDefine("reports/js/data_corrections", [
         self.matchesQuery = function (propertyName) {
             return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
-        self.initQuery = function () {
-            self.query("");
-        };
-        self.query.subscribe(function () {
+        self.filter = function () {
             self.currentPage(1);
             self.totalFilteredItems(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length) || 1);
             self.render();
-        });
+        };
+        self.clearQuery = function () {
+            self.query('');
+            seilf.filter();
+        };
 
         // Because of how search is implemented, it's useful to store a list of the values that we're going to
         // search against, ordered the same way properties are displayed. Regenerate this list each time
@@ -291,7 +293,7 @@ hqDefine("reports/js/data_corrections", [
                 }));
             }));
             self.generateSearchableNames();
-            self.initQuery();
+            self.clearQuery();
             self.currentPage(1);
             self.showError(false);
             self.showRetry(false);
