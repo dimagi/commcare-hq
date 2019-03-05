@@ -806,6 +806,7 @@ class AggLocation(models.Model):
             WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
                   AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
                   AND (opened_on < closed_on OR closed_on IS NULL)
+                  AND (opened_on < add OR add IS NULL)
                   AND state_id IS NOT NULL
                   AND domain = %(domain)s
             GROUP BY ROLLUP({location_levels})
