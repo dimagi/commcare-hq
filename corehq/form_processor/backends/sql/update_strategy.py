@@ -37,7 +37,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter
-reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
 
 
 def _validate_length(length):
