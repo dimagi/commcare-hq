@@ -11,7 +11,7 @@ import sqlalchemy
 
 from django.test.testcases import TestCase, override_settings
 
-from corehq.sql_db.connections import connection_manager, get_icds_ucr_db_alias
+from corehq.sql_db.connections import connection_manager
 from six.moves import zip
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
