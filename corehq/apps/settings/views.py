@@ -1,10 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import json
 import re
 from base64 import b64encode
+from io import BytesIO
+
 from django.views.decorators.debug import sensitive_post_parameters
-from pygooglechart import QRChart
+import qrcode
+
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
@@ -454,15 +458,10 @@ def get_qrcode(data):
     """
     Return a QR Code PNG (binary data)
     """
-    height = width = 250
-    code = QRChart(height, width)
-    code.set_ec('L', 0)  # "Level L" error correction with a 0 pixel margin
-    code.add_data(data)
-    with get_temp_file() as (__, fname):
-        code.download(fname)
-        with open(fname, "rb") as f:
-            png_data = f.read()
-    return png_data
+    image = qrcode.make(data)
+    output = BytesIO()
+    image.save(output, "PNG")
+    return output.getvalue()
 
 
 class EnableMobilePrivilegesView(BaseMyAccountView):
