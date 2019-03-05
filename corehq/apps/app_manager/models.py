@@ -1,7 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -19,6 +19,9 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
+from io import BytesIO
+
+import qrcode
 from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
@@ -4644,9 +4647,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
-            from pygooglechart import QRChart
-            HEIGHT = WIDTH = 250
-            code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4655,18 +4655,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            code.add_data(url)
-
-            # "Level L" error correction with a 0 pixel margin
-            code.set_ec('L', 0)
-            f, fname = tempfile.mkstemp()
-            code.download(fname)
-            os.close(f)
-            with open(fname, "rb") as f:
-                png_data = f.read()
-                self.lazy_put_attachment(png_data, filename,
-                                         content_type="image/png")
-            return png_data
+            image = qrcode.make(url)
+            output = BytesIO()
+            image.save(output, "PNG")
+            qr_content = output.getvalue()
+            self.lazy_put_attachment(qr_content, filename,
+                                     content_type="image/png")
+            return qr_content
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
