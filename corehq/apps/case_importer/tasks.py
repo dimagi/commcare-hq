@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import uuid
 from collections import namedtuple
 
+from celery import states
+from celery.exceptions import Ignore
 from celery.schedules import crontab
 from celery.task import task
 from couchdbkit.exceptions import ResourceNotFound
@@ -25,7 +27,7 @@ from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.datadog.utils import case_load_counter
 from corehq.util.soft_assert import soft_assert
-from soil.progress import set_task_progress
+from soil.progress import set_task_progress, update_task_state
 
 POOL_SIZE = 10
 PRIME_VIEW_FREQUENCY = 500
@@ -40,7 +42,8 @@ def bulk_import_async(config, domain, excel_id):
     try:
         case_upload.check_file()
     except ImporterError as e:
-        return {'errors': get_importer_error_message(e)}
+        update_task_state(bulk_import_async, states.FAILURE, {'errors': get_importer_error_message(e)})
+        raise Ignore()
 
     try:
         with case_upload.get_spreadsheet() as spreadsheet:
@@ -54,7 +57,8 @@ def bulk_import_async(config, domain, excel_id):
             'messages': result
         }
     except ImporterError as e:
-        return {'errors': get_importer_error_message(e)}
+        update_task_state(bulk_import_async, states.FAILURE, {'errors': get_importer_error_message(e)})
+        raise Ignore()
     finally:
         store_task_result.delay(excel_id)
 
