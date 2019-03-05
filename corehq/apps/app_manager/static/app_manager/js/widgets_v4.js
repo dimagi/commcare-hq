@@ -1,16 +1,21 @@
 // Note that this file exists only for select2 v4 and it depends on the paginate_releases URL being registered
 hqDefine("app_manager/js/widgets_v4", [
     'jquery',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
 ], function (
     $,
+    assertProperties,
     initialPageData
 ) {
-    $(".app-manager-version-dropdown").each(function () {
-        $(this).select2({
+    var initVersionDropdown = function ($select, options) {
+        options = options || {};
+        assertProperties.assertRequired(options, [], ['url', 'width']);
+
+        $select.select2({
             ajax: {
-                url: initialPageData.reverse('paginate_releases'),
+                url: options.url || initialPageData.reverse('paginate_releases'),
                 dataType: 'json',
                 data: function (params) {
                     return {
@@ -31,7 +36,17 @@ hqDefine("app_manager/js/widgets_v4", [
                     };
                 },
             },
-            width: '200px',
+            width: options.width || '200px',
+        });
+    };
+
+    $(function () {
+        $(".app-manager-version-dropdown").each(function () {
+            initVersionDropdown($(this));
         });
     });
+
+    return {
+        initVersionDropdown: initVersionDropdown,
+    };
 });

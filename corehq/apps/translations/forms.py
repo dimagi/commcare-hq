@@ -4,6 +4,7 @@ import openpyxl
 import langcodes
 
 from django import forms
+from django.forms.widgets import Select
 from zipfile import ZipFile
 
 from crispy_forms.helper import FormHelper
@@ -111,7 +112,8 @@ class PullResourceForm(forms.Form):
 class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy("Application Version"), required=False,
-                                 help_text=ugettext_lazy("Leave blank to use current saved state"))
+                                 help_text=ugettext_lazy("Leave blank to use current saved state"),
+                                 widget=Select(choices=[]))
     use_version_postfix = forms.MultipleChoiceField(
         choices=[
             ('yes', 'Track resources per version'),
