@@ -4,15 +4,6 @@
 
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
-        .media-totals-list {
-            margin: 0;
-            padding: 0;
-        }
-
-        .media-totals {
-            list-style-type: none;
-        }
-
         .media-type-icon,
         .media-status-icon {
             font-size: 22px;
@@ -69,7 +60,7 @@
             {% if totals|length %}
             <div class="well">
                 {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
-                <ul class="media-totals-list" data-bind="foreach: totals">
+                <ul class="list-unstyled" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
                         <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span>
