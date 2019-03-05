@@ -74,7 +74,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
-from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm, MultimediaTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -261,17 +261,30 @@ def get_app_view_context(request, app):
             'plural_noun': _("app translations"),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
         },
+        'bulk_app_multimedia_upload': {
+            'action': reverse('upload_bulk_app_translations',   # TODO
+                              args=(app.domain, app.get_id)),
+            'download_url': reverse('download_bulk_multimedia_translations',
+                                    args=(app.domain, app.get_id)),
+            'adjective': _("multimedia"),
+            'plural_noun': _("multimedia references"),
+        },
     })
     context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_ui_translation_upload"
+            context_key="bulk_ui_translation_upload",
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-        )
+        ),
+        'bulk_multimedia_translation_form': get_bulk_upload_form(
+            context,
+            context_key="bulk_app_multimedia_upload",
+            form_class=MultimediaTranslationsBulkUploadForm,
+        ),
     })
     context.update({
         'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
