@@ -232,7 +232,9 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initMenuItemSorting = function () {
-        nestChildModules();
+        if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
+            nestChildModules();
+        }
         initDragHandles();
         if (modulesWereReordered()) {
             promptToSaveOrdering();
