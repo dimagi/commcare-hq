@@ -1,10 +1,13 @@
+from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
+
+import six
 import logging
 
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.db import connections
 from memoized import memoized
-from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime
 
@@ -173,7 +176,7 @@ class Command(BaseCommand):
         engine = self.get_engine()
         if not engine.dialect.has_table(engine, BackfillScriptStub.__table__.name):
             return
-        query = self.get_session().query(BackfillScriptStub)    
+        query = self.get_session().query(BackfillScriptStub)
         if state_id:
             query = query.filter(state_id=state_id)
         if ucr_id:
@@ -196,7 +199,7 @@ class Command(BaseCommand):
         rows = []
         for state_id in get_state_ids():
             scripts_by_ucr = get_sql_scripts(state_id)
-            for ucr_id, script in scripts_by_ucr.iteritems():
+            for ucr_id, script in six.iteritems(scripts_by_ucr):
                 rows.append(BackfillScriptStub(state_id=state_id, ucr_id=ucr_id, raw_sql_script=script))
         session.add_all(rows)
         session.commit()
