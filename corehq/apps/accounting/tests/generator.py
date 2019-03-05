@@ -139,7 +139,7 @@ def arbitrary_commcare_user(domain, is_active=True):
 @unit_testing_only
 def arbitrary_commcare_users_for_domain(domain, num_users, is_active=True):
     CommCareUser.bulk_save([
-        arbitrary_commcare_user(domain, is_active=is_active, save=False)
+        arbitrary_commcare_user(domain, is_active=is_active)
         for _ in range(0, num_users)
     ])
     return num_users
