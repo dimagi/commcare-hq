@@ -61,8 +61,9 @@ class Requests(object):
                 response.raise_for_status()
         except requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
-            logger.error('Request: %s', err_request)
-            logger.error('Response: %s', err_response)
+            # commented out since these are spamming Sentry
+            # logger.error('Request: %s', err_request)
+            # logger.error('Response: %s', err_response)
             raise
         return response
 
