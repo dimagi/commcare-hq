@@ -170,7 +170,12 @@ _LAYOUT = [
         "collapse": True,
         "name": _("Mobile Experience"),
         "description": _("Improve the user experience of your mobile workers"),
-        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list"],
+        "slugs": [
+            "case_list_menu_item",
+            "enum_image",
+            "menu_mode",
+            "register_from_case_list",
+        ],
     },
     {
         "slug": "xpath",

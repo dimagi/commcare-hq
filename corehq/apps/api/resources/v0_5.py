@@ -967,6 +967,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     class Meta(v0_4.CommCareCaseResource.Meta):
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
+        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
 
     def prepend_urls(self):
         return [

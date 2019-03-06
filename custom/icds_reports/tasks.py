@@ -98,7 +98,7 @@ DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'softlayer':
+if settings.SERVER_ENVIRONMENT == 'india':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
@@ -130,7 +130,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
 ]
 
 
@@ -548,9 +547,8 @@ def _agg_ls_table(day):
 
 @track_time
 def _agg_awc_table_weekly(day):
-    _run_custom_sql_script([
-        "SELECT update_aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
+        AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')

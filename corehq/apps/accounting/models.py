@@ -997,7 +997,8 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
+        _soft_assert_domain_not_loaded(
+            isinstance(self.domain, six.text_type), "domain type is %s" % type(self.domain))  # TODO remove April 1
 
 
         if new_plan_version is None:

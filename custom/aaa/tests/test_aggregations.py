@@ -33,6 +33,7 @@ from custom.aaa.tasks import (
     update_woman_history_table,
 )
 from custom.icds_reports.tests import CSVTestCase
+from six.moves import range
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc': 'config_report_reach-test_reach-awc_location_4646cfd7',
