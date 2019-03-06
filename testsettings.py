@@ -115,14 +115,29 @@ if 'aaa-data' not in DATABASES:
             'SERIALIZE': False,
         }
     }
+
+DATABASES['icds-db'] = {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'DISABLE_SERVER_SIDE_CURSORS': True,
+    'NAME': 'icds_db',
+    'USER': 'commcarehq',
+    'PASSWORD': 'commcarehq',
+    'HOST': 'localhost',
+    'PORT': '5432',
+    'MIGRATE': False,
+    'TEST': {
+        'SERIALIZE': False,
+    },
+}
+
 helper.assign_test_db_names(DATABASES)
 
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-ucr-non-dashboard': 'default',
-    'icds-test-ucr': 'default',
+    'icds-ucr': 'icds-db',
+    'icds-ucr-non-dashboard': 'icds-db',
+    'icds-test-ucr': 'icds-db',
     'aaa-data': 'aaa-data',
 }
 
