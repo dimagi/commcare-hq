@@ -905,6 +905,7 @@ def rearrange(request, domain, app_id, key):
 @no_conflict_require_POST
 @require_can_edit_apps
 def reorder_child_modules(request, domain, app_id):
+    """Move the application's child modules to immediately after their parents"""
     app = get_app(domain, app_id)
     modules_by_parent_id = OrderedDict(
         (m.unique_id, [m]) for m in app.modules if not m.root_module_id
