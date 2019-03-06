@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from unittest import skip
+
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -8,6 +11,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from django.test import TestCase
 
 
+@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInstitutionalDeliveriesSector(TestCase):
 

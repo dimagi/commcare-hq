@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+from unittest import skip
+
 from django.test.utils import override_settings
 
 from custom.icds_reports.messages import awcs_reported_weighing_scale_infants_help_text
@@ -10,6 +13,7 @@ from django.test import TestCase
 from custom.icds_reports.const import ChartColors, MapColors
 
 
+@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInfantsWeightScale(TestCase):
 

@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from unittest import skip
+
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -9,6 +12,7 @@ from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, 
 from django.test import TestCase
 
 
+@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAWCSCovered(TestCase):
 
