@@ -312,23 +312,25 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         lactating = self.table.c.lactating == 1
         st_caste = self.table.c.caste == 'st'
         sc_caste = self.table.c.caste == 'sc'
-        rations = self.table.c.num_rations_distributed > 21
-        disabled = (self.table.c.disabled == 'yes')
-        minority = (self.table.c.minority == 'yes')
-        absent = 0
+        rations_gte_21 = self.table.c.num_rations_distributed > 21
+        disabled = self.table.c.disabled == 'yes'
+        minority = self.table.c.minority == 'yes'
+        rations_none = self.table.c.num_rations_distributed == 0
         partial = 0
         migrant = 0
         columns = (
-            format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations)),
-            format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations)),
-            format_column(title='thr_rations_pregnant_sc', logic=(pregnant & sc_caste & rations)),
-            format_column(title='thr_rations_lactating_sc', logic=(lactating & sc_caste & rations)),
-            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) & (not st_caste) & rations)),
-            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) & (not st_caste) & rations)),
-            format_column(title='thr_rations_pregnant_disabled', logic=(pregnant & disabled & rations)),
-            format_column(title='thr_rations_lactating_disabled', logic=(lactating & disabled & rations)),
-            format_column(title='thr_rations_pregnant_minority', logic=(pregnant & minority & rations)),
-            format_column(title='thr_rations_lactating_minority', logic=(lactating & minority & rations)),
+            format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations_gte_21)),
+            format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_sc', logic=(pregnant & sc_caste & rations_gte_21)),
+            format_column(title='thr_rations_lactating_sc', logic=(lactating & sc_caste & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) & (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) & (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_disabled', logic=(pregnant & disabled & rations_gte_21)),
+            format_column(title='thr_rations_lactating_disabled', logic=(lactating & disabled & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_minority', logic=(pregnant & minority & rations_gte_21)),
+            format_column(title='thr_rations_lactating_minority', logic=(lactating & minority & rations_gte_21)),
+            format_column(title='thr_rations_absent_pregnant', logic=(pregnant & rations_none)),
+            format_column(title='thr_rations_absent_lactating', logic=(lactating & rations_none)),
         )
 
         if not total_row:
