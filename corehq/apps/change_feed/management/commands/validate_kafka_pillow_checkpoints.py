@@ -31,8 +31,8 @@ class Command(BaseCommand):
 def validate_checkpoints(print_only):
 
     for pillow in get_all_pillow_instances():
-        if (pillow.pillow_id in getattr(settings, 'ACTIVE_PILLOW_NAMES', [pillow.pillow_id]) and
-           isinstance(pillow.get_change_feed(), KafkaChangeFeed)):
+        if (pillow.pillow_id in getattr(settings, 'ACTIVE_PILLOW_NAMES', [pillow.pillow_id])
+                and isinstance(pillow.get_change_feed(), KafkaChangeFeed)):
             checkpoint_dict = _get_checkpoint_dict(pillow)
             try:
                 validate_offsets(checkpoint_dict)
