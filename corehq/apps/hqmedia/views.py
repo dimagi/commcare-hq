@@ -20,7 +20,7 @@ from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
-from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 
 from django.shortcuts import render
 import shutil
