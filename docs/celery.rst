@@ -3,9 +3,7 @@ Celery
 ======
 
 Official Celery documentation: http://docs.celeryproject.org/en/latest/
-
-What is it
-==========
+What is it ==========
 
 Celery is a library we use to perform tasks outside the bounds of an HTTP request.
 
@@ -96,7 +94,39 @@ To use soil:
 
         expose_cached_download(payload, expiry, file_extension)
 
-For error handling update the task state to failure and provide errors:
+For error handling update the task state to failure and provide errors, HQ currently supports two options:
+
+Option 1
+--------
+
+This option raises a celery exception which tells celery to ignore future state updates.
+The resulting task result will not be marked as "successful" so ``task.successful()`` will return ``False``
+If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), and with ``.delay()``,
+the exception will be caught by celery and ``task.result`` will return the exception.
+
+.. code-block:: python
+
+    from celery.exceptions import Ignore
+    from soil import DownloadBase
+    from soil.progress import update_task_state
+    from soil.util import expose_cached_download
+
+    @task
+    def my_cool_task():
+        try:
+            # do some stuff
+        except SomeError as err:
+            errors = [err]
+            update_task_state(my_cool_task, states.FAILURE, {'errors': errors})
+            raise Ignore()
+
+Option 2
+--------
+
+This option raises an exception which celery does not catch.
+Soil will catch this and set the error to the error message in the exception.
+The resulting task will be marked as a failure meaning ``task.failed()`` will return ``True``
+If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), the exception will "bubble up" to the calling code.
 
 .. code-block:: python
 
@@ -110,8 +140,26 @@ For error handling update the task state to failure and provide errors:
             # do some stuff
         except SomeError as err:
             errors = [err]
-            update_task_state(my_cool_task, states.FAILURE, {'errors': errors})
-            raise
+            raise SomeError(errors)
+
+Testing
+=======
+
+As noted in the [celery docs](http://docs.celeryproject.org/en/v4.2.1/userguide/testing.html) testing tasks in celery is not the same as in production.
+In order to test effectively, mocking is required.
+
+An example of mocking with Option 1 from the soil documentation:
+
+.. code-block:: python
+
+    @patch('my_cool_test.update_state')
+    def my_cool_test(update_state):
+        res = my_cool_task.delay()
+        self.assertIsInstance(res.result, Ignore)
+        update_state.assert_called_with(
+            state=states.FAILURE,
+            meta={'errors': ['my uncool errors']}
+        )
 
 Other references
 ================
