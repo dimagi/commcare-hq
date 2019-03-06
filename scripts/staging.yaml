@@ -56,4 +56,6 @@ branches:
   - mk-21944-2 # MK Feb 25
   - inconsistent-user-filters-exports  # Gabriella March 2
   - inconsistent-user-filters-reports  # Gabriella March 2
+  - es/module-display  # Ethan March 4th
+  - jls/search-box-widget # Jenny March 6
 submodules: {}

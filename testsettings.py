@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import settingshelper as helper
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
@@ -108,12 +109,13 @@ if 'aaa-data' not in DATABASES:
         'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
+        'HOST': 'localhost',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
         }
     }
+helper.assign_test_db_names(DATABASES)
 
 citus_ucr_db = 'citus-ucr' if 'citus-ucr' in DATABASES else 'default'
 REPORTING_DATABASES = {

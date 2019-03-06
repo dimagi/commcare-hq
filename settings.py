@@ -159,7 +159,6 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
-    'custom.icds_reports.middleware.ICDSAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -370,35 +369,6 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.aaa',
-)
-
-# also excludes any app starting with 'django.'
-APPS_TO_EXCLUDE_FROM_TESTS = (
-    'captcha',
-    'couchdbkit.ext.django',
-    'corehq.apps.ivr',
-    'corehq.messaging.smsbackends.mach',
-    'corehq.messaging.smsbackends.http',
-    'corehq.apps.settings',
-    'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.yo',
-    'corehq.messaging.smsbackends.smsgh',
-    'corehq.messaging.smsbackends.push',
-    'corehq.messaging.smsbackends.apposit',
-    'crispy_forms',
-    'django_extensions',
-    'django_prbac',
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'djcelery',
-    'gunicorn',
-    'langcodes',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'two_factor',
-    'custom.apps.crs_reports',
-    'custom.m4change',
 )
 
 # any built-in management commands we want to override should go in hqscripts
@@ -1421,6 +1391,8 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
+if 'icds-ucr' in DATABASES:
+    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(

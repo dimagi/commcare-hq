@@ -485,6 +485,14 @@ class AggAwc(models.Model):
             for query in index_queries:
                 cursor.execute(query)
 
+    @classmethod
+    def weekly_aggregate(cls, month):
+        helper = AggAwcHelper(month)
+        update_queries = helper.weekly_updates()
+        with get_cursor(cls) as cursor:
+            for query, params in update_queries:
+                cursor.execute(query, params)
+
 
 class AggregateLsAWCVisitForm(models.Model):
     awc_visits = models.IntegerField(help_text='awc visits made by LS')
@@ -965,6 +973,7 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition

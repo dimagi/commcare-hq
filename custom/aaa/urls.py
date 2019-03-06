@@ -14,6 +14,7 @@ from custom.aaa.views import (
 )
 
 dashboardurls = [
+    url('^$', ProgramOverviewReport.as_view(), name='program_overview'),
     url('^program_overview/', ProgramOverviewReport.as_view(), name='program_overview'),
     url('^unified_beneficiary/$', UnifiedBeneficiaryReport.as_view(), name='unified_beneficiary'),
     url(

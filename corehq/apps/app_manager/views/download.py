@@ -410,6 +410,7 @@ def download_index(request, domain, app_id):
             extra_tags='html'
         )
     enabled_build_profiles = []
+    latest_enabled_build_profiles = {}
     if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
         enabled_build_profiles = [id for id, version in latest_enabled_build_profiles.items()

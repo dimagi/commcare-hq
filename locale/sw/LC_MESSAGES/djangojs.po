@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-26 20:41+0000\n"
+"POT-Creation-Date: 2019-03-05 19:59+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
@@ -736,7 +736,6 @@ msgid "Questions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:111
 msgid "Copy"
 msgstr ""
 
@@ -2840,7 +2839,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:66
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:38
+msgid "<%= num %> per page"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:69
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3513,22 +3516,18 @@ msgid "(filtered from _MAX_ total broadcasts)"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:62
 msgid "Active"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:64
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:64
 msgid "Inactive"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:74
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:87
 msgid "Deactivate"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:77
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:94
 msgid "Activate"
 msgstr ""
 
@@ -3544,59 +3543,38 @@ msgstr ""
 msgid "Are you sure you want to delete this scheduled message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:25
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:26
-msgid "There are no alerts to display."
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:27
-msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:69
-msgid "Processing"
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:99
-msgid "Restart Rule"
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:110
-msgid "Project"
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:179
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:52
 msgid "This rule has been restarted."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:182
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:55
 #, javascript-format
 msgid ""
 "Unable to restart rule. Rules can only be started every two hours and there "
 "are %s minute(s) remaining before this rule can be started again."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:190
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:63
 msgid "Copy successful."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:192
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:65
 #, javascript-format
 msgid "Error: %s"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:207
-msgid "Are you sure you want to delete this conditional message?"
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:73
+msgid "Are you sure you want to remove this conditional message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:216
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:87
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. You will only be able to restart this rule once every two "
 "hours. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:221
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:92
 msgid ""
 "A rule should only be restarted when you believe it is stuck and is not "
 "progressing. Your user is able to restart as many times as you like, but "
@@ -3604,11 +3582,11 @@ msgid ""
 "system. Restart this rule?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:236
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:104
 msgid "Please enter a project name first."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:240
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:108
 #, javascript-format
 msgid "Copy this alert to project %s?"
 msgstr ""

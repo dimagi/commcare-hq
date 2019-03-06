@@ -29,3 +29,14 @@ class ApplicationIntegrationMixin(object):
         )
         return (existing.is_enabled
                 and toggles.BIOMETRIC_INTEGRATION.enabled(self.domain))
+
+    @property
+    @memoized
+    def biometric_context(self):
+        config = SimprintsIntegration.objects.get(domain=self.domain)
+        return {
+            'projectId': config.project_id,
+            'userId': config.user_id,
+            'moduleId': config.module_id,
+            'packageName': 'org.commcare.dalvik',
+        }

@@ -5,6 +5,7 @@ from codecs import BOM_UTF8
 from contextlib import closing
 import io
 import os
+import six
 
 from django.test import SimpleTestCase
 from lxml import html, etree
@@ -44,19 +45,31 @@ class ZippedExportWriterTests(SimpleTestCase):
         mock_zip_file = self.MockZipFile.return_value
         self.writer.table_names = {0: 'ひらがな'}
         self.writer._write_final_result()
-        mock_zip_file.write.assert_called_with(
-            'tmp',
-            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
-        )
+        if six.PY3:
+            mock_zip_file.write.assert_called_with(
+                'tmp',
+                os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+            )
+        else:
+            mock_zip_file.write.assert_called_with(
+                'tmp',
+                os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
+            )
 
     def test_zipped_export_writer_utf8(self):
         mock_zip_file = self.MockZipFile.return_value
         self.writer.table_names = {0: b'\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
         self.writer._write_final_result()
-        mock_zip_file.write.assert_called_with(
-            'tmp',
-            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
-        )
+        if six.PY3:
+            mock_zip_file.write.assert_called_with(
+                'tmp',
+                os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+            )
+        else:
+            mock_zip_file.write.assert_called_with(
+                'tmp',
+                os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
+            )
 
 
 class CsvFileWriterTests(SimpleTestCase):
