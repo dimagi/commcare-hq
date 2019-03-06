@@ -7,7 +7,7 @@ import os
 import tempfile
 import urllib3
 import zipfile
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from wsgiref.util import FileWrapper
 
 from couchdbkit.exceptions import ResourceConflict
@@ -904,22 +904,9 @@ def rearrange(request, domain, app_id, key):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def reorder_child_modules(request, domain, app_id):
-    """Move the application's child modules to immediately after their parents"""
+def move_child_modules_after_parents(request, domain, app_id):
     app = get_app(domain, app_id)
-    modules_by_parent_id = OrderedDict(
-        (m.unique_id, [m]) for m in app.modules if not m.root_module_id
-    )
-    orphaned_modules = []
-    for module in app.modules:
-        if module.root_module_id:
-            if module.root_module_id in modules_by_parent_id:
-                modules_by_parent_id[module.root_module_id].append(module)
-            else:
-                orphaned_modules.append(module)
-
-    app.modules = [m for modules in modules_by_parent_id.values() for m in modules]
-    app.modules += orphaned_modules
+    app.move_child_modules_after_parents()
     app.save()
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 

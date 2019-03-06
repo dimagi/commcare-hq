@@ -79,7 +79,7 @@
                     {% trans "Your menus were reordered" %}
                 </h4>
             </div>
-            <form action="{% url "reorder_child_modules" domain app.id %}"
+            <form action="{% url "move_child_modules_after_parents" domain app.id %}"
                   method="post">
                 {% csrf_token %}
                 <div class="modal-body">

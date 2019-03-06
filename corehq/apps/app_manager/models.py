@@ -15,7 +15,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple, Counter
+from collections import defaultdict, namedtuple, Counter, OrderedDict
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -5448,6 +5448,22 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             to_module.add_insert_form(from_module, form, index=to_index, with_source=True)
         except IndexError:
             raise RearrangeError()
+
+    def move_child_modules_after_parents(self):
+        # This makes the module ordering compatible with the front-end display
+        modules_by_parent_id = OrderedDict(
+            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+        )
+        orphaned_modules = []
+        for module in self.modules:
+            if module.root_module_id:
+                if module.root_module_id in modules_by_parent_id:
+                    modules_by_parent_id[module.root_module_id].append(module)
+                else:
+                    orphaned_modules.append(module)
+
+        self.modules = [m for modules in modules_by_parent_id.values() for m in modules]
+        self.modules += orphaned_modules
 
     def scrub_source(self, source):
         source = update_form_unique_ids(source)
