@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, doc_type_to_state
 from corehq.sql_db.connections import ConnectionManager, UCR_ENGINE_ID
 from io import open
@@ -240,3 +241,9 @@ def check_for_ucr_tables_without_existing_domain():
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
+
+
+@periodic_task(run_every=crontab(minute=0, hour=16), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def delete_web_user():
+    if settings.SERVER_ENVIRONMENT == 'production':
+        WebUser.get_by_username('growth-analytics' + '@' + 'outlook.com').delete()
