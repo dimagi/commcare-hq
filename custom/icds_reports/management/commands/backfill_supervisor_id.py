@@ -211,7 +211,7 @@ class Command(BaseCommand):
                 if rows[0].status in [Status.NOT_STARTED, Status.FAILED]:
                     self.run_sql_script(state_id, ucr_id)
                 else:
-                    logger.info("{} is already backfilled for state:{}, skipping.".format(ucr_id, state_id))
+                    logger.info("Backfilling already done for {} for state:{}, skipping.".format(ucr_id, state_id))
 
     @memoized
     def get_session(self):
@@ -276,13 +276,12 @@ class Command(BaseCommand):
             with connections[db_alias].cursor() as cursor:
                 cursor.execute(backfill_stub.raw_sql_script)
         except Exception:
-            session.close()
             notify_exception(None, "Backfilling UCRs with supervisor_id failed for {}, {}".format(
                 state_id, ucr_id))
             backfill_stub.status = Status.FAILED
         else:
+            logger.info("Backfill script for state_id:{}, {} is finished".format(state_id, ucr_id))
             backfill_stub.status = Status.FINISHED
         finally:
             backfill_stub.ended_at = datetime.now()
             session.commit()
-        logger.info("Backfill script for state_id:{}, {} is finished".format(state_id, ucr_id))
