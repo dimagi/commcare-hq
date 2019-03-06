@@ -52,7 +52,7 @@ class DiffTypes(object):
 
     ALL = TABLE_TYPES + COLUMN_TYPES + MODIFY_TYPES + CONSTRAINT_TYPES
 
-    TYPES_FOR_REBUILD = TABLE_TYPES + COLUMN_TYPES + (MODIFY_TYPE, MODIFY_NULLABLE)
+    TYPES_FOR_REBUILD = TABLE_TYPES + (ADD_COLUMN,) + (MODIFY_TYPE, MODIFY_NULLABLE)
 
 
 class RebuildTableException(Exception):
@@ -238,6 +238,20 @@ def add_columns(engine, raw_diffs, table_names):
             op.add_column(table_name, col)
 
 
+def remove_columns(engine, raw_diffs, table_names):
+    with engine.begin() as conn:
+        ctx = get_migration_context(conn, table_names)
+        op = Operations(ctx)
+        columns = [
+            diff[3]
+            for diff in raw_diffs
+            if diff[0] in DiffTypes.REMOVE_COLUMN
+        ]
+        for col in columns:
+            table_name = col.table.name
+            op.drop_column(table_name, col)
+
+
 def get_tables_to_migrate(diffs, table_names):
     tables_with_indexes = get_tables_with_index_changes(diffs, table_names)
     tables_with_added_columns = get_tables_with_added_nullable_columns(diffs, table_names)
@@ -246,6 +260,7 @@ def get_tables_to_migrate(diffs, table_names):
 
 def migrate_tables(engine, raw_diffs, table_names):
     add_columns(engine, raw_diffs, table_names)
+    remove_columns(engine, raw_diffs, table_names)
     apply_index_changes(engine, raw_diffs, table_names)
 
 

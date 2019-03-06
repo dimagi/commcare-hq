@@ -71,6 +71,20 @@ class TestAlembicDiffs(TestCase):
             SimpleDiff(DiffTypes.REMOVE_COLUMN, self.table_name, 'password')
         })
 
+    def test_add_nullable_column(self):
+        metadata = sqlalchemy.MetaData()
+        sqlalchemy.Table(
+            self.table_name, metadata,
+            sqlalchemy.Column('user_id', sqlalchemy.Integer, primary_key=True),
+            sqlalchemy.Column('user_name', sqlalchemy.String(16), nullable=False),
+            sqlalchemy.Column('email_address', sqlalchemy.String(60), key='email'),
+            sqlalchemy.Column('new_password', sqlalchemy.String(20), nullable=True)
+        )
+        self._test_diffs(metadata, {
+            SimpleDiff(DiffTypes.ADD_NULLABLE_COLUMN, self.table_name, 'new_password'),
+            SimpleDiff(DiffTypes.REMOVE_COLUMN, self.table_name, 'password')
+        })
+
     def test_modify_column(self):
         metadata = sqlalchemy.MetaData()
         sqlalchemy.Table(
@@ -112,4 +126,18 @@ class TestTablesToRebuild(SimpleTestCase):
         self.assertEqual(
             tables,
             set(DiffTypes.TYPES_FOR_REBUILD)
+        )
+
+    def test_column_rebuild(self):
+        self.assertEqual(
+            get_tables_to_rebuild([SimpleDiff(DiffTypes.ADD_NULLABLE_COLUMN, 't3', None)], {'t3'}),
+            set([])
+        )
+        self.assertEqual(
+            get_tables_to_rebuild([SimpleDiff(DiffTypes.ADD_COLUMN, 't3', None)], {'t3'}),
+            {'t3'}
+        )
+        self.assertEqual(
+            get_tables_to_rebuild([SimpleDiff(DiffTypes.REMOVE_COLUMN, 't3', None)], {'t3'}),
+            set([])
         )
