@@ -14,12 +14,15 @@ RATE_LIMITED_EXCEPTIONS = {
     'socketpool.pool.MaxTriesError': 'couchdb',
 
     'corehq.elastic.ESError': 'elastic',
+    'elasticsearch.exceptions.ConnectionTimeout': 'elastic',
 
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
 
     'socket.error': 'rabbitmq',
 
     'redis.exceptions.ConnectionError': 'redis',
+    'ClusterDownError': 'redis',
+
     'botocore.exceptions.ClientError': 'riak',
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
     'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
