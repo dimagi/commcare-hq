@@ -701,12 +701,12 @@ def run_downgrade_process():
     for domain, oldest_unpaid_invoice, total in _get_domains_with_subscription_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
         if _is_subscription_eligible_for_downgrade_process(current_subscription):
-            _apply_downgrade_process(current_subscription, oldest_unpaid_invoice, total, today)
+            _apply_downgrade_process(oldest_unpaid_invoice, total, today, current_subscription)
 
     for account, oldest_unpaid_invoice, total in _get_accounts_with_customer_invoices_over_threshold(today):
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
         if _is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
-            _apply_downgrade_process(None, oldest_unpaid_invoice, total, today)
+            _apply_downgrade_process(oldest_unpaid_invoice, total, today)
 
 
 def _get_domains_with_subscription_invoices_over_threshold(today):
@@ -775,8 +775,11 @@ def _is_subscription_eligible_for_downgrade_process(subscription):
     )
 
 
-def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
+def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=None):
     from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
+
+    if oldest_unpaid_invoice.is_customer_invoice:
+        return
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
     domain = subscription.subscriber.domain
