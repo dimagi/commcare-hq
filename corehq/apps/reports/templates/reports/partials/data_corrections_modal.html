@@ -25,15 +25,11 @@
                             <!--/ko-->
                         </ul>
                     <!--/ko-->
-                    <div class="input-group input-group-sm">
-                        <input type="text" class="form-control" placeholder="{% trans "Search" %}"
-                               data-bind="value: query, valueUpdate: 'afterkeydown'" />
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" data-bind="click: initQuery">
-                                <i class="fa fa-times"></i>
-                            </button>
-                        </span>
-                    </div>
+                    <search-box data-apply-bindings="false"
+                                params="value: query,
+                                        action: filter,
+                                        immediate: true,
+                                        placeholder: '{% if instance %}{% trans_html_attr "Filter questions" %}{% else %}{% trans_html_attr "Filter properties" %}{% endif %}'"></search-box>
                 </div>
                 <h4 class="modal-title">
                     {% if instance %}{# This is a form, not a case #}

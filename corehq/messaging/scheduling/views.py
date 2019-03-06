@@ -570,13 +570,16 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         context['allow_copy'] = self.allow_copy
         return context
 
-    def get_conditional_alerts_queryset(self):
-        return (
+    def get_conditional_alerts_queryset(self, query_string=''):
+        query = (
             AutomaticUpdateRule
             .objects
             .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-            .order_by('case_type', 'name', 'id')
         )
+        if query_string:
+            query = query.filter(name__icontains=query_string)
+        query = query.order_by('case_type', 'name', 'id')
+        return query
 
     def schedule_is_editable(self, schedule):
         return (
@@ -598,7 +601,7 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         }
 
     def get_conditional_alerts_ajax_response(self, request):
-        query = self.get_conditional_alerts_queryset()
+        query = self.get_conditional_alerts_queryset(query_string=request.GET.get('query', ''))
         total_records = query.count()
 
         limit = int(request.GET.get('limit'))
