@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0101_add_supervisor_id'),
+        ('icds_reports', '0102_drop_update_aggregate_awc_data'),
     ]
 
     operations = [
