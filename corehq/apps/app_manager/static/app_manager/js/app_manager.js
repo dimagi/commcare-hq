@@ -235,18 +235,16 @@ hqDefine('app_manager/js/app_manager', function () {
         if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
         }
-        initDragHandles();
         if (modulesWereReordered()) {
             promptToSaveOrdering();
         } else {
+            initDragHandles();
             $('.sortable').each(function () {
                 initSortable($(this));
             });
-            $('.sort-action').hide();
         }
 
         function initDragHandles() {
-            $('.sortable .sort-action').addClass('sort-disabled');
             $('.drag_handle').addClass('fa fa-arrows-v');
             $('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');

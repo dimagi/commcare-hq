@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 
 <ul class="sortable appmanager-main-menu appnav-menu appnav-module sortable-modules">
-    <li class="sort-action">
+    <li class="sort-action hide sort-disabled">
         <form method="post"
               action="{% url "rearrange" domain app.id 'modules' %}">
               {% csrf_token %}
@@ -24,7 +24,7 @@
                            {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %}
                            {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}"
                     data-parentvar="moduleid">
-                    <li class="sort-action">
+                    <li class="sort-action hide sort-disabled">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">
                               {% csrf_token %}
@@ -100,7 +100,7 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                         {% trans "Not Now" %}
                     </button>
-                    <button type="submit" class="disable-on-submit btn btn-danger">
+                    <button type="submit" class="disable-on-submit btn btn-danger btn-primary">
                         {% trans "Rearrange" %}
                     </button>
                 </div>
