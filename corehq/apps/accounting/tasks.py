@@ -713,12 +713,12 @@ def _get_domains_with_subscription_invoices_over_threshold(today):
     unpaid_saas_invoices = Invoice.objects.filter(
         is_hidden=False,
         subscription__service_type=SubscriptionType.PRODUCT,
-        date_paid__isnull=True,
+        date_paid__isnull=True
     )
 
     overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
         date_due__lte=today - datetime.timedelta(days=1),
-        date_due__gte=today - datetime.timedelta(days=61),
+        date_due__gte=today - datetime.timedelta(days=61)
     ).order_by('date_due').select_related('subscription__subscriber')
 
     domains = set()
@@ -729,7 +729,7 @@ def _get_domains_with_subscription_invoices_over_threshold(today):
             total_overdue_to_date = unpaid_saas_invoices.filter(
                 Q(date_due__lte=overdue_invoice.date_due)
                 | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
-                subscription__subscriber__domain=domain,
+                subscription__subscriber__domain=domain
             ).aggregate(Sum('balance'))['balance__sum']
             if total_overdue_to_date >= 100:
                 domains.add(domain)
@@ -739,12 +739,12 @@ def _get_domains_with_subscription_invoices_over_threshold(today):
 def _get_accounts_with_customer_invoices_over_threshold(today):
     unpaid_customer_invoices = CustomerInvoice.objects.filter(
         is_hidden=False,
-        date_paid__isnull=True,
+        date_paid__isnull=True
     )
 
     overdue_customer_invoices_in_downgrade_daterange = unpaid_customer_invoices.filter(
         date_due__lte=today - datetime.timedelta(days=1),
-        date_due__gte=today - datetime.timedelta(days=61),
+        date_due__gte=today - datetime.timedelta(days=61)
     ).order_by('date_due').select_related('account')
 
     accounts = set()
