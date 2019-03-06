@@ -374,8 +374,10 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
             format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations_gte_21)),
             format_column(title='thr_rations_pregnant_sc', logic=(pregnant & sc_caste & rations_gte_21)),
             format_column(title='thr_rations_lactating_sc', logic=(lactating & sc_caste & rations_gte_21)),
-            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) & (not st_caste) & rations_gte_21)),
-            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) & (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) &
+                                                                      (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) &
+                                                                       (not st_caste) & rations_gte_21)),
             format_column(title='thr_rations_pregnant_disabled', logic=(pregnant & disabled & rations_gte_21)),
             format_column(title='thr_rations_lactating_disabled', logic=(lactating & disabled & rations_gte_21)),
             format_column(title='thr_rations_pregnant_minority', logic=(pregnant & minority & rations_gte_21)),
