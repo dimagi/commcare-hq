@@ -241,15 +241,22 @@ class Command(BaseCommand):
         if force and previous_table_exists:
             session.close()
             BackfillScriptStub.__table__.drop(engine)
+            Base.metadata.create_all(engine)
         elif previous_table_exists:
-            logging.info("Scripts are already setup. Skipping this step, use --resetup_scripts to force resetup")
-            return
-        Base.metadata.create_all(engine)
+            logging.info("Scripts are already setup. Setting up missing ones only, use --resetup_scripts to force resetup")
+        else:
+            Base.metadata.create_all(engine)
+        existing = [
+            (stub.state_id, stub.ucr_id)
+            for stub in session.query(BackfillScriptStub).all()
+        ]
         rows = []
         for state_id in get_state_ids():
             scripts_by_ucr = get_sql_scripts(state_id)
             for ucr_id, script in six.iteritems(scripts_by_ucr):
-                rows.append(BackfillScriptStub(state_id=state_id, ucr_id=ucr_id, raw_sql_script=script))
+                if (state_id, ucr_id) not in existing:
+                    logger.info("Setting up stub for {} {}".format(state_id, ucr_id))
+                    rows.append(BackfillScriptStub(state_id=state_id, ucr_id=ucr_id, raw_sql_script=script))
         session.add_all(rows)
         session.commit()
         logger.info("Status stubs have been setup.")
