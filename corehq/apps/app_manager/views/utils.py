@@ -172,16 +172,15 @@ def overwrite_app(app, master_build, report_map=None):
             app_json[key] = value
     app_json['version'] = master_json['version']
     wrapped_app = wrap_app(app_json)
-    for module in wrapped_app.modules:
-        if isinstance(module, ReportModule):
-            if report_map is not None:
-                for config in module.report_configs:
-                    try:
-                        config.report_id = report_map[config.report_id]
-                    except KeyError:
-                        raise AppEditingError(config.report_id)
-            else:
-                raise AppEditingError('Report map not passed to overwrite_app')
+    for module in wrapped_app.get_report_modules():
+        if report_map is None:
+            raise AppEditingError('Report map not passed to overwrite_app')
+
+        for config in module.report_configs:
+            try:
+                config.report_id = report_map[config.report_id]
+            except KeyError:
+                raise AppEditingError(config.report_id)
 
     wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     enable_usercase_if_necessary(wrapped_app)

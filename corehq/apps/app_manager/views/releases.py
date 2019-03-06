@@ -52,7 +52,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_version,
 )
 from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
-from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -186,7 +185,6 @@ def get_releases_context(request, domain, app_id):
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
-        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,

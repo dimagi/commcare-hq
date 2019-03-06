@@ -204,7 +204,7 @@ hqDefine("export/js/export_list", [
         });
 
         self.totalItems = ko.observable(0);
-        self.itemsPerPage = ko.observable(25);
+        self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
             self.isLoadingPage(true);
             $.ajax({

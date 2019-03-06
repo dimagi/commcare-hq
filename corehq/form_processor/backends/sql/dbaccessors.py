@@ -18,6 +18,7 @@ import re
 
 import operator
 import six
+from ddtrace import tracer
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 from django.db.models import Q, F
@@ -874,6 +875,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
+    @tracer.wrap("form_processor.sql.check_transaction_order_for_case")
     def check_transaction_order_for_case(case_id):
         """ Returns whether the order of transactions needs to be reconciled by client_date
 

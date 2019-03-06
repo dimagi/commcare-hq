@@ -130,7 +130,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
 ]
 
 
@@ -548,9 +547,8 @@ def _agg_ls_table(day):
 
 @track_time
 def _agg_awc_table_weekly(day):
-    _run_custom_sql_script([
-        "SELECT update_aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
+        AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
