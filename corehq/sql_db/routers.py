@@ -27,7 +27,7 @@ AAA_APP = 'aaa'
 
 # this logic is necessary for test database setup
 citus_masters = [db for db in settings.DATABASES.values() if db.get('ROLE', None) == 'citus_master']
-assert len(citus_masters) in (0,1), "Multiple CitusDB masters found"
+assert len(citus_masters) in (0, 1), "Multiple CitusDB masters found"
 CITUS_MASTER = citus_masters[0] if citus_masters else None
 CITUS_WORKERS = [db for db in settings.DATABASES.values() if db.get('ROLE', None) == 'citus_worker']
 if CITUS_MASTER:

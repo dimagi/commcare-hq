@@ -101,7 +101,7 @@ DATABASES.update({
     'citus-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',  # use postgres DB since otherwise we'd need to create the database on the workers
+        'NAME': 'commcare_ucr_citus',
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': 'citus_master',
