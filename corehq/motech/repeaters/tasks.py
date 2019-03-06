@@ -9,7 +9,7 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from redis.exceptions import LockError
 from corehq.util.datadog.gauges import datadog_gauge_task
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.motech.repeaters.dbaccessors import iterate_repeat_records, \
@@ -24,7 +24,7 @@ from corehq.motech.repeaters.const import (
 logging = get_task_logger(__name__)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=CHECK_REPEATERS_INTERVAL,
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
@@ -32,12 +32,11 @@ def check_repeaters():
     start = datetime.utcnow()
     cutoff = start + CHECK_REPEATERS_INTERVAL
 
-    redis_client = get_redis_client().client.get_client()
-
     # Timeout for slightly less than periodic check
-    check_repeater_lock = redis_client.lock(
+    check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=CHECK_REPEATERS_INTERVAL.seconds - 10
+        timeout=CHECK_REPEATERS_INTERVAL.seconds - 10,
+        name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
         return
@@ -49,7 +48,12 @@ def check_repeaters():
         if now > cutoff:
             break
 
-        lock = redis_client.lock(lock_key, timeout=60 * 60 * 48)
+        lock = get_redis_lock(
+            lock_key,
+            timeout=60 * 60 * 48,
+            name="repeat_record",
+            track_unreleased=False,
+        )
         if not lock.acquire(blocking=False):
             continue
 

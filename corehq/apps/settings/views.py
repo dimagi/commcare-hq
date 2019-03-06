@@ -167,7 +167,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     def phone_number_is_valid(self):
         return (
             isinstance(self.phone_number, six.string_types) and
-            re.compile('^\d+$').match(self.phone_number) is not None
+            re.compile(r'^\d+$').match(self.phone_number) is not None
         )
 
     def process_add_phone_number(self):
@@ -401,6 +401,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         kwargs = kwargs or {}
         kwargs.update(self.storage.validated_step_data.get('method', {}))
         return PhoneDevice(key=self.get_key(), **kwargs)
+
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 

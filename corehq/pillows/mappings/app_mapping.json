@@ -1,0 +1,806 @@
+{
+    "date_formats": "__DATE_FORMATS_ARR__",
+    "dynamic": false,
+    "_meta": {
+        "created": null
+    },
+    "_all": {
+        "enabled": false
+    },
+    "date_detection": false,
+    "properties": {
+        "@indexed_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
+        "short_url": {
+            "type": "string"
+        },
+        "build_broken": {
+            "type": "boolean"
+        },
+        "copy_of": {
+            "type": "string"
+        },
+        "phone_model": {
+            "type": "string"
+        },
+        "copy_history": {
+            "type": "string"
+        },
+        "is_released": {
+            "type": "boolean"
+        },
+        "platform": {
+            "type": "string"
+        },
+        "admin_password": {
+            "type": "string"
+        },
+        "build_spec": {
+            "type": "object",
+            "dynamic": false,
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "build_number": {
+                    "type": "long"
+                },
+                "latest": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "success_message": {
+            "type": "object",
+            "dynamic": false
+        },
+        "multimedia_map": {
+            "type": "object",
+            "dynamic": false,
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "output_size": {
+                    "type": "object",
+                    "dynamic": false
+                },
+                "version": {
+                    "type": "long"
+                },
+                "multimedia_id": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "unique_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "comment_from": {
+            "type": "string"
+        },
+        "cloudcare_enabled": {
+            "type": "boolean"
+        },
+        "recipients": {
+            "type": "string"
+        },
+        "translations": {
+            "type": "object",
+            "dynamic": false
+        },
+        "built_on": {
+            "type": "date",
+            "format": "__DATE_FORMATS_STRING__"
+        },
+        "built_with": {
+            "type": "object",
+            "dynamic": false,
+            "properties": {
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "build_number": {
+                    "type": "long"
+                },
+                "signed": {
+                    "type": "boolean"
+                },
+                "datetime": {
+                    "type": "date",
+                    "format": "__DATE_FORMATS_STRING__"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "latest": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "application_version": {
+            "type": "string"
+        },
+        "build_comment": {
+            "type": "string"
+        },
+        "doc_type": {
+            "index": "not_analyzed",
+            "type": "string"
+        },
+        "name": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "force_http": {
+            "type": "boolean"
+        },
+        "created_from_template": {
+            "type": "string"
+        },
+        "translation_strategy": {
+            "type": "string"
+        },
+        "case_sharing": {
+            "type": "boolean"
+        },
+        "short_odk_url": {
+            "type": "string"
+        },
+        "domain": {
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "build_langs": {
+            "type": "string"
+        },
+        "deployment_date": {
+            "type": "date",
+            "format": "__DATE_FORMATS_STRING__"
+        },
+        "user_type": {
+            "type": "string"
+        },
+        "text_input": {
+            "type": "string"
+        },
+        "secure_submissions": {
+            "type": "boolean"
+        },
+        "build_signed": {
+            "type": "boolean"
+        },
+        "vellum_case_management": {
+            "type": "boolean"
+        },
+        "version": {
+            "type": "long"
+        },
+        "profile": {
+            "type": "object",
+            "dynamic": true
+        },
+        "description": {
+            "type": "string"
+        },
+        "short_odk_media_url": {
+            "type": "string"
+        },
+        "langs": {
+            "type": "string"
+        },
+        "use_custom_suite": {
+            "type": "boolean"
+        },
+        "cached_properties": {
+            "type": "object",
+            "dynamic": false
+        },
+        "modules": {
+            "type": "nested",
+            "dynamic": false,
+            "properties": {
+                "case_list": {
+                    "type": "object",
+                    "dynamic": false,
+                    "properties": {
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "show": {
+                            "type": "boolean"
+                        },
+                        "label": {
+                            "type": "object",
+                            "dynamic": false
+                        }
+                    }
+                },
+                "put_in_root": {
+                    "type": "boolean"
+                },
+                "root_module_id": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "doc_type": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "object",
+                    "dynamic": false
+                },
+                "referral_list": {
+                    "type": "object",
+                    "dynamic": false,
+                    "properties": {
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "show": {
+                            "type": "boolean"
+                        },
+                        "label": {
+                            "type": "object",
+                            "dynamic": false
+                        }
+                    }
+                },
+                "parent_select": {
+                    "type": "object",
+                    "dynamic": false,
+                    "properties": {
+                        "active": {
+                            "type": "boolean"
+                        },
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "relationship": {
+                            "type": "string"
+                        },
+                        "module_id": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "forms": {
+                    "type": "nested",
+                    "dynamic": false,
+                    "properties": {
+                        "unique_id": {
+                            "type": "string"
+                        },
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "version": {
+                            "type": "long"
+                        },
+                        "name": {
+                            "type": "object",
+                            "dynamic": false
+                        },
+                        "show_count": {
+                            "type": "boolean"
+                        },
+                        "form_type": {
+                            "type": "string"
+                        },
+                        "requires": {
+                            "type": "string"
+                        },
+                        "form_filter": {
+                            "type": "string"
+                        },
+                        "actions": {
+                            "type": "object",
+                            "dynamic": false,
+                            "properties": {
+                                "subcases": {
+                                    "type": "nested",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "repeat_context": {
+                                            "type": "string"
+                                        },
+                                        "case_properties": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "case_type": {
+                                            "type": "string"
+                                        },
+                                        "reference_id": {
+                                            "type": "string"
+                                        },
+                                        "case_name": {
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "update_case": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "update": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "close_referral": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "open_referral": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "name_path": {
+                                            "type": "string"
+                                        },
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "followup_date": {
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "case_preload": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "preload": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "doc_type": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "load_from_form": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "preload": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "open_case": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "name_path": {
+                                            "type": "string"
+                                        },
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "external_id": {
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "update_referral": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "followup_date": {
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "referral_preload": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "preload": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "close_case": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "condition": {
+                                            "type": "object",
+                                            "dynamic": false,
+                                            "properties": {
+                                                "answer": {
+                                                    "type": "string"
+                                                },
+                                                "doc_type": {
+                                                    "index": "not_analyzed",
+                                                    "type": "string"
+                                                },
+                                                "question": {
+                                                    "type": "string"
+                                                },
+                                                "type": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "xmlns": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "case_type": {
+                    "fields": {
+                        "exact": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    },
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object",
+                    "dynamic": false,
+                    "properties": {
+                        "filter": {
+                            "type": "string"
+                        },
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "type": {
+                            "type": "string"
+                        },
+                        "sort_elements": {
+                            "type": "object",
+                            "dynamic": false,
+                            "properties": {
+                                "doc_type": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "direction": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "field": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "columns": {
+                            "type": "object",
+                            "dynamic": false,
+                            "properties": {
+                                "doc_type": {
+                                    "index": "not_analyzed",
+                                    "type": "string"
+                                },
+                                "time_ago_interval": {
+                                    "type": "float"
+                                },
+                                "filter_xpath": {
+                                    "type": "string"
+                                },
+                                "field": {
+                                    "type": "string"
+                                },
+                                "late_flag": {
+                                    "type": "long"
+                                },
+                                "format": {
+                                    "type": "string"
+                                },
+                                "enum": {
+                                    "type": "object",
+                                    "dynamic": false,
+                                    "properties": {
+                                        "doc_type": {
+                                            "index": "not_analyzed",
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "object",
+                                            "dynamic": false
+                                        },
+                                        "key": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "header": {
+                                    "type": "object",
+                                    "dynamic": false
+                                },
+                                "model": {
+                                    "type": "string"
+                                },
+                                "advanced": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "task_list": {
+                    "type": "object",
+                    "dynamic": false,
+                    "properties": {
+                        "doc_type": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        },
+                        "show": {
+                            "type": "boolean"
+                        },
+                        "label": {
+                            "type": "object",
+                            "dynamic": false
+                        }
+                    }
+                },
+                "unique_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "attribution_notes": {
+            "type": "string"
+        },
+        "admin_password_charset": {
+            "type": "string"
+        },
+        "date_created": {
+            "type": "date",
+            "format": "__DATE_FORMATS_STRING__"
+        },
+        "cp_is_active": {
+            "type": "boolean"
+        }
+    }
+}

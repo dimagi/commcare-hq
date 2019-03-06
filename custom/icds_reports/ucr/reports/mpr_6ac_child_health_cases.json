@@ -9,14 +9,14 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "report_id": "static-mpr_6ac_child_health_cases",

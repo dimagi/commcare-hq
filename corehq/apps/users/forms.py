@@ -469,7 +469,7 @@ class CommCareAccountForm(forms.Form):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
@@ -1101,7 +1101,7 @@ class AddPhoneNumberForm(forms.Form):
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
-                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern='\d+')
+                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1162,7 +1162,7 @@ class CommCareUserFilterForm(forms.Form):
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
 
         roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()

@@ -68,7 +68,7 @@ from jsonobject.api import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty
 import six
 
-ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
+ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 

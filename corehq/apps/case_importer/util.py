@@ -341,11 +341,11 @@ def get_spreadsheet(filename):
         with open_any_workbook(filename) as workbook:
             yield WorksheetWrapper.from_workbook(workbook)
     except SpreadsheetFileEncrypted as e:
-        raise ImporterExcelFileEncrypted(e.message)
+        raise ImporterExcelFileEncrypted(six.text_type(e))
     except SpreadsheetFileNotFound as e:
-        raise ImporterFileNotFound(e.message)
+        raise ImporterFileNotFound(six.text_type(e))
     except SpreadsheetFileInvalidError as e:
-        raise ImporterExcelError(e.message)
+        raise ImporterExcelError(six.text_type(e))
 
 
 def is_valid_location_owner(owner, domain):
@@ -422,6 +422,6 @@ def get_importer_error_message(e):
         return _('The file you want to import is password protected. '
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
-        return _("The file uploaded has the following error: {}").format(e.message)
+        return _("The file uploaded has the following error: {}").format(six.text_type(e))
     else:
-        return _("Error: {}").format(e.message)
+        return _("Error: {}").format(six.text_type(e))

@@ -7,7 +7,6 @@ import functools
 import json
 import os
 import tempfile
-import uuid
 import re
 
 from django.conf import settings
@@ -50,9 +49,9 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -435,7 +434,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, e.message)
+                messages.error(request, six.text_type(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -695,7 +694,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
+        report_data = json.loads(six.moves.urllib.parse.unquote(request.body.decode('utf-8')))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters
@@ -1286,7 +1285,7 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@login_or_basic
+@api_auth
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
@@ -1312,7 +1311,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(e.message, status=400)
+        return HttpResponse(six.text_type(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

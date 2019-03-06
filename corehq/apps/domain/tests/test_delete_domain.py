@@ -251,12 +251,14 @@ class TestDeleteDomain(TestCase):
 
         self.domain.delete()
 
+        # Check that get_credits_by_subscription_and_features does not return the old deactivated credit line
         subscription_credits = CreditLine.get_credits_by_subscription_and_features(
             self.current_subscription,
             feature_type=FeatureType.SMS,
         )
-        self.assertEqual(len(subscription_credits), 1)
-        self.assertEqual(subscription_credits[0].balance, Decimal('0.0000'))
+        self.assertEqual(len(subscription_credits), 0)
+
+        # Check that old credit line has been tranferred to accoun
         account_credits = CreditLine.get_credits_for_account(
             self.current_subscription.account,
             feature_type=FeatureType.SMS,

@@ -17,6 +17,7 @@ from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
+from corehq.util.datadog.utils import case_load_counter, form_load_counter
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog,
@@ -188,6 +189,10 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
+        if lock:
+            # only record metric if locking since otherwise it has been
+            # (most likley) recorded elsewhere
+            case_load_counter("rebuild_case", domain)()
         case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock, wrap=True)
         found = bool(case)
         if not found:
@@ -201,6 +206,7 @@ class FormProcessorCouch(object):
         try:
             assert case.domain == domain, (case.domain, domain)
             forms = FormProcessorCouch.get_case_forms(case_id)
+            form_load_counter("rebuild_case", domain)(len(forms))
             filtered_forms = [f for f in forms if f.is_normal]
             sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 

@@ -9,6 +9,7 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-test",
     "icds-sql",
@@ -17,8 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "report_id": "static-mpr_10a_person_cases",

@@ -10,4 +10,3 @@ class Command(BaseCommand):
     def handle(self, **options):
         daily_reports()
         weekly_reports()
-        

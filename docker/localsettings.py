@@ -27,6 +27,17 @@ DATABASES = {
             'SERIALIZE': False,
         },
     },
+    'aaa-data': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'aaa_commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
 }
 
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
@@ -226,8 +237,6 @@ SKIP_TOUCHFORMS_TESTS = True
 UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
-
-ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 

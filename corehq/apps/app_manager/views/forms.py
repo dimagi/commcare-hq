@@ -111,7 +111,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
-        messages.error(request, e.message)
+        messages.error(request, six.text_type(e))
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)
@@ -284,8 +284,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     # First, we strip all newlines and reformat the DOM.
                     px = parseString(xform.replace('\r\n', '')).toprettyxml()
                     # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub('>\g<1></', px)
+                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+                    prettyXml = text_re.sub(r'>\g<1></', px)
                     xform = prettyXml
                 except Exception:
                     pass

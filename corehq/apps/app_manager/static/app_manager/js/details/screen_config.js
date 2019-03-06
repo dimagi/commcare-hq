@@ -1047,7 +1047,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             containsParentConfiguration: columnType === "short",
                             containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType === "short",
-                            containsCaseListLookupConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
                             containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType === "short",

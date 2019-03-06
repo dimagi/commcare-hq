@@ -20,6 +20,7 @@ SELECT
 "awc_location_months"."district_map_location_name" AS "district_map_location_name",
 "awc_location_months"."state_map_location_name" AS "state_map_location_name",
 "awc_location_months"."aggregation_level" AS "aggregation_level",
+agg_awc.month as month,
 agg_awc.num_launched_awcs AS num_launched_awcs,
 agg_awc.valid_visits AS valid_visits,
 agg_awc.expected_visits AS expected_visits,
@@ -66,7 +67,6 @@ INNER JOIN (
         SUM(CASE WHEN agg_ccs_record.ccs_status in ('lactating', 'pregnant') THEN agg_ccs_record.rations_21_plus_distributed ELSE 0 END) as mother_thr,
         SUM(valid_in_month) as mother_thr_eligible
         from agg_ccs_record
-        where month='2018-05-01'
         group by state_id,district_id,block_id,supervisor_id,awc_id,aggregation_level, month
 
         ) ccr on (
@@ -99,6 +99,7 @@ GROUP BY
   "awc_location_months"."district_map_location_name" ,
   "awc_location_months"."state_map_location_name",
   "awc_location_months"."aggregation_level",
+  agg_awc.month,
   agg_awc.num_launched_awcs,
   agg_awc.num_awcs_conducted_cbe,
   agg_awc.valid_visits,

@@ -8,23 +8,21 @@ import tempfile
 from collections import namedtuple, OrderedDict, defaultdict
 
 import polib
-from django.conf import settings
 from django.utils.functional import cached_property
 from memoized import memoized
 
-from corehq.apps.app_manager.util import get_form_data
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
-HQ_MODULE_SHEET_NAME = re.compile('^module(\d+)$')
-HQ_FORM_SHEET_NAME = re.compile('^module(\d+)_form(\d+)$')
+HQ_MODULE_SHEET_NAME = re.compile(r'^module(\d+)$')
+HQ_FORM_SHEET_NAME = re.compile(r'^module(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
 
-class AppTranslationsGenerator:
+class AppTranslationsGenerator(object):
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False, use_version_postfix=True):
         """
@@ -81,17 +79,18 @@ class AppTranslationsGenerator:
 
         labels_to_skip = defaultdict(set)
         necessary_labels = defaultdict(set)
-        module_data, errors = get_form_data(self.domain, self.app)
 
-        for module in module_data:
-            for form in module['forms']:
-                for question in form['questions']:
+        for module in self.app.modules:
+            for form in module.forms:
+                questions = form.get_questions(self.app.langs, include_triggers=True,
+                                               include_groups=True, include_translations=True)
+                for question in questions:
                     if not question.get('label_ref'):
                         continue
                     if question['comment'] and SKIP_TRANSFEX_STRING in question['comment']:
-                        labels_to_skip[form['id']] |= _labels_from_question(question)
+                        labels_to_skip[form.unique_id] |= _labels_from_question(question)
                     else:
-                        necessary_labels[form['id']] |= _labels_from_question(question)
+                        necessary_labels[form.unique_id] |= _labels_from_question(question)
 
         for form_id in labels_to_skip.keys():
             labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]

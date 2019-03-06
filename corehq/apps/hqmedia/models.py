@@ -8,7 +8,7 @@ from datetime import datetime
 from io import BytesIO
 
 import magic
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.template.defaultfilters import filesizeformat
 
 from corehq import privileges
@@ -157,10 +157,8 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
             else:
                 # this should only be files that had attachments deleted while the bug
                 # was in effect, so hopefully we will stop seeing it after a few days
-                soft_assert(notify_admins=True)(False, 'someone is uploading a file that should have existed for multimedia', {
-                    'media_id': self._id,
-                    'attachment_id': attachment_id
-                })
+                soft_assert(notify_admins=True)(False, '[ICDS-291] someone is uploading a file that should '
+                    'have existed for multimedia', {'media_id': self._id, 'attachment_id': attachment_id})
             self.put_attachment(
                 data,
                 attachment_id,
@@ -277,6 +275,10 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     def get_by_data(cls, data):
         file_hash = cls.generate_hash(data)
         return cls.get_by_hash(file_hash)
+
+    @classmethod
+    def get_doc_types(cls):
+        return ('CommCareImage', 'CommCareAudio', 'CommCareVideo')
 
     @classmethod
     def get_doc_class(cls, doc_type):
@@ -550,7 +552,7 @@ def _log_media_deletion(app, deleted_media):
         for path, map_item, media in deleted_media
     ]
     soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-        False, "path deleted from multimedia map", json.dumps({
+        False, "[ICDS-291] path deleted from multimedia map", json.dumps({
             'domain': app.domain,
             'app_id': app._id,
             'deleted_media': list(formatted_media),
@@ -942,29 +944,42 @@ class ApplicationMediaMixin(Document, MediaMixin):
         found_missing_mm = False
         # preload all the docs to avoid excessive couch queries.
         # these will all be needed in memory anyway so this is ok.
-        expected_ids = [map_item.multimedia_id for map_item in self.multimedia_map.values()]
-        raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        all_media = {m.path: m for m in self.all_media()}
-        deleted_media = []
-        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
         build_profile = self.build_profiles[build_profile_id] if build_profile_id else None
-        for path, map_item in self.multimedia_map_for_build(build_profile=build_profile).items():
+        multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile)
+        expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
+        raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
+        retry_successes = []
+        retry_failures = []
+        for path, map_item in multimedia_map_for_build.items():
             media_item = raw_docs.get(map_item.multimedia_id)
             if media_item:
                 media_cls = CommCareMultimedia.get_doc_class(map_item.media_type)
                 yield path, media_cls.wrap(media_item)
             else:
-                # delete media reference from multimedia map so this doesn't pop up again!
-                deleted_media.append((path, map_item, all_media.get(path)))
-                if allow_deletion:
-                    del self.multimedia_map[path]
-                    found_missing_mm = True
+                # Re-attempt to fetch media directly from couch
+                media = CommCareMultimedia.get_doc_class(map_item.media_type)
+                try:
+                    media = media.get(map_item.multimedia_id)
+                    retry_successes.append(map_item)
+                    yield path, media
+                except ResourceNotFound as e:
+                    retry_failures.append(map_item)
+                    if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
+                        raise e
 
-        if not allow_deletion and deleted_media:
-            _log_media_deletion(self, deleted_media)
-
-        if found_missing_mm:
-            self.save()
+        if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
+            if retry_successes or retry_failures:
+                soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
+                    False, "[ICDS-291] get_media_objects failed to find multimedia", json.dumps([{
+                        'domain': self.domain,
+                        'app_id': self._id,
+                        'retry_successes_count': len(retry_successes),
+                        'retry_failures_count': len(retry_failures),
+                    }, {
+                        'retry_successes': [s.to_json() for s in retry_successes],
+                        'retry_failures': [f.to_json() for f in retry_failures],
+                    }], indent=4)
+                )
 
     def get_references(self, lang=None):
         """
@@ -983,7 +998,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
             Returns a list of totals of each type of media in the application and total matches.
         """
         totals = []
-        for mm in [CommCareImage, CommCareAudio, CommCareVideo]:
+        for mm in [CommCareMultimedia.get_doc_class(t) for t in CommCareMultimedia.get_doc_types()]:
             paths = self.get_all_paths_of_type(mm.__name__)
             matched_paths = [p for p in self.multimedia_map.keys() if p in paths]
             if len(paths) > 0:

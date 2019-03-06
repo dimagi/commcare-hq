@@ -1,10 +1,11 @@
 {
   "domains": [
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "config": {
@@ -94,6 +95,12 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "hand_wash"
+      },
+      {
+        "column_id": "birth_weight",
+        "datatype": "small_integer",
+        "type": "raw",
+        "property_name": "birth_weight"
       }
     ],
     "named_expressions": {

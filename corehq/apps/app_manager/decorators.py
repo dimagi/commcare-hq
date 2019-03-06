@@ -18,6 +18,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+
 def safe_download(f):
     """
     Makes a download safe, by trapping any app errors and redirecting

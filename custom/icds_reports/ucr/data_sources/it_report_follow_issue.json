@@ -9,13 +9,14 @@
     "shrena-dev",
     "aparatest",
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
     "icds-test",
     "icds-cas",
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
   ],

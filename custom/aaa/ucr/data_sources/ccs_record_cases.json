@@ -1,10 +1,11 @@
 {
   "domains": [
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "config": {
@@ -136,7 +137,7 @@
       },
       {
         "column_id": "child_birth_location",
-        "datatype": "date",
+        "datatype": "string",
         "type": "raw",
         "property_name": "child_birth_location"
       }

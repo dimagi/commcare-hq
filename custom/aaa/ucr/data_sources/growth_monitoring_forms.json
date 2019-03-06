@@ -1,10 +1,11 @@
 {
   "domains": [
     "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "config": {
@@ -227,8 +228,8 @@
         }
       },
       {
-        "column_id": "string",
-        "datatype": "small_integer",
+        "column_id": "zscore_grading_wfh",
+        "datatype": "string",
         "type": "expression",
         "expression": {
           "type": "root_doc",

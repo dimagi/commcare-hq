@@ -59,7 +59,7 @@ def validate_time(value):
     if isinstance(value, time):
         return value
     error_msg = _("Please enter a valid time from 00:00 to 23:59.")
-    time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
+    time_regex = re.compile(r"^\d{1,2}:\d\d(:\d\d){0,1}$")
     if not isinstance(value, six.string_types) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
     try:

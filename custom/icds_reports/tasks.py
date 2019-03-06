@@ -36,6 +36,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.datadog.utils import create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -65,7 +66,7 @@ from custom.icds_reports.models import (
     AggLs,
     AggAwc,
     AwcLocation,
-    AwcLocationMonths)
+)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
     AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
 from custom.icds_reports.models.helper import IcdsFile
@@ -97,7 +98,7 @@ DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'softlayer':
+if settings.SERVER_ENVIRONMENT == 'india':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
@@ -133,10 +134,10 @@ SQL_FUNCTION_PATHS = [
 ]
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23),
+@periodic_task(run_every=crontab(minute=30, hour=23),
                acks_late=True, queue='icds_aggregation_queue')
-def run_move_ucr_data_into_aggregation_tables_task(date=None):
-    move_ucr_data_into_aggregation_tables.delay(date)
+def run_move_ucr_data_into_aggregation_tables_task():
+    move_ucr_data_into_aggregation_tables.delay()
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
@@ -257,7 +258,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
-            _bust_awc_cache.delay()
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -268,6 +268,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
+        _bust_awc_cache.delay()
 
 
 def _create_aggregate_functions(cursor):
@@ -560,7 +561,7 @@ def email_dashboad_team(aggregation_date):
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=21),
     acks_late=True
@@ -671,29 +672,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             month=config['month'],
             aggregation_level=aggregation_level
         ).get_excel_data()
-        if aggregation_level == 1:
-            location_object = AwcLocationMonths.objects.filter(
-                state_id=location,
-                aggregation_level=aggregation_level
-            ).first()
-        elif aggregation_level == 2:
-            location_object = AwcLocationMonths.objects.filter(
-                district_id=location,
-                aggregation_level=aggregation_level
-            ).first()
-        else:
-            location_object = AwcLocationMonths.objects.filter(
-                block_id=location,
-                aggregation_level=aggregation_level
-            ).first()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
-                location_object.state_name,
-                location_object.district_name if aggregation_level >= 2 else None,
-                location_object.block_name if aggregation_level == 3 else None,
+                state=SQLLocation.objects.get(
+                    location_id=config['state_id'], domain=config['domain']
+                ).name,
+                district=SQLLocation.objects.get(
+                    location_id=config['district_id'], domain=config['domain']
+                ).name if aggregation_level >= 2 else None,
+                block=SQLLocation.objects.get(
+                    location_id=config['block_id'], domain=config['domain']
+                ).name if aggregation_level == 3 else None,
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -871,7 +863,7 @@ def _get_value(data, field):
     return getattr(data, field) or default
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
     filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
@@ -922,7 +914,7 @@ def build_disha_dump():
     celery_task_logger.info("Finished dumping DISHA data")
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute=0, hour=0), queue='background_queue')
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def push_missing_docs_to_es():
     if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
         return
@@ -994,5 +986,8 @@ def create_mbt_for_month(state_id, month):
 
 @task(queue='background_queue')
 def _bust_awc_cache():
+    create_datadog_event('redis: delete dashboard keys', 'start')
     reach_keys = cache.keys('*cas_reach_data*')
-    cache.delete_many(reach_keys)
+    for key in reach_keys:
+        cache.delete(key)
+    create_datadog_event('redis: delete dashboard keys', 'finish')

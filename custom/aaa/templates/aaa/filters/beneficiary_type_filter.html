@@ -1,0 +1,16 @@
+<script type="text/html" id="beneficiary-type-template">
+    <div>
+        <h2 class="filter-title"><strong><i class="fa fa-smile-o icon-bar"></i> Beneficiary Type</strong></h2>
+        <div class="form-group">
+            <label for="beneficiary-type">Current Beneficiary Status <span class="required">*</span></label>
+            <select class="form-control" data-bind="options: beneficiaryTypes,
+                optionsText: 'name',
+                optionsValue: 'id',
+                value: selectedType,
+                valueAllowUnset: true,
+                select2: {placeholder: 'Current Beneficiary Status'}">
+            </select>
+        </div>
+    </div>
+    <hr/>
+</script>
