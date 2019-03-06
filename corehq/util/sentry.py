@@ -1,4 +1,7 @@
 from __future__ import absolute_import, unicode_literals
+
+import traceback
+
 from six import string_types
 from six.moves import filter
 import re
@@ -33,13 +36,31 @@ RATE_LIMITED_EXCEPTIONS = {
 }
 
 
+RATE_LIMIT_BY_PACKAGE = {
+    'requests.exceptions.ConnectionError': [
+        ('cloudant', 'couchdb'),
+    ],
+    'requests.exceptions.HTTPError': [
+        ('cloudant', 'couchdb'),
+    ]
+}
+
+
 def _get_rate_limit_key(exc_info):
-    exc_type = exc_info[0]
+    exc_type, value, tb = exc_info
     exc_name = '%s.%s' % (exc_type.__module__, exc_type.__name__)
     if exc_type.__name__ in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_type.__name__]
     elif exc_name in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_name]
+
+    if exc_name in RATE_LIMIT_BY_PACKAGE:
+        mappings = RATE_LIMIT_BY_PACKAGE[exc_name]
+        frame_summaries = traceback.extract_tb(tb)
+        for frame in frame_summaries:
+            for package, key in mappings:
+                if frame.filename.startswith(package):
+                    return key
 
 
 class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
