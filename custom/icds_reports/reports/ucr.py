@@ -334,7 +334,11 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
             format_column(title='thr_rations_partial_pregnant', logic=(pregnant & rations_lt_21)),
             format_column(title='thr_rations_partial_lactating', logic=(lactating & rations_lt_21)),
             format_column(title='thr_rations_migrant_pregnant', logic=(pregnant & rations_gte_21 & migrant)),
-            format_column(title='thr_rations_migrant_lactating', logic=(lactating & rations_gte_21 & migrant))
+            format_column(title='thr_rations_migrant_lactating', logic=(lactating & rations_gte_21 & migrant)),
+            format_column(title='pregnant', logic=pregnant),
+            format_column(title='lactating', logic=lactating),
+            format_column(title='thr_total_rations_pregnant', logic=(pregnant & rations_gte_21)),
+            format_column(title='thr_total_rations_lactating', logic=(lactating & rations_gte_21)),
         )
 
         if not total_row:
