@@ -30,7 +30,7 @@ hqDefine('hqwebapp/js/components/search_box', [
 
             self.clickAction = params.action;
             self.keypressAction = function (model, e) {
-                if (event.keyCode === 13) {
+                if (e.keyCode === 13) {
                     self.action();
                 }
                 return true;

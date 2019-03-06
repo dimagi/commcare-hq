@@ -201,7 +201,7 @@ hqDefine("reports/js/data_corrections", [
         };
         self.clearQuery = function () {
             self.query('');
-            seilf.filter();
+            self.filter();
         };
 
         // Because of how search is implemented, it's useful to store a list of the values that we're going to
