@@ -32,7 +32,6 @@ from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layo
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
-    DEFAULT_FETCH_LIMIT,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -278,10 +277,6 @@ def get_app_view_context(request, app):
     })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
-    try:
-        context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
-    except ValueError:
-        context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
         context['upstream_url'] = _get_upstream_url(app, request.couch_user)
