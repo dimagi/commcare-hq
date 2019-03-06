@@ -108,7 +108,8 @@ For error handling update the task state to failure and provide errors:
     def my_cool_task():
         try:
             # do some stuff
-        except:
+        except SomeError as err:
+            errors = [err]
             update_task_state(my_cool_task, states.FAILURE, {'errors': errors})
             raise
 
