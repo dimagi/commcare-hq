@@ -37,12 +37,9 @@ RATE_LIMITED_EXCEPTIONS = {
 
 
 RATE_LIMIT_BY_PACKAGE = {
-    'requests.exceptions.ConnectionError': [
-        ('cloudant', 'couchdb'),
-    ],
-    'requests.exceptions.HTTPError': [
-        ('cloudant', 'couchdb'),
-    ]
+    # exception: (python package prefix, rate limit key)
+    'requests.exceptions.ConnectionError': ('cloudant', 'couchdb'),
+    'requests.exceptions.HTTPError': ('cloudant', 'couchdb'),
 }
 
 
@@ -55,12 +52,14 @@ def _get_rate_limit_key(exc_info):
         return RATE_LIMITED_EXCEPTIONS[exc_name]
 
     if exc_name in RATE_LIMIT_BY_PACKAGE:
-        mappings = RATE_LIMIT_BY_PACKAGE[exc_name]
+        # not super happy with this approach but want to be able to
+        # rate limit exceptions based on where they come from rather than
+        # the specific exception
+        package, key = RATE_LIMIT_BY_PACKAGE[exc_name]
         frame_summaries = traceback.extract_tb(tb)
         for frame in frame_summaries:
-            for package, key in mappings:
-                if frame.filename.startswith(package):
-                    return key
+            if frame.filename.startswith(package):
+                return key
 
 
 class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
