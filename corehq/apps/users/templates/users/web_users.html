@@ -7,18 +7,8 @@
 {% block page_content %}
     {% registerurl "delete_invitation" domain %}
     {% registerurl "delete_request" domain %}
-    {% registerurl "post_user_role" domain %}
-    {% registerurl "delete_user_role" domain %}
     {% registerurl "paginate_web_users" domain %}
     {% registerurl "reinvite_web_user" domain %}
-    {% initial_page_data "user_roles" user_roles %}
-    {% initial_page_data "default_role" default_role %}
-    {% initial_page_data "report_list" report_list %}
-    {% initial_page_data "web_apps_list" web_apps_list %}
-    {% initial_page_data "apps_list" apps_list %}
-    {% initial_page_data "can_edit_roles" can_edit_roles %}
-    {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
-    {% initial_page_data "landing_page_choices" landing_page_choices %}
 
     <p class="lead">
         {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
@@ -26,15 +16,17 @@
             However, these users cannot submit forms from phones
             using the {{ cc_name }} Application.
         {% endblocktrans %}
+        {% if not request.is_view_only %}
         <div class="btn-toolbar">
             <a class="btn btn-primary"
                href="{% url "invite_web_user" domain %}">
                 <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
             </a>
         </div>
+        {% endif %}
     </p>
 
-    {% if requests %}
+    {% if requests and not request.is_view_only %}
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -122,7 +114,9 @@
                         <th>{% trans "Role" %}</th>
                         <th>{% trans "Name" %}</th>
                         <th>{% trans "Phone Numbers" %}</th>
+                        {% if not request.is_view_only %}
                         <th></th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody data-bind="foreach: users">
@@ -137,6 +131,7 @@
                                 <li data-bind="text: $data"></li>
                             </ul>
                         </td>
+                        {% if not request.is_view_only %}
                         <td>
                             <div data-bind="visible: removeUrl">
                                 <button type="button"
@@ -191,6 +186,7 @@
                                 </div>
                             <!-- /ko -->
                         </td>
+                        {% endif %}
                     </tr>
                 </tbody>
             </table>
@@ -205,7 +201,7 @@
         </div><!-- end .panel-body -->
     </div><!-- end .panel -->
 
-    {% if invitations %}
+    {% if invitations and not request.is_view_only %}
         <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -265,503 +261,6 @@
         </div>
     {% endif %}
 
-    <div class="panel panel-default" id="user-roles-table" style="display: none;">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {% trans 'Roles' %}
-            </h3>
-        </div>
-        <div class="panel-body">
-            <table class="table table-striped table-responsive">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>
-                          {% trans "Edit Web Users" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Web Users" %}"
-                                data-content="{% trans "Specify web user access permissions; invite new web users to the domain; manage account settings for web users." %}"></span>
-                        </th>
-                        <th>
-                          {% trans "Edit Mobile Workers" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Mobile Workers" %}"
-                                data-content="{% trans "Manage account settings for mobile workers; create accounts for mobile workers; archive and/or delete mobile users." %}"></span>
-                        </th>
-                        <th>
-                          {% trans "Edit Locations" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Locations"%}"
-                                data-content="{% trans "Create, update, and delete Locations in the Organization Hierarchy." %}"></span>
-                        </th>
-                        {% if show_integration %}
-                        <th>
-                          {% trans "Edit Integration" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans 'Edit Integration' %}"
-                                data-content="{% trans 'Manage integration with other systems.' %}"></span>
-                        </th>
-                        {% endif %}
-                        <th>
-                          {% trans "Edit Data" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Data" %}"
-                                data-content="{% trans "View, export, and edit form and case data; reassign cases." %}"></span>
-                        </th>
-                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                            <th>
-                              {% trans "Edit Shared Exports" %}
-                              <span class="hq-help-template"
-                                    data-title="{% trans "Edit Shared Exports" %}"
-                                    data-content="{% trans "Access and edit the content and structure of shared exports." %}"></span>
-                            </th>
-                        {% endif %}
-                        <th>
-                          {% trans "Edit Apps" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Apps" %}"
-                                data-content="{% trans "Modify the structure and configuration of the application." %}"></span>
-                        </th>
-                        <th>
-                          {% trans "View Reports" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "View Reports" %}"
-                                data-content="{% trans "See all CommCareHQ performance reports." %}"></span>
-                        </th>
-                        <th>
-                          {% trans "Edit Subscription Info" %}
-                          <span class="hq-help-template"
-                                data-title="{% trans "Edit Subscription Info" %}"
-                                data-content="{% trans "Edit the subscription information for this domain." %}"></span>
-                        </th>
-                        <th data-bind="visible: allowEdit">{% trans "Actions" %}</th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: userRoles">
-                    <tr>
-                        <th>
-                            <span data-bind="visible: name, text: name"></span>
-                            <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
-                        </th>
-                        <td><i data-bind="staticChecked: permissions.edit_web_users"></i></td>
-                        <td><i data-bind="staticChecked: permissions.edit_commcare_users"></i></td>
-                        <td><i data-bind="staticChecked: permissions.edit_locations"></i></td>
-                        {% if show_integration %}
-                        <td><i data-bind="staticChecked: permissions.edit_motech"></i></td>
-                        {% endif %}
-                        <td><i data-bind="staticChecked: permissions.edit_data"></i></td>
-                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                            <td><i data-bind="staticChecked: permissions.edit_shared_exports"></i></td>
-                        {% endif %}
-                        <td><i data-bind="staticChecked: permissions.edit_apps"></i></td>
-                        <td>
-                            <span data-bind="visible: reportPermissions.all(), staticChecked: true"></span>
-                            <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
-                                {% trans "Only" %}
-                                <ul data-bind="foreach: reportPermissions.specific">
-                                    <li data-bind="html: name, visible: value"></li>
-                                </ul>
-                            </div>
-                            <span data-bind="visible: !reportPermissions.all() && !reportPermissions.specific().length, staticChecked: false"></span>
-                        </td>
-                        <td><i data-bind="staticChecked: permissions.edit_billing"></i></td>
-                        <td data-bind="visible: $root.allowEdit">
-                            <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
-                                <i class="fa fa-edit"></i>
-                                {% trans "Edit Role" %}
-                            </button>
-                            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned, click: $data._id ? $root.setRoleBeingDeleted : null">
-                                <i class="fa fa-trash"></i>
-                                {% trans "Delete Role" %}
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            {% if can_edit_roles %}
-                <button class="btn btn-default"
-                        data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add Role" %}
-                </button>
-                <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
-                    <div data-bind="with: roleBeingDeleted"
-                         class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button"
-                                        class="close"
-                                        data-bind="click: $root.unsetRoleBeingDeleted">
-                                    <span aria-hidden="true">&times;</span>
-                                    <span class="sr-only">{% trans "Close" %}</span>
-                                </button>
-                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
-                            </div>
-                            <div class="modal-body">
-                                <h4 data-bind="text: modalConfirmation"></h4>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button"
-                                        class="btn btn-default"
-                                        data-bind="click: $root.unsetRoleBeingDeleted">
-                                    {% trans "Cancel" %}
-                                </button>
-                                <div data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog">
-                    <div data-bind="with: roleBeingEdited"
-                         class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button"
-                                        class="close"
-                                        data-bind="click: $root.unsetRoleBeingEdited">
-                                    <span aria-hidden="true">&times;</span>
-                                    <span class="sr-only">{% trans "Close" %}</span>
-                                </button>
-                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
-                            </div>
-                            <div class="modal-body">
-                                <div class="form form-horizontal">
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label"
-                                               for="role-name">
-                                            {% trans "Role Name" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <input data-bind="value: name"
-                                                   type="text"
-                                                   id="role-name"
-                                                   class="form-control" />
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Web Users" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_web_users" />
-                                                    {% trans "Allow role to edit Web Users." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Mobile Workers" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_commcare_users" />
-                                                    {% trans "Allow role to edit Mobile Workers." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Locations" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_locations" />
-                                                    {% trans "Allow role to edit Locations." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if show_integration %}
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Integration" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_motech" />
-                                                    {% trans "Allow role to manage integration with other systems." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Data" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_data" />
-                                                    {% trans "Allow role to edit Data." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                                        <div class="form-group">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "Edit Shared Exports" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="checkbox">
-                                                    <label>
-                                                        <input type="checkbox"
-                                                               data-bind="checked: permissions.edit_shared_exports" />
-                                                        {% trans "Allow role to edit shared exports." %}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Applications" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_apps" />
-                                                    {% trans "Allow role to edit Applications." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Edit Subscription Info" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.edit_billing" />
-                                                    {% trans "Allow role to edit subscription information." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group"
-                                         data-bind="css: { 'has-error': hasUnpermittedLocationRestriction },
-                                                    visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Full Organization Access" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.access_all_locations,
-                                                                      disable: hasUnpermittedLocationRestriction" />
-                                                        {% trans "Allow role to access data from all locations" %}
-                                                    <span class="help-block" data-bind="visible: hasUnpermittedLocationRestriction">
-                                                        {% trans "Organization-based data access restrictions are only available on the Pro plan and above.  Saving this role will enable full organization access for the assigned users." %}
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "View All Reports" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: reportPermissions.all" />
-                                                    {% trans "Allow role to view all reports." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group"
-                                         data-bind="visible: !reportPermissions.all()">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "View Specific Reports" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="panel panel-default">
-                                                <div class="panel-heading">
-                                                    {% trans "Select which reports the role can view:" %}
-                                                </div>
-                                                <div class="panel-body"
-                                                     data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
-                                                    <div class="checkbox">
-                                                        <label>
-                                                            <input type="checkbox" data-bind="checked: value"/>
-                                                            <span data-bind="html: name"></span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if request|toggle_enabled:"ROLE_WEBAPPS_PERMISSIONS" %}
-                                        <div class="form-group">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "View All Web Apps" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="checkbox">
-                                                    <label>
-                                                        <input type="checkbox"
-                                                               data-bind="checked: webAppsPermissions.all" />
-                                                        {% trans "Allow role to view all Web Apps." %}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group"
-                                             data-bind="visible: !webAppsPermissions.all()">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "Web Apps Permissions" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="panel panel-default">
-                                                    <div class="panel-heading">
-                                                        {% trans "Select which Web Apps the role can view:" %}
-                                                    </div>
-                                                    <div class="panel-body"
-                                                         data-bind="foreach: webAppsPermissions.specific, slideVisible: !webAppsPermissions.all()">
-                                                        <div class="checkbox">
-                                                            <label>
-                                                                <input type="checkbox" data-bind="checked: value"/>
-                                                                <span data-bind="html: name"></span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    {% if request|toggle_enabled:"RESTRICT_APP_RELEASE" %}
-                                        <div class="form-group">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "Manage Releases" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="checkbox">
-                                                    <label>
-                                                        <input type="checkbox"
-                                                               data-bind="checked: manageAppReleasePermissions.all" />
-                                                        {% trans "Allow role to manage all Apps." %}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-group"
-                                             data-bind="visible: !manageAppReleasePermissions.all()">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "Manage Releases Permissions" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="panel panel-default">
-                                                    <div class="panel-heading">
-                                                        {% trans "Select which Apps this role can manage:" %}
-                                                    </div>
-                                                    <div class="panel-body"
-                                                         data-bind="foreach: manageAppReleasePermissions.specific, slideVisible: !manageAppReleasePermissions.all()">
-                                                        <div class="checkbox">
-                                                            <label>
-                                                                <input type="checkbox" data-bind="checked: value"/>
-                                                                <span data-bind="html: name"></span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label"
-                                               for="landing-page">
-                                            {% trans "Default Landing Page" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <select class="form-control" id="landing-page" data-bind="
-                                                options: $root.landingPageChoices,
-                                                optionsText: 'name',
-                                                optionsValue: 'id',
-                                                value: default_landing_page
-                                            "></select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Allow Reporting Issues" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: permissions.report_an_issue" />
-                                                    {% trans "Allow this role to report issues." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">
-                                            {% trans "Non-admin Editable" %}
-                                        </label>
-                                        <div class="col-sm-8 controls">
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox"
-                                                           data-bind="checked: is_non_admin_editable" />
-                                                    {% trans "Allow non-admins to assign this role to other users." %}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
-                                        <div class="form-group">
-                                            <label class="col-sm-4 control-label">
-                                                {% trans "View File Dropzone" %}
-                                            </label>
-                                            <div class="col-sm-8 controls">
-                                                <div class="checkbox">
-                                                    <label>
-                                                        <input type="checkbox"
-                                                               data-bind="checked: permissions.view_file_dropzone" />
-                                                        {% trans "Allow role to upload and download files from dropzone." %}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button"
-                                        class="btn btn-default"
-                                        data-bind="click: $root.unsetRoleBeingEdited">
-                                    {% trans "Cancel" %}
-                                </button>
-                                <div data-bind="saveButton2: $root.modalSaveButton.state,
-                                                saveOptions: $root.modalSaveButton.saveOptions"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
     {% if user.is_superuser %}
         <div class="panel panel-default">
             <div class="panel-heading"
@@ -798,13 +297,13 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+{% if not request.is_view_only %}
 <div id="modal-deletion" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button"
-                        class="close"
-                        data-bind="click: $root.unsetRoleBeingDeleted">
+                        class="close">
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">{% trans "Close" %}</span>
                 </button>
@@ -818,4 +317,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
