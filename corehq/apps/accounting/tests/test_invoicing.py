@@ -323,6 +323,8 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
 class TestUserLineItem(BaseInvoiceTestCase):
 
+    is_using_test_plans = True
+
     def setUp(self):
         super(TestUserLineItem, self).setUp()
         self.user_rate = self.subscription.plan_version.feature_rates.filter(feature__feature_type=FeatureType.USER)[:1].get()
