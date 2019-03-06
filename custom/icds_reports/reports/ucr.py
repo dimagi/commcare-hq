@@ -304,55 +304,38 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         return CcsRecordMonthlyViewAlchemy
 
     def _get_query_object(self, total_row=False):
-        filters = self.helper.sql_alchemy_filters
-        filter_values = self.helper.sql_alchemy_filter_values
+
+        def format_column(title, logic):
+            return func.count(self.table.c.case_id).filter(logic).label(title)
+
+        pregnant = self.table.c.pregnant == 1
+        lactating = self.table.c.lactating == 1
+        st_caste = self.table.c.caste == 'st'
+        sc_caste = self.table.c.caste == 'sc'
+        rations = self.table.c.num_rations_distributed > 21
+        disabled = (self.table.c.disabled == 'yes')
+        minority = (self.table.c.minority == 'yes')
+        absent = 0
+        partial = 0
+        migrant = 0
         columns = (
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.pregnant == 1)
-                & (self.table.c.caste == 'st')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_st'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.lactating == 1)
-                & (self.table.c.caste == 'st')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_st'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.pregnant == 1)
-                & (self.table.c.caste == 'sc')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_sc'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.lactating == 1)
-                & (self.table.c.caste == 'sc')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_sc'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.pregnant == 1)
-                & (self.table.c.caste != 'sc')
-                & (self.table.c.caste != 'st')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_others'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.lactating == 1)
-                & (self.table.c.caste != 'sc')
-                & (self.table.c.caste != 'st')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_others'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.pregnant == 1)
-                & (self.table.c.disabled == 'yes')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_disabled'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.lactating == 1)
-                & (self.table.c.disabled == 'yes')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_disabled'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.pregnant == 1)
-                & (self.table.c.minority == 'yes')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_pregnant_minority'),
-            func.count(self.table.c.case_id).filter(
-                (self.table.c.lactating == 1)
-                & (self.table.c.minority == 'yes')
-                & (self.table.c.num_rations_distributed > 21)).label('thr_rations_lactating_minority'),
+            format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations)),
+            format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations)),
+            format_column(title='thr_rations_pregnant_sc', logic=(pregnant & sc_caste & rations)),
+            format_column(title='thr_rations_lactating_sc', logic=(lactating & sc_caste & rations)),
+            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) & (not st_caste) & rations)),
+            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) & (not st_caste) & rations)),
+            format_column(title='thr_rations_pregnant_disabled', logic=(pregnant & disabled & rations)),
+            format_column(title='thr_rations_lactating_disabled', logic=(lactating & disabled & rations)),
+            format_column(title='thr_rations_pregnant_minority', logic=(pregnant & minority & rations)),
+            format_column(title='thr_rations_lactating_minority', logic=(lactating & minority & rations)),
         )
 
         if not total_row:
             columns = (self.table.c.awc_id.label("owner_id"),) + columns
+
+        filters = self.helper.sql_alchemy_filters
+        filter_values = self.helper.sql_alchemy_filter_values
 
         query = (
             self.helper.adapter.session_helper.Session.query(
