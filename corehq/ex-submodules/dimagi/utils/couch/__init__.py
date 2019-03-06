@@ -8,6 +8,7 @@ from dimagi.ext.couchdbkit import DateTimeProperty, DocumentSchema
 from couchdbkit.exceptions import ResourceConflict
 from redis.exceptions import RedisError, LockError
 import json
+import re
 import six
 import sys
 
@@ -82,10 +83,10 @@ def get_redis_lock(key, timeout=None, name=None, track_unreleased=True, **kw):
 
     :param key: Redis lock name.
     :param timeout: Timeout passed through to redis lock.
-    :param name: Datadog tag name. This should be just specific enough
-    to identify the area of code that acquired the lock, but not so
-    specific that it will multiply the number of tags in datadog
-    unnecessarily.
+    :param name: Datadog "lock_name" tag value. This should be just
+    specific enough to identify the area of code that acquired the lock,
+    but not so specific that it will multiply the number of tags in
+    datadog unnecessarily.
     :param track_unreleased: When true (the default), increase the count
     of unreleased locks if a lock object is garbage-collected before it
     is released.
@@ -377,8 +378,7 @@ class CriticalSection(object):
     def __enter__(self):
         try:
             for key in self.keys:
-                sep = "-" if "-" in key else "_"
-                name = "_".join(key.split(sep, 2)[:2])
+                name = "_".join(re.split(r"_|-", key, 2)[:2])
                 lock = get_redis_lock(key, timeout=self.timeout, name=name)
                 self.locks.append(lock)
             for lock in self.locks:
@@ -417,8 +417,10 @@ class LooselyEqualDocumentSchema(DocumentSchema):
     def __hash__(self):
         return hash(json.dumps(self._doc, sort_keys=True))
 
+
 class IncompatibleDocument(Exception):
     pass
+
 
 def get_cached_property(couch_cls, obj_id, prop_name, expiry=12*60*60):
     """

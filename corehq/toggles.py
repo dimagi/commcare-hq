@@ -1293,7 +1293,7 @@ PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
     'profile_bulk_multimedia_upload',
     'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_USER],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1333,10 +1333,10 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 
 ICDS = StaticToggle(
     'icds',
-    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1657,7 +1657,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1742,5 +1742,13 @@ DASHBOARD_REACH_REPORT = StaticToggle(
     'dashboard_reach_reports',
     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
     TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+PARTIAL_UI_TRANSLATIONS = StaticToggle(
+    'partial_ui_translations',
+    'Enable uploading a subset of translations in the UI Translations Excel upload',
+    TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )

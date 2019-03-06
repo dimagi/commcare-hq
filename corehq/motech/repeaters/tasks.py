@@ -48,7 +48,12 @@ def check_repeaters():
         if now > cutoff:
             break
 
-        lock = get_redis_lock(lock_key, timeout=60 * 60 * 48, name="repeat_record")
+        lock = get_redis_lock(
+            lock_key,
+            timeout=60 * 60 * 48,
+            name="repeat_record",
+            track_unreleased=False,
+        )
         if not lock.acquire(blocking=False):
             continue
 

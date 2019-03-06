@@ -11,6 +11,7 @@ SHOW_VERBOSE = getattr(settings, 'COUCHDB_DEVSERVER_VERBOSE', False)
 SHOW_STACKTRACE = getattr(settings, 'COUCHDB_DEVSERVER_STACKTRACE', False)
 STACKTRACE_SIZE = getattr(settings, 'COUCHDB_DEVSERVER_STACK_SIZE', 1) - 1
 
+
 class CouchDBDevModule(DevServerModule):
     """
     A couchdb console output module for the django devserver https://github.com/dcramer/django-devserver

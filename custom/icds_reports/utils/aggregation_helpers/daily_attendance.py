@@ -43,20 +43,21 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
         return """
             INSERT INTO "{tablename}" (
               SELECT DISTINCT ON (awc_id, submitted_on)
-                doc_id,
-                awc_id,
-                month,
+                doc_id as doc_id,
+                awc_id as awc_id,
+                month as month,
                 submitted_on as pse_date,
-                awc_open_count,
-                1,
-                eligible_children,
-                attended_children,
-                attended_children_percent,
-                form_location,
-                form_location_lat,
-                form_location_long,
-                image_name,
-                pse_conducted
+                awc_open_count as awc_open_count,
+                1 as count,
+                eligible_children as eligible_children,
+                attended_children as attended_children,
+                attended_children_percent as attended_children_percent,
+                form_location as form_location,
+                form_location_lat as form_location_lat,
+                form_location_long as form_location_long,
+                image_name as image_name,
+                pse_conducted as pse_conducted,
+                supervisor_id as supervisor_id
               FROM "{ucr_daily_attendance_tablename}"
               WHERE month = %(start_month)s
               ORDER BY awc_id, submitted_on, inserted_at DESC

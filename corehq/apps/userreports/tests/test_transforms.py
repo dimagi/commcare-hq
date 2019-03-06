@@ -88,6 +88,7 @@ def test_gregorian_to_ethiopian(self, date_string, expected_result):
 
     self.assertEqual(expected_result, transform(date_string))
 
+
 class CustomTransformTest(SimpleTestCase):
 
     def testInvalidCustomType(self):

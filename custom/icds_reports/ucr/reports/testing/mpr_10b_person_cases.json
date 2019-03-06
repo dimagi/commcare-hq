@@ -15,7 +15,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-mpr_10b_person_cases-optimized",
