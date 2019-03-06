@@ -34,6 +34,19 @@
                     </fieldset>
                 </form>
             </div>
+            <div class="well">
+                <div class="form">
+                    <fieldset>
+                        <legend>
+                            {% trans "Check the status of our services." %}
+                        </legend>
+                        {% blocktrans %}
+                        If there is a problem with our systems, we'll post an update to our Service Page.
+                        {% endblocktrans %}<br/><br/>
+                        <a href="http://status.commcarehq.org/" class="btn btn-primary">{% trans "View Service Page" %}</a>
+                    </fieldset>
+                </div>
+            </div>
             {% if allow_report_an_issue %}
             <div class="panel panel-modern-gray">
                 <div class="panel-heading">
