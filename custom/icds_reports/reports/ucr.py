@@ -317,7 +317,7 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         disabled = self.table.c.disabled == 'yes'
         minority = self.table.c.minority == 'yes'
         rations_none = self.table.c.num_rations_distributed == 0
-        migrant = 0
+        migrant = self.table.c.resident == 'no'
         columns = (
             format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations_gte_21)),
             format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations_gte_21)),
@@ -333,6 +333,8 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
             format_column(title='thr_rations_absent_lactating', logic=(lactating & rations_none)),
             format_column(title='thr_rations_partial_pregnant', logic=(pregnant & rations_lt_21)),
             format_column(title='thr_rations_partial_lactating', logic=(lactating & rations_lt_21)),
+            format_column(title='thr_rations_migrant_pregnant', logic=(pregnant & rations_gte_21 & migrant)),
+            format_column(title='thr_rations_migrant_lactating', logic=(lactating & rations_gte_21 & migrant))
         )
 
         if not total_row:
