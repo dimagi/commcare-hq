@@ -829,31 +829,31 @@ def _update_case_list_translations(sheet, rows, app):
     for i, row in enumerate(rows):
         # If it's an enum case property, set index_of_last_enum_in_condensed
         if row['case_property'].endswith(" (ID Mapping Text)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = re.match('.*(?= \()', row['case_property']).group()
             condensed_rows.append(row)
             index_of_last_enum_in_condensed = len(condensed_rows) - 1
 
         # If it's an enum value, add it to it's parent enum property
         elif row['case_property'].endswith(" (ID Mapping Value)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = re.match('.*(?= \()', row['case_property']).group()
             parent = condensed_rows[index_of_last_enum_in_condensed]
             parent['mappings'] = parent.get('mappings', []) + [row]
 
         # If it's a graph case property, set index_of_last_graph_in_condensed
         elif row['case_property'].endswith(" (graph)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = re.match('.*(?= \()', row['case_property']).group()
             condensed_rows.append(row)
             index_of_last_graph_in_condensed = len(condensed_rows) - 1
 
         # If it's a graph configuration item, add it to its parent
         elif row['case_property'].endswith(" (graph config)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = re.match('.*(?= \()', row['case_property']).group()
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['configs'] = parent.get('configs', []) + [row]
 
         # If it's a graph series configuration item, add it to its parent
         elif row['case_property'].endswith(" (graph series config)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = re.match('.*(?= \()', row['case_property']).group()
             row['series_index'] = row['case_property'].split(" ")[1]
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['series_configs'] = parent.get('series_configs', []) + [row]
