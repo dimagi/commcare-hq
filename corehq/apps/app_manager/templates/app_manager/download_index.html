@@ -66,7 +66,18 @@
         {% endif %}
         <tr>
             <td>
-                <a href="#download_ccz" data-toggle="modal"  class='download-zip'>CommCare.ccz</a>
+                <a href="#download_ccz" data-toggle="modal"  class='download-zip'>
+                    <i class="fa fa-file-zip-o"></i>
+                    CommCare.ccz
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="{% url "download_bulk_app_translations" app.domain app.id %}">
+                    <i class="fa fa-file-excel-o"></i>
+                    {% trans "Bulk application translations" %}
+                </a>
             </td>
         </tr>
     </table>
