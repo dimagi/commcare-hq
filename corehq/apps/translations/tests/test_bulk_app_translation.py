@@ -31,7 +31,7 @@ from corehq.apps.translations.app_translations import (
     get_unicode_dicts,
     process_bulk_app_translation_upload,
     _remove_description_from_case_property,
-    update_form_translations,
+    update_app_from_form_sheet,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
@@ -783,9 +783,8 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         If Markdown is vetoed for one language, it should be vetoed for the label
         """
         sheet = self.form1_worksheet
-        rows = get_unicode_dicts(sheet)
         with patch('corehq.apps.translations.app_translations.save_xform') as save_xform_patch:
-            msgs = update_form_translations(sheet, rows, self.app)
+            msgs = update_app_from_form_sheet(self.app, sheet)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
