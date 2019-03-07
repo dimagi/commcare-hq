@@ -862,7 +862,7 @@ def update_app_from_form_sheet(app, sheet):
 def escape_output_value(value):
     try:
         return etree.fromstring("<value>{}</value>".format(
-            re.sub(r"(?<!/)>", "&gt;", re.sub(r"<(\s*)(?!output)", "&lt;\\1", value))
+            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:
         # if something went horribly wrong just don't bother with escaping
@@ -892,92 +892,15 @@ def update_app_from_module_sheet(app, sheet):
     # match sheet rows to DetailColumns by position.
     msgs = []
 
-    module_index = int(sheet.worksheet.title.replace("module", "")) - 1
-    module = app.get_module(module_index)
-
+    module = _get_module_from_sheet_name(app, sheet)
     if isinstance(module, ReportModule):
         return msgs
 
-    # It is easier to process the translations if mapping and graph config
-    # rows are nested under their respective DetailColumns.
-
-    condensed_rows = []
-    case_list_form_label = None
-    detail_tab_headers = [None for i in module.case_details.long.tabs]
-    index_of_last_enum_in_condensed = -1
-    index_of_last_graph_in_condensed = -1
-
-    for i, row in enumerate(get_unicode_dicts(sheet)):
-        # If it's an enum case property, set index_of_last_enum_in_condensed
-        if row['case_property'].endswith(" (ID Mapping Text)"):
-            row['id'] = _remove_description_from_case_property(row)
-            condensed_rows.append(row)
-            index_of_last_enum_in_condensed = len(condensed_rows) - 1
-
-        # If it's an enum value, add it to it's parent enum property
-        elif row['case_property'].endswith(" (ID Mapping Value)"):
-            row['id'] = _remove_description_from_case_property(row)
-            parent = condensed_rows[index_of_last_enum_in_condensed]
-            parent['mappings'] = parent.get('mappings', []) + [row]
-
-        # If it's a graph case property, set index_of_last_graph_in_condensed
-        elif row['case_property'].endswith(" (graph)"):
-            row['id'] = _remove_description_from_case_property(row)
-            condensed_rows.append(row)
-            index_of_last_graph_in_condensed = len(condensed_rows) - 1
-
-        # If it's a graph configuration item, add it to its parent
-        elif row['case_property'].endswith(" (graph config)"):
-            row['id'] = _remove_description_from_case_property(row)
-            parent = condensed_rows[index_of_last_graph_in_condensed]
-            parent['configs'] = parent.get('configs', []) + [row]
-
-        # If it's a graph series configuration item, add it to its parent
-        elif row['case_property'].endswith(" (graph series config)"):
-            trimmed_property = _remove_description_from_case_property(row)
-            row['id'] = trimmed_property.split(" ")[0]
-            row['series_index'] = trimmed_property.split(" ")[1]
-            parent = condensed_rows[index_of_last_graph_in_condensed]
-            parent['series_configs'] = parent.get('series_configs', []) + [row]
-
-        # If it's a graph annotation, add it to its parent
-        elif row['case_property'].startswith("graph annotation "):
-            row['id'] = int(row['case_property'].split(" ")[-1])
-            parent = condensed_rows[index_of_last_graph_in_condensed]
-            parent['annotations'] = parent.get('annotations', []) + [row]
-
-        # It's a case list registration form label. Don't add it to condensed rows
-        elif row['case_property'] == 'case_list_form_label':
-            case_list_form_label = row
-
-        # If it's a tab header, don't add it to condensed rows
-        elif re.search(r'^Tab \d+$', row['case_property']):
-            index = int(row['case_property'].split(' ')[-1])
-            if index < len(detail_tab_headers):
-                detail_tab_headers[index] = row
-            else:
-                msgs.append((
-                    messages.error,
-                    _("Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
-                      "No changes were made for sheet {1}.").format(
-                          len(detail_tab_headers),
-                          sheet.worksheet.title,
-                          index
-                      )
-                ))
-
-        # It's a normal case property
-        else:
-            row['id'] = row['case_property']
-            condensed_rows.append(row)
+    (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(app, sheet)
 
     partial_upload = False
-    list_rows = [
-        row for row in condensed_rows if row['list_or_detail'] == 'list'
-    ]
-    detail_rows = [
-        row for row in condensed_rows if row['list_or_detail'] == 'detail'
-    ]
+    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
 
@@ -1106,6 +1029,95 @@ def update_app_from_module_sheet(app, sheet):
         _update_translation(case_list_form_label, module.case_list_form.label)
 
     return msgs
+
+
+def _get_condensed_rows(app, sheet):
+    '''
+    Reconfigure the given sheet into objects that are easier to process.
+    The major change is to nest mapping and graph config rows under their
+    "parent" rows, so that there's one row per case proeprty.
+
+    This function also pulls out case detail tab headers and the case list form label,
+    which will be processed separately from the case proeprty rows.
+
+    Returns a three-item tuple: case property rows, tab header rows, case list form label
+    '''
+    module = _get_module_from_sheet_name(app, sheet)
+    condensed_rows = []
+    case_list_form_label = None
+    detail_tab_headers = [None for i in module.case_details.long.tabs]
+    index_of_last_enum_in_condensed = -1
+    index_of_last_graph_in_condensed = -1
+    for i, row in enumerate(get_unicode_dicts(sheet)):
+        # If it's an enum case property, set index_of_last_enum_in_condensed
+        if row['case_property'].endswith(" (ID Mapping Text)"):
+            row['id'] = _remove_description_from_case_property(row)
+            condensed_rows.append(row)
+            index_of_last_enum_in_condensed = len(condensed_rows) - 1
+
+        # If it's an enum value, add it to its parent enum property
+        elif row['case_property'].endswith(" (ID Mapping Value)"):
+            row['id'] = _remove_description_from_case_property(row)
+            parent = condensed_rows[index_of_last_enum_in_condensed]
+            parent['mappings'] = parent.get('mappings', []) + [row]
+
+        # If it's a graph case property, set index_of_last_graph_in_condensed
+        elif row['case_property'].endswith(" (graph)"):
+            row['id'] = _remove_description_from_case_property(row)
+            condensed_rows.append(row)
+            index_of_last_graph_in_condensed = len(condensed_rows) - 1
+
+        # If it's a graph configuration item, add it to its parent
+        elif row['case_property'].endswith(" (graph config)"):
+            row['id'] = _remove_description_from_case_property(row)
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['configs'] = parent.get('configs', []) + [row]
+
+        # If it's a graph series configuration item, add it to its parent
+        elif row['case_property'].endswith(" (graph series config)"):
+            trimmed_property = _remove_description_from_case_property(row)
+            row['id'] = trimmed_property.split(" ")[0]
+            row['series_index'] = trimmed_property.split(" ")[1]
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['series_configs'] = _remove_description_from_case_property(row)
+
+        # If it's a graph annotation, add it to its parent
+        elif row['case_property'].startswith("graph annotation "):
+            row['id'] = int(row['case_property'].split(" ")[-1])
+            parent = condensed_rows[index_of_last_graph_in_condensed]
+            parent['annotations'] = parent.get('annotations', []) + [row]
+
+        # It's a case list registration form label. Don't add it to condensed rows
+        elif row['case_property'] == 'case_list_form_label':
+            case_list_form_label = row
+
+        # If it's a tab header, don't add it to condensed rows
+        elif re.search(r'^Tab \d+$', row['case_property']):
+            index = int(row['case_property'].split(' ')[-1])
+            if index < len(detail_tab_headers):
+                detail_tab_headers[index] = row
+            else:
+                msgs.append((
+                    messages.error,
+                    _("Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
+                      "No changes were made for sheet {1}.").format(
+                          len(detail_tab_headers),
+                          sheet.worksheet.title,
+                          index
+                      )
+                ))
+
+        # It's a normal case property
+        else:
+            row['id'] = row['case_property']
+            condensed_rows.append(row)
+
+    return (condensed_rows, detail_tab_headers, case_list_form_label)
+
+
+def _get_module_from_sheet_name(app, sheet):
+    module_index = int(sheet.worksheet.title.replace("module", "")) - 1
+    return app.get_module(module_index)
 
 
 def _has_at_least_one_translation(row, prefix, langs):
