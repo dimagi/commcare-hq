@@ -44,8 +44,8 @@ class Command(BaseCommand):
             filename='all_case_ids_last_modified_{}_to_{}_by_domain.json'.format(start, end),
             fn=lambda: get_all_case_ids_by_domain(start, end)
         )
-        print({domain: len(case_ids) for domain, case_ids in all_case_ids_by_domain.iteritems()})
-
+        print({domain: len(case_ids) for domain, case_ids in all_case_ids_by_domain.iteritems()
+               if case_ids})
 
 def generate_all_form_ids_by_domain(start, end):
     form_ids_by_domain = {
