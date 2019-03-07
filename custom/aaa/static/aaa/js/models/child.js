@@ -93,6 +93,7 @@ hqDefine("aaa/js/models/child", [
 
         self.currentWeight = ko.observable();
         self.nrcReferred = ko.observable();
+        self.referralDate = ko.observable();
         self.growthMonitoringStatus = ko.observable();
         self.previousGrowthMonitoringStatus = ko.observable();
 

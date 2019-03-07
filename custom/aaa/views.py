@@ -349,13 +349,6 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 marriedAt=25,
                 aadhaarNo='Yes'
             )
-            husband = dict(
-                name='Raju Kumar',
-                gender='Female',
-                dob=date(1991, 5, 11),
-                marriedAt=26,
-                aadhaarNo='Yes'
-            )
             other = dict(
                 address='J-142, Saket, New Delhi, Delhi',
                 subcentre='Rasidpur',
@@ -642,7 +635,8 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     currentWeight=30,
                     nrcReferred='Yes',
                     growthMonitoringStatus='MAM',
-                    previousGrowthMonitoringStatus='2019-04-09',
+                    referralDate='2019-04-09',
+                    previousGrowthMonitoringStatus='Normal',
                     underweight='Yes',
                     underweightStatus='Moderate',
                     stunted='No',
