@@ -29,6 +29,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
@@ -87,9 +88,6 @@ def process_bulk_app_translation_upload(app, workbook):
 
     processed_sheets = set()
     for sheet in workbook.worksheets:
-        # sheet.__iter__ can only be called once, so cache the result
-        rows = get_unicode_dicts(sheet)
-
         error = _check_for_sheet_error(app, sheet, processed_sheets=processed_sheets)
         if error:
             msgs.append(messages.error, error)
@@ -101,17 +99,16 @@ def process_bulk_app_translation_upload(app, workbook):
         for warning in warnings:
             msgs.append(messages.warning, warning)
 
+        # sheet.__iter__ can only be called once, so cache the result
+        rows = get_unicode_dicts(sheet)
         try:
-            if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
-                # It's the first sheet
+            if is_modules_and_forms_sheet(sheet):
                 ms = _process_modules_and_forms_sheet(rows, app)
                 msgs.extend(ms)
-            elif sheet.headers[0] == "case_property":
-                # It's a module sheet
+            elif is_module_sheet(sheet):
                 ms = _update_case_list_translations(sheet, rows, app)
                 msgs.extend(ms)
-            else:
-                # It's a form sheet
+            elif is_form_sheet(sheet):
                 ms = update_form_translations(sheet, rows, app)
                 msgs.extend(ms)
         except ValueError:
@@ -135,18 +132,15 @@ def _check_for_sheet_error(app, sheet, processed_sheets=Ellipsis):
     if expected_columns is None:
         return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
 
-    if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
+    if is_modules_and_forms_sheet(sheet):
         if expected_columns[1] not in sheet.headers:
             return (_('Skipping sheet "%s", could not find "%s" column')
                 % (sheet.worksheet.title, expected_columns[1]))
-    elif expected_columns[0] == "case_property":
-        # It's a module sheet
-        if (expected_columns[0] not in sheet.headers
-                or expected_columns[1] not in sheet.headers):
+    elif is_module_sheet(sheet):
+        if (expected_columns[0] not in sheet.headers or expected_columns[1] not in sheet.headers):
             return (_('Skipping sheet "%s", could not find case_property or list_or_detail column.')
                 % sheet.worksheet.title)
-    else:
-        # It's a form sheet
+    elif is_form_sheet(sheet):
         if expected_columns[0] not in sheet.headers:
             return _('Skipping sheet "%s", could not find label column') % sheet.worksheet.title
 
