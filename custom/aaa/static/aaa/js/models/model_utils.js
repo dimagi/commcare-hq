@@ -2,12 +2,10 @@ hqDefine("aaa/js/models/model_utils", [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
-    _,
-    initialPageData
+    _
 ) {
 
     var pncModel = function (options) {
@@ -37,7 +35,7 @@ hqDefine("aaa/js/models/model_utils", [
 
         self.pncDate = ko.computed(function () {
             if (self.pncDate() === void(0)) {
-                return 'Not Done'
+                return 'Not Done';
             }
             return self.pncDate;
         });
@@ -52,11 +50,11 @@ hqDefine("aaa/js/models/model_utils", [
             }
         };
 
-        _.each(self, function(value, key) {
+        _.each(self, function (value, key) {
             if (key !== 'pncDate' && key !== 'marked') {
                 self[key] = ko.computed(function () {
-                    return self.marked(value())
-                })
+                    return self.marked(value());
+                });
             }
         });
 
@@ -76,7 +74,7 @@ hqDefine("aaa/js/models/model_utils", [
 
         self.ancDate = ko.computed(function () {
             if (self.ancDate() === void(0)) {
-                return 'Not Done'
+                return 'Not Done';
             }
             return self.ancDate;
         });
@@ -98,5 +96,5 @@ hqDefine("aaa/js/models/model_utils", [
         pncModel: pncModel,
         ancModel: ancModel,
         vaccinationModel: vaccinationModel,
-    }
+    };
 });

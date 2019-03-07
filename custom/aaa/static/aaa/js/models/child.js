@@ -207,7 +207,7 @@ hqDefine("aaa/js/models/child", [
                     color: 'black',
                     strokeWidth: 2,
                     yAxis: 1,
-                }
+                },
             ]).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
@@ -260,9 +260,9 @@ hqDefine("aaa/js/models/child", [
                     color: 'black',
                     strokeWidth: 2,
                     yAxis: 1,
-                }
+                },
             ]).call(chart);
-            nv.utils.windowResize(function() { chart.update() });
+            nv.utils.windowResize(chart.update);
             return chart;
         };
 
@@ -312,7 +312,7 @@ hqDefine("aaa/js/models/child", [
                     color: 'black',
                     strokeWidth: 2,
                     yAxis: 1,
-                }
+                },
             ]).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
