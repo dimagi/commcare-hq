@@ -803,7 +803,8 @@ class PrimaryLocationWidget(forms.Widget):
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
-            'value': value or ''
+            'value': value or '',
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
