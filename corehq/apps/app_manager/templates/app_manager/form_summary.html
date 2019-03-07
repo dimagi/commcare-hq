@@ -99,8 +99,8 @@
                     <!-- /ko -->
                     <ol data-bind="foreach: questions">
                         <li data-bind="visible: isVisible">
-                            <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
-                            <!-- ko text: $root.showIds() ? value :  $root.translateQuestion($data) --><!-- /ko -->
+                            <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
+                            <a data-bind="attr: { 'href': $parent.url + hashtagValue }, text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
                             <!-- ko if: required -->
                             <span title="{% trans "This question is required"|escapejs %}">*</span>
                             <!-- /ko -->
