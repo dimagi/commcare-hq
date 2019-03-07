@@ -777,25 +777,34 @@ def _is_subscription_eligible_for_downgrade_process(subscription):
 
 def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=None):
     from corehq.apps.domain.views.accounting import DomainBillingStatementsView, DomainSubscriptionView
+    from corehq.apps.accounting.views import EnterpriseBillingStatementsView
 
-    if oldest_unpaid_invoice.is_customer_invoice:
-        return
-
-    days_ago = (today - oldest_unpaid_invoice.date_due).days
-    domain = subscription.subscriber.domain
     context = {
-        'domain': domain,
         'total': total,
-        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
-                                             args=[domain]),
-        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
-                                           args=[domain]),
         'date_60': oldest_unpaid_invoice.date_due + datetime.timedelta(days=60),
         'contact_email': settings.INVOICING_CONTACT_EMAIL
     }
+    if oldest_unpaid_invoice.is_customer_invoice:
+        domain = oldest_unpaid_invoice.subscriptions.first().subscriber.domain
+        context.update({
+            'statements_url': absolute_reverse(
+                EnterpriseBillingStatementsView.urlname, args=[domain]),
+        })
+    else:
+        domain = subscription.subscriber.domain
+        context.update({
+            'domain': domain,
+            'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                                 args=[domain]),
+            'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                               args=[domain]),
+        })
+
+    days_ago = (today - oldest_unpaid_invoice.date_due).days
     if days_ago == 61:
-        _downgrade_domain(subscription)
-        _send_downgrade_notice(oldest_unpaid_invoice, context)
+        if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
+            _downgrade_domain(subscription)
+            _send_downgrade_notice(oldest_unpaid_invoice, context)
     elif days_ago == 58:
         _send_downgrade_warning(oldest_unpaid_invoice, context)
     elif days_ago == 30:
