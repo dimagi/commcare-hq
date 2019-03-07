@@ -29,6 +29,8 @@ from corehq.apps.translations.app_translations_old import (
     get_bulk_app_sheet_rows,
     get_bulk_multimedia_sheet_rows,
     get_app_translation_workbook,
+)
+from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
     process_bulk_multimedia_translation_upload,
     validate_bulk_app_translation_upload,
