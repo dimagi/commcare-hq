@@ -898,39 +898,9 @@ def update_app_from_module_sheet(app, sheet):
 
     (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(app, sheet)
 
-    partial_upload = False
-    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
-    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
-    short_details = list(module.case_details.short.get_columns())
-    long_details = list(module.case_details.long.get_columns())
-
-    # Check length of lists
-    for expected_list, received_list, word in [
-        (short_details, list_rows, "list"),
-        (long_details, detail_rows, "detail")
-    ]:
-        if len(expected_list) != len(received_list):
-            # if a field is not referenced twice in a case list or detail,
-            # then we can perform a partial upload using field (case property)
-            # as a key
-            number_fields = len({detail.field for detail in expected_list})
-            if number_fields == len(expected_list) and toggles.ICDS.enabled(app.domain):
-                partial_upload = True
-                continue
-            msgs.append((
-                messages.error,
-                _("Expected {0} case {3} properties in sheet {2}, found {1}. "
-                  "No case list or detail properties for sheet {2} were "
-                  "updated").format(
-                      len(expected_list),
-                      len(received_list),
-                      sheet.worksheet.title,
-                      word
-                  )
-            ))
-
-    if msgs:
-        return msgs
+    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows)
+    if errors:
+        return [(messages.error, e) for e in errors]
 
     # Update the translations
     def _update_translation(row, language_dict, require_translation=True):
@@ -1016,6 +986,10 @@ def update_app_from_module_sheet(app, sheet):
             if rows_by_property.get(detail.field):
                 _update_detail(rows_by_property.get(detail.field), detail)
 
+    short_details = list(module.case_details.short.get_columns())
+    long_details = list(module.case_details.long.get_columns())
+    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
     if partial_upload:
         _partial_upload(list_rows, short_details)
         _partial_upload(detail_rows, long_details)
@@ -1113,6 +1087,38 @@ def _get_condensed_rows(app, sheet):
             condensed_rows.append(row)
 
     return (condensed_rows, detail_tab_headers, case_list_form_label)
+
+
+def _check_for_detail_length_errors(module, condensed_rows):
+    errors = []
+
+    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
+    short_details = list(module.case_details.short.get_columns())
+    long_details = list(module.case_details.long.get_columns())
+    partial_upload = False
+
+    for expected_list, received_list, word in [
+        (short_details, list_rows, "list"),
+        (long_details, detail_rows, "detail")
+    ]:
+        if len(expected_list) != len(received_list):
+            # if a field is not referenced twice in a case list or detail, then
+            # we can perform a partial upload using field (case property) as a key
+            number_fields = len({detail.field for detail in expected_list})
+            if number_fields == len(expected_list) and toggles.ICDS.enabled(app.domain):
+                partial_upload = True
+                continue
+            errors.append(_("Expected {0} case {3} properties in sheet {2}, found {1}. "
+                "No case list or detail properties for sheet {2} were updated").format(
+                    len(expected_list),
+                    len(received_list),
+                    sheet.worksheet.title,
+                    word
+                )
+            )
+
+    return (errors, partial_upload)
 
 
 def _get_module_from_sheet_name(app, sheet):
