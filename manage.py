@@ -99,6 +99,7 @@ def patch_jsonfield():
 
     def to_python(self, value):
         if isinstance(value, six.string_types):
+            assert isinstance(value, six.text_type)
             try:
                 return json.loads(value, **self.load_kwargs)
             except ValueError:
