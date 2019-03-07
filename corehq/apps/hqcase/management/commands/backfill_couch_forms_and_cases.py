@@ -70,13 +70,21 @@ def get_form_ids_missing_from_elasticsearch(all_form_ids):
 
 
 def get_all_case_ids_by_domain(start, end):
-    all_case_ids_by_domain = defaultdict(list)
+    all_case_ids_by_domain = {}
     for domain in iter_domains():
         print('Pulling cases for {}'.format(domain))
-        for owner_id in with_progress_bar(get_all_case_owner_ids(domain)):
-            all_case_ids_by_domain[domain].extend(
-                get_case_ids_modified_with_owner_since(domain, owner_id, start, end)
-            )
+        all_case_ids_by_domain[domain] = use_json_cache_file(
+            filename='all_case_ids_last_modified_{}_to_{}__{}.json'.format(start, end, domain),
+            fn=lambda: get_all_case_ids_for_domain(domain, start, end)
+        )
+    return all_case_ids_by_domain
+
+
+def get_all_case_ids_for_domain(domain, start, end):
+    case_ids = []
+    for owner_id in with_progress_bar(get_all_case_owner_ids(domain)):
+        case_ids.extend(get_case_ids_modified_with_owner_since(domain, owner_id, start, end))
+    return case_ids
 
 
 def use_json_cache_file(filename, fn):
