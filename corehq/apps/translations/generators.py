@@ -99,7 +99,7 @@ class AppTranslationsGenerator(object):
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations_old import get_bulk_app_sheet_rows
         # simply the rows of data per sheet name
         rows = get_bulk_app_sheet_rows(
             app,
@@ -108,7 +108,7 @@ class AppTranslationsGenerator(object):
         )
 
         # get the translation data headers
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_headers
+        from corehq.apps.translations.app_translations_old import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
