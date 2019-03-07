@@ -782,11 +782,10 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         If one translation has a Markdown node, the label should be a Markdown label
         If Markdown is vetoed for one language, it should be vetoed for the label
         """
-        missing_cols = set()
         sheet = self.form1_worksheet
         rows = get_unicode_dicts(sheet)
         with patch('corehq.apps.translations.app_translations.save_xform') as save_xform_patch:
-            msgs = update_form_translations(sheet, rows, missing_cols, self.app)
+            msgs = update_form_translations(sheet, rows, self.app)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
