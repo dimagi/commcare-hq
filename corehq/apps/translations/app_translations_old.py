@@ -29,89 +29,19 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
-    InvalidExcelFileException
+from corehq.apps.translations.app_translations.utils import (
+    get_form_sheet_name,
+    get_menu_row,
+    get_module_sheet_name,
+    get_modules_and_forms_row,
+)
+from corehq.util.workbook_json.excel import (
+    HeaderValueError,
+    InvalidExcelFileException,
+    JSONReaderError,
+    WorkbookJSONReader,
+)
 
-
-def get_unicode_dicts(iterable):
-    """
-    Iterates iterable and returns a list of dictionaries with keys and values converted to Unicode
-
-    >>> gen = ({'0': None, 2: 'two', u'3': 0xc0ffee} for i in range(3))
-    >>> get_unicode_dicts(gen)
-    [{u'2': u'two', u'0': None, u'3': u'12648430'},
-     {u'2': u'two', u'0': None, u'3': u'12648430'},
-     {u'2': u'two', u'0': None, u'3': u'12648430'}]
-
-    """
-    def none_or_unicode(val):
-        return six.text_type(val) if val is not None else val
-
-    rows = []
-    for row in iterable:
-        rows.append({six.text_type(k): none_or_unicode(v) for k, v in six.iteritems(row)})
-    return rows
-
-
-def get_app_translation_workbook(file_or_filename):
-    msgs = []
-    try:
-        workbook = WorkbookJSONReader(file_or_filename)
-    # todo: HeaderValueError does not belong here
-    except (HeaderValueError, InvalidExcelFileException) as e:
-        msgs.append(
-            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
-        )
-        return False, msgs
-    except JSONReaderError as e:
-        msgs.append(
-            (messages.error, _(
-                "App Translation Failed! There is an issue with Excel columns. Error details: {}."
-            ).format(e))
-        )
-        return False, msgs
-    return workbook, msgs
-
-
-def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, media_audio, unique_id):
-    """
-    assemble the various pieces of data that make up a row in the
-    {sheet_name} sheet into a single row (a flat tuple).
-
-    This function is meant as the single point of truth for the
-    column ordering of {sheet_name}
-
-    """.format(sheet_name=MODULES_AND_FORMS_SHEET_NAME)
-    assert row_type is not None
-    assert sheet_name is not None
-    assert isinstance(languages, list)
-    assert isinstance(media_image, list)
-    assert isinstance(media_audio, list)
-    assert isinstance(unique_id, six.string_types)
-    soft_assert_type_text(unique_id)
-
-    return [item if item is not None else "" for item in
-            ([row_type, sheet_name] +
-             get_menu_row(languages, media_image, media_audio) +
-             [unique_id])]
-
-
-def get_module_sheet_name(module):
-    return "module{}".format(module.get_app().get_module_index(module.unique_id) + 1)
-
-
-def get_form_sheet_name(form):
-    module = form.get_module()
-    return "_".join([
-        get_module_sheet_name(module),
-        "form{}".format(module.get_form_index(form.unique_id) + 1)
-    ])
-
-
-def get_menu_row(languages, media_image, media_audio):
-    return languages + media_image + media_audio
 
 
 def get_bulk_multimedia_sheet_headers(lang):
@@ -153,63 +83,6 @@ def get_bulk_multimedia_sheet_rows(lang, app):
                 rows.append(prefix + row)
 
     return rows
-
-
-def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
-    '''
-    Returns lists representing the expected structure of bulk app translation
-    Excel file uploads and downloads.
-
-    The list will be in the form:
-    [
-        ["sheetname", ["column name1", "column name 2"]],
-        ["sheet2 name", [...]],
-        ...
-    ]
-
-    exclude_module and exclude_form are functions that take in one argument
-    (form or module) and return True if the module/form should be excluded
-    from the returned list
-    '''
-    languages_list = ['default_' + l for l in app.langs]
-    audio_lang_list = ['audio_' + l for l in app.langs]
-    image_lang_list = ['image_' + l for l in app.langs]
-    video_lang_list = ['video_' + l for l in app.langs]
-
-    headers = []
-
-    # Add headers for the first sheet
-    headers.append([
-        MODULES_AND_FORMS_SHEET_NAME,
-        get_modules_and_forms_row(
-            row_type='Type',
-            sheet_name='sheet_name',
-            languages=languages_list,
-            media_image=['icon_filepath_%s' % l for l in app.langs],
-            media_audio=['audio_filepath_%s' % l for l in app.langs],
-            unique_id='unique_id',
-        )
-    ])
-
-    for mod_index, module in enumerate(app.get_modules()):
-        if exclude_module is not None and exclude_module(module):
-            continue
-
-        sheet_name = get_module_sheet_name(module)
-        headers.append([sheet_name, ['case_property', 'list_or_detail'] + languages_list])
-
-        for form_index, form in enumerate(module.get_forms()):
-            if form.form_type == 'shadow_form':
-                continue
-            if exclude_form is not None and exclude_form(form):
-                continue
-
-            sheet_name = get_form_sheet_name(form)
-            headers.append([
-                sheet_name,
-                ["label"] + languages_list + audio_lang_list + image_lang_list + video_lang_list
-            ])
-    return headers
 
 
 def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
@@ -420,40 +293,3 @@ def get_form_question_rows(langs, form):
             rows.append(row)
 
     return rows
-
-
-def _update_translation_dict(prefix, language_dict, row, langs):
-    # update translations as requested
-    for lang in langs:
-        key = '%s%s' % (prefix, lang)
-        if key not in row:
-            continue
-        translation = row[key]
-        if translation:
-            language_dict[lang] = translation
-        else:
-            language_dict.pop(lang, None)
-
-    # delete anything in language_dict that isn't in langs (anymore)
-    for lang in language_dict.keys():
-        if lang not in langs:
-            language_dict.pop(lang, None)
-
-
-def _get_missing_cols(app, sheet):
-    headers = get_bulk_app_sheet_headers(app)
-    expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
-    return set(expected_columns) - set(sheet.headers)
-
-
-def _get_col_key(translation_type, language):
-    """
-    Returns the name of the column in the bulk app translation spreadsheet
-    given the translation type and language
-    :param translation_type: What is being translated, i.e. 'default'
-    or 'image'
-    :param language:
-    :return:
-    """
-    return "%s_%s" % (translation_type, language)

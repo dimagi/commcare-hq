@@ -15,7 +15,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations_old import _get_col_key, _get_missing_cols, get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import get_missing_cols, get_unicode_dicts
 
 
 
@@ -165,7 +165,7 @@ def update_app_from_form_sheet(app, sheet):
                   " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
             ))
     # Update the translations
-    missing_cols = _get_missing_cols(app, sheet)
+    missing_cols = get_missing_cols(app, sheet)
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
@@ -258,3 +258,15 @@ def escape_output_value(value):
         element = Element('value')
         element.text = value
         return element
+
+
+def _get_col_key(translation_type, language):
+    """
+    Returns the name of the column in the bulk app translation spreadsheet
+    given the translation type and language
+    :param translation_type: What is being translated, i.e. 'default'
+    or 'image'
+    :param language:
+    :return:
+    """
+    return "%s_%s" % (translation_type, language)

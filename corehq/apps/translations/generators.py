@@ -108,7 +108,7 @@ class AppTranslationsGenerator(object):
         )
 
         # get the translation data headers
-        from corehq.apps.translations.app_translations_old import get_bulk_app_sheet_headers
+        from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
