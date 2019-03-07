@@ -28,12 +28,12 @@ from corehq.apps.translations.app_translations_old import (
     get_module_rows,
     get_module_sheet_name,
     get_unicode_dicts,
-    update_app_from_form_sheet,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
     _remove_description_from_case_property,
 )
+from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader
@@ -784,8 +784,9 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         If Markdown is vetoed for one language, it should be vetoed for the label
         """
         sheet = self.form1_worksheet
-        with patch('corehq.apps.translations.app_translations_old.save_xform') as save_xform_patch:
-            msgs = update_app_from_form_sheet(self.app, sheet)
+        with patch('corehq.apps.translations.app_translations.upload_form.save_xform') as save_xform_patch:
+            headers = get_bulk_app_sheet_headers(self.app)
+            msgs = update_app_from_form_sheet(self.app, sheet, sheet.worksheet.title)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None
