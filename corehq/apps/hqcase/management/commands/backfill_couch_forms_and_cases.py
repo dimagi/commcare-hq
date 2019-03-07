@@ -69,7 +69,7 @@ def get_form_ids_missing_from_elasticsearch(all_form_ids):
     missing_from_elasticsearch = set()
     for form_ids in chunked(all_form_ids, 500):
         form_ids = set(form_ids)
-        not_missing = set(CaseES().doc_id(form_ids).get_ids())
+        not_missing = set(FormES().doc_id(form_ids).get_ids())
         missing_from_elasticsearch.update(form_ids - not_missing)
         assert not_missing - form_ids == set()
     return list(missing_from_elasticsearch)
@@ -79,7 +79,7 @@ def get_case_ids_missing_from_elasticsearch(all_case_ids):
     missing_from_elasticsearch = set()
     for case_ids in chunked(all_case_ids, 500):
         case_ids = set(case_ids)
-        not_missing = set(FormES().doc_id(case_ids).get_ids())
+        not_missing = set(CaseES().doc_id(case_ids).get_ids())
         missing_from_elasticsearch.update(case_ids - not_missing)
         assert not_missing - case_ids == set()
     return list(missing_from_elasticsearch)
