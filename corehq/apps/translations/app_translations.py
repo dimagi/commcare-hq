@@ -80,8 +80,6 @@ def process_bulk_app_translation_upload(app, workbook):
     We return these message tuples instead of calling them now to allow this
     function to be used independently of request objects.
 
-    :param app:
-    :param f:
     :return: Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
@@ -95,60 +93,15 @@ def process_bulk_app_translation_upload(app, workbook):
         # sheet.__iter__ can only be called once, so cache the result
         rows = get_unicode_dicts(sheet)
 
-        # CHECK FOR REPEAT SHEET
-        if sheet.worksheet.title in processed_sheets:
-            msgs.append((
-                messages.error,
-                'Sheet "%s" was repeated. Only the first ' +
-                'occurrence has been processed' %
-                sheet.worksheet.title
-            ))
+        error = _check_for_sheet_error(sheet, expected_sheets=expected_sheets, processed_sheets=processed_sheets)
+        if error:
+            msgs.append(messages.error, error)
             continue
-
-        # CHECK FOR BAD SHEET NAME
-        expected_columns = expected_sheets.get(sheet.worksheet.title, None)
-        if expected_columns is None:
-            msgs.append((
-                messages.error,
-                'Skipping sheet "%s", did not recognize title' %
-                sheet.worksheet.title
-            ))
-            continue
-
-        # CHECK FOR MISSING KEY COLUMN
-        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
-            # Several columns on this sheet could be used to uniquely identify
-            # rows. Using sheet_name for now, but unique_id could also be used.
-            if expected_columns[1] not in sheet.headers:
-                msgs.append((
-                    messages.error,
-                    'Skipping sheet "%s", could not find "%s" column' %
-                    (sheet.worksheet.title, expected_columns[1])
-                ))
-                continue
-        elif expected_columns[0] == "case_property":
-            # It's a module sheet
-            if (expected_columns[0] not in sheet.headers
-                    or expected_columns[1] not in sheet.headers):
-                msgs.append((
-                    messages.error,
-                    'Skipping sheet "%s", could not find case_property'
-                    ' or list_or_detail column.' % sheet.worksheet.title
-                ))
-                continue
-        else:
-            # It's a form sheet
-            if expected_columns[0] not in sheet.headers:
-                msgs.append((
-                    messages.error,
-                    'Skipping sheet "%s", could not find label column' %
-                    sheet.worksheet.title
-                ))
-                continue
 
         processed_sheets.add(sheet.worksheet.title)
 
         # CHECK FOR MISSING COLUMNS
+        expected_columns = expected_sheets.get(sheet.worksheet.title, None)
         missing_cols = set(expected_columns) - set(sheet.headers)
         if len(missing_cols) > 0:
             msgs.append((
@@ -168,10 +121,6 @@ def process_bulk_app_translation_upload(app, workbook):
                 'Sheet will be processed but ignoring the following columns: %s'
                 % (sheet.worksheet.title, " ,".join(extra_cols))
             ))
-
-        # NOTE: At the moment there is no missing row detection.
-        # This could be added if we want though
-        #      (it is not that bad if a user leaves out a row)
 
         try:
             if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
@@ -194,6 +143,30 @@ def process_bulk_app_translation_upload(app, workbook):
         (messages.success, _("App Translations Updated!"))
     )
     return msgs
+
+
+def _check_for_sheet_error(sheet, expected_sheets=Ellipsis, processed_sheets=Ellipsis):
+    if sheet.worksheet.title in processed_sheets:
+        return _('Sheet "%s" was repeated. Only the first occurrence has been processed.') % sheet.worksheet.title
+
+    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
+    if expected_columns is None:
+        return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
+
+    if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
+        if expected_columns[1] not in sheet.headers:
+            return (_('Skipping sheet "%s", could not find "%s" column')
+                % (sheet.worksheet.title, expected_columns[1]))
+    elif expected_columns[0] == "case_property":
+        # It's a module sheet
+        if (expected_columns[0] not in sheet.headers
+                or expected_columns[1] not in sheet.headers):
+            return (_('Skipping sheet "%s", could not find case_property or list_or_detail column.')
+                % sheet.worksheet.title)
+    else:
+        # It's a form sheet
+        if expected_columns[0] not in sheet.headers:
+            return _('Skipping sheet "%s", could not find label column') % sheet.worksheet.title
 
 
 def process_bulk_multimedia_translation_upload(app, workbook, lang):
