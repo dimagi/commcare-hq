@@ -10,7 +10,7 @@ from corehq.apps.translations.app_translations import (
     get_bulk_app_sheet_rows,
     get_unicode_dicts,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {
@@ -105,12 +105,13 @@ class UploadedTranslationsValidator(object):
             # from transifex integration
             if sheet_name not in self.expected_rows:
                 continue
+
             rows = get_unicode_dicts(sheet)
-            if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
+            if is_modules_and_forms_sheet(sheet):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
-            elif 'module' in sheet_name and 'form' not in sheet_name:
+            elif is_module_sheet(sheet):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module')
-            elif 'module' in sheet_name and 'form' in sheet_name:
+            elif is_form_sheet(sheet):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'form')
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
