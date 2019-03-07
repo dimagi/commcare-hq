@@ -9,7 +9,7 @@ from datetime import date
 from django.core.management import BaseCommand
 
 from corehq.apps.domain.dbaccessors import iter_domains
-from corehq.apps.es import FormES
+from corehq.apps.es import FormES, CaseES
 from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
@@ -44,8 +44,14 @@ class Command(BaseCommand):
             filename='all_case_ids_last_modified_{}_to_{}_by_domain.json'.format(start, end),
             fn=lambda: get_all_case_ids_by_domain(start, end)
         )
-        print({domain: len(case_ids) for domain, case_ids in all_case_ids_by_domain.iteritems()
-               if case_ids})
+        print("[4] Get case ids by domain missing from ES")
+        missing_case_ids_by_domain = {}
+        for domain, case_ids in all_case_ids_by_domain.items():
+            missing_case_ids_by_domain[domain] = use_json_cache_file(
+                filename='missing_case_ids_{}_to_{}__{}'.format(start, end, domain),
+                fn=lambda: get_case_ids_missing_from_elasticsearch(case_ids)
+            )
+
 
 def generate_all_form_ids_by_domain(start, end):
     form_ids_by_domain = {
@@ -63,9 +69,19 @@ def get_form_ids_missing_from_elasticsearch(all_form_ids):
     missing_from_elasticsearch = set()
     for form_ids in chunked(all_form_ids, 500):
         form_ids = set(form_ids)
-        not_missing = set(FormES().doc_id(form_ids).get_ids())
+        not_missing = set(CaseES().doc_id(form_ids).get_ids())
         missing_from_elasticsearch.update(form_ids - not_missing)
         assert not_missing - form_ids == set()
+    return list(missing_from_elasticsearch)
+
+
+def get_case_ids_missing_from_elasticsearch(all_case_ids):
+    missing_from_elasticsearch = set()
+    for case_ids in chunked(all_case_ids, 500):
+        case_ids = set(case_ids)
+        not_missing = set(FormES().doc_id(case_ids).get_ids())
+        missing_from_elasticsearch.update(case_ids - not_missing)
+        assert not_missing - case_ids == set()
     return list(missing_from_elasticsearch)
 
 
