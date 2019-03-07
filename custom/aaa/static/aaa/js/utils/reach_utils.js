@@ -58,6 +58,11 @@ hqDefine("aaa/js/utils/reach_utils", [
         self.selectedLocation = options.selectedLocation || userLocationId;
         self.selectedMinistry = options.selectedMinistry || initialPageData.get('user_role_type') || USERROLETYPES.MOHFW;
         self.selectedBeneficiaryType = ko.observable(options.selectedBeneficiaryType || null);
+
+        self.selectedMonthName = ko.computed(function () {
+            return reachUtils().monthName(self.selectedMonth())
+        });
+
         return self;
     };
 

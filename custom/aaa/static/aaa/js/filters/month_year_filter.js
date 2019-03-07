@@ -47,13 +47,13 @@ hqDefine('aaa/js/filters/month_year_filter', [
             }
 
             self.selectedYear.subscribe(function (newValue) {
-                params.postData.selectedYear(newValue);
                 updateMonths(newValue);
             });
 
-            self.selectedMonth.subscribe(function (newValue) {
-                params.postData.selectedMonth(newValue)
-            });
+            params.filters[self.slug].applyFilter = function () {
+                params.postData.selectedYear(self.selectedYear());
+                params.postData.selectedMonth(self.selectedMonth())
+            };
 
             params.filters[self.slug].resetFilters = function () {
                 self.selectedMonth(moment().month() + 1);
