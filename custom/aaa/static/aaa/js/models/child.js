@@ -63,7 +63,7 @@ hqDefine("aaa/js/models/child", [
     };
 
 
-    var childModel = function(data, postData) {
+    var childModel = function (data, postData) {
         var self = {};
         self.id = data.id || null;
         self.name = data.name || null;
@@ -113,26 +113,26 @@ hqDefine("aaa/js/models/child", [
         });
         
         self.updateModel = function (data) {
-            _.each(data, function(value, key) {
+            _.each(data, function (value, key) {
                 self[key](value);
-            })
+            });
         };
 
         self.updatePncVisits = function (data) {
             _.each(data, function (visit) {
-                self.pncVisits.push(modelUtils.pncModel(visit))
+                self.pncVisits.push(modelUtils.pncModel(visit));
             });
             while (self.pncVisits().length < 4) {
-                self.pncVisits.push(modelUtils.pncModel({}))
+                self.pncVisits.push(modelUtils.pncModel({}));
             }
         };
 
         self.updateVaccinationDetails = function (data, period) {
             _.each(data, function (vitamin) {
-                self.vaccinationDetails[period].push(modelUtils.vaccinationModel(vitamin))
+                self.vaccinationDetails[period].push(modelUtils.vaccinationModel(vitamin));
             });
             while (self.vaccinationDetails[period]().length % 5 > 0) {
-                self.vaccinationDetails[period].push(modelUtils.vaccinationModel({}))
+                self.vaccinationDetails[period].push(modelUtils.vaccinationModel({}));
             }
         };
 
@@ -179,38 +179,38 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
             d3.select('#weight_for_age_chart svg').datum([
-                    {
-                        key: 'green',
-                        type: 'area',
-                        values: chartConst.weightForAge['M']['green'],
-                        color: 'green',
-                        area: true,
-                    },
-                    {
-                        key: 'orange',
-                        type: 'area',
-                        values: chartConst.weightForAge['M']['orange'],
-                        color: 'orange',
-                        area: true,
-                    },
-                    {
-                        key: 'red',
-                        type: 'area',
-                        values: chartConst.weightForAge['M']['red'],
-                        color: 'red',
-                        area: true,
-                    },
-                    {
-                        key: 'line',
-                        type: 'line',
-                        values: data.points,
-                        color: 'black',
-                        strokeWidth: 2,
-                        yAxis: 1,
-                    }
-                ]).call(chart);
+                {
+                    key: 'green',
+                    type: 'area',
+                    values: chartConst.weightForAge['M']['green'],
+                    color: 'green',
+                    area: true,
+                },
+                {
+                    key: 'orange',
+                    type: 'area',
+                    values: chartConst.weightForAge['M']['orange'],
+                    color: 'orange',
+                    area: true,
+                },
+                {
+                    key: 'red',
+                    type: 'area',
+                    values: chartConst.weightForAge['M']['red'],
+                    color: 'red',
+                    area: true,
+                },
+                {
+                    key: 'line',
+                    type: 'line',
+                    values: data.points,
+                    color: 'black',
+                    strokeWidth: 2,
+                    yAxis: 1,
+                }
+            ]).call(chart);
             nv.utils.windowResize(chart.update);
-            return chart
+            return chart;
         };
 
         self.heightForAgeChart = function (data) {
@@ -232,38 +232,38 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
             d3.select('#height_for_age_chart svg').datum([
-                    {
-                        key: 'green',
-                        type: 'area',
-                        values: chartConst.heightForAge['M']['green'],
-                        color: 'green',
-                        area: true,
-                    },
-                    {
-                        key: 'orange',
-                        type: 'area',
-                        values: chartConst.heightForAge['M']['orange'],
-                        color: 'orange',
-                        area: true,
-                    },
-                    {
-                        key: 'red',
-                        type: 'area',
-                        values: chartConst.heightForAge['M']['red'],
-                        color: 'red',
-                        area: true,
-                    },
-                    {
-                        key: 'line',
-                        type: 'line',
-                        values: data.points,
-                        color: 'black',
-                        strokeWidth: 2,
-                        yAxis: 1,
-                    }
-                ]).call(chart);
+                {
+                    key: 'green',
+                    type: 'area',
+                    values: chartConst.heightForAge['M']['green'],
+                    color: 'green',
+                    area: true,
+                },
+                {
+                    key: 'orange',
+                    type: 'area',
+                    values: chartConst.heightForAge['M']['orange'],
+                    color: 'orange',
+                    area: true,
+                },
+                {
+                    key: 'red',
+                    type: 'area',
+                    values: chartConst.heightForAge['M']['red'],
+                    color: 'red',
+                    area: true,
+                },
+                {
+                    key: 'line',
+                    type: 'line',
+                    values: data.points,
+                    color: 'black',
+                    strokeWidth: 2,
+                    yAxis: 1,
+                }
+            ]).call(chart);
             nv.utils.windowResize(function() { chart.update() });
-            return chart
+            return chart;
         };
 
         self.weightForHeightChart = function (data) {
@@ -284,38 +284,38 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
             d3.select('#weight_for_height_chart svg').datum([
-                    {
-                        key: 'green',
-                        type: 'area',
-                        values: chartConst.weightForHeight['M']['green'],
-                        color: 'green',
-                        area: true,
-                    },
-                    {
-                        key: 'orange',
-                        type: 'area',
-                        values: chartConst.weightForHeight['M']['orange'],
-                        color: 'orange',
-                        area: true,
-                    },
-                    {
-                        key: 'red',
-                        type: 'area',
-                        values: chartConst.weightForHeight['M']['red'],
-                        color: 'red',
-                        area: true,
-                    },
-                    {
-                        key: 'line',
-                        type: 'line',
-                        values: data.points,
-                        color: 'black',
-                        strokeWidth: 2,
-                        yAxis: 1,
-                    }
-                ]).call(chart);
+                {
+                    key: 'green',
+                    type: 'area',
+                    values: chartConst.weightForHeight['M']['green'],
+                    color: 'green',
+                    area: true,
+                },
+                {
+                    key: 'orange',
+                    type: 'area',
+                    values: chartConst.weightForHeight['M']['orange'],
+                    color: 'orange',
+                    area: true,
+                },
+                {
+                    key: 'red',
+                    type: 'area',
+                    values: chartConst.weightForHeight['M']['red'],
+                    color: 'red',
+                    area: true,
+                },
+                {
+                    key: 'line',
+                    type: 'line',
+                    values: data.points,
+                    color: 'black',
+                    strokeWidth: 2,
+                    yAxis: 1,
+                }
+            ]).call(chart);
             nv.utils.windowResize(chart.update);
-            return chart
+            return chart;
         };
 
         self.getPersonDetails = function () {
@@ -328,10 +328,10 @@ hqDefine("aaa/js/models/child", [
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.mother(personUtils.personModel(data.mother, self.postData));
                 self.personDetails.other(personUtils.personOtherInfoModel(data.other));
-            })
+            });
         };
 
-        self.getChildDetails = function(subsection) {
+        self.getChildDetails = function (subsection) {
             var params = Object.assign({
                 section: 'child',
                 subsection: subsection,
@@ -339,14 +339,14 @@ hqDefine("aaa/js/models/child", [
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 if (subsection === 'child_postnatal_care_details') {
-                    self.infantDetails().updatePncVisits(data.visits)
+                    self.infantDetails().updatePncVisits(data.visits);
                 } else {
-                    self.infantDetails().updateModel(data)
+                    self.infantDetails().updateModel(data);
                 }
-            })
+            });
         };
 
-        self.getVaccinationDetails = function(period) {
+        self.getVaccinationDetails = function (period) {
             var params = Object.assign({
                 section: 'child',
                 subsection: 'vaccination_details',
@@ -354,11 +354,11 @@ hqDefine("aaa/js/models/child", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.infantDetails().updateVaccinationDetails(data.vitamins, period)
-            })
+                self.infantDetails().updateVaccinationDetails(data.vitamins, period);
+            });
         };
 
-        self.getChartData = function(subsection) {
+        self.getChartData = function (subsection) {
             var params = Object.assign({
                 section: 'child',
                 subsection: subsection,
@@ -370,9 +370,9 @@ hqDefine("aaa/js/models/child", [
                     'height_for_age_chart': self.heightForAgeChart,
                     'weight_for_height_chart': self.weightForHeightChart,
                 };
-                nv.addGraph(function() {
+                nv.addGraph(function () {
                     types[subsection](data);
-                })
+                });
             });
         };
 

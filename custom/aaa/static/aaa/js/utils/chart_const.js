@@ -1701,5 +1701,5 @@ hqDefine("aaa/js/utils/chart_const", [
         weightForAge: weightForAge,
         heightForAge: heightForAge,
         weightForHeight: weightForHeight,
-    }
+    };
 });

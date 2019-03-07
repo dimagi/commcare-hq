@@ -7,7 +7,7 @@ hqDefine("aaa/js/models/model_utils", [
     $,
     ko,
     _,
-    initialPageData,
+    initialPageData
 ) {
 
     var pncModel = function (options) {
