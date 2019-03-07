@@ -641,36 +641,27 @@ def update_app_from_form_sheet(app, sheet):
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
-    msgs = []
     mod_text, form_text = sheet.worksheet.title.split("_")
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
     form = app.get_module(module_index).get_form(form_index)
     rows = get_unicode_dicts(sheet)  # fetch once, because sheet.__iter__ can only be called once
-    if isinstance(form, ShadowForm):
-        msgs.append((
-            messages.warning,
-            _("Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
-              " Cannot translate ShadowForms, skipping.").format(
-                  # Add one to revert back to match index in Excel sheet
-                  module_index=module_index + 1,
-                  form_index=form_index + 1,
-                  name=form.default_name(),
-              )
-        ))
-        return msgs
+
+    warning = _check_for_shadow_form_warning(sheet, form)
+    if warning:
+        return [(messages.warning, warning)]
 
     if form.source:
         xform = form.wrapped_xform()
     else:
-        # This Form doesn't have an xform yet. It is empty.
-        # Tell the user this?
-        return msgs
+        # This form is empty. Ignore it.
+        return []
 
     try:
         itext = xform.itext_node
     except XFormException:
-        return msgs
+        # Can't do anything with this form. Ignore it.
+        return []
 
     # Make language nodes for each language if they don't yet exist
     #
@@ -761,6 +752,7 @@ def update_app_from_form_sheet(app, sheet):
                     return True
 
     # Aggregate Markdown vetoes, and translations that currently have Markdown
+    msgs = []
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
     for lang in app.langs:
@@ -857,6 +849,15 @@ def update_app_from_form_sheet(app, sheet):
 
     save_xform(app, form, etree.tostring(xform.xml))
     return msgs
+
+
+def _check_for_shadow_form_warning(sheet, form):
+    if isinstance(form, ShadowForm):
+        return _("Found a ShadowForm at {sheet_name} with the name {name}."
+            " Cannot translate ShadowForms, skipping.").format(
+                sheet_name=sheet.worksheet.title,
+                name=form.default_name(),
+            )
 
 
 def escape_output_value(value):
