@@ -7,7 +7,6 @@ import six
 
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq import toggles
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 
 def get_file_content_from_workbook(wb):
@@ -32,16 +31,4 @@ def update_app_translations_from_trans_dict(app, trans_dict):
     else:
         if isinstance(app, LinkedApplication):
             app.linked_app_translations.update(trans_dict)
-        app.translations.update(trans_dict)
-
-
-def is_form_sheet(sheet):
-    return 'module' in sheet.worksheet.title and 'form' in sheet.worksheet.title
-
-
-def is_module_sheet(sheet):
-    return 'module' in sheet.worksheet.title and 'form' not in sheet.worksheet.title
-
-
-def is_modules_and_forms_sheet(sheet):
-    return sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME
+        app.translations.update(trans_dict) 

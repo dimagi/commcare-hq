@@ -13,15 +13,17 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.translations.app_translations_old import (
+from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
+    get_missing_cols,
     get_unicode_dicts,
-    _get_missing_cols,  # TODO: rename
-    _update_translation_dict,   # TODO: rename
+    is_form_sheet,
+    is_module_sheet,
+    is_modules_and_forms_sheet,
+    update_translation_dict,
 )
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
 from corehq.apps.translations.app_translations.upload_module import update_app_from_module_sheet
-from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
 
 
 def validate_bulk_app_translation_upload(app, workbook, email):
@@ -119,7 +121,7 @@ def _check_for_sheet_warnings(app, sheet):
     expected_sheets = {h[0]: h[1] for h in headers}
     expected_columns = expected_sheets.get(sheet.worksheet.title, None)
 
-    missing_cols = _get_missing_cols(app, sheet)
+    missing_cols = get_missing_cols(app, sheet)
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
             'Sheet will be processed but the following translations will be unchanged: %s')
@@ -191,7 +193,7 @@ def update_app_from_modules_and_forms_sheet(app, sheet):
                 ))
                 continue
 
-        _update_translation_dict('default_', document.name, row, app.langs)
+        update_translation_dict('default_', document.name, row, app.langs)
 
         for lang in app.langs:
             icon_filepath = 'icon_filepath_%s' % lang

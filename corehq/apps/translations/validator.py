@@ -5,12 +5,14 @@ import ghdiff
 from memoized import memoized
 from six.moves import zip
 
-from corehq.apps.translations.app_translations_old import (
+from corehq.apps.translations.app_translations_old import get_bulk_app_sheet_row
+from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
-    get_bulk_app_sheet_rows,
     get_unicode_dicts,
+    is_form_sheet,
+    is_module_sheet,
+    is_modules_and_forms_sheet,
 )
-from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {

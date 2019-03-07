@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
-from corehq.apps.translations.app_translations_old import get_unicode_dicts, _update_translation_dict
+from corehq.apps.translations.app_translations.utils import get_unicode_dicts, update_translation_dict
 
 
 
@@ -49,7 +49,7 @@ def update_app_from_module_sheet(app, sheet):
                     row, 'default', app.langs
             ))
         if ok_to_delete_translations:
-            _update_translation_dict('default_', language_dict, row, app.langs)
+            update_translation_dict('default_', language_dict, row, app.langs)
         else:
             msgs.append((
                 messages.error,

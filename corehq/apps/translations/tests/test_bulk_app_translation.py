@@ -15,19 +15,20 @@ from six.moves import zip
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.translations.app_translations_old import (
+from corehq.apps.translations.app_translations.utils import (
     get_app_translation_workbook,
     get_bulk_app_sheet_headers,
+    get_form_sheet_name,
+    get_menu_row,
+    get_module_sheet_name,
+)
+from corehq.apps.translations.app_translations_old import (
     get_bulk_app_sheet_rows,
     get_bulk_multimedia_sheet_headers,
     get_bulk_multimedia_sheet_rows,
     get_form_question_rows,
-    get_form_sheet_name,
-    get_menu_row,
     get_module_case_list_form_rows,
     get_module_rows,
-    get_module_sheet_name,
-    get_unicode_dicts,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
