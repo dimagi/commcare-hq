@@ -10,7 +10,11 @@ from django.core.management import BaseCommand
 
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.apps.es import FormES
+from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
+from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
+    get_case_ids_modified_with_owner_since
 from corehq.util.dates import iso_string_to_date
+from corehq.util.log import with_progress_bar
 from couchforms.dbaccessors import get_form_ids_by_type
 from dimagi.utils.chunked import chunked
 
@@ -35,11 +39,12 @@ class Command(BaseCommand):
                 filename='missing_form_ids_{}_to_{}__{}'.format(start, end, domain),
                 fn=lambda: get_form_ids_missing_from_elasticsearch(form_ids)
             )
-        print({
-            domain: len(missing_form_ids)
-            for domain, missing_form_ids in missing_form_ids_by_domain.items()
-            if missing_form_ids
-        })
+        print("[3] Get all case ids by domain for date range")
+        all_case_ids_by_domain = use_json_cache_file(
+            filename='all_case_ids_last_modified_{}_to_{}_by_domain.json'.format(start, end),
+            fn=lambda: get_all_case_ids_by_domain(start, end)
+        )
+        print({domain: len(case_ids) for domain, case_ids in all_case_ids_by_domain.iteritems()})
 
 
 def generate_all_form_ids_by_domain(start, end):
@@ -62,6 +67,16 @@ def get_form_ids_missing_from_elasticsearch(all_form_ids):
         missing_from_elasticsearch.update(form_ids - not_missing)
         assert not_missing - form_ids == set()
     return list(missing_from_elasticsearch)
+
+
+def get_all_case_ids_by_domain(start, end):
+    all_case_ids_by_domain = defaultdict(list)
+    for domain in iter_domains():
+        print('Pulling cases for {}'.format(domain))
+        for owner_id in with_progress_bar(get_all_case_owner_ids(domain)):
+            all_case_ids_by_domain[domain].extend(
+                get_case_ids_modified_with_owner_since(domain, owner_id, start, end)
+            )
 
 
 def use_json_cache_file(filename, fn):
