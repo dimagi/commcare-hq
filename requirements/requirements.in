@@ -82,7 +82,7 @@ httpagentparser~=1.7
 boto3~=1.9
 simpleeval~=0.9
 laboratory==0.2.0
-ConcurrentLogHandler==0.9.1
+concurrent-log-handler==0.9.12
 PyGithub==1.35
 django-bulk-update~=2.0
 csiphash==0.0.5
