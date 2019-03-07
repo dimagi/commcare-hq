@@ -22,7 +22,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_menu_row,
     get_module_sheet_name,
 )
-from corehq.apps.translations.app_translations_old import (
+from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheet_rows,
     get_bulk_multimedia_sheet_headers,
     get_bulk_multimedia_sheet_rows,
@@ -786,8 +786,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         """
         sheet = self.form1_worksheet
         with patch('corehq.apps.translations.app_translations.upload_form.save_xform') as save_xform_patch:
-            headers = get_bulk_app_sheet_headers(self.app)
-            msgs = update_app_from_form_sheet(self.app, sheet, sheet.worksheet.title)
+            msgs = update_app_from_form_sheet(self.app, sheet)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None

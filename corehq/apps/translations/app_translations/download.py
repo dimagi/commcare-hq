@@ -2,11 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import copy
-import itertools
 import re
-import ghdiff
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 
 import six
 import io
@@ -14,32 +11,16 @@ from django.contrib import messages
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from lxml import etree
-from lxml.etree import XMLSyntaxError, Element
-from six.moves import zip
 
-from corehq import toggles
-from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException,
-    ModuleNotFoundException,
-    XFormException)
-from corehq.apps.app_manager.models import ReportModule, ShadowForm
-from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.xform import ItextValue, ItextOutput
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
     get_menu_row,
     get_module_sheet_name,
     get_modules_and_forms_row,
-)
-from corehq.util.workbook_json.excel import (
-    HeaderValueError,
-    InvalidExcelFileException,
-    JSONReaderError,
-    WorkbookJSONReader,
 )
 
 
