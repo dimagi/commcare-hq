@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_app_translation_workbook,
     get_bulk_app_sheet_headers,
 )
-from corehq.apps.translations.app_translations_old import (
+from corehq.apps.translations.app_translations.download import (
     get_module_rows,
     get_form_question_rows,
     get_bulk_multimedia_sheet_headers,

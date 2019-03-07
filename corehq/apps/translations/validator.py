@@ -5,7 +5,7 @@ import ghdiff
 from memoized import memoized
 from six.moves import zip
 
-from corehq.apps.translations.app_translations_old import get_bulk_app_sheet_row
+from corehq.apps.translations.app_translations.download import get_bulk_app_sheet_rows
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_unicode_dicts,
