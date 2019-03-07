@@ -344,6 +344,12 @@
         {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
         {% initial_page_data 'toggles_dict' toggles_dict %}
         {% initial_page_data 'previews_dict' previews_dict %}
+
+        {% if demo_workflow_ab_v2 %}
+          {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
+          {% initial_analytics_data 'hubspot.demoABv2' demo_workflow_ab_v2 %}
+        {% endif %}
+
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
