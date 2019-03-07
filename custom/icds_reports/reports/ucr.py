@@ -364,7 +364,7 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         st_caste = self.table.c.caste == 'st'
         sc_caste = self.table.c.caste == 'sc'
         rations_gte_21 = self.table.c.num_rations_distributed >= 21
-        rations_lt_21 = self.table.c.num_rations_distributed < 21
+        rations_lt_21 = (0 < self.table.c.num_rations_distributed) & (self.table.c.num_rations_distributed < 21)
         disabled = self.table.c.disabled == 'yes'
         minority = self.table.c.minority == 'yes'
         rations_none = self.table.c.num_rations_distributed == 0
