@@ -35,8 +35,6 @@ hqDefine("app_manager/js/settings/translations", function () {
             $multimediaPanel.koApplyBindings(multimediaTranslationsModel({
                 baseUrl: $multimediaPanel.find("#download_link").attr("href"),
             }));
-
-            $multimediaPanel.find("#bulk_app_multimedia_upload_form").html("<div class='alert alert-info'>Upload is not yet supported.</div>");
         }
     });
 });

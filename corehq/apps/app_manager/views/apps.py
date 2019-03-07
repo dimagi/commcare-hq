@@ -261,7 +261,7 @@ def get_app_view_context(request, app):
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
         },
         'bulk_app_multimedia_upload': {
-            'action': reverse('upload_bulk_app_translations',   # TODO
+            'action': reverse('upload_bulk_multimedia_translations',
                               args=(app.domain, app.get_id)),
             'download_url': reverse('download_bulk_multimedia_translations',
                                     args=(app.domain, app.get_id)),
