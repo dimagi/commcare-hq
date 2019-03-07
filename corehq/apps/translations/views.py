@@ -20,7 +20,10 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
-from corehq.apps.translations.app_translations import (
+from corehq.apps.translations.app_translations_old import (
+    get_menu_row,
+    get_module_rows,
+    get_form_question_rows,
     get_bulk_app_sheet_headers,
     get_bulk_multimedia_sheet_headers,
     get_bulk_app_sheet_rows,

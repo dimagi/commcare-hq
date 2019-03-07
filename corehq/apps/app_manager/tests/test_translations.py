@@ -10,7 +10,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.translations.app_translations import escape_output_value
+from corehq.apps.translations.app_translations_old import escape_output_value
 
 
 class AppManagerTranslationsTest(TestCase, SuiteMixin):

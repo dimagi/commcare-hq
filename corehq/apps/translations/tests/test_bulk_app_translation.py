@@ -15,7 +15,7 @@ from six.moves import zip
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.translations.app_translations import (
+from corehq.apps.translations.app_translations_old import (
     get_app_translation_workbook,
     get_bulk_app_sheet_headers,
     get_bulk_app_sheet_rows,
@@ -27,7 +27,6 @@ from corehq.apps.translations.app_translations import (
     get_module_case_list_form_rows,
     get_module_rows,
     get_module_sheet_name,
-    get_modules_and_forms_row,
     get_unicode_dicts,
     process_bulk_app_translation_upload,
     _remove_description_from_case_property,
@@ -783,7 +782,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         If Markdown is vetoed for one language, it should be vetoed for the label
         """
         sheet = self.form1_worksheet
-        with patch('corehq.apps.translations.app_translations.save_xform') as save_xform_patch:
+        with patch('corehq.apps.translations.app_translations_old.save_xform') as save_xform_patch:
             msgs = update_app_from_form_sheet(self.app, sheet)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
