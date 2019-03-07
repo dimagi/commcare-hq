@@ -3,8 +3,6 @@ from __future__ import print_function
 
 import json
 import os
-from collections import defaultdict
-from datetime import date
 
 from django.core.management import BaseCommand
 
@@ -51,6 +49,8 @@ class Command(BaseCommand):
                 filename='missing_case_ids_{}_to_{}__{}'.format(start, end, domain),
                 fn=lambda: get_case_ids_missing_from_elasticsearch(case_ids)
             )
+        print({domain: case_ids[0] for domain, case_ids in missing_case_ids_by_domain.iteritems()
+               if case_ids})
 
 
 def generate_all_form_ids_by_domain(start, end):
