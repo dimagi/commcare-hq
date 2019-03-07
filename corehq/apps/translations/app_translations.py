@@ -85,42 +85,21 @@ def process_bulk_app_translation_upload(app, workbook):
     """
     msgs = []
 
-    headers = get_bulk_app_sheet_headers(app)
-    expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
-
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
         rows = get_unicode_dicts(sheet)
 
-        error = _check_for_sheet_error(sheet, expected_sheets=expected_sheets, processed_sheets=processed_sheets)
+        error = _check_for_sheet_error(app, sheet, processed_sheets=processed_sheets)
         if error:
             msgs.append(messages.error, error)
             continue
 
         processed_sheets.add(sheet.worksheet.title)
 
-        # CHECK FOR MISSING COLUMNS
-        expected_columns = expected_sheets.get(sheet.worksheet.title, None)
-        missing_cols = set(expected_columns) - set(sheet.headers)
-        if len(missing_cols) > 0:
-            msgs.append((
-                messages.warning,
-                'Sheet "%s" has fewer columns than expected. '
-                'Sheet will be processed but the following'
-                ' translations will be unchanged: %s'
-                % (sheet.worksheet.title, " ,".join(missing_cols))
-            ))
-
-        # CHECK FOR EXTRA COLUMNS
-        extra_cols = set(sheet.headers) - set(expected_columns)
-        if len(extra_cols) > 0:
-            msgs.append((
-                messages.warning,
-                'Sheet "%s" has unrecognized columns. '
-                'Sheet will be processed but ignoring the following columns: %s'
-                % (sheet.worksheet.title, " ,".join(extra_cols))
-            ))
+        warnings = _check_for_sheet_warnings(app, sheet)
+        for warning in warnings:
+            msgs.append(messages.warning, warning)
 
         try:
             if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
@@ -133,7 +112,7 @@ def process_bulk_app_translation_upload(app, workbook):
                 msgs.extend(ms)
             else:
                 # It's a form sheet
-                ms = update_form_translations(sheet, rows, missing_cols, app)
+                ms = update_form_translations(sheet, rows, app)
                 msgs.extend(ms)
         except ValueError:
             msgs.append((messages.error, _("There was a problem loading sheet {} and was skipped.").format(
@@ -145,7 +124,10 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def _check_for_sheet_error(sheet, expected_sheets=Ellipsis, processed_sheets=Ellipsis):
+def _check_for_sheet_error(app, sheet, processed_sheets=Ellipsis):
+    headers = get_bulk_app_sheet_headers(app)
+    expected_sheets = {h[0]: h[1] for h in headers}
+
     if sheet.worksheet.title in processed_sheets:
         return _('Sheet "%s" was repeated. Only the first occurrence has been processed.') % sheet.worksheet.title
 
@@ -167,6 +149,34 @@ def _check_for_sheet_error(sheet, expected_sheets=Ellipsis, processed_sheets=Ell
         # It's a form sheet
         if expected_columns[0] not in sheet.headers:
             return _('Skipping sheet "%s", could not find label column') % sheet.worksheet.title
+
+
+def _check_for_sheet_warnings(app, sheet):
+    warnings = []
+    headers = get_bulk_app_sheet_headers(app)
+    expected_sheets = {h[0]: h[1] for h in headers}
+    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
+
+    missing_cols = _get_missing_cols(app, sheet)
+    if len(missing_cols) > 0:
+        warnings.append((_('Sheet "%s" has fewer columns than expected. '
+            'Sheet will be processed but the following translations will be unchanged: %s')
+            % (sheet.worksheet.title, " ,".join(missing_cols))))
+
+    extra_cols = set(sheet.headers) - set(expected_columns)
+    if len(extra_cols) > 0:
+        warnings.append(_('Sheet "%s" has unrecognized columns. '
+            'Sheet will be processed but ignoring the following columns: %s')
+            % (sheet.worksheet.title, " ,".join(extra_cols)))
+
+    return warnings
+
+
+def _get_missing_cols(app, sheet):
+    headers = get_bulk_app_sheet_headers(app)
+    expected_sheets = {h[0]: h[1] for h in headers}
+    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
+    return set(expected_columns) - set(sheet.headers)
 
 
 def process_bulk_multimedia_translation_upload(app, workbook, lang):
@@ -629,7 +639,7 @@ def _update_translation_dict(prefix, language_dict, row, langs):
             language_dict.pop(lang, None)
 
 
-def update_form_translations(sheet, rows, missing_cols, app):
+def update_form_translations(sheet, rows, app):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
@@ -637,7 +647,6 @@ def update_form_translations(sheet, rows, missing_cols, app):
     :param sheet: a WorksheetJSONReader
     :param rows: The rows of the sheet (we can't get this from the sheet
     because sheet.__iter__ can only be called once)
-    :param missing_cols:
     :param app:
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
@@ -785,6 +794,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                   " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
             ))
     # Update the translations
+    missing_cols = _get_missing_cols(app, sheet)
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
