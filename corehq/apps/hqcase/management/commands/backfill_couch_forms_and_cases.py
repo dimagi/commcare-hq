@@ -45,10 +45,11 @@ class Command(BaseCommand):
         print("[4] Get case ids by domain missing from ES")
         missing_case_ids_by_domain = {}
         for domain, case_ids in all_case_ids_by_domain.items():
-            missing_case_ids_by_domain[domain] = use_json_cache_file(
-                filename='missing_case_ids_{}_to_{}__{}'.format(start, end, domain),
-                fn=lambda: get_case_ids_missing_from_elasticsearch(case_ids)
-            )
+            if case_ids:
+                missing_case_ids_by_domain[domain] = use_json_cache_file(
+                    filename='missing_case_ids_{}_to_{}__{}'.format(start, end, domain),
+                    fn=lambda: get_case_ids_missing_from_elasticsearch(case_ids)
+                )
         print({domain: case_ids[0] for domain, case_ids in missing_case_ids_by_domain.iteritems()
                if case_ids})
 
