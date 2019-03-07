@@ -98,10 +98,11 @@ class ProgramOverviewReportAPI(View):
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_location = self.request.POST.get('selectedLocation')
         selected_date = date(selected_year, selected_month, 1)
+        selected_ministry = self.request.POST.get('selectedMinistry')
         prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
 
         location_filters = build_location_filters(selected_location)
-        data = get_location_model_for_ministry(self.user_ministry).objects.filter(
+        data = get_location_model_for_ministry(selected_ministry).objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
             domain=self.request.domain,
             **location_filters

@@ -82,6 +82,7 @@ hqDefine('aaa/js/filters/location_filter', [
             };
 
             self.selectedMinistry.subscribe(function () {
+                params.postData.selectedMinistry = self.selectedMinistry();
                 self._initHierarchy();
             });
 

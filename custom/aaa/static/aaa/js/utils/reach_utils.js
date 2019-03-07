@@ -56,6 +56,7 @@ hqDefine("aaa/js/utils/reach_utils", [
         self.selectedYear = ko.observable(options.selectedYear || moment().year());
         self.selectedMonth = ko.observable(options.selectedMonth || moment().month() + 1);
         self.selectedLocation = options.selectedLocation || userLocationId;
+        self.selectedMinistry = options.selectedMinistry || initialPageData.get('user_role_type') || USERROLETYPES.MOHFW;
         self.selectedBeneficiaryType = ko.observable(options.selectedBeneficiaryType || null);
         return self;
     };
