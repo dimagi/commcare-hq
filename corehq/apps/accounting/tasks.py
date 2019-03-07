@@ -861,12 +861,16 @@ def _send_overdue_notice(invoice, context):
 
 
 def _create_overdue_notification(invoice, context):
+    if invoice.is_customer_invoice:
+        domains = [subscription.subscriber.domain for subscription in invoice.subscriptions.all()]
+    else:
+        domains = [invoice.get_domain()]
     message = _('Reminder - your {} statement is past due!'.format(
         invoice.date_start.strftime('%B')
     ))
     note = Notification.objects.create(content=message, url=context['statements_url'],
-                                       domain_specific=True, type='billing',
-                                       domains=[invoice.get_domain()])
+                                       domain_specific=False if invoice.is_customer_invoice else True,
+                                       type='billing', domains=domains)
     note.activate()
 
 
