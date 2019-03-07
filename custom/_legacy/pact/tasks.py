@@ -68,14 +68,3 @@ def eval_dots_block(xform_json, callback=None):
         #if this gets triggered, that's ok because web entry don't got them
         tb = traceback.format_exc()
         notify_exception(None, message="PACT error evaluating DOTS block docid %s, %s\n\tTraceback: %s" % (xform_json['_id'], ex, tb))
-
-
-# Originally there was a task here:
-# @periodic_task(run_every=crontab(hour="12", minute="0", day_of_week="*"))
-# def update_schedule_case_properties():
-# This comment is a tombstone for someone later trying to resolve a mystery.
-# This task had been failing once a day for nearly a full year
-# starting on Mar 28, 2018 8:00:08 AM EDT.
-# When getting rid of the long-broken cases_get_lite couch design doc,
-# Danny decided to remove this failing task entirely,
-# which should have the same effect as running once a day and failing once a day.
