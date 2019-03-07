@@ -9,7 +9,6 @@ from corehq.sql_db.operations import HqRunPython
 
 def _citus_composite_key_migration(apps, schema_editor):
     models_to_update = [
-        'aggregateawcinfrastructureforms',
         'aggregatebirthpreparednesforms',
         'aggregateccsrecorddeliveryforms',
         'aggregateccsrecordpostnatalcareforms',
@@ -20,7 +19,6 @@ def _citus_composite_key_migration(apps, schema_editor):
         'aggregatecomplementaryfeedingforms',
         'aggregategrowthmonitoringforms',
         'dailyattendance',
-        'awwincentivereport'
     ]
     if not getattr(settings, 'IS_ON_CITUSDB_BACKEND', False):
         return

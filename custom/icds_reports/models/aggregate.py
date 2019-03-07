@@ -862,7 +862,7 @@ class DailyAttendance(models.Model):
     class Meta:
         managed = False
         db_table = 'daily_attendance'
-        unique_together = ('supervisor_id', 'case_id')
+        unique_together = ('supervisor_id', 'doc_id')
 
     @classmethod
     def aggregate(cls, month):
@@ -1661,7 +1661,6 @@ class AggregateAwcInfrastructureForms(models.Model):
 
     class Meta(object):
         db_table = AGG_INFRASTRUCTURE_TABLE
-        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1702,7 +1701,6 @@ class AWWIncentiveReport(models.Model):
 
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE
-        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
