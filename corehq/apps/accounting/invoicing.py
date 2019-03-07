@@ -347,12 +347,13 @@ class CustomerAccountInvoiceFactory(object):
         self.subscriptions = {}
 
     def create_invoice(self):
-        for subscription in self.account.subscription_set.all():
-            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                if subscription.plan_version in self.subscriptions:
-                    self.subscriptions[subscription.plan_version].append(subscription)
+        for sub in self.account.subscription_set.all():
+            if not sub.do_not_invoice \
+                    and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
+                if sub.plan_version in self.subscriptions:
+                    self.subscriptions[sub.plan_version].append(sub)
                 else:
-                    self.subscriptions[subscription.plan_version] = [subscription]
+                    self.subscriptions[sub.plan_version] = [sub]
         if not self.subscriptions:
             return
         try:
