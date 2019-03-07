@@ -196,6 +196,15 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
+def process_bulk_multimedia_translation_upload(app, workbook, lang):
+    msgs = []
+    # TODO: validate header is the right language code
+    msgs.append(
+        (messages.success, _("Multimedia Translations Updated in {}!".format(lang)))
+    )
+    return msgs
+
+
 def validate_bulk_app_translation_upload(app, workbook, email):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
