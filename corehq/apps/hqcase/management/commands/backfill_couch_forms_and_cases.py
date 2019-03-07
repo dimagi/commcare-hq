@@ -35,6 +35,11 @@ class Command(BaseCommand):
                 filename='missing_form_ids_{}_to_{}__{}'.format(start, end, domain),
                 fn=lambda: get_form_ids_missing_from_elasticsearch(form_ids)
             )
+        print({
+            domain: len(missing_form_ids)
+            for domain, missing_form_ids in missing_form_ids_by_domain.items()
+            if missing_form_ids
+        })
 
 
 def generate_all_form_ids_by_domain(start, end):
