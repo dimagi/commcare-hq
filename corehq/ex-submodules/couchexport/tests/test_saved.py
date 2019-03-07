@@ -40,7 +40,7 @@ class SavedBasicExportTest(TestCase):
             saved = SavedBasicExport(configuration=_mk_config(name))
             saved.save()
             saved.set_payload(payload)
-            self.assertEqual(payload, saved.get_payload())
+            self.assertEqual(payload.encode('utf-8'), saved.get_payload())
 
     def test_get_by_index(self):
         index = ['some', 'index']
