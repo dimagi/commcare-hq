@@ -99,17 +99,15 @@ def process_bulk_app_translation_upload(app, workbook):
         for warning in warnings:
             msgs.append(messages.warning, warning)
 
-        # sheet.__iter__ can only be called once, so cache the result
-        rows = get_unicode_dicts(sheet)
         try:
             if is_modules_and_forms_sheet(sheet):
-                ms = _process_modules_and_forms_sheet(rows, app)
+                ms = update_app_from_modules_and_forms_sheet(app, sheet)
                 msgs.extend(ms)
             elif is_module_sheet(sheet):
-                ms = _update_case_list_translations(sheet, rows, app)
+                ms = update_app_from_module_sheet(app, sheet)
                 msgs.extend(ms)
             elif is_form_sheet(sheet):
-                ms = update_form_translations(sheet, rows, app)
+                ms = update_app_from_form_sheet(app, sheet)
                 msgs.extend(ms)
         except ValueError:
             msgs.append((messages.error, _("There was a problem loading sheet {} and was skipped.").format(
@@ -554,7 +552,7 @@ def get_form_question_rows(langs, form):
     return rows
 
 
-def _process_modules_and_forms_sheet(rows, app):
+def update_app_from_modules_and_forms_sheet(app, sheet):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
@@ -566,7 +564,7 @@ def _process_modules_and_forms_sheet(rows, app):
     """
     msgs = []
 
-    for row in rows:
+    for row in get_unicode_dicts(sheet):
         identifying_text = row.get('sheet_name', '').split('_')
 
         if len(identifying_text) not in (1, 2):
@@ -633,14 +631,12 @@ def _update_translation_dict(prefix, language_dict, row, langs):
             language_dict.pop(lang, None)
 
 
-def update_form_translations(sheet, rows, app):
+def update_app_from_form_sheet(app, sheet):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
 
     :param sheet: a WorksheetJSONReader
-    :param rows: The rows of the sheet (we can't get this from the sheet
-    because sheet.__iter__ can only be called once)
     :param app:
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
@@ -650,6 +646,7 @@ def update_form_translations(sheet, rows, app):
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
     form = app.get_module(module_index).get_form(form_index)
+    rows = get_unicode_dicts(sheet)  # fetch once, because sheet.__iter__ can only be called once
     if isinstance(form, ShadowForm):
         msgs.append((
             messages.warning,
@@ -878,7 +875,7 @@ def _remove_description_from_case_property(row):
     return re.match('.*(?= \()', row['case_property']).group()
 
 
-def _update_case_list_translations(sheet, rows, app):
+def update_app_from_module_sheet(app, sheet):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -886,8 +883,6 @@ def _update_case_list_translations(sheet, rows, app):
     This function does not save the modified app to the database.
 
     :param sheet:
-    :param rows: The rows of the sheet (we can't get this from the sheet
-    because sheet.__iter__ can only be called once)
     :param app:
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
@@ -912,7 +907,7 @@ def _update_case_list_translations(sheet, rows, app):
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
 
-    for i, row in enumerate(rows):
+    for i, row in enumerate(get_unicode_dicts(sheet)):
         # If it's an enum case property, set index_of_last_enum_in_condensed
         if row['case_property'].endswith(" (ID Mapping Text)"):
             row['id'] = _remove_description_from_case_property(row)
