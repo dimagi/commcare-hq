@@ -16,10 +16,10 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.app_translations_old import (
     get_bulk_app_sheet_headers,
     get_unicode_dicts,
-    update_app_from_form_sheet,
     _get_missing_cols,  # TODO: rename
     _update_translation_dict,   # TODO: rename
 )
+from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
 from corehq.apps.translations.app_translations.upload_module import update_app_from_module_sheet
 from corehq.apps.translations.utils import is_form_sheet, is_module_sheet, is_modules_and_forms_sheet
 
