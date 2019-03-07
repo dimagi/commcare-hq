@@ -1092,7 +1092,7 @@ LOGGING = {
         },
         'ucr_diff': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
             'formatter': 'ucr_diff',
             'filename': UCR_DIFF_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
