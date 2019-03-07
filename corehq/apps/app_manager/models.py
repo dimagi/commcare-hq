@@ -1148,7 +1148,8 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException("Error in form {}".format(self.full_path_name), e)
+            raise XFormException(_('Error in form "{}": {}')
+                                 .format(trans(self.name), six.text_type(e)))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1162,7 +1163,7 @@ class FormBase(DocumentSchema):
             try:
                 valid_paths = {question['value']: question['tag']
                                for question in self.get_questions(langs=[])}
-            except XFormException as e:
+            except XFormException:
                 # punt on invalid xml (sorry, no rich attachments)
                 valid_paths = {}
 
