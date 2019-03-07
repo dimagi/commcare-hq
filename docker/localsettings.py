@@ -18,7 +18,7 @@ DATABASES = {
     },
     'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'icds-ucr_commcarehq',
+        'NAME': 'icds_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',

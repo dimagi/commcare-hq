@@ -4,7 +4,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/components.ko',    // pagination widget
+    'hqwebapp/js/components.ko',    // pagination and search box widgets
 ], function (
     $,
     ko,
@@ -127,6 +127,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             return self.totalItems() === 0;
         });
         self.currentPage = ko.observable(1);
+        self.query = ko.observable('');
         self.goToPage = function (page) {
             self.showPaginationSpinner(true);
             self.currentPage(page);
@@ -136,6 +137,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
                     action: 'list_conditional_alerts',
                     page: page,
                     limit: self.itemsPerPage(),
+                    query: self.query(),
                 },
                 success: function (data) {
                     self.showPaginationSpinner(false);

@@ -333,20 +333,6 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
 
-        self.searchOnEnter = function(value, event) {
-            if (event.keyCode === 13){
-                self.goToPage(1);
-            }
-            return true;
-        };
-
-        self.initQuery = function(){
-            if (self.buildComment()){
-                self.buildComment('');
-                self.goToPage(1);
-            }
-        };
-
         self.toggleRelease = function (savedApp, event) {
             $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var isReleased = savedApp.is_released();
