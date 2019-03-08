@@ -41,7 +41,7 @@ class Command(BaseCommand):
         missing_form_ids_by_domain = {}
         for domain, form_ids in all_form_ids_by_domain.items():
             missing_form_ids_by_domain[domain] = use_json_cache_file(
-                filename='missing_form_ids_{}_to_{}__{}'.format(start, end, domain),
+                filename='missing_form_ids_{}_to_{}__{}.json'.format(start, end, domain),
                 fn=lambda: get_form_ids_missing_from_elasticsearch(form_ids)
             )
         print("[3] Get all case ids by domain for date range")
@@ -54,17 +54,17 @@ class Command(BaseCommand):
         for domain, case_ids in all_case_ids_by_domain.items():
             if case_ids:
                 missing_case_ids_by_domain[domain] = use_json_cache_file(
-                    filename='missing_case_ids_{}_to_{}__{}'.format(start, end, domain),
+                    filename='missing_case_ids_{}_to_{}__{}.json'.format(start, end, domain),
                     fn=lambda: get_case_ids_missing_from_elasticsearch(case_ids)
                 )
 
         print("[5] Get all the _revs for these docs")
         case_metadata = use_json_cache_file(
-            filename='missing_case_metadata_{}_to_{}'.format(start, end),
+            filename='missing_case_metadata_{}_to_{}.json'.format(start, end),
             fn=lambda: prepare_metadata(missing_case_ids_by_domain)
         )
         form_metadata = use_json_cache_file(
-            filename='missing_form_metadata_{}_to_{}'.format(start, end),
+            filename='missing_form_metadata_{}_to_{}.json'.format(start, end),
             fn=lambda: prepare_metadata(missing_form_ids_by_domain)
         )
 
