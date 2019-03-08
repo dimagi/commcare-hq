@@ -703,7 +703,7 @@ def run_downgrade_process():
         if _is_subscription_eligible_for_downgrade_process(current_subscription):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today, current_subscription)
 
-    for account, oldest_unpaid_invoice, total in _get_accounts_with_customer_invoices_over_threshold(today):
+    for oldest_unpaid_invoice, total in _get_accounts_with_customer_invoices_over_threshold(today):
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
         if _is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
@@ -765,7 +765,7 @@ def _get_accounts_with_customer_invoices_over_threshold(today):
 
             if total_overdue_to_date > 100:
                 accounts.add((account, plan))
-                yield account, overdue_invoice, total_overdue_to_date
+                yield overdue_invoice, total_overdue_to_date
 
 
 def _is_subscription_eligible_for_downgrade_process(subscription):
@@ -789,6 +789,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         context.update({
             'statements_url': absolute_reverse(
                 EnterpriseBillingStatementsView.urlname, args=[domain]),
+            'domain_or_account': oldest_unpaid_invoice.account.name
         })
     else:
         domain = subscription.subscriber.domain
@@ -798,6 +799,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
                                                  args=[domain]),
             'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
                                                args=[domain]),
+            'domain_or_account': domain
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
@@ -842,7 +844,6 @@ def _send_downgrade_warning(invoice, context):
             "CommCare Alert: {}'s subscriptions will be downgraded to Community Plan after tomorrow!".format(
                 invoice.account.name
             ))
-        domain_or_account = invoice.account.name
         subscriptions_to_downgrade = _(
             "subscriptions on {}".format(invoice.account.name)
         )
@@ -852,14 +853,12 @@ def _send_downgrade_warning(invoice, context):
             "CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
                 invoice.get_domain()
             ))
-        domain_or_account = invoice.get_domain()
         subscriptions_to_downgrade = _(
             "subscription for {}".format(invoice.get_domain())
         )
         bcc = [settings.GROWTH_EMAIL]
 
     context.update({
-        'domain_or_account': domain_or_account,
         'subscriptions_to_downgrade': subscriptions_to_downgrade
     })
     send_html_email_async.delay(
@@ -874,16 +873,11 @@ def _send_downgrade_warning(invoice, context):
 
 def _send_overdue_notice(invoice, context):
     if invoice.is_customer_invoice:
-        domain_or_account = invoice.account.name
         bcc = None
     else:
-        domain_or_account = invoice.get_domain()
         bcc = [settings.GROWTH_EMAIL]
-    context.update({
-        'domain_or_account': domain_or_account
-    })
     send_html_email_async.delay(
-        _('CommCare Billing Statement 30 days Overdue for {}'.format(domain_or_account)),
+        _('CommCare Billing Statement 30 days Overdue for {}'.format(context['domain_or_account'])),
         invoice.contact_emails,
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
