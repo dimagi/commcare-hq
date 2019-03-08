@@ -1,6 +1,6 @@
 {% load i18n %}
 {% blocktrans %}
-Dear {{ domain }} administrator,
+Dear {{ domain_or_account }} administrator,
 
 Your billing account has unpaid CommCare Billing Statements which are more than 30 days overdue. The balance currently owed is: ${{ total }}.
 

@@ -850,13 +850,22 @@ def _send_downgrade_warning(invoice, context):
 
 
 def _send_overdue_notice(invoice, context):
+    if invoice.is_customer_invoice:
+        domain_or_account = invoice.account.name
+        bcc = None
+    else:
+        domain_or_account = invoice.get_domain()
+        bcc = [settings.GROWTH_EMAIL]
+    context.update({
+        'domain_or_account': domain_or_account
+    })
     send_html_email_async.delay(
-        _('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
+        _('CommCare Billing Statement 30 days Overdue for {}'.format(domain_or_account)),
         invoice.contact_emails,
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
-        bcc=[settings.GROWTH_EMAIL],
+        bcc=bcc,
         email_from=get_dimagi_from_email())
 
 
