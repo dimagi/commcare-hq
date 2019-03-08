@@ -59,26 +59,12 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         }
 
     @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = _("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
@@ -100,7 +86,6 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = _("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property
