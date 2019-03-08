@@ -850,7 +850,7 @@ class ExportConfiguration(DocumentSchema):
             return 'form'
 
     def __repr__(self):
-        return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
+        return '%s (%s)' % (self.name, self.index)
 
 
 class GroupExportComponent(object):
