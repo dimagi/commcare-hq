@@ -29,7 +29,7 @@ class CaseBlock(object):
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
                  close=False, index=None, strict=True):
-        if isinstance(case_id, bytes)
+        if isinstance(case_id, bytes):
             case_id = case_id.decode('utf-8')
         # todo: can we use None instead of CaseBlock.undefined, throughout?
         owner_id = CaseBlock.undefined if owner_id is None else owner_id
