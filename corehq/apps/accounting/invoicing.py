@@ -29,7 +29,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType, InvoicingPlan, DomainUserHistory
+    SubscriptionType, InvoicingPlan, DomainUserHistory, SoftwarePlanEdition
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -348,7 +348,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def create_invoice(self):
         for subscription in self.account.subscription_set.filter(do_not_invoice=False):
-            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
+            if not subscription.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
+                    and should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
                 if subscription.plan_version in self.subscriptions:
                     self.subscriptions[subscription.plan_version].append(subscription)
                 else:
