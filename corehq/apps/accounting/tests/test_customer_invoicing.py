@@ -180,15 +180,9 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         invoice = CustomerInvoice.objects.first()
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 2)
-        for line_item in product_line_items:
-            self.assertIn(line_item.base_description, [
-                'One month of CommCare Advanced Edition Software Plan.',
-                'One month of CommCare Standard Edition Software Plan.',
-            ])
-            self.assertIn(line_item.base_cost, [
-                self.product_rate.monthly_fee,
-                self.advanced_plan.product_rate.monthly_fee,
-            ])
+        product_descriptions = [line_item.base_description for line_item in product_line_items]
+        self.assertIn('One month of CommCare Advanced Edition Software Plan.', product_descriptions)
+        self.assertIn('One month of CommCare Standard Edition Software Plan.', product_descriptions)
 
     def test_product_line_items_in_quarterly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
@@ -198,7 +192,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.balance, Decimal('4500.0000'))
         self.assertEqual(invoice.account, self.account)
 
         # There should be two product line items, with 3 months billed for each
@@ -215,7 +209,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.balance, Decimal('18000.0000'))
         self.assertEqual(invoice.account, self.account)
 
         # There should be two product line items, with 3 months billed for each
