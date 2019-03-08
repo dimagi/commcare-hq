@@ -7,8 +7,6 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 import six
 
-from corehq.util.python_compatibility import soft_assert_type_text
-
 try:
     # < 3.0
     from celery.log import get_task_logger
@@ -45,6 +43,7 @@ def force_to_datetime(val):
     elif isinstance(val, datetime.date):
         return datetime.datetime.combine(val, datetime.time())
     elif isinstance(val, six.string_types):
+        from corehq.util.python_compatibility import soft_assert_type_text
         soft_assert_type_text(val)
         return string_to_datetime(val)
     else:
