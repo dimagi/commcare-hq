@@ -837,15 +837,38 @@ def _downgrade_domain(subscription):
 
 
 def _send_downgrade_warning(invoice, context):
+    if invoice.is_customer_invoice:
+        subject = _(
+            "CommCare Alert: {}'s subscriptions will be downgraded to Community Plan after tomorrow!".format(
+                invoice.account.name
+            ))
+        domain_or_account = invoice.account.name
+        subscriptions_to_downgrade = _(
+            "subscriptions on {}".format(invoice.account.name)
+        )
+        bcc = None
+    else:
+        subject = _(
+            "CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+                invoice.get_domain()
+            ))
+        domain_or_account = invoice.get_domain()
+        subscriptions_to_downgrade = _(
+            "subscription for {}".format(invoice.get_domain())
+        )
+        bcc = [settings.GROWTH_EMAIL]
+
+    context.update({
+        'domain_or_account': domain_or_account,
+        'subscriptions_to_downgrade': subscriptions_to_downgrade
+    })
     send_html_email_async.delay(
-        _("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
-            invoice.get_domain()
-        )),
+        subject,
         invoice.contact_emails,
         render_to_string('accounting/email/downgrade_warning.html', context),
         render_to_string('accounting/email/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
-        bcc=[settings.GROWTH_EMAIL],
+        bcc=bcc,
         email_from=get_dimagi_from_email())
 
 
