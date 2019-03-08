@@ -42,19 +42,10 @@ def check_repeaters():
         return
 
     for record in iterate_repeat_records(start):
-        now = datetime.utcnow()
-        lock_key = _get_repeat_record_lock_key(record)
-
-        if now > cutoff:
+        if datetime.utcnow() > cutoff:
             break
 
-        lock = get_redis_lock(
-            lock_key,
-            timeout=60 * 60 * 48,
-            name="repeat_record",
-            track_unreleased=False,
-        )
-        if not lock.acquire(blocking=False):
+        if not record.redis_lock.acquire(blocking=False):
             continue
 
         process_repeat_record.delay(record)
@@ -95,14 +86,6 @@ def process_repeat_record(repeat_record):
                 repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
-
-
-def _get_repeat_record_lock_key(record):
-    """
-    Including the rev in the key means that the record will be unlocked for processing
-    every time we execute a `save()` call.
-    """
-    return 'repeat_record_in_progress-{}_{}'.format(record._id, record._rev)
 
 
 repeaters_overdue = datadog_gauge_task(

@@ -46,6 +46,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 from .const import (
@@ -163,16 +164,27 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if not self.allowed_to_forward(payload):
             return
 
+        def forward_now(record):
+            from corehq.motech.repeaters.tasks import process_repeat_record
+
+            if not record.redis_lock.acquire(blocking=False):
+                return
+            process_repeat_record.delay(repeat_record)
+
         now = datetime.utcnow()
+        if next_check is None:
+            next_check = now
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             registered_on=now,
-            next_check=next_check or now,
+            next_check=next_check,
             payload_id=payload.get_id
         )
         repeat_record.save()
+        if next_check is now:
+            forward_now(repeat_record)
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -779,6 +791,20 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
+
+    @property
+    def redis_lock(self):
+
+        # Including the rev in the key means that the record will be
+        # unlocked for processing every time we execute a `save()` call.
+        lock_key = 'repeat_record_in_progress-{}_{}'.format(self._id, self._rev)
+        return get_redis_lock(
+            lock_key,
+            timeout=60 * 60 * 48,
+            name="repeat_record",
+            track_unreleased=False,
+        )
+
 
 
 # import signals
