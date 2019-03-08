@@ -8,7 +8,6 @@ import six
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ugettext_noop
 from django.views.generic import View
 from six.moves import range
 
@@ -79,7 +78,7 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = ugettext_noop("Case Summary")
+    page_title = _("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
@@ -101,7 +100,7 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = ugettext_noop("Form Summary")
+    page_title = _("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property
