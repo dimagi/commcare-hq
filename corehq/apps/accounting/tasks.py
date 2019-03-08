@@ -780,7 +780,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
     from corehq.apps.accounting.views import EnterpriseBillingStatementsView
 
     context = {
-        'total': total,
+        'total': format(total, '7.2f'),
         'date_60': oldest_unpaid_invoice.date_due + datetime.timedelta(days=60),
         'contact_email': settings.INVOICING_CONTACT_EMAIL
     }
