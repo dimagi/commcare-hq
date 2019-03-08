@@ -99,6 +99,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
+from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_dashboard
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
@@ -331,6 +332,38 @@ class LadySupervisorView(BaseReportView):
 
         data = get_lady_supervisor_data(
             domain, config, include_test
+        )
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ServiceDeliveryDashboardView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+        age_sdd = request.GET.get('ageSDD')
+
+        start = int(request.GET.get('start', 0))
+        length = int(request.GET.get('length', 10))
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
+        order_by_number_column = request.GET.get('order[0][column]')
+        order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
+        order_dir = request.GET.get('order[0][dir]', 'asc')
+        reversed_order = True if order_dir == 'desc' else False
+
+        data = get_service_delivery_dashboard(
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            age_sdd,
         )
         return JsonResponse(data=data)
 
