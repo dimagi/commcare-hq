@@ -100,8 +100,10 @@ class UploadedTranslationsValidator(object):
         msgs = {}
         self._generate_expected_headers_and_rows()
         for sheet in self.uploaded_workbook.worksheets:
-            rows = get_unicode_dicts(sheet)
             sheet_name = sheet.worksheet.title
+            if sheet_name not in self.expected_rows:
+                continue
+            rows = get_unicode_dicts(sheet)
             if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
             elif 'module' in sheet_name and 'form' not in sheet_name:
