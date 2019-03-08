@@ -31,12 +31,6 @@ from dimagi.utils.web import json_response
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
