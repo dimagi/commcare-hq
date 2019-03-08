@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import settingshelper as helper
 from settings import *
 
+USING_CITUS = 'citus-ucr' in DATABASES
+
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
 # it can be reverted whenever that's figured out.
@@ -12,6 +14,12 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
+
+if USING_CITUS:
+    INSTALLED_APPS = (
+        'testapps.citus_master',
+        'testapps.citus_worker',
+    ) + tuple(INSTALLED_APPS)
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -117,7 +125,7 @@ if 'aaa-data' not in DATABASES:
     }
 helper.assign_test_db_names(DATABASES)
 
-citus_ucr_db = 'citus-ucr' if 'citus-ucr' in DATABASES else 'default'
+citus_ucr_db = 'citus-ucr' if USING_CITUS else 'default'
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
