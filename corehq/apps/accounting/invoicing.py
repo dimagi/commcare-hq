@@ -7,6 +7,7 @@ import datetime
 import six
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
+from collections import defaultdict
 
 from django.conf import settings
 from django.db import transaction
@@ -344,16 +345,13 @@ class CustomerAccountInvoiceFactory(object):
         self.account = account
         self.recipients = recipients
         self.customer_invoice = None
-        self.subscriptions = {}
+        self.subscriptions = defaultdict(list)
 
     def create_invoice(self):
         for sub in self.account.subscription_set.filter(do_not_invoice=False):
             if not sub.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY \
                     and should_create_invoice(sub, sub.subscriber.domain, self.date_start, self.date_end):
-                if sub.plan_version in self.subscriptions:
-                    self.subscriptions[sub.plan_version].append(sub)
-                else:
-                    self.subscriptions[sub.plan_version] = [sub]
+                self.subscriptions[sub.plan_version].append(sub)
         if not self.subscriptions:
             return
         try:
