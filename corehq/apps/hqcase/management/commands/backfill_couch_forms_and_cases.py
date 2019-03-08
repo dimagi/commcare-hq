@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import itertools
 import json
 import os
 import time
 
+from six.moves import zip_longest
 from django.core.management import BaseCommand
 
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
@@ -69,7 +69,7 @@ class Command(BaseCommand):
         )
 
         print("[6] Publish changes for docs missing from ES!")
-        interleaved_changes = (change for pair in itertools.izip_longest(
+        interleaved_changes = (change for pair in zip_longest(
             iter_case_changes(case_metadata),
             iter_form_changes(form_metadata),
         ) for change in pair if change is not None)
