@@ -367,7 +367,8 @@ class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
         rations_lt_21 = (0 < self.table.c.num_rations_distributed) & (self.table.c.num_rations_distributed < 21)
         disabled = self.table.c.disabled == 'yes'
         minority = self.table.c.minority == 'yes'
-        rations_none = self.table.c.num_rations_distributed == 0 or self.table.c.num_rations_distributed == None
+        rations_none = (self.table.c.num_rations_distributed == 0) |\
+                       (self.table.c.num_rations_distributed.is_(None))
         migrant = self.table.c.resident == 'no'
         columns = (
             format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations_gte_21)),
