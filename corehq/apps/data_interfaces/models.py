@@ -1403,6 +1403,12 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
 
 
 class CaseRuleSubmission(models.Model):
+    """This model records which forms were submitted as a result of a case
+    update rule. This serves both as a log as well as providing the ability
+    to undo the effects of rules in case of errors.
+
+    This data is not stored permanently but is removed after 90 days (see tasks file)
+    """
     domain = models.CharField(max_length=126)
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
 
