@@ -52,7 +52,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
         "#START": global_keyword_start,
         "#STOP": global_keyword_stop,
         "#CURRENT": global_keyword_current,
-        "#UPDATE": global_keyword_update
     }
 
     inbound_metadata = MessageMetadata(
@@ -62,27 +61,6 @@ def handle_global_keywords(v, text, msg, text_words, open_sessions):
 
     fcn = global_keywords.get(global_keyword, global_keyword_unknown)
     return fcn(v, text, msg, text_words, open_sessions)
-
-
-def global_keyword_update(v, text, msg, text_words, open_sessions):
-
-    outbound_metadata = MessageMetadata(
-        workflow=WORKFLOW_KEYWORD,
-    )
-
-    if v.owner_doc_type != 'CommCareUser':
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v), metadata=outbound_metadata)
-        return True
-
-    if len(text_words) > 1:
-        keyword = text_words[1]
-        send_sms_to_verified_number(
-            v, get_message(MSG_UPDATE_UNRECOGNIZED_ACTION, v, (keyword,)), metadata=outbound_metadata
-        )
-    else:
-        send_sms_to_verified_number(v, get_message(MSG_UPDATE, v),
-                                    metadata=outbound_metadata)
-    return True
 
 
 def global_keyword_start(v, text, msg, text_words, open_sessions):
