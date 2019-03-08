@@ -349,7 +349,6 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         start = int(request.GET.get('start', 0))
         length = int(request.GET.get('length', 10))
-        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         order_by_number_column = request.GET.get('order[0][column]')
         order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
         order_dir = request.GET.get('order[0][dir]', 'asc')
