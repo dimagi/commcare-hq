@@ -98,7 +98,7 @@ if USE_PARTITIONED_DATABASE:
 # CitusDB setup is done by Django migrations in the testapps.citus_* apps. These
 # migrations are only run during unit tests.
 DATABASES.update({
-    'citus-ucr': {
+    'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',

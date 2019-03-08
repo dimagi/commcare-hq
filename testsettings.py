@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import settingshelper as helper
 from settings import *
 
-USING_CITUS = 'citus-ucr' in DATABASES
+USING_CITUS = any(db for db in DATABASES.values() if db.get('ROLE') == 'citus_master')
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -139,13 +139,12 @@ if 'aaa-data' not in DATABASES:
     }
 helper.assign_test_db_names(DATABASES)
 
-citus_ucr_db = 'citus-ucr' if USING_CITUS else 'default'
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': citus_ucr_db,
-    'icds-ucr-non-dashboard': citus_ucr_db,
-    'icds-test-ucr': citus_ucr_db,
+    'icds-ucr': 'icds-ucr',
+    'icds-ucr-non-dashboard': 'icds-ucr',
+    'icds-test-ucr': 'icds-ucr',
     'aaa-data': 'aaa-data',
 }
 
