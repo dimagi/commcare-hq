@@ -60,7 +60,7 @@ hqDefine("aaa/js/utils/reach_utils", [
         self.selectedBeneficiaryType = ko.observable(options.selectedBeneficiaryType || null);
 
         self.selectedMonthName = ko.computed(function () {
-            return reachUtils().monthName(self.selectedMonth())
+            return reachUtils().monthName(self.selectedMonth());
         });
 
         return self;

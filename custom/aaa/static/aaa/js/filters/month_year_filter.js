@@ -52,7 +52,7 @@ hqDefine('aaa/js/filters/month_year_filter', [
 
             params.filters[self.slug].applyFilter = function () {
                 params.postData.selectedYear(self.selectedYear());
-                params.postData.selectedMonth(self.selectedMonth())
+                params.postData.selectedMonth(self.selectedMonth());
             };
 
             params.filters[self.slug].resetFilters = function () {
@@ -60,7 +60,7 @@ hqDefine('aaa/js/filters/month_year_filter', [
                 self.selectedYear(moment().year())
             };
 
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'month-year-template\' }"></div>',
     };
