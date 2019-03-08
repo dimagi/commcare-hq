@@ -15,6 +15,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -479,6 +480,7 @@ class ApplicationMediaReference(object):
 
         if not isinstance(path, six.string_types):
             path = ''
+        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):

@@ -5,6 +5,7 @@ import six
 
 from six.moves import map
 
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
 
 
@@ -183,6 +184,7 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
                 if isinstance(agg_col, six.string_types):
+                    soft_assert_type_text(agg_col)
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))

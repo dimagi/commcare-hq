@@ -34,6 +34,7 @@ from corehq.apps.sms.util import is_contact_active, register_sms_contact, strip_
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.datadog.utils import sms_load_counter
+from corehq.util.python_compatibility import soft_assert_type_text
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -133,6 +134,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     if domain and contact and is_commcarecase(contact):
         backend_name = contact.get_case_property('contact_backend_id')
         backend_name = backend_name.strip() if isinstance(backend_name, six.string_types) else ''
+        soft_assert_type_text(backend_name)
         if backend_name:
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
@@ -542,6 +544,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 def is_opt_message(text, keyword_list):
     if not isinstance(text, six.string_types):
         return False
+    soft_assert_type_text(text)
 
     text = text.strip().upper()
     return text in keyword_list

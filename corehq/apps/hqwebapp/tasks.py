@@ -4,6 +4,7 @@ from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
 from corehq.util.log import send_HTML_email
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.logging import notify_exception
 import six
 
@@ -65,6 +66,8 @@ def send_html_email_async(self, subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
                         file_attachments=file_attachments, bcc=bcc)
     except Exception as e:
+        if isinstance(recipient, six.string_types):
+            soft_assert_type_text(recipient)
         recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
         notify_exception(
             None,

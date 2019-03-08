@@ -53,6 +53,7 @@ from corehq.apps.reports.exportfilters import (
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
@@ -1163,11 +1164,14 @@ def ordering_config_validator(value):
             raise error
         if not isinstance(group[0], six.string_types):
             raise error
+        else:
+            soft_assert_type_text(group[0])
         if not isinstance(group[1], list):
             raise error
         for report in group[1]:
             if not isinstance(report, six.string_types):
                 raise error
+            soft_assert_type_text(report)
 
 
 class ReportsSidebarOrdering(models.Model):

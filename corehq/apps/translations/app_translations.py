@@ -29,6 +29,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
 
@@ -232,6 +233,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
     assert isinstance(unique_id, six.string_types)
+    soft_assert_type_text(unique_id)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages

@@ -24,6 +24,7 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSing
 from corehq.const import MISSING_APP_ID
 from corehq.elastic import ESError
 from corehq.util.context_processors import commcare_hq_names
+from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
 
 PARAM_SLUG_STATUS = 'status'
@@ -404,6 +405,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         If obj is a string, just output that string.
         """
         if isinstance(obj, six.string_types):
+            soft_assert_type_text(obj)
             return obj
         if not obj:
             return _('Untitled')

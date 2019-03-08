@@ -29,6 +29,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
@@ -190,6 +191,7 @@ class ICDSMixin(object):
 
                     def check_condition(v):
                         if isinstance(v, six.string_types):
+                            soft_assert_type_text(v)
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)

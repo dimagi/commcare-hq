@@ -6,6 +6,7 @@ import warnings
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V2_NAMESPACE
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
@@ -215,6 +216,8 @@ class _DictToXML(object):
         if isinstance(value, datetime):
             return six.text_type(json_format_datetime(value))
         elif isinstance(value, six.string_types + (numbers.Number, date)):
+            if isinstance(value, six.string_types):
+                soft_assert_type_text(value)
             return six.text_type(value)
         else:
             raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))

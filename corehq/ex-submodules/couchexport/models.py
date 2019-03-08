@@ -28,7 +28,7 @@ from dimagi.utils.logging import notify_exception
 import six
 from six.moves import zip
 from six.moves import range
-
+from corehq.util.python_compatibility import soft_assert_type_text
 
 ColumnType = namedtuple('ColumnType', 'cls label')
 column_types = {}
@@ -313,6 +313,7 @@ class SplitColumn(ComplexExportColumn):
 
         if not isinstance(value, six.string_types):
             return row if self.ignore_extras else row + [value]
+        soft_assert_type_text(value)
 
         values = value.split(' ') if value else []
         for index, option in enumerate(self.options):
@@ -798,6 +799,8 @@ class SavedExportSchema(BaseSavedExportSchema):
         # confusingly, the index isn't the actual index property,
         # but is the index appended with the id to this document.
         # this is to avoid conflicts among multiple exports
+        if isinstance(self.index, six.string_types):
+            soft_assert_type_text(self.index)
         index = "%s-%s" % (self.index, self._id) if isinstance(self.index, six.string_types) else \
             self.index + [self._id] # self.index required to be a string or list
         return ExportConfiguration(index=index, name=self.name,

@@ -8,6 +8,7 @@ from corehq import toggles
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     StaticDataSourceConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 
@@ -39,6 +40,7 @@ class JsonField(forms.CharField):
 
     def prepare_value(self, value):
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             try:
                 return json.loads(value)
             except ValueError:

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.push.models import PushBackend
+from corehq.util.python_compatibility import soft_assert_type_text
 from django.http import HttpResponse, HttpResponseBadRequest
 from lxml import etree
 from xml.sax.saxutils import unescape
@@ -18,8 +19,8 @@ class PushIncomingView(IncomingBackendView):
 
     def clean_value(self, value):
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return unescape(value.strip())
-
         return value
 
     def get_number_and_message(self, request):

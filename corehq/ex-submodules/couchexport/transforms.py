@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import datetime
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 COUCH_FORMATS = ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']
 EXCEL_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -13,6 +15,7 @@ def identity(val, doc):
 
 def couch_to_excel_datetime(val, doc):
     if isinstance(val, six.string_types):
+        soft_assert_type_text(val)
         # todo: subtree merge couchexport into commcare-hq
         # todo: and replace this with iso_string_to_datetime
         dt_val = None

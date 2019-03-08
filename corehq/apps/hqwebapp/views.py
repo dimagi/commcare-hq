@@ -86,6 +86,7 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -368,6 +369,7 @@ def _login(req, domain_name):
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
         if isinstance(custom_landing_page, six.string_types):
+            soft_assert_type_text(custom_landing_page)
             template_name = custom_landing_page
         else:
             template_name = custom_landing_page.get(req.get_host())

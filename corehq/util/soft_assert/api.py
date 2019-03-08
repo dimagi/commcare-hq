@@ -7,6 +7,7 @@ from django.conf import settings
 from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
 from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert.core import SoftAssert
 import six
 
@@ -68,6 +69,7 @@ def soft_assert(to=None, notify_admins=False,
     """
 
     if isinstance(to, six.string_types):
+        soft_assert_type_text(to)
         to = [to]
 
     if to is None:
