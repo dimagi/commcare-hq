@@ -35,6 +35,7 @@ class MeteredLock(object):
                 tracer.trace("commcare.lock.acquire", resource=self.key) as span:
             acquired = self.lock.acquire(*args, **kw)
             span.set_tags({
+                "key": self.key,
                 "name": self.name,
                 "acquired": ("true" if acquired else "false"),
             })
@@ -45,7 +46,7 @@ class MeteredLock(object):
             self.lock_timer.start()
             if self.track_unreleased:
                 self.lock_trace = tracer.trace("commcare.lock.locked", resource=self.key)
-                self.lock_trace.set_tag("name", self.name)
+                self.lock_trace.set_tags({"key": self.key, "name": self.name})
         return acquired
 
     def release(self):

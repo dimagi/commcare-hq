@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 def get_supply_point_ids_in_domain_by_location(domain):

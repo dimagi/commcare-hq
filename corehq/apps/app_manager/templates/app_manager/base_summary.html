@@ -140,12 +140,10 @@
 
     {# Question/property filter #}
     <script type="text/html" id="search-box">
-        <form class="form-inline" role="form">
-            <div class="form-group">
-                <label class="sr-only" for="property" data-bind="text: queryLabel"></label>
-                <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown', attr: {placeholder: queryLabel}" />
-            </div>
-            <button class="btn btn-default" data-bind="click: clearQuery" type="button"><i class="fa fa-times"></i></button>
-        </form>
+        <search-box data-apply-bindings="false"
+                    params="value: query,
+                            action: onQuery,
+                            immediate: true,
+                            placeholder: queryLabel"></search-box>
     </script>
 {% endblock content %}

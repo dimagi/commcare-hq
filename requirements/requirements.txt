@@ -12,14 +12,14 @@ asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
 billiard==3.3.0.23        # via celery
-boto3==1.9.105
-botocore==1.12.105        # via boto3, s3transfer
+boto3==1.9.108
+botocore==1.12.108        # via boto3, s3transfer
 celery==3.1.25
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.11.0          # via jsonobject-couchdbkit
-concurrentloghandler==0.9.1
+concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 cryptography==2.6.1       # via pyopenssl, requests
 csiphash==0.0.5
@@ -31,7 +31,7 @@ defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1
 django-angular==0.7.16
-django-appconf==1.0.2     # via django-compressor, django-statici18n
+django-appconf==1.0.3     # via django-compressor, django-statici18n
 django-braces==1.13.0
 django-bulk-update==2.2.0
 django-celery==3.2.1
@@ -74,7 +74,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1           # via xhtml2pdf
-httpagentparser==1.8.1
+httpagentparser==1.8.2
 idna==2.8                 # via email-validator, requests
 ipaddress==1.0.22         # via cryptography, faker
 iso8601==0.1.12
@@ -95,7 +95,7 @@ markdown==2.2.1
 markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
-openpyxl==2.6.0
+openpyxl==2.6.1
 pbr==5.1.3                # via mock
 phonenumberslite==8.10.6
 pillow==5.4.1

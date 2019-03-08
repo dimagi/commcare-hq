@@ -99,10 +99,7 @@ def commit_plan(domain, planning_db):
 
 
 def _get_submission_xml(xform, db):
-    xml = BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
-    if isinstance(xml, six.text_type):
-        xml = xml.encode('utf-8')
-    return xml
+    return BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml', return_bytes=True)
 
 
 def _get_new_form_json(xml, xform_id):
