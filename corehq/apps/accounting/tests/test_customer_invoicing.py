@@ -218,6 +218,27 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         for product_line_item in invoice.lineitem_set.get_products().all():
             self.assertEqual(product_line_item.quantity, 12)
 
+    def test_subscriptions_marked_do_not_invoice_not_included(self):
+        self.subscription.do_not_invoice = True
+
+        invoice_date = utils.months_from_date(self.sub2.date_end, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1200.0000'))
+        self.assertEqual(invoice.account, self.account)
+
+        product_line_items = invoice.lineitem_set.get_products()
+        self.assertEqual(product_line_items.count(), 1)
+        self.assertEqual(
+            product_line_items.first().base_description,
+            'One month of CommCare Advanced Edition Software Plan.'
+        )
+
+        num_feature_line_items = invoice.lineitem_set.get_features().count()
+        self.assertEqual(num_feature_line_items, self.sub2.plan_version.feature_rates.count())
+
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
 
