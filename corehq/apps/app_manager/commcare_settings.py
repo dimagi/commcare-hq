@@ -31,7 +31,8 @@ def _translate_setting(setting, prop):
     if not isinstance(value, six.string_types):
         return [ugettext(v) for v in value]
     else:
-        soft_assert_type_text(value)
+        if six.PY3:
+            soft_assert_type_text(value)
         return ugettext(value)
 
 
