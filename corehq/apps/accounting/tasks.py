@@ -750,17 +750,14 @@ def _get_accounts_with_customer_invoices_over_threshold(today):
     accounts = set()
     for overdue_invoice in overdue_customer_invoices_in_downgrade_daterange:
         account = overdue_invoice.account.name
-        if overdue_invoice.subscriptions.count() < 1:
-            continue
-        else:
-            plan = overdue_invoice.subscriptions.first().plan_version
+        plan = overdue_invoice.subscriptions.first().plan_version
         if (account, plan) not in accounts:
             invoices = unpaid_customer_invoices.filter(
                 Q(date_due__lte=overdue_invoice.date_due)
                 | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
                 account__name=account
             )
-            invoices = [invoice for invoice in invoices if invoice.subscriptions.count() > 0 and invoice.subscriptions.first().plan_version == plan]
+            invoices = [invoice for invoice in invoices if invoice.subscriptions.first().plan_version == plan]
             total_overdue_to_date = sum(invoice.balance for invoice in invoices)
 
             if total_overdue_to_date > 100:
