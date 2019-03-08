@@ -82,6 +82,16 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             plan_version=cls.advanced_plan
         )
 
+        # This subscription should not be included in any customer invoices in these tests
+        cls.domain_community = generator.arbitrary_domain()
+        cls.sub3 = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain3,
+            date_start=subscription_start_date,
+            date_end=advanced_subscription_end_date,
+            plan_version=DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        )
+
     def tearDown(self):
         for user in self.domain.all_users():
             user.delete()
