@@ -101,6 +101,8 @@ class UploadedTranslationsValidator(object):
         self._generate_expected_headers_and_rows()
         for sheet in self.uploaded_workbook.worksheets:
             sheet_name = sheet.worksheet.title
+            # if sheet is not in the expected rows, ignore it. This can happen if the module/form sheet is excluded
+            # from transifex integration
             if sheet_name not in self.expected_rows:
                 continue
             rows = get_unicode_dicts(sheet)
