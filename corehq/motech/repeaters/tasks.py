@@ -9,6 +9,7 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from redis.exceptions import LockError
 from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -19,8 +20,12 @@ from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     RECORD_PENDING_STATE,
-    RECORD_FAILURE_STATE)
+    RECORD_FAILURE_STATE,
+    RECORD_LOCK_TIMEOUT,
+)
 
+
+_soft_assert = soft_assert(to=b'aubbcre@qvzntv.pbz'.decode('rot13'))  # Norman
 logging = get_task_logger(__name__)
 
 
@@ -30,19 +35,23 @@ logging = get_task_logger(__name__)
 )
 def check_repeaters():
     start = datetime.utcnow()
-    cutoff = start + CHECK_REPEATERS_INTERVAL
+    repeater_lock_timeout = RECORD_LOCK_TIMEOUT // 2
+    timeout_dt = start + timedelta(seconds=repeater_lock_timeout)
 
-    # Timeout for slightly less than periodic check
+    # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=CHECK_REPEATERS_INTERVAL.seconds - 10,
+        timeout=repeater_lock_timeout,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
         return
 
     for record in iterate_repeat_records(start):
-        if datetime.utcnow() > cutoff:
+        if not _soft_assert(
+                datetime.utcnow() < timeout_dt,
+                "Unable to iterate all waiting repeat records before check_repeaters lock timed out"
+        ):
             break
 
         if record.redis_lock.acquire(blocking=False):

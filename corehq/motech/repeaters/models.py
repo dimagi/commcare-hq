@@ -57,6 +57,7 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
+    RECORD_LOCK_TIMEOUT,
 )
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -797,7 +798,7 @@ class RepeatRecord(Document):
         lock_key = 'repeat_record_in_progress-{}_{}'.format(self._id, self._rev)
         return get_redis_lock(
             lock_key,
-            timeout=60 * 60 * 48,
+            timeout=RECORD_LOCK_TIMEOUT,
             name="repeat_record",
             track_unreleased=False,
         )
