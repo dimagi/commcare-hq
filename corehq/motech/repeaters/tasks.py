@@ -45,10 +45,8 @@ def check_repeaters():
         if datetime.utcnow() > cutoff:
             break
 
-        if not record.redis_lock.acquire(blocking=False):
-            continue
-
-        process_repeat_record.delay(record)
+        if record.redis_lock.acquire(blocking=False):
+            process_repeat_record.delay(record)
 
     try:
         check_repeater_lock.release()

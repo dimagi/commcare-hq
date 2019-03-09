@@ -167,23 +167,20 @@ class Repeater(QuickCachedDocumentMixin, Document):
         def forward_now(record):
             from corehq.motech.repeaters.tasks import process_repeat_record
 
-            if not record.redis_lock.acquire(blocking=False):
-                return
-            process_repeat_record.delay(repeat_record)
+            if record.redis_lock.acquire(blocking=False):
+                process_repeat_record.delay(repeat_record)
 
         now = datetime.utcnow()
-        if next_check is None:
-            next_check = now
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
             registered_on=now,
-            next_check=next_check,
+            next_check=next_check or now,
             payload_id=payload.get_id
         )
         repeat_record.save()
-        if next_check is now:
+        if next_check is None:
             forward_now(repeat_record)
         return repeat_record
 
