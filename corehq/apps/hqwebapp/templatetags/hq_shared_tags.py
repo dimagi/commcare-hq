@@ -22,7 +22,6 @@ from corehq.motech.utils import pformat_json
 from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
-from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
@@ -213,8 +212,9 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, bytes):
+        name_or_instance = name_or_instance.decode('utf-8')
     if isinstance(name_or_instance, six.string_types):
-        soft_assert_type_text(name_or_instance)
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -644,19 +644,19 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def trans_html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
-    else:
-        soft_assert_type_text(value)
     return escape(_(value))
 
 
 @register.simple_tag
 def html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
-    else:
-        soft_assert_type_text(value)
     return escape(value)
 
 
