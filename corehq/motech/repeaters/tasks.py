@@ -1,21 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
-from celery.schedules import crontab
-from couchdbkit import ResourceNotFound
 
-from django.conf import settings
+from datetime import datetime, timedelta
+
+from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from redis.exceptions import LockError
-from corehq.util.datadog.gauges import datadog_gauge_task
-from corehq.util.soft_assert import soft_assert
-from dimagi.utils.couch import get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.motech.repeaters.dbaccessors import iterate_repeat_records, \
-    get_overdue_repeat_record_count
-from corehq import toggles
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
@@ -23,6 +16,14 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_LOCK_TIMEOUT,
 )
+from corehq.motech.repeaters.dbaccessors import (
+    iterate_repeat_records,
+    get_overdue_repeat_record_count,
+)
+from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch import get_redis_lock
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
 _soft_assert = soft_assert(to=b'aubbcre@qvzntv.pbz'.decode('rot13'))  # Norman
