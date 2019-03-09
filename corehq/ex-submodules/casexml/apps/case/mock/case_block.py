@@ -31,6 +31,8 @@ class CaseBlock(object):
                  close=False, index=None, strict=True):
         if isinstance(case_id, bytes):
             case_id = case_id.decode('utf-8')
+        if isinstance(user_id, bytes):
+            user_id = user_id.decode('utf-8')
         # todo: can we use None instead of CaseBlock.undefined, throughout?
         owner_id = CaseBlock.undefined if owner_id is None else owner_id
         self.update = copy.copy(update) if update else {}
@@ -217,9 +219,11 @@ class _DictToXML(object):
             return ''
         if isinstance(value, datetime):
             return six.text_type(json_format_datetime(value))
-        elif isinstance(value, six.string_types + (numbers.Number, date)):
-            if isinstance(value, six.string_types):
-                soft_assert_type_text(value)
+        elif isinstance(value, bytes):
+            return value.decode('utf-8')
+        elif isinstance(value, six.text_type):
+            return value
+        elif isinstance(value, (numbers.Number, date)):
             return six.text_type(value)
         else:
             raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))
