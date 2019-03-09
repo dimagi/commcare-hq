@@ -542,9 +542,10 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 
 def is_opt_message(text, keyword_list):
-    if not isinstance(text, six.string_types):
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
+    if not isinstance(text, six.text_type):
         return False
-    soft_assert_type_text(text)
 
     text = text.strip().upper()
     return text in keyword_list
