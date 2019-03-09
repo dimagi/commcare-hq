@@ -20,7 +20,7 @@ certifi==2018.11.29
 cffi==1.12.2
 chardet==3.0.4
 cloudant==2.11.0
-concurrentloghandler==0.9.1
+concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 cryptography==2.6.1
 csiphash==0.0.5

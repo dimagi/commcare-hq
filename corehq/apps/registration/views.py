@@ -200,10 +200,7 @@ class UserRegistrationView(BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         if settings.IS_SAAS_ENVIRONMENT:
-            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
-                response)
-            ab_tests.SessionAbTest(ab_tests.SIGNUP_ALT_UX, request).update_response(
-                response)
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -234,10 +231,7 @@ class UserRegistrationView(BasePageView):
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
         if settings.IS_SAAS_ENVIRONMENT:
-            context['demo_workflow_ab'] = ab_tests.SessionAbTest(
-                ab_tests.DEMO_WORKFLOW, self.request).context
-            context['signup_ux_ab'] = ab_tests.SessionAbTest(
-                ab_tests.SIGNUP_ALT_UX, self.request).context
+            context['demo_workflow_ab'] = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, self.request).context
         return context
 
     @property

@@ -34,7 +34,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
         self.locationDetails = initialPageData.get('beneficiary_location_names');
 
         var detailsTypes = {
-            // child: childUtils.detailsView(),
+            child: childUtils.detailsView(self.postData),
             pregnant_women: pregnantWomenModel.detailsView(self.postData),
             eligible_couples: eligibleCoupleModel.detailsView(self.postData),
         };

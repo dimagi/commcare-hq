@@ -62,7 +62,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_start=subscription_start_date,
             date_end=subscription_end_date,
         )
-        cls.subscription.plan_version.plan.is_customer_software_plan = True
 
         advanced_subscription_end_date = add_months_to_date(subscription_end_date, 2)
         cls.domain2 = generator.arbitrary_domain()
@@ -73,7 +72,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_end=advanced_subscription_end_date,
             plan_version=cls.advanced_plan
         )
-        cls.sub2.plan_version.plan.is_customer_software_plan = True
 
         cls.domain3 = generator.arbitrary_domain()
         cls.sub3 = generator.generate_domain_subscription(
@@ -83,7 +81,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_end=advanced_subscription_end_date,
             plan_version=cls.advanced_plan
         )
-        cls.sub3.plan_version.plan.is_customer_software_plan = True
 
     def tearDown(self):
         for user in self.domain.all_users():
