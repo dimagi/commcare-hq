@@ -20,7 +20,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
         }
     });
     $("#criteria_continue").on('click', function () {
-        if ($("#id_criteria-case_type").val())) {
+        if ($("#id_criteria-case_type").val()) {
             // remove error message
             $("#required_error_message").addClass('hidden');
             // move to next tab
