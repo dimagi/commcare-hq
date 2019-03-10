@@ -560,6 +560,8 @@ class DefaultExportSchema(BaseSavedExportSchema):
                 return ExportFiles(tmp, checkpoint)
 
         fd, path = tempfile.mkstemp()
+        if six.PY2:
+            path = path.decode('utf-8')
         with os.fdopen(fd, 'wb') as tmp:
             schema_index = export_tag
             config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
