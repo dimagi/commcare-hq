@@ -48,6 +48,12 @@
     for more information.
     {% endblocktrans %}
 </p>
+<p id="required_error_message" class="help-block alert alert-danger hidden">
+    <i class="fa fa-warning"></i>
+    {% blocktrans %}
+    Please fill the required fields marked with *
+    {% endblocktrans %}
+</p>
 {% endif %}
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
