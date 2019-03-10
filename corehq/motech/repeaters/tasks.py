@@ -26,7 +26,7 @@ from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
-_soft_assert = soft_assert(to=b'aubbcre@qvzntv.pbz'.decode('rot13'))  # Norman
+_soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
 logging = get_task_logger(__name__)
 
 
