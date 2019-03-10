@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from datetime import datetime, timedelta
 from celery.schedules import crontab
+from concurrent.futures import ThreadPoolExecutor
 from couchdbkit import ResourceNotFound
 
 from django.conf import settings
@@ -19,7 +21,9 @@ from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     RECORD_PENDING_STATE,
-    RECORD_FAILURE_STATE)
+    RECORD_FAILURE_STATE,
+    RECORD_CHUNK_MAX_WORKERS,
+)
 
 logging = get_task_logger(__name__)
 
@@ -41,6 +45,7 @@ def check_repeaters():
     if not check_repeater_lock.acquire(blocking=False):
         return
 
+    record_chunk = []
     for record in iterate_repeat_records(start):
         now = datetime.utcnow()
         lock_key = _get_repeat_record_lock_key(record)
@@ -57,13 +62,31 @@ def check_repeaters():
         if not lock.acquire(blocking=False):
             continue
 
-        process_repeat_record.delay(record)
+        record_chunk.append(record)
+        if len(record_chunk) == RECORD_CHUNK_MAX_WORKERS:
+            process_repeat_record_chunk.delay(record_chunk)
+            record_chunk = []
+
+    if len(record_chunk):
+        process_repeat_record_chunk.delay(record_chunk)
 
     try:
         check_repeater_lock.release()
     except LockError:
         # Ignore if already released
         pass
+
+
+@task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+def process_repeat_record_chunk(repeat_record_chunk):
+    """
+    Uses concurrency to process repeat records without blocking on the
+    API calls of each one.
+    """
+    with ThreadPoolExecutor(max_workers=len(repeat_record_chunk)) as executor:
+        for repeat_record in repeat_record_chunk:
+            executor.submit(process_repeat_record.apply, repeat_record)
+        # ThreadPoolExecutor will wait at exit until all futures are complete
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
