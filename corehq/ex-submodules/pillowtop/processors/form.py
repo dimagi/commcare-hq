@@ -103,10 +103,11 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
-    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], six.string_types):
-        metadata = format_form_meta_for_es(metadata)
-    if isinstance(metadata['appVersion'], six.string_types):
-        soft_assert_type_text(metadata['appVersion'])
+    if metadata and metadata.get('appVersion'):
+        if not isinstance(metadata['appVersion'], six.string_types):
+            metadata = format_form_meta_for_es(metadata)
+        else:
+            soft_assert_type_text(metadata['appVersion'])
 
     app_version_info = get_app_version_info(
         domain,
