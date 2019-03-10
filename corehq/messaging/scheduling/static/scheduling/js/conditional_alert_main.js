@@ -4,8 +4,8 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function () {
-    $("#basic_continue").on('click', function() {
-        if(!!$("#id_conditional-alert-name").val()) {
+    $("#basic_continue").on('click', function () {
+        if ($("#id_conditional-alert-name").val().trim()) {
             // remove error message
             $("#required_error_message").addClass('hidden');
             // move to next tab
@@ -19,8 +19,8 @@ hqDefine("scheduling/js/conditional_alert_main", [
             $("#schedule-nav").addClass('hidden');
         }
     });
-    $("#criteria_continue").on('click', function() {
-        if(!!$("#id_criteria-case_type").val()) {
+    $("#criteria_continue").on('click', function () {
+        if ($("#id_criteria-case_type").val())) {
             // remove error message
             $("#required_error_message").addClass('hidden');
             // move to next tab
