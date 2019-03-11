@@ -771,8 +771,6 @@ def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
         _send_downgrade_warning(oldest_unpaid_invoice, context)
     elif days_ago == 30:
         _send_overdue_notice(oldest_unpaid_invoice, context)
-    elif days_ago == 1:
-        _create_overdue_notification(oldest_unpaid_invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
@@ -820,16 +818,6 @@ def _send_overdue_notice(invoice, context):
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
-
-
-def _create_overdue_notification(invoice, context):
-    message = _('Reminder - your {} statement is past due!'.format(
-        invoice.date_start.strftime('%B')
-    ))
-    note = Notification.objects.create(content=message, url=context['statements_url'],
-                                       domain_specific=True, type='billing',
-                                       domains=[invoice.get_domain()])
-    note.activate()
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
