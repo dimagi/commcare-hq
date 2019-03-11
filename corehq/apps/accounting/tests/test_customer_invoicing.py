@@ -102,6 +102,9 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         for user in self.domain3.all_users():
             user.delete()
 
+        for user in self.domain_community.all_users():
+            user.delete()
+
         if self.is_using_test_plans:
             for software_plan in SoftwarePlan.objects.all():
                 SoftwarePlan.get_version.clear(software_plan)
@@ -113,6 +116,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.domain.delete()
         cls.domain2.delete()
         cls.domain3.delete()
+        cls.domain_community.delete()
 
         super(BaseCustomerInvoiceCase, cls).tearDownClass()
 
