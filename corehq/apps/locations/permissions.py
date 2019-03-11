@@ -118,7 +118,7 @@ def require_can_edit_locations(view_fn):
     )
 
 
-def require_can_edit_and_view_locations(view_fn):
+def require_can_edit_or_view_locations(view_fn):
     """Decorator verifying that the user has permission to edit and view
     individual locations."""
     return locations_access_required(

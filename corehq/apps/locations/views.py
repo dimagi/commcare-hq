@@ -48,7 +48,7 @@ from .permissions import (
     locations_access_required,
     can_edit_location,
     require_can_edit_locations,
-    require_can_edit_and_view_locations,
+    require_can_edit_or_view_locations,
     user_can_edit_location_types,
     can_edit_location_types,
 )
@@ -184,7 +184,7 @@ class LocationsListView(BaseLocationView):
     @use_jquery_ui
     @use_select2_v4
     @method_decorator(check_pending_locations_import())
-    @method_decorator(require_can_edit_and_view_locations)
+    @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -668,7 +668,7 @@ class EditLocationView(BaseEditLocationView):
 
     @use_multiselect
     @use_select2_v4
-    @method_decorator(require_can_edit_and_view_locations)
+    @method_decorator(require_can_edit_or_view_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
@@ -978,7 +978,7 @@ def location_importer_job_poll(request, domain, download_id):
     return render(request, template, context)
 
 
-@require_can_edit_and_view_locations
+@require_can_edit_or_view_locations
 @location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
@@ -996,7 +996,7 @@ def location_export(request, domain):
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
 
-@require_can_edit_and_view_locations
+@require_can_edit_or_view_locations
 @location_safe
 def location_download_job_poll(request, domain,
                                download_id,
@@ -1014,7 +1014,7 @@ class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')
 
-    @method_decorator(require_can_edit_and_view_locations)
+    @method_decorator(require_can_edit_or_view_locations)
     def dispatch(self, request, *args, **kwargs):
         return super(BaseLocationView, self).dispatch(request, *args, **kwargs)
 
