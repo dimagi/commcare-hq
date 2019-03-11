@@ -21,6 +21,8 @@ if USING_CITUS:
         'testapps.citus_worker',
     ) + tuple(INSTALLED_APPS)
 
+    DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
+
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
     #'--no-migrations' # trim ~120s from test run with db tests
