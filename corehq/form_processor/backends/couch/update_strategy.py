@@ -245,11 +245,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         return self
 
     def soft_rebuild_case(self, xforms=None):
-        """
-        Rebuilds the case state in place from its actions.
-
-        If strict is True, this will enforce that the first action must be a create.
-        """
+        """Rebuilds the case state in place from its actions."""
         xforms = xforms or {}
         self.reset_case_state()
         # try to re-sort actions if necessary
