@@ -805,7 +805,8 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
-            app=self.app,
+            domain=self.app.domain,
+            app_id=self.app.id,
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,

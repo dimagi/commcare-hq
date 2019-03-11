@@ -133,7 +133,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
 
 @task(serializer='pickle')
-def build_application_zip(include_multimedia_files, include_index_files, app,
+def build_application_zip(include_multimedia_files, include_index_files, domain, app_id,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip",
                           download_targeted_version=False):
     from corehq.apps.hqmedia.views import iter_app_files
@@ -142,6 +142,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     initial_progress = 10   # early on indicate something is happening
     file_progress = 50.0    # arbitrarily say building files takes half the total time
 
+    app = get_app(domain, app_id)
     errors = []
     compression = zipfile.ZIP_DEFLATED if compress_zip else zipfile.ZIP_STORED
 
