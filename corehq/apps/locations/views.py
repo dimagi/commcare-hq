@@ -47,6 +47,7 @@ from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
     can_edit_location,
+    can_edit_or_view_location,
     require_can_edit_locations,
     require_can_edit_or_view_locations,
     user_can_edit_location_types,
@@ -668,8 +669,8 @@ class EditLocationView(BaseEditLocationView):
 
     @use_multiselect
     @use_select2_v4
-    @method_decorator(require_can_edit_or_view_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
+    @method_decorator(can_edit_or_view_location)
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 

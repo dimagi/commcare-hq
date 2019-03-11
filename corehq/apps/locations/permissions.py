@@ -306,3 +306,17 @@ def can_edit_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_locations(_inner)
+
+
+def can_edit_or_view_location(view_fn):
+    """
+    Decorator controlling a user's access to edit or VIEW a specific location.
+    The decorated function must be passed a loc_id arg (eg: from urls.py)
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, loc_id, *args, **kwargs):
+        if user_can_access_location_id(domain, request.couch_user, loc_id):
+            return view_fn(request, domain, loc_id, *args, **kwargs)
+        return location_restricted_response(request)
+
+    return require_can_edit_or_view_locations(_inner)
