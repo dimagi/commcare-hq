@@ -1,20 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
 from elasticsearch import ElasticsearchException
 
-from corehq.apps.es import CaseES, GroupES, LedgerES
-from corehq.apps.es import FormES
-from corehq.apps.es.sms import SMSES
+from corehq.apps.es import CaseES, FormES, GroupES, LedgerES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
-from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
-import six
+from corehq.apps.es.sms import SMSES
+from corehq.elastic import ES_EXPORT_INSTANCE, get_es_new
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
     query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain)
-            .xmlns(xmlns)
-            .remove_default_filter('has_user'))
+             .domain(domain)
+             .xmlns(xmlns)
+             .remove_default_filter('has_user'))
 
     if app_id:
         query = query.app(app_id)
