@@ -1743,3 +1743,11 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
+)
