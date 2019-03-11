@@ -439,48 +439,6 @@ def export_data(req, domain):
         raise Http404()
 
 
-@require_form_export_permission
-@login_and_domain_required
-@datespan_default
-@require_GET
-def export_data_async(request, domain):
-    """
-    Download all data for a couchdbkit model
-    """
-    try:
-        export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
-        export_type = request.GET.get("type", "form")
-    except ValueError:
-        return HttpResponseBadRequest()
-    assert(export_tag[0] == domain)
-    format = request.GET.get("format", Format.XLS_2007)
-    filename = request.GET.get("filename", None)
-    previous_export_id = request.GET.get("previous_export", None)
-
-    filter = create_export_filter(request, domain, export_type=export_type)
-
-    def _export_tag_or_bust(request):
-        export_tag = request.GET.get("export_tag", "")
-        if not export_tag:
-            raise Exception("You must specify a model to download!")
-        try:
-            # try to parse this like a compound json list
-            export_tag = json.loads(request.GET.get("export_tag", ""))
-        except ValueError:
-            pass  # assume it was a string
-        return export_tag
-
-    export_tag = _export_tag_or_bust(request)
-    export_object = DefaultExportSchema(index=export_tag)
-
-    return export_object.export_data_async(
-        filter=filter,
-        filename=filename,
-        previous_export_id=previous_export_id,
-        format=format
-    )
-
-
 @login_or_digest
 @datespan_default
 def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
