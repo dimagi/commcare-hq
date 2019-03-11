@@ -21,13 +21,14 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
-    return query
+    return query.sort("received_on")
 
 
 def get_case_export_base_query(domain, case_type):
     return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
-            .case_type(case_type))
+            .case_type(case_type)
+            .sort("opened_on"))
 
 
 def get_sms_export_base_query(domain):
