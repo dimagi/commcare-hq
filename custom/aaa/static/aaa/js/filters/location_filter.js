@@ -75,6 +75,12 @@ hqDefine('aaa/js/filters/location_filter', [
 
             self._initHierarchy();
 
+            params.filters[self.slug].applyFilter = function () {
+                _.forEach(self.hierarchyConfig(), function (location) {
+                    location.applyFilter();
+                });
+            };
+
             params.filters[self.slug].resetFilters = function () {
                 _.each(self.hierarchyConfig(), function (location) {
                     location.setDefaultOption();
@@ -82,6 +88,7 @@ hqDefine('aaa/js/filters/location_filter', [
             };
 
             self.selectedMinistry.subscribe(function () {
+                params.postData.selectedMinistry = self.selectedMinistry();
                 self._initHierarchy();
             });
 
