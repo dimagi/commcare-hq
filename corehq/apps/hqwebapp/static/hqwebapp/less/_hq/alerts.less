@@ -11,6 +11,8 @@
   border: 1px solid @cc-neutral-hi;
 }
 
+.alert-invoice-overdue,
+.alert-invoice-overdue-30,
 .alert-maintenance,
 .alert-trial {
   z-index: @zindex-navbar;
@@ -19,17 +21,40 @@
   margin-bottom: 0;
 }
 
+.alert-invoice-overdue,
+.alert-invoice-overdue-30,
+.alert-trial {
+  border: none;
+  border-radius: 0;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
 .alert-ui-notify.helpbubble {
   padding-bottom: 20px;
+}
+
+.alert-invoice-overdue {
+  background-color: @cc-att-neg-hi;
+  color: @cc-att-neg-low;
+
+  a, a:link, a:visited {
+    color: @cc-att-neg-extra-low;
+  }
+}
+
+.alert-invoice-overdue-30 {
+  background-color: @cc-att-neg-low;
+  color: @cc-att-neg-extra-hi;
+
+  a, a:link, a:visited {
+    color: @cc-att-neg-extra-low;
+  }
 }
 
 .alert-trial {
   background-color: @color-purple-dark;
   color: @color-purple-dark-inverse;
-  border: none;
-  border-radius: 0;
-  font-size: 1.1em;
-  font-weight: bold;
 
   a, a:link, a:visited {
     color: white;
