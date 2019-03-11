@@ -540,37 +540,22 @@ class CaseRebuildTestSQL(CaseRebuildTest):
 
 class TestCheckActionOrder(SimpleTestCase):
 
+    def _action(self, datetime_):
+        return CommCareCaseAction(server_date=datetime_, date=datetime_, action_type='update')
+
     def test_already_sorted(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
+            self._action(datetime(2001, 1, 1, 0, 0, 0)),
+            self._action(datetime(2001, 1, 2, 0, 0, 0)),
+            self._action(datetime(2001, 1, 3, 0, 0, 0)),
         ])
         self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
 
     def test_out_of_order(self):
         case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-        ])
-        self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
-
-    def test_sorted_with_none(self):
-        case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-        ])
-        self.assertTrue(CouchCaseUpdateStrategy(case).check_action_order())
-
-    def test_out_of_order_with_none(self):
-        case = CommCareCase(actions=[
-            CommCareCaseAction(server_date=datetime(2001, 1, 1, 0, 0, 0)),
-            CommCareCaseAction(server_date=datetime(2001, 1, 3, 0, 0, 0)),
-            CommCareCaseAction(server_date=None),
-            CommCareCaseAction(server_date=datetime(2001, 1, 2, 0, 0, 0)),
+            self._action(datetime(2001, 1, 1, 0, 0, 0)),
+            self._action(datetime(2001, 1, 3, 0, 0, 0)),
+            self._action(datetime(2001, 1, 2, 0, 0, 0)),
         ])
         self.assertFalse(CouchCaseUpdateStrategy(case).check_action_order())
 
