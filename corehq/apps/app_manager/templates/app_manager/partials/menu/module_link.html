@@ -1,0 +1,106 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+<div class="appnav-item {% if module.unique_id == selected_module.unique_id %}{% if not form %}active{% endif %}{% endif %}">
+
+    <a href="#module_confirm_delete_{{ module.unique_id }}"
+       data-toggle="modal"
+       class="appnav-delete">
+      <i class="fa fa-trash-o"></i>
+    </a>
+
+    <a href="{% url "view_module" domain app.id module.unique_id %}"
+       class="appnav-title{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
+        <i class="drag_handle appnav-drag-icon js-appnav-drag-module"></i>
+        {% if module.module_type == 'advanced' %}
+          <i class="fa fa-flask appmanager-icon-type appnav-primary-icon"></i>
+        {% elif module.module_type == 'report' %}
+          <i class="fa fa-bar-chart appmanager-icon-type appnav-primary-icon"></i>
+        {% elif module.module_type == 'shadow' %}
+          <i class="fa fa-folder-open-o appmanager-icon-type appnav-primary-icon"></i>
+        {% elif module.is_training_module %}
+          <i class="fa fa-book appnav-primary-icon"></i>
+        {% elif not module.is_surveys %}
+          <i class="fa fa-bars appnav-primary-icon"></i>
+        {% else %}
+          <i class="fa fa-folder-open appnav-primary-icon"></i>
+        {% endif %}
+        <span {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}>
+            {{ module.name|html_trans_prefix:langs }}
+        </span>
+    </a>
+
+    {% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+    <a href="#"
+       class="appnav-secondary js-add-new-item"
+       data-slug="form"
+       data-module-unique-id="{{ module.unique_id }}"
+       data-new-form-url="{% url 'new_form' domain app.id module.unique_id %}"
+       data-show-survey="{% if module.is_surveys and not module.is_training_module %}1{% endif %}"
+       data-show-training="{% if module.is_training_module %}1{% endif %}"
+       data-show-case-forms="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+       data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+       data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+    >
+        <i class="fa fa-plus"></i>
+    </a>
+    {% endif %}
+
+    <!-- Deletion confirmation modal -->
+    <div id="module_confirm_delete_{{ module.unique_id }}" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">
+              {% if module.is_surveys %}
+                  {% blocktrans %}
+                  Are you sure you want to delete this survey folder?
+                  {% endblocktrans %}
+              {% else %}
+                  {% blocktrans %}
+                  Are you sure you want to delete this case list?
+                  {% endblocktrans %}
+              {% endif %}
+            </h4>
+          </div>
+          <form action="{% url "delete_module" domain app.id module.unique_id %}"
+                method="post">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p class="lead">
+                {% blocktrans %}You are about to delete{% endblocktrans %}
+                <strong>{{ module.name|html_trans:langs }}</strong>!
+              </p>
+              <p>
+                {% if module.is_surveys %}
+                    {% blocktrans %}
+                    This action will also delete all forms in this survey folder.
+                    {% endblocktrans %}
+                {% else %}
+                    {% blocktrans %}
+                    This action will also delete all forms in this case list.
+                    {% endblocktrans %}
+                {% endif %}
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="submit" class="disable-on-submit btn btn-danger">
+                  <i class="fa fa-trash"></i>
+                  {% if module.is_surveys %}
+                      {% trans "Delete Surveys" %}
+                  {% else %}
+                      {% trans "Delete Case List" %}
+                  {% endif %}
+              </button>
+            </div>
+          </form>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</div>
