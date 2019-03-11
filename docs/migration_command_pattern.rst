@@ -18,28 +18,26 @@ ensure a smooth rollout to everyone running any size environemnt with minimal
 overhead for those running small environments.
 
 
-Pattern Outline
----------------
+Pattern Components
+------------------
 
-- Pattern components
+- A management command that performs the data migration.
 
-  - A management command that performs the data migration.
+  - Unless downtime will be scheduled, the command should be written in a way
+    that allows legacy code to continue working while the migration is in
+    progress. Techniques for achieving this are out of scope here.
+  - May accept a ``--dbname=xxxx`` parameter to limit operation to the
+    given database.
 
-    - Unless downtime will be scheduled, the command should be written in a way
-      that allows legacy code to continue working while the migration is in
-      progress. Techniques for achieving this are out of scope here.
-    - May accept a ``--dbname=xxxx`` parameter to limit operation to the
-      given database.
+- Change log entry in CommCare Cloud describing the steps to perform the
+  migration manually by running the management command.
+- A Django migration that will
 
-  - Change log entry in CommCare Cloud describing the steps to perform the
-    migration manually by running the management command.
-  - A Django migration that will
-
-    - Check if there are any items that need to be migrated
-    - Run the management command if necessary
-    - Verify management command success/failure
-    - Display an error and stop on failure
-    - Continue with next migration on success
+  - Check if there are any items that need to be migrated
+  - Run the management command if necessary
+  - Verify management command success/failure
+  - Display an error and stop on failure
+  - Continue with next migration on success
 
 
 Django Migration Code Example
@@ -74,8 +72,8 @@ did it run successfully?) can be performed in the context of a Django migration.
 
     https://github.com/dimagi/commcare-cloud/blob/master/docs/changelog/0000-example-entry.md
 
-    If you are unable to run the management command because it has been deleted,
-    you will need to checkout an older version of CommCareHQ first:
+    You will need to checkout an older version of CommCareHQ first if you are
+    unable to run the management command because it has been deleted:
 
     git checkout {commit}
     """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
