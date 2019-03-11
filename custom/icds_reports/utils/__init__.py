@@ -990,3 +990,11 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
     icds_file.save()
     return file_hash
+
+
+def get_datatables_ordering_info(request):
+    # retrive table ordering provided by datatables plugin upon clicking on column header
+    order_by_number_column = request.GET.get('order[0][column]')
+    order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
+    order_dir = request.GET.get('order[0][dir]', 'asc')
+    return order_by_number_column, order_by_name_column, order_dir

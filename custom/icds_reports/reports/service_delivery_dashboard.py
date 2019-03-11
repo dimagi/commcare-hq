@@ -11,10 +11,21 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered
     'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'age_sdd'
 ], timeout=30 * 60)
 def get_service_delivery_dashboard(start, length, order, reversed_order, location_filters, year, month, age_sdd):
+    if location_filters.get('aggregation_level') == 1:
+        default_order = 'state_name'
+    elif location_filters.get('aggregation_level') == 2:
+        default_order = 'district_name'
+    elif location_filters.get('aggregation_level') == 3:
+        default_order = 'block_name'
+    elif location_filters.get('aggregation_level') == 4:
+        default_order = 'supervisor_name'
+    else:
+        default_order = 'awc_name'
+
     data = ServiceDeliveryMonthly.objects.filter(
         month=date(year, month, 1),
         **location_filters
-    ).order_by('state_name').values(
+    ).order_by(default_order).values(
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs',
         'valid_visits', 'expected_visits', 'gm_0_3', 'children_0_3', 'num_awcs_conducted_cbe',
         'num_awcs_conducted_vhnd', 'thr_given_21_days', 'total_thr_candidates', 'lunch_count_21_days',

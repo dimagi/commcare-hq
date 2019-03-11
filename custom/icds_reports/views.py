@@ -104,7 +104,8 @@ from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
+    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
+    get_datatables_ordering_info
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -349,9 +350,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
 
         start = int(request.GET.get('start', 0))
         length = int(request.GET.get('length', 10))
-        order_by_number_column = request.GET.get('order[0][column]')
-        order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
-        order_dir = request.GET.get('order[0][dir]', 'asc')
+        order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
 
         data = get_service_delivery_dashboard(
@@ -652,9 +651,8 @@ class AwcReportsView(BaseReportView):
                 length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
                 elif order_by_name_column == 'current_month_nutrition_status':
@@ -686,9 +684,8 @@ class AwcReportsView(BaseReportView):
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
@@ -708,9 +705,8 @@ class AwcReportsView(BaseReportView):
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
