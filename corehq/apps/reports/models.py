@@ -412,7 +412,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except UnsupportedSavedReportError:
             return "#"
         except Exception as e:
-            logging.exception(e.message)
+            logging.exception(six.text_type(e))
             return "#"
 
     @property
@@ -787,7 +787,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def get_secret(self, email):
         uuid = self._get_or_create_uuid()
-        return hashlib.sha1(uuid + email).hexdigest()[:20]
+        return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
         # Scenario: user has been removed from the domain that they
@@ -845,6 +845,16 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             self.recipient_emails.remove(email)
         except ValueError:
             pass
+
+    def update_attributes(self, items):
+        for k, v in items:
+            if k == 'start_date':
+                self.verify_start_date(v)
+            self.__setattr__(k, v)
+
+    def verify_start_date(self, start_date):
+        if start_date != self.start_date and start_date < datetime.today().date():
+            raise ValidationError("You can not specify a start date in the past.")
 
 
 class AppNotFound(Exception):

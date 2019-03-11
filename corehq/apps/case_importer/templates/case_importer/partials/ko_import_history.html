@@ -18,13 +18,17 @@
     <!--ko foreach: case_uploads-->
     <tr>
         <td class="col-md-1">
-            <!--ko if: task_status().state == $root.states.SUCCESS-->
+            <!--ko if: task_status().state == $root.states.SUCCESS && task_status().result-->
                 <!--ko if: _.isEmpty(task_status().result.errors)-->
                 <span class="label label-success">{% trans "Success" %}</span>
                 <!--/ko-->
                 <!--ko if: !_.isEmpty(task_status().result.errors)-->
                 <span class="label label-warning">{% trans "Success with warnings" %}</span>
                 <!--/ko-->
+            <!--/ko-->
+            {# The following failed state is necessary to handle legacy errors #}
+            <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
+            <span class="label label-danger">{% trans "Failed" %}</span>
             <!--/ko-->
             <!--ko if: task_status().state == $root.states.FAILED-->
             <span class="label label-danger">{% trans "Failed" %}</span>
@@ -74,8 +78,8 @@
                 <a style="cursor: pointer" data-bind="
                     text: upload_file_name,
                     popover: {
-                        title: django.gettext('You may not download this file yourself'),
-                        content: django.gettext('Please ask an administrator or the user who uploaded the file for their help'),
+                        title: '{% trans_html_attr 'You may not download this file yourself' %}',
+                        content: '{% trans_html_attr 'Please ask an administrator or the user who uploaded the file for their help' %}',
                         placement: 'top'
                     }
                 "></a>
@@ -105,6 +109,7 @@
 </table>
 <pagination data-apply-bindings="false"
             params="goToPage: goToPage,
+                    slug: 'case-import',
                     perPage: itemsPerPage,
                     totalItems: totalItems,
                     showSpinner: showPaginationSpinner"></pagination>

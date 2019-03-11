@@ -20,7 +20,7 @@ from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
-from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 
 from django.shortcuts import render
 import shutil
@@ -52,7 +52,11 @@ from corehq.apps.hqmedia.controller import (
     MultimediaVideoUploadController
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
-from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
+from corehq.apps.hqmedia.tasks import (
+    process_bulk_upload_zip,
+    profile_and_process_bulk_upload_zip,
+    build_application_zip,
+)
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
@@ -149,11 +153,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "references": self.app.get_references(),
-            "multimedia_state": self.app.check_media_state(),
-            "object_map": self.app.get_object_map(),
-            "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),
+            "multimedia_state": self.app.check_media_state(),
         })
         return context
 
@@ -167,6 +168,15 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
         ]
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('json', None):
+            return JsonResponse({
+                "references": self.app.get_references(),
+                "object_map": self.app.get_object_map(),
+                "totals": self.app.get_reference_totals(),
+            })
+        return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
@@ -419,7 +429,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(e.message)
+            self.errors.append(six.text_type(e))
         response.update({
             'errors': self.errors,
         })
@@ -472,12 +482,21 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
 
-        process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
-                                      username=self.username,
-                                      share_media=self.share_media,
-                                      license_name=self.license_used,
-                                      author=self.author,
-                                      attribution_notes=self.attribution_notes)
+        if toggles.PROFILE_BULK_MULTIMEDIA_UPLOAD.enabled(self.username):
+            profile_and_process_bulk_upload_zip(processing_id, self.domain, self.app_id,
+                                                username=self.username,
+                                                share_media=self.share_media,
+                                                license_name=self.license_used,
+                                                author=self.author,
+                                                attribution_notes=self.attribution_notes)
+        else:
+            process_bulk_upload_zip(processing_id, self.domain, self.app_id,
+                                    username=self.username,
+                                    share_media=self.share_media,
+                                    license_name=self.license_used,
+                                    author=self.author,
+                                    attribution_notes=self.attribution_notes)
+
         return status.get_response()
 
     @classmethod
@@ -700,13 +719,6 @@ class RemoveLogoView(BaseMultimediaView):
         return HttpResponse()
 
 
-class CheckOnProcessingFile(BaseMultimediaView):
-    urlname = "hqmedia_check_processing"
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponse("workin on it")
-
-
 def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
@@ -734,7 +746,7 @@ def iter_media_files(media_objects):
                     'error': e,
                 }
                 errors.append(message)
-                notify_exception(None, message)
+                notify_exception(None, "[ICDS-291] {}".format(message))
     return _media_files(), errors
 
 
@@ -935,7 +947,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        notify_exception(None, e.message)
+        notify_exception(None, "[ICDS-291] {}".format(six.text_type(e)))
         errors = [six.text_type(e)]
 
     return _files(files), errors, len(files)

@@ -7,6 +7,7 @@ hqDefine('app_manager/js/summary/case_summary',[
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
+    'hqwebapp/js/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function (caseType, showCalculations) {
@@ -56,7 +57,9 @@ hqDefine('app_manager/js/summary/case_summary',[
                     _.each(caseType.properties, function (property) {
                         var isVisible = !query || property.name.indexOf(query) !== -1;
                         property.matchesQuery(isVisible);
-                        self.showCalculations(self.showCalculations() || (query && isVisible && property.is_detail_calculation));
+                        if (!self.showCalculations() && (query && isVisible && property.is_detail_calculation)) {
+                            self.showCalculations(true);
+                        }
                         hasVisible = hasVisible || isVisible;
                     });
                     caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);

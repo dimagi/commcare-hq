@@ -18,6 +18,7 @@ DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE = {
     'json': {}
 }
 
+
 class Command(BaseCommand):
     help = ("Restores full ES cluster or specific index from snapshot. "
             "Index arguments are optional and it will default to a full "

@@ -80,12 +80,9 @@ hqDefine('app_manager/js/summary/models',[
         // Search box behavior
         self.query = ko.observable('');
         self.queryLabel = options.query_label;
-        self.clearQuery = function () {
-            self.query('');
+        self.onQuery = function () {
+            options.onQuery(self.query());
         };
-        self.query.subscribe(_.debounce(function (newValue) {
-            options.onQuery(newValue);
-        }, 200));
 
         // Utilities
         self.lang = options.lang;

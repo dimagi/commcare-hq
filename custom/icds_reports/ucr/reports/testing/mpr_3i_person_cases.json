@@ -12,7 +12,7 @@
     "icds-cas"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-mpr_3i_person_cases-optimized",

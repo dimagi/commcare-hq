@@ -49,11 +49,13 @@
 trunk: master
 name: autostaging
 branches:
-  - es/child-module-metrics  # Ethan Feb 7
-  - ns/update_uwsgi  # Nitigya Feb 12 
-  - dmr/kill-mvp  # Danny Feb 19
   - bmb/users-perms-ui  # Biyeun Feb 20
-  - nonetype-cmp  # Nick P Feb 21
-  - py3-requirejs  # Nick P Feb 21
-  - notifications-migration-text  # Nick P Feb 21
+  - vellum-staging      # Farid 20 Feb
+  - fr/question-links   # Farid 20 Feb
+  - jls/download-mm-translations  # Jenny Feb 23
+  - mk-21944-2 # MK Feb 25
+  - inconsistent-user-filters-exports  # Gabriella March 2
+  - inconsistent-user-filters-reports  # Gabriella March 2
+  - es/module-display  # Ethan March 4th
+  #- jls/log-media-map-app-id # Jenny March 7
 submodules: {}

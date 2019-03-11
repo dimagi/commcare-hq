@@ -220,21 +220,22 @@
 
                         <div class="nav-settings-bar pull-right">
                           <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
+                            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
+                                {% if demo_workflow_ab.version == 'hubspot' %}
+                                    <a href="#cta-form-get-demo"
+                                       data-toggle="modal"
+                                       id="cta-form-get-demo-button-header"
+                                       class="btn btn-purple navbar-btn">
+                                       {% trans 'Schedule a Demo' %}
+                                    </a>
+                                {% endif %}
 
-                              {% if demo_workflow_ab.version == 'hubspot' %}
-                              <a href="#cta-form-get-demo"
-                                 data-toggle="modal"
-                                 id="cta-form-get-demo-button-header"
-                                 class="btn btn-purple navbar-btn">{% trans 'Schedule a Demo' %}</a>
-                              {% endif %}
-
-                              {% if demo_workflow_ab.version == 'drift' %}
-                              <button id="cta-form-get-demo-button-header"
-                                      class="btn btn-purple navbar-btn schedule-demo-drift-cta">
-                                {% trans 'Schedule a Demo' %}</button>
-                              {% endif %}
-
+                            {% if demo_workflow_ab.version == 'drift' %}
+                                <button id="cta-form-get-demo-button-header"
+                                        class="btn btn-purple navbar-btn schedule-demo-drift-cta">
+                                        {% trans 'Schedule a Demo' %}
+                                </button>
+                            {% endif %}
                           {% endif %}
                         </div>
                       </nav>
@@ -523,6 +524,8 @@
         {# Knockout component templates #}
         {% include 'hqwebapp/ko_pagination.html' %}
         {% include 'hqwebapp/partials/ko_inline_edit.html' %}
+        {% include 'hqwebapp/partials/ko_search_box.html' %}
+        {% include 'hqwebapp/partials/ko_select_toggle.html' %}
 
         {% block js %}{% endblock js %}
 

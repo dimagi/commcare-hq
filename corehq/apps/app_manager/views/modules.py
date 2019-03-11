@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+import uuid
 from collections import OrderedDict
 import json
 import logging
@@ -71,7 +73,10 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations,
+    DefaultCaseSearchProperty,
+    get_all_mobile_filter_configs,
+    get_auto_filter_configurations,
+    CaseListForm,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -974,7 +979,17 @@ def new_module(request, domain, app_id):
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
 
-    if module_type == 'case' or module_type == 'survey':  # survey option added for V2
+    if module_type == 'biometrics':
+        enroll_module, enroll_form_id = _init_biometrics_enroll_module(app, lang)
+        _init_biometrics_identify_module(app, lang, enroll_form_id)
+
+        app.save()
+
+        response = back_to_main(request, domain, app_id=app_id,
+                                module_id=enroll_module.id, form_id=0)
+        response.set_cookie('suppress_build_errors', 'yes')
+        return response
+    elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
             name = name or 'Case List'
         else:
@@ -1035,6 +1050,85 @@ def _init_module_case_type(module):
         module.case_type = app_case_types[0]
     else:
         module.case_type = 'case'
+
+
+def _init_biometrics_enroll_module(app, lang):
+    """
+    Creates Enrolment Module for Biometrics
+    """
+    module = app.add_module(Module.new_module(_("Registration"), lang))
+
+    form_name = _("Enroll New Person")
+
+    context = {
+        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'form_name': form_name,
+        'name_label': _("What is your name?"),
+        'simprints_enrol_label': _("Scan Fingerprints"),
+        'lang': lang,
+    }
+    context.update(app.biometric_context)
+    attachment = render_to_string(
+        "app_manager/simprints_enrolment_form.xml",
+        context=context
+    )
+
+    enroll = app.new_form(module.id, form_name, lang, attachment=attachment)
+    enroll.actions.open_case = OpenCaseAction(
+        name_path="/data/name",
+        condition=FormActionCondition(type='always'),
+    )
+    enroll.actions.update_case = UpdateCaseAction(
+        update={
+            'simprintsId': '/data/simprintsId',
+            'rightIndex': '/data/rightIndex',
+            'rightThumb': '/data/rightThumb',
+            'leftIndex': '/data/leftIndex',
+            'leftThumb': '/data/leftThumb',
+        },
+        condition=FormActionCondition(type='always'),
+    )
+
+    module.case_type = 'person'
+
+    return module, enroll.get_unique_id()
+
+
+def _init_biometrics_identify_module(app, lang, enroll_form_id):
+    """
+    Creates Identification Module for Biometrics
+    """
+    module = app.add_module(Module.new_module(_("Identify Registered Person"), lang))
+
+    # make sure app has Register From Case List Add-On enabled
+    app.add_ons["register_from_case_list"] = True
+
+    # turn on Register from Case List with Simprints Enrolment form
+    module.case_list_form = CaseListForm(
+        form_id=enroll_form_id,
+        label=dict([(lang, _("Enroll New Person"))]),
+    )
+    case_list = module.case_details.short
+    case_list.lookup_enabled = True
+    case_list.lookup_action = "com.simprints.id.IDENTIFY"
+    case_list.lookup_name = _("Scan Fingerprint")
+    case_list.lookup_extras = list([
+        dict(key=key, value=value)
+        for key, value in app.biometric_context.items()
+    ])
+    case_list.lookup_responses = [
+        {'key': 'fake'},
+    ]
+    case_list.lookup_display_results = True
+    case_list.lookup_field_header[lang] = _("Confidence")
+    case_list.lookup_field_template = 'simprintsId'
+
+    identify = app.new_form(module.id, _("Followup with Person"), lang)
+    identify.requires = 'case'
+    identify.actions.update_case = UpdateCaseAction(
+        condition=FormActionCondition(type='always'))
+
+    module.case_type = 'person'
 
 
 def _save_case_list_lookup_params(short, case_list_lookup, lang):

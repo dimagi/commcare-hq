@@ -65,7 +65,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
             for index, row in enumerate(rs):
                 rows[index].append(row[-1])
                 if index == 10:
-                    numbers = re.split('/|\s|%', row[-1]['html'])
+                    numbers = re.split(r'/|\s|%', row[-1]['html'])
                     sum_row_10 += int(numbers[0])
                     denom_row_10 += int(numbers[1])
                 else:

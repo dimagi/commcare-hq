@@ -18,8 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
-    "icds-new",
+    "india",
     "icds"
   ],
   "config": {
@@ -70,7 +69,6 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "type": "expression",
         "expression":{
           "type": "location_parent_id",
           "location_id_expression": {

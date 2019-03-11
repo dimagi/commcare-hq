@@ -120,9 +120,9 @@ def submit_unfinished_form(session):
     except InvalidSessionIdException:
         return
     root = XML(xml)
-    case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
-    meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
-    timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
+    case_tag_regex = re.compile(r"^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
+    meta_tag_regex = re.compile(r"^(\{.*\}){0,1}meta$")
+    timeEnd_tag_regex = re.compile(r"^(\{.*\}){0,1}timeEnd$")
     current_timstamp = json_format_datetime(utcnow())
     for child in root:
         if case_tag_regex.match(child.tag) is not None:

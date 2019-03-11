@@ -46,7 +46,6 @@ STOCK_QUESTION_TAG_NAMES = [
     'transfer',
 ]
 
-DEFAULT_FETCH_LIMIT = 5
 
 APP_TRANSLATION_UPLOAD_FAIL_MESSAGE = (
     "Translation Upload Failed! "

@@ -149,7 +149,7 @@ def json_request(params, lenient=True, booleans_as_strings=False):
 
 # get_ip was stolen verbatim from auditcare.utils
 # this is not intended to be an all-knowing IP address regex
-IP_RE = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+IP_RE = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
 
 def get_ip(request):

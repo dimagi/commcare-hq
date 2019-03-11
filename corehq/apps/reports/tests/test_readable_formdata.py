@@ -1,27 +1,38 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 import json
 import os
 import uuid
-
 from collections import OrderedDict
-from django.test import SimpleTestCase
+from io import open
+
 import yaml
+from django.test import SimpleTestCase
 from django.test.testcases import TestCase
 from mock import patch
 
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    LoadUpdateAction,
+)
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
+    get_app_summary_formdata,
     get_data_cleaning_data,
     get_questions_from_xform_node,
+    get_readable_data_for_submission,
     get_readable_form_data,
-    get_readable_data_for_submission)
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
-from io import open
 
 
 class ReadableFormdataTest(SimpleTestCase):
@@ -403,3 +414,60 @@ class ReadableFormTest(TestCase):
 @use_sql_backend
 class ReadableFormSQLTest(ReadableFormTest):
     pass
+
+
+class TestGetFormData(TestCase):
+
+    def test_form_data_with_case_properties(self):
+        factory = AppFactory()
+        app = factory.app
+        module1, form1 = factory.new_basic_module('open_case', 'household')
+        form1_builder = XFormBuilder(form1.name)
+
+        # question 0
+        form1_builder.new_question('name', 'Name')
+
+        # question 1 (a group)
+        form1_builder.new_group('demographics', 'Demographics')
+        # question 2 (a question in a group)
+        form1_builder.new_question('age', 'Age', group='demographics')
+
+        # question 3 (a question that has a load property)
+        form1_builder.new_question('polar_bears_seen', 'Number of polar bears seen')
+
+        form1.source = form1_builder.tostring(pretty_print=True).decode('utf-8')
+        factory.form_requires_case(form1, case_type='household', update={
+            'name': '/data/name',
+            'age': '/data/demographics/age',
+        }, preload={
+            '/data/polar_bears_seen': 'polar_bears_seen',
+        })
+        app.save()
+
+        modules, errors = get_app_summary_formdata(app.domain, app)
+
+        q1_saves = modules[0]['forms'][0]['questions'][0]['save_properties'][0]
+        self.assertEqual(q1_saves.case_type, 'household')
+        self.assertEqual(q1_saves.property, 'name')
+
+        group_saves = modules[0]['forms'][0]['questions'][2]['save_properties'][0]
+        self.assertEqual(group_saves.case_type, 'household')
+        self.assertEqual(group_saves.property, 'age')
+
+        q3_loads = modules[0]['forms'][0]['questions'][3]['load_properties'][0]
+        self.assertEqual(q3_loads.case_type, 'household')
+        self.assertEqual(q3_loads.property, 'polar_bears_seen')
+
+    def test_advanced_form_get_action_type(self):
+        app = Application.new_app('domain', "Untitled Application")
+
+        parent_module = app.add_module(AdvancedModule.new_module('parent', None))
+        parent_module.case_type = 'parent'
+        parent_module.unique_id = 'id_parent_module'
+
+        form = app.new_form(0, "Untitled Form", None)
+        form.xmlns = 'http://id_m1-f0'
+        form.actions.load_update_cases.append(LoadUpdateAction(case_type="clinic", case_tag='load_0'))
+
+        modules, errors = get_app_summary_formdata('domain', app)
+        self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')

@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 import copy
 from datetime import datetime, timedelta, date
-from functools import partial
+from functools import cmp_to_key, partial
 import itertools
 import json
 import csv342 as csv
@@ -945,8 +945,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
-        if not toggles.SET_SCHEDULED_REPORT_START_DATE.enabled(self.domain):
-            form.fields.pop('start_date')
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
@@ -990,9 +988,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
-            for k, v in self.scheduled_report_form.cleaned_data.items():
-                setattr(self.report_notification, k, v)
-
+            try:
+                self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
+            except ValidationError as err:
+                kwargs['error'] = six.text_type(err)
+                messages.error(request, ugettext_lazy(kwargs['error']))
+                return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
                 self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
@@ -1546,7 +1547,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1861,7 +1862,7 @@ def _sorted_form_metadata_keys(keys):
             return 0
 
         return cmp(x, y)
-    return sorted(keys, cmp=mycmp)
+    return sorted(keys, key=cmp_to_key(mycmp))
 
 
 def _get_edit_info(instance):

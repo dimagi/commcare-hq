@@ -11,7 +11,7 @@ from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import partition_config, parse_existing_shard, get_shards_to_update
 from six.moves import input
 
-SHARD_OPTION_RX = re.compile('^p[\d+]')
+SHARD_OPTION_RX = re.compile(r'^p[\d+]')
 
 SERVER_TEMPLATE = """
     CREATE SERVER {server_name} FOREIGN DATA WRAPPER plproxy

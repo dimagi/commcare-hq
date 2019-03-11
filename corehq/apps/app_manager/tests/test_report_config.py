@@ -32,7 +32,7 @@ class ReportAppConfigTest(SimpleTestCase):
     def test_new_uuid(self):
         report_app_config = ReportAppConfig(report_id='report_id')
         self.assertTrue(report_app_config.uuid)
-        self.assertIsInstance(report_app_config.uuid, six.string_types)
+        self.assertIsInstance(report_app_config.uuid, six.text_type)
 
     def test_different_uuids(self):
         report_app_config_1 = ReportAppConfig(report_id='report_id')

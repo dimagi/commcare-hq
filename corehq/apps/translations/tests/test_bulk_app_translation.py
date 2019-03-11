@@ -31,6 +31,8 @@ from corehq.apps.translations.app_translations import (
     get_unicode_dicts,
     process_bulk_app_translation_upload,
     update_form_translations,
+    read_uploaded_app_translation_file,
+    _remove_description_from_case_property
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
@@ -381,6 +383,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                 'App Translations Updated!'
             ]
         )
+
+    def test_remove_description_from_case_property(self):
+        row = {'case_property': 'words to keep (remove this)'}
+        description = _remove_description_from_case_property(row)
+        self.assertEqual(description, 'words to keep')
+
+    def test_remove_description_from_case_property_multiple_parens(self):
+        row = {'case_property': '(words (to) keep) (remove this)'}
+        description = _remove_description_from_case_property(row)
+        self.assertEqual(description, '(words (to) keep)')
 
     def test_empty_translations(self):
         # make the form a registration form

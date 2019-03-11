@@ -45,7 +45,7 @@ def JSON(obj):
     except TypeError as e:
         msg = ("Unserializable data was sent to the `|JSON` template tag.  "
                "If DEBUG is off, Django will silently swallow this error.  "
-               "{}".format(e.message))
+               "{}".format(six.text_type(e)))
         soft_assert(notify_admins=True)(False, msg)
         raise e
 
@@ -638,6 +638,13 @@ def registerurl(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'registered_urls')
+
+
+@register.simple_tag
+def trans_html_attr(value):
+    if not isinstance(value, six.string_types):
+        value = JSON(value)
+    return escape(_(value))
 
 
 @register.simple_tag

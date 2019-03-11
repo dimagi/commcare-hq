@@ -18,7 +18,18 @@ DATABASES = {
     },
     'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
+        'NAME': 'icds_commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
+    'aaa-data': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
@@ -226,8 +237,6 @@ SKIP_TOUCHFORMS_TESTS = True
 UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
-
-ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 

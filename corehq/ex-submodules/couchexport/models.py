@@ -850,7 +850,7 @@ class ExportConfiguration(DocumentSchema):
             return 'form'
 
     def __repr__(self):
-        return ('%s (%s)' % (self.name, self.index)).encode('utf-8')
+        return '%s (%s)' % (self.name, self.index)
 
 
 class GroupExportComponent(object):
@@ -978,7 +978,7 @@ class SavedBasicExport(BlobMixin, Document):
         self.put_attachment(payload, self.get_attachment_name(), domain=UNKNOWN_DOMAIN)
 
     def get_payload(self, stream=False):
-        return self.fetch_attachment(self.get_attachment_name(), stream=stream)
+        return self.fetch_attachment(self.get_attachment_name(), stream=stream, return_bytes=True)
 
     @classmethod
     def by_index(cls, index):

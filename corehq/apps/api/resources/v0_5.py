@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from django.conf.urls import url
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.forms import ValidationError
@@ -17,6 +18,7 @@ from collections import namedtuple
 from django.contrib.auth.models import User
 from django.urls import reverse
 
+import six
 from tastypie import fields
 from tastypie.bundle import Bundle
 
@@ -198,7 +200,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                         except ValidationError as e:
                             if not hasattr(bundle.obj, 'errors'):
                                 bundle.obj.errors = []
-                            bundle.obj.errors.append(e.message)
+                            bundle.obj.errors.append(six.text_type(e))
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
@@ -762,7 +764,7 @@ class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, Doma
         try:
             report_configuration = get_document_or_404(ReportConfiguration, domain, pk)
         except Http404 as e:
-            raise NotFound(e.message)
+            raise NotFound(six.text_type(e))
         return report_configuration
 
     def obj_get_list(self, bundle, **kwargs):
@@ -965,6 +967,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
     class Meta(v0_4.CommCareCaseResource.Meta):
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
+        max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
 
     def prepend_urls(self):
         return [

@@ -11,11 +11,15 @@
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'aaa/css/reach_dashboard.css' %}"/>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
     {% javascript_libraries underscore=True hq=True %}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
     <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
+
+    <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.js' %}"></script>
 
     <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
     <script src="{% static 'aaa/js/utils/reach_utils.js' %}"></script>
@@ -37,19 +41,23 @@
         {% include 'aaa/menus/top_menu.html' %}
 
         <div class="row no-margin">
-            {% include 'aaa/menus/selected_filters.html' %}
-
+            {% if not is_details %}
+                {% include 'aaa/menus/selected_filters.html' %}
+            {% endif %}
             {% block content %}
 
             {% endblock %}
         </div>
         {% registerurl 'program_overview_api' domain %}
         {% registerurl 'unified_beneficiary_api' domain %}
+        {% registerurl 'unified_beneficiary_details' domain 'details_type' 'beneficiary_id' %}
+        {% registerurl 'unified_beneficiary_details_api' domain %}
         {% registerurl 'location_api' domain %}
         {% initial_page_data 'user_role_type' user_role_type %}
         {% initial_page_data 'user_location_id' user_location_id %}
         {% initial_page_data 'user_location_ids' user_location_ids %}
         {% initial_page_data 'is_web_user' is_web_user %}
+        {% initial_page_data 'is_details' is_details %}
     </div>
 </div>
 

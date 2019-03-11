@@ -155,7 +155,7 @@ def export_for_group_async(group_config_id):
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="23", minute="59", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
