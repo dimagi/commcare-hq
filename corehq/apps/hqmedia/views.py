@@ -942,6 +942,8 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
         except ResourceConflict as e:
             if is_retry:
                 raise e
+            # Reload app and retry
+            app = get_app(domain, app.id)
             return _download_index_files(app, build_profile_id, is_retry=True)
 
     try:
