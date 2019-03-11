@@ -1,20 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
 import uuid
+from copy import deepcopy
+from datetime import datetime, timedelta
 
-from couchdbkit.exceptions import ResourceNotFound
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from six.moves import range, zip
+
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.exceptions import MissingServerDate
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from datetime import datetime, timedelta
-from copy import deepcopy
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import primary_actions, post_case_blocks
+from casexml.apps.case.util import post_case_blocks, primary_actions
 from corehq.apps.change_feed import topics
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy, _action_sort_key_function
 from corehq.form_processor.exceptions import CaseNotFound
@@ -22,10 +22,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
-from couchforms.models import XFormInstance
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
-from six.moves import zip
-from six.moves import range
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
 
