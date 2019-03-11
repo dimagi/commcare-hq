@@ -348,9 +348,8 @@ class ServiceDeliveryDashboardView(BaseReportView):
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
         age_sdd = request.GET.get('ageSDD')
 
-        start = int(request.GET.get('start', 0))
-        length = int(request.GET.get('length', 10))
-        order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
 
         data = get_service_delivery_dashboard(
@@ -647,11 +646,10 @@ class AwcReportsView(BaseReportView):
             if age:
                 filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
                 order_by_name_column = order_by_name_column or 'person_name'
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
@@ -681,10 +679,9 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
                 order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
@@ -702,10 +699,9 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column, order_by_name_column, order_dir = get_datatables_ordering_info(request)
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
                 order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 

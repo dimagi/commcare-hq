@@ -994,7 +994,9 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
 
 def get_datatables_ordering_info(request):
     # retrive table ordering provided by datatables plugin upon clicking on column header
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
     order_by_number_column = request.GET.get('order[0][column]')
     order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
     order_dir = request.GET.get('order[0][dir]', 'asc')
-    return order_by_number_column, order_by_name_column, order_dir
+    return start, length, order_by_number_column, order_by_name_column, order_dir
