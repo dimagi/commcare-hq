@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import hashlib
 import json
 
@@ -477,6 +477,44 @@ def maintenance_alert(request):
         )
     else:
         return ''
+
+
+@register.simple_tag
+def overdue_invoice_alert(request):
+    from corehq.apps.domain.views import DomainBillingStatementsView
+
+    domain_name = getattr(request, 'domain', None)
+    if domain_name:
+        overdue_invoice = get_overdue_invoice(domain_name)
+        if overdue_invoice:
+            days_overdue = (date.today() - overdue_invoice.date_due).days
+            css_class = 'alert-invoice-overdue' if days_overdue < 30 else 'alert-invoice-overdue-30'
+            return format_html(
+                '<div class="alert %s">{}</div>' % css_class,
+                mark_safe(
+                    "Your invoice for %(invoice_month)s is past due and you're at risk of losing access "
+                    "to paid features and priority support if your invoice isn't paid in %(days_until_downgrade)s "
+                    "days. Please pay your invoice <a href=%(billing_statements_link)s>here</a>." % {
+                        'invoice_month': overdue_invoice.date_start.strftime('%B %Y'),
+                        'days_until_downgrade': max(1, 61 - days_overdue),
+                        'billing_statements_link': reverse(DomainBillingStatementsView.urlname, args=[domain_name]),
+                    }
+                )
+            )
+    return ''
+
+
+def get_overdue_invoice(domain_name):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.accounting.tasks import (
+        get_domains_with_invoices_over_threshold_by_domain,
+        is_subscription_eligible_for_downgrade_process,
+    )
+
+    current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
+    if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
+        overdue_invoice, _ = get_domains_with_invoices_over_threshold_by_domain(date.today(), domain_name)
+        return overdue_invoice
 
 
 @register.simple_tag
