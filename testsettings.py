@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import settingshelper as helper
 from settings import *
 
-USING_CITUS = any(db for db in DATABASES.values() if db.get('ROLE') == 'citus_master')
+USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
