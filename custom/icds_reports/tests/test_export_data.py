@@ -519,10 +519,11 @@ class TestExportData(TestCase):
                     'domain': 'icds-cas'
                 },
             ).get_excel_data('st1'),
-            [['Demographics',
+            [[
+                'Demographics',
                 [[
                     'State', 'Number of households',
-                    'Total number of beneficiaries (Children under 6 years old,  pregnant women and lactating women, alive and seeking services) who have an Aadhaar ID',
+                    'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services) who have an Aadhaar ID',
                     'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services)',
                     'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
                     'Number of pregnant women enrolled for services', 'Number of lactating women',
@@ -548,24 +549,24 @@ class TestExportData(TestCase):
                 ['st2', 6662, 275, 1615, '17.03 %', 139, 139, 154, 154, 1322, 1322, 52, 301, 969, 36, 20, 36, 20],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st3', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st4', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st6', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
+                ['st5', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
+                ['st6', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
                 ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
                 ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
                 ['st7', 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
@@ -579,7 +580,7 @@ class TestExportData(TestCase):
                         ['State', 'st1']
                     ]
                 ]
-             ]
+            ]
         )
 
     def test_system_usage_export(self):
