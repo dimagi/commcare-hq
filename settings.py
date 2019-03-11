@@ -673,10 +673,8 @@ GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
-LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-LOCAL_REPEATERS = ()
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -1369,8 +1367,6 @@ COUCHDB_APPS = [
     ('app_manager', APPS_DB),
 ]
 
-COUCHDB_APPS += LOCAL_COUCHDB_APPS
-
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
@@ -1782,7 +1778,7 @@ PILLOWTOPS = {
     ]
 }
 
-BASE_REPEATERS = (
+REPEATERS = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
@@ -1794,8 +1790,6 @@ BASE_REPEATERS = (
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [

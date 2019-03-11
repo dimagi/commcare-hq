@@ -217,7 +217,7 @@ def get_dependent_case_info(domain, case_ids):
      2. any extensions of the passed in cases
      3. (1) and (2) above, for any dependencies that are pulled in
     """
-    assert not isinstance(case_ids, six.string_types)
+    assert not isinstance(case_ids, (six.text_type, bytes))
     all_dependencies = set()
     direct_dependencies = _get_direct_dependencies(domain, case_ids)
     new_case_ids = direct_dependencies.all
@@ -231,7 +231,7 @@ def get_dependent_case_info(domain, case_ids):
 
 
 def _get_direct_dependencies(domain, case_ids):
-    assert not isinstance(case_ids, six.string_types)
+    assert not isinstance(case_ids, (six.text_type, bytes))
     case_accessor = CaseAccessors(domain)
     extension_cases = set(case_accessor.get_extension_case_ids(case_ids))
     indexed_cases = set(case_accessor.get_indexed_case_ids(case_ids))

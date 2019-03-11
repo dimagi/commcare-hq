@@ -1713,15 +1713,6 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 )
 
 
-SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
-    'set_scheduled_report_start_date',
-    'Allow users to set an effective start date for scheduled reports.',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
-)
-
-
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
@@ -1751,4 +1742,12 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'Enable uploading a subset of translations in the UI Translations Excel upload',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )
