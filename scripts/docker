@@ -77,6 +77,25 @@ function usage() {
             echo "Remove all containers, images and volumes"
             echo ""
             ;;
+        citus)
+            echo "Manage citus containers"
+            echo ""
+            echo "$0 citus [COMMAND]"
+            echo ""
+            echo "OPTIONS are passed to docker compose."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # run citus containers in the background
+            echo "  $0 citus up -d"
+            echo ""
+            echo "  # list citus containers"
+            echo "  $0 citus ps"
+            echo ""
+            echo "  # stop citus containers"
+            echo "  $0 citus stop"
+            echo ""
+            ;;
         *)
             echo "Manage docker services for CommCare HQ"
             echo ""
@@ -164,6 +183,13 @@ else
             elif [ -z "$CMD" ]; then
                 CMD="up"
             fi
+        fi
+    elif [ "$CMD" == "citus" ]; then
+        SERVICES="citus"
+        CMD="$1"
+        shift
+        if [ -z "$CMD" ]; then
+            CMD="help"
         fi
     else
         SERVICES="services"
