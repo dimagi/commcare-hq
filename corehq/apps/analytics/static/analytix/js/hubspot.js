@@ -41,17 +41,7 @@ hqDefine('analytix/js/hubspot', [
 
                 $.when.apply($, _.map(formScriptUrls, function (url) { return $.getScript(url); }))
                     .done(function () {
-                        var isTrial = _get('isDemoTrial'),
-                            isVariant = _get('demoABv2').version === 'variant',
-                            formId;
-
-                        if (isTrial) {
-                            formId = isVariant ? "c2381f55-9bd9-4f27-8476-82900e58bfd6" : "4474515e-fea6-4154-b3cf-1fe42b1c1333";
-                        } else {
-                            formId = isVariant ? "f6ebf161-fccf-4083-9a72-5839a0c8ac8c" : "d1897875-a5bb-4b63-9b9c-3d8fdbbe8274";
-                        }
-
-                        _utils.loadDemoForm(apiId, formId);
+                        _utils.loadDemoForm(apiId);
                     });
             });
         }
@@ -62,12 +52,11 @@ hqDefine('analytix/js/hubspot', [
      * Loads the Hubspot Request Demo form and loads a Schedule Once Calendar
      * Widget for auto-booking an appointment as soon as the form is submitted.
      * @param {string} apiId
-     * @param {string} formId
      */
-    _utils.loadDemoForm = function (apiId, formId) {
+    _utils.loadDemoForm = function (apiId) {
         hbspt.forms.create({
             portalId: apiId,
-            formId: formId,
+            formId: "38980202-f1bd-412e-b490-f390f40e9ee1",
             target: "#get-demo-cta-form-content",
             css: "",
             onFormReady: function () {
