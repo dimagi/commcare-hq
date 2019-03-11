@@ -32,7 +32,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import (
     require_can_edit_groups,
-    require_can_edit_and_view_groups,
+    require_can_edit_or_view_groups,
 )
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.messaging.scheduling.util import domain_has_reminders
@@ -127,7 +127,7 @@ class BulkSMSVerificationView(BaseDomainView):
 
 class BaseGroupsView(BaseUserSettingsView):
 
-    @method_decorator(require_can_edit_and_view_groups)
+    @method_decorator(require_can_edit_or_view_groups)
     @use_multiselect
     @use_select2_v4
     def dispatch(self, request, *args, **kwargs):

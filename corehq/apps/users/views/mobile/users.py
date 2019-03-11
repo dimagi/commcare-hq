@@ -74,7 +74,7 @@ from corehq.apps.users.bulkupload import (
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
-    require_can_edit_and_view_commcare_users,
+    require_can_edit_or_view_commcare_users,
 )
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
@@ -135,7 +135,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @use_select2
     @use_multiselect
-    @method_decorator(require_can_edit_and_view_commcare_users)
+    @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditCommCareUserView, self).dispatch(request, *args, **kwargs)
 
@@ -575,7 +575,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
 
     @use_select2
     @use_angular_js
-    @method_decorator(require_can_edit_and_view_commcare_users)
+    @method_decorator(require_can_edit_or_view_commcare_users)
     def dispatch(self, *args, **kwargs):
         return super(MobileWorkerListView, self).dispatch(*args, **kwargs)
 
@@ -790,7 +790,7 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
-@require_can_edit_and_view_commcare_users
+@require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
 def paginate_mobile_workers(request, domain):

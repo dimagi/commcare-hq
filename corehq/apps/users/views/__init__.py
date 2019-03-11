@@ -69,7 +69,7 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
-    require_can_edit_and_view_web_users,
+    require_can_edit_or_view_web_users,
     require_permission_to_edit_user,
     require_can_view_roles,
 )
@@ -392,7 +392,7 @@ class EditWebUserView(BaseEditUserView):
 
         return ctx
 
-    @method_decorator(require_can_edit_and_view_web_users)
+    @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
@@ -479,7 +479,7 @@ class ListWebUsersView(BaseRoleAccessView):
     page_title = ugettext_lazy("Web Users")
     urlname = 'web_users'
 
-    @method_decorator(require_can_edit_and_view_web_users)
+    @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
@@ -568,7 +568,7 @@ class ListRolesView(BaseRoleAccessView):
         }
 
 
-@require_can_edit_and_view_web_users
+@require_can_edit_or_view_web_users
 @require_GET
 @location_safe_for_ews_ils
 def paginate_web_users(request, domain):
