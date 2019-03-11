@@ -690,7 +690,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
-        export = self.rendered_as == 'export'
+        export = self.rendered_as in ('export', 'email')
         if util.is_query_too_big(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
         ) and not export:
@@ -738,7 +738,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             user_ids=user_ids,
             xmlnss=[f['xmlns'] for f in self.all_relevant_forms.values()],
             by_submission_time=self.by_submission_time,
-            export=self.rendered_as == 'export'
+            export=self.rendered_as in ('export', 'email')
         )
 
 
@@ -1735,7 +1735,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return avg_datespan
 
     def _report_data(self):
-        export = self.rendered_as == 'export'
+        export = self.rendered_as in ('export', 'email')
         avg_datespan = self.avg_datespan
 
         case_owners = _get_owner_ids_from_users(self.users_to_iterate)
