@@ -504,6 +504,7 @@ def overdue_invoice_alert(request):
     return ''
 
 
+@quickcache(['domain_name'], timeout=60 * 60)
 def get_overdue_invoice(domain_name):
     from corehq.apps.accounting.models import Subscription
     from corehq.apps.accounting.tasks import (

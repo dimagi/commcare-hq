@@ -61,6 +61,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import get_overdue_invoice
 from corehq.apps.users.models import WebUser
 from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT
@@ -1131,6 +1132,8 @@ class Subscription(models.Model):
         """
         super(Subscription, self).save(*args, **kwargs)
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        get_overdue_invoice.clear(self.subscriber.domain)
+
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -2001,6 +2004,10 @@ class Invoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+
+    def save(self, *args, **kwargs):
+        super(Invoice, self).save(*args, **kwargs)
+        get_overdue_invoice.clear(self.subscription.subscriber.domain)
 
     @property
     def email_recipients(self):
