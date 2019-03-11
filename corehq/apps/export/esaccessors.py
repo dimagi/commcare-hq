@@ -7,7 +7,6 @@ from corehq.apps.es import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
-from corehq.toggles import EXPORT_NO_SORT
 import six
 
 
@@ -19,9 +18,6 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
     if app_id:
         query = query.app(app_id)
-    if not EXPORT_NO_SORT.enabled(domain):
-        query = query.sort("received_on")
-
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
@@ -29,14 +25,9 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    query = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .case_type(case_type))
-
-    if not EXPORT_NO_SORT.enabled(domain):
-        query = query.sort("opened_on")
-
-    return query
 
 
 def get_sms_export_base_query(domain):
