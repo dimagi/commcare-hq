@@ -74,10 +74,14 @@
       </div>{# .col-sm-6 #}
       <div class="col-xs-6 col-break-reg">
         <div class="tile-wrapper get-tour">
-          <a class="well tile"
+          <a class="well tile{% if demo_workflow_ab and demo_workflow_ab.version == 'drift' %} schedule-demo-drift-cta{% endif %}"
              id="js-get-tour"
+             {% if demo_workflow_ab and demo_workflow_ab.version == 'drift' %}
+             href="#"
+             {% else %}
              href="#cta-form-get-demo"
              data-toggle="modal"
+            {% endif %}
           >
             <h3>
               {% blocktrans %}
