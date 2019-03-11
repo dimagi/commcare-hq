@@ -812,7 +812,7 @@ def _send_downgrade_warning(invoice, context):
 def _send_overdue_notice(invoice, context):
     send_html_email_async.delay(
         _('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
-        invoice.contact_emails,
+        invoice.contact_emails,  # also add web admins and take the unique set
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
