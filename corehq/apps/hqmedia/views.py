@@ -932,7 +932,6 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
             if build_profile_id is not None:
                 name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:
-                # TODO: make RemoteApp.create_all_files not return media files
                 extension = os.path.splitext(name)[1]
                 data = _encode_if_unicode(f) if extension in text_extensions else f
                 yield (_get_name(name), data)
