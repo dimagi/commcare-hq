@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import json
 import uuid
+
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case import const
@@ -259,6 +262,40 @@ class CouchCaseRebuildTest(TestCase, CaseRebuildTestMixin):
         case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self._assertListEqual(original_actions, primary_actions(case))
         self._assertListEqual(original_form_ids, case.xform_ids)
+
+    def test_couch_reconcile_actions_different_ordering(self):
+        created_at = datetime(2017, 12, 2, 10, 23, 14)
+        case_id = _post_util(create=True, form_extras={'received_on': created_at})
+
+        # this case update is processed much later than the created date,
+        # but the time on the phone (date_modified) is much before the time the server received it
+        _post_util(
+            case_id=case_id,
+            p1='p1-1',
+            date_modifed=datetime(2018, 1, 26, 20, 22, 20),
+            form_extras={'received_on': datetime(2018, 2, 2, 8, 41, 53)}
+        )
+
+        # this case update was received by the server before the previous update
+        # however the date_modified is after the previous updates
+        _post_util(
+            case_id=case_id,
+            p2='p2-2',
+            date_modifed=datetime(2018, 2, 2, 8, 40, 43),
+            form_extras={'received_on': datetime(2018, 2, 2, 8, 41, 0)}
+        )
+        case = CommCareCase.get(case_id)
+
+        update_strategy = CouchCaseUpdateStrategy(case)
+        original_actions = [deepcopy(a) for a in case.actions]
+        self._assertListEqual(original_actions, case.actions)
+
+        # assert that the actions should not be reorder
+        self.assertTrue(update_strategy.check_action_order())
+
+        # assert that if a re-ordering is attempted, it results in the same output
+        update_strategy.reconcile_actions()
+        self._assertListEqual(original_actions, case.actions)
 
 
 class CaseRebuildTest(TestCase, CaseRebuildTestMixin):
