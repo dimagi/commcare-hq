@@ -172,18 +172,22 @@ def process_bulk_app_translation_upload(app, workbook):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
-            # It's the first sheet
-            ms = _process_modules_and_forms_sheet(rows, app)
-            msgs.extend(ms)
-        elif sheet.headers[0] == "case_property":
-            # It's a module sheet
-            ms = _update_case_list_translations(sheet, rows, app)
-            msgs.extend(ms)
-        else:
-            # It's a form sheet
-            ms = update_form_translations(sheet, rows, missing_cols, app)
-            msgs.extend(ms)
+        try:
+            if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
+                # It's the first sheet
+                ms = _process_modules_and_forms_sheet(rows, app)
+                msgs.extend(ms)
+            elif sheet.headers[0] == "case_property":
+                # It's a module sheet
+                ms = _update_case_list_translations(sheet, rows, app)
+                msgs.extend(ms)
+            else:
+                # It's a form sheet
+                ms = update_form_translations(sheet, rows, missing_cols, app)
+                msgs.extend(ms)
+        except ValueError:
+            msgs.append((messages.error, _("There was a problem loading sheet {} and was skipped.").format(
+                sheet.worksheet.title)))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
