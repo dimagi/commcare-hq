@@ -989,7 +989,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
             try:
-                self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
+                self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = six.text_type(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))
