@@ -165,10 +165,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if not self.allowed_to_forward(payload):
             return
 
-        def forward_now(record):
+        def forward_now(repeat_record):
             from corehq.motech.repeaters.tasks import process_repeat_record
 
-            if record.can_enqueue():
+            if repeat_record.can_enqueue():
                 process_repeat_record.delay(repeat_record)
 
         now = datetime.utcnow()
