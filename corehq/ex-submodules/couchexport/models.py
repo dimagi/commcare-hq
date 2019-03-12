@@ -746,6 +746,8 @@ class SavedExportSchema(BaseSavedExportSchema):
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
         fd, path = tempfile.mkstemp()
+        if six.PY2:
+            path = path.decode('utf-8')
         with os.fdopen(fd, 'wb') as tmp:
             writer.open(
                 formatted_headers,
