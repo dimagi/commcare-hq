@@ -837,7 +837,7 @@ class RebuildTableTest(TestCase):
         expected_pk = ['doc_id']
         self.assertEqual(expected_pk, pk['constrained_columns'])
 
-    def text_ordered_pk(self):
+    def test_ordered_pk(self):
         self._setup_data_source('ordered_pk')
         config = self._get_config('ordered_pk')
         config.configured_indicators.append({

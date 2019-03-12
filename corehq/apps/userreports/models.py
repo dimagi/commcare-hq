@@ -409,6 +409,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
         self.parsed_expression
+        self.pk_columns
 
     @classmethod
     def by_domain(cls, domain):
@@ -476,13 +477,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     @property
     def pk_columns(self):
-        if not self.sql_settings.primary_key:
-            columns = []
-            for col in self.get_columns():
-                if col.is_primary_key:
-                    column_name = decode_column_name(col)
-                    columns.append(column_name)
-        else:
+        columns = []
+        for col in self.get_columns():
+            if col.is_primary_key:
+                column_name = decode_column_name(col)
+                columns.append(column_name)
+        if self.sql_settings.primary_key:
+            if set(columns) != set(self.sql_settings.primary_key):
+                raise BadSpecError("Primary key columns must have is_primary_key set to true")
             columns = self.sql_settings.primary_key
         return columns
 
