@@ -242,7 +242,6 @@ LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
-    type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
 
     def get_load_properties(self, form_id, path):
         """gets all case types with a list of properties which load into a form question
