@@ -15,7 +15,7 @@ import types
 import re
 import datetime
 import uuid
-from collections import defaultdict, namedtuple, Counter
+from collections import defaultdict, namedtuple, Counter, OrderedDict
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
@@ -5404,28 +5404,39 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             module.rename_lang(old_lang, new_lang)
         _rename_key(self.translations, old_lang, new_lang)
 
-    def rearrange_modules(self, i, j):
+    def rearrange_modules(self, from_index, to_index):
         modules = self.modules
         try:
-            modules.insert(i, modules.pop(j))
+            moving_module = modules.pop(from_index)
+            module_id = moving_module.unique_id
+            modules.insert(to_index, moving_module)
+
+            non_children = [m for m in modules if m.root_module_id != module_id]
+            children = [m for m in modules if m.root_module_id == module_id]
+            modules = []
+            for module in non_children:
+                modules.append(module)
+                if module.unique_id == module_id:
+                    modules.extend(children)
+
         except IndexError:
             raise RearrangeError()
         self.modules = modules
 
-    def rearrange_forms(self, to_module_id, from_module_id, i, j):
+    def rearrange_forms(self, from_module_uid, to_module_uid, from_index, to_index):
         """
         The case type of the two modules conflict, the rearrangement goes through anyway.
         This is intentional.
 
         """
-        to_module = self.get_module(to_module_id)
-        from_module = self.get_module(from_module_id)
+        from_module = self.get_module_by_unique_id(from_module_uid)
+        to_module = self.get_module_by_unique_id(to_module_uid)
         try:
-            from_module.forms[j].pre_move_hook(from_module, to_module)
+            from_module.forms[from_index].pre_move_hook(from_module, to_module)
         except NotImplementedError:
             pass
         try:
-            form = from_module.forms.pop(j)
+            form = from_module.forms.pop(from_index)
             if not isinstance(form, AdvancedForm):
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
@@ -5436,9 +5447,25 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                         form.requires = "none"
                         form.actions.update_case = UpdateCaseAction(
                             condition=FormActionCondition(type='never'))
-            to_module.add_insert_form(from_module, form, index=i, with_source=True)
+            to_module.add_insert_form(from_module, form, index=to_index, with_source=True)
         except IndexError:
             raise RearrangeError()
+
+    def move_child_modules_after_parents(self):
+        # This makes the module ordering compatible with the front-end display
+        modules_by_parent_id = OrderedDict(
+            (m.unique_id, [m]) for m in self.modules if not m.root_module_id
+        )
+        orphaned_modules = []
+        for module in self.modules:
+            if module.root_module_id:
+                if module.root_module_id in modules_by_parent_id:
+                    modules_by_parent_id[module.root_module_id].append(module)
+                else:
+                    orphaned_modules.append(module)
+
+        self.modules = [m for modules in modules_by_parent_id.values() for m in modules]
+        self.modules += orphaned_modules
 
     def scrub_source(self, source):
         source = update_form_unique_ids(source)
