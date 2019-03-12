@@ -393,12 +393,11 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        case_filters = self.export_filter.get_model_filter('', True, None)
+        case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
         fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
                                                      web=False)
         assert not filters_from_slugs_patch.called
-
         self.assertIsInstance(case_filters[0], NOT)
         self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
@@ -415,12 +414,11 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        case_filters = self.export_filter.get_model_filter('', True, None)
+        case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
         fetch_user_ids_patch.assert_called_once_with(admin=False, commtrack=True, demo=True, unknown=True,
                                                      web=False)
         assert not filters_from_slugs_patch.called
-
         self.assertIsInstance(case_filters[0], NOT)
         self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
@@ -433,12 +431,11 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
-        case_filters = self.export_filter.get_model_filter('', True, None)
+        case_filters = self.export_filter.get_model_filter(self.group_ids_slug, True, None)
 
         fetch_user_ids_patch.assert_called_once_with(admin=True, commtrack=True, demo=True, unknown=True,
                                                      web=True, active=True, deactivated=False)
         assert not filters_from_slugs_patch.called
-
         self.assertIsInstance(case_filters[0], NOT)
         self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
@@ -501,3 +498,16 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_locations_ids.assert_called_once_with([])
         get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)
+
+    @patch.object(filter_builder, '_get_filters_from_slugs')
+    @patch.object(filter_builder, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_model_filter_for_default_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
+        data = {'date_range': '1992-01-30 to 2016-11-28'}
+        self.export_filter = self.subject(self.domain, pytz.utc, data=data)
+        self.assertTrue(self.export_filter.is_valid())
+        # Default should be all data when filters are blank
+        case_filters = self.export_filter.get_model_filter('', True, None)
+
+        assert not fetch_user_ids_patch.called
+        assert not filters_from_slugs_patch.called
+        self.assertEqual(case_filters, [])
