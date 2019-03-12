@@ -46,6 +46,10 @@ hqDefine('analytix/js/google', [
                 isCommCare: _get('userIsCommCare', 'no', 'yes'),
                 domain: _get('domain', 'none'),
                 hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+                linker: {
+                    accept_incoming: true,  // this is necessary for cross-domain tracking with dimagi.com
+                    domains: ['dimagi.com'],
+                },
             };
 
             // Update User Data & Legacy "Dimensions"
