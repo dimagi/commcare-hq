@@ -195,6 +195,7 @@
         {% endif %}
         {% block background_content %}{% endblock %}
         {% maintenance_alert request %}
+        {% overdue_invoice_alert request %}
         {% if request.user.is_authenticated and is_demo_visible %}
           {% include "hqwebapp/partials/get_demo_banner.html" %}
         {% endif %}
