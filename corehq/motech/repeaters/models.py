@@ -168,7 +168,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         def forward_now(record):
             from corehq.motech.repeaters.tasks import process_repeat_record
 
-            if record.redis_lock.acquire(blocking=False):
+            if record.can_enqueue():
                 process_repeat_record.delay(repeat_record)
 
         now = datetime.utcnow()
@@ -577,6 +577,7 @@ class RepeatRecord(Document):
     last_checked = DateTimeProperty()
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
+    queued = BooleanProperty(default=False)
     succeeded = BooleanProperty(default=False)
 
     @property
@@ -651,6 +652,7 @@ class RepeatRecord(Document):
         self.attempts.append(attempt)
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
+        self.queued = False
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
@@ -662,6 +664,7 @@ class RepeatRecord(Document):
     def postpone_by(self, duration):
         self.last_checked = datetime.utcnow()
         self.next_check = self.last_checked + duration
+        self.queued = False
         self.save()
 
     def make_set_next_try_attempt(self, failure_reason):
@@ -781,28 +784,23 @@ class RepeatRecord(Document):
 
     def cancel(self):
         self.next_check = None
+        self.queued = False
         self.cancelled = True
 
+    def can_enqueue(self):
+        if self.queued:
+            return False
+        self.queued = True
+        self.save()
+        return True
+
     def requeue(self):
+        self.queued = False
         self.cancelled = False
         self.succeeded = False
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
-
-    @property
-    def redis_lock(self):
-
-        # Including the rev in the key means that the record will be
-        # unlocked for processing every time we execute a `save()` call.
-        lock_key = 'repeat_record_in_progress-{}_{}'.format(self._id, self._rev)
-        return get_redis_lock(
-            lock_key,
-            timeout=RECORD_LOCK_TIMEOUT,
-            name="repeat_record",
-            track_unreleased=False,
-        )
-
 
 
 # import signals

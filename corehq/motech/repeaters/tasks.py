@@ -54,7 +54,7 @@ def check_repeaters():
                 _soft_assert(False, "Unable to iterate repeat records before check_repeater_lock timed out")
                 break
 
-            if record.redis_lock.acquire(blocking=False):
+            if record.can_enqueue():
                 process_repeat_record.delay(record)
     finally:
         check_repeater_lock.release()
