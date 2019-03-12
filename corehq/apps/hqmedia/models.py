@@ -726,7 +726,7 @@ class FormMediaMixin(MediaMixin):
     def all_media(self, lang=None):
         kwargs = self.get_media_ref_kwargs()
 
-        media = self.menu_media(self, lang=lang)
+        media = copy(self.menu_media(self, lang=lang))
 
         # Form questions
         parsed = self.wrapped_xform()
