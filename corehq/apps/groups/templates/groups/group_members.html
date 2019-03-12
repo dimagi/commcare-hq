@@ -18,7 +18,12 @@
 {% endblock %}
 
 {% block page_title %}
-{% trans "Editing Group" %} "{{ group.name }}"{% if group.case_sharing %} ({% trans 'Case Sharing' %}){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})
+  {% if request.is_view_only %}
+      {% trans "Viewing Group" %}
+  {% else %}
+      {% trans "Editing Group" %}
+  {% endif %}
+  "{{ group.name }}"{% if group.case_sharing %} ({% trans 'Case Sharing' %}){% endif %} ({% blocktrans count num_users=num_users %}{{ num_users }} member{% plural %}{{ num_users }} members{% endblocktrans %})
 {% endblock %}
 
 {% block page_content %}
@@ -31,18 +36,23 @@
         <div class="alert alert-info">
             {% blocktrans%}
             This group has been deleted already.
-            If you would like to undelete it you can do so below.
             {% endblocktrans %}
-            <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
-                {% csrf_token %}
-                <button class="btn btn-primary disable-on-submit" type="submit">
-                    {% blocktrans with group.name as group_name %}
-                        Restore Group "{{group_name}}"
-                    {% endblocktrans %}
-                </button>
-            </form>
+            {% if not request.is_view_only %}
+                {% blocktrans %}
+                If you would like to undelete it you can do so below.
+                {% endblocktrans %}
+                <form name="restore_group" action="{% url "restore_group" domain group.get_id %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-primary disable-on-submit" type="submit">
+                        {% blocktrans with group.name as group_name %}
+                            Restore Group "{{group_name}}"
+                        {% endblocktrans %}
+                    </button>
+                </form>
+            {% endif %}
         </div>
     {% else %}
+        {% if not request.is_view_only %}
         <div class="btn-toolbar">
             <a href="#editGroupSettings" class="btn btn-default" data-toggle="modal"><i class="fa fa-pencil"></i> {% trans "Edit Settings" %}</a>
             <a class="btn btn-danger pull-right" style="margin-right: 45px;" data-toggle="modal" href="#delete_group_modal">
@@ -75,6 +85,7 @@
             {% endif %}
         </div>
         <hr />
+        {% endif %}
 
         <ul class="nav nav-tabs sticky-tabs" role="tablist" style="margin-bottom: 20px;">
             <li role="presentation">
@@ -92,46 +103,104 @@
         <!-- Tab panes -->
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane" id="membership-tab">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <div class="alert alert-info" id="membership_updating" style="display: none">
-                          <p class="lead">
-                            <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
-                          </p>
+                <div class="panel-body">
+                    {% if request.is_view_only %}
+                        <div class="form form-horizontal">
+                            <legend>
+                                {% trans "View Group Membership" %}
+                            </legend>
+                            <div class="form-group">
+                                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+                                    {% trans "Group Membership" %}
+                                </label>
+                                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
+                                    {% if not group_members %}
+                                        {% blocktrans %}
+                                            No Mobile Workers are currently assigned to this group.
+                                        {% endblocktrans %}
+                                    {% else %}
+                                        <ul>
+                                            {% for member in group_members %}
+                                                <li>{{ member.username_in_report }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
+                    {% else %}
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="alert alert-info" id="membership_updating" style="display: none">
+                                  <p class="lead">
+                                    <i class="fa fa-spinner fa-spin"></i> {% trans 'Updating Group Membership, please wait...' %}
+                                  </p>
+                                </div>
 
-                        <form class="form-horizontal disable-on-submit"
-                              id="edit_membership"
-                              action="{% url "update_group_membership" domain group.get_id %}" method='post'>
-                                {% crispy group_membership_form %}
-                        </form>
+                                <form class="form-horizontal disable-on-submit"
+                                      id="edit_membership"
+                                      action="{% url "update_group_membership" domain group.get_id %}" method='post'>
+                                        {% crispy group_membership_form %}
+                                </form>
 
 
-                    </div>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
             <div role="tabpanel" class="tab-pane" id="groupdata-tab">
-                <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
-                    {% csrf_token %}
-                    <fieldset>
-                        <legend>{% trans "Edit Group Data" %}</legend>
-                        <div class="form-group">
-                            <label class="control-label col-sm-2">
-                                {% trans "Group Data" %}
-                            </label>
-                            <div class="col-sm-9">
-                                <div id="group-data-ui-editor"></div>
+                <div class="panel-body">
+                    {% if request.is_view_only %}
+                        <div class="form form-horizontal">
+                            <legend>
+                                {% trans "View Group Data" %}
+                            </legend>
+                            <div class="form-group">
+                                <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2">
+                                    {% trans "Group Data" %}
+                                </label>
+                                <div class="controls-text col-xs-12 col-sm-8 col-md-8 col-lg-6">
+                                    {% if not group.metadata %}
+                                        {% trans "No Data Provided" %}
+                                    {% else %}
+                                        <ul>
+                                            {% for key, val in group.metadata.items %}
+                                            <li>
+                                                <strong>{{ key }}</strong>
+                                                &rarr;
+                                                {{ val }}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
-                        <div class="form-actions">
-                            <div class="col-sm-9 col-sm-offset-2">
-                                <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
-                            </div>
-                        </div>
+                    {% else %}
+                        <form id="group-data-form" class="form-horizontal disable-on-submit" name="group-data-form" method="post" action="{% url "update_group_data" domain group.get_id %}">
+                            {% csrf_token %}
+                            <fieldset>
+                                <legend>{% trans "Edit Group Data" %}</legend>
+                                <div class="form-group">
+                                    <label class="control-label col-sm-2">
+                                        {% trans "Group Data" %}
+                                    </label>
+                                    <div class="col-sm-9">
+                                        <div id="group-data-ui-editor"></div>
+                                    </div>
+                                </div>
+                                <input name="group-data" id="group-data" type="hidden" value="{% html_attr group.metadata %}">
+                                <div class="form-actions">
+                                    <div class="col-sm-9 col-sm-offset-2">
+                                        <button type="submit" class="btn btn-primary">{% trans "Update Group Data" %}</button>
+                                    </div>
+                                </div>
 
-                    </fieldset>
-                </form>
+                            </fieldset>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -139,6 +208,7 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+{% if not request.is_view_only %}
     <div id="delete_group_modal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -238,4 +308,5 @@
         </div>
     </div>
     <div id="hq-modal-home"></div>
+{% endif %}
 {% endblock modals %}
