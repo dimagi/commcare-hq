@@ -74,7 +74,7 @@ def get_dashboard_users_not_logged_in(start_date, end_date, dashboard_usernames)
 def output(usernames, path):
     with open(path, 'w') as out:
         writer = csv.writer(out)
-        writer.writerow(["Useranme", "Location", "State"])
+        writer.writerow(["Username", "Location", "State"])
         for username in usernames:
             user = CommCareUser.get_by_username(username)
             loc = user.sql_location
