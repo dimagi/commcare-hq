@@ -16,10 +16,11 @@ INSTALLED_APPS = (
 ) + tuple(INSTALLED_APPS)
 
 if USING_CITUS:
-    INSTALLED_APPS = (
-        'testapps.citus_master',
-        'testapps.citus_worker',
-    ) + tuple(INSTALLED_APPS)
+    if 'testapps.citus_master' not in INSTALLED_APPS:
+        INSTALLED_APPS = (
+            'testapps.citus_master',
+            'testapps.citus_worker',
+        ) + tuple(INSTALLED_APPS)
 
     if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
         # this router must go first
