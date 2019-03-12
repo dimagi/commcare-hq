@@ -48,19 +48,16 @@ def check_repeaters():
     if not check_repeater_lock.acquire(blocking=False):
         return
 
-    for record in iterate_repeat_records(start):
-        if datetime.utcnow() > timeout_dt:
-            _soft_assert(False, "Unable to iterate repeat records before check_repeater_lock timed out")
-            break
-
-        if record.redis_lock.acquire(blocking=False):
-            process_repeat_record.delay(record)
-
     try:
+        for record in iterate_repeat_records(start):
+            if datetime.utcnow() > timeout_dt:
+                _soft_assert(False, "Unable to iterate repeat records before check_repeater_lock timed out")
+                break
+
+            if record.redis_lock.acquire(blocking=False):
+                process_repeat_record.delay(record)
+    finally:
         check_repeater_lock.release()
-    except LockError:
-        # Ignore if already released
-        pass
 
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
