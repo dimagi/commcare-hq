@@ -7,14 +7,12 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from redis.exceptions import LockError
 
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     RECORD_PENDING_STATE,
     RECORD_FAILURE_STATE,
-    RECORD_LOCK_TIMEOUT,
 )
 from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
@@ -36,13 +34,11 @@ logging = get_task_logger(__name__)
 )
 def check_repeaters():
     start = datetime.utcnow()
-    repeater_lock_timeout = RECORD_LOCK_TIMEOUT // 2
-    timeout_dt = start + timedelta(seconds=repeater_lock_timeout)
+    six_hours_later = start + timedelta(hours=6)
 
     # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=repeater_lock_timeout,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
@@ -50,8 +46,8 @@ def check_repeaters():
 
     try:
         for record in iterate_repeat_records(start):
-            if datetime.utcnow() > timeout_dt:
-                _soft_assert(False, "Unable to iterate repeat records before check_repeater_lock timed out")
+            if datetime.utcnow() > six_hours_later:
+                _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
                 break
 
             if record.can_enqueue():

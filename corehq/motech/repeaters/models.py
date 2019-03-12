@@ -46,7 +46,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 from .const import (
@@ -57,7 +56,6 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
     POST_TIMEOUT,
-    RECORD_LOCK_TIMEOUT,
 )
 from .dbaccessors import (
     get_pending_repeat_record_count,
