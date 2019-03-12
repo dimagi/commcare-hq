@@ -55,7 +55,6 @@ from .views import (
     resave_form_view,
     unarchive_form,
     project_health_user_details,
-    export_data,
     hq_download_saved_export,
     hq_deid_download_saved_export,
     export_report,
@@ -124,9 +123,6 @@ urlpatterns = [
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
         name='project_health_user_details'),
-
-    # export API
-    url(r"^export/$", export_data, name='export_data'),
 
     # Download Exports
     # todo should eventually be moved to corehq.apps.export

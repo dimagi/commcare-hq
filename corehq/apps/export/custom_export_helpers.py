@@ -519,19 +519,3 @@ class CaseCustomExportHelper(CustomExportHelper):
         ctxt = super(CaseCustomExportHelper, self).get_context()
         self.update_table_conf(ctxt["table_configuration"])
         return ctxt
-
-
-def make_custom_export_helper(request, export_type, domain=None, export_id=None):
-    export_type = export_type or request.GET.get('request_type', 'form')
-    # benrudolph: minimal is for succeed domain. their exports were literally
-    # so big Chrome would crash when it would try to load. so to fix it i
-    # made a minimal version that wouldn't do some random things to make
-    # the page actual loading. mainly not sorting and not loading anything
-    # but the main custom export
-    # todo biyeun this might be a candidate for remove / cleanup when we switch
-    # over to the new exports.
-    minimal = bool(request.GET.get('minimal', False))
-    return {
-        'form': FormCustomExportHelper,
-        'case': CaseCustomExportHelper,
-    }[export_type](request, domain, export_id=export_id, minimal=minimal)

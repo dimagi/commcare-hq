@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 import copy
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
 import itertools
 import json
@@ -77,35 +77,24 @@ from casexml.apps.case.util import (
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
-import couchexport
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import UserRequestedRebuild
 
-from couchexport.exceptions import (
-    CouchExportException,
-    SchemaMismatchException
-)
 from couchexport.export import Format, export_from_tables
-from couchexport.models import DefaultExportSchema, SavedBasicExport
-from couchexport.shortcuts import (export_data_shared, export_raw_data,
-                                   export_response)
-from couchexport.tasks import rebuild_schemas
-from couchexport.util import SerializableFunction
-from couchforms.filters import instances
+from couchexport.models import SavedBasicExport
+from couchexport.shortcuts import export_response
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
-                                  string_to_datetime, json_format_date)
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
@@ -119,8 +108,6 @@ from corehq.apps.domain.decorators import (
     api_auth,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
-from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
@@ -150,7 +137,6 @@ from corehq.util.view_utils import (
 )
 
 from .dispatcher import ProjectReportDispatcher
-from .filters.users import UserTypeFilter
 from .forms import SavedReportConfigForm
 from .models import (
     ReportConfig,
@@ -165,16 +151,9 @@ from .tasks import (
     rebuild_export_async,
     send_delayed_report,
 )
-from .util import (
-    create_export_filter,
-    get_group,
-    group_filter,
-    users_matching_filter,
-)
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
     use_select2_v4,
     use_datatables,
     use_multiselect,
@@ -376,61 +355,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
-
-
-@requires_privilege_json_response(privileges.API_ACCESS)
-@login_or_digest
-@require_form_export_permission
-@datespan_default
-@require_GET
-def export_data(req, domain):
-    """
-    Download all data for a couchdbkit model
-    """
-    try:
-        export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
-    except ValueError:
-        return HttpResponseBadRequest()
-
-    include_errors = string_to_boolean(req.GET.get("include_errors", False))
-
-    kwargs = {"format": req.GET.get("format", Format.XLS_2007),
-              "previous_export_id": req.GET.get("previous_export", None),
-              "filename": export_tag,
-              "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
-              "max_column_size": int(req.GET.get("max_column_size", 2000)),
-              "separator": req.GET.get("separator", "|")}
-
-    user_filter, _ = UserTypeFilter.get_user_filter(req)
-
-    if user_filter:
-        filtered_users = users_matching_filter(domain, user_filter)
-
-        def _ufilter(user):
-            try:
-                return user['form']['meta']['userID'] in filtered_users
-            except KeyError:
-                return False
-        filter = _ufilter
-    else:
-        group = get_group(**json_request(req.GET))
-        filter = SerializableFunction(group_filter, group=group)
-
-    errors_filter = instances if not include_errors else None
-
-    kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
-    if kwargs['format'] == 'raw':
-        resp = export_raw_data([domain, export_tag], filename=export_tag)
-    else:
-        try:
-            resp = export_data_shared([domain, export_tag], **kwargs)
-        except CouchExportException as e:
-            return HttpResponseBadRequest(e)
-    if resp:
-        return resp
-    else:
-        messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
-        raise Http404()
 
 
 @csrf_exempt
