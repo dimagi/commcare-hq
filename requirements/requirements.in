@@ -103,6 +103,7 @@ csv342==1.0.0
 Faker==0.8.15
 polib==1.1.0
 werkzeug==0.11.15
+commcare-translation-checker>=0.9.3
 
 # Workaround for https://github.com/jazzband/pip-tools/issues/355
 # git URL installs need to be listed with -e to satisfy pip-compile
