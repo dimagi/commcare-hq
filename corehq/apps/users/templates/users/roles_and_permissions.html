@@ -29,6 +29,14 @@
       {% endif %}
     </p>
 
+    <p>
+      <i class="fa fa-info-circle"></i>
+      {% blocktrans %}
+        <a href="https://confluence.dimagi.com/display/commcarepublic/CommCareHQ+Web+Users"
+           target="_blank">Learn more</a> about how roles &amp; permissions are used.
+      {% endblocktrans %}
+    </p>
+
     {% if not can_edit_roles and is_domain_admin %}
         {% url "domain_select_plan" domain as subscription_url %}
         <div class="alert alert-info">
