@@ -484,7 +484,7 @@ def get_case_types_from_apps(domain):
     :returns: A set of case_types
     """
     case_types_agg = NestedAggregation('modules', 'modules').aggregation(
-        TermsAggregation('case_types', 'case_type'))
+        TermsAggregation('case_types', 'modules.case_type.exact'))
     q = (AppES()
          .domain(domain)
          .is_build(False)

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from copy import copy
 import hashlib
 import json
 import logging
@@ -796,7 +797,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             return self.multimedia_map
 
-        requested_media = self.logo_paths   # logos aren't language-specific
+        requested_media = copy(self.logo_paths)   # logos aren't language-specific
         for lang in build_profile.langs:
             requested_media |= self.all_media_paths(lang=lang)
 

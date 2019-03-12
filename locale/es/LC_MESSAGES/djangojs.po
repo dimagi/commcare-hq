@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-05 19:59+0000\n"
+"POT-Creation-Date: 2019-03-12 19:45+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -652,17 +652,17 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:390
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:376
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:424
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:410
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:429
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:415
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -704,19 +704,19 @@ msgstr "Reiniciar"
 msgid "Please enter a version to compare"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:51
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:52
 msgid "Filter properties"
 msgstr "Filtrar propiedades"
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:105
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:106
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:14
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:15
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:135
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:136
 msgid "View All Forms"
 msgstr "Ver Todos los Formularios"
 
@@ -2154,7 +2154,7 @@ msgstr "Distribuir debe tener un Caso Origen."
 msgid "Receive must have a Destination Case."
 msgstr "Recibir debe tener una Caso Destino"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Model Iteration ID Query"
 msgstr "Consulta del ID del Modelo de Iteración"
 
@@ -2505,7 +2505,7 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:27
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:32
 msgid "no comment"
 msgstr ""
 
@@ -2946,19 +2946,19 @@ msgstr "Error al guardar"
 msgid "Please wait and do not navigate away..."
 msgstr "Por favor espere y no se vaya..."
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show All References"
 msgstr "Mostar Todas las Referencias"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show Only Missing References"
 msgstr "Mostrar Solo las Referencias Faltantes"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
 msgid "Replace "
 msgstr "Reemplazaar"
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
 msgid "Upload "
 msgstr "Cargar"
 
@@ -2971,6 +2971,18 @@ msgstr ""
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:43
 msgid "No items were found to update."
 msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:23
+#, fuzzy
+#| msgid ""
+#| "An error occurred while deleting your location. If the problem persists, "
+#| "please report an issue"
+msgid ""
+"Error loading, please refresh the page. If this persists, please report an "
+"issue."
+msgstr ""
+"Ocurrió un error al eliminar su ubicación. Si el problema persiste, por "
+"favor reporte un problema"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7
 msgid "This is Danny, one of our best developers."
@@ -2988,11 +3000,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:38
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:46
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:69
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:83
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3246,7 +3258,7 @@ msgstr ""
 "Su consulta de búsqueda es inválida; por favor ajuste el formato e intente "
 "de nuevo."
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:345
+#: corehq/apps/reports/static/reports/js/data_corrections.js:347
 msgid "Select a value"
 msgstr ""
 
@@ -3762,10 +3774,8 @@ msgid "Error: %s"
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:73
-#, fuzzy
-#| msgid "Are you sure you want to delete this invitation?"
 msgid "Are you sure you want to remove this conditional message?"
-msgstr "¿Está seguro que desea eliminar esta invitación?"
+msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:87
 msgid ""
@@ -3928,6 +3938,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Project"
-#~ msgstr "Proyecto"

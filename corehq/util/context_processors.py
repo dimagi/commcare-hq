@@ -10,7 +10,8 @@ from django.urls import resolve, reverse
 from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 
-from corehq import privileges
+from corehq import privileges, toggles
+from corehq.apps.analytics import ab_tests
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
@@ -214,7 +215,10 @@ def mobile_experience_hidden_by_toggle(request):
 
 def get_demo(request):
     is_demo_visible = False
-    num_trial_days_remaining = 0
+    is_demo_trial = False
+
+    context = {}
+
     if (settings.IS_SAAS_ENVIRONMENT
             and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')):
         if getattr(request, 'user', None) and not request.user.is_authenticated:
@@ -223,7 +227,26 @@ def get_demo(request):
             delta = request.subscription.date_end - datetime.date.today()
             num_trial_days_remaining = max(0, delta.days)
             is_demo_visible = True
-    return {
+            is_demo_trial = True
+
+            # toggles are more reliable (and easier to implement site-wide)
+            # than a SessionAbTest, however we can't use toggles in pre-login
+            # as it requires the user namespace.
+            show_demo_variant = toggles.DEMO_WORKFLOW_V2_AB_VARIANT.enabled(
+                request.user, toggles.NAMESPACE_USER
+            )
+            context.update({
+                'demo_workflow_ab_v2': {
+                    'name': ab_tests.DEMO_WORKFLOW_V2.name,
+                    'version': (ab_tests.DEMO_WORKFLOW_V2_VARIANT
+                                if show_demo_variant
+                                else ab_tests.DEMO_WORKFLOW_V2_CONTROL),
+                },
+                'num_trial_days_remaining': num_trial_days_remaining,
+            })
+
+    context.update({
+        'is_demo_trial': is_demo_trial,
         'is_demo_visible': is_demo_visible,
-        'num_trial_days_remaining': num_trial_days_remaining,
-    }
+    })
+    return context

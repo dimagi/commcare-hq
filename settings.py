@@ -1247,7 +1247,10 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
+
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
 }

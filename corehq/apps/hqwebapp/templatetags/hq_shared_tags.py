@@ -472,7 +472,7 @@ def maintenance_alert(request):
     alert = MaintenanceAlert.get_latest_alert()
     if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            '<div class="alert alert-warning alert-maintenance hide" data-id="{}">{}{}</div>',
             alert.id,
             mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),

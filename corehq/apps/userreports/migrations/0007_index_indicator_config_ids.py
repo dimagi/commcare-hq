@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 import django.contrib.postgres.fields
 from django.db import migrations, models
-from corehq.sql_db.operations import HqRunPython, HqRunSQL
+
 from corehq.util.django_migrations import add_if_not_exists_raw
 
 
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             add_if_not_exists_raw(
                 """
                 CREATE INDEX userreports_asyncindicator_indicator_config_ids_gin_idx
