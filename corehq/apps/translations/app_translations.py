@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 import copy
 import itertools
 import re
-import ghdiff
-from collections import defaultdict, OrderedDict
-
 import six
 import io
+from collections import defaultdict, OrderedDict
+
+import ghdiff
 from django.contrib import messages
 from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
