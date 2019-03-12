@@ -192,6 +192,8 @@ class HqdbContext(DatabaseContext):
         self.reuse_db = reuse_db
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
+        if reuse_db:
+            runner.keepdb = True
         super(HqdbContext, self).__init__(tests, runner)
 
     def should_skip_test_setup(self):
