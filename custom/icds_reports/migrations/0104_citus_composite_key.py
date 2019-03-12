@@ -37,13 +37,10 @@ def _citus_composite_key_sql(model_cls):
             pkey=model_cls._meta.pk.name,
             index=index,
         )
-    if not getattr(settings, 'IS_ON_CITUSDB_BACKEND', False):
-        print "Not CITUS"
-        return migrations.RunSQL.noop, reverse_sql
-    else:
-        print "Yes CITUS"
-        print sql
+    if getattr(settings, 'UNIT_TESTING', False):
         return sql, reverse_sql
+    else:
+        return migrations.RunSQL.noop, reverse_sql
 
 
 def get_sql_operations():
