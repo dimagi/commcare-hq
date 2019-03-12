@@ -1,7 +1,6 @@
 {
   "domains": [
     "icds-cas",
-    "cas-lab",
     "icds-dashboard-qa",
     "laurence-project-1",
     "jessica-icds-cas",
@@ -10,18 +9,16 @@
     "priyanka-app",
     "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
     "reach-test"
   ],
   "server_environment": [
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_3i_pregnancies",
-  "data_source_table": "static-person_cases_v2",
+  "report_id": "static-mpr_3i_pregnancies-optimized",
+  "data_source_table": "static-person_cases_v3",
   "config": {
-    "title": "MPR 3i - Pregnancies Registered (Static)",
+    "title": "MPR 3i - Pregnancies Registered (Static) (Optimized)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -35,12 +32,6 @@
         "type": "date",
         "field": "opened_on",
         "datatype": "date"
-      },
-      {
-        "display": "Filter by Village",
-        "slug": "asha_id",
-        "type": "village_choice_list",
-        "field": "doc_id"
       },
       {
         "display": "Filter by AWW",
@@ -96,7 +87,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -113,18 +104,22 @@
       {
         "display": "pregnant_resident_count",
         "column_id": "pregnant_resident_count",
-        "type": "field",
-        "field": "pregnant_resident_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1": 1
+        }
       },
       {
         "display": "pregnant_migrant_count",
         "column_id": "pregnant_migrant_count",
-        "type": "field",
-        "field": "pregnant_migrant_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1": 1
+        }
       }
     ],
     "sort_expression": [],

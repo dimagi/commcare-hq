@@ -11,20 +11,18 @@
     "reach-sandbox",
     "reach-dashboard-qa",
     "reach-test",
-    "icds-test",
-    "icds-sql",
     "icds-cas",
-    "cas-lab",
-    "icds-cas-sandbox"
+    "cas-lab"
   ],
   "server_environment": [
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_2bi_preg_delivery_death_list",
-  "data_source_table": "static-person_cases_v2",
+  "report_id": "static-mpr_2bi_preg_delivery_death_list-optimized",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 2bi - Preg & Delivery Death List (Static)",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.MPR2BIPregDeliveryDeathList",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -95,6 +93,17 @@
       }
     ],
     "columns": [
+      {
+        "display": "dead_preg_count (for filter only)",
+        "column_id": "dead_preg_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "whens": {
+          "female_death_type IS NOT NULL AND age_at_death_yrs >= 11": 1
+        },
+        "else_": 0,
+        "visible": false
+      },
       {
         "format": "default",
         "aggregation": "simple",
