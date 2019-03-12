@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
+import logging
+
 import six
 
 from architect import install
@@ -12,8 +14,7 @@ from sqlalchemy.schema import Index
 
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
-    ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
-    MissingColumnWarning, translate_programming_error)
+    ColumnNotFoundError, TableRebuildError, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
@@ -21,6 +22,9 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
 from memoized import memoized
+
+
+logger = logging.getLogger(__name__)
 
 
 metadata = sqlalchemy.MetaData()
@@ -58,11 +62,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return type_
 
     def _apply_sql_addons(self):
-        if self.config.sql_settings.partition_config:
-            self._install_partition()
-
+        distributed = False
         if self.config.sql_settings.citus_config.distribution_type:
-            self._distribute_table()
+            distributed = self._distribute_table()
+
+        if self.config.sql_settings.partition_config:
+            if distributed:
+                logger.warning(
+                    'Skipping installing partitions since table is distributed in CitusDB: %s', self.table_id
+                )
+            else:
+                self._install_partition()
+
 
     def _distribute_table(self):
         config = self.config.sql_settings.citus_config
@@ -85,6 +96,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 ))
             else:
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
+            return True
 
     def _install_partition(self):
         config = self.config.sql_settings.partition_config[0]
