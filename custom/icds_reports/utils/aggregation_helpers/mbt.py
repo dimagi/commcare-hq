@@ -154,12 +154,6 @@ class ChildHealthMbtHelper(MBTHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases_monthly_tableau_v2')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def columns(self):
         return ('t.awc_id',
                 't.case_id',
@@ -251,7 +245,6 @@ class ChildHealthMbtHelper(MBTHelper):
             state_id=self.state_id,
             month=self.month,
             person_cases_ucr=self.person_case_ucr_tablename,
-            ccs_record_monthly=self.ccs_record_monthly_ucr_tablename,
             state_id_last_3=self.state_id[-3:]
         )
 

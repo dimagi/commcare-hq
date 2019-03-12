@@ -22,12 +22,6 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def ccs_record_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
         config, _ = get_datasource_config(doc_id, self.domain)
@@ -263,7 +257,6 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
-            ucr_ccs_record_monthly_table=self.ccs_record_monthly_ucr_tablename,
             agg_thr_table=AGG_CCS_RECORD_THR_TABLE,
             ccs_record_case_ucr=self.ccs_record_case_ucr_tablename,
             agg_pnc_table=AGG_CCS_RECORD_PNC_TABLE,

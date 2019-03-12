@@ -13,12 +13,6 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
     aggregate_child_table_prefix = 'icds_db_bp_form_'
 
-    @property
-    def _old_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
@@ -121,31 +115,3 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             previous_month_tablename=previous_month_tablename,
             tablename=tablename
         ), query_params
-
-    def compare_with_old_data_query(self):
-        month = self.month.replace(day=1)
-        return """
-        SELECT agg.case_id
-        FROM "{ccs_record_monthly_ucr}" ccs_ucr
-        FULL OUTER JOIN "{new_agg_table}" agg
-        ON ccs_ucr.doc_id = agg.case_id AND ccs_ucr.month = agg.month AND agg.state_id = ccs_ucr.state_id
-        WHERE ccs_ucr.month = %(month)s and agg.state_id = %(state_id)s AND
-              (ccs_ucr.pregnant = 1 AND (
-                 (ccs_ucr.anemic_severe = 1 AND agg.anemia != 1) OR
-                 (ccs_ucr.anemic_moderate = 1 AND agg.anemia != 2) OR
-                 (ccs_ucr.anemic_normal = 1 AND agg.anemia != 3) OR
-                 (ccs_ucr.anemic_unknown = 1 AND agg.anemia != 0) OR
-                 ccs_ucr.extra_meal != agg.eating_extra OR
-                 ccs_ucr.resting_during_pregnancy != agg.resting
-              )) AND
-              (ccs_ucr.pregnant = 1 AND trimester = 3 AND (
-                 ccs_ucr.counsel_immediate_bf != agg.immediate_breastfeeding
-              ))
-        """.format(
-            ccs_record_monthly_ucr=self._old_ucr_tablename,
-            new_agg_table=self.aggregate_parent_table,
-        ), {
-            "month": month.strftime('%Y-%m-%d'),
-            "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
-            "state_id": self.state_id
-        }
