@@ -21,7 +21,9 @@ if USING_CITUS:
         'testapps.citus_worker',
     ) + tuple(INSTALLED_APPS)
 
-    DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
+    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
+        # this router must go first
+        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
