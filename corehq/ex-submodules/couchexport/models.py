@@ -173,14 +173,6 @@ class ExportSchema(Document):
     def get_columns(self, index):
         return ['id'] + self.table_dict[index].data
 
-    def get_all_ids(self, database=None):
-        database = database or self.get_db()
-        return set(
-            [result['id'] for result in database.view(
-                        "couchexport/schema_index",
-                        reduce=False,
-                        **get_schema_index_view_keys(self.index)).all()])
-
     def get_new_ids(self, database=None):
         database = database or self.get_db()
         assert self.timestamp, 'exports without timestamps are no longer supported.'
@@ -193,9 +185,6 @@ class ExportSchema(Document):
                         reduce=False,
                         startkey=startkey,
                         endkey=endkey)])
-
-    def get_new_docs(self, database=None):
-        return iter_docs(self.get_new_ids(database))
 
 
 @register_column_type('plain')
@@ -528,10 +517,6 @@ class DefaultExportSchema(BaseSavedExportSchema):
         # can be overridden to rename/remove default stuff from exports
         return tables
 
-    def get_export_components(self, previous_export_id=None, filter=None):
-        from couchexport.export import get_export_components
-        return get_export_components(self.index, previous_export_id, filter=self.filter & filter)
-
     def get_export_files(self, format='', previous_export_id=None, filter=None,
                          use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
         # the APIs of how these methods are broken down suck, but at least
@@ -777,19 +762,6 @@ class SavedExportSchema(BaseSavedExportSchema):
             return writer.get_preview()
 
         return ExportFiles(path, export_schema_checkpoint, format)
-
-    def get_preview_data(self, export_filter, limit=50):
-        return self.get_export_files(Format.PYTHON_DICT, None, export_filter,
-                                     limit=limit)
-
-    def download_data(self, format="", previous_export=None, filter=None, limit=0):
-        """
-        If there is data, return an HTTPResponse with the appropriate data.
-        If there is not data returns None.
-        """
-        from couchexport.shortcuts import export_response
-        files = self.get_export_files(format, previous_export, filter, limit=limit)
-        return export_response(files.file, files.format, self.name)
 
     def to_export_config(self):
         """
