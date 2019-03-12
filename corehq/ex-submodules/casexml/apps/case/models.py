@@ -398,7 +398,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return get_forms_by_id(self.xform_ids)
 
     def get_attachment(self, attachment_name):
-        return self.fetch_attachment(attachment_name)
+        return self.fetch_attachment(attachment_name, return_bytes=True)
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
