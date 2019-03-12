@@ -5,8 +5,10 @@
 
 {% block js %}
     {{ block.super }}
-    <script src="{% static 'aaa/js/models/child.js' %}"></script>
+    <script src="{% static 'aaa/js/utils/chart_const.js' %}"></script>
+    <script src="{% static 'aaa/js/models/model_utils.js' %}"></script>
     <script src="{% static 'aaa/js/models/person.js' %}"></script>
+    <script src="{% static 'aaa/js/models/child.js' %}"></script>
     <script src="{% static 'aaa/js/models/pregnant_women.js' %}"></script>
     <script src="{% static 'aaa/js/models/eligible_couple.js' %}"></script>
     <script src="{% static 'aaa/js/reports/unified_beneficiary_details.js' %}"></script>
@@ -37,7 +39,7 @@
             <br/>
             <br/>
             <!-- ko if: showSection('person_details')-->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 main-title">
                         <h2 data-bind="text: detailsModel.personDetails.person().name"></h2>
                     </div>
@@ -46,9 +48,16 @@
                             <li class="nav-item active">
                                 <a class="padding-15 nav-link active" id="person-details-tab" data-toggle="tab" href="#person-details" role="tab" aria-controls="person-details" aria-selected="true">{% trans 'PERSONAL DETAILS' %}</a>
                             </li>
+                            <!-- ko if: selectedType !== 'child' -->
                             <li class="nav-item">
                                 <a class="padding-15 nav-link" id="husband-details-tab" data-toggle="tab" href="#husband-details" role="tab" aria-controls="husband-details" aria-selected="false">{% trans 'HUSBAND DETAILS' %}</a>
                             </li>
+                            <!-- /ko -->
+                            <!-- ko if: selectedType === 'child' -->
+                                <li class="nav-item">
+                                    <a class="padding-15 nav-link" id="mother-details-tab" data-toggle="tab" href="#mother-details" role="tab" aria-controls="mother-details" aria-selected="false">{% trans 'MOTHER DETAILS' %}</a>
+                                </li>
+                            <!-- /ko -->
                             <li class="nav-item">
                                 <a class="padding-15 nav-link" id="other-details-tab" data-toggle="tab" href="#other-details" role="tab" aria-controls="other-details" aria-selected="false">{% trans 'OTHER DETAILS' %}</a>
                             </li>
@@ -64,14 +73,16 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
-                                            <label class="col-md-5 col-form-label">{% trans 'Status' %}:</label>
-                                            <div class="col-md-7">
-                                                <span data-bind="text: detailsModel.personDetails.person().status"></span>
+                                    <!-- ko if: selectedType !== 'child' -->
+                                        <div class="col-md-6 row-content">
+                                            <div class="padding-15 row">
+                                                <label class="col-md-5 col-form-label">{% trans 'Status' %}:</label>
+                                                <div class="col-md-7">
+                                                    <span data-bind="text: detailsModel.personDetails.person().status"></span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    <!-- /ko -->
                                     <div class="col-md-6 row-content">
                                         <div class="padding-15 row">
                                             <label class="col-md-5 col-form-label">{% trans 'Date of Birth' %}:</label>
@@ -80,14 +91,16 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
-                                            <label class="col-md-5 col-form-label">{% trans 'Married At' %}:</label>
-                                            <div class="col-md-7">
-                                                <span data-bind="text: detailsModel.personDetails.person().marriedAt"></span>
+                                    <!-- ko if: selectedType !== 'child' -->
+                                        <div class="col-md-6 row-content">
+                                            <div class="padding-15 row">
+                                                <label class="col-md-5 col-form-label">{% trans 'Married At' %}:</label>
+                                                <div class="col-md-7">
+                                                    <span data-bind="text: detailsModel.personDetails.person().marriedAt"></span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    <!-- /ko -->
                                     <div class="col-md-6 row-content">
                                         <div class="padding-15 row">
                                             <label class="col-md-5 col-form-label">{% trans 'Age' %}:</label>
@@ -106,7 +119,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="tab-pane fade" id="husband-details" role="tabpanel" aria-labelledby="husband-details-tab">
+                            <!-- ko if: selectedType !== 'child' -->
+                                <div class="tab-pane fade" id="husband-details" role="tabpanel" aria-labelledby="husband-details-tab">
                                 <div class="row no-margin details-table">
                                     <div class="col-md-6 row-content">
                                         <div class="padding-15 row">
@@ -158,6 +172,29 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- /ko -->
+                            <!-- ko if: selectedType === 'child' -->
+                                <div class="tab-pane fade" id="mother-details" role="tabpanel" aria-labelledby="mother-details-tab">
+                                <div class="row no-margin details-table">
+                                    <div class="col-md-6 row-content">
+                                        <div class="padding-15 row">
+                                            <label class="col-md-5 col-form-label">{% trans 'Name' %}:</label>
+                                            <div class="col-md-7">
+                                                <span data-bind="html: detailsModel.personDetails.mother().nameLink"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 row-content">
+                                        <div class="padding-15 row">
+                                            <label class="col-md-5 col-form-label"></label>
+                                            <div class="col-md-7">
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /ko -->
                             <div class="tab-pane fade" id="other-details" role="tabpanel" aria-labelledby="other-details-tab">
                                 <div class="row no-margin details-table">
                                     <div class="col-md-6 row-content">
@@ -233,7 +270,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('children_list') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Children' %}</h4>
                     </div>
@@ -242,7 +279,7 @@
                             <!-- ko if: child.name !== void(0) -->
                                 <label class="col-md-5 col-form-label" data-bind="text: 'Child ' + ($index() + 1) + ':'"></label>
                                 <div class="col-md-7">
-                                    <span data-bind="text: child.linkName"></span>
+                                    <span data-bind="html: child.linkName"></span>
                                 </div>
                             <!-- /ko -->
                         </div>
@@ -252,7 +289,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('eligible_couple_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Eligible Couple Details' %}</h4>
                     </div>
@@ -325,7 +362,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('pregnancy_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Pregnancy Details' %}</h4>
                     </div>
@@ -391,7 +428,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('pregnancy_risk') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'High Risk Pregnancy Details' %}</h4>
                     </div>
@@ -448,7 +485,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('antenatal_care_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 table-title">
                         <div class="row">
                             <div class="col-md-4"><h4>{% trans 'Antenatal Care' %}</h4></div>
@@ -507,7 +544,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('consumables_disbursed') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Details of Consumables Disbursed During Pregnancy' %}</h4>
                     </div>
@@ -532,7 +569,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('immunization_counseling_details')-->
-                <div class="row">
+                <div class="row details-box">
                     <div class="col-md-6 no-padding" style="padding-right: 10px;">
                         <div class="col-md-12 secondary-title">
                             <h4>{% trans 'Immunization Details' %}</h4>
@@ -612,7 +649,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('abortion_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Abortion Details' %}</h4>
                     </div>
@@ -653,7 +690,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('maternal_death_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Maternal Death Details' %}</h4>
                     </div>
@@ -694,7 +731,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('delivery_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Delivery Details' %}</h4>
                     </div>
@@ -799,7 +836,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('postnatal_care_details') -->
-                <div class="row shadow">
+                <div class="row shadow details-box">
                     <div class="col-md-12 table-title">
                         <div class="row">
                             <div class="col-md-4"><h4>{% trans 'Postnatal Care' %}</h4></div>
@@ -810,93 +847,451 @@
                         </div>
                     </div>
                     <div class="col-md-12 table-content">
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Date of PNC visit' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><span data-bind="text: pncDate()"></span></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-12"><span>{% trans 'Maternal Danger Signs' %}</span></div>
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Postpartum heamorrhage' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: postpartumHeamorrhage()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Fever' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: fever()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Convulsions/unconvulsions' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: convulsions()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Abdominal pain' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: abdominalPain()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Painful urination' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: painfulUrination()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Congested breasts' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: congestedBreasts()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Painful nipples' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: painfulNipples()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Other issues with breasts' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: otherBreastsIssues()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-12"><span>{% trans 'Counseling Delivered to Mother' %}</span></div>
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Managing brests problems' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: managingBreastProblems()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Increasing food intake while brestfeeding' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: increasingFoodIntake()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Possible maternal complications' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: possibleMaternalComplications()"></i></div>
                             <!-- /ko -->
                         </div>
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-12"><span>{% trans 'Other Information' %}</span></div>
                         </div>
 
-                        <div class="row">
+                        <div class="row details-box">
                             <div class="col-md-4"><span>{% trans 'Has the beneficiary started eating well' %}</span></div>
                             <!-- ko foreach: detailsModel.pregnantDetails().pncVisits -->
                                 <div class="col-md-2"><i data-bind="css: beneficiaryStartedEating()"></i></div>
                             <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+            <!-- /ko -->
+            <!-- ko if: showSection('infant_details') -->
+                <div class="row shadow details-box">
+                    <div class="col-md-12 secondary-title">
+                        <h4>{% trans 'Infant Details' %}</h4>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Pregnancy Length' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().pregnancyLength"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Complimentary Breastfeeding initiated' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().breastfeedingInitiated"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Baby cried immedietely at birth' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().babyCried"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Complementary feeding with adequate diet diversity' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().dietDiversity"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Birth weight (kg)' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().birthWeight"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Complementary feeding with adequate diet quantity' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().dietQuantity"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Breast feeding (within 1 hr of birth)' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().breastFeeding"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Complementary feeding with appt. handwash' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().handwash"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Exclusively Breastfed' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().exclusivelyBreastfed"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label"></label>
+                            <div class="col-md-6">
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+            <!-- /ko -->
+            <!-- ko if: showSection('child_postnatal_care_details') -->
+                <div class="row shadow details-box">
+                    <div class="col-md-12 table-title">
+                        <div class="row">
+                            <div class="col-md-4"><h4>{% trans 'Postnatal Care' %}</h4></div>
+                            <div class="col-md-2"><h4>{% trans 'PNC 1' %}</h4></div>
+                            <div class="col-md-2"><h4>{% trans 'PNC 2' %}</h4></div>
+                            <div class="col-md-2"><h4>{% trans 'PNC 3' %}</h4></div>
+                            <div class="col-md-2"><h4>{% trans 'PNC 4' %}</h4></div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-content-no-subsections">
+                        <div class="row details-box">
+                            <div class="col-md-4"><span>{% trans 'Date of PNC visit' %}</span></div>
+                            <!-- ko foreach: detailsModel.infantDetails().pncVisits -->
+                                <div class="col-md-2"><span data-bind="text: pncDate()"></span></div>
+                            <!-- /ko -->
+                        </div>
+                        <div class="row details-box">
+                            <div class="col-md-4"><span>{% trans 'Infant breastfeeding well' %}</span></div>
+                            <!-- ko foreach: detailsModel.infantDetails().pncVisits -->
+                                <div class="col-md-2"><i data-bind="css: breastfeeding()"></i></div>
+                            <!-- /ko -->
+                        </div>
+                        <div class="row details-box">
+                            <div class="col-md-4"><span>{% trans 'Infant givien skin-to-skin contact' %}</span></div>
+                            <!-- ko foreach: detailsModel.infantDetails().pncVisits -->
+                                <div class="col-md-2"><i data-bind="css: skinToSkinContact()"></i></div>
+                            <!-- /ko -->
+                        </div>
+                        <div class="row details-box">
+                            <div class="col-md-4"><span>{% trans 'Infant wrapped up adequately' %}</span></div>
+                            <!-- ko foreach: detailsModel.infantDetails().pncVisits -->
+                                <div class="col-md-2"><i data-bind="css: wrappedUpAdequately()"></i></div>
+                            <!-- /ko -->
+                        </div>
+                        <div class="row details-box">
+                            <div class="col-md-4"><span>{% trans 'Infant active when awake' %}</span></div>
+                            <!-- ko foreach: detailsModel.infantDetails().pncVisits -->
+                                <div class="col-md-2"><i data-bind="css: awakeActive()"></i></div>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+            <!-- /ko -->
+            <!-- ko if: showSection('vaccination_details') -->
+                <div class="row shadow details-box">
+                    <div class="col-md-12 secondary-title">
+                        <h4>{% trans 'Vaccination Details' %}</h4>
+                    </div>
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due at birth" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.atBirth -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due at 6 weeks" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.sixWeek -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due at 10 weeks" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.tenWeek -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due at 14 weeks" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.fourteenWeek -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due between 9 and 12 months" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.nineTwelveMonths -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due between 16 and 24 months" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.sixTeenTwentyFourMonth -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                    <div class="col-md-12 row-content padding-15 subtitle">
+                        {% trans "Due between 24 and 72 months" %}
+                    </div>
+                    <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.twentyTwoSeventyTwoMonth -->
+                        <div class="col-md-2-5">
+                            <div class="row details-box no-margin center">
+                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                            </div>
+                        </div>
+                    <!-- /ko -->
+                </div>
+                <br/>
+                <br/>
+            <!-- /ko -->
+            <!-- ko if: showSection('growth_monitoring_details') -->
+                <div class="row shadow details-box">
+                    <div class="col-md-12 secondary-title">
+                        <h4>{% trans 'Infant Details' %}</h4>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Current weight (kg)' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().currentWeight"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Referred to NRC' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().nrcReferred"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Growth Monitoring Status' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().growthMonitoringStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Date of Referral' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().referralDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Previouts Growth Monitoring Status' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().previousGrowthMonitoringStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label"></label>
+                            <div class="col-md-6">
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item secondary-title center">
+                        <h4>{% trans 'Weight for Age' %}</h4>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Underweight' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().underweight"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Status, if Underweight' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().underweightStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item">
+                        <div id="weight_for_age_chart" class="detailsChart" style="height: 450px">
+                            <svg></svg>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item secondary-title center">
+                        <h4>{% trans 'Height for Age' %}</h4>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Stunted' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().stunted"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Status, if Stunted' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().stuntedStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item">
+                        <div id="height_for_age_chart" class="detailsChart" style="height: 450px">
+                            <svg></svg>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item secondary-title center">
+                        <h4>{% trans 'Weight for Height' %}</h4>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Wasting' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().wasting"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-item">
+                        <div class="row">
+                            <label class="col-md-6 col-form-label">{% trans 'Status, if Wasted' %}:</label>
+                            <div class="col-md-6">
+                                <span data-bind="text: detailsModel.infantDetails().wastingStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 table-item">
+                        <div id="weight_for_height_chart" class="detailsChart" style="height: 450px">
+                            <svg></svg>
                         </div>
                     </div>
                 </div>

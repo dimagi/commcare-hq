@@ -1237,13 +1237,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
-    'allow_location_update_over_sms',
-    'Allow users to update their location over SMS.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1710,15 +1703,6 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     'Do not release builds for all app profiles by default. Then manage via Source files view',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-
-SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
-    'set_scheduled_report_start_date',
-    'Allow users to set an effective start date for scheduled reports.',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
 )
 
 

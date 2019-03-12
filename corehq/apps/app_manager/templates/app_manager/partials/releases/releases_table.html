@@ -58,19 +58,10 @@
 
     <div class="row">
         <div class="col-md-3 col-md-offset-9">
-            <span class="input-group input-group-sm">
-                <input type="text" class="form-control" autocomplete="off"
-                       placeholder="{% trans "Version or comment" %}"
-                       data-bind="value: buildComment, valueUpdate: 'afterkeydown', event: {keypress: searchOnEnter}" />
-                <span class="input-group-btn">
-                    <button class="btn btn-default" type="button" data-bind="click: function(){ goToPage(1); }">
-                        <i class="fa fa-search"></i>
-                    </button>
-                    <button class="btn btn-default" type="button" data-bind="click: initQuery">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </span>
-            </span>
+            <search-box data-apply-bindings="false"
+                        params="value: buildComment,
+                                action: function() { goToPage(1); },
+                                placeholder: '{% trans_html_attr "Version or comment" %}'"></search-box>
         </div>
     </div>
 

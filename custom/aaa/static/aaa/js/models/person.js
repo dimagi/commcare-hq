@@ -9,8 +9,9 @@ hqDefine("aaa/js/models/person", [
     _,
     initialPageData,
 ) {
-    var personModel = function (data) {
+    var personModel = function (data, postData) {
         var self = {};
+        self.id = data.id;
         self.name = data.name;
         self.gender = data.gender;
         self.status = data.status;
@@ -21,6 +22,15 @@ hqDefine("aaa/js/models/person", [
         self.age = ko.computed(function () {
             return Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'years',true)) + ' Yrs';
         });
+
+        self.nameLink = ko.computed(function () {
+            var url = initialPageData.reverse('unified_beneficiary_details');
+            url = url.replace('details_type', 'eligible_couples');
+            url = url.replace('beneficiary_id', 1);
+            url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
+            return '<a href="' + url + '">' + self.name + '</a>';
+        });
+
         return self;
     };
 

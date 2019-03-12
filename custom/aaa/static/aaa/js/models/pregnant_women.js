@@ -5,6 +5,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     'hqwebapp/js/initial_page_data',
     'aaa/js/models/child',
     'aaa/js/models/person',
+    'aaa/js/models/model_utils',
 ], function (
     $,
     ko,
@@ -12,6 +13,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     initialPageData,
     childUtils,
     personUtils,
+    modelUtils,
 ) {
     var pregnantWomenList = function (options, postData) {
         var self = {};
@@ -46,72 +48,6 @@ hqDefine("aaa/js/models/pregnant_women", [
             {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
             {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
         ];
-        return self;
-    };
-
-    var pncModel = function (options) {
-        var self = {};
-
-        self.pncDate = ko.observable(options.pncDate);
-        self.postpartumHeamorrhage = ko.observable(options.postpartumHeamorrhage);
-        self.fever = ko.observable(options.fever);
-        self.convulsions = ko.observable(options.convulsions);
-        self.abdominalPain = ko.observable(options.abdominalPain);
-        self.painfulUrination = ko.observable(options.painfulUrination);
-        self.congestedBreasts = ko.observable(options.congestedBreasts);
-        self.painfulNipples = ko.observable(options.painfulNipples);
-        self.otherBreastsIssues = ko.observable(options.otherBreastsIssues);
-        self.managingBreastProblems = ko.observable(options.managingBreastProblems);
-        self.increasingFoodIntake = ko.observable(options.increasingFoodIntake);
-        self.possibleMaternalComplications = ko.observable(options.possibleMaternalComplications);
-        self.beneficiaryStartedEating = ko.observable(options.beneficiaryStartedEating);
-
-        self.pncDate = ko.computed(function () {
-            if (self.pncDate() === void(0)) {
-                return 'Not Done'
-            }
-            return self.pncDate;
-        });
-
-        self.marked = function (value) {
-            if (value === void(0)) {
-                return 'fa fa-minus black';
-            } else if (value === 0) {
-                return 'fa fa-times red';
-            } else {
-                return 'fa fa-check green';
-            }
-        };
-
-        _.each(self, function(value, key) {
-            if (key !== 'pncDate' && key !== 'marked') {
-                self[key] = ko.computed(function () {
-                    return self.marked(value())
-                })
-            }
-        });
-
-        return self;
-    };
-
-    var ancModel = function (options) {
-        var self = {};
-
-        self.ancDate = ko.observable(options.ancDate || '-');
-        self.ancLocation = ko.observable(options.ancLocation || '-');
-        self.pwWeight = ko.observable(options.pwWeight || '-');
-        self.bloodPressure = ko.observable(options.bloodPressure || '-');
-        self.hb = ko.observable(options.hb || '-');
-        self.abdominalExamination = ko.observable(options.abdominalExamination || '-');
-        self.abnormalitiesDetected = ko.observable(options.abnormalitiesDetected || '-');
-
-        self.ancDate = ko.computed(function () {
-            if (self.ancDate() === void(0)) {
-                return 'Not Done'
-            }
-            return self.ancDate;
-        });
-
         return self;
     };
 
@@ -176,19 +112,19 @@ hqDefine("aaa/js/models/pregnant_women", [
 
         self.updatePncVisits = function (data) {
             _.each(data, function (visit) {
-                self.pncVisits.push(pncModel(visit))
+                self.pncVisits.push(modelUtils.pncModel(visit))
             });
             while (self.pncVisits().length < 4) {
-                self.pncVisits.push(pncModel({}))
+                self.pncVisits.push(modelUtils.pncModel({}))
             }
         };
 
         self.updateAncVisits = function (data) {
             _.each(data, function (visit) {
-                self.ancVisits.push(ancModel(visit))
+                self.ancVisits.push(modelUtils.ancModel(visit))
             });
             while (self.ancVisits().length < 4) {
-                self.ancVisits.push(ancModel({}))
+                self.ancVisits.push(modelUtils.ancModel({}))
             }
         };
 
@@ -213,7 +149,6 @@ hqDefine("aaa/js/models/pregnant_women", [
             other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
-        // self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
 
         self.pregnantDetails = ko.observable(pregnantWomenDetails());
 
@@ -235,12 +170,13 @@ hqDefine("aaa/js/models/pregnant_women", [
 
         self.getPersonDetails = function () {
             var params = Object.assign({
+                section: 'pregnant_women',
                 subsection: 'person_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.personDetails.person(personUtils.personModel(data.person));
-                self.personDetails.husband(personUtils.personModel(data.husband));
+                self.personDetails.person(personUtils.personModel(data.person, self.postData));
+                self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
                 self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             })
         };
@@ -252,7 +188,7 @@ hqDefine("aaa/js/models/pregnant_women", [
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 _.forEach(data.children, function(child) {
-                    self.childDetails.push(childUtils.childModel(child));
+                    self.childDetails.push(childUtils.childModel(child, self.postData));
                 });
                 while (self.childDetails().length % 4 > 0) {
                     self.childDetails.push({})

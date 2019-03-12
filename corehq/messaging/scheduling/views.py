@@ -131,17 +131,18 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def add_sms_status_info(self, result):
         if len(self.domain_object.restricted_sms_times) > 0:
             result['uses_restricted_time_windows'] = True
-            result['within_allowed_sms_times'] = time_within_windows(
+            sms_allowed = result['within_allowed_sms_times'] = time_within_windows(
                 self.domain_now,
                 self.domain_object.restricted_sms_times
             )
-            if not result['within_allowed_sms_times']:
-                for i in range(1, 7 * 24 * 60):
-                    # This is a very fast check so it's ok to iterate this many times.
-                    resume_time = self.domain_now + timedelta(minutes=i)
-                    if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
-                        result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
-                        break
+            # find next restricted window transition
+            for i in range(1, 7 * 24 * 60):
+                # This is a very fast check so it's ok to iterate this many times.
+                future_time = self.domain_now + timedelta(minutes=i)
+                future_allowed = time_within_windows(future_time, self.domain_object.restricted_sms_times)
+                if sms_allowed != future_allowed:
+                    result['sms_resume_time'] = future_allowed.strftime('%Y-%m-%d %H:%M')
+                    break
         else:
             result['uses_restricted_time_windows'] = False
             result['within_allowed_sms_times'] = True
@@ -570,13 +571,16 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         context['allow_copy'] = self.allow_copy
         return context
 
-    def get_conditional_alerts_queryset(self):
-        return (
+    def get_conditional_alerts_queryset(self, query_string=''):
+        query = (
             AutomaticUpdateRule
             .objects
             .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-            .order_by('case_type', 'name', 'id')
         )
+        if query_string:
+            query = query.filter(name__icontains=query_string)
+        query = query.order_by('case_type', 'name', 'id')
+        return query
 
     def schedule_is_editable(self, schedule):
         return (
@@ -598,7 +602,7 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         }
 
     def get_conditional_alerts_ajax_response(self, request):
-        query = self.get_conditional_alerts_queryset()
+        query = self.get_conditional_alerts_queryset(query_string=request.GET.get('query', ''))
         total_records = query.count()
 
         limit = int(request.GET.get('limit'))
