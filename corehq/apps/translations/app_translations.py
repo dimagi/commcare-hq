@@ -251,7 +251,7 @@ def _email_app_translations_discrepancies(msgs, text_messages, email, app_name, 
     if result_wb:
         attachments.append(_attachment("{} TranslationChecker.xlsx".format(app_name),
                                        io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
-    send_html_email_async(subject, email, linebreaksbr(text_content), file_attachments=attachments)
+    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)
 
 
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
