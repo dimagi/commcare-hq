@@ -48,14 +48,14 @@ def get_data_source_with_related_doc_type():
         return DataSourceConfiguration.wrap(structure)
 
 
-def get_sample_doc_and_indicators(fake_time_now=None):
+def get_sample_doc_and_indicators(fake_time_now=None, owner_id='some-user-id'):
     if fake_time_now is None:
         fake_time_now = datetime.utcnow()
     date_opened = datetime(2014, 6, 21)
     sample_doc = dict(
         _id=uuid.uuid4().hex,
         opened_on=json_format_datetime(date_opened),
-        owner_id='some-user-id',
+        owner_id=owner_id,
         doc_type="CommCareCase",
         domain='user-reports',
         name='sample name',
@@ -70,7 +70,7 @@ def get_sample_doc_and_indicators(fake_time_now=None):
         'doc_id': sample_doc['_id'],
         'repeat_iteration': 0,
         'date': date_opened,
-        'owner': 'some-user-id',
+        'owner': owner_id,
         'count': 1,
         'category_bug': 1, 'category_feature': 0, 'category_app': 0, 'category_schedule': 0,
         'tags_easy-win': 1, 'tags_potential-dupe': 0, 'tags_roadmap': 0, 'tags_public': 1,

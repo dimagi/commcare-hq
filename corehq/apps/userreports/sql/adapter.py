@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import hashlib
 import logging
 
 import six
-
+import sqlalchemy
 from architect import install
 from django.utils.translation import ugettext as _
-import sqlalchemy
+from memoized import memoized
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
@@ -21,8 +22,6 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
-from memoized import memoized
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,16 +73,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 self._install_partition()
 
-
     def _distribute_table(self):
         config = self.config.sql_settings.citus_config
         self.session_helper.Session.remove()
-        with self.engine.begin() as connection:
+        if not self.session_helper.is_citus_db:
             # only do this if the database contains the citus extension
-            citus = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")
-            if not list(citus):
-                return
+            return
 
+        with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
                     raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
