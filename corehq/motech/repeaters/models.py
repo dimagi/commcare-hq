@@ -575,7 +575,6 @@ class RepeatRecord(Document):
     last_checked = DateTimeProperty()
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
-    queued = BooleanProperty(default=False)
     succeeded = BooleanProperty(default=False)
 
     @property
@@ -650,7 +649,6 @@ class RepeatRecord(Document):
         self.attempts.append(attempt)
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
-        self.queued = False
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
@@ -662,7 +660,6 @@ class RepeatRecord(Document):
     def postpone_by(self, duration):
         self.last_checked = datetime.utcnow()
         self.next_check = self.last_checked + duration
-        self.queued = False
         self.save()
 
     def make_set_next_try_attempt(self, failure_reason):
@@ -670,16 +667,16 @@ class RepeatRecord(Document):
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
+        now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:
-            window = self.next_check - self.last_checked
+            window = now - self.last_checked
             window += (window // 2)  # window *= 1.5
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
 
-        now = datetime.utcnow()
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
@@ -782,18 +779,17 @@ class RepeatRecord(Document):
 
     def cancel(self):
         self.next_check = None
-        self.queued = False
         self.cancelled = True
 
     def can_enqueue(self):
-        if self.queued:
+        if self.next_check > datetime.utcnow():
+            # self is already in the queue, or it is not ready to be enqueued
             return False
-        self.queued = True
+        self.next_check += timedelta(hours=48)
         self.save()
         return True
 
     def requeue(self):
-        self.queued = False
         self.cancelled = False
         self.succeeded = False
         self.failure_reason = ''
