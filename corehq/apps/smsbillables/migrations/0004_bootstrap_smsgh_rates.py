@@ -6,7 +6,7 @@ from django.db import migrations
 
 from corehq.apps.smsbillables.management.commands.bootstrap_smsgh_gateway import \
     bootstrap_smsgh_gateway
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def create_smsgh_rates(apps, schema_editor):
@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        HqRunPython(create_smsgh_rates),
+        migrations.RunPython(create_smsgh_rates),
     }

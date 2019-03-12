@@ -98,10 +98,11 @@ class ProgramOverviewReportAPI(View):
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_location = self.request.POST.get('selectedLocation')
         selected_date = date(selected_year, selected_month, 1)
+        selected_ministry = self.request.POST.get('selectedMinistry')
         prev_month = date(selected_year, selected_month, 1) - relativedelta(months=1)
 
-        location_filters = build_location_filters(selected_location)
-        data = get_location_model_for_ministry(self.user_ministry).objects.filter(
+        location_filters = build_location_filters(selected_location, selected_ministry)
+        data = get_location_model_for_ministry(selected_ministry).objects.filter(
             (Q(month=selected_date) | Q(month=prev_month)),
             domain=self.request.domain,
             **location_filters
@@ -349,13 +350,6 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 marriedAt=25,
                 aadhaarNo='Yes'
             )
-            husband = dict(
-                name='Raju Kumar',
-                gender='Female',
-                dob=date(1991, 5, 11),
-                marriedAt=26,
-                aadhaarNo='Yes'
-            )
             other = dict(
                 address='J-142, Saket, New Delhi, Delhi',
                 subcentre='Rasidpur',
@@ -369,9 +363,29 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             )
             data = dict(
                 person=person,
-                husband=husband,
                 other=other,
             )
+
+            if section == 'child':
+                mother = dict(
+                    id=1,
+                    name='Reena Kumar',
+                    gender='Female',
+                    status='Pregnant Woman',
+                    dob=date(1991, 5, 11),
+                    marriedAt=25,
+                    aadhaarNo='Yes'
+                )
+                data.update(dict(mother=mother))
+            else:
+                husband = dict(
+                    name='Raju Kumar',
+                    gender='Female',
+                    dob=date(1991, 5, 11),
+                    marriedAt=26,
+                    aadhaarNo='Yes'
+                )
+                data.update(dict(husband=husband))
         elif sub_section == 'child_details':
             children = [
                 dict(id=1, name='Ritu Kummar', age=8),
@@ -384,7 +398,283 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             )
 
         if section == 'child':
-            data = {}
+            if sub_section == 'infant_details':
+                data = dict(
+                    pregnancyLength='Pre-term',
+                    breastfeedingInitiated='Yes',
+                    babyCried='Yes',
+                    dietDiversity='Yes',
+                    birthWeight=3.2,
+                    dietQuantity='Yes',
+                    breastFeeding='Yes',
+                    handwash='Yes',
+                    exclusivelyBreastfed='Yes',
+                )
+            elif sub_section == 'child_postnatal_care_details':
+                data = dict(
+                    visits=[
+                        dict(
+                            pncDate='2019-08-20',
+                            breastfeeding=0,
+                            skinToSkinContact=1,
+                            wrappedUpAdequately=0,
+                            awakeActive=0,
+                        ),
+                        dict(
+                            pncDate='2019-08-22',
+                            breastfeeding=0,
+                            skinToSkinContact=1,
+                            wrappedUpAdequately=0,
+                            awakeActive=0,
+                        )
+                    ]
+                )
+            elif sub_section == 'vaccination_details':
+                period = self.request.POST.get('period', 'atBirth')
+                if period == 'atBirth':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='BCG',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Hepatitis B - 1',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                            dict(
+                                vitaminName='OPV - 0',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                        ]
+                    )
+                elif period == 'sixWeek':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='OPV - 1',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                            dict(
+                                vitaminName='Pentavalent - 1',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Fractional IPV - 1',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                            dict(
+                                vitaminName='Rotavirus - 1',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                            dict(
+                                vitaminName='PCV - 1',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                        ]
+                    )
+                elif period == 'tenWeek':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='OPV - 2',
+                                date='2019-08-20',
+                                adverseEffects='no AEFI',
+                            ),
+                            dict(
+                                vitaminName='Pentavalent - 2',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                            dict(
+                                vitaminName='Rotavirus - 2',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                        ]
+                    )
+                elif period == 'fourteenWeek':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='OPV - 3',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                            dict(
+                                vitaminName='Pentavalent - 3',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                            dict(
+                                vitaminName='Fractional IPV - 2',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Rotavirus - 3',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                            dict(
+                                vitaminName='PCV - 2',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                        ]
+                    )
+                elif period == 'nineTwelveMonths':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='PCV Booster',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 1',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                            dict(
+                                vitaminName='Measles - 1',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='JE - 1',
+                                date='2019-08-20',
+                                adverseEffects='Serious',
+                            ),
+                        ]
+                    )
+                elif period == 'sixTeenTwentyFourMonth':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='DPT Booster - 1',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Measles - 2',
+                                date='2019-08-20',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='OPV Booster',
+                                date='2019-08-20',
+                                adverseEffects='Non-serious AEFI',
+                            ),
+                            dict(
+                                vitaminName='JE - 2',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 2',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 3',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                        ]
+                    )
+                elif period == 'twentyTwoSeventyTwoMonth':
+                    data = dict(
+                        vitamins=[
+                            dict(
+                                vitaminName='Vit. A - 4',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 5',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 6',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 7',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 8',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='Vit. A - 9',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            ),
+                            dict(
+                                vitaminName='DPT Booster - 2',
+                                date='Not Given',
+                                adverseEffects='No AEFI',
+                            )
+                        ]
+                    )
+            elif sub_section == 'growth_monitoring':
+                data = dict(
+                    currentWeight=30,
+                    nrcReferred='Yes',
+                    growthMonitoringStatus='MAM',
+                    referralDate='2019-04-09',
+                    previousGrowthMonitoringStatus='Normal',
+                    underweight='Yes',
+                    underweightStatus='Moderate',
+                    stunted='No',
+                    stuntedStatus='Not applicable',
+                    wasting='Yes',
+                    wastingStatus='Severe',
+                )
+            elif sub_section == 'weight_for_age_chart':
+                data = dict(
+                    points=[
+                        dict(x=24, y=10),
+                        dict(x=25, y=10.2),
+                        dict(x=26, y=9.5),
+                        dict(x=27, y=6.2),
+                        dict(x=28, y=6.0),
+                        dict(x=29, y=6.2),
+                    ]
+                )
+            elif sub_section == 'height_for_age_chart':
+                data = dict(
+                    points=[
+                        dict(x=24, y=45),
+                        dict(x=25, y=44.8),
+                        dict(x=26, y=45.2),
+                        dict(x=27, y=49.1),
+                        dict(x=28, y=49.2),
+                        dict(x=29, y=48.9),
+                    ]
+                )
+            elif sub_section == 'weight_for_height_chart':
+                data = dict(
+                    points=[
+                        dict(x=78, y=3.8),
+                        dict(x=83, y=3.9),
+                    ]
+                )
+
         elif section == 'pregnant_women':
             if sub_section == 'pregnancy_details':
                 data = dict(

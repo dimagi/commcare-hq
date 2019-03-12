@@ -945,8 +945,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
-        if not toggles.SET_SCHEDULED_REPORT_START_DATE.enabled(self.domain):
-            form.fields.pop('start_date')
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
@@ -991,7 +989,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
             try:
-                self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
+                self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = six.text_type(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))

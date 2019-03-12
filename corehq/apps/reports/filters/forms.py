@@ -434,8 +434,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         if instance._show_unknown:
             return True
         for param in params:
-            if param['slug'] in [PARAM_SLUG_APP_ID, PARAM_SLUG_STATUS]:
+            if param['slug'] == PARAM_SLUG_APP_ID:
                 return True
+        if request.GET.get('show_advanced') == 'on':
+            return True
         return False
 
     def _get_filtered_data(self, filter_results):

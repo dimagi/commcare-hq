@@ -239,7 +239,9 @@
 }
 
 .row-content {
-   border: 1px solid #ddd;
+    border: 1px solid #ddd;
+    background-color: #ffffff;
+    min-height: 55px;
 }
 
 .second-value {
@@ -408,14 +410,6 @@ tr, th {
 	position: relative;
 }
 
-.arrow-steps .step.done span:before {
-	opacity: 1;
-	-webkit-transition: opacity 0.3s ease 0.5s;
-	-moz-transition: opacity 0.3s ease 0.5s;
-	-ms-transition: opacity 0.3s ease 0.5s;
-	transition: opacity 0.3s ease 0.5s;
-}
-
 .arrow-steps .step.current-status {
 	color: #fff;
 	background-color: #004ebc;
@@ -432,4 +426,55 @@ tr, th {
 
 .arrow-steps .step.previous-status:after {
 	border-left: 19px solid #a1c5f9;
+}
+
+@media (min-width: 992px) {
+    .col-md-2-5 {
+        width: 20%;
+        float: left;
+    }
+
+    .details-box {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .details-box [class*='col-'] {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.col-md-2-5 {
+    position: relative;
+    min-height: 1px;
+}
+
+.subtitle {
+    background-color: #004ebc14;
+    color: #004ebc;
+}
+
+.detailsChart .nv-series-0, .detailsChart .nv-series-1, .detailsChart .nv-series-2 {
+    stroke-opacity: 0 !important;
+}
+
+.detailsChart .nv-series-3 > circle {
+    fill-opacity: 1 !important;
+    stroke-opacity: 1 !important;
+}
+
+.detailsChart .nv-area {
+    fill-opacity: 0.75;
+}
+
+.detailsChart line.nv-guideline {
+    stroke: #ccc;
+}
+
+circle {
+    stroke-width: .5px !important;
 }

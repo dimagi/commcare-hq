@@ -81,3 +81,9 @@ Couch
 Changing views can block our deploys due to the way we sync our couch views. If you're changing
 a view, please sync with someone else who understands this process and coordinate with the team
 to ensure we can rebuild the view without issue.
+
+
+Migration Patterns and Best Practices
+-------------------------------------
+
+- :ref:`auto-managed-migration-pattern`

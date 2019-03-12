@@ -139,10 +139,10 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
     def _make_couchdb_tuple(self, row):
-        if isinstance(row, six.string_types):
-            app_label, postfix = row, None
-        else:
+        if isinstance(row, tuple):
             app_label, postfix = row
+        else:
+            app_label, postfix = row, None
         if postfix:
             if postfix in self.db_urls_by_prefix:
                 url = self.db_urls_by_prefix[postfix]
