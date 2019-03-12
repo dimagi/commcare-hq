@@ -18,7 +18,7 @@
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_1_person_cases-optimized",
+  "report_id": "static-mpr_1_person_cases",
   "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 1 - Person cases (Static)",

@@ -18,10 +18,10 @@
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_3_children_registered-optimized",
+  "report_id": "static-mpr_3_children_registered",
   "data_source_table": "static-person_cases_v3",
   "config": {
-    "title": "MPR 3 - Children Registered (Static) (Optimized)",
+    "title": "MPR 3 - Children Registered (Static)",
     "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
     "visible": false,
     "aggregation_columns": [

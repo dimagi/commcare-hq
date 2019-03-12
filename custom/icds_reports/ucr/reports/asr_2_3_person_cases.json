@@ -15,10 +15,10 @@
     "india",
     "icds"
   ],
-  "report_id": "static-asr_2_3_person_cases-optimized",
+  "report_id": "static-asr_2_3_person_cases",
   "data_source_table": "static-person_cases_v3",
   "config": {
-    "title": "ASR - 2,3 - Person Cases (Static) (Optimized)",
+    "title": "ASR - 2,3 - Person Cases (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
