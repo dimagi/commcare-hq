@@ -6,7 +6,6 @@ import copy
 import itertools
 import re
 import ghdiff
-import openpyxl
 from collections import defaultdict, OrderedDict
 
 import six
@@ -200,7 +199,7 @@ def run_translation_checker(file_obj):
     translation_checker_messages = []
     result_wb = None
     try:
-        result_wb = validate_workbook(openpyxl.load_workbook(file_obj), translation_checker_messages)
+        result_wb = validate_workbook(file_obj, translation_checker_messages)
     except FatalError as e:
         translation_checker_messages.append(
             _("Workbook check failed to finish due to the following error : %s" % e))
