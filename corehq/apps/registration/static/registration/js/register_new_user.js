@@ -83,6 +83,9 @@ $(function () {
         geoIpLookup: function (success) {
             $.get("https://ipinfo.io", function () {}, "jsonp").always(function (resp) {
                 var countryCode = (resp && resp.country) ? resp.country : "";
+                if (!countryCode) {
+                    countryCode = "us";
+                }
                 success(countryCode);
             });
         },
