@@ -45,7 +45,7 @@ def _citus_composite_key_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0103_drop_update_aggregate_awc_data'),
+        ('accounting', '0103_aggregateccsrecordcomplementaryfeedingforms_supervisor_id'),
     ]
 
     operations = [
