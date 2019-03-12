@@ -485,6 +485,14 @@ class AggAwc(models.Model):
             for query in index_queries:
                 cursor.execute(query)
 
+    @classmethod
+    def weekly_aggregate(cls, month):
+        helper = AggAwcHelper(month)
+        update_queries = helper.weekly_updates()
+        with get_cursor(cls) as cursor:
+            for query, params in update_queries:
+                cursor.execute(query, params)
+
 
 class AggregateLsAWCVisitForm(models.Model):
     awc_visits = models.IntegerField(help_text='awc visits made by LS')
@@ -837,6 +845,7 @@ class AggAwcDaily(models.Model):
 class DailyAttendance(models.Model):
     doc_id = models.TextField(primary_key=True)
     awc_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(null=True)
     pse_date = models.DateField(null=True)
     awc_open_count = models.IntegerField(null=True)
@@ -880,6 +889,7 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -924,6 +934,7 @@ class AggregateComplementaryFeedingForms(models.Model):
         help_text="Hand washing occurred for this case in the latest form"
     )
 
+
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
 
@@ -962,6 +973,7 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     """
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1007,6 +1019,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1105,6 +1119,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1159,6 +1174,7 @@ class AggregateChildHealthTHRForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1199,6 +1215,7 @@ class AggregateCcsRecordTHRForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1239,6 +1256,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1321,6 +1339,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 class AggregateBirthPreparednesForms(models.Model):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1465,6 +1484,8 @@ class AggregateCcsRecordDeliveryForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1485,6 +1506,7 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         null=True,
         help_text="Where the child is born"
     )
+
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
@@ -1556,6 +1578,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1572,6 +1595,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         null=True,
         help_text="Number of days the child had the lunch"
     )
+
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
 
@@ -1598,6 +1622,7 @@ class AggregateAwcInfrastructureForms(models.Model):
 
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
     # primary key as it's unique for every partition
@@ -1650,6 +1675,7 @@ class AWWIncentiveReport(models.Model):
     # primary key as it's unique for every partition
     awc_id = models.CharField(max_length=40, primary_key=True)
     block_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
     state_name = models.TextField(null=True)
     district_name = models.TextField(null=True)
     block_name = models.TextField(null=True)

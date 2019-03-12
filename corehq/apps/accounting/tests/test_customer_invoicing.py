@@ -12,10 +12,11 @@ from corehq.apps.accounting import utils, tasks
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
+    SoftwarePlan,
     SoftwarePlanEdition,
     CustomerInvoice,
     InvoicingPlan,
-    DomainUserHistory
+    DomainUserHistory,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -32,9 +33,14 @@ from corehq.apps.smsbillables.tests.generator import arbitrary_sms_billables_for
 
 class BaseCustomerInvoiceCase(BaseAccountingTest):
 
+    is_using_test_plans = False
+
     @classmethod
     def setUpClass(cls):
         super(BaseCustomerInvoiceCase, cls).setUpClass()
+
+        if cls.is_using_test_plans:
+            generator.bootstrap_test_software_plan_versions()
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
@@ -56,7 +62,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_start=subscription_start_date,
             date_end=subscription_end_date,
         )
-        cls.subscription.plan_version.plan.is_customer_software_plan = True
 
         advanced_subscription_end_date = add_months_to_date(subscription_end_date, 2)
         cls.domain2 = generator.arbitrary_domain()
@@ -67,7 +72,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_end=advanced_subscription_end_date,
             plan_version=cls.advanced_plan
         )
-        cls.sub2.plan_version.plan.is_customer_software_plan = True
 
         cls.domain3 = generator.arbitrary_domain()
         cls.sub3 = generator.generate_domain_subscription(
@@ -77,7 +81,16 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
             date_end=advanced_subscription_end_date,
             plan_version=cls.advanced_plan
         )
-        cls.sub3.plan_version.plan.is_customer_software_plan = True
+
+        # This subscription should not be included in any customer invoices in these tests
+        cls.domain_community = generator.arbitrary_domain()
+        cls.sub3 = generator.generate_domain_subscription(
+            cls.account,
+            cls.domain3,
+            date_start=subscription_start_date,
+            date_end=advanced_subscription_end_date,
+            plan_version=DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+        )
 
     def tearDown(self):
         for user in self.domain.all_users():
@@ -89,6 +102,13 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         for user in self.domain3.all_users():
             user.delete()
 
+        for user in self.domain_community.all_users():
+            user.delete()
+
+        if self.is_using_test_plans:
+            for software_plan in SoftwarePlan.objects.all():
+                SoftwarePlan.get_version.clear(software_plan)
+
         super(BaseAccountingTest, self).tearDown()
 
     @classmethod
@@ -96,6 +116,7 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
         cls.domain.delete()
         cls.domain2.delete()
         cls.domain3.delete()
+        cls.domain_community.delete()
 
         super(BaseCustomerInvoiceCase, cls).tearDownClass()
 
@@ -173,15 +194,12 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         invoice = CustomerInvoice.objects.first()
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 2)
-        for line_item in product_line_items:
-            self.assertIn(line_item.base_description, [
-                'One month of CommCare Advanced Edition Software Plan.',
-                'One month of CommCare Standard Edition Software Plan.',
-            ])
-            self.assertIn(line_item.base_cost, [
-                self.product_rate.monthly_fee,
-                self.advanced_plan.product_rate.monthly_fee,
-            ])
+        product_descriptions = [line_item.base_description for line_item in product_line_items]
+        self.assertItemsEqual(product_descriptions, ['One month of CommCare Advanced Edition Software Plan.',
+                                                     'One month of CommCare Standard Edition Software Plan.'])
+        product_costs = [line_item.base_cost for line_item in product_line_items]
+        self.assertItemsEqual(product_costs, [self.product_rate.monthly_fee,
+                                              self.advanced_plan.product_rate.monthly_fee])
 
     def test_product_line_items_in_quarterly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
@@ -191,7 +209,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.balance, Decimal('4500.0000'))
         self.assertEqual(invoice.account, self.account)
 
         # There should be two product line items, with 3 months billed for each
@@ -208,7 +226,7 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
 
         self.assertEqual(CustomerInvoice.objects.count(), 1)
         invoice = CustomerInvoice.objects.first()
-        self.assertGreater(invoice.balance, Decimal('0.0000'))
+        self.assertEqual(invoice.balance, Decimal('18000.0000'))
         self.assertEqual(invoice.account, self.account)
 
         # There should be two product line items, with 3 months billed for each
@@ -217,8 +235,32 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         for product_line_item in invoice.lineitem_set.get_products().all():
             self.assertEqual(product_line_item.quantity, 12)
 
+    def test_subscriptions_marked_do_not_invoice_not_included(self):
+        self.subscription.do_not_invoice = True
+
+        invoice_date = utils.months_from_date(self.sub2.date_end, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+        self.assertEqual(invoice.balance, Decimal('1200.0000'))
+        self.assertEqual(invoice.account, self.account)
+
+        product_line_items = invoice.lineitem_set.get_products()
+        self.assertEqual(product_line_items.count(), 1)
+        self.assertEqual(
+            product_line_items.first().base_description,
+            'One month of CommCare Advanced Edition Software Plan.'
+        )
+
+        num_feature_line_items = invoice.lineitem_set.get_features().count()
+        self.assertEqual(num_feature_line_items, self.sub2.plan_version.feature_rates.count())
+
 
 class TestUserLineItem(BaseCustomerInvoiceCase):
+
+    is_using_test_plans = True
+
     def setUp(self):
         super(TestUserLineItem, self).setUp()
         self.user_rate = self.subscription.plan_version.feature_rates \
@@ -248,7 +290,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             self.assertIsNone(user_line_item.base_description)
             self.assertEqual(user_line_item.base_cost, Decimal('0.0000'))
             self.assertIsNone(user_line_item.unit_description)
-            self.assertEqual(user_line_item.unit_cost, Decimal('2.0000'))
+            self.assertEqual(user_line_item.unit_cost, Decimal('1.0000'))
 
     def test_over_limit(self):
         num_users = self.user_rate.monthly_limit + 1
@@ -366,6 +408,8 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
 
 class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
 
+    is_using_test_plans = True
+
     def setUp(self):
         super(TestQuarterlyInvoicing, self).setUp()
         self.user_rate = self.subscription.plan_version.feature_rates \
@@ -386,6 +430,7 @@ class TestQuarterlyInvoicing(BaseCustomerInvoiceCase):
     def tearDown(self):
         for user_history in DomainUserHistory.objects.all():
             user_history.delete()
+        super(TestQuarterlyInvoicing, self).tearDown()
 
     def initialize_domain_user_history_objects(self):
         record_dates = []

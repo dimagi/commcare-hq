@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL("""DROP FUNCTION IF EXISTS save_case_and_related_models(
+        migrations.RunSQL("""DROP FUNCTION IF EXISTS save_case_and_related_models(
                 TEXT,
                 form_processor_commcarecasesql,
                 form_processor_casetransaction[],

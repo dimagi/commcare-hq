@@ -12,6 +12,9 @@ INDICATOR_LIST = {
     'institutional_deliveries': _('Institutional Deliveries'),
 }
 
+MINISTRY_MOHFW = 'MoHFW'
+MINISTRY_MWCD = 'MWCD'
+
 NUMERIC = 'numeric'
 PERCENT = 'percent'
 

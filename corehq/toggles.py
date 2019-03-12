@@ -1237,13 +1237,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
-    'allow_location_update_over_sms',
-    'Allow users to update their location over SMS.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1293,7 +1286,7 @@ PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
     'profile_bulk_multimedia_upload',
     'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_USER],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
@@ -1333,10 +1326,10 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 
 ICDS = StaticToggle(
     'icds',
-    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
     always_enabled={
         "icds-dashboard-qa",
         "reach-test",
@@ -1657,7 +1650,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'india'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1713,15 +1706,6 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 )
 
 
-SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
-    'set_scheduled_report_start_date',
-    'Allow users to set an effective start date for scheduled reports.',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
-)
-
-
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
@@ -1743,4 +1727,20 @@ DASHBOARD_REACH_REPORT = StaticToggle(
     'REACH: Enable access to the AAA Convergence Dashboard reports for REACH',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+
+PARTIAL_UI_TRANSLATIONS = StaticToggle(
+    'partial_ui_translations',
+    'Enable uploading a subset of translations in the UI Translations Excel upload',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )

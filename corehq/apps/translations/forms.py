@@ -4,6 +4,7 @@ import openpyxl
 import langcodes
 
 from django import forms
+from django.forms.widgets import Select
 from zipfile import ZipFile
 
 from crispy_forms.helper import FormHelper
@@ -28,9 +29,15 @@ class ConvertTranslationsForm(forms.Form):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'upload_file',
-                data_bind="value: file",
+            hqcrispy.B3MultiField(
+                "",
+                crispy.Div(
+                    crispy.Field(
+                        'upload_file',
+                        data_bind="value: file",
+                    ),
+                    css_class='col-sm-4'
+                ),
             ),
             StrictButton(
                 ugettext_lazy('Convert'),
@@ -89,7 +96,7 @@ class PullResourceForm(forms.Form):
                 tuple((project.slug, project) for project in projects)
             )
         self.helper.layout = crispy.Layout(
-            'transifex_project_slug',
+            crispy.Field('transifex_project_slug', css_class="ko-select2"),
             crispy.Field('target_lang', css_class="ko-select2"),
             'resource_slug',
             hqcrispy.FormActions(
@@ -105,7 +112,8 @@ class PullResourceForm(forms.Form):
 class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
     version = forms.IntegerField(label=ugettext_lazy("Application Version"), required=False,
-                                 help_text=ugettext_lazy("Leave blank to use current saved state"))
+                                 help_text=ugettext_lazy("Leave blank to use current saved state"),
+                                 widget=Select(choices=[]))
     use_version_postfix = forms.MultipleChoiceField(
         choices=[
             ('yes', 'Track resources per version'),
@@ -145,23 +153,28 @@ class AppTranslationsForm(forms.Form):
                 tuple((project.slug, project) for project in projects)
             )
         form_fields = self.form_fields()
-        form_fields.append(hqcrispy.Field(StrictButton(
-            ugettext_lazy("Submit"),
-            type="submit",
-            css_class="btn btn-primary btn-lg disable-on-submit",
-            onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
-        )))
         self.helper.layout = crispy.Layout(
-            *form_fields
+            crispy.Fieldset(
+                "",
+                *form_fields
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Submit"),
+                    type="submit",
+                    css_class="btn btn-primary disable-on-submit",
+                    onclick="return confirm('%s')" % ugettext_lazy("Please confirm that you want to proceed?")
+                )
+            )
         )
         self.fields['action'].initial = self.form_action
 
     def form_fields(self):
         return [
-            hqcrispy.Field('app_id'),
+            hqcrispy.Field('app_id', css_class="ko-select2"),
             hqcrispy.Field('version'),
             hqcrispy.Field('use_version_postfix'),
-            hqcrispy.Field('transifex_project_slug'),
+            hqcrispy.Field('transifex_project_slug', css_class="ko-select2"),
             hqcrispy.Field('action')
         ]
 

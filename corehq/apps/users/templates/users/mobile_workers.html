@@ -227,15 +227,10 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-sm-6">
-                        <div class="input-group">
-                            <input type="text" class="form-control" data-bind="value: query"
-                                   placeholder="{% trans "Filter Workers..." %}">
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-default" data-bind="click: function() { goToPage(1); }">
-                                    <i class="fa fa-search"></i>
-                                </button>
-                            </span>
-                        </div>
+                        <search-box data-apply-bindings="false"
+                                    params="value: query,
+                                            action: function() { goToPage(1); },
+                                            placeholder: '{% trans_html_attr "Search Workers..." %}'"></search-box>
                         <p class="help-block">
                             <i class="fa fa-info-circle"></i>
                             {% blocktrans %}
@@ -421,6 +416,7 @@
                 <pagination data-apply-bindings="false"
                             data-bind="visible: showTable"
                             params="goToPage: goToPage,
+                                    slug: 'mobile-workers',
                                     perPage: itemsPerPage,
                                     totalItems: totalItems,
                                     showSpinner: showPaginationSpinner"></pagination>
