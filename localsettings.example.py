@@ -206,15 +206,12 @@ FORMTRANSLATE_TIMEOUT = 5
 LOCAL_APPS = (
 #    'django_coverage', # Adds `python manage.py test_coverage` (settings below)
 #    'debug_toolbar',   # Adds a retractable panel to every page giving profiling & debugging info
-#    'couchdebugpanel', # Adds couch info to said toolbar
 #    'devserver',       # Adds improved dev server that also prints SQL on the console (for AJAX, etc, when you cannot use debug_toolbar)
 #    'django_cpserver', # Another choice for a replacement server
 #    'dimagi.utils',
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
-#    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
 #    'kombu.transport.django', # required for celery
-#    'package_monitor',
 )
 
 LOCAL_MIDDLEWARE = [

@@ -34,12 +34,16 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
         self.locationDetails = initialPageData.get('beneficiary_location_names');
 
         var detailsTypes = {
-            // child: childUtils.detailsView(),
-            // pregnant_women: pregnantWomenModel.detailsView(),
+            child: childUtils.detailsView(self.postData),
+            pregnant_women: pregnantWomenModel.detailsView(self.postData),
             eligible_couples: eligibleCoupleModel.detailsView(self.postData),
         };
 
         self.detailsModel = detailsTypes[self.selectedType];
+
+        self.showSection = function (section) {
+            return self.detailsModel.sections.indexOf(section) !== -1;
+        };
 
         self.callback = function () {
             self.detailsModel.callback();

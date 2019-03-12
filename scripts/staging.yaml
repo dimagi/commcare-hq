@@ -50,8 +50,11 @@ trunk: master
 name: autostaging
 branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
-  - vellum-staging      # Farid 20 Feb
-  - fr/question-links   # Farid 20 Feb
   - jls/download-mm-translations  # Jenny Feb 23
   - mk-21944-2 # MK Feb 25
+  - inconsistent-user-filters-exports  # Gabriella March 2
+  - inconsistent-user-filters-reports  # Gabriella March 2
+  - es/module-display  # Ethan March 4th
+  #- jls/log-media-map-app-id # Jenny March 7
+  - downgrade-banner  # Nick March 11
 submodules: {}

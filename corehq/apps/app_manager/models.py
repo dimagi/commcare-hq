@@ -1,7 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -19,6 +19,9 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
+from io import BytesIO
+
+import qrcode
 from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
@@ -60,6 +63,7 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -142,7 +146,7 @@ from corehq.apps.app_manager.util import (
     update_report_module_ids,
     module_offers_search,
     get_latest_enabled_build_for_profile,
-    get_enabled_build_profiles_for_version,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -1144,7 +1148,8 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException("Error in form {}".format(self.full_path_name), e)
+            raise XFormException(_('Error in form "{}": {}')
+                                 .format(trans(self.name), six.text_type(e)))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1158,7 +1163,7 @@ class FormBase(DocumentSchema):
             try:
                 valid_paths = {question['value']: question['tag']
                                for question in self.get_questions(langs=[])}
-            except XFormException as e:
+            except XFormException:
                 # punt on invalid xml (sorry, no rich attachments)
                 valid_paths = {}
 
@@ -4643,9 +4648,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
-            from pygooglechart import QRChart
-            HEIGHT = WIDTH = 250
-            code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4654,18 +4656,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            code.add_data(url)
-
-            # "Level L" error correction with a 0 pixel margin
-            code.set_ec('L', 0)
-            f, fname = tempfile.mkstemp()
-            code.download(fname)
-            os.close(f)
-            with open(fname, "rb") as f:
-                png_data = f.read()
-                self.lazy_put_attachment(png_data, filename,
-                                         content_type="image/png")
-            return png_data
+            image = qrcode.make(url)
+            output = BytesIO()
+            image.save(output, "PNG")
+            qr_content = output.getvalue()
+            self.lazy_put_attachment(qr_content, filename,
+                                     content_type="image/png")
+            return qr_content
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
@@ -5305,6 +5302,11 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
+    def get_report_modules(self):
+        for module in self.modules:
+            if isinstance(module, ReportModule):
+                yield module
+
     def get_forms(self, bare=True):
         for module in self.get_modules():
             for form in module.get_forms():
@@ -5807,19 +5809,19 @@ class LinkedApplication(Application):
         self.save()
 
 
-def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None):
     if isinstance(app_id_or_source, six.string_types):
         app_id = app_id_or_source
         source = get_app(None, app_id)
-        src_dom = source['domain']
-        if validate_source_domain:
-            validate_source_domain(src_dom)
+        source_domain = source['domain']
         source = source.export_json(dump_json=False)
+        report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
+        report_map = {}
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5836,6 +5838,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    if report_map:
+        for module in app.get_report_modules():
+            for config in module.report_configs:
+                try:
+                    config.report_id = report_map[config.report_id]
+                except KeyError:
+                    raise AppEditingError(
+                        "Report {} not found in {}".format(config.report_id, domain)
+                    )
 
     app.save_attachments(attachments)
 
@@ -5958,7 +5970,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
+        get_latest_enabled_versions_per_profile.clear(self.app_id)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

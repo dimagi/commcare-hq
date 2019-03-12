@@ -149,7 +149,7 @@ class LocalCommCareHqClient(object):
                     else:
                         more_to_fetch = False
 
-                self.checkpoint(paginator, batch_list)
+                    self.checkpoint(paginator, batch_list)
 
         from commcare_export.repeatable_iterator import RepeatableIterator
         return RepeatableIterator(iterate_resource)

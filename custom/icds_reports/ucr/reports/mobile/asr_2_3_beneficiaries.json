@@ -15,7 +15,7 @@
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-asr_2_3_beneficiaries",

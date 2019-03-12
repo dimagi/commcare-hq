@@ -309,7 +309,7 @@ class FormProcessorSQL(object):
         return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
 
     @staticmethod
-    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(case_id, lock=False, wrap=False):
         try:
             if lock:
                 try:

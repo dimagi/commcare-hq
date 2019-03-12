@@ -28,6 +28,7 @@ Welcome to CommCareHQ's documentation!
    testing
    forms
    management_commands
+   migrations
    commtrack
    cloudcare
    translations
