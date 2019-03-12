@@ -195,8 +195,11 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 2)
         product_descriptions = [line_item.base_description for line_item in product_line_items]
-        self.assertIn('One month of CommCare Advanced Edition Software Plan.', product_descriptions)
-        self.assertIn('One month of CommCare Standard Edition Software Plan.', product_descriptions)
+        self.assertItemsEqual(product_descriptions, ['One month of CommCare Advanced Edition Software Plan.',
+                                                     'One month of CommCare Standard Edition Software Plan.'])
+        product_costs = [line_item.base_cost for line_item in product_line_items]
+        self.assertItemsEqual(product_costs, [self.product_rate.monthly_fee,
+                                              self.advanced_plan.product_rate.monthly_fee])
 
     def test_product_line_items_in_quarterly_invoice(self):
         self.account.invoicing_plan = InvoicingPlan.QUARTERLY
