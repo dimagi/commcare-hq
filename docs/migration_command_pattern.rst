@@ -1,3 +1,5 @@
+.. _auto-managed-migration-pattern:
+
 Auto-Managed Migration Pattern
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
