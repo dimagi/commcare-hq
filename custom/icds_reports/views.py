@@ -99,7 +99,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_dashboard
+from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
@@ -352,7 +352,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
 
-        data = get_service_delivery_dashboard(
+        data = get_service_delivery_data(
             start,
             length,
             order_by_name_column,
