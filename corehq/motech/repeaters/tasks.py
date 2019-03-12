@@ -26,7 +26,6 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 _soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
 logging = get_task_logger(__name__)
-six_hours_sec = 6 * 60 * 60
 
 
 @periodic_task(
@@ -35,6 +34,7 @@ six_hours_sec = 6 * 60 * 60
 )
 def check_repeaters():
     start = datetime.utcnow()
+    six_hours_sec = 6 * 60 * 60
     six_hours_later = start + timedelta(seconds=six_hours_sec)
 
     # Long timeout to allow all waiting repeat records to be iterated
