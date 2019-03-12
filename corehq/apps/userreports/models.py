@@ -63,6 +63,7 @@ from corehq.apps.userreports.reports.factory import ChartFactory, \
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
@@ -104,6 +105,7 @@ class CitusConfig(DocumentSchema):
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)
     citus_config = SchemaProperty(CitusConfig)
+    primary_key = ListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -157,6 +159,10 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
     def get_columns(self):
+        raise NotImplementedError()
+
+    @property
+    def pk_columns(self):
         raise NotImplementedError()
 
 
@@ -345,6 +351,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
+    @memoized
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -472,6 +479,18 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 prop_value = [prop_value]
             return prop_value
         return [None]
+
+    @property
+    def pk_columns(self):
+        if not self.sql_settings.primary_key:
+            columns = []
+            for col in self.get_columns():
+                if col.is_primary_key:
+                    column_name = decode_column_name(col)
+                    columns.append(column_name)
+        else:
+            columns = self.sql_settings.primary_key
+        return columns
 
 
 class ReportMeta(DocumentSchema):
