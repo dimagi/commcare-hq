@@ -6,6 +6,7 @@ import copy
 import itertools
 import re
 import ghdiff
+import openpyxl
 from collections import defaultdict, OrderedDict
 
 import six
@@ -31,6 +32,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
+from CommcareTranslationChecker import validate_workbook
+from CommcareTranslationChecker.exceptions import FatalError
 
 
 def get_unicode_dicts(iterable):
@@ -191,9 +194,20 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def validate_bulk_app_translation_upload(app, workbook, email):
+def run_translation_checker(file_obj):
+    translation_checker_messages = []
+    result_wb = None
+    try:
+        result_wb = validate_workbook(openpyxl.load_workbook(file_obj), translation_checker_messages)
+    except FatalError as e:
+        translation_checker_messages.append(_("Workbook check failed to finish due to the following error : %s" % e))
+    return translation_checker_messages, result_wb
+
+
+def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
+    checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs:
         _email_app_translations_discrepancies(msgs, email, app.name)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
