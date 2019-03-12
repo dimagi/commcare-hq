@@ -285,6 +285,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
+    print("(PV): Doing an excel report instead")
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'

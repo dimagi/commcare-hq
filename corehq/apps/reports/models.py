@@ -473,6 +473,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         """
         from corehq.apps.locations.middleware import LocationAccessMiddleware
+        from urllib3.exceptions import ReadTimeoutError
+        from corehq.elastic import ESError
 
         try:
             if self.report is None:
@@ -516,7 +518,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         LocationAccessMiddleware.apply_location_access(mock_request)
 
         try:
-            raise Exception
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
             email_response = dispatch_func(render_as='email')
             if email_response.status_code == 302:
@@ -575,14 +576,19 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 },
                 None,
             )
-        except Exception:
+        except ReadTimeoutError:
+            print("(PV): in ReadTimeoutError")
+            raise ReadTimeoutError
+        except ESError:
+            print("(PV): in ESError")
+            raise ESError
+        except Exception as e:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
                 'user': self.owner.username,
                 'report': self.report_slug,
                 'report config': self.get_id
             })
-            raise Exception
             return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
