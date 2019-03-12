@@ -8,7 +8,7 @@ import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
@@ -786,7 +786,10 @@ class RepeatRecord(Document):
             # self is already in the queue, or it is not ready to be enqueued
             return False
         self.next_check += timedelta(hours=48)
-        self.save()
+        try:
+            self.save()
+        except ResourceConflict:
+            return False
         return True
 
     def requeue(self):
