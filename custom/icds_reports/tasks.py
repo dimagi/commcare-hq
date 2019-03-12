@@ -97,16 +97,9 @@ UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.com')]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
-CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'india':
-    # Currently QA needs more monthly data, so these are different than on ICDS
-    # If this exists after July 1, ask Emord why these UCRs still exist
-    CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
-
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -568,7 +561,6 @@ def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
-        'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
     ]
 
