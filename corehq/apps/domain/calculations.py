@@ -436,7 +436,10 @@ def num_telerivet_backends(domain):
 
 def use_domain_security_settings(domain):
     domain_obj = Domain.get_by_name(domain)
-    return domain_obj.two_factor_auth or domain_obj.secure_sessions or domain_obj.strong_mobile_passwords
+    return any([
+        getattr(domain_obj, attr, False)
+        for attr in ['two_factor_auth', 'secure_sessions', 'strong_mobile_passwords']
+    ])
 
 
 def num_custom_roles(domain):
