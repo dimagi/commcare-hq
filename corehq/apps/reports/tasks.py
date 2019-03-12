@@ -257,21 +257,19 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     config.filters = filters
 
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
-
-    content = _render_report_configs(
-        mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-        notes=cleaned_data['notes'], once=once
-    )[0]
-    body = render_full_report_notification(None, content).content
-
     try:
+        content = _render_report_configs(
+            mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
+            notes=cleaned_data['notes'], once=once
+        )[0]
+        body = render_full_report_notification(None, content).content
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=[LARGE_FILE_SIZE_ERROR_CODE])
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
+        if True: # getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = {
@@ -289,6 +287,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
+    report.rendered_as = 'export'
 
     # need to set request
     setattr(report.request, 'REQUEST', {})

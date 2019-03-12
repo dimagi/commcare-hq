@@ -516,6 +516,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         LocationAccessMiddleware.apply_location_access(mock_request)
 
         try:
+            raise Exception
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
             email_response = dispatch_func(render_as='email')
             if email_response.status_code == 302:
@@ -581,6 +582,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 'report': self.report_slug,
                 'report config': self.get_id
             })
+            raise Exception
             return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
