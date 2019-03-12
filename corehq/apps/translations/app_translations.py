@@ -12,6 +12,7 @@ from collections import defaultdict, OrderedDict
 import six
 import io
 from django.contrib import messages
+from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -30,6 +31,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.files import read_workbook_content_as_file
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
 from CommcareTranslationChecker import validate_workbook
@@ -209,25 +211,47 @@ def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
     msgs = UploadedTranslationsValidator(app, workbook).compare()
     checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs:
-        _email_app_translations_discrepancies(msgs, email, app.name)
+        _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, _("No issues found."))]
 
 
-def _email_app_translations_discrepancies(msgs, email, app_name):
-    html_content = ghdiff.default_css
-    for sheet_name, msg in msgs.items():
-        html_content += "<strong>{}</strong>".format(sheet_name) + msg
+def _email_app_translations_discrepancies(msgs, text_messages, email, app_name, result_wb):
+    """
+    :param msgs: messages for app translation discrepancies
+    :param text_messages: text message for issues found by translation checker
+    :param email: email to
+    :param app_name: name of the application
+    :param result_wb: result wb of translation checker to attach with the email
+    """
+    def _form_email_content(msgs, text_messages):
+        if msgs:
+            html_content = ghdiff.default_css
+            for sheet_name, msg in msgs.items():
+                html_content += "<strong>{}</strong>".format(sheet_name) + msg
+            text_content = _("Hi, PFA file for discrepancies found for app translations.\n")
+        else:
+            html_content = None
+            text_content = _("Hi, No discrepancies found for app translations.\n")
+        if text_messages:
+            text_content += _("Issues found with the workbook are as follows :\n %s." % '\n'.join(text_messages))
+        else:
+            text_content += _("No issues found with the workbook.")
+        return html_content, text_content
+
+    def _attachment(title, content, mimetype='text/html'):
+        return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    text_content = _("Hi, PFA file for discrepancies found for app translations.")
-    html_attachment = {
-        'title': "{} Discrepancies.html".format(app_name),
-        'file_obj': io.StringIO(html_content),
-        'mimetype': 'text/html',
-    }
-    send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
+    html_content, text_content = _form_email_content(msgs, text_messages)
+    attachments = []
+    if html_content:
+        attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_content)))
+    if result_wb:
+        attachments.append(_attachment("{} TranslationChecker.xlsx".format(app_name),
+                                       io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
+    send_html_email_async(subject, email, linebreaksbr(text_content), file_attachments=attachments)
 
 
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
