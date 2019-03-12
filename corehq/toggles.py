@@ -561,13 +561,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     notification_emails=['jemord']
 )
 
-EXPORT_NO_SORT = StaticToggle(
-    'export_no_sort',
-    'Do not sort exports',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
