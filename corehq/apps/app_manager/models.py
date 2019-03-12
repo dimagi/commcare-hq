@@ -5074,6 +5074,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
             for logo_name in logo_refs:
                 app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'force': True,
                     'value': self.logo_refs[logo_name]['path'],
                 }
 
