@@ -892,8 +892,7 @@ def _create_overdue_notification(invoice, context):
         invoice.date_start.strftime('%B')
     ))
     note = Notification.objects.create(content=message, url=context['statements_url'],
-                                       domain_specific=False if invoice.is_customer_invoice else True,
-                                       type='billing', domains=domains)
+                                       domain_specific=True, type='billing', domains=domains)
     note.activate()
 
 
