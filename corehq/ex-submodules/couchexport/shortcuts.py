@@ -2,11 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import io
 from wsgiref.util import FileWrapper
-from zipfile import ZipFile
 
 from couchexport.files import TempBase
 from django.http import HttpResponse, StreamingHttpResponse
-from couchexport.util import get_schema_index_view_keys
 
 
 def export_response(file, format, filename, checkpoint=None):

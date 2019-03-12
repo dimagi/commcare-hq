@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-from datetime import datetime
 import hashlib
 from itertools import islice
 import os
 import tempfile
 from six.moves.urllib.error import URLError
 from dimagi.ext.couchdbkit import Document, DictProperty,\
-    DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
+    DocumentSchema, StringProperty, SchemaListProperty,\
+    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
 import couchexport
 from corehq.apps.domain import UNKNOWN_DOMAIN
@@ -17,14 +16,12 @@ from corehq.blobs.mixin import BlobMixin, CODES
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
-from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list
+from couchexport.util import SerializableFunctionProperty, force_tag_to_list
 from memoized import memoized
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
-from dimagi.utils.logging import notify_exception
 import six
 from six.moves import zip
 from six.moves import range

@@ -4,8 +4,6 @@ from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from datetime import datetime
-import os
-import json
 from couchexport.tasks import rebuild_schemas
 from dimagi.utils.logging import notify_exception
 import six
