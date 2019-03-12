@@ -49,10 +49,8 @@ def check_repeaters():
         return
 
     for record in iterate_repeat_records(start):
-        if not _soft_assert(
-                datetime.utcnow() < timeout_dt,
-                "Unable to iterate all waiting repeat records before check_repeaters lock timed out"
-        ):
+        if datetime.utcnow() > timeout_dt:
+            _soft_assert(False, "Unable to iterate repeat records before check_repeater_lock timed out")
             break
 
         if record.redis_lock.acquire(blocking=False):
