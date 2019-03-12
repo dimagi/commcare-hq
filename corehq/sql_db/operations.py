@@ -8,8 +8,7 @@ from io import open
 import attr
 from django.conf import settings
 from django.db import connection, router
-from django.db.migrations import RunPython
-from django.db.migrations.operations.special import RunSQL
+from django.db.migrations import RunPython, RunSQL
 from django.template import engines
 
 NOOP = object()

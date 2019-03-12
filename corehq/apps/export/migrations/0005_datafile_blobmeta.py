@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.blobs import CODES
-from corehq.sql_db.operations import HqRunPython
+
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
 
@@ -39,6 +39,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(move_datafile_to_blobmeta),
+        migrations.RunPython(move_datafile_to_blobmeta),
         migrations.DeleteModel(name='DataFile'),
     ]

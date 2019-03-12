@@ -60,7 +60,7 @@ did it run successfully?) can be performed in the context of a Django migration.
     from django.core.management import call_command
     from django.db import migrations
 
-    from corehq.sql_db.operations import HqRunPython
+
 
     COUNT_ITEMS_TO_BE_MIGRATED = "SELECT COUNT(*) FROM ..."
     GIT_COMMIT_WITH_MANAGEMENT_COMMAND = "TODO change this"
@@ -122,7 +122,7 @@ did it run successfully?) can be performed in the context of a Django migration.
         ]
 
         operations = [
-            HqRunPython(_assert_migrated, migrations.RunPython.noop)
+            migrations.RunPython(_assert_migrated, migrations.RunPython.noop)
         ]
 
 
