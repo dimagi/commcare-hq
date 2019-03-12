@@ -3,12 +3,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db.migrations import Migration
-
-from corehq.sql_db.operations import HqRunSQL
+from django.db import migrations
 
 
-class Migration(Migration):
+
+
+class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
@@ -16,7 +16,7 @@ class Migration(Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP INDEX CONCURRENTLY IF EXISTS form_processor_commcarecasesql_case_uuid_c24829d3eeac14d_like",
             "SELECT 1",
         ),

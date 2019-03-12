@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.apps.smsbillables.management.commands.bootstrap_icds_gateway import bootstrap_icds_gateway
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def create_icds_rates(apps, schema_editor):
@@ -19,5 +19,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        HqRunPython(create_icds_rates),
+        migrations.RunPython(create_icds_rates),
     }
