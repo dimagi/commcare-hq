@@ -39,7 +39,7 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from .export import get_writer
+from couchexport.export import get_writer
 import six
 from six.moves import zip
 from six.moves import range
