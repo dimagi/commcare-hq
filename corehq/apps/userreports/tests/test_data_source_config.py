@@ -456,6 +456,18 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
         with self.assertRaises(BadSpecError):
             bad_config.validate()
 
+    def test_no_pk_attribute(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.sql_settings.primary_key = ['doc_id', 'laugh_sound']
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_missing_pk_column(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.sql_settings.primary_key = ['doc_id', 'no_exist']
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
 
 class IndicatorNamedFilterTest(SimpleTestCase):
 
