@@ -57,5 +57,4 @@ branches:
   #- jls/log-media-map-app-id # Jenny March 7
   - mk-434 # MK March 12
   - user-filters-qa  # Gabriella March 13
-  - dmr/kill-old-exports  # Danny March 13
 submodules: {}
