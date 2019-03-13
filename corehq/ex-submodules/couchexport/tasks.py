@@ -5,7 +5,7 @@ from unidecode import unidecode
 from celery.task import task
 import zipfile
 from couchexport.files import Temp
-from couchexport.models import Format, ExportSchema, GroupExportConfiguration
+from couchexport.models import Format, ExportSchema
 import tempfile
 import os
 
