@@ -28,7 +28,7 @@ from corehq.apps.translations.app_translations.download import (
     get_module_rows,
     get_form_question_rows,
     get_bulk_app_sheet_rows,
-    get_bulk_multimedia_sheet_rows,
+    get_bulk_app_single_sheet_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
@@ -94,32 +94,18 @@ def download_bulk_ui_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
+    lang = request.GET.get('lang')
     app = get_app(domain, app_id)
-    headers = get_bulk_app_sheet_headers(app)
-    rows = get_bulk_app_sheet_rows(app)
+    headers = get_bulk_app_sheet_headers(app, lang=lang)
+    rows = get_bulk_app_single_sheet_rows(app, lang) if lang else get_bulk_app_sheet_rows(app)
+
     temp = io.BytesIO()
     data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
-    filename = '{app_name} v.{app_version} - App Translations'.format(
-        app_name=app.name,
-        app_version=app.version)
-    return export_response(temp, Format.XLS_2007, filename)
-
-
-@require_can_edit_apps
-def download_bulk_multimedia_translations(request, domain, app_id):
-    lang = request.GET.get('lang')
-    app = get_app(domain, app_id)
-
-    headers = get_bulk_app_sheet_headers(app, lang=lang)
-    rows = get_bulk_multimedia_sheet_rows(lang, app)
-
-    temp = io.BytesIO()
-    export_raw(headers, [(headers[0][0], rows)], temp)
-    filename = '{app_name} v.{app_version} - Multimedia Translations {lang}'.format(
+    filename = '{app_name} v.{app_version} - App Translations{lang}'.format(
         app_name=app.name,
         app_version=app.version,
-        lang=lang)
+        lang=' ' + lang if lang else '')
     return export_response(temp, Format.XLS_2007, filename)
 
 

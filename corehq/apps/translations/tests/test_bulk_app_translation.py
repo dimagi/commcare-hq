@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheet_rows,
-    get_bulk_multimedia_sheet_rows,
+    get_bulk_app_single_sheet_rows,
     get_form_question_rows,
     get_module_case_list_form_rows,
     get_module_rows,
@@ -679,8 +679,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             self.assertEqual(actual_sheet, expected_sheet)
         self.assertEqual(actual_workbook, self.expected_workbook)
 
-    def test_bulk_multimedia_sheet_rows(self):
-        self.assertListEqual(get_bulk_multimedia_sheet_rows(self.app.langs[0], self.app), [
+    def test_bulk_app_single_sheet_rows(self):
+        self.assertListEqual(get_bulk_app_single_sheet_rows(self.app.langs[0], self.app), [
             ['module1', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None],
             ['module1', 'name', 'list', 'Name'], ['module1', 'name', 'detail', 'Name'],
             ['module1_form1', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None],

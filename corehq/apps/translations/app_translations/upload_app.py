@@ -105,6 +105,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     if expected_headers is None:
         return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
 
+    # TODO: display a friendlier error message if user mixed up the two types of uploads (single vs multi sheet)
     num_required_headers = 0
     if is_modules_and_forms_sheet(sheet):
         num_required_headers = 2    # module or form, sheet name
