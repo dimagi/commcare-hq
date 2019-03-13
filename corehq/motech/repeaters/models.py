@@ -778,9 +778,15 @@ class RepeatRecord(Document):
     def attempt_forward_now(self):
         from corehq.motech.repeaters.tasks import process_repeat_record
 
-        if self.next_check > datetime.utcnow():
-            # self is already in the queue, or it is not ready to be enqueued
+        def is_ready():
+            return self.next_check < datetime.utcnow()
+
+        def already_processed():
+            return self.succeeded or self.cancelled or self.next_check is None
+
+        if already_processed() or not is_ready():
             return
+
         # Set the next check to happen an arbitrarily long time from now so
         # if something goes horribly wrong with the delayed task it will not
         # be lost forever. A check at this time is expected to occur rarely,
