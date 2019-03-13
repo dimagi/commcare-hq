@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.xform import ItextValue, ItextOutput
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.apps.translations.app_translations.utils import (
     get_form_sheet_name,
     get_menu_row,
@@ -25,7 +25,8 @@ from corehq.apps.translations.app_translations.utils import (
 
 
 
-def get_bulk_multimedia_sheet_rows(lang, app):
+# TODO: rename? this returns a dict of worksheets, not just rows
+def get_bulk_app_single_sheet_rows(app, lang):
     rows = []
     for module_index, module in enumerate(app.modules):
         prefix = [get_module_sheet_name(module)]
@@ -51,9 +52,10 @@ def get_bulk_multimedia_sheet_rows(lang, app):
             for row in get_form_question_rows([lang], form):
                 rows.append(prefix + row)
 
-    return rows
+    return OrderedDict({SINGLE_SHEET_NAME: rows})
 
 
+# TODO: rename? this returns a dict of worksheets, not just rows
 def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
     """
     Data rows for bulk app translation download
