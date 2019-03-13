@@ -46,7 +46,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
 
     if count_only:
         return query.count()
-    user_ids = [u['_id'] for u in query.source(['_id']).run().hits]
+    user_ids = query.scroll_ids()
     return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
 
 
