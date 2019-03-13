@@ -131,9 +131,18 @@ class AppManagerTest(TestCase):
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']
         m1 = self.app.modules[1].name['en']
-        self.app.rearrange_modules(0, 1)
+        self.app.rearrange_modules(1, 0)
         self.assertEqual(self.app.modules[0].name['en'], m1)
         self.assertEqual(self.app.modules[1].name['en'], m0)
+
+    def testRearrangeModuleswithChildren(self):
+        m0, m1, m2 = self.app.modules
+        self.app.modules[2].root_module_id = m1.unique_id
+        self.app.rearrange_modules(1, 0)
+        # m2 is a child of m1, so when m1 moves to to the top, m2 should follow
+        self.assertEqual(self.app.modules[0].name['en'], m1.name['en'])
+        self.assertEqual(self.app.modules[1].name['en'], m2.name['en'])
+        self.assertEqual(self.app.modules[2].name['en'], m0.name['en'])
 
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
