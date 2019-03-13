@@ -25,18 +25,6 @@ from corehq.apps.translations.app_translations.utils import (
 
 
 
-def get_bulk_multimedia_sheet_headers(lang):
-    return (('translations', (
-        'menu or form',
-        'case_property',         # modules only
-        'detail or label',       # detail type (module) or question label (form)
-        lang,                    # localized text
-        'image',
-        'audio',
-        'video',
-    )),)
-
-
 def get_bulk_multimedia_sheet_rows(lang, app):
     rows = []
     for module_index, module in enumerate(app.modules):

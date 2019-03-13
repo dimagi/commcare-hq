@@ -24,7 +24,6 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheet_rows,
-    get_bulk_multimedia_sheet_headers,
     get_bulk_multimedia_sheet_rows,
     get_form_question_rows,
     get_module_case_list_form_rows,
@@ -35,7 +34,7 @@ from corehq.apps.translations.app_translations.upload_app import (
     _remove_description_from_case_property,
 )
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
@@ -77,7 +76,8 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
-            messages = process_bulk_app_translation_upload(self.app, workbook)
+            expected_headers = get_bulk_app_sheet_headers(self.app)
+            messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -96,7 +96,8 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         with io.open(self.get_path(name, "xlsx"), 'rb') as f:
             workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
-            messages = process_bulk_app_translation_upload(self.app, workbook)
+            expected_headers = get_bulk_app_sheet_headers(self.app)
+            messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -579,10 +580,10 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     maxDiff = None
 
     excel_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'icon_filepath_en',
-                                        'audio_filepath_en', 'unique_id')),
-        ('module1', ('case_property', 'list_or_detail', 'default_en')),
-        ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'image_en',
+                                        'audio_en', 'unique_id')),
+        ('menu1', ('case_property', 'list_or_detail', 'default_en')),
+        ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en'))
     )
 
     excel_data = (
@@ -629,9 +630,9 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['module1_form1', ['label', 'default_en', 'audio_en', 'image_en', 'video_en']]
         ])
 
-        self.assertEqual(get_bulk_multimedia_sheet_headers('fra'),
-            (('translations', ('menu or form', 'case_property', 'detail or label',
-                               'fra', 'image', 'audio', 'video')),))
+        self.assertEqual(get_bulk_app_sheet_headers(self.app, lang='fra'),
+            ((SINGLE_SHEET_NAME, ('menu_or_form', 'case_property', 'list_or_detail', 'label',
+                                  'default_fra', 'image_fra', 'audio_fra', 'video_fra')),))
 
     def test_module_case_list_form_rows(self):
         app = AppFactory.case_list_form_app_factory().app
