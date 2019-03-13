@@ -36,18 +36,11 @@ class DataSourceConfigurationCitusDBTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.data_source)
         if not cls.adapter.session_helper.is_citus_db:
             raise SkipTest("Test only applicable when using CitusDB: {}".format(cls.adapter.session_helper.engine))
-
-        try:
-            cls.adapter.rebuild_table()
-        except NotSupportedError:
-            # cleanup in case or error caused by bad citus configuration
-            cls.adapter.engine.execute("DROP TABLE IF EXISTS \"%s\" CASCADE;" % cls.adapter.get_table().name)
-            raise
+        cls.adapter.build_table()
 
     def tearDown(self):
         self.adapter.session_helper.Session.remove()
-        table = self.adapter.get_table()
-        self.adapter.engine.execute("DROP TABLE \"%s\" CASCADE;" % table.name)
+        self.adapter.drop_table()
         self.data_source.delete()
         super(DataSourceConfigurationCitusDBTest, self).tearDown()
 

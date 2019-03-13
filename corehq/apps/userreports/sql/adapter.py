@@ -133,10 +133,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
+            table = self.get_table()
             if self.config.sql_settings.partition_config:
-                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=self.get_table().name))
+                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=table.name))
             else:
-                self.get_table().drop(connection, checkfirst=True)
+                table.drop(connection, checkfirst=True)
+            metadata.remove(table)
 
     @unit_testing_only
     def clear_table(self):
@@ -278,6 +280,7 @@ def _custom_index_name(table_name, column_ids):
 def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
+        metadata.remove(table)
         table.create(connection)
 
 
