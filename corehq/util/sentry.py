@@ -58,7 +58,7 @@ def _get_rate_limit_key(exc_info):
         package, key = RATE_LIMIT_BY_PACKAGE[exc_name]
         frame_summaries = traceback.extract_tb(tb)
         for frame in frame_summaries:
-            if frame.filename.startswith(package):
+            if frame[0].startswith(package): # filename
                 return key
 
 

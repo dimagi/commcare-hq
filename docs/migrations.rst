@@ -86,4 +86,4 @@ to ensure we can rebuild the view without issue.
 Migration Patterns and Best Practices
 -------------------------------------
 
-- `Auto-Managed Migration Pattern <migration_command_pattern>`_.
+- :ref:`auto-managed-migration-pattern`

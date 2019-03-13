@@ -561,13 +561,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     notification_emails=['jemord']
 )
 
-EXPORT_NO_SORT = StaticToggle(
-    'export_no_sort',
-    'Do not sort exports',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -1735,4 +1728,12 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'Enable uploading a subset of translations in the UI Translations Excel upload',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )
