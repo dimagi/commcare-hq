@@ -47,6 +47,8 @@ DATABASES.update({
         'PORT': '5601',
         'TEST': {
             'SERIALIZE': False,
+            # this ensures the master gets created / destroyed before the workers
+            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker1:5432'
@@ -61,6 +63,7 @@ DATABASES.update({
         'PORT': '5602',
         'TEST': {
             'SERIALIZE': False,
+            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker2:5432'

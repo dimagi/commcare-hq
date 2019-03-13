@@ -121,6 +121,7 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
+            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker'
     },
@@ -134,6 +135,7 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
+            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker'
     },
