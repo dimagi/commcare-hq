@@ -232,7 +232,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
             if not loc_type.administrative
         ]
-        return super(SiteCodeToLocationCache, self).__init__(domain)
+        super(SiteCodeToLocationCache, self).__init__(domain)
 
     def lookup(self, site_code):
         """
