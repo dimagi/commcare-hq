@@ -67,7 +67,8 @@ def soft_assert(to=None, notify_admins=False,
 
     """
 
-    if isinstance(to, six.string_types):
+    assert not isinstance(to, bytes)
+    if isinstance(to, six.text_type):
         to = [to]
 
     if to is None:

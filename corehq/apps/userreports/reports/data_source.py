@@ -4,6 +4,7 @@ from corehq.apps.userreports.const import UCR_SQL_BACKEND, DATA_SOURCE_TYPE_STAN
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 
@@ -25,6 +26,7 @@ class ConfigurableReportDataSource(object):
             self._config_id = self._config._id
         else:
             assert isinstance(config_or_config_id, six.string_types)
+            soft_assert_type_text(config_or_config_id)
             self._config = None
             self._config_id = config_or_config_id
 
