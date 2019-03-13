@@ -15,7 +15,11 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import get_missing_cols, get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import (
+    get_bulk_app_sheet_headers,
+    get_missing_cols,
+    get_unicode_dicts,
+)
 
 
 
@@ -165,7 +169,8 @@ def update_app_from_form_sheet(app, sheet):
                   " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
             ))
     # Update the translations
-    missing_cols = get_missing_cols(app, sheet)
+    headers = get_bulk_app_sheet_headers(app)
+    missing_cols = get_missing_cols(app, sheet, headers)
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())

@@ -7,8 +7,8 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
 
@@ -34,7 +34,7 @@ def get_app_translation_workbook(file_or_filename):
     return workbook, msgs
 
 
-def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None):
     '''
     Returns lists representing the expected structure of bulk app translation
     Excel file uploads and downloads.
@@ -50,10 +50,20 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
     (form or module) and return True if the module/form should be excluded
     from the returned list
     '''
-    languages_list = ['default_' + l for l in app.langs]
-    audio_lang_list = ['audio_' + l for l in app.langs]
-    image_lang_list = ['image_' + l for l in app.langs]
-    video_lang_list = ['video_' + l for l in app.langs]
+    langs = [lang] if lang else app.langs
+
+    default_lang_list = ['default_' + l for l in langs]
+    audio_lang_list = ['audio_' + l for l in langs]
+    image_lang_list = ['image_' + l for l in langs]
+    video_lang_list = ['video_' + l for l in langs]
+    lang_list = default_lang_list + image_lang_list + audio_lang_list + video_lang_list
+
+    if lang:
+        return ((SINGLE_SHEET_NAME, (
+            'menu or form',
+            'case_property',         # modules only
+            'detail or label',       # detail type (module) or question label (form)
+        ) + tuple(lang_list)),)
 
     headers = []
 
@@ -63,9 +73,9 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
         get_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
-            languages=languages_list,
-            media_image=['icon_filepath_%s' % l for l in app.langs],
-            media_audio=['audio_filepath_%s' % l for l in app.langs],
+            languages=default_lang_list,
+            media_image=['icon_filepath_%s' % l for l in langs],
+            media_audio=['audio_filepath_%s' % l for l in langs],
             unique_id='unique_id',
         )
     ])
@@ -75,7 +85,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
             continue
 
         sheet_name = get_module_sheet_name(module)
-        headers.append([sheet_name, ['case_property', 'list_or_detail'] + languages_list])
+        headers.append([sheet_name, ['case_property', 'list_or_detail'] + default_lang_list])
 
         for form_index, form in enumerate(module.get_forms()):
             if form.form_type == 'shadow_form':
@@ -86,7 +96,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
             sheet_name = get_form_sheet_name(form)
             headers.append([
                 sheet_name,
-                ["label"] + languages_list + audio_lang_list + image_lang_list + video_lang_list
+                ["label"] + lang_list
             ])
     return headers
 
@@ -142,8 +152,11 @@ def is_modules_and_forms_sheet(sheet):
     return sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME
 
 
-def get_missing_cols(app, sheet):
-    headers = get_bulk_app_sheet_headers(app)
+def is_single_sheet(sheet):
+    return sheet.worksheet.title == SINGLE_SHEET_NAME
+
+
+def get_missing_cols(app, sheet, headers):
     expected_sheets = {h[0]: h[1] for h in headers}
     expected_columns = expected_sheets.get(sheet.worksheet.title, None)
     return set(expected_columns) - set(sheet.headers)

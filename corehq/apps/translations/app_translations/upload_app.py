@@ -20,6 +20,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
+    is_single_sheet,
     update_translation_dict,
 )
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
@@ -51,7 +52,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
 
 
-def process_bulk_app_translation_upload(app, workbook):
+def process_bulk_app_translation_upload(app, workbook, expected_headers):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -64,16 +65,16 @@ def process_bulk_app_translation_upload(app, workbook):
 
     processed_sheets = set()
     for sheet in workbook.worksheets:
-        error = _check_for_sheet_error(app, sheet, processed_sheets=processed_sheets)
+        error = _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
         if error:
-            msgs.append(messages.error, error)
+            msgs.append((messages.error, error))
             continue
 
         processed_sheets.add(sheet.worksheet.title)
 
-        warnings = _check_for_sheet_warnings(app, sheet)
+        warnings = _check_for_sheet_warnings(app, sheet, expected_headers)
         for warning in warnings:
-            msgs.append(messages.warning, warning)
+            msgs.append((messages.warning, warning))
 
         if is_modules_and_forms_sheet(sheet):
             ms = update_app_from_modules_and_forms_sheet(app, sheet)
@@ -84,6 +85,9 @@ def process_bulk_app_translation_upload(app, workbook):
         elif is_form_sheet(sheet):
             ms = update_app_from_form_sheet(app, sheet)
             msgs.extend(ms)
+        elif is_single_sheet(sheet):
+            # TODO
+            pass
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -91,58 +95,53 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def _check_for_sheet_error(app, sheet, processed_sheets=Ellipsis):
-    headers = get_bulk_app_sheet_headers(app)
+def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     expected_sheets = {h[0]: h[1] for h in headers}
 
     if sheet.worksheet.title in processed_sheets:
         return _('Sheet "%s" was repeated. Only the first occurrence has been processed.') % sheet.worksheet.title
 
-    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
-    if expected_columns is None:
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
+    if expected_headers is None:
         return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
 
+    num_required_headers = 0
     if is_modules_and_forms_sheet(sheet):
-        if expected_columns[1] not in sheet.headers:
-            return (_('Skipping sheet "%s", could not find "%s" column')
-                % (sheet.worksheet.title, expected_columns[1]))
+        num_required_headers = 2    # module or form, sheet name
     elif is_module_sheet(sheet):
-        if (expected_columns[0] not in sheet.headers or expected_columns[1] not in sheet.headers):
-            return (_('Skipping sheet "%s", could not find case_property or list_or_detail column.')
-                % sheet.worksheet.title)
+        num_required_headers = 2    # case property, list or detail
     elif is_form_sheet(sheet):
-        if expected_columns[0] not in sheet.headers:
-            return _('Skipping sheet "%s", could not find label column') % sheet.worksheet.title
+        num_required_headers = 1    # label
+    elif is_single_sheet(sheet):
+        num_required_headers = 3    # menu or form, case property, list or detail or label
+
+    expected_required_headers = tuple(expected_headers[:num_required_headers])
+    actual_required_headers = tuple(sheet.headers[:num_required_headers])
+    if expected_required_headers != actual_required_headers:
+        return _('Skipping sheet {title}: expected first columns to be {expected}').format(
+            title=sheet.worksheet.title,
+            expected=", ".join(expected_required_headers),
+        )
 
 
-def _check_for_sheet_warnings(app, sheet):
+def _check_for_sheet_warnings(app, sheet, headers):
     warnings = []
-    headers = get_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = expected_sheets.get(sheet.worksheet.title, None)
+    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
-    missing_cols = get_missing_cols(app, sheet)
+    missing_cols = get_missing_cols(app, sheet, headers)
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
             'Sheet will be processed but the following translations will be unchanged: %s')
             % (sheet.worksheet.title, " ,".join(missing_cols))))
 
-    extra_cols = set(sheet.headers) - set(expected_columns)
+    extra_cols = set(sheet.headers) - set(expected_headers)
     if len(extra_cols) > 0:
         warnings.append(_('Sheet "%s" has unrecognized columns. '
             'Sheet will be processed but ignoring the following columns: %s')
             % (sheet.worksheet.title, " ,".join(extra_cols)))
 
     return warnings
-
-
-def process_bulk_multimedia_translation_upload(app, workbook, lang):
-    msgs = []
-    # TODO: validate header is the right language code
-    msgs.append(
-        (messages.success, _("Multimedia Translations Updated in {}!".format(lang)))
-    )
-    return msgs
 
 
 def update_app_from_modules_and_forms_sheet(app, sheet):

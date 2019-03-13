@@ -27,13 +27,11 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.app_translations.download import (
     get_module_rows,
     get_form_question_rows,
-    get_bulk_multimedia_sheet_headers,
     get_bulk_app_sheet_rows,
     get_bulk_multimedia_sheet_rows,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
-    process_bulk_multimedia_translation_upload,
     validate_bulk_app_translation_upload,
 )
 from corehq.apps.translations.utils import update_app_translations_from_trans_dict
@@ -113,7 +111,7 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     app = get_app(domain, app_id)
 
-    headers = get_bulk_multimedia_sheet_headers(lang)
+    headers = get_bulk_app_sheet_headers(app, lang=lang)
     rows = get_bulk_multimedia_sheet_rows(lang, app)
 
     temp = io.BytesIO()
@@ -125,42 +123,24 @@ def download_bulk_multimedia_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, filename)
 
 
-# TODO: DRY up with upload_bulk_app_translations below
-@no_conflict_require_POST
-@require_can_edit_apps
-@get_file("bulk_upload_file")
-def upload_bulk_multimedia_translations(request, domain, app_id):
-    lang = request.POST.get('language')
-    app = get_app(domain, app_id)
-    workbook, msgs = get_app_translation_workbook(request.file)
-    if workbook:
-        msgs = process_bulk_multimedia_translation_upload(app, workbook, lang)
-        app.save()
-    for msg in msgs:
-        # Add the messages to the request object.
-        # msg[0] should be a function like django.contrib.messages.error .
-        # msg[1] should be a string.
-        msg[0](request, msg[1])
-
-    # In v2, languages is the default tab on the settings page
-    view_name = 'app_settings'
-    return HttpResponseRedirect(
-        reverse(view_name, args=[domain, app_id])
-    )
-
-
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
+    lang = request.POST.get('language')
     validate = request.POST.get('validate')
+
+    # TODO: either allow validation for single language or error when lang and validate
+    # (and make the UI hide the validation checkbox when a language is selected)
+
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)
     if workbook:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email)
         else:
-            msgs = process_bulk_app_translation_upload(app, workbook)
+            headers = get_bulk_app_sheet_headers(app, lang=lang)
+            msgs = process_bulk_app_translation_upload(app, workbook, headers)
             app.save()
     for msg in msgs:
         # Add the messages to the request object.
@@ -169,7 +149,6 @@ def upload_bulk_app_translations(request, domain, app_id):
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page
-    view_name = 'app_settings'
     return HttpResponseRedirect(
-        reverse(view_name, args=[domain, app_id])
+        reverse('app_settings', args=[domain, app_id])
     )
