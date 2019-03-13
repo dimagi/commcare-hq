@@ -34,12 +34,10 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     """
     role_id = user_filters.get('role_id', None)
     search_string = user_filters.get('search_string', None)
+    if not role_id and not search_string and not count_only:
+        return get_all_commcare_users_by_domain(domain)
+
     query = UserES().domain(domain).mobile_users()
-    if not role_id and not search_string:
-        if count_only:
-            query.count()
-        else:
-            return get_all_commcare_users_by_domain(domain)
 
     if role_id:
         query = query.role_id(role_id)
