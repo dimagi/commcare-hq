@@ -143,13 +143,25 @@ def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
 
 
 def get_user_docs_by_username(usernames):
+    return [
+        ret['doc'] for ret in _get_user_results_by_username(usernames)
+    ]
+
+
+def get_existing_usernames(usernames):
+    return [
+        ret['key'] for ret in _get_user_results_by_username(usernames, include_docs=False)
+    ]
+
+
+def _get_user_results_by_username(usernames, include_docs=True):
     from corehq.apps.users.models import CouchUser
-    return [res['doc'] for res in CouchUser.get_db().view(
+    return CouchUser.get_db().view(
         'users/by_username',
         keys=list(usernames),
         reduce=False,
-        include_docs=True,
-    ).all()]
+        include_docs=include_docs,
+    ).all()
 
 
 def get_all_user_ids():
