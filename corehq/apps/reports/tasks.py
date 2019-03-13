@@ -258,6 +258,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
     try:
+        raise Exception
         content = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
             notes=cleaned_data['notes'], once=once

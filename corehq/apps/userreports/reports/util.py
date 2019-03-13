@@ -63,6 +63,7 @@ class ReportExport(object):
         :param file_path: The path to the file the report should be saved
         :param format_: The format of the resulting export
         """
+        print("(PV) util 2")
         return export_from_tables(self.get_table(), file_path, format_)
 
     @memoized

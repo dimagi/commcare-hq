@@ -516,11 +516,16 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(mock_request)
         LocationAccessMiddleware.apply_location_access(mock_request)
+        print("(PV) in models 1")
 
         try:
+            print("(PV) in models 2")
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
+            print("(PV) in models 3")
             email_response = dispatch_func(render_as='email')
+            print("(PV) in models 4")
             if email_response.status_code == 302:
+                print("(PV) in models 5")
                 return ReportContent(
                     _(
                         "We are sorry, but your saved report '%(config_name)s' "
@@ -537,6 +542,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 dispatch_func(render_as='excel') if attach_excel else None,
             )
         except PermissionDenied:
+            print("(PV) in models 6")
             return ReportContent(
                 _(
                     "We are sorry, but your saved report '%(config_name)s' "
@@ -555,6 +561,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 None,
             )
         except Http404:
+            print("(PV) in models 7")
             return ReportContent(
                 _(
                     "We are sorry, but your saved report '%(config_name)s' "
@@ -567,6 +574,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 None,
             )
         except UnsupportedSavedReportError:
+            print("(PV) in models 8")
             return ReportContent(
                 _(
                     "We are sorry, but your saved report '%(config_name)s' "

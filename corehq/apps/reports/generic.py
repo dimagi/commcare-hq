@@ -644,8 +644,12 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
+        # Could use tempfile instead of BytesIO so it doesnt try to keep this in memory
+        print("(PV) generic 1")
         file = io.BytesIO()
+        print("(PV) generic 2")
         export_from_tables(self.export_table, file, self.export_format)
+        print("(PV) generic 3")
         return file
 
     @property

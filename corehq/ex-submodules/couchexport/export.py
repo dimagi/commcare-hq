@@ -129,10 +129,15 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
+    print("(PV) Export 1")
     tables = FormattedRow.wrap_all_rows(tables)
+    print("(PV) Export 2")
     writer = get_writer(format)
+    print("(PV) Export 3")
     writer.open(tables, file, max_column_size=max_column_size)
+    print("(PV) Export 4")
     writer.write(tables, skip_first=True)
+    print("(PV) Export 5")
     writer.close()
 
 
