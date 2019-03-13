@@ -22,7 +22,7 @@ ghdiff==0.4
 gunicorn
 lxml~=4.3.0
 kafka-python~=1.4
-kombu==4.2.2.post1  # Remove once fix is released for https://github.com/celery/kombu/issues/1006
+kombu!=4.3.0
 mock==2.0.0
 Pillow~=5.2
 phonenumberslite~=8.8
