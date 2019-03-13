@@ -1351,6 +1351,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
+    exportable_all = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1475,6 +1476,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def user_ids(self):
+        # This could be returned in chunks and maybe still use the same _report_data fn
         return [u["user_id"] for u in self.users_to_iterate]
 
     def es_last_submissions(self):
@@ -1734,6 +1736,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
+    def get_all_rows(self):
+        # call this function to generate the excel for emails
+        # Needs to return same info as rows but paginate it
+        # Pagination in ES is done via scroll queries (so .scroll instead of .run at the end of the query)
+        #
+        pass
+
     def _report_data(self):
         export = self.rendered_as in ('export', 'email')
         avg_datespan = self.avg_datespan
@@ -1741,6 +1750,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(self.users_to_iterate)
         user_ids = self.user_ids
 
+        # Database is getting called here
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
                 self.domain, avg_datespan, user_ids=user_ids, export=export

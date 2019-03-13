@@ -648,7 +648,9 @@ class GenericReportView(object):
         print("(PV) generic 1")
         file = io.BytesIO()
         print("(PV) generic 2")
-        export_from_tables(self.export_table, file, self.export_format)
+        export_table = self.export_table
+        export_format = self.export_format
+        export_from_tables(export_table, file, export_format)
         print("(PV) generic 3")
         return file
 
@@ -993,19 +995,25 @@ class GenericTabularReport(GenericReportView):
         2. cell['sort_key']
         3. str(cell)
         """
+        print("(PV) export_table 1")
         headers = self.headers
-
+        print("(PV) export_table 2")
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
                     return val.get('raw', val.get('sort_key', val))
                 return self._strip_tags(val)
 
+            print("(PV) export_table 6")
             return [_unformat_val(val) for val in row]
 
+        print("(PV) export_table 3")
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in self.export_rows]
+        print("(PV) export_table 4")
+        rows = (_unformat_row(row) for row in self.export_rows)
+        print("(PV) export_table 5")
         table.extend(rows)
+        print("(PV) export_table 7")
         if self.total_row:
             table.append(_unformat_row(self.total_row))
         if self.statistics_rows:
