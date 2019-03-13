@@ -509,6 +509,9 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
 
+# https://github.com/celery/celery/issues/4817
+CELERY_BROKER_HEARTBEAT = 0
+
 CELERY_RESULT_BACKEND = 'django-db'
 
 CELERY_TASK_ANNOTATIONS = {
