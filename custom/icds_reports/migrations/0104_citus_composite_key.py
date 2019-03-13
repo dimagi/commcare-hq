@@ -6,11 +6,11 @@ from django.apps import apps
 from django.db import connections, migrations
 from django.conf import settings
 
-from corehq.sql_db.connections import get_icds_ucr_db_alias
+from corehq.sql_db.routers import db_for_read_write
 
 
 def _citus_composite_key_sql(model_cls):
-    connection = connections[get_icds_ucr_db_alias()]
+    connection = connections[db_for_read_write(model_cls)]
     with connection.schema_editor() as schema_editor:
         pkey_name = '{}_pkey'.format(model_cls._meta.db_table)
         fields = list(model_cls._meta.unique_together)[0]
