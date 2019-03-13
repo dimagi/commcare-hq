@@ -272,43 +272,48 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if True: # getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
+            print("(PV): tasks 0")
             report_state = {
                 'request': request_data,
                 'request_params': json_request(request_data['GET']),
                 'domain': domain,
                 'context': {},
             }
+            print("(PV): tasks 1")
             export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
+            print("(PV): tasks 2")
         else:
             self.retry(exc=er)
 
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
-    print("(PV): Doing an excel report instead")
+    print("(PV): tasks 3")
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
-
+    print("(PV): tasks 4")
     # need to set request
     setattr(report.request, 'REQUEST', {})
-
+    print("(PV): tasks 5")
     file = report.excel_response
+    print("(PV): tasks 6")
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
-
+    print("(PV): tasks 7")
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
-
+    print("(PV): tasks 8")
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
 def _send_email(user, report, hash_id, recipient):
+    print("(PV): tasks 9")
     domain = report.domain or user.get_domains()[0]
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
-
+    print("(PV): tasks 10")
     send_report_download_email(report.name, recipient, link)
 
 
