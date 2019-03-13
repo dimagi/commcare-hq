@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-05 19:59+0000\n"
+"POT-Creation-Date: 2019-03-12 19:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -633,15 +633,15 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:390
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:376
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:424
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:410
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:429
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:415
 msgid "No new changes!"
 msgstr ""
 
@@ -683,19 +683,19 @@ msgstr ""
 msgid "Please enter a version to compare"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:51
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:52
 msgid "Filter properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:105
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:106
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:14
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:15
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:135
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:136
 msgid "View All Forms"
 msgstr ""
 
@@ -2020,7 +2020,7 @@ msgstr ""
 msgid "Receive must have a Destination Case."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Model Iteration ID Query"
 msgstr ""
 
@@ -2368,7 +2368,7 @@ msgstr ""
 msgid "Command Bar"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:27
+#: corehq/apps/app_manager/static/app_manager/js/widgets_v4.js:32
 msgid "no comment"
 msgstr ""
 
@@ -2799,19 +2799,19 @@ msgstr ""
 msgid "Please wait and do not navigate away..."
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show All References"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:18
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:25
 msgid "Show Only Missing References"
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
 msgid "Replace "
 msgstr ""
 
-#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:221
+#: corehq/apps/hqmedia/static/hqmedia/js/hqmedia.reference_controller.js:228
 msgid "Upload "
 msgstr ""
 
@@ -2823,6 +2823,12 @@ msgstr ""
 
 #: corehq/apps/hqmedia/static/hqmedia/js/manage_paths_main.js:43
 msgid "No items were found to update."
+msgstr ""
+
+#: corehq/apps/hqmedia/static/hqmedia/js/references_main.js:23
+msgid ""
+"Error loading, please refresh the page. If this persists, please report an "
+"issue."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:7
@@ -2839,11 +2845,11 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:38
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:46
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:69
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:83
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3084,7 +3090,7 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:345
+#: corehq/apps/reports/static/reports/js/data_corrections.js:347
 msgid "Select a value"
 msgstr ""
 

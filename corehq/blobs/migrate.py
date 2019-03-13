@@ -53,13 +53,13 @@ models' attachments to the blob database:
    Then modify the new migration, adding an operation:
    ```
    operations = [
-       HqRunPython(*assert_migration_complete("<your_slug>"))
+       migrations.RunPython(*assert_migration_complete("<your_slug>"))
    ]
    ```
    Don't forget to put
    ```
    from corehq.blobs.migrate import assert_migration_complete
-   from corehq.sql_db.operations import HqRunPython
+   
    ```
    at the top of the file.
 

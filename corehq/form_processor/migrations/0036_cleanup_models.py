@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import models, migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 NOOP = 'SELECT 1'
 
@@ -25,7 +25,7 @@ def migrate_field_to_uuid(model, field, unique=True, db_index=True, null=False):
     forward = _alter_to_uuid_sql_forawd(model, field)
     reverse = _alter_to_uuid_sql_reverse(model, field)
 
-    return HqRunSQL(
+    return migrations.RunSQL(
         forward,
         reverse,
         state_operations=[migrations.AlterField(
@@ -190,7 +190,7 @@ class Migration(migrations.Migration):
             new_name='location_id',
         ),
         # custom migration in order to support backwards migration
-        HqRunSQL(
+        migrations.RunSQL(
             'ALTER TABLE form_processor_commcarecasesql ALTER COLUMN "location_id" TYPE varchar(255)',
             'ALTER TABLE form_processor_commcarecasesql ALTER COLUMN "location_id" TYPE uuid USING location_id::uuid',
             state_operations=[
