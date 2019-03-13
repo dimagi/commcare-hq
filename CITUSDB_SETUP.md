@@ -49,7 +49,7 @@ DATABASES.update({
             'SERIALIZE': False,
         },
         'ROLE': 'citus_worker',
-        'CITUS_NODE_NAME': 'citus_worker1'
+        'CITUS_NODE_NAME': 'citus_worker1:5432'
     },
     'citus-ucr-worker2': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -63,7 +63,7 @@ DATABASES.update({
             'SERIALIZE': False,
         },
         'ROLE': 'citus_worker',
-        'CITUS_NODE_NAME': 'citus_worker2'
+        'CITUS_NODE_NAME': 'citus_worker2:5432'
     },
 })
 ```
@@ -78,12 +78,12 @@ and add the worker nodes to the master.
 **CITUS_NODE_NAME**
 
 By defaul when Django creates the test database on the master
-node it will add the worker nodes using the `HOST` field as
-the nodes host. In some cases this doesn't work e.g. if you
+node it will add the worker nodes using the `HOST` and `PORT`.
+In some cases this doesn't work e.g. if you
 are running Django outside of Docker. In this case the
 master node will not be able to access the worker nodes
 with the same hostname that Django uses. Setting `CITUS_NODE_NAME`
-will override the host for master to worker communications.
+will override the host and port for master to worker communications.
 
 ## Setting up the database
 There are two ways to do the database setup. In both cases you will need
