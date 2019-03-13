@@ -10,7 +10,6 @@ from dimagi.ext.couchdbkit import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
-import couchexport
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.blobs.mixin import BlobMixin, CODES
 from couchexport.exceptions import CustomExportValidationError
@@ -846,27 +845,6 @@ class GroupExportConfiguration(Document):
                 self.save()
             except ValueError:
                 pass
-
-    @property
-    @memoized
-    def saved_exports(self):
-        return self._saved_exports_from_configs(self.all_configs)
-
-    def _saved_exports_from_configs(self, configs):
-        exports = SavedBasicExport.view(
-            "couchexport/saved_exports",
-            keys=[json.dumps(config.index) for config in configs],
-            include_docs=True,
-            reduce=False,
-        ).all()
-        export_map = dict((json.dumps(export.configuration.index), export) for export in exports)
-        return [
-            GroupExportComponent(
-                config, export_map.get(json.dumps(config.index), None),
-                self._id, list(self.all_configs).index(config)
-            )
-            for config in configs
-        ]
 
     @property
     @memoized

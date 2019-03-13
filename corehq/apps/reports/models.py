@@ -1082,21 +1082,6 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
             if custom_export:
                 yield _rewrap(custom_export)
 
-    def exports_of_type(self, type):
-        return self._saved_exports_from_configs([
-            config for config, schema in self.all_exports if schema.type == type
-        ])
-
-    @property
-    @memoized
-    def form_exports(self):
-        return self.exports_of_type('form')
-
-    @property
-    @memoized
-    def case_exports(self):
-        return self.exports_of_type('case')
-
     @classmethod
     @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
@@ -1114,25 +1099,6 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
                 logging.error("Domain %s has more than one group export config! This is weird." % domain)
             return groups[0]
         return HQGroupExportConfiguration(domain=domain)
-
-    @classmethod
-    def add_custom_export(cls, domain, export_id):
-        group = cls.get_for_domain(domain)
-        if export_id not in group.custom_export_ids:
-            group.custom_export_ids.append(export_id)
-            group.save()
-        return group
-
-    @classmethod
-    def remove_custom_export(cls, domain, export_id):
-        group = cls.get_for_domain(domain)
-        updated = False
-        while export_id in group.custom_export_ids:
-            group.custom_export_ids.remove(export_id)
-            updated = True
-        if updated:
-            group.save()
-        return group
 
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
