@@ -160,7 +160,7 @@ def _check_celery_workers():
         expected_running, expected_stopped = parse_celery_workers(all_workers)
 
         celery = Celery()
-        celery.config_from_object(settings)
+        celery.config_from_object('django.conf:settings', namespace='CELERY')
         worker_responses = celery.control.ping(timeout=10)
         pings = parse_celery_pings(worker_responses)
 
