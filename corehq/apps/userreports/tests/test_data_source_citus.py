@@ -5,7 +5,6 @@ from datetime import datetime
 from unittest import SkipTest
 
 from django.test import TestCase
-from sqlalchemy.exc import NotSupportedError
 
 from corehq.apps.userreports.models import CitusConfig
 from corehq.apps.userreports.tests.utils import (
