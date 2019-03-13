@@ -13,13 +13,24 @@ from mock import patch
 from six.moves import zip
 
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations import (
-    process_bulk_app_translation_upload,
-    expected_bulk_app_sheet_rows,
-    expected_bulk_app_sheet_headers,
-    update_form_translations,
+    get_app_translation_workbook,
+    get_bulk_app_sheet_headers,
+    get_bulk_app_sheet_rows,
+    get_bulk_multimedia_sheet_headers,
+    get_bulk_multimedia_sheet_rows,
+    get_form_question_rows,
+    get_form_sheet_name,
+    get_menu_row,
+    get_module_case_list_form_rows,
+    get_module_rows,
+    get_module_sheet_name,
+    get_modules_and_forms_row,
     get_unicode_dicts,
+    process_bulk_app_translation_upload,
+    update_form_translations,
     read_uploaded_app_translation_file,
     _remove_description_from_case_property
 )
@@ -63,7 +74,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
             f.seek(0)
-            workbook, messages = read_uploaded_app_translation_file(f)
+            workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 
@@ -82,7 +93,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
         with io.open(self.get_path(name, "xlsx"), 'rb') as f:
-            workbook, messages = read_uploaded_app_translation_file(f)
+            workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 
@@ -569,7 +580,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
            'c480ace490edc870ae952765e8dfacec33c69fec'))),
         ('module1', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
         ('module1_form1',
-         (('What_does_this_look_like-label', 'What does this look like?', '', 'jr://file/commcare/image/data/What_does_this_look_like.png', ''),
+         (('What_does_this_look_like-label', 'What does this look like?',
+           'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
           ('no_media-label', 'No media', '', '', ''),
           ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', '')))
     )
@@ -589,9 +601,55 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             cls.expected_workbook = [{'name': ws.title, 'rows': list(ws)}
                                      for ws in wb_reader.worksheets]
 
-    def test_download(self):
-        actual_headers = expected_bulk_app_sheet_headers(self.app)
-        actual_rows = expected_bulk_app_sheet_rows(self.app)
+    def test_sheet_names(self):
+        self.assertEqual(get_module_sheet_name(self.app.modules[0]), "module1")
+        self.assertEqual(get_form_sheet_name(self.app.modules[0].forms[0]), "module1_form1")
+
+    def test_sheet_headers(self):
+        self.assertListEqual(get_bulk_app_sheet_headers(self.app), [
+            ['Modules_and_forms', ['Type', 'sheet_name', 'default_en',
+             'icon_filepath_en', 'audio_filepath_en', 'unique_id']],
+            ['module1', ['case_property', 'list_or_detail', 'default_en']],
+            ['module1_form1', ['label', 'default_en', 'audio_en', 'image_en', 'video_en']]
+        ])
+
+        self.assertEqual(get_bulk_multimedia_sheet_headers('fra'),
+            (('translations', ('menu or form', 'case_property', 'detail or label',
+                               'fra', 'image', 'audio', 'video')),))
+
+    def test_module_case_list_form_rows(self):
+        app = AppFactory.case_list_form_app_factory().app
+        self.assertEqual(get_module_case_list_form_rows(app.langs, app.modules[0]),
+                         [('case_list_form_label', 'list', 'New Case')])
+
+    def test_module_rows(self):
+        self.assertListEqual(get_module_rows(self.app.langs, self.app.modules[0]), [
+            ('name', 'list', 'Name'),
+            ('name', 'detail', 'Name'),
+        ])
+
+    def test_form_rows(self):
+        lang = self.app.langs[0]
+        form = self.app.modules[0].forms[0]
+
+        self.assertListEqual(get_menu_row([form.name.get(lang)],
+                                          [form.icon_by_language(lang)],
+                                          [form.audio_by_language(lang)]),
+                             ['Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None])
+
+        self.assertListEqual(get_form_question_rows([lang], form), [
+            ['What_does_this_look_like-label', 'What does this look like?',
+             'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''],
+            ['no_media-label', 'No media',
+             '', '', ''],
+            ['has_refs-label',
+             'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
+             '', '', ''],
+        ])
+
+    def test_bulk_app_sheet_rows(self):
+        actual_headers = get_bulk_app_sheet_headers(self.app)
+        actual_rows = get_bulk_app_sheet_rows(self.app)
 
         actual_workbook = [
             {'name': title,
@@ -603,6 +661,19 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                                                 self.expected_workbook):
             self.assertEqual(actual_sheet, expected_sheet)
         self.assertEqual(actual_workbook, self.expected_workbook)
+
+    def test_bulk_multimedia_sheet_rows(self):
+        self.assertListEqual(get_bulk_multimedia_sheet_rows(self.app.langs[0], self.app), [
+            ['module1', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None],
+            ['module1', 'name', 'list', 'Name'], ['module1', 'name', 'detail', 'Name'],
+            ['module1_form1', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None],
+            ['module1_form1', '', 'What_does_this_look_like-label', 'What does this look like?',
+             'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''],
+            ['module1_form1', '', 'no_media-label', 'No media', '', '', ''],
+            ['module1_form1', '', 'has_refs-label',
+             'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
+             '', '', ''],
+        ])
 
 
 class RenameLangTest(SimpleTestCase):
