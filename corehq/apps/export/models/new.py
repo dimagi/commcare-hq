@@ -649,13 +649,13 @@ class ExportInstanceFilters(DocumentSchema):
 
 class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
-    show_all_data = BooleanProperty(default=True)
-    show_project_data = BooleanProperty()
+    show_all_data = BooleanProperty()
+    show_project_data = BooleanProperty(default=True)
     show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE, HQUserType.DEACTIVATED])
 
 
 class ExportInstance(BlobMixin, Document):
