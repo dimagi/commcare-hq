@@ -6,7 +6,6 @@ import datetime
 import math
 from collections import defaultdict, namedtuple
 
-from django.conf import settings
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from pygooglechart import ScatterChart
 import pytz
