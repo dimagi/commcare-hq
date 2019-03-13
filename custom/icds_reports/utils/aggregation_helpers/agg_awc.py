@@ -518,7 +518,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('usage_num_add_person',),
             ('usage_num_add_pregnancy',),
             ('is_launched', "'yes'"),
-            ('aggregation_level', str(aggregation_level)),
+            ('aggregation_level', six.text_type(aggregation_level)),
             ('num_launched_states', lambda col: _launched_col(col)),
             ('num_launched_districts', lambda col: _launched_col(col)),
             ('num_launched_blocks', lambda col: _launched_col(col)),

@@ -244,7 +244,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('fully_immunized_on_time', ),
             ('fully_immunized_late', ),
             ('has_aadhar_id', ),
-            ('aggregation_level', str(aggregation_level)),
+            ('aggregation_level', six.text_type(aggregation_level)),
             ('pnc_eligible', ),
             ('height_eligible', ),
             ('wasting_moderate', ),

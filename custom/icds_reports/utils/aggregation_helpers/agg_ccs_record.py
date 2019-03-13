@@ -206,7 +206,7 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ('counsel_immediate_conception', ),
             ('counsel_accessible_postpartum_fp', ),
             ('has_aadhar_id', ),
-            ('aggregation_level', str(aggregation_level)),
+            ('aggregation_level', six.text_type(aggregation_level)),
             ('valid_all_registered_in_month', ),
             ('institutional_delivery_in_month', ),
             ('lactating_all', ),
