@@ -14,9 +14,11 @@ run_patches()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-app = Celery()
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
+from django.conf import settings  # noqa
+
+app = Celery('corehq')
+app.config_from_object('django.conf:settings')
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 django.setup()
 try:
