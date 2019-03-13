@@ -147,7 +147,8 @@ class datadog_track_errors(ContextDecorator):
         self.timer_start = None
 
     def __enter__(self):
-        self.timer_start = time.time()
+        if self.duration_buckets:
+            self.timer_start = time.time()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.duration_buckets:
