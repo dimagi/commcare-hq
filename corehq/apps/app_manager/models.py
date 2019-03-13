@@ -1453,12 +1453,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
-        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
         app = self.get_app()
 
-        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
+        if self.use_default_image_for_all and media_attr == 'media_image':
             lang = app.default_language
-        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+        if self.use_default_audio_for_all and media_attr == 'media_audio':
             lang = app.default_language
 
         media_dict = getattr(self, media_attr)
