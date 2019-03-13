@@ -5,66 +5,65 @@ from __future__ import unicode_literals
 import datetime
 import math
 from collections import defaultdict, namedtuple
+import six
+from six.moves import map, range
+from six.moves.urllib.parse import urlencode
 
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
-from pygooglechart import ScatterChart
 import pytz
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from memoized import memoized
+from pygooglechart import ScatterChart
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.es import filters
-from corehq.apps.es import cases as case_es
-from corehq.apps.es.aggregations import (
-    TermsAggregation,
-    FilterAggregation,
-    MissingAggregation,
-)
+from corehq.apps.es import cases as case_es, filters
+from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
 from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
-from corehq.apps.reports import util
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_users,
-    get_submission_counts_by_user,
-    get_completed_counts_by_user,
-    get_submission_counts_by_date,
-    get_completed_counts_by_date,
-    get_case_counts_closed_by_user,
-    get_case_counts_opened_by_user,
-    get_active_case_counts_by_owner,
-    get_total_case_counts_by_owner,
-    get_forms,
-    get_form_duration_stats_by_user,
-    get_form_duration_stats_for_users)
-from corehq.apps.reports.exceptions import TooMuchDataError
-from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import (
-    ExpandedMobileWorkerFilter as EMWF
-)
-from corehq.apps.reports.standard import ProjectReportParametersMixin, \
-    DatespanMixin, ProjectReport
-from corehq.apps.reports.filters.forms import CompletionOrSubmissionTimeFilter, FormsByApplicationFilter
-from corehq.apps.reports.filters.select import CaseTypeFilter
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType, DataTablesColumnGroup
-from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
-from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.timezones.conversions import ServerTime, PhoneTime
+from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
-from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
-import six
-from six.moves import range
-from six.moves import map
-from six.moves.urllib.parse import urlencode
-
+from corehq.apps.reports import util
+from corehq.apps.reports.analytics.esaccessors import (
+    get_active_case_counts_by_owner,
+    get_case_counts_closed_by_user,
+    get_case_counts_opened_by_user,
+    get_completed_counts_by_date,
+    get_completed_counts_by_user,
+    get_form_counts_by_user_xmlns,
+    get_form_duration_stats_by_user,
+    get_form_duration_stats_for_users,
+    get_forms,
+    get_last_submission_time_for_users,
+    get_submission_counts_by_date,
+    get_submission_counts_by_user,
+    get_total_case_counts_by_owner,
+)
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesColumnGroup,
+    DataTablesHeader,
+    DTSortType,
+)
+from corehq.apps.reports.exceptions import BadRequestError, TooMuchDataError
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.forms import (
+    CompletionOrSubmissionTimeFilter,
+    FormsByApplicationFilter,
+)
+from corehq.apps.reports.filters.select import CaseTypeFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.models import HQUserType
+from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
+from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
 
 TOO_MUCH_DATA = ugettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
