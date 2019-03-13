@@ -150,14 +150,15 @@ def update_calculated_properties():
     all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
-        if not Domain.get_by_name(dom):
+        domain_obj = Domain.get_by_name(dom)
+        if not domain_obj:
             send_to_elasticsearch("domains", r, delete=True)
             continue
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
-            props = calced_props(dom, r["_id"], all_stats)
+            props = calced_props(domain_obj, r["_id"], all_stats)
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
