@@ -43,6 +43,7 @@ from corehq.apps.domain.calculations import (
     calced_props,
     CALC_FNS,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.elastic import (
     stream_es_query,
@@ -149,6 +150,9 @@ def update_calculated_properties():
     all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
+        if not Domain.get_by_name(dom):
+            send_to_elasticsearch("domains", r, delete=True)
+            continue
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
