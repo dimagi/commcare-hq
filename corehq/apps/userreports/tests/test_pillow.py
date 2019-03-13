@@ -844,6 +844,7 @@ class RebuildTableTest(TestCase):
             "column_id": "pk_key",
             "type": "raw",
             "datatype": "string",
+            "property_name": "owner_id",
             "is_primary_key": True
         })
         config.save()
