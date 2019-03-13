@@ -461,21 +461,6 @@ class BaseSavedExportSchema(Document):
     def is_bulk(self):
         return False
 
-    def get_download_task(self, format=None, **kwargs):
-        format = format or self.default_format
-        download = DownloadBase()
-        download.set_task(couchexport.tasks.export_async.delay(
-            self,
-            download.download_id,
-            format=format,
-            **kwargs
-        ))
-        return download
-
-    def export_data_async(self, format=None, **kwargs):
-        download = self.get_download_task(format=format, **kwargs)
-        return download.get_start_response()
-
     @property
     def table_name(self):
         if len(self.index) > 2:
