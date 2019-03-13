@@ -17,6 +17,9 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 DUE_LIST_XMLNS = "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
 IMMUNIZATION_XMLNS = "http://openrosa.org/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
 ELIGIBLE_COUPLE_XMLNS = "http://openrosa.org/formdesigner/21A52E12-3C84-4307-B680-1AB194FCE647"
+EDIT_HOUSEHOLD_XMLNS = "http://openrosa.org/formdesigner/1301907C-932A-4F00-AA00-54E8CE294667"
+REMOVE_HOUSEHOLD_XMLNS = "http://openrosa.org/formdesigner/5A823C7A-1DD0-40E5-B85E-800186BCECC9"
+CHANGE_VILLAGE_XMLNS = "http://openrosa.org/formdesigner/B17F9F60-6184-404D-AC63-24B6F1FC8B2B"
 
 
 class Command(BaseCommand):
@@ -153,6 +156,11 @@ class Command(BaseCommand):
                 new_form_source = form.source.replace(
                     "instance('commcaresession')/session/data/case_id",
                     "instance('commcaresession')/session/data/case_id_load_tasks_0")
+                real_form.source = new_form_source
+            if form.xmlns in (EDIT_HOUSEHOLD_XMLNS, REMOVE_HOUSEHOLD_XMLNS, CHANGE_VILLAGE_XMLNS):
+                new_form_source = form.source.replace(
+                    "instance('commcaresession')/session/data/case_id",
+                    "instance('commcaresession')/session/data/case_id_load_household_0")
                 real_form.source = new_form_source
             elif form.xmlns == ELIGIBLE_COUPLE_XMLNS:
                 new_form_source = form.source.replace(
