@@ -57,7 +57,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
@@ -1045,16 +1045,6 @@ class CaseExportSchema(HQExportSchema):
     @property
     def has_case_history_table(self):
         return False  # This check is only for new exports
-
-
-class DefaultFormExportSchema(DefaultExportSchema):
-
-    def remap_tables(self, tables):
-        # kill the weird confusing stuff, and rename the main table to something sane
-        tables = _apply_removal(tables, ('#|#export_tag|#', '#|location_|#', '#|history|#'))
-        return _apply_mapping(tables, {
-            '#': 'Forms',
-        })
 
 
 def _apply_mapping(export_tables, mapping_dict):
