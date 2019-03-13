@@ -12,6 +12,7 @@ from pygooglechart import ScatterChart
 import pytz
 
 from corehq import toggles
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
@@ -1378,10 +1379,14 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return [_f for _f in self.request.GET.getlist('case_type') if _f]
 
     @property
+    @memoized
     def view_by_groups(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return False
-        return self.request.GET.get('view_by', None) == 'groups'
+        view_by_groups = self.request.GET.get('view_by', None) == 'groups'
+        track_workflow(self.request.couch_user.username,
+                       "Worker Activity Report: view_by_groups == {}".format(view_by_groups))
+        return view_by_groups
 
     @property
     def headers(self):
