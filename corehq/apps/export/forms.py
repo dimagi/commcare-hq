@@ -441,7 +441,7 @@ class DashboardFeedFilterForm(forms.Form):
             accessible_location_ids=accessible_location_ids,
             sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
             show_all_data=CaseListFilter.show_all_data(emwf_selections) or
-                CaseListFilter.no_filters_selected(emwf_selections),
+            CaseListFilter.no_filters_selected(emwf_selections),
             show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
 
