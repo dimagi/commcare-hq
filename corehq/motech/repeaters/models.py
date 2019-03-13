@@ -163,12 +163,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if not self.allowed_to_forward(payload):
             return
 
-        def forward_now(repeat_record):
-            from corehq.motech.repeaters.tasks import process_repeat_record
-
-            if repeat_record.can_enqueue():
-                process_repeat_record.delay(repeat_record)
-
         now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
@@ -180,7 +174,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         )
         repeat_record.save()
         if next_check is None:
-            forward_now(repeat_record)
+            repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -781,16 +775,26 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
-    def can_enqueue(self):
+    def attempt_forward_now(self):
+        from corehq.motech.repeaters.tasks import process_repeat_record
+
         if self.next_check > datetime.utcnow():
             # self is already in the queue, or it is not ready to be enqueued
-            return False
-        self.next_check += timedelta(hours=48)
+            return
+        # Set the next check to happen an arbitrarily long time from now so
+        # if something goes horribly wrong with the delayed task it will not
+        # be lost forever. A check at this time is expected to occur rarely,
+        # if ever, because `process_repeat_record` will usually succeed or
+        # reset the next check to sometime sooner.
+        self.next_check = datetime.utcnow() + timedelta(hours=48)
         try:
             self.save()
         except ResourceConflict:
-            return False
-        return True
+            # Another process beat us to the punch. This takes advantage of
+            # the fact Couch uses optimistic locking to prevent one process
+            # from overwriting the work of another with stale data.
+            return
+        process_repeat_record.delay(self)
 
     def requeue(self):
         self.cancelled = False

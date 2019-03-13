@@ -51,9 +51,7 @@ def check_repeaters():
             if datetime.utcnow() > six_hours_later:
                 _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
                 break
-
-            if record.can_enqueue():
-                process_repeat_record.delay(record)
+            record.attempt_forward_now()
     finally:
         check_repeater_lock.release()
 
