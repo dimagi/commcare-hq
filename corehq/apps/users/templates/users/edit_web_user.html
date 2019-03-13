@@ -35,7 +35,7 @@
             </dl>
         </fieldset>
     </div>
-    {% if can_edit_role %}
+    {% if can_edit_role and not request.is_view_only %}
     <form class="form form-horizontal" name="user_role" method="post">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="update-user" />
@@ -51,7 +51,7 @@
         </fieldset>
     </form>
     {% endif %}
-    {% if update_permissions %}
+    {% if update_permissions and not request.is_view_only %}
         <hr />
         <form class="form form-horizontal" name="user_permissions" method="post">
             {% csrf_token %}
@@ -79,14 +79,16 @@
                 <legend>{% trans 'Location Settings' %}</legend>
                 {% crispy update_form %}
             </fieldset>
+            {% if not request.is_view_only %}
             <div class="form-actions">
                 <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
                     <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
                 </div>
             </div>
+            {% endif %}
         </form>
     {% endif %}
-    {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" %}
+    {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" and not request.is_view_only %}
         <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
             {% trans 'Edit EWS settings' %}
         </a>

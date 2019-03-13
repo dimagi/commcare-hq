@@ -30,7 +30,10 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
 )
 from corehq.apps.users.forms import GroupMembershipForm
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import (
+    require_can_edit_groups,
+    require_can_edit_or_view_groups,
+)
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq import privileges
@@ -62,7 +65,7 @@ def get_group_or_404(domain, group_id):
 class BulkSMSVerificationView(BaseDomainView):
     urlname = 'bulk_sms_verification'
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_groups)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(BulkSMSVerificationView, self).dispatch(*args, **kwargs)
@@ -124,7 +127,7 @@ class BulkSMSVerificationView(BaseDomainView):
 
 class BaseGroupsView(BaseUserSettingsView):
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_groups)
     @use_multiselect
     @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
@@ -167,6 +170,8 @@ class EditGroupMembersView(BaseGroupsView):
 
     @property
     def page_name(self):
+        if self.request.is_view_only:
+            return _('Viewing Group "%s"') % self.group.name
         return _('Editing Group "%s"') % self.group.name
 
     @property
@@ -218,6 +223,7 @@ class EditGroupMembersView(BaseGroupsView):
         )
         return {
             'group': self.group,
+            'group_members': self.members,
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.members),
             'group_membership_form': self.group_membership_form,
