@@ -63,6 +63,7 @@ from corehq.apps.userreports.reports.factory import ChartFactory, \
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
@@ -74,7 +75,7 @@ from dimagi.utils.modules import to_function
 from io import open
 
 
-ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
+ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
 
 def _check_ids(value):
@@ -98,6 +99,7 @@ class SQLPartition(DocumentSchema):
 
 class SQLSettings(DocumentSchema):
     partition_config = SchemaListProperty(SQLPartition)
+    primary_key = ListProperty()
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -151,6 +153,10 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
     def get_columns(self):
+        raise NotImplementedError()
+
+    @property
+    def pk_columns(self):
         raise NotImplementedError()
 
 
@@ -339,6 +345,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
+    @memoized
     def get_columns(self):
         return self.indicators.get_columns()
 
@@ -402,6 +409,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
 
         self.parsed_expression
+        self.pk_columns
 
     @classmethod
     def by_domain(cls, domain):
@@ -466,6 +474,19 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 prop_value = [prop_value]
             return prop_value
         return [None]
+
+    @property
+    def pk_columns(self):
+        columns = []
+        for col in self.get_columns():
+            if col.is_primary_key:
+                column_name = decode_column_name(col)
+                columns.append(column_name)
+        if self.sql_settings.primary_key:
+            if set(columns) != set(self.sql_settings.primary_key):
+                raise BadSpecError("Primary key columns must have is_primary_key set to true")
+            columns = self.sql_settings.primary_key
+        return columns
 
 
 class ReportMeta(DocumentSchema):

@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 <!--ko foreach: mappingRows-->
 <tr>
@@ -11,12 +12,12 @@
 <td class="col-sm-3">
     <select class="form-control excel_field" name="excel_field[]" data-bind="
         options: $root.excelFields,
-        optionsCaption: django.gettext('Select field from excel...'),
+        optionsCaption: '{% trans_html_attr 'Select field from excel' %}',
         value: excelField
     "></select>
 </td>
 
-<td>
+<td class="text-center">
     <i class="fa fa-arrow-right"></i>
 </td>
 
@@ -32,7 +33,7 @@
     <select class="form-control case_field" name="case_field[]" data-bind="
         visible: !isCustom(),
         options: $root.caseFieldSpecsInMenu,
-        optionsCaption: django.gettext('Select property name...'),
+        optionsCaption: '{% trans_html_attr 'Select property name' %}',
         optionsText: 'field',
         optionsValue: 'field',
         value: selectedCaseFieldOrBlank

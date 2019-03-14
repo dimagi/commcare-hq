@@ -38,6 +38,7 @@ from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.messaging.scheduling.util import domain_has_reminders
 
+
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
 
@@ -349,7 +350,8 @@ def all_domain_stats():
     }
 
 
-def calced_props(dom, id, all_stats):
+def calced_props(domain_obj, id, all_stats):
+    dom = domain_obj.name
     return {
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
@@ -393,7 +395,7 @@ def calced_props(dom, id, all_stats):
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
-        "cp_use_domain_security": use_domain_security_settings(dom),
+        "cp_use_domain_security": use_domain_security_settings(domain_obj),
         "cp_n_custom_roles": num_custom_roles(dom),
         "cp_using_locations": users_have_locations(dom),
         "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
@@ -406,7 +408,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_ucr_reports": number_of_ucr_reports(dom),
         "cp_n_lookup_tables": num_lookup_tables(dom),
-        "cp_has_project_icon": has_domain_icon(dom),
+        "cp_has_project_icon": has_domain_icon(domain_obj),
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
         "cp_n_apps": len(_get_domain_apps(dom)),
         "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
@@ -433,9 +435,11 @@ def num_telerivet_backends(domain):
     return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
 
 
-def use_domain_security_settings(domain):
-    domain_obj = Domain.get_by_name(domain)
-    return domain_obj.two_factor_auth or domain_obj.secure_sessions or domain_obj.strong_mobile_passwords
+def use_domain_security_settings(domain_obj):
+    return any([
+        getattr(domain_obj, attr, False)
+        for attr in ['two_factor_auth', 'secure_sessions', 'strong_mobile_passwords']
+    ])
 
 
 def num_custom_roles(domain):
@@ -484,8 +488,7 @@ def num_lookup_tables(domain):
     return len(FixtureDataType.by_domain(domain))
 
 
-def has_domain_icon(domain):
-    domain_obj = Domain.get_by_name(domain)
+def has_domain_icon(domain_obj):
     return domain_obj.has_custom_logo
 
 

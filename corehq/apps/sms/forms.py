@@ -26,6 +26,7 @@ from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
@@ -618,6 +619,7 @@ class SettingsForm(Form):
             if field_name in ["restricted_sms_times_json",
                 "sms_conversation_times_json"]:
                 if isinstance(value, six.string_types):
+                    soft_assert_type_text(value)
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value
@@ -948,7 +950,7 @@ class BackendForm(Form):
             value = value.strip().upper()
         if value is None or value == "":
             raise ValidationError(_("This field is required."))
-        if re.compile("\s").search(value) is not None:
+        if re.compile(r"\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
         if self.is_global_backend:

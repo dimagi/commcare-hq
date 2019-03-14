@@ -11,7 +11,7 @@ import six
 from io import open
 
 from corehq.apps.app_manager.util import app_doc_types
-
+from corehq.util.python_compatibility import soft_assert_type_text
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
     'name',
@@ -31,6 +31,8 @@ def _translate_setting(setting, prop):
     if not isinstance(value, six.string_types):
         return [ugettext(v) for v in value]
     else:
+        if six.PY3:
+            soft_assert_type_text(value)
         return ugettext(value)
 
 
@@ -123,7 +125,7 @@ def get_commcare_settings_lookup():
 
 
 def parse_condition_string(condition_str):
-    pattern = re.compile("{(?P<type>[\w-]+?)\.(?P<id>[\w-]+?)}=(?P<equals>true|false|'[\w-]+')")
+    pattern = re.compile(r"{(?P<type>[\w-]+?)\.(?P<id>[\w-]+?)}=(?P<equals>true|false|'[\w-]+')")
     match = pattern.match(condition_str).groupdict()
     if match["equals"] == 'true':
         match["equals"] = True

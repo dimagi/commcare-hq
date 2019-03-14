@@ -1703,7 +1703,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['ageServiceDeliveryDashboard', 'gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
 
@@ -2149,17 +2149,69 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     var attended = day ? day.attended : '0';
                     var eligible = day ? day.eligible : '0';
 
-                    var tooltip_content = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
-                    tooltip_content += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
-                    tooltip_content += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
+                    var tooltipContent = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
+                    tooltipContent += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
+                    tooltipContent += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 
-                    return tooltip_content;
+                    return tooltipContent;
                 });
                 return chart;
             },
             reduceXTicks: false,
             showLegend: false,
         },
+    };
+
+    vm.beneficiaryChartCallback = function (
+        lineChartDataName,
+        nominatorName,
+        nominatorUnit,
+        denominatorName,
+        denominatorUnit
+    ) {
+        return function (chart) {
+            var tooltip = chart.interactiveLayer.tooltip;
+            tooltip.contentGenerator(function (d) {
+                var html = "";
+                var tooltipData = void(0);
+                // lineChartData can not be provided during generation
+                var lineChartData = null;
+                if (lineChartDataName === 'lineChartTwoData') {lineChartData = vm.lineChartTwoData;}
+                if (lineChartDataName === 'lineChartOneData') {lineChartData = vm.lineChartOneData;}
+                if (lineChartDataName === 'lineChartThreeData') {lineChartData = vm.lineChartThreeData;}
+                for (var i = 0; i < lineChartData.length; i++) {
+                    if (lineChartData[i].x === d.value) {
+                        tooltipData = lineChartData[i];
+                    }
+                }
+                // search for imperfect values in tooltip in Weight For Height graph
+                if (lineChartDataName === 'lineChartThreeData' && tooltipData === void(0)) {
+                    for (i = 0; i < lineChartData.length; i++) {
+                        if (Math.abs(lineChartData[i].x - d.value) < 0.5) {
+                            tooltipData = lineChartData[i];
+                        }
+                    }
+                }
+                var denominatorValue = d.value;
+                if (tooltipData) {
+                    html = "<p>" + nominatorName + ": <strong>" + tooltipData.y + "</strong> " +
+                        nominatorUnit + "</p>";
+                    denominatorValue = tooltipData.x;  // show correct X value for imperfect WFH matches
+                } else {
+                    html = "<p>" + nominatorName + ": <strong>Data Not Recorded</strong></p>";
+                }
+                if (denominatorUnit === 'month') {
+                    denominatorUnit = denominatorValue === 1 ? "month" : "months";
+                }
+                html += "<p>" + denominatorName + ": <strong>" + denominatorValue + "</strong> " +
+                    denominatorUnit + "</p>";
+                return html;
+            });
+            window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                if (key.__data__[0].y !== null) key.classList.add('chart-dot');
+            });
+            return chart;
+        };
     };
 
     vm.beneficiaryChartOptionsHFA = {
@@ -2197,31 +2249,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             interactiveLayer: {
                 showGuideLine: true,
             },
-            callback: function (chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-                    var html = "";
-                    var tooltipData = void(0);
-                    for (var i = 0; i < vm.lineChartTwoData.length; i++) {
-                        if (vm.lineChartTwoData[i].x === d.value) {
-                            tooltipData = vm.lineChartTwoData[i];
-                        }
-                    }
-
-                    if (tooltipData) {
-                        html = "<p>Height: <strong>" + tooltipData.y + "</strong> cm</p>";
-                    } else {
-                        html = "<p>Height: <strong>Data Not Recorded</strong></p>";
-                    }
-                    var month = d.value === 1 ? "month" : "months";
-                    html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
-                    return html;
-                });
-                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
-                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
-                });
-                return chart;
-            },
+            callback: vm.beneficiaryChartCallback(
+                'lineChartTwoData',
+                'Height',
+                'cm',
+                'Age',
+                'month'
+            ),
         },
     };
 
@@ -2260,31 +2294,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             interactiveLayer: {
                 showGuideLine: true,
             },
-            callback: function (chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-                    var html = "";
-                    var tooltipData = void(0);
-                    for (var i = 0; i < vm.lineChartOneData.length; i++) {
-                        if (vm.lineChartOneData[i].x === d.value) {
-                            tooltipData = vm.lineChartOneData[i];
-                        }
-                    }
-
-                    if (tooltipData) {
-                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
-                    } else {
-                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
-                    }
-                    var month = d.value === 1 ? "month" : "months";
-                    html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
-                    return html;
-                });
-                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
-                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
-                });
-                return chart;
-            },
+            callback: vm.beneficiaryChartCallback(
+                'lineChartOneData',
+                'Weight',
+                'kg',
+                'Age',
+                'month'
+            ),
         },
     };
 
@@ -2323,30 +2339,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             interactiveLayer: {
                 showGuideLine: true,
             },
-            callback: function (chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-                    var html = "";
-                    var tooltipData = void(0);
-                    for (var i = 0; i < vm.lineChartThreeData.length; i++) {
-                        if (vm.lineChartThreeData[i].x === d.value) {
-                            tooltipData = vm.lineChartThreeData[i];
-                        }
-                    }
-
-                    if (tooltipData) {
-                        html = "<p>Weight: <strong>" + tooltipData.y + "</strong> kg</p>";
-                    } else {
-                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
-                    }
-                    html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
-                    return html;
-                });
-                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
-                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
-                });
-                return chart;
-            },
+            callback: vm.beneficiaryChartCallback(
+                'lineChartThreeData',
+                'Weight',
+                'kg',
+                'Height',
+                'cm'
+            ),
         },
     };
 

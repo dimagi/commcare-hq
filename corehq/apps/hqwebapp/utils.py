@@ -135,7 +135,7 @@ def get_environment_friendly_name():
     try:
         env = {
             "production": "",
-            "softlayer": "India",
+            "india": "India",
         }[settings.SERVER_ENVIRONMENT]
     except KeyError:
         env = settings.SERVER_ENVIRONMENT

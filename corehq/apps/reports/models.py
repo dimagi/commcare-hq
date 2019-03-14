@@ -53,11 +53,12 @@ from corehq.apps.reports.exportfilters import (
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, DefaultExportSchema, SplitColumn
+from couchexport.models import SavedExportSchema, GroupExportConfiguration, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
@@ -787,7 +788,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def get_secret(self, email):
         uuid = self._get_or_create_uuid()
-        return hashlib.sha1(uuid + email).hexdigest()[:20]
+        return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
 
     def send(self):
         # Scenario: user has been removed from the domain that they
@@ -845,6 +846,16 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             self.recipient_emails.remove(email)
         except ValueError:
             pass
+
+    def update_attributes(self, items):
+        for k, v in items:
+            if k == 'start_date':
+                self.verify_start_date(v)
+            self.__setattr__(k, v)
+
+    def verify_start_date(self, start_date):
+        if start_date != self.start_date and start_date < datetime.today().date():
+            raise ValidationError("You can not specify a start date in the past.")
 
 
 class AppNotFound(Exception):
@@ -1037,16 +1048,6 @@ class CaseExportSchema(HQExportSchema):
         return False  # This check is only for new exports
 
 
-class DefaultFormExportSchema(DefaultExportSchema):
-
-    def remap_tables(self, tables):
-        # kill the weird confusing stuff, and rename the main table to something sane
-        tables = _apply_removal(tables, ('#|#export_tag|#', '#|location_|#', '#|history|#'))
-        return _apply_mapping(tables, {
-            '#': 'Forms',
-        })
-
-
 def _apply_mapping(export_tables, mapping_dict):
     def _clean(tabledata):
         def _clean_tablename(tablename):
@@ -1082,21 +1083,6 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
             if custom_export:
                 yield _rewrap(custom_export)
 
-    def exports_of_type(self, type):
-        return self._saved_exports_from_configs([
-            config for config, schema in self.all_exports if schema.type == type
-        ])
-
-    @property
-    @memoized
-    def form_exports(self):
-        return self.exports_of_type('form')
-
-    @property
-    @memoized
-    def case_exports(self):
-        return self.exports_of_type('case')
-
     @classmethod
     @quickcache(['cls.__name__', 'domain'])
     def by_domain(cls, domain):
@@ -1114,25 +1100,6 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
                 logging.error("Domain %s has more than one group export config! This is weird." % domain)
             return groups[0]
         return HQGroupExportConfiguration(domain=domain)
-
-    @classmethod
-    def add_custom_export(cls, domain, export_id):
-        group = cls.get_for_domain(domain)
-        if export_id not in group.custom_export_ids:
-            group.custom_export_ids.append(export_id)
-            group.save()
-        return group
-
-    @classmethod
-    def remove_custom_export(cls, domain, export_id):
-        group = cls.get_for_domain(domain)
-        updated = False
-        while export_id in group.custom_export_ids:
-            group.custom_export_ids.remove(export_id)
-            updated = True
-        if updated:
-            group.save()
-        return group
 
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
@@ -1153,11 +1120,14 @@ def ordering_config_validator(value):
             raise error
         if not isinstance(group[0], six.string_types):
             raise error
+        else:
+            soft_assert_type_text(group[0])
         if not isinstance(group[1], list):
             raise error
         for report in group[1]:
             if not isinstance(report, six.string_types):
                 raise error
+            soft_assert_type_text(report)
 
 
 class ReportsSidebarOrdering(models.Model):

@@ -10,6 +10,7 @@ import datetime
 
 from couchdbkit import ResourceConflict
 
+from corehq.apps.couch_sql_migration.couchsqlmigration import TIMING_BUCKETS
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
@@ -285,12 +286,15 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(export_instances, filters, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        domain,
+        export_ids,
+        exports_type,
+        username,
         filters,
         download.download_id,
         filename=filename
@@ -463,7 +467,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export')
+@datadog_track_errors('rebuild_export', duration_buckets=TIMING_BUCKETS)
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance

@@ -33,6 +33,11 @@
                 The dropdown here (and throughout this section) should use a select2, as discussed in
                 <a href='{% url 'styleguide_molecules' %}#molecules-selections' target='_blank'>selections</a>.
             </li>
+            <li>
+                The <code>autocomplete</code> attribute controls the browser's form autofill. Most forms in HQ
+                are unique to HQ and should set turn off autocomplete to prevent unexpected automatic input.
+                Exceptions would be forms that include information like a user's name and address.
+            </li>
         </ul>
     </p>
     {% include 'styleguide/example_html.html' with slug='html_form' title='Simple HTML form' content=examples.html_form %}

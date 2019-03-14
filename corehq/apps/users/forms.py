@@ -28,6 +28,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import format_username, cc_user_domain
@@ -469,7 +470,7 @@ class CommCareAccountForm(forms.Form):
 
     def clean_phone_number(self):
         phone_number = self.cleaned_data['phone_number']
-        phone_number = re.sub('\s|\+|\-', '', phone_number)
+        phone_number = re.sub(r'\s|\+|\-', '', phone_number)
         if phone_number == '':
             return None
         elif not re.match(r'\d+$', phone_number):
@@ -902,6 +903,7 @@ class CommtrackUserForm(forms.Form):
         value = self.cleaned_data.get('assigned_locations')
         if not isinstance(value, six.string_types) or value.strip() == '':
             return []
+        soft_assert_type_text(value)
 
         location_ids = [location_id.strip() for location_id in value.split(',')]
         try:
@@ -1101,7 +1103,7 @@ class AddPhoneNumberForm(forms.Form):
             Fieldset(
                 _('Add a Phone Number'),
                 'form_type',
-                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern='\d+')
+                twbscrispy.PrependedText('phone_number', '+', type='tel', pattern=r'\d+')
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -1162,7 +1164,7 @@ class CommCareUserFilterForm(forms.Form):
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
 
         roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+        self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()

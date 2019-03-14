@@ -56,6 +56,7 @@ from corehq.apps.reports.formdetails.readable import FormQuestionResponse, \
     questions_in_hierarchy
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -201,6 +202,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
         if isinstance(condition.answer, six.string_types):
+            soft_assert_type_text(condition.answer)
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):
@@ -284,8 +286,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     # First, we strip all newlines and reformat the DOM.
                     px = parseString(xform.replace('\r\n', '')).toprettyxml()
                     # Then we remove excess newlines from the DOM output.
-                    text_re = re.compile('>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
-                    prettyXml = text_re.sub('>\g<1></', px)
+                    text_re = re.compile(r'>\n\s+([^<>\s].*?)\n\s+</', re.DOTALL)
+                    prettyXml = text_re.sub(r'>\g<1></', px)
                     xform = prettyXml
                 except Exception:
                     pass

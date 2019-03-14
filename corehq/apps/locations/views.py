@@ -36,8 +36,8 @@ from corehq.apps.locations.tasks import download_locations_async, import_locatio
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.couch import release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.util.python_compatibility import soft_assert_type_text
+from dimagi.utils.couch import get_redis_lock, release_lock
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
@@ -76,8 +76,11 @@ def lock_locations(func):
     # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
     def func_wrapper(request, *args, **kwargs):
         key = "import_locations_async-{domain}".format(domain=request.domain)
-        client = get_redis_client()
-        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
+        lock = get_redis_lock(
+            key,
+            timeout=LOCK_LOCATIONS_TIMEOUT,
+            name="import_locations_async",
+        )
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
@@ -295,6 +298,8 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
+            if isinstance(pk, six.string_types):
+                soft_assert_type_text(pk)
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative, has_user,

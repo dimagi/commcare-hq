@@ -29,6 +29,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.users.models import CouchUser
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse, request_as_dict
 from couchexport.export import export_from_tables
@@ -39,7 +40,7 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from .export import get_writer
+from couchexport.export import get_writer
 import six
 from six.moves import zip
 from six.moves import range
@@ -307,6 +308,7 @@ class GenericReportView(object):
         fields = self.fields
         for field in fields or []:
             if isinstance(field, six.string_types):
+                soft_assert_type_text(field)
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -437,6 +439,8 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
+            if isinstance(field, six.string_types):
+                soft_assert_type_text(field)
             field_fn = to_function(field) if isinstance(field, six.string_types) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
@@ -960,6 +964,7 @@ class GenericTabularReport(GenericReportView):
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -1226,7 +1231,7 @@ class GetParamsMixin(object):
         so as to get sorting working correctly with the context of the GET params
         """
         ret = super(GetParamsMixin, self).shared_pagination_GET_params
-        for k, v in self.request.GET.items():
+        for k, v in six.iterlists(self.request.GET):
             ret.append(dict(name=k, value=v))
         return ret
 

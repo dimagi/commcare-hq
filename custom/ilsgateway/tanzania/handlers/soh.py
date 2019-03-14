@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 from re import findall
-from strop import maketrans
 
 from custom.ilsgateway.slab.messages import REMINDER_TRANS, SOH_OVERSTOCKED
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler
@@ -39,20 +38,36 @@ def parse_report(val):
     [('zi', 10), ('co', 20), ('la', 30)]
     """
 
-    def _cleanup(s):
-        return six.text_type(s).encode('utf-8')
+    if six.PY3:
+        maketrans = str.maketrans
+        if isinstance(val, bytes):
+            val = val.decode('utf-8')
 
-    return [
-        (x[0], int(x[1].translate(maketrans("lLO", "110"))))
-        for x in findall(
-            "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
-            "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" %
-            {
-                "minchars": 2,
-                "maxchars": 4,
-                "numeric_letters": "lLO"
-            }, _cleanup(val))
-    ]
+        return [
+            (x[0], int(x[1].replace(' ', '').translate(maketrans("lLO", "110"))))
+            for x in findall(
+                "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
+                "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" % {
+                    "minchars": 2,
+                    "maxchars": 4,
+                    "numeric_letters": "lLO"
+                }, val)
+        ]
+    else:
+        from strop import maketrans
+        if isinstance(val, six.text_type):
+            val = val.encode('utf-8')
+
+        return [
+            (x[0], int(x[1].translate(maketrans("lLO", "110"))))
+            for x in findall(
+                "\s*(?P<code>[A-Za-z]{%(minchars)d,%(maxchars)d})\s*"
+                "(?P<quantity>[+-]?[ ]*[0-9%(numeric_letters)s]+)\s*" % {
+                    "minchars": 2,
+                    "maxchars": 4,
+                    "numeric_letters": "lLO"
+                }, val)
+        ]
 
 
 class SohFormatter(Formatter):

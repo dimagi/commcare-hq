@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 from datetime import datetime, timedelta, date
 from django.test import SimpleTestCase
 from mock import patch
@@ -88,6 +89,7 @@ def test_gregorian_to_ethiopian(self, date_string, expected_result):
 
     self.assertEqual(expected_result, transform(date_string))
 
+
 class CustomTransformTest(SimpleTestCase):
 
     def testInvalidCustomType(self):
@@ -120,6 +122,8 @@ class DaysElapsedTransformTest(SimpleTestCase):
             "custom_type": "days_elapsed_from_date"
         })
         date = (datetime.utcnow() - timedelta(days=5)).strftime('%Y-%m-%d')
+        if six.PY2:
+            date = date.decode('utf-8')
         self.assertEqual(transform.transform(date), 5)
 
 

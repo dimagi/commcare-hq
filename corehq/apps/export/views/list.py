@@ -628,7 +628,8 @@ def commit_filters(request, domain):
             # restrictions on an export that a more restricted user created (which would mean the more
             # restricted user would lose access to the export)
             old_can_access_all_locations,
-            old_accessible_location_ids
+            old_accessible_location_ids,
+            export.type
         )
         if export.filters != filters:
             export.filters = filters

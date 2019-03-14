@@ -16,7 +16,7 @@
     "cas-lab"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
   ],
@@ -236,7 +236,7 @@
             "type": "root_doc"
           },
           "location_type": "supervisor",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -258,7 +258,7 @@
             "type": "root_doc"
           },
           "location_type": "block",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -280,7 +280,7 @@
             "type": "root_doc"
           },
           "location_type": "district",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -302,7 +302,7 @@
             "type": "root_doc"
           },
           "location_type": "state",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,

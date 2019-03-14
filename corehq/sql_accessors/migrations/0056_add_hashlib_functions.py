@@ -4,7 +4,8 @@ from __future__ import absolute_import, unicode_literals
 
 from django.db import migrations
 from django.conf import settings
-from corehq.sql_db.operations import HqRunSQL, noop_migration
+
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -19,7 +20,7 @@ class Migration(migrations.Migration):
         # and Amazon RDS doesn't allow it
         # Todo: Move this to testing harness, doesn't really belong here.
         # See https://github.com/dimagi/commcare-hq/pull/21627#pullrequestreview-149807976
-        HqRunSQL(
+        migrations.RunSQL(
             'CREATE EXTENSION IF NOT EXISTS hashlib',
             'DROP EXTENSION hashlib'
         )

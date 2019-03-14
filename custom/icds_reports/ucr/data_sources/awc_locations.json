@@ -18,7 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
   ],
@@ -607,7 +607,7 @@
           "name": "awc_id"
         },
         "location_type": "supervisor",
-        "location_propery": "_id",
+        "location_property": "_id",
         "type": "ancestor_location"
       },
       "block_id": {
@@ -616,7 +616,7 @@
           "name": "awc_id"
         },
         "location_type": "block",
-        "location_propery": "_id",
+        "location_property": "_id",
         "type": "ancestor_location"
       },
       "district_id": {
@@ -625,7 +625,7 @@
           "name": "awc_id"
         },
         "location_type": "district",
-        "location_propery": "_id",
+        "location_property": "_id",
         "type": "ancestor_location"
       },
       "state_id": {
@@ -634,7 +634,7 @@
           "name": "awc_id"
         },
         "location_type": "state",
-        "location_propery": "_id",
+        "location_property": "_id",
         "type": "ancestor_location"
       },
       "is_test": {

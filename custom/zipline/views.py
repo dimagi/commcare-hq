@@ -4,6 +4,7 @@ import json
 import re
 from corehq.apps.api.decorators import api_user_basic_auth
 from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.zipline.api import get_order_update_critical_section_key, ProductQuantity
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field, EmergencyOrderPackage)
@@ -107,6 +108,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
         if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
+        soft_assert_type_text(value)
 
     def validate_and_clean_time(self, data, field_name):
         value = data.get(field_name)
@@ -114,8 +116,9 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
         if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
+        soft_assert_type_text(value)
 
-        if not re.match('^\d\d?:\d\d$', value):
+        if not re.match(r'^\d\d?:\d\d$', value):
             raise OrderStatusValidationError(error_msg)
 
         try:
@@ -131,6 +134,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
 
         if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
+        soft_assert_type_text(value)
 
         try:
             Decimal(value)

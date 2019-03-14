@@ -36,6 +36,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.datadog.utils import create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -97,7 +98,7 @@ DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'softlayer':
+if settings.SERVER_ENVIRONMENT == 'india':
     # Currently QA needs more monthly data, so these are different than on ICDS
     # If this exists after July 1, ask Emord why these UCRs still exist
     CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
@@ -129,7 +130,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'aggregated_awc_data_weekly.sql'),
 ]
 
 
@@ -257,7 +257,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get()
-            _bust_awc_cache.delay()
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -268,6 +267,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
+        _bust_awc_cache.delay()
 
 
 def _create_aggregate_functions(cursor):
@@ -309,6 +309,9 @@ def _update_aggregate_locations_tables():
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_aggregation_task(self, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
@@ -334,6 +337,9 @@ def icds_aggregation_task(self, date, func):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_state_aggregation_task(self, state_id, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
@@ -547,9 +553,8 @@ def _agg_ls_table(day):
 
 @track_time
 def _agg_awc_table_weekly(day):
-    _run_custom_sql_script([
-        "SELECT update_aggregate_awc_data(%s)"
-    ], day)
+    with transaction.atomic(using=db_for_read_write(AggAwc)):
+        AggAwc.weekly_aggregate(force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -985,5 +990,8 @@ def create_mbt_for_month(state_id, month):
 
 @task(queue='background_queue')
 def _bust_awc_cache():
+    create_datadog_event('redis: delete dashboard keys', 'start')
     reach_keys = cache.keys('*cas_reach_data*')
-    cache.delete_many(reach_keys)
+    for key in reach_keys:
+        cache.delete(key)
+    create_datadog_event('redis: delete dashboard keys', 'finish')

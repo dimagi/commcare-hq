@@ -24,6 +24,7 @@ INTEGRATION_TEST_URL = 'https://jenkins.dimagi.com/job/integration-tests/'
 def integration_tests_link(style, url):
     return make_link(style, 'tests', url)
 
+
 def diff_link(style, url):
     return make_link(style, 'here', url)
 

@@ -15,7 +15,7 @@
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "report_id": "static-mpr_10a_children_referred",

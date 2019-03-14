@@ -18,7 +18,7 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds-new",
     "icds"
   ],
@@ -79,7 +79,7 @@
             "type": "root_doc"
           },
           "location_type": "district",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "transform": {},
@@ -103,7 +103,7 @@
             "type": "root_doc"
           },
           "location_type": "state",
-          "location_propery": "_id",
+          "location_property": "_id",
           "type": "ancestor_location"
         },
         "transform": {},

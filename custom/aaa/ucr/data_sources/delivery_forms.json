@@ -1,0 +1,195 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-delivery_forms",
+    "display_name": "Forms - Delivery Forms (REACH Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+    },
+    "configured_indicators": [
+      {
+        "column_id": "user_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "userID"
+          ]
+        }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "child_health_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["case_open_child_health_3", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "timeEnd"]
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "received_on"
+      },
+      {
+        "column_id": "add",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "add"]
+        }
+      },
+      {
+        "column_id": "where_born",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "where_born"]
+        }
+      },
+      {
+        "column_id": "which_hospital",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "which_hospital"]
+        }
+      },
+      {
+        "column_id": "which_village",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "which_village"]
+        }
+      },
+      {
+        "column_id": "delivery_nature",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "delivery_nature"]
+        }
+      },
+      {
+        "column_id": "discharge_date",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "discharge_date"]
+        }
+      },
+      {
+        "column_id": "discharge_time",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "discharge_time"]
+        }
+      },
+      {
+        "column_id": "who_assisted",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "who_assisted"]
+        }
+      },
+      {
+        "column_id": "time_birth",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "first_child"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "time_birth"
+          }
+        }
+      },
+      {
+        "column_id": "child_cried",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "first_child"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "child_cried"
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+      "first_child": {
+        "comment": "The app only saves one child_health case per delivery form",
+        "type": "array_index",
+        "array_expression": {
+          "type": "property_path",
+          "property_path": ["form", "child"]
+        },
+        "index_expression": {
+          "type": "constant",
+          "constant": 0
+        }
+      }
+    },
+    "engine_id": "aaa-data",
+    "disable_destructive_rebuild": true
+  }
+}

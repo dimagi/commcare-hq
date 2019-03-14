@@ -298,6 +298,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
             'molecules/checkboxes',
             'molecules/modals',
             'molecules/pagination',
+            'molecules/search_box',
             'molecules/inline_edit',
         ]
 
@@ -315,6 +316,7 @@ class MoleculesStyleGuideView(BaseStyleGuideArticleView):
                 'lonely_checkbox': self.example('lonely_checkbox.html'),
                 'modals': self.example('modals.html'),
                 'pagination': self.example('pagination.html'),
+                'search_box': self.example('search_box.html'),
                 'inline_edit': self.example('inline_edit.html'),
             },
         }

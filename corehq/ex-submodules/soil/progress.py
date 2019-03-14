@@ -73,9 +73,13 @@ def get_task_progress(task):
 
 
 def set_task_progress(task, current, total):
+    update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+
+
+def update_task_state(task, state, meta):
     try:
         if task:
-            task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+            task.update_state(state=state, meta=meta)
     except (TypeError, NotImplementedError):
         pass
     except IntegrityError:
@@ -130,7 +134,7 @@ def get_task_status(task, is_multiple_download_task=False):
 
     def progress_complete():
         return (
-            getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
+            getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False) or
             progress and progress.percent == 100 and
             not progress.error
         )

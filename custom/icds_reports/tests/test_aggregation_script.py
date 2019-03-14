@@ -51,7 +51,7 @@ class AggregationScriptTestBase(CSVTestCase):
             return value_str
 
     def _load_data_from_db(self, table_name, sort_key):
-        engine = connection_manager.get_session_helper('default').engine
+        engine = connection_manager.get_session_helper('icds-ucr').engine
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
         table = metadata.tables[table_name]
@@ -72,8 +72,6 @@ class AggregationScriptTestBase(CSVTestCase):
                         row[idx] = str(value)
                     elif isinstance(value, (float, Decimal)):
                         row[idx] = self._convert_decimal_to_string(row[idx])
-                    elif isinstance(value, six.string_types):
-                        row[idx] = value.encode('utf-8')
                     elif value is None:
                         row[idx] = ''
                 yield dict(zip(columns, row))

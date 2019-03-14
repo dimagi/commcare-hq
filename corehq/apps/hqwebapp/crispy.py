@@ -23,6 +23,13 @@ class HQFormHelper(FormHelper):
     label_class = CSS_LABEL_CLASS
     field_class = CSS_FIELD_CLASS
 
+    def __init__(self, *args, **kwargs):
+        super(HQFormHelper, self).__init__(*args, **kwargs)
+        if 'autocomplete' not in self.attrs:
+            self.attrs.update({
+                'autocomplete': 'off',
+            })
+
 
 class HQModalFormHelper(FormHelper):
     form_class = 'form form-horizontal'
@@ -59,7 +66,7 @@ class ErrorsOnlyField(OldField):
 
 def _get_offsets(context):
     label_class = context.get('label_class', '')
-    return re.sub(r'(xs|sm|md|lg)-', '\g<1>-offset-', label_class)
+    return re.sub(r'(xs|sm|md|lg)-', r'\g<1>-offset-', label_class)
 
 
 class FormActions(OriginalFormActions):

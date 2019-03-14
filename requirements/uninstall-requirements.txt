@@ -8,5 +8,6 @@ restkit
 http-parser
 zeep
 cython
-django-celery-results
+django-celery
 numpy
+ConcurrentLogHandler
