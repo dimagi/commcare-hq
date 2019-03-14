@@ -34,9 +34,6 @@ from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
-from corehq.apps.reports.dbaccessors import (
-    hq_group_export_configs_by_domain,
-)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import (
@@ -54,7 +51,6 @@ from corehq.apps.userreports.util import default_language as ucr_default_languag
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.quickcache import quickcache
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
@@ -1082,24 +1078,6 @@ class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfigurat
             custom_export = self._get_custom(custom)
             if custom_export:
                 yield _rewrap(custom_export)
-
-    @classmethod
-    @quickcache(['cls.__name__', 'domain'])
-    def by_domain(cls, domain):
-        return hq_group_export_configs_by_domain(domain)
-
-    @classmethod
-    def get_for_domain(cls, domain):
-        """
-        For when we only expect there to be one of these per domain,
-        which right now is always.
-        """
-        groups = cls.by_domain(domain)
-        if groups:
-            if len(groups) > 1:
-                logging.error("Domain %s has more than one group export config! This is weird." % domain)
-            return groups[0]
-        return HQGroupExportConfiguration(domain=domain)
 
     def clear_caches(self):
         super(HQGroupExportConfiguration, self).clear_caches()
