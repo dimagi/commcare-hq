@@ -107,7 +107,7 @@ def update_app_from_module_sheet(app, rows, identifier):
             # Check that names match (user is not allowed to change property in the
             # upload). Mismatched names indicate the user probably botched the sheet.
             if row.get('id', None) != detail.field:
-                message = _('A row for module {index} has an unexpected case property "{field}"'
+                message = _('A row for menu {index} has an unexpected case property "{field}"'
                             'Case properties must appear in the same order as they do in the bulk '
                             'app translation download. No translations updated for this row.').format(
                                 index=module.id + 1,
@@ -206,8 +206,8 @@ def _get_condensed_rows(module, rows):
             if index < len(detail_tab_headers):
                 detail_tab_headers[index] = row
             else:
-                message = _("Expected {0} case detail tabs for module {1} but found row for Tab {2}. No changes "
-                            "were made for module {1}.").format(len(detail_tab_headers), module.id + 1, index)
+                message = _("Expected {0} case detail tabs for menu {1} but found row for Tab {2}. No changes "
+                            "were made for menu {1}.").format(len(detail_tab_headers), module.id + 1, index)
                 msgs.append((messages.error, message))
 
         # It's a normal case property
@@ -242,8 +242,8 @@ def _check_for_detail_length_errors(module, condensed_rows):
             if number_fields == len(expected_list) and toggles.ICDS.enabled(module.get_app().domain):
                 partial_upload = True
                 continue
-            errors.append(_("Expected {expected_count} {list_or_detail} properties in module {index}, found "
-                "{actual_count}. No case list or detail properties for module {index} were updated").format(
+            errors.append(_("Expected {expected_count} {list_or_detail} properties in menu {index}, found "
+                "{actual_count}. No case list or detail properties for menu {index} were updated").format(
                     expected_count=len(expected_list),
                     actual_count=len(received_list),
                     index=module.id + 1,
@@ -255,7 +255,7 @@ def _check_for_detail_length_errors(module, condensed_rows):
 
 
 def _get_module_from_sheet_name(app, identifier):
-    module_index = int(identifier.replace("module", "")) - 1
+    module_index = int(identifier.replace("module", "").replace("menu", "")) - 1
     return app.get_module(module_index)
 
 

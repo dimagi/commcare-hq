@@ -76,7 +76,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
 
         module_sheet_name = get_module_sheet_name(module)
         rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
-            row_type="Module",
+            row_type="Menu",
             sheet_name=module_sheet_name,
             languages=[module.name.get(lang) for lang in app.langs],
             media_image=[module.icon_by_language(lang) for lang in app.langs],

@@ -5,7 +5,7 @@ HQ supports a file download and re-upload to update all application-specific tra
 
 The download has two variants, a multi-sheet and a single-sheet format. Both are tolerant of partial uploads.
 
-The default multi-sheet format contains a first "modules and forms" sheet for editing module and form names and menu media. It then contains a sheet for each module and each form.
+The default multi-sheet format contains a first "menus and forms" sheet for editing module and form names and menu media. It then contains a sheet for each module and each form.
 
 The single-sheet format allows editing all of the same content, just with all rows in the same sheet. Depending on the type of row (module/form name, module content, or form content) certain columns will be blank.
 
