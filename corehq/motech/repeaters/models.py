@@ -46,6 +46,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 from .const import (
@@ -775,6 +776,22 @@ class RepeatRecord(Document):
         self.next_check = None
         self.cancelled = True
 
+    @property
+    def redis_lock(self):
+        # TODO: Drop this lock at least 48 hours after PR #23580 is
+        #       deployed so next_check is set on all repeat record queue
+        #       items (2019-03-14)
+
+        # Including the rev in the key means that the record will be
+        # unlocked for processing every time we execute a `save()` call.
+        lock_key = 'repeat_record_in_progress-{}_{}'.format(self._id, self._rev)
+        return get_redis_lock(
+            lock_key,
+            timeout=48 * 60 * 60,
+            name="repeat_record",
+            track_unreleased=False,
+        )
+
     def attempt_forward_now(self):
         from corehq.motech.repeaters.tasks import process_repeat_record
 
@@ -800,7 +817,8 @@ class RepeatRecord(Document):
             # the fact Couch uses optimistic locking to prevent one process
             # from overwriting the work of another with stale data.
             return
-        process_repeat_record.delay(self)
+        if self.redis_lock.acquire():
+            process_repeat_record.delay(self)
 
     def requeue(self):
         self.cancelled = False
