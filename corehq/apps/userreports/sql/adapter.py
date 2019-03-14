@@ -101,7 +101,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             constraint=config.constraint, column=config.column, db=self.engine.url,
             orm='sqlalchemy', return_null=True
         )
-        mapping = self.get_sqlalchemy_mapping()
+        mapping = self.get_sqlalchemy_orm_table()
         partition(mapping)
         mapping.architect.partition.get_partition().prepare()
 
