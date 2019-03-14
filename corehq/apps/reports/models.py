@@ -10,6 +10,7 @@ import json
 import logging
 from six.moves.urllib.parse import urlencode
 
+from corehq.elastic import ESError
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404
@@ -575,6 +576,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 },
                 None,
             )
+        except ESError:
+            raise ESError
         except Exception:
             notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
                 'domain': self.domain,
