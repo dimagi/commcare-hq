@@ -887,24 +887,6 @@ class FormExportSchema(HQExportSchema):
     split_multiselects = BooleanProperty(default=False)
     _default_type = 'form'
 
-    def update_schema(self):
-        super(FormExportSchema, self).update_schema()
-        if self.split_multiselects:
-            self.update_question_schema()
-            for column in [column for table in self.tables for column in table.columns]:
-                if isinstance(column, SplitColumn):
-                    question = self.question_schema.question_schema.get(column.index)
-                    # this is to workaround a bug where a "special" column was incorrectly
-                    # being flagged as a SplitColumn.
-                    # https://github.com/dimagi/commcare-hq/pull/9915
-                    if question:
-                        column.options = question.options
-                        column.ignore_extras = True
-
-    def update_question_schema(self):
-        schema = self.question_schema
-        schema.update_schema()
-
     @property
     def question_schema(self):
         from corehq.apps.export.models import FormQuestionSchema
@@ -1003,45 +985,6 @@ class FormExportSchema(HQExportSchema):
                 if bool(form.active_actions()):
                     return True
         return False
-
-
-class CaseExportSchema(HQExportSchema):
-    doc_type = 'SavedExportSchema'
-    _default_type = 'case'
-
-    @property
-    def filter(self):
-        return SerializableFunction(default_case_filter)
-
-    @property
-    def domain(self):
-        return self.index[0]
-
-    @property
-    def domain_obj(self):
-        return Domain.get_by_name(self.domain)
-
-    @property
-    def case_type(self):
-        return self.index[1]
-
-    @property
-    def applications(self):
-        return self.domain_obj.full_applications(include_builds=False)
-
-    @property
-    def case_properties(self):
-        props = set([])
-
-        for app in self.applications:
-            prop_map = get_case_properties(app, [self.case_type], defaults=("name",))
-            props |= set(prop_map[self.case_type])
-
-        return props
-
-    @property
-    def has_case_history_table(self):
-        return False  # This check is only for new exports
 
 
 def _apply_mapping(export_tables, mapping_dict):

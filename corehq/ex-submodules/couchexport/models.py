@@ -169,19 +169,6 @@ class ExportSchema(Document):
     def get_columns(self, index):
         return ['id'] + self.table_dict[index].data
 
-    def get_new_ids(self, database=None):
-        database = database or self.get_db()
-        assert self.timestamp, 'exports without timestamps are no longer supported.'
-        tag_as_list = force_tag_to_list(self.index)
-        startkey = tag_as_list + [self.timestamp.isoformat()]
-        endkey = tag_as_list + [{}]
-        return set(
-            [result['id'] for result in database.view(
-                        "couchexport/schema_index",
-                        reduce=False,
-                        startkey=startkey,
-                        endkey=endkey)])
-
 
 @register_column_type('plain')
 class ExportColumn(DocumentSchema):
@@ -499,69 +486,6 @@ class DefaultExportSchema(BaseSavedExportSchema):
         # can be overridden to rename/remove default stuff from exports
         return tables
 
-    def get_export_files(self, format='', previous_export_id=None, filter=None,
-                         use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
-        # the APIs of how these methods are broken down suck, but at least
-        # it's DRY
-        from couchexport.export import get_writer, get_export_components, get_headers, get_formatted_rows
-        from django.core.cache import cache
-        import hashlib
-
-        export_tag = self.index
-
-        CACHE_TIME = 1 * 60 * 60 # cache for 1 hour, in seconds
-
-        def _build_cache_key(tag, prev_export_id, format, max_column_size):
-            def _human_readable_key(tag, prev_export_id, format, max_column_size):
-                return "couchexport_:%s:%s:%s:%s" % (tag, prev_export_id, format, max_column_size)
-            return hashlib.md5(_human_readable_key(tag, prev_export_id,
-                format, max_column_size).encode('utf-8')).hexdigest()
-
-        # check cache, only supported for filterless queries, currently
-        cache_key = _build_cache_key(export_tag, previous_export_id, format, max_column_size)
-        if use_cache and filter is None:
-            cached_data = cache.get(cache_key)
-            if cached_data:
-                (tmp, checkpoint) = cached_data
-                return ExportFiles(tmp, checkpoint)
-
-        fd, path = tempfile.mkstemp()
-        if six.PY2:
-            path = path.decode('utf-8')
-        with os.fdopen(fd, 'wb') as tmp:
-            schema_index = export_tag
-            config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
-                                                                                     previous_export_id, filter)
-            if config:
-                writer = get_writer(format)
-
-                # get cleaned up headers
-                formatted_headers = self.remap_tables(get_headers(updated_schema, separator=separator))
-                writer.open(formatted_headers, tmp, max_column_size=max_column_size)
-
-                total_docs = len(config.potentially_relevant_ids)
-                if process:
-                    DownloadBase.set_progress(process, 0, total_docs)
-                for i, doc in config.enum_docs():
-                    if self.transform:
-                        doc = self.transform(doc)
-
-                    writer.write(self.remap_tables(get_formatted_rows(
-                        doc, updated_schema, include_headers=False,
-                        separator=separator)))
-                    if process:
-                        DownloadBase.set_progress(process, i + 1, total_docs)
-                writer.close()
-
-            checkpoint = export_schema_checkpoint
-
-        if checkpoint:
-            if use_cache:
-                cache.set(cache_key, (path, checkpoint), CACHE_TIME)
-            return ExportFiles(path, checkpoint)
-
-        return None
-
 
 @six.python_2_unicode_compatible
 class SavedExportSchema(BaseSavedExportSchema):
@@ -654,18 +578,6 @@ class SavedExportSchema(BaseSavedExportSchema):
     def table_configuration(self):
         return [self.get_table_configuration(index) for index, cols in self.schema.tables]
 
-    def update_schema(self):
-        """
-        Update the schema for this object to include the latest columns from
-        any relevant docs.
-
-        Does NOT save the doc, just updates the in-memory object.
-        """
-        from couchexport.schema import build_latest_schema
-        schema = build_latest_schema(self.index)
-        if schema:
-            self.set_schema(schema)
-
     def set_schema(self, schema):
         """
         Set the schema for this object.
@@ -683,71 +595,6 @@ class SavedExportSchema(BaseSavedExportSchema):
                     data, doc, apply_transforms, self.global_transform_function
                 )))
         return tables
-
-    def get_export_components(self, previous_export_id=None, filter=None):
-        from couchexport.export import ExportConfiguration
-
-        database = get_db()
-
-        config = ExportConfiguration(database, self.index,
-            previous_export_id,
-            self.filter & filter)
-
-        # get and checkpoint the latest schema
-        updated_schema = config.get_latest_schema()
-        export_schema_checkpoint = config.create_new_checkpoint()
-        return config, updated_schema, export_schema_checkpoint
-
-    def get_export_files(self, format=None, previous_export=None, filter=None, process=None, max_column_size=None,
-                         apply_transforms=True, limit=0, **kwargs):
-        from couchexport.export import get_writer, get_formatted_rows
-        if not format:
-            format = self.default_format or Format.XLS_2007
-
-        config, updated_schema, export_schema_checkpoint = self.get_export_components(previous_export, filter)
-
-        # transform docs onto output and save
-        writer = get_writer(format)
-
-        # open the doc and the headers
-        formatted_headers = list(self.get_table_headers())
-        fd, path = tempfile.mkstemp()
-        if six.PY2:
-            path = path.decode('utf-8')
-        with os.fdopen(fd, 'wb') as tmp:
-            writer.open(
-                formatted_headers,
-                tmp,
-                max_column_size=max_column_size,
-                table_titles=dict([
-                    (table.index, table.display)
-                    for table in self.tables if table.display
-                ])
-            )
-
-            total_docs = len(config.potentially_relevant_ids)
-            if process:
-                DownloadBase.set_progress(process, 0, total_docs)
-            for i, doc in config.enum_docs():
-                if limit and i > limit:
-                    break
-                if self.transform and apply_transforms:
-                    doc = self.transform(doc)
-                formatted_tables = self.trim(
-                    get_formatted_rows(doc, updated_schema, separator="."),
-                    doc,
-                    apply_transforms=apply_transforms
-                )
-                writer.write(formatted_tables)
-                if process:
-                    DownloadBase.set_progress(process, i + 1, total_docs)
-
-            writer.close()
-
-        if format == Format.PYTHON_DICT:
-            return writer.get_preview()
-
-        return ExportFiles(path, export_schema_checkpoint, format)
 
     def to_export_config(self):
         """

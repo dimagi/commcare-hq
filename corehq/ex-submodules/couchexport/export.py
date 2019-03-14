@@ -7,109 +7,13 @@ from couchexport.exceptions import SchemaMismatchException,\
 from couchexport.schema import extend_schema
 from django.conf import settings
 from couchexport.models import ExportSchema, Format
-from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
-from memoized import memoized
-from couchexport.util import get_schema_index_view_keys, default_cleanup
+from couchexport.util import default_cleanup
 from datetime import datetime
 import six
 from six.moves import range
 from six.moves import map
 from corehq.util.python_compatibility import soft_assert_type_text
-
-
-class ExportConfiguration(object):
-    """
-    A representation of the configuration parameters for an export and
-    some functions to actually facilitate the export from this config.
-    """
-
-    def __init__(self, database, schema_index, previous_export=None, filter=None,
-                 disable_checkpoints=False, cleanup_fn=default_cleanup):
-        self.database = database
-        if len(schema_index) > 2:
-            schema_index = schema_index[0:2]
-        self.schema_index = schema_index
-        self.previous_export = previous_export
-        self.filter = filter
-        self.timestamp = datetime.utcnow()
-        self.potentially_relevant_ids = self._potentially_relevant_ids()
-        self.disable_checkpoints = disable_checkpoints
-        self.cleanup_fn = cleanup_fn
-
-    def include(self, document):
-        """
-        Returns True if the document should be included in the results,
-        otherwise false
-        """
-        return self.filter(document) if self.filter else True
-
-    def cleanup(self, document_or_schema):
-        """
-        Given a doc or schema, pass it through a cleanup function prior to mapping
-        to remove potential unwanted properties. One example of this is to remove
-        the overly verbose _attachments fields.
-        """
-        return self.cleanup_fn(document_or_schema) if self.cleanup_fn else document_or_schema
-
-    @property
-    @memoized
-    def all_doc_ids(self):
-        """
-        Gets view results for all documents matching this schema
-        """
-        return set([result['id'] for result in \
-                    self.database.view(
-                        "couchexport/schema_index",
-                        reduce=False,
-                        **get_schema_index_view_keys(self.schema_index)
-                    ).all()])
-
-    def _potentially_relevant_ids(self):
-        return self.previous_export.get_new_ids() if self.previous_export \
-            else self.all_doc_ids
-
-    def get_potentially_relevant_docs(self):
-        return iter_docs(self.database, self.potentially_relevant_ids)
-
-    def enum_docs(self):
-        """
-        yields (index, doc) tuples for docs that pass the filter
-        index counts number of docs processed so far
-        NOT the number of docs returned so far
-
-        Useful for progress bars which use
-        len(self.potentially_relevant_ids) as the total.
-
-        """
-        for i, doc in enumerate(self.get_potentially_relevant_docs()):
-            if self.include(doc):
-                yield i, self.cleanup(doc)
-
-    def get_docs(self):
-        for _, doc in self.enum_docs():
-            yield doc
-
-    def last_checkpoint(self):
-        return None if self.disable_checkpoints else ExportSchema.last(self.schema_index)
-
-    @memoized
-    def get_latest_schema(self):
-        last_export = self.last_checkpoint()
-        schema = self.cleanup(dict(last_export.schema) if last_export and last_export.schema else None)
-        doc_ids = last_export.get_new_ids(self.database) if last_export else self.all_doc_ids
-        for doc in iter_docs(self.database, doc_ids):
-            schema = extend_schema(schema, self.cleanup(doc))
-        return schema
-
-    def create_new_checkpoint(self):
-        checkpoint = ExportSchema(
-            schema=self.get_latest_schema(),
-            timestamp=self.timestamp,
-            index=self.schema_index,
-        )
-        checkpoint.save()
-        return checkpoint
 
 
 def get_writer(format):
@@ -188,28 +92,6 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
     writer.write(data)
     yield writer
     writer.close()
-
-
-def get_export_components(schema_index, previous_export_id=None, filter=None):
-    """
-    Get all the components needed to build an export file.
-    """
-
-    previous_export = ExportSchema.get(previous_export_id)\
-        if previous_export_id else None
-    database = get_db()
-    config = ExportConfiguration(database, schema_index,
-        previous_export, filter)
-
-    # handle empty case
-    if not config.potentially_relevant_ids:
-        return None, None, None
-
-    # get and checkpoint the latest schema
-    updated_schema = config.get_latest_schema()
-    export_schema_checkpoint = config.create_new_checkpoint()
-
-    return config, updated_schema, export_schema_checkpoint
 
 
 @six.python_2_unicode_compatible

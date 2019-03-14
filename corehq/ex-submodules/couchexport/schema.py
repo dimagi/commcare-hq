@@ -6,22 +6,6 @@ from couchexport.exceptions import SchemaInferenceError
 from couchexport.models import ExportSchema
 
 
-def build_latest_schema(schema_index):
-    """
-    Build a schema, directly from the index. Also creates a saved checkpoint.
-    """
-    from couchexport.export import ExportConfiguration
-    db = Database(settings.COUCH_DATABASE)
-    previous_export = ExportSchema.last(schema_index)
-    config = ExportConfiguration(db, schema_index,
-                                 previous_export=previous_export)
-    schema = config.get_latest_schema()
-    if not schema:
-        return None
-    updated_checkpoint = config.create_new_checkpoint()
-    return updated_checkpoint
-
-
 def get_kind(doc):
     if doc == "" or doc is None:
         return "null"
