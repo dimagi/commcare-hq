@@ -745,7 +745,7 @@ class RestoreConfig(object):
             'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         maybe_add_domain_tag(self.domain, tags)
-        timer_buckets = (5, 20, 60, 120)
+        timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
