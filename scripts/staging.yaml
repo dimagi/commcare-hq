@@ -55,4 +55,5 @@ branches:
   #- jls/log-media-map-app-id # Jenny March 7
   - mk-434 # MK March 12
   - dmr/kill-old-exports  # Danny March 14
+  - celery-4.1.1  # Nick P March 14
 submodules: {}
