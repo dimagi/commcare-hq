@@ -172,9 +172,9 @@ def import_locations_async(domain, file_ref_id, user_id):
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
 
-    if getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
         # Log results because they are not sent to the view when
-        # CELERY_ALWAYS_EAGER is true
+        # CELERY_TASK_ALWAYS_EAGER is true
         logging.getLogger(__name__).info(
             "import_locations_async %s results: %s -> success=%s",
             file_ref_id,
