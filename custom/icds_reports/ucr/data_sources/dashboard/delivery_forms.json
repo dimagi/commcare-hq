@@ -62,7 +62,8 @@
           },
           "location_type": "supervisor",
       	  "location_property": "_id"
-        }
+        },
+        "is_primary_key": true
       },
       {
         "column_id": "case_load_ccs_record0",
@@ -237,6 +238,13 @@
       }
     },
     "engine_id": "icds-ucr",
-    "disable_destructive_rebuild": true
+    "disable_destructive_rebuild": true,
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    }
   }
 }
