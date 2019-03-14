@@ -8,8 +8,14 @@
     "priyanka-app",
     "shrena-dev",
     "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
     "reach-test",
-    "icds-cas"
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
   ],
   "server_environment": [
     "india",
