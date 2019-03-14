@@ -868,3 +868,49 @@ hr {
 .pregnantDetailsColumn {
     min-width: 150px;
 }
+
+#serviceDeliveryDashboardTable .medium-col {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#serviceDeliveryDashboardTable .sorting_asc, .sorting_desc, .sorting {
+    background: #2F5597 !important;
+    color: white;
+}
+
+#serviceDeliveryDashboardTable > tbody > tr:nth-of-type(2n+1) {
+    background-color: #CFD5EA;
+}
+#serviceDeliveryDashboardTable > tbody > tr:nth-of-type(2n) {
+    background-color: #E9EBF5;
+}
+
+#serviceDeliveryDashboardTable .headerTooplip {
+    position: relative;
+    display: inline-block;
+}
+#serviceDeliveryDashboardTable .headerTooplip .headerTooplipText {
+    opacity: 0;
+    display: none;
+    transition: opacity 1s;
+    border: 1px solid rgba(0, 0, 0, .2);
+    border-radius: 6px;
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, .2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, .2);
+    font-size: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    text-align: start;
+    width: 276px;
+    padding: 10px 14px;
+    color: #000;
+    background-color: #fff;
+    position: absolute;
+    top: 100%;
+    right: 105%;
+    z-index: 1;
+}
+#serviceDeliveryDashboardTable .headerTooplip:hover .headerTooplipText {
+    opacity: 1;
+    display: block;
+}

@@ -8,12 +8,14 @@ from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime
 
 from corehq.toggles import MM_CASE_PROPERTIES
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 import six
 
 
 def datetime_to_xml_string(datetime_string):
     if isinstance(datetime_string, six.string_types):
+        soft_assert_type_text(datetime_string)
         return datetime_string
 
     return json_format_datetime(datetime_string)
@@ -35,6 +37,7 @@ def date_to_xml_string(date):
         return ''
 
     if isinstance(date, six.string_types):
+        soft_assert_type_text(date)
         date = parse_datetime(date)
 
     return json_format_date(date)

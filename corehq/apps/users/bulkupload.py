@@ -15,6 +15,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
+
+from corehq.util.python_compatibility import soft_assert_type_text
 from six.moves import map
 from six.moves import range
 
@@ -189,7 +191,8 @@ class GroupMemoizer(object):
 
 def _fmt_phone(phone_number):
     if phone_number and not isinstance(phone_number, six.string_types):
-        phone_number = str(int(phone_number))
+        phone_number = six.text_type(int(phone_number))
+    soft_assert_type_text(phone_number)
     return phone_number.lstrip("+")
 
 
@@ -299,6 +302,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 def get_location_from_site_code(site_code, location_cache):
     if isinstance(site_code, six.string_types):
+        soft_assert_type_text(site_code)
         site_code = site_code.lower()
     elif isinstance(site_code, six.integer_types):
         site_code = str(site_code)
@@ -416,6 +420,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             is_active = row.get('is_active')
             if isinstance(is_active, six.string_types):
+                soft_assert_type_text(is_active)
                 try:
                     is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:

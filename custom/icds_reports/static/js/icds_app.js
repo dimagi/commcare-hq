@@ -298,6 +298,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/awc_reports", {
                 redirectTo: "/awc_reports/pse",
             })
+            .when("/service_delivery_dashboard", {
+                template: "<service-delivery-dashboard></service-delivery-dashboard>",
+            })
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
             })

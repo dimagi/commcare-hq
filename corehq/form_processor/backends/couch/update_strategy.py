@@ -343,7 +343,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         def fetch_attachment(name):
             if fetch_attachment.form is None:
                 fetch_attachment.form = XFormInstance.get(attachment_action.xform_id)
-            return fetch_attachment.form.fetch_attachment(name)
+            return fetch_attachment.form.fetch_attachment(name, return_bytes=True)
         fetch_attachment.form = xform
 
         # NOTE `attachment_action` is a
