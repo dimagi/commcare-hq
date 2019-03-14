@@ -63,6 +63,10 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
     a function like django.contrib.messages.error, and the second is a string.
     """
     msgs = []
+    error = _check_for_workbook_error(app, workbook, expected_headers)
+    if error:
+        msgs.append((messages.error, error))
+        return msgs
 
     processed_sheets = set()
     for sheet in workbook.worksheets:
@@ -132,6 +136,14 @@ def _process_single_sheet_rows(app, identifier, rows, sheet_name=None):
 
     return []
 
+def _check_for_workbook_error(app, workbook, headers):
+    if len(headers) == 1 and len(workbook.worksheets) > 1:
+        return _("Expected a single sheet. If you are uploading a multi-sheet file, "
+                 "please select 'All Languages'.")
+    if len(headers) > 1 and len(workbook.worksheets) == 1:
+        return _("File contains only one sheet. If you are uploading a single-language file, "
+                 "please select a language.")
+
 def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     expected_sheets = {h[0]: h[1] for h in headers}
 
@@ -142,7 +154,6 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     if expected_headers is None:
         return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
 
-    # TODO: display a friendlier error message if user mixed up the two types of uploads (single vs multi sheet)
     num_required_headers = 0
     if is_modules_and_forms_sheet(sheet.worksheet.title):
         num_required_headers = 2    # module or form, sheet name
