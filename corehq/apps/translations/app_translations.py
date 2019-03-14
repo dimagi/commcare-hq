@@ -866,7 +866,7 @@ def _update_case_list_translations(sheet, rows, app):
         elif row['case_property'].endswith(" (graph series config)"):
             trimmed_property = _remove_description_from_case_property(row)
             row['id'] = trimmed_property.split(" ")[0]
-            row['series_index'] = trimmed_property.split(" ")[2]
+            row['series_index'] = trimmed_property.split(" ")[1]
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['series_configs'] = parent.get('series_configs', []) + [row]
 
