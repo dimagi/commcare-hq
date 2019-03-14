@@ -559,6 +559,8 @@ def _agg_awc_table_weekly(day):
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
+    if six.PY2 and isinstance(aggregation_date, bytes):
+        aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
     _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
     celery_task_logger.info("Aggregation has completed")
