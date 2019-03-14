@@ -137,11 +137,6 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def rebuild_export_async(config, schema):
-    rebuild_export(config, schema)
-
-
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
