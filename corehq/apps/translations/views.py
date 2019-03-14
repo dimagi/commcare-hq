@@ -114,10 +114,9 @@ def download_bulk_app_translations(request, domain, app_id):
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
-    validate = request.POST.get('validate')
 
-    # TODO: either allow validation for single language or error when lang and validate
-    # (and make the UI hide the validation checkbox when a language is selected)
+    # Validation is not supported for the single-tab, single-language download
+    validate = request.POST.get('validate') and not lang
 
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)

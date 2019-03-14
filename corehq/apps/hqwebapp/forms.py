@@ -119,7 +119,10 @@ class AppTranslationsBulkUploadForm(BulkUploadForm):
             ])
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate')
+                crispy.Div(
+                    InlineField('validate'),
+                    data_bind="visible: !lang()",
+                )
             ])
         return crispy_form_fields
 
