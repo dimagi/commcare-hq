@@ -29,11 +29,9 @@ from corehq.apps.translations.app_translations.download import (
     get_module_case_list_form_rows,
     get_module_rows,
 )
-from corehq.apps.translations.app_translations.upload_app import (
-    process_bulk_app_translation_upload,
-    _remove_description_from_case_property,
-)
+from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
+from corehq.apps.translations.app_translations.upload_module import _remove_description_from_case_property
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader
