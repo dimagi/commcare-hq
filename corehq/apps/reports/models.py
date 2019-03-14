@@ -54,7 +54,7 @@ from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
-from couchexport.models import SavedExportSchema, GroupExportConfiguration, SplitColumn
+from couchexport.models import SavedExportSchema, SplitColumn
 from couchexport.transforms import couch_to_excel_datetime, identity
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
@@ -1054,34 +1054,6 @@ def _apply_mapping(export_tables, mapping_dict):
 
 def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
-
-
-class HQGroupExportConfiguration(QuickCachedDocumentMixin, GroupExportConfiguration):
-    """
-    HQ's version of a group export, tagged with a domain
-    """
-    domain = StringProperty()
-
-    def get_custom_exports(self):
-
-        def _rewrap(export):
-            # custom wrap if relevant
-            try:
-                return {
-                    'form': FormExportSchema,
-                    'case': CaseExportSchema,
-                }[export.type].wrap(export._doc)
-            except KeyError:
-                return export
-
-        for custom in list(self.custom_export_ids):
-            custom_export = self._get_custom(custom)
-            if custom_export:
-                yield _rewrap(custom_export)
-
-    def clear_caches(self):
-        super(HQGroupExportConfiguration, self).clear_caches()
-        self.by_domain.clear(self.__class__, self.domain)
 
 
 def ordering_config_validator(value):
