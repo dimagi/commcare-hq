@@ -311,3 +311,11 @@ class DataFileDownloadDetail(BaseProjectDataView):
             raise Http404
         data_file.delete()
         return HttpResponse(status=204)
+
+
+def can_view_form_exports(couch_user, domain):
+    return ExportsPermissionsManager('form', domain, couch_user).has_form_export_permissions
+
+
+def can_view_case_exports(couch_user, domain):
+    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions

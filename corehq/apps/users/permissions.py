@@ -39,16 +39,6 @@ def can_download_data_files(domain, couch_user):
     return toggles.DATA_FILE_DOWNLOAD.enabled(domain) and role.permissions.view_file_dropzone
 
 
-def can_view_form_exports(couch_user, domain):
-    from corehq.apps.export.views.utils import ExportsPermissionsManager
-    return ExportsPermissionsManager('form', couch_user).has_form_export_permissions
-
-
-def can_view_case_exports(couch_user, domain):
-    from corehq.apps.export.views.utils import ExportsPermissionsManager
-    return ExportsPermissionsManager('case', couch_user).has_form_export_permissions
-
-
 def can_view_sms_exports(couch_user, domain):
     return has_permission_to_view_report(
         couch_user, domain, SMS_EXPORT_PERMISSION
