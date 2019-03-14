@@ -59,8 +59,7 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
                 pse_conducted as pse_conducted,
                 supervisor_id as supervisor_id
               FROM "{ucr_daily_attendance_tablename}"
-              WHERE month = %(start_month)s and
-                    awc_open_count+awc_not_open = 1
+              WHERE month = %(start_month)s and (awc_open_count=1 OR awc_not_open = 1)
               ORDER BY awc_id, submitted_on, inserted_at DESC
             )
         """.format(
