@@ -350,6 +350,6 @@ class TestUserBulkUploadUtils(SimpleTestCase):
             },
         ]
 
-        with patch('corehq.apps.users.bulkupload.get_user_docs_by_username',
+        with patch('corehq.apps.users.bulkupload.get_existing_usernames',
                 return_value=['hello@domain.commcarehq.org']):
             self.assertRaises(UserUploadError, check_existing_usernames, user_specs, 'domain')
