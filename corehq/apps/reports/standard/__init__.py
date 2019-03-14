@@ -27,6 +27,7 @@ class ProjectReport(GenericReportView):
     base_template = 'reports/base_template.html'
     dispatcher = ProjectReportDispatcher
     asynchronous = True
+    paginate = False
 
     @property
     def default_report_url(self):

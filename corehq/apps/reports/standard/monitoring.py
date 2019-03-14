@@ -1351,6 +1351,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
+    exportable_all = True
+    paginate = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1459,11 +1461,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     @memoized
     def users_to_iterate(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled('icds-cas'):
             user_query = EMWF.user_es_query(
                 self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
             )
-            return util.get_simplified_users(user_query)
+            return util.get_simplified_users(user_query, paginate=self.paginate)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
@@ -1733,6 +1735,23 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
+
+    @property
+    def get_all_rows(self):
+        # call this function to generate the excel for emails
+        # Needs to return same info as rows but paginate it
+        # Pagination in ES is done via scroll queries (so .scroll instead of .run at the end of the query)
+        #
+        report_data = self._report_data()
+
+        rows = []
+        if self.view_by_groups:
+            rows = self._rows_by_group(report_data)
+        else:
+            rows = self._rows_by_user(report_data)
+
+        self.total_row = self._total_row(rows, report_data)
+        return rows
 
     def _report_data(self):
         export = self.rendered_as == 'export'
