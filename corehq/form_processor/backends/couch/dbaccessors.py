@@ -39,7 +39,7 @@ from couchforms.dbaccessors import (
     get_form_ids_for_user,
     get_forms_by_id,
     get_form_ids_by_type,
-    get_form_ids_by_xmlns,
+    iter_form_ids_by_xmlns,
 )
 from couchforms.models import XFormInstance, doc_types, XFormOperation
 from dimagi.utils.couch.database import iter_docs
@@ -140,7 +140,7 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def iter_form_ids_by_xmlns(domain, xmlns=None):
-        return get_form_ids_by_xmlns(domain, xmlns)
+        return iter_form_ids_by_xmlns(domain, xmlns)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
