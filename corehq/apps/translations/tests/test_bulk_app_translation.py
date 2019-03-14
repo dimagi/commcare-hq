@@ -31,7 +31,6 @@ from corehq.apps.translations.app_translations import (
     get_unicode_dicts,
     process_bulk_app_translation_upload,
     update_form_translations,
-    read_uploaded_app_translation_file,
     _remove_description_from_case_property
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
