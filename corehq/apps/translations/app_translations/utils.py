@@ -60,9 +60,9 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
 
     if lang:
         return ((SINGLE_SHEET_NAME, (
-            'menu or form',
+            'menu_or_form',
             'case_property',         # modules only
-            'detail or label',       # detail type (module) or question label (form)
+            'detail_or_label',       # detail type (module) or question label (form)
         ) + tuple(lang_list)),)
 
     headers = []
@@ -140,20 +140,20 @@ def get_form_sheet_name(form):
     ])
 
 
-def is_form_sheet(sheet):
-    return 'module' in sheet.worksheet.title and 'form' in sheet.worksheet.title
+def is_form_sheet(identifier):
+    return 'module' in identifier and 'form' in identifier
 
 
-def is_module_sheet(sheet):
-    return 'module' in sheet.worksheet.title and 'form' not in sheet.worksheet.title
+def is_module_sheet(identifier):
+    return 'module' in identifier and 'form' not in identifier
 
 
-def is_modules_and_forms_sheet(sheet):
-    return sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME
+def is_modules_and_forms_sheet(identifier):
+    return identifier == MODULES_AND_FORMS_SHEET_NAME
 
 
-def is_single_sheet(sheet):
-    return sheet.worksheet.title == SINGLE_SHEET_NAME
+def is_single_sheet(identifier):
+    return identifier == SINGLE_SHEET_NAME
 
 
 def get_missing_cols(app, sheet, headers):
