@@ -294,6 +294,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
+    report.rendered_as = 'export'
 
     # need to set request
     setattr(report.request, 'REQUEST', {})
