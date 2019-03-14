@@ -111,12 +111,12 @@ class ExportsPermissionsManager(object):
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
     def access_list_exports_or_404(self, is_deid=False):
-        if not (self.has_edit_permissions or self.has_view_permissions
+        if not (self.has_view_permissions
                 or (is_deid and self.has_deid_view_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
-        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+        if not (self.has_view_permissions or self.has_deid_view_permissions):
             raise Http404()
 
 
