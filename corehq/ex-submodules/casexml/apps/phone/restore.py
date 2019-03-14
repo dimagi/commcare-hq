@@ -648,7 +648,11 @@ class RestoreConfig(object):
             # store the task id in cache
             self.async_restore_task_id_cache.set_value(task.id)
         try:
-            response = task.get(timeout=self._get_task_timeout(new_task))
+            response_or_name = task.get(timeout=self._get_task_timeout(new_task))
+            if isinstance(response_or_name, six.text_type):
+                response = CachedResponse(response_or_name)
+            else:
+                response = response_or_name
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
