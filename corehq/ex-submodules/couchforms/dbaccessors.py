@@ -114,7 +114,7 @@ def iter_form_ids_by_xmlns(domain, xmlns):
         for result in results:
             yield result['id']
 
-        # add the last document's submitted_on time to the startkey
+        # add the last document's received_on time to the startkey
         last_result = results[-1]
         startkey = key + [last_result['key'][-1]]
 
