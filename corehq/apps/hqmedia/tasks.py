@@ -64,7 +64,6 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     zipped_files = uploaded_zip.namelist()
     status.total_files = len(zipped_files)
     checked_paths = []
-
     try:
         save_app = False
         for index, path in enumerate(zipped_files):
