@@ -99,9 +99,9 @@ class AppTranslationsGenerator(object):
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.translations.app_translations.download import get_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
         # simply the rows of data per sheet name
-        rows = get_bulk_app_sheet_rows(
+        rows = get_bulk_app_sheets_by_name(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment

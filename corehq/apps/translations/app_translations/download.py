@@ -25,8 +25,7 @@ from corehq.apps.translations.app_translations.utils import (
 
 
 
-# TODO: rename? this returns a dict of worksheets, not just rows
-def get_bulk_app_single_sheet_rows(app, lang):
+def get_bulk_app_single_sheet_by_name(app, lang):
     rows = []
     for module_index, module in enumerate(app.modules):
         prefix = [get_module_sheet_name(module)]
@@ -59,8 +58,7 @@ def get_bulk_app_single_sheet_rows(app, lang):
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
 
-# TODO: rename? this returns a dict of worksheets, not just rows
-def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
+def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
     """
     Data rows for bulk app translation download
 

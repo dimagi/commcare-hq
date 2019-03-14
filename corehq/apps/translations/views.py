@@ -27,8 +27,8 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.app_translations.download import (
     get_module_rows,
     get_form_question_rows,
-    get_bulk_app_sheet_rows,
-    get_bulk_app_single_sheet_rows,
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
 )
 from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
@@ -97,10 +97,10 @@ def download_bulk_app_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     app = get_app(domain, app_id)
     headers = get_bulk_app_sheet_headers(app, lang=lang)
-    rows = get_bulk_app_single_sheet_rows(app, lang) if lang else get_bulk_app_sheet_rows(app)
+    sheets = get_bulk_app_single_sheet_by_name(app, lang) if lang else get_bulk_app_sheets_by_name(app)
 
     temp = io.BytesIO()
-    data = [(k, v) for k, v in six.iteritems(rows)]
+    data = [(k, v) for k, v in six.iteritems(sheets)]
     export_raw(headers, data, temp)
     filename = '{app_name} v.{app_version} - App Translations{lang}'.format(
         app_name=app.name,

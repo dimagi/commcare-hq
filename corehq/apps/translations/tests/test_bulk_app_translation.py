@@ -23,8 +23,8 @@ from corehq.apps.translations.app_translations.utils import (
     get_module_sheet_name,
 )
 from corehq.apps.translations.app_translations.download import (
-    get_bulk_app_sheet_rows,
-    get_bulk_app_single_sheet_rows,
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
     get_form_question_rows,
     get_module_case_list_form_rows,
     get_module_rows,
@@ -666,11 +666,11 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_bulk_app_sheet_rows(self):
         actual_headers = get_bulk_app_sheet_headers(self.app)
-        actual_rows = get_bulk_app_sheet_rows(self.app)
+        actual_sheets = get_bulk_app_sheets_by_name(self.app)
 
         actual_workbook = [
             {'name': title,
-             'rows': [dict(zip(headers, row)) for row in actual_rows[title]]}
+             'rows': [dict(zip(headers, row)) for row in actual_sheets[title]]}
             for title, headers in actual_headers
         ]
 
