@@ -109,11 +109,11 @@ class UploadedTranslationsValidator(object):
                 continue
 
             rows = get_unicode_dicts(sheet)
-            if is_modules_and_forms_sheet(sheet):
+            if is_modules_and_forms_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
-            elif is_module_sheet(sheet):
+            elif is_module_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module')
-            elif is_form_sheet(sheet):
+            elif is_form_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'form')
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)

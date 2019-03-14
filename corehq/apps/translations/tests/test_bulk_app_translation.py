@@ -442,7 +442,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                 'be processed but ignoring the following columns: default-fra',
 
                 "You must provide at least one translation for the label 'question1-label' "
-                "in sheet 'module1_form1'",
+                "in form 1",
 
                 'App Translations Updated!'
             ]
@@ -787,7 +787,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         """
         sheet = self.form1_worksheet
         with patch('corehq.apps.translations.app_translations.upload_form.save_xform') as save_xform_patch:
-            msgs = update_app_from_form_sheet(self.app, sheet)
+            msgs = update_app_from_form_sheet(self.app, sheet, sheet.worksheet.title)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
             self.maxDiff = None

@@ -17,29 +17,26 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
-    get_missing_cols,
     get_unicode_dicts,
 )
 
 
 
-def update_app_from_form_sheet(app, sheet):
+def update_app_from_form_sheet(app, rows, identifier, label_header='label'):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
 
-    :param sheet: a WorksheetJSONReader
     :param app:
+    :param rows: Iterable of rows from a WorksheetJSONReader
+    :param identifier: String like "module1_form_2"
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
-    mod_text, form_text = sheet.worksheet.title.split("_")
-    module_index = int(mod_text.replace("module", "")) - 1
-    form_index = int(form_text.replace("form", "")) - 1
-    form = app.get_module(module_index).get_form(form_index)
-    rows = get_unicode_dicts(sheet)  # fetch once, because sheet.__iter__ can only be called once
+    form = _get_form_from_sheet_name(app, identifier)
+    rows = get_unicode_dicts(rows)
 
-    warning = _check_for_shadow_form_warning(sheet, form)
+    warning = _check_for_shadow_form_warning(form)
     if warning:
         return [(messages.warning, warning)]
 
@@ -152,7 +149,7 @@ def update_app_from_form_sheet(app, sheet):
         # told HQ that "**stars**" in an app's English translation is not Markdown, then we must assume that
         # "**étoiles**" in the French translation is not Markdown either.
         for row in rows:
-            label_id = row['label']
+            label_id = row[label_header]
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
@@ -161,30 +158,30 @@ def update_app_from_form_sheet(app, sheet):
     if form.is_registration_form():
         for row in rows:
             if not has_translation(row, app.langs):
-                skip_label.add(row['label'])
+                skip_label.add(row[label_header])
         for label in skip_label:
             msgs.append((
                 messages.error,
                 _("You must provide at least one translation"
-                  " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
+                  " for the label '%s' in form %s") % (label, form.id + 1)
             ))
+
     # Update the translations
     headers = get_bulk_app_sheet_headers(app)
-    missing_cols = get_missing_cols(app, sheet, headers)
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
 
         for row in rows:
-            label_id = row['label']
+            label_id = row[label_header]
             if label_id in skip_label:
                 continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    _("Unrecognized translation label {0} in sheet {1}. That row"
-                      " has been skipped").format(label_id, sheet.worksheet.title)
+                    _("Unrecognized translation label {0} in form {1}. That row"
+                      " has been skipped").format(label_id, form.id + 1)
                 ))
                 continue
 
@@ -201,12 +198,12 @@ def update_app_from_form_sheet(app, sheet):
 
             # Add or remove translations
             for trans_type, new_translation in translations.items():
-                if not new_translation and col_key not in missing_cols:
+                if not new_translation:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
                         key = _get_col_key(trans_type, l)
-                        if key in missing_cols:
+                        if key not in row:
                             continue
                         fallback = row[key]
                         if fallback:
@@ -244,13 +241,17 @@ def update_app_from_form_sheet(app, sheet):
     return msgs
 
 
-def _check_for_shadow_form_warning(sheet, form):
+def _get_form_from_sheet_name(app, sheet_name):
+    mod_text, form_text = sheet_name.split("_")
+    module_index = int(mod_text.replace("module", "")) - 1
+    form_index = int(form_text.replace("form", "")) - 1
+    return app.get_module(module_index).get_form(form_index)
+
+
+def _check_for_shadow_form_warning(form):
     if isinstance(form, ShadowForm):
-        return _("Found a ShadowForm at {sheet_name} with the name {name}."
-            " Cannot translate ShadowForms, skipping.").format(
-                sheet_name=sheet.worksheet.title,
-                name=form.default_name(),
-            )
+        return _('Form {index}, "{name}", is a shadow form. '
+                 'Cannot translate shadow forms, skipping.').format(index=form.id + 1, name=form.default_name())
 
 
 def escape_output_value(value):

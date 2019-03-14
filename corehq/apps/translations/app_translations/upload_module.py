@@ -15,15 +15,15 @@ from corehq.apps.translations.app_translations.utils import get_unicode_dicts, u
 
 
 
-def update_app_from_module_sheet(app, sheet):
+def update_app_from_module_sheet(app, rows, identifier, detail_header='list_or_detail'):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
     the exact same order that they appear in the bulk app translation download.
     This function does not save the modified app to the database.
 
-    :param sheet:
     :param app:
+    :param rows: Iterable of rows from a WorksheetJSONReader
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
@@ -32,13 +32,13 @@ def update_app_from_module_sheet(app, sheet):
     # match sheet rows to DetailColumns by position.
     msgs = []
 
-    module = _get_module_from_sheet_name(app, sheet)
+    module = _get_module_from_sheet_name(app, identifier)
     if isinstance(module, ReportModule):
         return msgs
 
-    (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(app, sheet)
+    (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(module, rows)
 
-    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows)
+    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows, detail_header=detail_header)
     if errors:
         return [(messages.error, e) for e in errors]
 
@@ -107,16 +107,12 @@ def update_app_from_module_sheet(app, sheet):
             # Check that names match (user is not allowed to change property in the
             # upload). Mismatched names indicate the user probably botched the sheet.
             if row.get('id', None) != detail.field:
-                msgs.append((
-                    messages.error,
-                    _('A row in sheet {sheet} has an unexpected value of "{field}" '
-                      'in the case_property column. Case properties must appear in '
-                      'the same order as they do in the bulk app translation '
-                      'download. No translations updated for this row.').format(
-                          sheet=sheet.worksheet.title,
-                          field=row.get('case_property', "")
-                      )
-                ))
+                message = _('A row for module {index} has an unexpected case property "{field}"'
+                            'Case properties must appear in the same order as they do in the bulk '
+                            'app translation download. No translations updated for this row.').format(
+                                index=module.id + 1,
+                                field=row.get('case_property', ""))
+                msgs.append((messages.error, message))
                 continue
             _update_detail(row, detail)
 
@@ -128,8 +124,8 @@ def update_app_from_module_sheet(app, sheet):
 
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
-    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
-    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
+    list_rows = [row for row in condensed_rows if row[detail_header] == 'list']
+    detail_rows = [row for row in condensed_rows if row[detail_header] == 'detail']
     if partial_upload:
         _partial_upload(list_rows, short_details)
         _partial_upload(detail_rows, long_details)
@@ -145,7 +141,7 @@ def update_app_from_module_sheet(app, sheet):
     return msgs
 
 
-def _get_condensed_rows(app, sheet):
+def _get_condensed_rows(module, rows):
     '''
     Reconfigure the given sheet into objects that are easier to process.
     The major change is to nest mapping and graph config rows under their
@@ -156,13 +152,12 @@ def _get_condensed_rows(app, sheet):
 
     Returns a three-item tuple: case property rows, tab header rows, case list form label
     '''
-    module = _get_module_from_sheet_name(app, sheet)
     condensed_rows = []
     case_list_form_label = None
     detail_tab_headers = [None for i in module.case_details.long.tabs]
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
-    for i, row in enumerate(get_unicode_dicts(sheet)):
+    for i, row in enumerate(get_unicode_dicts(rows)):
         # If it's an enum case property, set index_of_last_enum_in_condensed
         if row['case_property'].endswith(" (ID Mapping Text)"):
             row['id'] = _remove_description_from_case_property(row)
@@ -211,15 +206,9 @@ def _get_condensed_rows(app, sheet):
             if index < len(detail_tab_headers):
                 detail_tab_headers[index] = row
             else:
-                msgs.append((
-                    messages.error,
-                    _("Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
-                      "No changes were made for sheet {1}.").format(
-                          len(detail_tab_headers),
-                          sheet.worksheet.title,
-                          index
-                      )
-                ))
+                message = _("Expected {0} case detail tabs for module {1} but found row for Tab {2}. No changes "
+                            "were made for module {1}.").format(len(detail_tab_headers), module.id + 1, index)
+                msgs.append((messages.error, message))
 
         # It's a normal case property
         else:
@@ -233,40 +222,40 @@ def _remove_description_from_case_property(row):
     return re.match('.*(?= \()', row['case_property']).group()
 
 
-def _check_for_detail_length_errors(module, condensed_rows):
+def _check_for_detail_length_errors(module, condensed_rows, detail_header='list_or_detail'):
     errors = []
 
-    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
-    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
+    list_rows = [row for row in condensed_rows if row[detail_header] == 'list']
+    detail_rows = [row for row in condensed_rows if row[detail_header] == 'detail']
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
     partial_upload = False
 
-    for expected_list, received_list, word in [
-        (short_details, list_rows, "list"),
-        (long_details, detail_rows, "detail")
+    for expected_list, received_list, list_or_detail in [
+        (short_details, list_rows, _("case list")),
+        (long_details, detail_rows, _("case detail")),
     ]:
         if len(expected_list) != len(received_list):
             # if a field is not referenced twice in a case list or detail, then
             # we can perform a partial upload using field (case property) as a key
             number_fields = len({detail.field for detail in expected_list})
-            if number_fields == len(expected_list) and toggles.ICDS.enabled(app.domain):
+            if number_fields == len(expected_list) and toggles.ICDS.enabled(module.get_app().domain):
                 partial_upload = True
                 continue
-            errors.append(_("Expected {0} case {3} properties in sheet {2}, found {1}. "
-                "No case list or detail properties for sheet {2} were updated").format(
-                    len(expected_list),
-                    len(received_list),
-                    sheet.worksheet.title,
-                    word
+            errors.append(_("Expected {expected_count} {list_or_detail} properties in module {index}, found "
+                "{actual_count}. No case list or detail properties for module {index} were updated").format(
+                    expected_count=len(expected_list),
+                    actual_count=len(received_list),
+                    index=module.id + 1,
+                    list_or_detail=list_or_detail,
                 )
             )
 
     return (errors, partial_upload)
 
 
-def _get_module_from_sheet_name(app, sheet):
-    module_index = int(sheet.worksheet.title.replace("module", "")) - 1
+def _get_module_from_sheet_name(app, identifier):
+    module_index = int(identifier.replace("module", "")) - 1
     return app.get_module(module_index)
 
 
