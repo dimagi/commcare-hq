@@ -15,7 +15,7 @@ from corehq.apps.translations.app_translations.utils import get_unicode_dicts, u
 
 
 
-def update_app_from_module_sheet(app, rows, identifier, detail_header='list_or_detail'):
+def update_app_from_module_sheet(app, rows, identifier):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -38,7 +38,7 @@ def update_app_from_module_sheet(app, rows, identifier, detail_header='list_or_d
 
     (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(module, rows)
 
-    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows, detail_header=detail_header)
+    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows)
     if errors:
         return [(messages.error, e) for e in errors]
 
@@ -124,8 +124,8 @@ def update_app_from_module_sheet(app, rows, identifier, detail_header='list_or_d
 
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
-    list_rows = [row for row in condensed_rows if row[detail_header] == 'list']
-    detail_rows = [row for row in condensed_rows if row[detail_header] == 'detail']
+    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
     if partial_upload:
         _partial_upload(list_rows, short_details)
         _partial_upload(detail_rows, long_details)
@@ -222,11 +222,11 @@ def _remove_description_from_case_property(row):
     return re.match('.*(?= \()', row['case_property']).group()
 
 
-def _check_for_detail_length_errors(module, condensed_rows, detail_header='list_or_detail'):
+def _check_for_detail_length_errors(module, condensed_rows):
     errors = []
 
-    list_rows = [row for row in condensed_rows if row[detail_header] == 'list']
-    detail_rows = [row for row in condensed_rows if row[detail_header] == 'detail']
+    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
     partial_upload = False

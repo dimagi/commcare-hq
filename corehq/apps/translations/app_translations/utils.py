@@ -61,8 +61,9 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
     if lang:
         return ((SINGLE_SHEET_NAME, (
             'menu_or_form',
-            'case_property',         # modules only
-            'detail_or_label',       # detail type (module) or question label (form)
+            'case_property',        # modules only
+            'list_or_detail',       # modules only
+            'label',                # forms only
         ) + tuple(lang_list)),)
 
     headers = []
