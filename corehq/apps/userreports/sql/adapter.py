@@ -50,15 +50,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return get_indicator_table(self.config)
 
     @memoized
-    def get_sqlalchemy_mapping(self):
+    def get_sqlalchemy_orm_table(self):
         table = self.get_table()
         Base = declarative_base(metadata=metadata)
-        properties = dict(table.columns)
-        properties['__tablename__'] = table.name
-        properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
-        return type_
+        class TemporaryTableDef(Base):
+            __table__ = table
+
+        return TemporaryTableDef
 
     def _apply_sql_addons(self):
         distributed = False
