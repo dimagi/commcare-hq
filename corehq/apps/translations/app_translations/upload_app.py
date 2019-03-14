@@ -168,16 +168,30 @@ def _check_for_sheet_warnings(app, sheet, headers):
     expected_headers = expected_sheets.get(sheet.worksheet.title, None)
 
     missing_cols = get_missing_cols(app, sheet, headers)
+    extra_cols = set(sheet.headers) - set(expected_headers)
+
+    # Backwards compatibility for old "filepath" header names
+    not_missing_cols = set()
+    for col in missing_cols:
+        for key, legacy in (
+            ('image_', 'icon_filepath_'),
+            ('audio_', 'audio_filepath_'),
+        ):
+            for lang in app.langs:
+                if key + lang in missing_cols and legacy + lang in extra_cols:
+                    not_missing_cols.add(key + lang)
+                    extra_cols.remove(legacy + lang)
+    missing_cols = missing_cols - not_missing_cols
+
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
             'Sheet will be processed but the following translations will be unchanged: %s')
-            % (sheet.worksheet.title, " ,".join(missing_cols))))
+            % (sheet.worksheet.title, ", ".join(missing_cols))))
 
-    extra_cols = set(sheet.headers) - set(expected_headers)
     if len(extra_cols) > 0:
         warnings.append(_('Sheet "%s" has unrecognized columns. '
             'Sheet will be processed but ignoring the following columns: %s')
-            % (sheet.worksheet.title, " ,".join(extra_cols)))
+            % (sheet.worksheet.title, ", ".join(extra_cols)))
 
     return warnings
 
@@ -226,12 +240,19 @@ def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='shee
 
         update_translation_dict('default_', document.name, row, app.langs)
 
+        # Update menu media
+        # For backwards compatibility with previous code, accept old "filepath" header names
         for lang in app.langs:
-            icon_filepath = 'icon_filepath_%s' % lang
-            audio_filepath = 'audio_filepath_%s' % lang
-            if icon_filepath in row:
-                document.set_icon(lang, row[icon_filepath])
-            if audio_filepath in row:
-                document.set_audio(lang, row[audio_filepath])
+            image_header = 'image_%s' % lang
+            if image_header not in row:
+                image_header = 'icon_filepath_%s' % lang
+            if image_header in row:
+                document.set_icon(lang, row[image_header])
+
+            audio_header = 'audio_%s' % lang
+            if audio_header not in row:
+                audio_header = 'audio_filepath_%s' % lang
+            if audio_header in row:
+                document.set_audio(lang, row[audio_header])
 
     return msgs

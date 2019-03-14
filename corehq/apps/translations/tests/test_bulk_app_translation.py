@@ -138,7 +138,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-            "Type", "sheet_name", "default_en", "default_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra", 'image_en', 'image_fra', 'audio_en', 'audio_fra', "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -151,7 +151,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_headers_bad_column = (  # bad column is default-fra
         (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "sheet_name", "default_en", "default-fra",
-            "icon_filepath_en", "icon_filepath_fra", "audio_filepath_en", "audio_filepath_fra", "unique_id"
+            "image_en", "image_fra", "audio_en", "audio_fra", "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default-fra"
@@ -210,8 +210,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_no_change_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'default_fra',
-                                        'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en',
-                                        'audio_filepath_fra', 'unique_id')),
+                                        'image_en', 'image_fra', 'audio_en',
+                                        'audio_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
@@ -625,7 +625,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_sheet_headers(self):
         self.assertListEqual(get_bulk_app_sheet_headers(self.app), [
             ['Modules_and_forms', ['Type', 'sheet_name', 'default_en',
-             'icon_filepath_en', 'audio_filepath_en', 'unique_id']],
+             'image_en', 'audio_en', 'unique_id']],
             ['module1', ['case_property', 'list_or_detail', 'default_en']],
             ['module1_form1', ['label', 'default_en', 'audio_en', 'image_en', 'video_en']]
         ])
@@ -724,8 +724,8 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         (MODULES_AND_FORMS_SHEET_NAME, (
             'Type', 'sheet_name',
             'default_en', 'default_afr', 'default_fra',
-            'icon_filepath_en', 'icon_filepath_afr', 'icon_filepath_fra',
-            'audio_filepath_en', 'audio_filepath_afr', 'audio_filepath_fra',
+            'image_en', 'image_afr', 'image_fra',
+            'audio_en', 'audio_afr', 'audio_fra',
             'unique_id'
         )),
         ('module1', (
