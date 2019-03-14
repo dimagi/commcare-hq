@@ -29,7 +29,7 @@ def update_app_from_form_sheet(app, rows, identifier):
 
     :param app:
     :param rows: Iterable of rows from a WorksheetJSONReader
-    :param identifier: String like "module1_form_2"
+    :param identifier: String like "menu1_form_2"
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
@@ -243,7 +243,7 @@ def update_app_from_form_sheet(app, rows, identifier):
 
 def _get_form_from_sheet_name(app, sheet_name):
     mod_text, form_text = sheet_name.split("_")
-    module_index = int(mod_text.replace("module", "")) - 1
+    module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
     return app.get_module(module_index).get_form(form_index)
 

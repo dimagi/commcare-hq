@@ -15,7 +15,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
-    get_missing_cols,
     get_unicode_dicts,
     is_form_sheet,
     is_module_sheet,
@@ -23,7 +22,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_single_sheet,
     update_translation_dict,
 )
-from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
 from corehq.apps.translations.app_translations.upload_module import update_app_from_module_sheet
 
@@ -150,7 +149,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     if sheet.worksheet.title in processed_sheets:
         return _('Sheet "%s" was repeated. Only the first occurrence has been processed.') % sheet.worksheet.title
 
-    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
+    expected_headers = _get_expected_headers(sheet, expected_sheets)
     if expected_headers is None:
         return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
 
@@ -173,12 +172,22 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
         )
 
 
+def _get_expected_headers(sheet, expected_sheets):
+    if sheet.worksheet.title == LEGACY_MODULES_AND_FORMS_SHEET_NAME:
+        expected_headers = expected_sheets.get(MODULES_AND_FORMS_SHEET_NAME, None)
+    elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
+        expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
+    else:
+        expected_headers = expected_sheets.get(sheet.worksheet.title, None)
+    return expected_headers
+
+
 def _check_for_sheet_warnings(app, sheet, headers):
     warnings = []
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = expected_sheets.get(sheet.worksheet.title, None)
+    expected_headers = _get_expected_headers(sheet, expected_sheets)
 
-    missing_cols = get_missing_cols(app, sheet, headers)
+    missing_cols = _get_missing_cols(app, sheet, headers)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
     # Backwards compatibility for old "filepath" header names
@@ -207,6 +216,12 @@ def _check_for_sheet_warnings(app, sheet, headers):
     return warnings
 
 
+def _get_missing_cols(app, sheet, headers):
+    expected_sheets = {h[0]: h[1] for h in headers}
+    expected_columns = _get_expected_headers(sheet, expected_sheets)
+    return set(expected_columns) - set(sheet.headers)
+
+
 def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='sheet_name'):
     """
     Modify the translations and media references for the modules and forms in
@@ -229,13 +244,13 @@ def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='shee
             ))
             continue
 
-        module_index = int(identifying_text[0].replace("module", "")) - 1
+        module_index = int(identifying_text[0].replace("menu", "").replace("module", "")) - 1
         try:
             document = app.get_module(module_index)
         except ModuleNotFoundException:
             msgs.append((
                 messages.error,
-                _('Invalid module in row "%s", skipping row.') % row.get(identifying_header, '')
+                _('Invalid menu in row "%s", skipping row.') % row.get(identifying_header, '')
             ))
             continue
         if len(identifying_text) == 2:
