@@ -12,7 +12,10 @@
     "priyanka-app",
     "shrena-dev",
     "aparatest",
-    "icds-cas"
+    "icds-cas",
+    "icds-test",
+    "icds-sql",
+    "icds-cas-sandbox"
   ],
   "server_environment": [
     "india",
