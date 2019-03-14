@@ -309,6 +309,9 @@ def _update_aggregate_locations_tables():
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_aggregation_task(self, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
@@ -334,6 +337,9 @@ def icds_aggregation_task(self, date, func):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_state_aggregation_task(self, state_id, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return

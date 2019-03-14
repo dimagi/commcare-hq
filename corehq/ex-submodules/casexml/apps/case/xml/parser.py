@@ -10,10 +10,10 @@ import datetime
 from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.parsing import string_to_utc_datetime
 import six
 from six.moves import filter
-
 
 XMLNS_ATTR = "@xmlns"
 KNOWN_PROPERTIES = {
@@ -214,6 +214,7 @@ class CaseAttachmentAction(CaseActionBase):
 
         for id, data in block.items():
             if isinstance(data, six.string_types):
+                soft_assert_type_text(data)
                 attachment_src = None
                 attachment_from = None
                 attachment_name = None

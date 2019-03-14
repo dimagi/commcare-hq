@@ -9,10 +9,12 @@ import json
 from couchexport.tasks import rebuild_schemas
 from dimagi.utils.logging import notify_exception
 import six
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def export_for_group(export_id_or_group, last_access_cutoff=None):
     if isinstance(export_id_or_group, six.string_types):
+        soft_assert_type_text(export_id_or_group)
         try:
             config = GroupExportConfiguration.get(export_id_or_group)
         except ResourceNotFound:

@@ -20,6 +20,7 @@ from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -1199,7 +1200,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
         if not isinstance(phone_number, six.string_types):
-            phone_number = str(phone_number)
+            phone_number = six.text_type(phone_number)
+        soft_assert_type_text(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
     def set_default_phone_number(self, phone_number):
@@ -2422,6 +2424,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, six.string_types):
+            soft_assert_type_text(location_object_or_id)
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id

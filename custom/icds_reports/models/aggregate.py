@@ -862,6 +862,7 @@ class DailyAttendance(models.Model):
     class Meta:
         managed = False
         db_table = 'daily_attendance'
+        unique_together = ('supervisor_id', 'doc_id')
 
     @classmethod
     def aggregate(cls, month):
@@ -937,6 +938,7 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -991,6 +993,7 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_CF_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1081,6 +1084,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1143,6 +1147,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1190,6 +1195,7 @@ class AggregateChildHealthTHRForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1231,6 +1237,7 @@ class AggregateCcsRecordTHRForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_THR_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1311,6 +1318,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 
     class Meta(object):
         db_table = AGG_GROWTH_MONITORING_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1447,6 +1455,7 @@ class AggregateBirthPreparednesForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1507,9 +1516,9 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         help_text="Where the child is born"
     )
 
-
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1598,6 +1607,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
 
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
+        unique_together = ('supervisor_id', 'case_id')
 
     @classmethod
     def aggregate(cls, state_id, month):

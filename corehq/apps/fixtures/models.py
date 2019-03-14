@@ -20,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from dimagi.ext.couchdbkit import Document, DocumentSchema, DictProperty, StringProperty, StringListProperty, SchemaListProperty, IntegerProperty, BooleanProperty
 from corehq.apps.groups.models import Group
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from memoized import memoized
@@ -50,6 +51,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
             raise ResourceNotFound
         # Migrate fixtures without attributes on item-fields to fields with attributes
         if obj["fields"] and isinstance(obj['fields'][0], six.string_types):
+            soft_assert_type_text(obj['fields'][0])
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
 
         # Migrate fixtures without attributes on items to items with attributes
@@ -179,6 +181,8 @@ class FixtureDataItem(Document):
         fields_dict = {}
 
         def _is_new_type(field_val):
+            if isinstance(field_val, six.string_types):
+                soft_assert_type_text(field_val)
             old_types = (six.string_types, int, float)
             return field_val is not None and not isinstance(field_val, old_types)
 
@@ -468,6 +472,7 @@ class FixtureDataItem(Document):
 
 def _id_from_doc(doc_or_doc_id):
     if isinstance(doc_or_doc_id, six.string_types):
+        soft_assert_type_text(doc_or_doc_id)
         doc_id = doc_or_doc_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None

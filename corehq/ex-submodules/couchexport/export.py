@@ -15,6 +15,7 @@ from datetime import datetime
 import six
 from six.moves import range
 from six.moves import map
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 class ExportConfiguration(object):
@@ -288,8 +289,8 @@ def fit_to_schema(doc, schema):
         if not doc:
             doc = ""
         if not isinstance(doc, six.string_types):
-        #log("%s is not a string" % doc)
             doc = six.text_type(doc)
+        soft_assert_type_text(doc)
         return doc
 
 
@@ -334,6 +335,7 @@ def _create_intermediate_tables(docs, schema):
         id = []
         for k in path:
             if isinstance(k, six.string_types):
+                soft_assert_type_text(k)
                 if k:
                     column.append(k)
             else:
@@ -396,6 +398,7 @@ class FormattedRow(object):
     @property
     def formatted_id(self):
         if isinstance(self.id, six.string_types):
+            soft_assert_type_text(self.id)
             return self.id
         return self.separator.join(map(six.text_type, self.id))
 
@@ -405,6 +408,7 @@ class FormattedRow(object):
     @property
     def compound_id(self):
         if isinstance(self.id, six.string_types):
+            soft_assert_type_text(self.id)
             return [self.id]
         return self.id
 
@@ -436,6 +440,7 @@ class FormattedRow(object):
         for name, rows in tables:
             rows = list(rows)
             if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
+                soft_assert_type_text(rows[0])
                 # `rows` is actually just a single row, so wrap it
                 rows = [rows]
             ret.append(
