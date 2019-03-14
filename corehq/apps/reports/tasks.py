@@ -264,6 +264,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     try:
+        raise Exception
         content = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
             notes=cleaned_data['notes'], once=once
@@ -276,7 +277,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                             smtp_exception_skip_list=[LARGE_FILE_SIZE_ERROR_CODE])
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
+        print("(PV) tasks 1")
+        if True: # getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = {
