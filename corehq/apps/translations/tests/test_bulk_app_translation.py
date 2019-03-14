@@ -680,14 +680,15 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(actual_workbook, self.expected_workbook)
 
     def test_bulk_app_single_sheet_rows(self):
-        self.assertListEqual(get_bulk_app_single_sheet_rows(self.app.langs[0], self.app), [
-            ['module1', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None],
-            ['module1', 'name', 'list', 'Name'], ['module1', 'name', 'detail', 'Name'],
-            ['module1_form1', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None],
-            ['module1_form1', '', 'What_does_this_look_like-label', 'What does this look like?',
+        sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
+        self.assertListEqual(sheet, [
+            ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None],
+            ['menu1', 'name', 'list', '', 'Name'], ['menu1', 'name', 'detail', '', 'Name'],
+            ['menu1_form1', '', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None],
+            ['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
              'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''],
-            ['module1_form1', '', 'no_media-label', 'No media', '', '', ''],
-            ['module1_form1', '', 'has_refs-label',
+            ['menu1_form1', '', '', 'no_media-label', 'No media', '', '', ''],
+            ['menu1_form1', '', '', 'has_refs-label',
              'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
              '', '', ''],
         ])

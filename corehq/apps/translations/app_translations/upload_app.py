@@ -82,7 +82,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
             modules_and_forms_rows = []
             rows = []
             for row in sheet:
-                if not row['case_property'] and not row['detail_or_label']:
+                if not row['case_property'] and not row['list_or_detail'] and not row ['label']:
                     modules_and_forms_rows.append(row)
                 elif module_or_form != row['menu_or_form']:
                     msgs.extend(_process_single_sheet_rows(app, module_or_form, rows))
@@ -125,10 +125,10 @@ def _process_single_sheet_rows(app, identifier, rows, sheet_name=None):
         return update_app_from_modules_and_forms_sheet(app, rows, identifying_header='menu_or_form')
 
     if is_module_sheet(identifier):
-        return update_app_from_module_sheet(app, rows, identifier, detail_header='detail_or_label')
+        return update_app_from_module_sheet(app, rows, identifier)
 
     if is_form_sheet(identifier):
-        return update_app_from_form_sheet(app, rows, identifier, label_header='detail_or_label')
+        return update_app_from_form_sheet(app, rows, identifier)
 
     return []
 
@@ -151,7 +151,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     elif is_form_sheet(sheet.worksheet.title):
         num_required_headers = 1    # label
     elif is_single_sheet(sheet.worksheet.title):
-        num_required_headers = 3    # menu or form, case property, list or detail or label
+        num_required_headers = 4    # menu or form, case property, list or detail, label
 
     expected_required_headers = tuple(expected_headers[:num_required_headers])
     actual_required_headers = tuple(sheet.headers[:num_required_headers])

@@ -32,18 +32,22 @@ def get_bulk_app_single_sheet_rows(app, lang):
         prefix = [get_module_sheet_name(module)]
 
         # Name / menu media row
-        rows.append(prefix + ['', ''] + get_menu_row([module.name.get(lang)],
-                                                     [module.icon_by_language(lang)],
-                                                     [module.audio_by_language(lang)]))
+        # Leave blanks for case_property, list_or_detail, and label
+        rows.append(prefix + ['', '', ''] + get_menu_row([module.name.get(lang)],
+                                                         [module.icon_by_language(lang)],
+                                                         [module.audio_by_language(lang)]))
 
         # Detail case properties, etc.
         for row in get_module_rows([lang], module):
-            rows.append(prefix + list(row))
+            # Insert blank for label
+            rows.append(prefix + list(row[:2]) + [''] + list(row[2:]))
 
         for form_index, form in enumerate(module.forms):
-            prefix = [get_form_sheet_name(form), '']
+            # Leave blanks for case_property and list_or_detail
+            prefix = [get_form_sheet_name(form), '', '']
 
             # Name / menu media row
+            # Leave another blank for label
             rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
                                                      [form.icon_by_language(lang)],
                                                      [form.audio_by_language(lang)]))

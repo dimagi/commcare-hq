@@ -22,7 +22,7 @@ from corehq.apps.translations.app_translations.utils import (
 
 
 
-def update_app_from_form_sheet(app, rows, identifier, label_header='label'):
+def update_app_from_form_sheet(app, rows, identifier):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
@@ -149,7 +149,7 @@ def update_app_from_form_sheet(app, rows, identifier, label_header='label'):
         # told HQ that "**stars**" in an app's English translation is not Markdown, then we must assume that
         # "**étoiles**" in the French translation is not Markdown either.
         for row in rows:
-            label_id = row[label_header]
+            label_id = row['label']
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
@@ -158,7 +158,7 @@ def update_app_from_form_sheet(app, rows, identifier, label_header='label'):
     if form.is_registration_form():
         for row in rows:
             if not has_translation(row, app.langs):
-                skip_label.add(row[label_header])
+                skip_label.add(row['label'])
         for label in skip_label:
             msgs.append((
                 messages.error,
@@ -173,7 +173,7 @@ def update_app_from_form_sheet(app, rows, identifier, label_header='label'):
         assert(translation_node.exists())
 
         for row in rows:
-            label_id = row[label_header]
+            label_id = row['label']
             if label_id in skip_label:
                 continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
