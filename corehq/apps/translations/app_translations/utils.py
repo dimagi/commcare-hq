@@ -74,8 +74,8 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
             row_type='Type',
             sheet_name='sheet_name',
             languages=default_lang_list,
-            media_image=['icon_filepath_%s' % l for l in langs],
-            media_audio=['audio_filepath_%s' % l for l in langs],
+            media_image=['image_%s' % l for l in langs],
+            media_audio=['audio_%s' % l for l in langs],
             unique_id='unique_id',
         )
     ])
