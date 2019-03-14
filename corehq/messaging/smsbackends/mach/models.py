@@ -5,6 +5,7 @@ from django.conf import settings
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 MACH_URL = "http://smsgw.a2p.mme.syniverse.com/sms.php"
@@ -72,6 +73,7 @@ class SQLMachBackend(SQLSMSBackend):
                 "Unrecognized response received from Syniverse "
                 "backend %s" % self.pk
             )
+        soft_assert_type_text(response)
 
         response = response.strip().upper()
         if response.startswith('+OK'):

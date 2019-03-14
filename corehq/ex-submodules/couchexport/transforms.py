@@ -12,7 +12,9 @@ def identity(val, doc):
 
 
 def couch_to_excel_datetime(val, doc):
-    if isinstance(val, six.string_types):
+    if isinstance(val, bytes):
+        val = val.decode('utf-8')
+    if isinstance(val, six.text_type):
         # todo: subtree merge couchexport into commcare-hq
         # todo: and replace this with iso_string_to_datetime
         dt_val = None

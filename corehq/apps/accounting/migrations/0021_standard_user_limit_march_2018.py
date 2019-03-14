@@ -7,7 +7,7 @@ from django.db import migrations
 
 from corehq.apps.accounting.bootstrap.config.standard_user_limit_march_2018 import BOOTSTRAP_CONFIG
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _bootstrap_new_standard_user_limit(apps, schema_editor):
@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_bootstrap_new_standard_user_limit),
+        migrations.RunPython(_bootstrap_new_standard_user_limit),
     ]

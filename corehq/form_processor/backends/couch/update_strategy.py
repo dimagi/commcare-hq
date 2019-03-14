@@ -69,8 +69,13 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
     @tracer.wrap(name='form_processor.couch.check_action_order')
     def check_action_order(self):
-        action_dates = [a.server_date for a in self.case.actions if a.server_date]
-        return action_dates == sorted(action_dates)
+        """Returns true if the actions are currently in the correct order."""
+
+        sorted_actions = sorted(
+            self.case.actions,
+            key=_action_sort_key_function(self.case)
+        )
+        return self.case.actions == sorted_actions
 
     def reconcile_actions_if_necessary(self, xform):
         if not self.check_action_order():
@@ -245,11 +250,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         return self
 
     def soft_rebuild_case(self, xforms=None):
-        """
-        Rebuilds the case state in place from its actions.
-
-        If strict is True, this will enforce that the first action must be a create.
-        """
+        """Rebuilds the case state in place from its actions."""
         xforms = xforms or {}
         self.reset_case_state()
         # try to re-sort actions if necessary

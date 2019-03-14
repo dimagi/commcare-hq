@@ -212,6 +212,8 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, bytes):
+        name_or_instance = name_or_instance.decode('utf-8')
     if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
@@ -470,7 +472,7 @@ def maintenance_alert(request):
     alert = MaintenanceAlert.get_latest_alert()
     if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            '<div class="alert alert-warning alert-maintenance hide" data-id="{}">{}{}</div>',
             alert.id,
             mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
@@ -642,6 +644,8 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def trans_html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(_(value))
@@ -649,6 +653,8 @@ def trans_html_attr(value):
 
 @register.simple_tag
 def html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)

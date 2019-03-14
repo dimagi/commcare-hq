@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_STATE_DELETED': XFormInstanceSQL.DELETED
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP FUNCTION IF EXISTS save_ledger_values(TEXT[], form_processor_ledgervalue[]);",
             "SELECT 1"
         ),

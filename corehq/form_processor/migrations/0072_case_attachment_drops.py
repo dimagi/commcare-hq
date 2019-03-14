@@ -3,21 +3,21 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from django.db.migrations import Migration, RemoveField
-from corehq.sql_db.operations import HqRunSQL
+from django.db import migrations
 
 
-class Migration(Migration):
+
+class Migration(migrations.Migration):
 
     dependencies = [
         ('form_processor', '0071_case_attachment_refactor'),
     ]
 
     operations = [
-        RemoveField(model_name='caseattachmentsql', name='attachment_from'),
-        RemoveField(model_name='caseattachmentsql', name='attachment_src'),
-        RemoveField(model_name='caseattachmentsql', name='identifier'),
-        HqRunSQL(
+        migrations.RemoveField(model_name='caseattachmentsql', name='attachment_from'),
+        migrations.RemoveField(model_name='caseattachmentsql', name='attachment_src'),
+        migrations.RemoveField(model_name='caseattachmentsql', name='identifier'),
+        migrations.RunSQL(
             "DROP FUNCTION IF EXISTS get_case_attachment_by_identifier(TEXT, TEXT)",
             "SELECT 1",
         ),

@@ -23,6 +23,7 @@ from corehq.apps.sms.filters import (
     PhoneNumberReportFilter
 )
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
 from memoized import memoized
@@ -754,6 +755,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return value.strip()
 
         return None
@@ -1227,6 +1229,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return apply_leniency(value.strip())
 
         return None
