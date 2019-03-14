@@ -864,8 +864,9 @@ def _update_case_list_translations(sheet, rows, app):
 
         # If it's a graph series configuration item, add it to its parent
         elif row['case_property'].endswith(" (graph series config)"):
-            row['id'] = _remove_description_from_case_property(row)
-            row['series_index'] = row['case_property'].split(" ")[1]
+            trimmed_property = _remove_description_from_case_property(row)
+            row['id'] = trimmed_property.split(" ")[0]
+            row['series_index'] = trimmed_property.split(" ")[2]
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['series_configs'] = parent.get('series_configs', []) + [row]
 
