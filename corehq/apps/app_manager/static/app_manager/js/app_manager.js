@@ -1,6 +1,7 @@
 /* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var module = hqImport("hqwebapp/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
@@ -325,13 +326,11 @@ hqDefine('app_manager/js/app_manager', function () {
                 to = move[1];
 
             if (to !== from || movingFormToNewModule) {
-                var $form = $sortable.find('> .sort-action form');
-                storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms);
                 resetIndexes($sortable);
                 if (movingFormToNewModule) {
                     resetOldModuleIndices($sortable, fromModuleUid);
                 }
-                submitReorderForm($form);
+                saveRearrangement(from, to, fromModuleUid, toModuleUid, sortingForms);
                 hqImport("app_manager/js/menu").setPublishStatus(true);
             }
         }
@@ -368,15 +367,6 @@ hqDefine('app_manager/js/app_manager', function () {
             });
             return [from, to];
         }
-        function storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms) {
-            $form.find('[name="from"], [name="to"]').remove();
-            $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-            $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
-            if (sortingForms) {
-                $form.append('<input type="hidden" name="from_module_uid" value="' + fromModuleUid + '" />');
-                $form.append('<input type="hidden" name="to_module_uid"   value="' + toModuleUid + '" />');
-            }
-        }
         function resetOldModuleIndices($sortable, fromModuleUid) {
             var $parentSortable = $sortable.parents(".sortable"),
                 $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
@@ -395,10 +385,19 @@ hqDefine('app_manager/js/app_manager', function () {
                 }
             });
         }
-        function submitReorderForm($form) {
-            $.ajax($form.attr('action'), {
+        function saveRearrangement(from, to, fromModuleUid, toModuleUid, sortingForms) {
+            var url = initialPageData.reverse('rearrange', sortingForms ? 'forms' : 'modules');
+            var data = {
+                from: from,
+                to: to,
+            };
+            if (sortingForms) {
+                data['from_module_uid'] = fromModuleUid;
+                data['to_module_uid'] = toModuleUid;
+            }
+            $.ajax(url, {
                 method: 'POST',
-                data: $form.serialize(),
+                data: data,
                 success: function () {
                     hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
                 },
