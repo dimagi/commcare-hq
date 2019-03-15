@@ -330,7 +330,7 @@ hqDefine('app_manager/js/app_manager', function () {
             var url = initialPageData.reverse('rearrange', 'modules'),
                 from = ui.item.data('index'),
                 to = _.findIndex($(".module"), function (module) {
-                    return $(module).data('index') === from;
+                    return $(module).data('uid') === ui.item.data('uid');
                 });
 
             if (to !== from) {
