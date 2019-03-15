@@ -100,44 +100,6 @@ class Format(object):
         return cls(format, **cls.FORMAT_DICT[format])
 
 
-@six.python_2_unicode_compatible
-class ExportSchema(Document):
-    """
-    An export schema that can store intermittent contents of the export so
-    that the entire doc list doesn't have to be used to generate the export
-    """
-    index = JsonProperty()
-    schema = DictProperty()
-    timestamp = TimeStampProperty()
-
-    def __str__(self):
-        return "%s: %s" % (json.dumps(self.index), self.timestamp)
-
-    @classmethod
-    def wrap(cls, data):
-        if data.get('timestamp', '').startswith('1-01-01'):
-            data['timestamp'] = '1970-01-01T00:00:00Z'
-
-        return super(ExportSchema, cls).wrap(data)
-
-    _tables = None
-
-    @property
-    def tables(self):
-        if self._tables is None:
-            from couchexport.export import get_headers
-            headers = get_headers(self.schema, separator=".")
-            self._tables = [(index, row[0]) for index, row in headers]
-        return self._tables
-
-    @property
-    def table_dict(self):
-        return dict(self.tables)
-
-    def get_columns(self, index):
-        return ['id'] + self.table_dict[index].data
-
-
 @register_column_type('plain')
 class ExportColumn(DocumentSchema):
     """

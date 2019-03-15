@@ -4,12 +4,9 @@ from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
     UnsupportedExportFormat
-from couchexport.schema import extend_schema
 from django.conf import settings
-from couchexport.models import ExportSchema, Format
+from couchexport.models import Format
 from couchexport import writers
-from couchexport.util import default_cleanup
-from datetime import datetime
 import six
 from six.moves import range
 from six.moves import map

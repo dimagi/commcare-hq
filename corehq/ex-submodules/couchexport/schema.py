@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from couchdbkit.client import Database
-from django.conf import settings
 from couchexport.exceptions import SchemaInferenceError
-from couchexport.models import ExportSchema
 
 
 def get_kind(doc):
