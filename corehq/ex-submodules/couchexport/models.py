@@ -130,28 +130,6 @@ class ExportSchema(Document):
 
         return super(ExportSchema, cls).wrap(data)
 
-    @classmethod
-    def last(cls, index):
-        return cls.view("couchexport/schema_checkpoints",
-            startkey=[json.dumps(index), {}],
-            endkey=[json.dumps(index)],
-            descending=True,
-            limit=1,
-            include_docs=True,
-            reduce=False,
-        ).one()
-
-    @classmethod
-    def get_all_checkpoints(cls, index):
-        doc_ids = [result["id"] for result in cls.get_db().view(
-            "couchexport/schema_checkpoints",
-            startkey=[json.dumps(index)],
-            endkey=[json.dumps(index), {}],
-            reduce=False,
-        )]
-        for doc in iter_docs(cls.get_db(), doc_ids):
-            yield cls.wrap(doc)
-
     _tables = None
 
     @property
