@@ -314,7 +314,7 @@ hqDefine('app_manager/js/app_manager', function () {
             if ($sortable.hasClass('sortable-forms')) {
                 rearrangeForms(ui, $sortable);
             } else {
-                rearrangeModules($sortable);
+                rearrangeModules(ui, $sortable);
             }
         }
         function rearrangeForms(ui, $sortable) {
@@ -337,17 +337,18 @@ hqDefine('app_manager/js/app_manager', function () {
                 if (movingToNewModule) {
                     resetOldModuleIndices($sortable, fromModuleUid);
                 }
-                saveRearrangement(url, from, to, fromModuleUid, toModuleUid);
+                saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
             }
         }
-        function rearrangeModules($sortable) {
+        function rearrangeModules(ui, $sortable) {
             var url = initialPageData.reverse('rearrange', 'modules'),
-                move = calculateMoveWithinScope($sortable),
-                from = move[0],
-                to = move[1];
+                from = ui.item.data('index'),
+                to = _.findIndex($(".module"), function (module) {
+                    return $(module).data('index') === from;
+                });
 
             if (to !== from) {
-                saveRearrangement(url, from, to);
+                saveRearrangement($sortable, url, from, to);
             }
         }
         function calculateMoveFormToNewModule($sortable, ui, toModuleUid) {
@@ -401,7 +402,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 }
             });
         }
-        function saveRearrangement(url, from, to, fromModuleUid, toModuleUid) {
+        function saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid) {
             resetIndexes($sortable);
             var data = {
                 from: from,
