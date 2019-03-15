@@ -295,7 +295,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
         form_fields.append(hqcrispy.Field(StrictButton(
             ugettext_lazy("Add"),
             type="submit",
-            css_class="btn btn-primary btn-lg disable-on-submit",
+            css_class="btn btn-primary disable-on-submit",
         )))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
