@@ -136,13 +136,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-            "Type", "sheet_name", "default_en", "default_fra", 'image_en', 'image_fra', 'audio_en', 'audio_fra', "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra", 'image_en', 'image_fra',
+            'audio_en', 'audio_fra', "unique_id",
         )),
         ("menu1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
         )),
         ("menu1_form1", (
-            "label", "default_en", "default_fra", "audio_en", "audio_fra", "image_en", "image_fra", "video_en", "video_fra",
+            "label", "default_en", "default_fra", "image_en", "image_fra",
+            "audio_en", "audio_fra", "video_en", "video_fra",
         ))
     )
 
@@ -162,8 +164,10 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_data = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-          ("Menu", "menu1", "My & awesome module", "", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
-          ("Form", "menu1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
+            ("Menu", "menu1", "My & awesome module", "", "", "", "", "",
+                  "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+            ("Form", "menu1_form1", "My more & awesome form", "", "", "", "", "", "", "",
+                  "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("menu1", (
           ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
@@ -211,13 +215,16 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                                         'image_en', 'image_fra', 'audio_en',
                                         'audio_fra', 'unique_id')),
         ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
-        ('menu1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
+        ('menu1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra',
+                         'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
         (MODULES_AND_FORMS_SHEET_NAME,
-         (('Module', 'menu1', 'My & awesome module', '', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
-          ('Form', 'menu1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
+         (('Module', 'menu1', 'My & awesome module', '', '', '', '', '',
+            '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+          ('Form', 'menu1_form1', 'My more & awesome form', '', '', '', '', '', '', '',
+            '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('menu1',
          (('name', 'list', 'Name', ''),
           ('name', 'detail', 'Name', ''),
@@ -586,7 +593,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     excel_data = (
         (MODULES_AND_FORMS_SHEET_NAME,
-         (('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
+         (('Menu', 'menu1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '',
+           '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
           ('Form',
            'menu1_form1',
            'Stethoscope Form',

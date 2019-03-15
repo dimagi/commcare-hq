@@ -17,7 +17,6 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
     InvalidExcelFileException
 
 
-
 def get_app_translation_workbook(file_or_filename):
     msgs = []
     try:

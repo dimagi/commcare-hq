@@ -31,4 +31,4 @@ def update_app_translations_from_trans_dict(app, trans_dict):
     else:
         if isinstance(app, LinkedApplication):
             app.linked_app_translations.update(trans_dict)
-        app.translations.update(trans_dict) 
+        app.translations.update(trans_dict)

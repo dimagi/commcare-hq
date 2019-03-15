@@ -14,7 +14,6 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.app_translations.utils import (
-    get_bulk_app_sheet_headers,
     get_unicode_dicts,
     is_form_sheet,
     is_module_sheet,
@@ -85,7 +84,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
             modules_and_forms_rows = []
             rows = []
             for row in sheet:
-                if not row['case_property'] and not row['list_or_detail'] and not row ['label']:
+                if not row['case_property'] and not row['list_or_detail'] and not row['label']:
                     modules_and_forms_rows.append(row)
                 elif module_or_form != row['menu_or_form']:
                     msgs.extend(_process_single_sheet_rows(app, module_or_form, rows))
@@ -96,7 +95,8 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
             msgs.extend(_process_single_sheet_rows(app, module_or_form, rows))
             msgs.extend(_process_single_sheet_rows(app, MODULES_AND_FORMS_SHEET_NAME, modules_and_forms_rows))
         else:
-            msgs.extend(_process_multi_sheet_rows(app, sheet.worksheet.title, sheet, sheet_name=sheet.worksheet.title))
+            msgs.extend(_process_multi_sheet_rows(app, sheet.worksheet.title, sheet,
+                                                  sheet_name=sheet.worksheet.title))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -135,6 +135,7 @@ def _process_single_sheet_rows(app, identifier, rows, sheet_name=None):
 
     return []
 
+
 def _check_for_workbook_error(app, workbook, headers):
     if len(headers) == 1 and len(workbook.worksheets) > 1:
         return _("Expected a single sheet. If you are uploading a multi-sheet file, "
@@ -142,6 +143,7 @@ def _check_for_workbook_error(app, workbook, headers):
     if len(headers) > 1 and len(workbook.worksheets) == 1:
         return _("File contains only one sheet. If you are uploading a single-language file, "
                  "please select a language.")
+
 
 def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     expected_sheets = {h[0]: h[1] for h in headers}

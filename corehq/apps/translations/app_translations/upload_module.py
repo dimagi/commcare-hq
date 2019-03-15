@@ -14,7 +14,6 @@ from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import get_unicode_dicts, update_translation_dict
 
 
-
 def update_app_from_module_sheet(app, rows, identifier):
     """
     Modify the translations of a module case list and detail display properties
@@ -36,7 +35,8 @@ def update_app_from_module_sheet(app, rows, identifier):
     if isinstance(module, ReportModule):
         return msgs
 
-    (condensed_rows, detail_tab_headers, case_list_form_label) = _get_condensed_rows(module, rows)
+    (condensed_rows, detail_tab_headers, case_list_form_label, errors) = _get_condensed_rows(module, rows)
+    msgs = msgs + errors
 
     (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows)
     if errors:
@@ -44,11 +44,7 @@ def update_app_from_module_sheet(app, rows, identifier):
 
     # Update the translations
     def _update_translation(row, language_dict, require_translation=True):
-        ok_to_delete_translations = (
-            not require_translation or _has_at_least_one_translation(
-                    row, 'default', app.langs
-            ))
-        if ok_to_delete_translations:
+        if not require_translation or _has_at_least_one_translation(row, 'default', app.langs):
             update_translation_dict('default_', language_dict, row, app.langs)
         else:
             msgs.append((
@@ -153,6 +149,7 @@ def _get_condensed_rows(module, rows):
     Returns a three-item tuple: case property rows, tab header rows, case list form label
     '''
     condensed_rows = []
+    msgs = []
     case_list_form_label = None
     detail_tab_headers = [None for i in module.case_details.long.tabs]
     index_of_last_enum_in_condensed = -1
@@ -215,7 +212,7 @@ def _get_condensed_rows(module, rows):
             row['id'] = row['case_property']
             condensed_rows.append(row)
 
-    return (condensed_rows, detail_tab_headers, case_list_form_label)
+    return (condensed_rows, detail_tab_headers, case_list_form_label, msgs)
 
 
 def _remove_description_from_case_property(row):
@@ -247,8 +244,7 @@ def _check_for_detail_length_errors(module, condensed_rows):
                     expected_count=len(expected_list),
                     actual_count=len(received_list),
                     index=module.id + 1,
-                    list_or_detail=list_or_detail,
-                )
+                    list_or_detail=list_or_detail)
             )
 
     return (errors, partial_upload)

@@ -21,7 +21,6 @@ from corehq.apps.translations.app_translations.utils import (
 )
 
 
-
 def update_app_from_form_sheet(app, rows, identifier):
     """
     Modify the translations of a form given a sheet of translation data.
@@ -167,7 +166,6 @@ def update_app_from_form_sheet(app, rows, identifier):
             ))
 
     # Update the translations
-    headers = get_bulk_app_sheet_headers(app)
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
