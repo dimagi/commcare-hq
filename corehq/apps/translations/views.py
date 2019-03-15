@@ -20,17 +20,17 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
-from corehq.apps.translations.app_translations import (
-    get_menu_row,
+from corehq.apps.translations.app_translations.utils import (
+    get_app_translation_workbook,
+    get_bulk_app_sheet_headers,
+)
+from corehq.apps.translations.app_translations.download import (
     get_module_rows,
     get_form_question_rows,
-    get_bulk_app_sheet_headers,
-    get_bulk_multimedia_sheet_headers,
-    get_bulk_app_sheet_rows,
-    get_bulk_multimedia_sheet_rows,
-    get_app_translation_workbook,
-    get_form_sheet_name,
-    get_module_sheet_name,
+    get_bulk_app_sheets_by_name,
+    get_bulk_app_single_sheet_by_name,
+)
+from corehq.apps.translations.app_translations.upload_app import (
     process_bulk_app_translation_upload,
     validate_bulk_app_translation_upload,
 )
@@ -94,32 +94,18 @@ def download_bulk_ui_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
-    app = get_app(domain, app_id)
-    headers = get_bulk_app_sheet_headers(app)
-    rows = get_bulk_app_sheet_rows(app)
-    temp = io.BytesIO()
-    data = [(k, v) for k, v in six.iteritems(rows)]
-    export_raw(headers, data, temp)
-    filename = '{app_name} v.{app_version} - App Translations'.format(
-        app_name=app.name,
-        app_version=app.version)
-    return export_response(temp, Format.XLS_2007, filename)
-
-
-@require_can_edit_apps
-def download_bulk_multimedia_translations(request, domain, app_id):
     lang = request.GET.get('lang')
     app = get_app(domain, app_id)
-
-    headers = get_bulk_multimedia_sheet_headers(lang)
-    rows = get_bulk_multimedia_sheet_rows(lang, app)
+    headers = get_bulk_app_sheet_headers(app, lang=lang)
+    sheets = get_bulk_app_single_sheet_by_name(app, lang) if lang else get_bulk_app_sheets_by_name(app)
 
     temp = io.BytesIO()
-    export_raw(headers, [(headers[0][0], rows)], temp)
-    filename = '{app_name} v.{app_version} - Multimedia Translations {lang}'.format(
+    data = [(k, v) for k, v in six.iteritems(sheets)]
+    export_raw(headers, data, temp)
+    filename = '{app_name} v.{app_version} - App Translations{lang}'.format(
         app_name=app.name,
         app_version=app.version,
-        lang=lang)
+        lang=' ' + lang if lang else '')
     return export_response(temp, Format.XLS_2007, filename)
 
 
@@ -127,14 +113,19 @@ def download_bulk_multimedia_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    validate = request.POST.get('validate')
+    lang = request.POST.get('language')
+
+    # Validation is not supported for the single-tab, single-language download
+    validate = request.POST.get('validate') and not lang
+
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)
     if workbook:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email)
         else:
-            msgs = process_bulk_app_translation_upload(app, workbook)
+            headers = get_bulk_app_sheet_headers(app, lang=lang)
+            msgs = process_bulk_app_translation_upload(app, workbook, headers)
             app.save()
     for msg in msgs:
         # Add the messages to the request object.
@@ -143,7 +134,6 @@ def upload_bulk_app_translations(request, domain, app_id):
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page
-    view_name = 'app_settings'
     return HttpResponseRedirect(
-        reverse(view_name, args=[domain, app_id])
+        reverse('app_settings', args=[domain, app_id])
     )
