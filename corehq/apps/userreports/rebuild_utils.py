@@ -4,6 +4,7 @@ import attr
 from alembic.autogenerate import compare_metadata
 from alembic.operations import Operations
 
+from corehq.apps.userreports.exceptions import TableRebuildError
 from corehq.util.soft_assert import soft_assert
 from fluff.signals import (
     get_migration_context,
@@ -86,7 +87,6 @@ def add_columns(engine, raw_diffs, table_names):
             op.add_column(table_name, col)
 
 
-
 def apply_index_changes(engine, raw_diffs, table_names):
     indexes = _get_indexes_to_change(raw_diffs, table_names)
     remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
@@ -135,9 +135,12 @@ def _get_indexes_to_change(raw_diffs, table_names):
             indexes_to_change.append(index_diffs[0])
         else:
             # tests when alembic tries to remove/add the same index
-            assert len(index_diffs) == 2
             actions = [diff.action for diff in index_diffs]
-            assert DiffTypes.ADD_INDEX in actions
-            assert DiffTypes.REMOVE_INDEX in actions
+            if (
+                    len(actions) != 2
+                    or DiffTypes.ADD_INDEX not in actions
+                    or DiffTypes.REMOVE_INDEX not in actions
+            ):
+                raise TableRebuildError("Unexpected diffs")
 
     return indexes_to_change
