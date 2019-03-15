@@ -257,6 +257,7 @@ hqDefine('app_manager/js/app_manager', function () {
             var modulesByUid = {},
                 childModules = [];
             $(".module").each(function (index, element) {
+                // Set index here so we know whether we've rearranged anything
                 $(element).data('index', index);
                 modulesByUid[ $(element).data('uid') ] = element;
                 if ($(element).data('rootmoduleuid')) {
@@ -289,12 +290,6 @@ hqDefine('app_manager/js/app_manager', function () {
         function promptToSaveOrdering() {
             $("#reorder_modules_modal").modal('show');
         }
-        function updateRelatedTags($elem, name, value) {
-            var relatedTags = $elem.find("[data-" + name + "]");
-            _.each(relatedTags, function (related) {
-                $(related).data(name, value);
-            });
-        }
         function initSortable($sortable) {
             var options = {
                 handle: '.drag_handle ',
@@ -316,6 +311,7 @@ hqDefine('app_manager/js/app_manager', function () {
             } else {
                 rearrangeModules(ui, $sortable);
             }
+            resetIndexes();
         }
         function rearrangeForms(ui, $sortable) {
             var url = initialPageData.reverse('rearrange', 'forms'),
@@ -333,10 +329,6 @@ hqDefine('app_manager/js/app_manager', function () {
                 to = move[1];
 
             if (to !== from || movingToNewModule) {
-                resetIndexes($sortable);
-                if (movingToNewModule) {
-                    resetOldModuleIndices($sortable, fromModuleUid);
-                }
                 saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
             }
         }
@@ -384,26 +376,16 @@ hqDefine('app_manager/js/app_manager', function () {
             });
             return [from, to];
         }
-        function resetOldModuleIndices($sortable, fromModuleUid) {
-            var $parentSortable = $sortable.parents(".sortable"),
-                $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
-            resetIndexes($fromSortable);
-        }
-        function resetIndexes($sortable) {
-            var parentVar = $sortable.data('parentvar');
-            var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
-            _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
-                $(elem).data('index', i);
-                var indexVar = $(elem).data('indexvar');
-                updateRelatedTags($(elem), indexVar, i);
-                if (parentVar) {
-                    $(elem).data(parentVar, parentValue);
-                    updateRelatedTags($(elem), parentVar, parentValue);
-                }
+        function resetIndexes() {
+            $(".module").each(function (index, module) {
+                $(module).data('index', index);
+                $(module).children("ul.sortable-forms").first().children("li").each(function (index, form) {
+                    $(form).data('index', index);
+                    $(form).data('moduleuid', $(module).data('uid'));
+                });
             });
         }
         function saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid) {
-            resetIndexes($sortable);
             var data = {
                 from: from,
                 to: to,
