@@ -11,7 +11,7 @@ amqp==2.4.2
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
-billiard==3.5.0.5
+billiard==3.5.0.4
 boto3==1.9.108
 botocore==1.12.108
 celery==4.1.1
