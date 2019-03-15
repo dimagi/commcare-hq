@@ -22,6 +22,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
@@ -315,6 +316,7 @@ def populate_updated_fields(config, row):
             raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
 
         if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
+            soft_assert_type_text(update_value)
             # If we find any instances of blanks ('---'), convert them to an
             # actual blank value without performing any data type validation.
             # This is to be consistent with how the case export works.

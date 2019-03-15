@@ -8,7 +8,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleActionResult,
     DomainCaseRuleRun,
     AUTO_UPDATE_XMLNS,
-)
+    CaseRuleSubmission)
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.domain.models import Domain
 from corehq.util.decorators import serial_task
@@ -192,3 +192,10 @@ def run_case_update_rules_on_save(case):
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
             run_rules_for_case(case, rules, now)
+
+
+@periodic_task(run_every=crontab(hour=0, minute=0), queue='case_rule_queue', ignore_result=True)
+def delete_old_rule_submission_logs():
+    start = datetime.utcnow()
+    max_age = start - timedelta(days=90)
+    CaseRuleSubmission.objects.filter(created_on__lt=max_age).delete()

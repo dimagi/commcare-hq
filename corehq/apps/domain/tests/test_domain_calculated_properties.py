@@ -36,7 +36,7 @@ class DomainCalculatedPropertiesTest(TestCase):
 
     def test_sanity(self):
         all_stats = all_domain_stats()
-        props = calced_props(self.domain.name, self.domain._id, all_stats)
+        props = calced_props(self.domain, self.domain._id, all_stats)
         self.assertFalse(props['cp_has_app'])
         # ensure serializable
         json.dumps(props)

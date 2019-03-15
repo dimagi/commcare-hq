@@ -1,34 +1,30 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-from datetime import datetime
 import hashlib
 from itertools import islice
 import os
 import tempfile
 from six.moves.urllib.error import URLError
 from dimagi.ext.couchdbkit import Document, DictProperty,\
-    DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
+    DocumentSchema, StringProperty, SchemaListProperty,\
+    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
 import json
-import couchexport
 from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.blobs.mixin import BlobMixin, CODES
 from couchexport.exceptions import CustomExportValidationError
 from couchexport.files import ExportFiles
 from couchexport.transforms import identity
-from couchexport.util import SerializableFunctionProperty,\
-    get_schema_index_view_keys, force_tag_to_list
+from couchexport.util import SerializableFunctionProperty, force_tag_to_list
 from memoized import memoized
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
-from dimagi.utils.logging import notify_exception
 import six
 from six.moves import zip
 from six.moves import range
-
+from corehq.util.python_compatibility import soft_assert_type_text
 
 ColumnType = namedtuple('ColumnType', 'cls label')
 column_types = {}
@@ -173,14 +169,6 @@ class ExportSchema(Document):
     def get_columns(self, index):
         return ['id'] + self.table_dict[index].data
 
-    def get_all_ids(self, database=None):
-        database = database or self.get_db()
-        return set(
-            [result['id'] for result in database.view(
-                        "couchexport/schema_index",
-                        reduce=False,
-                        **get_schema_index_view_keys(self.index)).all()])
-
     def get_new_ids(self, database=None):
         database = database or self.get_db()
         assert self.timestamp, 'exports without timestamps are no longer supported.'
@@ -193,9 +181,6 @@ class ExportSchema(Document):
                         reduce=False,
                         startkey=startkey,
                         endkey=endkey)])
-
-    def get_new_docs(self, database=None):
-        return iter_docs(self.get_new_ids(database))
 
 
 @register_column_type('plain')
@@ -313,6 +298,7 @@ class SplitColumn(ComplexExportColumn):
 
         if not isinstance(value, six.string_types):
             return row if self.ignore_extras else row + [value]
+        soft_assert_type_text(value)
 
         values = value.split(' ') if value else []
         for index, option in enumerate(self.options):
@@ -475,21 +461,6 @@ class BaseSavedExportSchema(Document):
     def is_bulk(self):
         return False
 
-    def get_download_task(self, format=None, **kwargs):
-        format = format or self.default_format
-        download = DownloadBase()
-        download.set_task(couchexport.tasks.export_async.delay(
-            self,
-            download.download_id,
-            format=format,
-            **kwargs
-        ))
-        return download
-
-    def export_data_async(self, format=None, **kwargs):
-        download = self.get_download_task(format=format, **kwargs)
-        return download.get_start_response()
-
     @property
     def table_name(self):
         if len(self.index) > 2:
@@ -528,10 +499,6 @@ class DefaultExportSchema(BaseSavedExportSchema):
         # can be overridden to rename/remove default stuff from exports
         return tables
 
-    def get_export_components(self, previous_export_id=None, filter=None):
-        from couchexport.export import get_export_components
-        return get_export_components(self.index, previous_export_id, filter=self.filter & filter)
-
     def get_export_files(self, format='', previous_export_id=None, filter=None,
                          use_cache=True, max_column_size=2000, separator='|', process=None, **kwargs):
         # the APIs of how these methods are broken down suck, but at least
@@ -559,6 +526,8 @@ class DefaultExportSchema(BaseSavedExportSchema):
                 return ExportFiles(tmp, checkpoint)
 
         fd, path = tempfile.mkstemp()
+        if six.PY2:
+            path = path.decode('utf-8')
         with os.fdopen(fd, 'wb') as tmp:
             schema_index = export_tag
             config, updated_schema, export_schema_checkpoint = get_export_components(schema_index,
@@ -743,6 +712,8 @@ class SavedExportSchema(BaseSavedExportSchema):
         # open the doc and the headers
         formatted_headers = list(self.get_table_headers())
         fd, path = tempfile.mkstemp()
+        if six.PY2:
+            path = path.decode('utf-8')
         with os.fdopen(fd, 'wb') as tmp:
             writer.open(
                 formatted_headers,
@@ -778,19 +749,6 @@ class SavedExportSchema(BaseSavedExportSchema):
 
         return ExportFiles(path, export_schema_checkpoint, format)
 
-    def get_preview_data(self, export_filter, limit=50):
-        return self.get_export_files(Format.PYTHON_DICT, None, export_filter,
-                                     limit=limit)
-
-    def download_data(self, format="", previous_export=None, filter=None, limit=0):
-        """
-        If there is data, return an HTTPResponse with the appropriate data.
-        If there is not data returns None.
-        """
-        from couchexport.shortcuts import export_response
-        files = self.get_export_files(format, previous_export, filter, limit=limit)
-        return export_response(files.file, files.format, self.name)
-
     def to_export_config(self):
         """
         Return an ExportConfiguration object that represents this.
@@ -798,6 +756,8 @@ class SavedExportSchema(BaseSavedExportSchema):
         # confusingly, the index isn't the actual index property,
         # but is the index appended with the id to this document.
         # this is to avoid conflicts among multiple exports
+        if isinstance(self.index, six.string_types):
+            soft_assert_type_text(self.index)
         index = "%s-%s" % (self.index, self._id) if isinstance(self.index, six.string_types) else \
             self.index + [self._id] # self.index required to be a string or list
         return ExportConfiguration(index=index, name=self.name,
@@ -892,27 +852,6 @@ class GroupExportConfiguration(Document):
                 self.save()
             except ValueError:
                 pass
-
-    @property
-    @memoized
-    def saved_exports(self):
-        return self._saved_exports_from_configs(self.all_configs)
-
-    def _saved_exports_from_configs(self, configs):
-        exports = SavedBasicExport.view(
-            "couchexport/saved_exports",
-            keys=[json.dumps(config.index) for config in configs],
-            include_docs=True,
-            reduce=False,
-        ).all()
-        export_map = dict((json.dumps(export.configuration.index), export) for export in exports)
-        return [
-            GroupExportComponent(
-                config, export_map.get(json.dumps(config.index), None),
-                self._id, list(self.all_configs).index(config)
-            )
-            for config in configs
-        ]
 
     @property
     @memoized
