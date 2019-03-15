@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
@@ -6,7 +7,6 @@ from __future__ import division
 import csv
 import io
 import os
-import uuid
 from copy import deepcopy
 from datetime import datetime
 from time import time
@@ -19,13 +19,16 @@ from casexml.apps.case.xform import (
     get_all_extensions_to_close,
     CaseProcessingResult,
     get_case_updates,
-    get_case_ids_from_form
+    get_case_ids_from_form,
+    extract_case_blocks,
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
+from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
@@ -78,7 +81,12 @@ UNDO_CREATE = 'create'
 def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, debug=False, run_timestamp=None):
     if dst_domain is None:
         dst_domain = src_domain
-    set_local_domain_sql_backend_override(src_domain)
+
+    if src_domain == dst_domain:
+        # When src_domain is being migrated to a different dst_domain,
+        # src_domain stays on Couch and dst_domain is always on SQL;
+        # nothing changes.
+        set_local_domain_sql_backend_override(src_domain)
     CouchSqlDomainMigrator(
         src_domain,
         dst_domain,
@@ -91,7 +99,7 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, d
 class CouchSqlDomainMigrator(object):
     def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None):
         from corehq.apps.tzmigration.planning import DiffDB
-        self._assert_no_migration_restrictions(src_domain)
+        self._assert_no_migration_restrictions(src_domain, dst_domain)
         self.with_progress = with_progress
         self.debug = debug
         self.src_domain = src_domain
@@ -103,6 +111,7 @@ class CouchSqlDomainMigrator(object):
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
         self._id_map = {}
+        self._ignore_paths = defaultdict(list)
 
     def log_debug(self, message):
         _logger.debug(message)
@@ -159,22 +168,22 @@ class CouchSqlDomainMigrator(object):
 
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
-            form = change.get_document()
-            if form.get('problem', None):
+            couch_form_json = change.get_document()
+            if couch_form_json.get('problem', None):
                 self.errors_with_normal_doc_type.append(change.id)
                 continue
-            wrapped_form = XFormInstance.wrap(form)
-            form_received = wrapped_form.received_on
+            couch_form = XFormInstance.wrap(couch_form_json)
+            form_received = couch_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            self._try_to_process_form(wrapped_form, pool)
+            self._try_to_process_form(couch_form, pool)
             self._try_to_process_queues(pool)
 
         # finish up the queues once all changes have been iterated through
         while self.queues.has_next():
-            wrapped_form = self.queues.get_next()
-            if wrapped_form:
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+            couch_form = self.queues.get_next()
+            if couch_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, couch_form)
             else:
                 gevent.sleep(0.01)  # swap greenlets
 
@@ -212,36 +221,39 @@ class CouchSqlDomainMigrator(object):
 
         self._try_to_process_queues(pool)
 
-    def _migrate_form_and_associated_models_async(self, wrapped_form):
-        set_local_domain_sql_backend_override(self.src_domain)
+    def _migrate_form_and_associated_models_async(self, couch_form):
+        if self.src_domain == self.dst_domain:
+            set_local_domain_sql_backend_override(self.src_domain)
         try:
-            self._migrate_form_and_associated_models(wrapped_form)
+            self._migrate_form_and_associated_models(couch_form)
         except Exception:
-            self.log_error("Unable to migrate form: {}".format(wrapped_form.form_id))
+            self.log_error("Unable to migrate form: {}".format(couch_form.form_id))
             raise
         finally:
-            self.queues.release_lock_for_queue_obj(wrapped_form)
+            self.queues.release_lock_for_queue_obj(couch_form)
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, couch_form):
-        sql_form = _migrate_form(couch_form, self.dst_domain)
-        _migrate_form_attachments(sql_form, couch_form)
-        _migrate_form_operations(sql_form, couch_form)
+    def _migrate_form_and_associated_models(self, src_couch_form):
 
-        self._save_diffs(couch_form, sql_form)
+        dst_couch_form = self._map_form_ids(src_couch_form)
+        sql_form = _migrate_form(dst_couch_form, self.dst_domain)
+        _migrate_form_attachments(self.src_domain, sql_form, dst_couch_form)
+        _migrate_form_operations(sql_form, dst_couch_form)
+
+        self._save_diffs(dst_couch_form, sql_form)
 
         case_stock_result = None
         if sql_form.initial_processing_complete:
-            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
-                    update for update in get_case_updates(couch_form)
+                    update for update in get_case_updates(dst_couch_form)
                     if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                 ]
                 if len(touch_updates):
                     # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+                    self.forms_that_touch_cases_without_actions.add(dst_couch_form.form_id)
 
         _save_migrated_models(sql_form, case_stock_result)
 
@@ -264,14 +276,118 @@ class CouchSqlDomainMigrator(object):
             if 'orig_id' in user.user_data:
                 self._id_map[user.user_data['orig_id']] = user.get_id
 
+    def _map_form_ids(self, couch_form):
+        """
+        The destination domain will have new IDs for locations, mobile
+        workers, apps and app builds. Return the given form with source
+        domain IDs mapped to the corresponding IDs in the destination
+        domain.
+
+        Leaves app IDs and build IDs unchanged.
+        """
+        if self.src_domain == self.dst_domain:
+            return couch_form
+
+        id_properties = (
+            'activista_responsavel',
+            'activista_responsavel_casa',
+            'activista_responsavel_paciente',
+            'location_id',
+            'owner_id',
+            'user_location_id',
+        )
+
+        def check_property(property, dict_, base_path):
+            if property in dict_ and dict_[property] in self._id_map:
+                old_id = dict_[property]
+                new_id = self._id_map[old_id]
+                dict_[property] = new_id
+                self._ignore_paths[couch_form.get_id].append(tuple(base_path + [property]))
+
+        couch_form.domain = self.dst_domain
+
+        caseblocks_with_path = extract_case_blocks(couch_form.form, include_path=True)
+        for caseblock, path in caseblocks_with_path:
+            case_path = ['form'] + path + ['case']
+
+            # Example caseblock:
+            #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
+            #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
+            #      u'@user_id': u'7ea59f550f35758447400937f800f78c',
+            #      u'@xmlns': u'http://commcarehq.org/case/transaction/v2',
+            #      u'create': {u'case_name': u'Abigail',
+            #                  u'case_type': u'case',
+            #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
+            if '@userid' in caseblock and caseblock['@userid'] in self._id_map:
+                caseblock['@userid'] = self._id_map[caseblock['@userid']]
+                self._ignore_paths[couch_form.get_id].append(tuple(case_path + ['@userid']))
+
+            if 'create' in caseblock:
+                create_path = case_path + ['create']
+                for prop in id_properties:
+                    check_property(prop, caseblock['create'], create_path)
+
+            if 'update' in caseblock:
+                update_path = case_path + ['update']
+                for prop in id_properties:
+                    check_property(prop, caseblock['update'], update_path)
+
+        check_property('userID', couch_form.form['meta'], ['form', 'meta'])
+
+        # TODO:
+        #     - [ ] Basic forms:
+        #       - [✔] Change IDs in case create
+        #       - [✔] Change IDs in case update
+        #       - [ ] Change IDs in child cases
+        #       - [ ] Change IDs in survey module forms
+        #     - [ ] Advanced forms:
+        #       - [ ] Change IDs in multiple case creates
+        #       - [ ] Change IDs in multiple case updates
+        #       - [✔] Change IDs in child cases
+        #     - [ ] System forms (imported cases)
+        #     - [ ] Change IDs in save-to-case
+        #     - [✔] Questions that store location IDs or user IDs
+        #       - [✔] casa
+        #         - [✔] activista_responsavel(Location)
+        #         - [✔] activista_responsavel_casa(Location)
+        #         - [✔] owner_id(Location)
+        #         - [✔] user_location_id(Location)
+        #       - [✔] paciente
+        #         - [✔] location_id
+        #         - [✔] activista_responsavel(Location)
+        #         - [✔] activista_responsavel_paciente(Location)
+        #         - [✔] user_location_id(Location)
+        #         - [✔] owner_id(Location and User)
+        #         - [✔] owner_id
+        #       - [✔] referencia
+        #         - [✔] owner_id(Location)
+
+        return couch_form
+
+    def _map_case_ids(self, couch_case):
+        if self.src_domain == self.dst_domain:
+            return couch_case
+
+        couch_case.owner_id = self._id_map.get(couch_case.owner_id, couch_case.owner_id)
+        couch_case.user_id = self._id_map.get(couch_case.user_id, couch_case.user_id)
+        couch_case.opened_by = self._id_map.get(couch_case.opened_by, couch_case.opened_by)
+        couch_case.modified_by = self._id_map.get(couch_case.modified_by, couch_case.modified_by)
+        couch_case.closed_by = self._id_map.get(couch_case.closed_by, couch_case.closed_by)
+        return couch_case
+
     def _save_diffs(self, couch_form, sql_form):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         couch_form_json = couch_form.to_json()
         sql_form_json = sql_form.to_json()
+
+        if self.src_domain == self.dst_domain:
+            ignore_paths = None
+        else:
+            ignore_paths = self._ignore_paths[sql_form.form_id] + [('domain',)]
         diffs = json_diff(
             couch_form_json, sql_form_json,
             track_list_indices=False,
-            ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+            ignore_paths=ignore_paths,
         )
         self.diff_db.add_diffs(
             couch_form.doc_type, couch_form.form_id,
@@ -299,18 +415,19 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_unprocessed_form(self, couch_form_json):
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
-        couch_form = _wrap_form(couch_form_json)
+        src_couch_form = _wrap_form(couch_form_json)
+        dst_couch_form = self._map_form_ids(src_couch_form)
         sql_form = XFormInstanceSQL(
-            form_id=couch_form.form_id,
-            xmlns=couch_form.xmlns,
-            user_id=couch_form.user_id,
+            form_id=dst_couch_form.form_id,
+            xmlns=dst_couch_form.xmlns,
+            user_id=dst_couch_form.user_id,
         )
-        _copy_form_properties(self.src_domain, sql_form, couch_form)
-        _migrate_form_attachments(sql_form, couch_form)
-        _migrate_form_operations(sql_form, couch_form)
+        _copy_form_properties(self.dst_domain, sql_form, dst_couch_form)
+        _migrate_form_attachments(self.src_domain, sql_form, dst_couch_form)
+        _migrate_form_operations(sql_form, dst_couch_form)
 
-        if couch_form.doc_type != 'SubmissionErrorLog':
-            self._save_diffs(couch_form, sql_form)
+        if dst_couch_form.doc_type != 'SubmissionErrorLog':
+            self._save_diffs(dst_couch_form, sql_form)
 
         _save_migrated_models(sql_form)
 
@@ -332,36 +449,37 @@ class CouchSqlDomainMigrator(object):
         self._log_unprocessed_cases_processed_count()
 
     def _copy_unprocessed_case(self, change):
-        couch_case = CommCareCase.wrap(change.get_document())
-        self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
+        src_couch_case = CommCareCase.wrap(change.get_document())
+        self.log_debug('Processing doc: {}({})'.format(src_couch_case['doc_type'], change.id))
         try:
-            first_action = couch_case.actions[0]
+            first_action = src_couch_case.actions[0]
         except IndexError:
             first_action = CommCareCaseAction()
 
+        dst_couch_case = self._map_case_ids(src_couch_case)
         sql_case = CommCareCaseSQL(
-            case_id=couch_case.case_id,
+            case_id=dst_couch_case.case_id,
             domain=self.src_domain,
-            type=couch_case.type or '',
-            name=couch_case.name,
-            owner_id=couch_case.owner_id or couch_case.user_id or '',
-            opened_on=couch_case.opened_on or first_action.date,
-            opened_by=couch_case.opened_by or first_action.user_id,
-            modified_on=couch_case.modified_on,
-            modified_by=couch_case.modified_by or couch_case.user_id or '',
-            server_modified_on=couch_case.server_modified_on,
-            closed=couch_case.closed,
-            closed_on=couch_case.closed_on,
-            closed_by=couch_case.closed_by,
+            type=dst_couch_case.type or '',
+            name=dst_couch_case.name,
+            owner_id=dst_couch_case.owner_id or dst_couch_case.user_id or '',
+            opened_on=dst_couch_case.opened_on or first_action.date,
+            opened_by=dst_couch_case.opened_by or first_action.user_id,
+            modified_on=dst_couch_case.modified_on,
+            modified_by=dst_couch_case.modified_by or dst_couch_case.user_id or '',
+            server_modified_on=dst_couch_case.server_modified_on,
+            closed=dst_couch_case.closed,
+            closed_on=dst_couch_case.closed_on,
+            closed_by=dst_couch_case.closed_by,
             deleted=True,
-            deletion_id=couch_case.deletion_id,
-            deleted_on=couch_case.deletion_date,
-            external_id=couch_case.external_id,
-            case_json=couch_case.dynamic_case_properties()
+            deletion_id=dst_couch_case.deletion_id,
+            deleted_on=dst_couch_case.deletion_date,
+            external_id=dst_couch_case.external_id,
+            case_json=dst_couch_case.dynamic_case_properties()
         )
-        _migrate_case_actions(couch_case, sql_case)
-        _migrate_case_indices(couch_case, sql_case)
-        _migrate_case_attachments(couch_case, sql_case)
+        _migrate_case_actions(dst_couch_case, sql_case)
+        _migrate_case_indices(dst_couch_case, sql_case)
+        _migrate_case_attachments(dst_couch_case, sql_case)
         try:
             CaseAccessorSQL.save_case(sql_case)
         except IntegrityError:
@@ -467,12 +585,13 @@ class CouchSqlDomainMigrator(object):
                 filter_ledger_diffs(diffs)
             )
 
-    def _assert_no_migration_restrictions(self, domain_name):
-        assert should_use_sql_backend(domain_name)
-        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
-        assert not any(custom_report_domain == domain_name
+    def _assert_no_migration_restrictions(self, src_domain, dst_domain):
+        if src_domain == dst_domain:
+            assert should_use_sql_backend(src_domain)
+            assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(src_domain, NAMESPACE_DOMAIN)
+        assert not any(custom_report_domain == src_domain
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
-        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
+        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(src_domain)
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
@@ -798,7 +917,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
         domain=domain, lock=False, deleted_ok=True, xforms=xforms,
         load_src="couchsqlmigration",
     ) as case_db:
-        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
+        touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)  # broken
         extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,

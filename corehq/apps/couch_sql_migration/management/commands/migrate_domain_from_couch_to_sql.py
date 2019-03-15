@@ -97,6 +97,8 @@ class Command(BaseCommand):
                     raise CommandError("Migration must be in progress if run_timestamp is passed in")
             else:
                 set_couch_sql_migration_started(domain, self.dry_run)
+                set_couch_sql_migration_started(dst_domain, self.dry_run)  # Required at corehq/form_processor/interfaces/processor.py:253
+                                                                           # TODO: Although this is probably a terrible idea
 
             do_couch_to_sql_migration(
                 domain,
@@ -117,6 +119,7 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
+            set_couch_sql_migration_not_started(dst_domain)
             _blow_away_migration(domain, dst_domain)
 
         if options['stats_short'] or options['stats_long']:
