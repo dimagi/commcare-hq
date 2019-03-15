@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -189,7 +184,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -509,11 +504,11 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+CELERY_RESULT_BACKEND = 'django-db'
 
-CELERY_ANNOTATIONS = {
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -528,7 +523,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
@@ -1247,7 +1242,10 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
+
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
 }

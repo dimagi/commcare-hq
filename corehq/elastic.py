@@ -26,6 +26,7 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.python_compatibility import soft_assert_type_text
 from memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
@@ -91,6 +92,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     Check if a document exists, by ID or the whole document.
     """
     if isinstance(doc_id_or_dict, six.string_types):
+        soft_assert_type_text(doc_id_or_dict)
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)
@@ -105,6 +107,8 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     """
     from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
+    if isinstance(doc_id, bytes):
+        doc_id = doc_id.decode('utf-8')
     es_meta = ES_META[index_name]
     index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
     doc_exists = doc_exists_in_es(index_info, doc_id)

@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def deactivate_hardcoded_twilio_gateway_fees(apps, schema_editor):
@@ -44,5 +44,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(deactivate_hardcoded_twilio_gateway_fees),
+        migrations.RunPython(deactivate_hardcoded_twilio_gateway_fees),
     ]

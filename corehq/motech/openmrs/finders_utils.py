@@ -8,6 +8,8 @@ import six
 from dateutil.parser import parse as parse_date
 from Levenshtein import distance
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 def le_days_diff(max_days, date1, date2):
     """
@@ -24,8 +26,10 @@ def le_days_diff(max_days, date1, date2):
 
     """
     if isinstance(date1, six.string_types):
+        soft_assert_type_text(date1)
         date1 = parse_date(date1)
     if isinstance(date2, six.string_types):
+        soft_assert_type_text(date2)
         date2 = parse_date(date2)
     return abs(date1 - date2) <= timedelta(max_days)
 

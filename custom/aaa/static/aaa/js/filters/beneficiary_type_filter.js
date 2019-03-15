@@ -26,9 +26,11 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
 
             self.selectedType.subscribe(function (newValue) {
                 params.disableSubmit(newValue === null);
-                params.postData.selectedBeneficiaryType(newValue || null);
             });
 
+            params.filters[self.slug].applyFilter = function () {
+                params.postData.selectedBeneficiaryType(self.selectedType() || null);
+            };
 
             if (params.filters.hasOwnProperty(self.slug)) {
                 params.filters[self.slug].resetFilters = function () {

@@ -23,6 +23,7 @@ hqDefine('aaa/js/filters/location_model', [
         self.userLocationId = params.userLocationId;
         self.locations = ko.observableArray([reachUtils.DEFAULTLOCATION]);
         self.selectedLocation = ko.observable(reachUtils.DEFAULTLOCATION.id);
+        self.loc = ko.observable(reachUtils.DEFAULTLOCATION.id);
 
         self.getLocations = function (parentSelectedId) {
             var params = {
@@ -75,21 +76,29 @@ hqDefine('aaa/js/filters/location_model', [
 
         self.setDefaultOption = function () {
             self.selectedLocation(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
+            self.loc(self.userLocationId || reachUtils.DEFAULTLOCATION.id);
+            if (self.child !== null) {
+                self.child.setDefaultOption();
+            }
         };
 
         self.locationName = ko.computed(function() {
             var location = _.find(self.locations(), function (location) {
-                return location.id === self.selectedLocation();
+                return location.id === self.loc();
             });
             return location.name;
         }, self);
 
         self.hideName = ko.computed(function () {
-            if (self.parent === '' || self.parent.selectedLocation() !== reachUtils.DEFAULTLOCATION.id) {
+            if (self.parent === '' || self.parent.loc() !== reachUtils.DEFAULTLOCATION.id) {
                 return false
             }
-            return self.selectedLocation() === reachUtils.DEFAULTLOCATION.id;
+            return self.loc() === reachUtils.DEFAULTLOCATION.id;
         }, self);
+
+        self.applyFilter = function () {
+            self.loc(self.selectedLocation());
+        };
 
         return self;
     };
