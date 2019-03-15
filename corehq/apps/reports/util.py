@@ -386,14 +386,20 @@ def get_possible_reports(domain_name):
                 report_to_check_if_viewable = model
 
             if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain_obj):
+                path = model.__module__ + '.' + model.__name__
                 reports.append({
-                    'path': model.__module__ + '.' + model.__name__,
-                    'name': model.name
+                    'path': path,
+                    'name': model.name,
+                    'slug': path.replace('.', '_'),
                 })
 
     for slug, name, is_visible in get_extra_permissions():
         if is_visible(domain_obj):
-            reports.append({'path': slug, 'name': name})
+            reports.append({
+                'path': slug,
+                'name': name,
+                'slug': slug.replace('.', '_'),
+            })
     return reports
 
 
