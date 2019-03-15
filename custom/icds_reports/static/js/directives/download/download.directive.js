@@ -121,7 +121,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
-        {id: 8, name: 'AWW Performance Report'}
+        {id: 8, name: 'AWW Performance Report'},
+        {id: 9, name: 'Lady Supervisor'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -462,7 +463,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.isVisible = function(level) {
-        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all')  && !(vm.isIncentiveReportSelected() && level > 2);
+        return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all') &&
+            !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2);
     };
 
     vm.selectedFilterOptions = function() {
@@ -483,6 +485,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 8;
     };
 
+    vm.isLadySupervisorSelected = function () {
+        return vm.selectedIndicator === 9;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -496,7 +502,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.showViewBy = function () {
-        return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected());
+        return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
+            vm.isLadySupervisorSelected());
     };
 
     vm.isDistrictOrBelowSelected = function() {
