@@ -35,9 +35,9 @@ hqDefine("aaa/js/models/child", [
         self.age = ko.computed(function () {
             var age = parseInt(self.age());
             if (age < 12) {
-                return age + " Mon"
-            } else if (age === 12) {
-                return "1 Yr"
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
             } else {
                 return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
             }
@@ -67,7 +67,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.id = data.id || null;
         self.name = data.name || null;
-        self.age = data.age || null;
+        self.dob = data.dob || null;
 
         self.pregnancyLength = ko.observable();
         self.breastfeedingInitiated = ko.observable();
@@ -104,12 +104,23 @@ hqDefine("aaa/js/models/child", [
         self.wasting = ko.observable();
         self.wastingStatus = ko.observable();
 
+        self.age = ko.computed(function () {
+            var age = Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
+            if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
+
         self.linkName = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'child');
             url = url.replace('beneficiary_id', 1);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
-            return '<a href="' + url + '">' + self.name + ' (' + self.age + ' Yrs)' + '</a>';
+            return '<a href="' + url + '">' + self.name + ' (' + self.age()  + ')</a>';
         });
         
         self.updateModel = function (data) {

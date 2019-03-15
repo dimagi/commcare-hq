@@ -24,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.models import Woman
+from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -196,14 +196,24 @@ class UnifiedBeneficiaryReportAPI(View):
         sortColumnDir = self.request.POST.get('sortColumnDir', 0)
         data = []
         if beneficiary_type == 'child':
-            data = [
-                dict(id=1, name='test 1', age='27', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=2, name='test 2', age='12', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=3, name='test 3', age='3', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=4, name='test 4', age='5', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=5, name='test 5', age='16', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-                dict(id=6, name='test 6', age='19', gender='M', lastImmunizationType=1, lastImmunizationDate='2018-03-03'),
-            ]
+            data = (
+                Child.objects.annotate(
+                    age=ExtractYear(Func(F('dob'), function='age')),
+                ).filter(
+                    domain=request.domain,
+                    age__range=(0, 5),
+                ).extra(
+                    select={
+                        'lastImmunizationType': 1,
+                        'lastImmunizationDate': '2018-03-03',
+                        'gender': 'sex',
+                        'id': 'person_case_id'
+                    }
+                ).values(
+                    'id', 'name', 'age', 'gender',
+                    'lastImmunizationType', 'lastImmunizationDate'
+                )
+            )[:10]
         elif beneficiary_type == 'eligible_couple':
             data = (
                 Woman.objects
@@ -213,7 +223,7 @@ class UnifiedBeneficiaryReportAPI(View):
                 .filter(
                     # should filter for location
                     domain=request.domain,
-                    age__range=(19, 49),
+                    age__range=(15, 49),
                     marital_status='married',
                 )
                 .exclude(migration_status='yes')
@@ -230,16 +240,28 @@ class UnifiedBeneficiaryReportAPI(View):
                     'id', 'name', 'age',
                     'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
             )[:10]
-            data = list(data)
         elif beneficiary_type == 'pregnant_women':
-            data = [
-                dict(id=1, name='test 1', age='22', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=2, name='test 2', age='32', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(id=3, name='test 3', age='17', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=4, name='test 4', age='56', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-                dict(id=5, name='test 5', age='48', pregMonth='2018-03-03', highRiskPregnancy=0, noOfAncCheckUps=9),
-                dict(id=6, name='test 6', age='19', pregMonth='2018-03-03', highRiskPregnancy=1, noOfAncCheckUps=9),
-            ]
+            data = (
+                Woman.objects.annotate(
+                   age=ExtractYear(Func(F('dob'), function='age')),
+                ).filter(
+                    # should filter for location
+                    domain=request.domain,
+                ).extra(
+                    select={
+                        'highRiskPregnancy': 1,
+                        'noOfAncCheckUps': 8,
+                        'pregMonth': '2018-03-03',
+                        'id': 'person_case_id',
+                    },
+                    where=["daterange(%s, %s) && any(pregnant_ranges)"],
+                    params=[selected_date, selected_date + relativedelta(months=1)]
+                ).values(
+                   'id', 'name', 'age',
+                   'highRiskPregnancy', 'noOfAncCheckUps'
+                )
+            )[:10]
+        data = list(data)
         return JsonResponse(data={
             'rows': data,
             'draw': draw,
@@ -342,44 +364,53 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         data = {}
 
         if sub_section == 'person_details':
-            person = dict(
-                name='Reena Kumar',
-                gender='Female',
-                status='Pregnant Woman',
-                dob=date(1991, 5, 11),
-                marriedAt=25,
-                aadhaarNo='Yes'
-            )
-            other = dict(
-                address='J-142, Saket, New Delhi, Delhi',
-                subcentre='Rasidpur',
-                village='Rasidpur',
-                anganwadiCentre='Aspataal Ward',
-                phone='844-860-4774',
-                religion='Hinduk',
-                caste='Sudra',
-                bplOrApl='BPL',
+            person_model = Woman if section != 'child' else Child
 
+            extra_select = {
+                'gender': 'sex',
+                'aadhaarNo': 'has_aadhar_number',
+                'address': 'hh_address',
+                'phone': 'contact_phone_number',
+                'religion': 'hh_religion',
+                'caste': 'hh_caste',
+                'bplOrApl': 'hh_bpl_apl',
+                'subcentre': '\'Rasidpur\'',
+                'village': '\'Rasidpur\'',
+                'anganwadiCentre': '\'Aspataal Ward\''
+            }
+
+            if section != 'child':
+                extra_select.update({
+                    'status': 'migration_status',
+                    'marriedAt': 'age_marriage'
+                })
+
+            extra_select_values = extra_select.keys()
+            extra_select_values.extend(
+                ['dob', 'name', 'husband_name']
             )
+            person = person_model.objects.extra(
+                select=extra_select
+            ).values(*extra_select_values).get(
+                domain=request.domain,
+                person_case_id=beneficiary_id
+            )
+
             data = dict(
                 person=person,
-                other=other,
             )
 
             if section == 'child':
-                mother = dict(
-                    id=1,
-                    name='Reena Kumar',
-                    gender='Female',
-                    status='Pregnant Woman',
-                    dob=date(1991, 5, 11),
-                    marriedAt=25,
-                    aadhaarNo='Yes'
-                )
+                mother = Woman.objects.extra(
+                    select={
+                        'id': 'person_case_id'
+                    }
+                ).values('id', 'name').get(person_case_id=beneficiary_id)
                 data.update(dict(mother=mother))
             else:
+                # TODO update when the model will be created
                 husband = dict(
-                    name='Raju Kumar',
+                    name=person['husband_name'],
                     gender='Female',
                     dob=date(1991, 5, 11),
                     marriedAt=26,
@@ -387,30 +418,38 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':
-            children = [
-                dict(id=1, name='Ritu Kummar', age=8),
-                dict(id=2, name='Rahul Kumar', age=6),
-                dict(id=3, name='Jhanvi Kumar', age=3),
-                dict(id=4, name='Rohit Kumar', age=1),
-            ]
             data = dict(
-                children=children
+                children=list(Child.objects.filter(
+                    domain=request.domain,
+                    mother_case_id=beneficiary_id
+                ).extra(
+                    select={
+                        'id': 'person_case_id'
+                    }
+                ).values('id', 'name', 'dob'))
             )
-
         if section == 'child':
             if sub_section == 'infant_details':
-                data = dict(
-                    pregnancyLength='Pre-term',
-                    breastfeedingInitiated='Yes',
-                    babyCried='Yes',
-                    dietDiversity='Yes',
-                    birthWeight=3.2,
-                    dietQuantity='Yes',
-                    breastFeeding='Yes',
-                    handwash='Yes',
-                    exclusivelyBreastfed='Yes',
+                extra_select = {
+                        'breastfeedingInitiated': 'breastfed_within_first',
+                        'dietDiversity': 'diet_diversity',
+                        'birthWeight': 'birth_weight',
+                        'dietQuantity': 'diet_quantity',
+                        'breastFeeding': 'comp_feeding',
+                        'handwash': 'hand_wash',
+                        'exclusivelyBreastfed': 'is_exclusive_breastfeeding',
+                        'babyCried': 'Yes',
+                        'pregnancyLength': 'Pre-term',
+                    }
+
+                data = Child.objects.extra(
+                    select=extra_select
+                ).values(extra_select.keys()).get(
+                    domain=request.domain,
+                    person_case_id=beneficiary_id,
                 )
             elif sub_section == 'child_postnatal_care_details':
+                # TODO update when CcsRecord will have properties from PNC form
                 data = dict(
                     visits=[
                         dict(
@@ -646,45 +685,61 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     wastingStatus='Severe',
                 )
             elif sub_section == 'weight_for_age_chart':
+                child = Child.objects.get(person_case_id=beneficiary_id)
+                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                points = []
+                for recorded_weight in child_history.weight_child_history:
+                    month = relativedelta(recorded_weight[0], child.dob).months
+                    points.append(dict(x=month, y=recorded_weight[1]))
                 data = dict(
-                    points=[
-                        dict(x=24, y=10),
-                        dict(x=25, y=10.2),
-                        dict(x=26, y=9.5),
-                        dict(x=27, y=6.2),
-                        dict(x=28, y=6.0),
-                        dict(x=29, y=6.2),
-                    ]
+                    points=points
                 )
             elif sub_section == 'height_for_age_chart':
+                child = Child.objects.get(person_case_id=beneficiary_id)
+                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                points = []
+                for recorded_height in child_history.weight_child_history:
+                    month = relativedelta(recorded_height[0], child.dob).months
+                    points.append(dict(x=month, y=recorded_height[1]))
                 data = dict(
-                    points=[
-                        dict(x=24, y=45),
-                        dict(x=25, y=44.8),
-                        dict(x=26, y=45.2),
-                        dict(x=27, y=49.1),
-                        dict(x=28, y=49.2),
-                        dict(x=29, y=48.9),
-                    ]
+                    points=points
                 )
             elif sub_section == 'weight_for_height_chart':
+                child = Child.objects.get(person_case_id=beneficiary_id)
+                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                points = {}
+                for recorded_weight in child_history.weight_child_history:
+                    month = relativedelta(recorded_weight[0], child.dob).months
+                    points.update({month: dict(x=recorded_weight[1])})
+                for recorded_height in child_history.weight_child_history:
+                    month = relativedelta(recorded_height[0], child.dob).months
+                    if month in points:
+                        points[month].update(dict(y=recorded_height[1]))
+                    else:
+                        points.update({month: dict(y=recorded_height[1])})
                 data = dict(
-                    points=[
-                        dict(x=78, y=3.8),
-                        dict(x=83, y=3.9),
-                    ]
+                    points=filter(lambda point: 'x' in point and 'y' in point, points.values())
                 )
-
         elif section == 'pregnant_women':
             if sub_section == 'pregnancy_details':
-                data = dict(
-                    dateOfLmp='2018-11-10',
-                    weightOfPw=55,
-                    dateOfRegistration='2019-01-01',
-                    edd='2019-08-10',
-                    twelveWeeksPregnancyRegistration='Yes',
-                    bloodGroup='B+',
-                    pregnancyStatus=2
+                data = CcsRecord.objects.extra(
+                    select={
+                        'dateOfLmp': 'lmp',
+                        'weightOfPw': 'woman_weight_at_preg_reg',
+                        'dateOfRegistration': 'preg_reg_date',
+                    }
+                ).values(
+                    'lmp', 'weightOfPw', 'dateOfRegistration', 'edd', 'add'
+                ).get(person_case_id=beneficiary_id)
+                # I think we should consider to add blood_group to the CcsRecord to don't have two queries
+                data.update(
+                    Woman.objects.extra(
+                        select={
+                            'bloodGroup': 'blood_group'
+                        }
+                    ).values('bloodGroup').get(
+                        person_case_id=beneficiary_id
+                    )
                 )
             elif sub_section == 'pregnancy_risk':
                 data = dict(
@@ -795,8 +850,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         )
                     ]
                 )
-
-        elif section == 'eligible_couples':
+        elif section == 'eligible_couple':
             if sub_section == 'eligible_couple_details':
                 data = dict(
                     maleChildrenBorn=3,
