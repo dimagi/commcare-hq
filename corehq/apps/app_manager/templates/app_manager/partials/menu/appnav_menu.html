@@ -22,6 +22,7 @@
                             <li class="edit-form-li js-sorted-li"
                                 data-moduleuid="{{ module.unique_id }}"
                                 data-index="{{ form.id }}"
+                                data-uid="{{ form.unique_id }}"
                                 {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
                             >
                                 {% include 'app_manager/partials/menu/form_link.html' %}

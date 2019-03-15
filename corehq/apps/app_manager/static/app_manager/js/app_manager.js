@@ -317,18 +317,12 @@ hqDefine('app_manager/js/app_manager', function () {
             var url = initialPageData.reverse('rearrange', 'forms'),
                 toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
                 fromModuleUid = ui.item.data('moduleuid'),
-                movingToNewModule = toModuleUid !== fromModuleUid;
+                from = ui.item.data('index'),
+                to = _.findIndex($sortable.children().not('.sort-disabled'), function (form) {
+                    return $(form).data('uid') === ui.item.data('uid');
+                });
 
-            var move;
-            if (movingToNewModule) {
-                move = calculateMoveFormToNewModule($sortable, ui, toModuleUid);
-            } else {
-                move = calculateMoveWithinScope($sortable);
-            }
-            var from = move[0],
-                to = move[1];
-
-            if (to !== from || movingToNewModule) {
+            if (to !== from || toModuleUid !== fromModuleUid) {
                 saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
             }
         }
@@ -342,39 +336,6 @@ hqDefine('app_manager/js/app_manager', function () {
             if (to !== from) {
                 saveRearrangement($sortable, url, from, to);
             }
-        }
-        function calculateMoveFormToNewModule($sortable, ui, toModuleUid) {
-            var from = -1, to = -1;
-            $sortable.children().not('.sort-disabled').each(function (i) {
-                if ($(this).data('moduleuid') !== toModuleUid) {
-                    to = i;
-                    from = parseInt(ui.item.data('index'), 10);
-                    return false;
-                }
-            });
-            return [from, to];
-        }
-        function calculateMoveWithinScope($sortable) {
-            var from = -1, to = -1;
-            $sortable.children().not('.sort-disabled').each(function (i) {
-                var index = parseInt($(this).data('index'), 10);
-                if (from !== -1) {
-                    if (from === index) {
-                        to = i;
-                        return false;
-                    }
-                }
-                if (i !== index) {
-                    if (i + 1 === index) {
-                        from = i;
-                    } else {
-                        to = i;
-                        from = index;
-                        return false;
-                    }
-                }
-            });
-            return [from, to];
         }
         function resetIndexes() {
             $(".module").each(function (index, module) {
