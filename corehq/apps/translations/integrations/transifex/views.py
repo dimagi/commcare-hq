@@ -299,6 +299,44 @@ class PullResource(BaseTranslationsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class BlacklistTranslations(BaseTranslationsView):
+    page_title = _('Blacklist Translations')
+    urlname = 'blacklist_translations'
+    template_name = 'blacklist_translations.html'
+    section_name = ugettext_noop("Translations")
+
+    def section_url(self):
+        return self.page_url
+
+    @property
+    def page_context(self):
+        context = super(BlacklistTranslations, self).page_context
+        context['blacklisted_translations'] = self._blacklisted_translations
+        context['blacklist_form'] = AddTransifexBlacklistForm(self.domain)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.transifex_integration_enabled(request):
+            if self.pull_resource_form.is_valid():
+                try:
+                    return self._pull_resource(request)
+                except ResourceMissing:
+                    messages.add_message(request, messages.ERROR, 'Resource not found')
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def _blacklisted_translations(self):
+        blacklisted = TransifexBlacklist.objects.filter(domain=self.domain).all().values()
+        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(self.domain)}
+        ret = []
+        for trans in blacklisted:
+            r = trans.copy()
+            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
+            ret.append(r)
+        return ret
+
+
 @location_safe
 @method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
 class AppTranslations(BaseTranslationsView):
@@ -329,23 +367,10 @@ class AppTranslations(BaseTranslationsView):
             context['backup_form'] = AppTranslationsForm.form_for('backup')(self.domain)
             if self.request.user.is_staff:
                 context['delete_form'] = AppTranslationsForm.form_for('delete')(self.domain)
-            context['blacklisted_translations'] = self._blacklisted_translations
-            context['blacklist_form'] = AddTransifexBlacklistForm(self.domain)
         form_action = self.request.POST.get('action')
         if form_action:
             context[form_action + '_form'] = self.translations_form
         return context
-
-    @property
-    def _blacklisted_translations(self):
-        blacklisted = TransifexBlacklist.objects.filter(domain=self.domain).all().values()
-        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(self.domain)}
-        ret = []
-        for trans in blacklisted:
-            r = trans.copy()
-            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
-            ret.append(r)
-        return ret
 
     def section_url(self):
         return reverse(ConvertTranslations.urlname, args=self.args, kwargs=self.kwargs)
@@ -432,8 +457,6 @@ class AppTranslations(BaseTranslationsView):
                 return self.perform_backup_request(request, form_data)
             elif form_data['action'] == 'delete':
                 return self.perform_delete_request(request, form_data)
-            elif form_data['action'] == 'blacklist':
-                return self.translations_form.save()
 
     def post(self, request, *args, **kwargs):
         if self.transifex_integration_enabled(request):

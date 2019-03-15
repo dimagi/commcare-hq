@@ -22,7 +22,6 @@
           <li><a data-toggle="tab" href="#push-trans-form" id="push-tab">{% trans "Push" %}</a></li>
           <li><a data-toggle="tab" href="#pull-trans-form" id="pull-tab">{% trans "Pull" %}</a></li>
           <li><a data-toggle="tab" href="#backup-trans-form" id="backup-tab">{% trans "BackUp" %}</a></li>
-          <li><a data-toggle="tab" href="#blacklist-trans-form" id="blacklist-tab">{% trans "Blacklist" %}</a></li>
           <li><a data-toggle="tab" href="#del-trans-form" id="delete-tab">{% trans "Delete" %}</a></li>
         </ul>
         <div class="tab-content">
@@ -54,32 +53,6 @@
                 <form class="form form-horizontal" name="product" method="post">
                     <legend>{% trans "BackUp Translations" %}</legend>
                     {% crispy backup_form %}
-                </form>
-            </div>
-            <div id="blacklist-trans-form" class="tab-pane">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <th class="col-sm-2">{% trans "App" %}</th>
-                        <th class="col-sm-2">{% trans "Module" %}</th>
-                        <th class="col-sm-2">{% trans "Detail or List" %}</th>
-                        <th class="col-sm-2">{% trans "Field Name" %}</th>
-                        <th class="col-sm-4">{% trans "Default Display Text" %}</th>
-                    </thead>
-                    <tbody>
-                    {% for translation in blacklisted_translations %}
-                        <tr>
-                            <td>{{ translation.app_name }}</td>
-                            <td>{{ translation.module_id }}</td>
-                            <td>{{ translation.field_type }}</td>
-                            <td>{{ translation.field_name }}</td>
-                            <td>{{ translation.display_text }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <form class="form form-horizontal" name="product" method="post">
-                    <legend>{% trans "BlackList Translations" %}</legend>
-                    {% crispy blacklist_form %}
                 </form>
             </div>
             <div id="del-trans-form" class="tab-pane">

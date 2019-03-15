@@ -1,0 +1,35 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main "hqwebapp/js/widgets_v4" %}
+
+{% block page_content %}
+    <div id="blacklist-trans-form" class="tab-pane">
+        <table class="table table-striped table-hover">
+            <thead>
+                <th class="col-sm-2">{% trans "App" %}</th>
+                <th class="col-sm-2">{% trans "Module" %}</th>
+                <th class="col-sm-2">{% trans "Detail or List" %}</th>
+                <th class="col-sm-2">{% trans "Field Name" %}</th>
+                <th class="col-sm-4">{% trans "Default Display Text" %}</th>
+            </thead>
+            <tbody>
+            {% for translation in blacklisted_translations %}
+                <tr>
+                    <td>{{ translation.app_name }}</td>
+                    <td>{{ translation.module_id }}</td>
+                    <td>{{ translation.field_type }}</td>
+                    <td>{{ translation.field_name }}</td>
+                    <td>{{ translation.display_text }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <form class="form form-horizontal" method="post">
+            <legend>{% trans "BlackList Translations" %}</legend>
+            {% crispy blacklist_form %}
+        </form>
+    </div>
+{% endblock %}
