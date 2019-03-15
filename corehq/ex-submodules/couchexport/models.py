@@ -1,28 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-import hashlib
 from itertools import islice
-import os
-import tempfile
 from six.moves.urllib.error import URLError
 from dimagi.ext.couchdbkit import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty,\
-    StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty
+    StringListProperty, BooleanProperty
 import json
-from corehq.apps.domain import UNKNOWN_DOMAIN
-from corehq.blobs.mixin import BlobMixin, CODES
-from couchexport.exceptions import CustomExportValidationError
-from couchexport.files import ExportFiles
-from couchexport.transforms import identity
-from couchexport.util import SerializableFunctionProperty, force_tag_to_list
+from corehq.blobs.mixin import BlobMixin
+from couchexport.util import SerializableFunctionProperty
 from memoized import memoized
-from dimagi.utils.couch.database import get_db, iter_docs
-from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 import six
-from six.moves import zip
 from six.moves import range
 from corehq.util.python_compatibility import soft_assert_type_text
 
@@ -405,210 +395,6 @@ class ExportTable(DocumentSchema):
             row_id = row.id if id else None
             rows.append(FormattedRow(cells, row_id, id_index=id_index))
         return rows
-
-
-class BaseSavedExportSchema(Document):
-    # signature: filter(doc)
-    filter_function = SerializableFunctionProperty()
-
-    @property
-    def default_format(self):
-        return Format.XLS_2007
-
-    def transform(self, doc):
-        return doc
-
-    @property
-    def filter(self):
-        return self.filter_function
-
-    @property
-    def is_bulk(self):
-        return False
-
-    @property
-    def table_name(self):
-        if len(self.index) > 2:
-            return self.index[2]
-        else:
-            return "Form"
-
-    def parse_headers(self, headers):
-        return headers
-
-    def parse_tables(self, tables):
-        """
-        :param tables: [('table_name', [rows...])]
-        """
-        first_row = tables[0][1]
-        return [(self.table_name, first_row)]
-
-
-class DefaultExportSchema(BaseSavedExportSchema):
-    index = JsonProperty()
-    type = StringProperty()
-
-    @property
-    def name(self):
-        return self.index
-
-    @property
-    def indices(self):
-        return [self.index]
-
-    def parse_headers(self, headers):
-        first_header = headers[0][1]
-        return [(self.table_name, first_header)]
-
-    def remap_tables(self, tables):
-        # can be overridden to rename/remove default stuff from exports
-        return tables
-
-
-@six.python_2_unicode_compatible
-class SavedExportSchema(BaseSavedExportSchema):
-    """
-    Lets you save an export format with a schema and list of columns
-    and display names.
-    """
-
-    name = StringProperty()
-    default_format = StringProperty()
-
-    is_safe = BooleanProperty(default=False)  # Is the export de-identified?
-    # self.index should always match self.schema.index
-    # needs to be here so we can use in couch views
-    index = JsonProperty()
-
-    # id of an ExportSchema for checkpointed schemas
-    schema_id = StringProperty()
-
-    # user-defined table configuration
-    tables = SchemaListProperty(ExportTable)
-
-    # For us right now, 'form' or 'case'
-    type = StringProperty()
-
-    # ID of  the new style export that it was converted to
-    converted_saved_export_id = StringProperty()
-
-    def __str__(self):
-        return "%s (%s)" % (self.name, self.index)
-
-    def transform(self, doc):
-        return doc
-
-    @property
-    def global_transform_function(self):
-        # will be called on every value in the doc during export
-        return identity
-
-    @property
-    @memoized
-    def schema(self):
-        return ExportSchema.get(self.schema_id)
-
-    @property
-    def table_name(self):
-        return self.sheet_name if self.sheet_name else "%s" % self._id
-
-    @classmethod
-    def default(cls, schema, name="", type='form'):
-        return cls(name=name, index=schema.index, schema_id=schema.get_id,
-                   tables=[ExportTable.default(schema.tables[0][0])], type=type)
-
-    @property
-    @memoized
-    def tables_by_index(self):
-        return dict([t.index, t] for t in self.tables)
-
-    def get_table_configuration(self, index):
-        def column_configuration():
-            columns = self.schema.get_columns(index)
-            if index in self.tables_by_index:
-                return list(self.tables_by_index[index].get_column_configuration(columns))
-            else:
-                return [
-                    ExportColumn(
-                        index=c,
-                        display=''
-                    ).to_config_format(selected=False)
-                    for c in columns
-                ]
-
-        def display():
-            if index in self.tables_by_index:
-                return self.tables_by_index[index].display
-            else:
-                return ''
-
-        return {
-            "index": index,
-            "display": display(),
-            "column_configuration": column_configuration(),
-            "selected": index in self.tables_by_index
-        }
-
-    def get_table_headers(self, override_name=False):
-        return ((self.table_name if override_name and i == 0 else t.index, [t.get_headers_row()]) for i, t in enumerate(self.tables))
-
-    @property
-    def table_configuration(self):
-        return [self.get_table_configuration(index) for index, cols in self.schema.tables]
-
-    def set_schema(self, schema):
-        """
-        Set the schema for this object.
-
-        Does NOT save the doc, just updates the in-memory object.
-        """
-        self.schema_id = schema.get_id
-
-    def trim(self, document_table, doc, apply_transforms=True):
-        tables = []
-        for table_index, data in document_table:
-            if table_index in self.tables_by_index:
-                # todo: currently (index, rows) instead of (display, rows); where best to convert to display?
-                tables.append((table_index, self.tables_by_index[table_index].trim(
-                    data, doc, apply_transforms, self.global_transform_function
-                )))
-        return tables
-
-    def to_export_config(self):
-        """
-        Return an ExportConfiguration object that represents this.
-        """
-        # confusingly, the index isn't the actual index property,
-        # but is the index appended with the id to this document.
-        # this is to avoid conflicts among multiple exports
-        if isinstance(self.index, six.string_types):
-            soft_assert_type_text(self.index)
-        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, six.string_types) else \
-            self.index + [self._id] # self.index required to be a string or list
-        return ExportConfiguration(index=index, name=self.name,
-                                   format=self.default_format)
-
-    def custom_validate(self):
-        if self.default_format == Format.XLS:
-            for table in self.tables:
-                if len(table.columns) > 255:
-                    raise CustomExportValidationError("XLS files can only have 255 columns")
-
-    # replaces `sheet_name = StringProperty()`
-    def __get_sheet_name(self):
-        return self.tables[0].display
-
-    def __set_sheet_name(self, value):
-        self.tables[0].display = value
-
-    sheet_name = property(__get_sheet_name, __set_sheet_name)
-
-    @classmethod
-    def wrap(cls, data):
-        # since this is a property now, trying to wrap it will fail hard
-        if 'sheet_name' in data:
-            del data['sheet_name']
-        return super(SavedExportSchema, cls).wrap(data)
 
 
 class ExportConfiguration(DocumentSchema):

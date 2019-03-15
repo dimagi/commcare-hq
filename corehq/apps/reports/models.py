@@ -22,30 +22,17 @@ from django.utils.translation import ugettext_noop
 from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
-from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
-    QuickCachedDocumentMixin,
 )
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_all_daterange_slugs
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, CustomProjectReportDispatcher
-from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.exceptions import (
     InvalidDaterangeException,
     UnsupportedSavedReportError,
     UnsupportedScheduledReportError,
-)
-from corehq.apps.reports.exportfilters import (
-    default_case_filter,
-    default_form_filter,
-    form_matches_users,
-    is_commconnect_form,
 )
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
@@ -54,10 +41,6 @@ from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.translation import localize
 from corehq.util.view_utils import absolute_reverse
 
-from couchexport.models import SavedExportSchema, SplitColumn
-from couchexport.transforms import couch_to_excel_datetime, identity
-from couchexport.util import SerializableFunction
-from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
@@ -856,135 +839,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
 class AppNotFound(Exception):
     pass
-
-
-class HQExportSchema(SavedExportSchema):
-    doc_type = 'SavedExportSchema'
-    domain = StringProperty()
-    transform_dates = BooleanProperty(default=True)
-
-    @property
-    def global_transform_function(self):
-        if self.transform_dates:
-            return couch_to_excel_datetime
-        else:
-            return identity
-
-    @classmethod
-    def wrap(cls, data):
-        if 'transform_dates' not in data:
-            data['transform_dates'] = False
-        self = super(HQExportSchema, cls).wrap(data)
-        if not self.domain:
-            self.domain = self.index[0]
-        return self
-
-
-class FormExportSchema(HQExportSchema):
-    doc_type = 'SavedExportSchema'
-    app_id = StringProperty()
-    include_errors = BooleanProperty(default=False)
-    split_multiselects = BooleanProperty(default=False)
-    _default_type = 'form'
-
-    @property
-    def question_schema(self):
-        from corehq.apps.export.models import FormQuestionSchema
-        return FormQuestionSchema.get_or_create(self.domain, self.app_id, self.xmlns)
-
-    @property
-    @memoized
-    def app(self):
-        if self.app_id:
-            try:
-                return get_app(self.domain, self.app_id, latest=True)
-            except Http404:
-                logging.error('App %s in domain %s not found for export %s' % (
-                    self.app_id,
-                    self.domain,
-                    self.get_id
-                ))
-                raise AppNotFound()
-        else:
-            return None
-
-    @classmethod
-    def wrap(cls, data):
-        self = super(FormExportSchema, cls).wrap(data)
-        if self.filter_function == 'couchforms.filters.instances':
-            # grandfather in old custom exports
-            self.include_errors = False
-            self.filter_function = None
-        return self
-
-    @property
-    def filter(self):
-        user_ids = set(CouchUser.ids_by_domain(self.domain))
-        user_ids.update(CouchUser.ids_by_domain(self.domain, is_active=False))
-        user_ids.add('demo_user')
-
-        def _top_level_filter(form):
-            # careful, closures used
-            return form_matches_users(form, user_ids) or is_commconnect_form(form)
-
-        f = SerializableFunction(_top_level_filter)
-        if self.app_id is not None:
-            from corehq.apps.reports import util as reports_util
-            f.add(reports_util.app_export_filter, app_id=self.app_id)
-        if not self.include_errors:
-            f.add(instances)
-        actual = SerializableFunction(default_form_filter, filter=f)
-        return actual
-
-    @property
-    def domain(self):
-        return self.index[0]
-
-    @property
-    def xmlns(self):
-        return self.index[1]
-
-    @property
-    def formname(self):
-        return xmlns_to_name(self.domain, self.xmlns, app_id=self.app_id)
-
-    @property
-    @memoized
-    def question_order(self):
-        try:
-            if not self.app:
-                return []
-        except AppNotFound:
-            if settings.DEBUG:
-                return []
-            raise
-        else:
-            questions = self.app.get_questions(self.xmlns)
-
-        order = []
-        for question in questions:
-            if not question['value']:  # question probably belongs to a broken form
-                continue
-            index_parts = question['value'].split('/')
-            assert index_parts[0] == ''
-            index_parts[1] = 'form'
-            index = '.'.join(index_parts[1:])
-            order.append(index)
-
-        return order
-
-    def get_default_order(self):
-        return {'#': self.question_order}
-
-    def uses_cases(self):
-        if not self.app or isinstance(self.app, RemoteApp):
-            return False
-        forms = self.app.get_forms_by_xmlns(self.xmlns)
-        for form in forms:
-            if isinstance(form, Form):
-                if bool(form.active_actions()):
-                    return True
-        return False
 
 
 def _apply_mapping(export_tables, mapping_dict):
