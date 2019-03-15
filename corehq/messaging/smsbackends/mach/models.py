@@ -102,6 +102,6 @@ class SQLMachBackend(SQLSMSBackend):
             params['msg'] = msg.text.encode('utf-16-be').encode('hex')
             params['encoding'] = 'ucs'
         url = '%s?%s' % (MACH_URL, six.moves.urllib.parse.urlencode(params))
-        resp = six.moves.urllib.request.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        resp = six.moves.urllib.request.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read().decode('utf-8')
         self.handle_response(msg, resp)
         return resp
