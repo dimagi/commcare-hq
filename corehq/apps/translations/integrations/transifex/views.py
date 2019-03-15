@@ -310,19 +310,22 @@ class BlacklistTranslations(BaseTranslationsView):
         return self.page_url
 
     @property
+    def blacklist_form(self):
+        if self.request.POST:
+            return AddTransifexBlacklistForm(self.domain, self.request.POST)
+        return AddTransifexBlacklistForm(self.domain)
+
+    @property
     def page_context(self):
         context = super(BlacklistTranslations, self).page_context
         context['blacklisted_translations'] = self._blacklisted_translations
-        context['blacklist_form'] = AddTransifexBlacklistForm(self.domain)
+        context['blacklist_form'] = self.blacklist_form
         return context
 
     def post(self, request, *args, **kwargs):
         if self.transifex_integration_enabled(request):
-            if self.pull_resource_form.is_valid():
-                try:
-                    return self._pull_resource(request)
-                except ResourceMissing:
-                    messages.add_message(request, messages.ERROR, 'Resource not found')
+            if self.blacklist_form.is_valid():
+                self.blacklist_form.save()
         return self.get(request, *args, **kwargs)
 
     @property
