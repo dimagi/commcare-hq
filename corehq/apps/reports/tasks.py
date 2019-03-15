@@ -54,7 +54,6 @@ from .analytics.esaccessors import (
 )
 from .models import (
     ReportConfig,
-    FormExportSchema,
     ReportNotification,
     UnsupportedScheduledReportError,
 )
@@ -328,7 +327,7 @@ def build_form_multimedia_zip(
         export_id,
         zip_name,
         download_id,
-        export_is_legacy,
+        export_is_legacy=False,  # always False
         user_types=None,
         group=None):
 
@@ -341,7 +340,7 @@ def build_form_multimedia_zip(
         group=group,
         user_types=user_types,
     )
-    properties = _get_export_properties(export_id, export_is_legacy)
+    properties = _get_export_properties(export_id)
 
     if not app_id:
         zip_name = 'Unrelated Form'
@@ -436,28 +435,21 @@ def _convert_legacy_indices_to_export_properties(indices):
     ))
 
 
-def _get_export_properties(export_id, export_is_legacy):
+def _get_export_properties(export_id):
     """
     Return a list of strings corresponding to form questions that are
     included in the export.
     """
     properties = set()
     if export_id:
-        if export_is_legacy:
-            schema = FormExportSchema.get(export_id)
-            for table in schema.tables:
-                properties |= _convert_legacy_indices_to_export_properties(
-                    [column.index for column in table.columns]
-                )
-        else:
-            from corehq.apps.export.models import FormExportInstance
-            export = FormExportInstance.get(export_id)
-            for table in export.tables:
-                for column in table.columns:
-                    if column.selected and column.item:
-                        path_parts = [n.name for n in column.item.path]
-                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
-                        properties.add("-".join(path_parts))
+        from corehq.apps.export.models import FormExportInstance
+        export = FormExportInstance.get(export_id)
+        for table in export.tables:
+            for column in table.columns:
+                if column.selected and column.item:
+                    path_parts = [n.name for n in column.item.path]
+                    path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                    properties.add("-".join(path_parts))
     return properties
 
 
