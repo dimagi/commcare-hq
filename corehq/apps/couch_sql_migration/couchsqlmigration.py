@@ -102,6 +102,7 @@ class CouchSqlDomainMigrator(object):
 
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
+        self._id_map = {}
 
     def log_debug(self, message):
         _logger.debug(message)
@@ -122,6 +123,9 @@ class CouchSqlDomainMigrator(object):
         else:
             self.log_info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
         self.log_info('run timestamp is {}'.format(self.run_timestamp))
+
+        if self.src_domain != self.dst_domain:
+            self._build_id_map()
 
         self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
@@ -240,6 +244,25 @@ class CouchSqlDomainMigrator(object):
                     self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
 
         _save_migrated_models(sql_form, case_stock_result)
+
+    def _build_id_map(self):
+        """
+        Iterate locations and mobile workers to map IDs in the source
+        domain to IDs in the destination domain.
+
+        These will be used to update forms as they are migrated.
+
+        Apps and app builds are not mapped because they are not all in
+        the destination domain.
+        """
+        self._id_map = {}
+        for location in SQLLocation.objects.filter(domain=self.dst_domain):
+            if 'orig_id' in location.metadata:
+                self._id_map[location.metadata['orig_id']] = location.location_id
+
+        for user in CommCareUser.by_domain(self.dst_domain):
+            if 'orig_id' in user.user_data:
+                self._id_map[user.user_data['orig_id']] = user.get_id
 
     def _save_diffs(self, couch_form, sql_form):
         from corehq.apps.tzmigration.timezonemigration import json_diff
