@@ -17,6 +17,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.rebuild_utils import get_table_diffs
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -165,14 +166,11 @@ class ConfigurableReportTableManagerMixin(object):
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
-            engine = connection_manager.get_engine(engine_id)
             table_names = list(table_map)
-            with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_names)
-                raw_diffs = compare_metadata(migration_context, metadata)
-                diffs = reformat_alembic_diffs(raw_diffs)
+            engine = connection_manager.get_engine(engine_id)
+            diffs = get_table_diffs(engine, table_names, metadata)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
+            tables_to_rebuild = get_tables_to_rebuild(diffs.formatted, table_names)
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
@@ -183,9 +181,9 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
+            tables_to_migrate = get_tables_to_migrate(diffs.formatted, table_names)
             tables_to_migrate -= tables_to_rebuild
-            migrate_tables(engine, raw_diffs, tables_to_migrate)
+            migrate_tables(engine, diffs.raw, tables_to_migrate)
 
     def rebuild_table(self, adapter):
         config = adapter.config
