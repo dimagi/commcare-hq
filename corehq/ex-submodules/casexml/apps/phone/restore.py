@@ -649,6 +649,8 @@ class RestoreConfig(object):
             self.async_restore_task_id_cache.set_value(task.id)
         try:
             response_or_name = task.get(timeout=self._get_task_timeout(new_task))
+            if isinstance(response_or_name, bytes):
+                response_or_name = response_or_name.decode('utf-8')
             if isinstance(response_or_name, six.text_type):
                 response = CachedResponse(response_or_name)
             else:

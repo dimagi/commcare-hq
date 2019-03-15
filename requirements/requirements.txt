@@ -10,7 +10,7 @@ amqp==2.4.2               # via kombu
 asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
-billiard==3.5.0.5         # via celery
+billiard==3.5.0.4
 boto3==1.9.108
 botocore==1.12.108        # via boto3, s3transfer
 celery==4.1.1
