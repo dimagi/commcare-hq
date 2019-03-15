@@ -240,16 +240,7 @@ else
     export DOCKER_HQ_OVERLAY="${DOCKER_HQ_OVERLAY:-aufs}"
 fi
 
-if [  -z "$DOCKER_MACHINE_NAME" -a `uname` == 'Darwin' ]; then
-    # Docker for Mac (not in virtualbox)
-    # Put elasticsearch (and other) data in a named data volume, automatically
-    # created by docker, instead of $DOCKER_DATA_HOME/elasticsearch.
-    # https://forums.docker.com/t/elasticsearch-1-7-0-fails-to-start-on-docker4mac-1-11-1-beta10/11692/3
-    # The commit that introduced this can be reverted when the issue is resolved.
-    export DATA_VOLUME_PREFIX=${COMPOSE_PROJECT_NAME}-
-else
-    export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
-fi
+export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
 
 case $CMD in
     -h | --help | help | services | "")
