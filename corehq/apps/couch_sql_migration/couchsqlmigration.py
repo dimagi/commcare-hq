@@ -245,7 +245,11 @@ class CouchSqlDomainMigrator(object):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         couch_form_json = couch_form.to_json()
         sql_form_json = sql_form.to_json()
-        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
+        diffs = json_diff(
+            couch_form_json, sql_form_json,
+            track_list_indices=False,
+            ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+        )
         self.diff_db.add_diffs(
             couch_form.doc_type, couch_form.form_id,
             filter_form_diffs(couch_form_json, sql_form_json, diffs)
@@ -378,7 +382,11 @@ class CouchSqlDomainMigrator(object):
         for sql_case in sql_cases:
             couch_case = couch_cases[sql_case.case_id]
             sql_case_json = sql_case.to_json()
-            diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
+            diffs = json_diff(
+                couch_case, sql_case_json,
+                track_list_indices=False,
+                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+            )
             diffs = filter_case_diffs(
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
             )
@@ -404,7 +412,11 @@ class CouchSqlDomainMigrator(object):
             self.src_domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
-        diffs = json_diff(rebuilt_case_json, sql_case_json, track_list_indices=False)
+        diffs = json_diff(
+            rebuilt_case_json, sql_case_json,
+            track_list_indices=False,
+            ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+        )
         diffs = filter_case_diffs(
             rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
         )
@@ -422,7 +434,11 @@ class CouchSqlDomainMigrator(object):
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-            diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+            diffs = json_diff(
+                couch_state.to_json(), ledger_value.to_json(),
+                track_list_indices=False,
+                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+            )
             self.diff_db.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
