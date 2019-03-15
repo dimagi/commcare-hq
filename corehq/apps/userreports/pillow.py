@@ -16,7 +16,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild_utils import get_table_diffs, get_tables_rebulid_migrate
+from corehq.apps.userreports.rebuild_utils import get_table_diffs, get_tables_rebuild_migrate
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -165,7 +165,7 @@ class ConfigurableReportTableManagerMixin(object):
             engine = connection_manager.get_engine(engine_id)
             diffs = get_table_diffs(engine, table_names, metadata)
 
-            tables_to_act_on = get_tables_rebulid_migrate(diffs, table_names)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
             for table_name in tables_to_act_on.rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:

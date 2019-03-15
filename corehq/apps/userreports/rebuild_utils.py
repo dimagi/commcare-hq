@@ -36,7 +36,7 @@ def get_table_diffs(engine, table_names, metadata):
     return TableDiffs(raw=raw_diffs, formatted=diffs)
 
 
-def get_tables_rebulid_migrate(diffs, table_names):
+def get_tables_rebuild_migrate(diffs, table_names):
     tables_to_rebuild = get_tables_to_rebuild(diffs.formatted, table_names)
     tables_to_migrate = get_tables_to_migrate(diffs.formatted, table_names)
     tables_to_migrate -= tables_to_rebuild
