@@ -16,7 +16,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild_utils import get_table_diffs, get_tables_rebuild_migrate
+from corehq.apps.userreports.rebuild_utils import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -26,9 +26,6 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from fluff.signals import (
-    migrate_tables
-)
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
