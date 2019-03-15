@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django import forms
 from django.utils.translation import ugettext_noop, ugettext as _
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -43,7 +42,7 @@ class ExampleUserLoginForm(forms.Form):
         super(ExampleUserLoginForm, self).__init__(*args, **kwargs)
 
         # Here's what makes the form a Crispy Form:
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
 
         # This is necessary to make the form a horizontal form
         self.helper.form_class = 'form-horizontal'
