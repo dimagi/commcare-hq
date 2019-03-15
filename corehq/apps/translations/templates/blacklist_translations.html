@@ -27,9 +27,6 @@
             {% endfor %}
             </tbody>
         </table>
-        <form class="form form-horizontal" method="post">
-            <legend>{% trans "BlackList Translations" %}</legend>
-            {% crispy blacklist_form %}
-        </form>
+        {% crispy blacklist_form %}
     </div>
 {% endblock %}

@@ -282,10 +282,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
 
     def __init__(self, domain, *args, **kwargs):
         super(AddTransifexBlacklistForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4 col-md-4 col-lg-3'
-        self.helper.field_class = 'col-sm-6 col-md-6 col-lg-5'
+        self.helper = hqcrispy.HQFormHelper()
 
         self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
         form_fields = [
@@ -303,7 +300,10 @@ class AddTransifexBlacklistForm(forms.ModelForm):
             css_class="btn btn-primary btn-lg disable-on-submit",
         )))
         self.helper.layout = crispy.Layout(
-            *form_fields
+            crispy.Fieldset(
+                "Add translation to blacklist",
+                *form_fields
+            ),
         )
         self.fields['action'].initial = 'blacklist'
         self.fields['domain'].initial = domain
