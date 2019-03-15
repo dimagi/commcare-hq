@@ -56,4 +56,5 @@ branches:
   - dmr/kill-old-exports  # Danny March 14
   - jls/upload-mm-translations  # Jenny March 14
   - obj-to-dict  # Nick P March 15
+  - obj-to-dict-locations  # Nick P March 15
 submodules: {}
