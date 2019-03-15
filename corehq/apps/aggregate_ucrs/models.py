@@ -115,7 +115,7 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
     def pk_columns(self):
         columns = []
         for col in self.get_columns():
-            if col.is_primary_key():
+            if col.is_primary_key:
                 column_name = decode_column_name(col)
                 columns.append(column_name)
         return columns
