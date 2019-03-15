@@ -19,7 +19,7 @@
             {% for translation in blacklisted_translations %}
                 <tr>
                     <td>{{ translation.app_name }}</td>
-                    <td>{{ translation.module_id }}</td>
+                    <td><a href="{% url 'view_module' domain translation.app_id translation.module_id %}">{{translation.module_id}}</a></td>
                     <td>{{ translation.field_type }}</td>
                     <td>{{ translation.field_name }}</td>
                     <td>{{ translation.display_text }}</td>
