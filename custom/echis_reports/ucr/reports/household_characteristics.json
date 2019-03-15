@@ -1,4 +1,16 @@
 {
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+ "report_id":"static-household_characterstics_report",
+   "data_source_table":"static-household_characterstics_data_source", 
+ "config": {
    "doc_type":"ReportConfiguration",
    "domain":"fmoh-echis-staging",
    "config_id":"02f1aecf16cae01da886e3fcea186f66",
@@ -12,7 +24,7 @@
       "report_builder_version":"2.0",
       "last_modified":"2019-02-11T14:53:53.646278Z"
    },
-   "title":"(mobile) Household Characteristics",
+   "title":"Household Characteristics Report",
    "filters":[
       {
          "datatype":"string",
@@ -283,4 +295,5 @@
          "display":"Percent of CBHI Households"
       }
    ]
+}
 }

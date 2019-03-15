@@ -1,4 +1,16 @@
 {
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-kebele_population_profile_report",
+   "data_source_table":"static-kebele_population_profile_data_source",
+   "config":{
    "doc_type":"ReportConfiguration",
    "domain":"fmoh-echis-staging",
    "config_id":"dab63d3ec8e6ac18568978f839192d22",
@@ -12,7 +24,7 @@
       "report_builder_version":"2.0",
       "last_modified":"2019-02-11T13:34:30.485097Z"
    },
-   "title":"(mobile) Kebele Population Profile Report",
+   "title":"Kebele Population Profile Report",
    "filters":[
       {
          "comment":null,
@@ -315,4 +327,5 @@
          "display":"No of HH in the WDA Networks"
       }
    ]
+}
 }
