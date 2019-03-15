@@ -5,7 +5,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
     vm.tooltipPlacement = "right";
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['location_id', 'month', 'ageServiceDeliveryDashboard'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;

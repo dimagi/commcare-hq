@@ -59,13 +59,13 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     vm.selectedAgeSDD = $location.search()['ageSDD'] !== void(0) ? $location.search()['ageSDD'] : '0_3';
     var filtersObjects = [];
-    if (vm.filters && vm.filters.indexOf('gender') === -1) {
+    if (vm.filters && vm.filters.indexOf('gender') !== -1) {
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
-    if (vm.filters && vm.filters.indexOf('age') === -1) {
+    if (vm.filters && vm.filters.indexOf('age') !== -1) {
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
-    if (vm.filters && vm.filters.indexOf('ageServiceDeliveryDashboard') === -1) {
+    if (vm.filters && vm.filters.indexOf('ageServiceDeliveryDashboard') !== -1) {
         filtersObjects.push({ label: 'AgeSDD', value: vm.selectedAgeSDD });
     }
 

@@ -31,9 +31,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         legendTitle: 'Number of Children',
     };
     if (vm.step === 'chart') {
-        vm.filters = ['age', 'ageServiceDeliveryDashboard'];
+        vm.filters = ['location_id', 'month', 'gender'];
     } else {
-        vm.filters = ['ageServiceDeliveryDashboard'];
+        vm.filters = ['location_id', 'month', 'gender', 'age'];
     }
 
     vm.rightLegend = {

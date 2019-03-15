@@ -1703,7 +1703,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['ageServiceDeliveryDashboard', 'gender', 'age'];
+    vm.filters = ['location_id', 'month'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
 
@@ -2367,7 +2367,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         var get_url = url('awc_reports', 'beneficiary_details');
         var highest_age = 0;
 
-        vm.filters.push('month');
+        vm.filters = ['location_id'];
 
         vm.myPromise = $http({
             method: "GET",
@@ -2508,7 +2508,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         var params = $location.search();
         var getUrl = url('awc_reports', 'pregnant_details');
 
-        vm.filters.push('month');
+        vm.filters = ['location_id'];
 
         vm.myPromise = $http({
             method: "GET",
@@ -2532,7 +2532,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.showBeneficiaryTable = function () {
-        vm.filters.pop();
+        vm.filters = ['location_id', 'month', 'age'];
         vm.beneficiary = null;
         vm.showBeneficiary = false;
         vm.showTable = true;
@@ -2543,7 +2543,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.showPregnantTable = function () {
-        vm.filters.push('month');
+        vm.filters = ['location_id'];
         vm.pregnant = null;
         vm.pregnantData = null;
         vm.showPregnant = false;
@@ -2551,7 +2551,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.showLactatingTable = function () {
-        vm.filters.push('month');
+        vm.filters = ['location_id'];
         vm.lactating = null;
         vm.showLactating = false;
         vm.showTable = true;

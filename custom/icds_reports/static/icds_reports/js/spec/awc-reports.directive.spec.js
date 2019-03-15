@@ -88,7 +88,7 @@ describe('AWC Reports Directive', function () {
     it('tests show beneficiary table', function () {
         controller.showBeneficiaryTable();
 
-        assert.deepEqual(controller.filters, ['ageServiceDeliveryDashboard', 'gender']);
+        assert.deepEqual(controller.filters, ['location_id', 'month', 'age']);
         assert.equal(controller.beneficiary, null);
         assert.equal(controller.showBeneficiary, false);
         assert.equal(controller.showTable, true);
