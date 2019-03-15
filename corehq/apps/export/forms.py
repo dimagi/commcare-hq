@@ -232,7 +232,7 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
-        :param export: FormExportSchema instance or CaseExportSchema instance
+        :param export: FormExportInstance instance or FormExportInstance instance
         :return: url to edit the export
         """
         raise NotImplementedError("must implement get_edit_url")
