@@ -143,7 +143,7 @@ def get_table_name(domain, table_id):
     domain = domain.encode('unicode-escape').decode('utf-8')
     table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
-        'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
+        'cr_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
     )
 
@@ -152,7 +152,7 @@ def is_ucr_table(table_name):
     return table_name.startswith('config_report_')
 
 
-def truncate_value(value, max_length=63, from_left=True):
+def truncate_value(value, max_length=52, from_left=True):
     """
     Truncate a value (typically a column name) to a certain number of characters,
     using a hash to ensure uniqueness.
