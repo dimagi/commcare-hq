@@ -47,15 +47,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return get_indicator_table(self.config)
 
     @memoized
-    def get_sqlalchemy_mapping(self):
+    def get_sqlalchemy_orm_table(self):
         table = self.get_table()
         Base = declarative_base(metadata=metadata)
-        properties = dict(table.columns)
-        properties['__tablename__'] = table.name
-        properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
-        return type_
+        class TemporaryTableDef(Base):
+            __table__ = table
+
+        return TemporaryTableDef
 
     def _install_partition(self):
         if self.config.sql_settings.partition_config:
@@ -65,7 +64,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 constraint=config.constraint, column=config.column, db=self.engine.url,
                 orm='sqlalchemy', return_null=True
             )
-            mapping = self.get_sqlalchemy_mapping()
+            mapping = self.get_sqlalchemy_orm_table()
             partition(mapping)
             mapping.architect.partition.get_partition().prepare()
 
