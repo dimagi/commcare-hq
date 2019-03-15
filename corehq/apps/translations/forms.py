@@ -291,12 +291,14 @@ class AddTransifexBlacklistForm(forms.ModelForm):
             hqcrispy.Field('display_text'),
             hqcrispy.Field('domain'),
             hqcrispy.Field('action'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Add"),
+                    type="submit",
+                    css_class="btn-primary disable-on-submit",
+                )
+            )
         ]
-        form_fields.append(hqcrispy.Field(StrictButton(
-            ugettext_lazy("Add"),
-            type="submit",
-            css_class="btn btn-primary disable-on-submit",
-        )))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "Add translation to blacklist",
