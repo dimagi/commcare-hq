@@ -223,9 +223,9 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                         continue
 
                     if not_in_group(key, group_a) and sub_status != 'group_b':
-                        group = 'No PMT data Submitted'
+                        group = _('No PMT data Submitted')
                     elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':
-                        group = 'Incorrect PMT data Submitted'
+                        group = _('Incorrect PMT data Submitted')
                     else:
                         continue
                     rows.append(_to_report_format(date, user, group))
