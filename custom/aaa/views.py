@@ -216,18 +216,14 @@ class UnifiedBeneficiaryReportAPI(View):
             )[:10]
         elif beneficiary_type == 'eligible_couple':
             data = (
-                Woman.objects
-                .annotate(
+                Woman.objects.annotate(
                     age=ExtractYear(Func(F('dob'), function='age')),
-                )
-                .filter(
+                ).filter(
                     # should filter for location
                     domain=request.domain,
                     age__range=(15, 49),
                     marital_status='married',
-                )
-                .exclude(migration_status='yes')
-                .extra(
+                ).exclude(migration_status='yes').extra(
                     select={
                         'currentFamilyPlanningMethod': 0,
                         'adoptionDateOfFamilyPlaning': '2018-03-01',
@@ -235,15 +231,14 @@ class UnifiedBeneficiaryReportAPI(View):
                     },
                     where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
-                )
-                .values(
+                ).values(
                     'id', 'name', 'age',
                     'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
             )[:10]
         elif beneficiary_type == 'pregnant_women':
             data = (
                 Woman.objects.annotate(
-                   age=ExtractYear(Func(F('dob'), function='age')),
+                    age=ExtractYear(Func(F('dob'), function='age')),
                 ).filter(
                     # should filter for location
                     domain=request.domain,
@@ -257,8 +252,8 @@ class UnifiedBeneficiaryReportAPI(View):
                     where=["daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
                 ).values(
-                   'id', 'name', 'age',
-                   'highRiskPregnancy', 'noOfAncCheckUps'
+                    'id', 'name', 'age',
+                    'highRiskPregnancy', 'noOfAncCheckUps'
                 )
             )[:10]
         data = list(data)
@@ -385,7 +380,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     'marriedAt': 'age_marriage'
                 })
 
-            extra_select_values = extra_select.keys()
+            extra_select_values = list(extra_select.keys())
             extra_select_values.extend(
                 ['dob', 'name', 'husband_name']
             )
@@ -431,20 +426,20 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         if section == 'child':
             if sub_section == 'infant_details':
                 extra_select = {
-                        'breastfeedingInitiated': 'breastfed_within_first',
-                        'dietDiversity': 'diet_diversity',
-                        'birthWeight': 'birth_weight',
-                        'dietQuantity': 'diet_quantity',
-                        'breastFeeding': 'comp_feeding',
-                        'handwash': 'hand_wash',
-                        'exclusivelyBreastfed': 'is_exclusive_breastfeeding',
-                        'babyCried': 'Yes',
-                        'pregnancyLength': 'Pre-term',
-                    }
+                    'breastfeedingInitiated': 'breastfed_within_first',
+                    'dietDiversity': 'diet_diversity',
+                    'birthWeight': 'birth_weight',
+                    'dietQuantity': 'diet_quantity',
+                    'breastFeeding': 'comp_feeding',
+                    'handwash': 'hand_wash',
+                    'exclusivelyBreastfed': 'is_exclusive_breastfeeding',
+                    'babyCried': '\'Yes\'',
+                    'pregnancyLength': '\'Pre-term\'',
+                }
 
                 data = Child.objects.extra(
                     select=extra_select
-                ).values(extra_select.keys()).get(
+                ).values(*list(extra_select.keys())).get(
                     domain=request.domain,
                     person_case_id=beneficiary_id,
                 )
@@ -718,7 +713,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     else:
                         points.update({month: dict(y=recorded_height[1])})
                 data = dict(
-                    points=filter(lambda point: 'x' in point and 'y' in point, points.values())
+                    points=[point for point in points if 'x' in point and 'y']
                 )
         elif section == 'pregnant_women':
             if sub_section == 'pregnancy_details':
