@@ -1,18 +1,18 @@
 {
-   "doc_type":"ReportConfiguration",
-   "domain":"fmoh-echis-staging",
-   "config_id":"41ccd1feb600226be0c7b31bc1b1d794",
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-household_with_access_to_Latrine_by_type_report",
+   "data_source_table":"static-household_with_access_to_Latrine_by_type_data_source",
+   "config":{
    "description":"",
-   "report_meta":{
-      "doc_type":"ReportMeta",
-      "edited_manually":true,
-      "builder_report_type":null,
-      "created_by_builder":false,
-      "builder_source_type":null,
-      "report_builder_version":"",
-      "last_modified":"2019-02-11T14:54:44.751117Z"
-   },
-   "title":"(mobile)Household with access to Latrine by type",
+   "title":"Household with access to Latrine by type Report",
    "filters":[
       {
          "datatype":"string",
@@ -55,9 +55,7 @@
       "health_post_id",
       "health_post_name"
    ],
-   "custom_query_provider":null,
-   "soft_rollout":"0",
-   "_id":"e2416fc27a0aedf1d94c4943dc58ebd7",
+ 
    "sort_expression":[
 
    ],
@@ -237,4 +235,5 @@
          "display":"Percent of Not Available Latrine"
       }
    ]
+}
 }

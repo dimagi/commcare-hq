@@ -1,18 +1,18 @@
 {
-   "doc_type":"ReportConfiguration",
-   "domain":"fmoh-echis-staging",
-   "config_id":"02f1aecf16cae01da886e3fcea186f66",
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+ "report_id":"static-household_characterstics_report",
+   "data_source_table":"static-household_characterstics_data_source", 
+ "config": {
    "description":"",
-   "report_meta":{
-      "doc_type":"ReportMeta",
-      "edited_manually":true,
-      "builder_report_type":"table",
-      "created_by_builder":true,
-      "builder_source_type":null,
-      "report_builder_version":"2.0",
-      "last_modified":"2019-02-11T14:53:53.646278Z"
-   },
-   "title":"(mobile) Household Characteristics",
+   "title":"Household Characteristics Report",
    "filters":[
       {
          "datatype":"string",
@@ -55,9 +55,7 @@
       "health_post_id",
       "health_post_name"
    ],
-   "custom_query_provider":null,
-   "soft_rollout":"0",
-   "_id":"19c109ee62babf4c2b7ee7fdd7cca4a0",
+ 
    "sort_expression":[
 
    ],
@@ -283,4 +281,5 @@
          "display":"Percent of CBHI Households"
       }
    ]
+}
 }

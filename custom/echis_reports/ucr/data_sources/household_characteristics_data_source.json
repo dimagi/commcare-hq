@@ -1,5 +1,14 @@
 {
-   "domain":"fmoh-echis-staging",
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "config": { 
    "es_index_settings":{
       "doc_type":"ElasticSearchIndexSettings",
       "refresh_interval":"5s",
@@ -483,14 +492,13 @@
    "description":"",
    "referenced_doc_type":"CommCareCase",
    "engine_id":"ucr",
-   "last_modified":"2019-02-11T14:02:26.303716Z",
-   "display_name":"(mobile) Household Characteristics Data Source",
+   "display_name":"Household Characteristics Data Source",
    "named_expressions":{
 
    },
    "doc_type":"DataSourceConfiguration",
    "icds_rebuild_related_docs":false,
-   "table_id":"household_characterstics_tbl_id",
+   "table_id":"static-household_characterstics_data_source",
    "named_filters":{
 
    },
@@ -498,4 +506,5 @@
    "sql_column_indexes":[
 
    ]
+}
 }

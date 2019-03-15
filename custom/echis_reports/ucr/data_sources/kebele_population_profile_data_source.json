@@ -1,5 +1,15 @@
 {
-   "domain":"fmoh-echis-staging",
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "config": {
+  
    "es_index_settings":{
       "doc_type":"ElasticSearchIndexSettings",
       "number_of_shards":2,
@@ -1243,14 +1253,13 @@
    "description":"",
    "referenced_doc_type":"CommCareCase",
    "engine_id":"ucr",
-   "last_modified":"2019-02-13T09:28:12.512618Z",
-   "display_name":"(mobile) Kebele Population Profile Data Source",
+   "display_name":"Kebele Population Profile Data Source",
    "named_expressions":{
 
    },
    "doc_type":"DataSourceConfiguration",
    "icds_rebuild_related_docs":false,
-   "table_id":"kebele_population_profile_data_source_id",
+   "table_id":"static-kebele_population_profile_data_source",
    "named_filters":{
 
    },
@@ -1258,4 +1267,6 @@
    "sql_column_indexes":[
 
    ]
+}
+
 }

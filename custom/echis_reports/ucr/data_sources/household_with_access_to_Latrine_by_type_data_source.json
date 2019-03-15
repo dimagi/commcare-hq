@@ -1,6 +1,15 @@
 {
-   "domain":"fmoh-echis-staging",
-   "es_index_settings":{
+  "domains": [
+    "fmoh-echis",
+    "fmoh-echis-staging",
+    "fmoh-echis-link-test"
+  ],
+  "server_environment": [
+    "production",
+    "echis"
+  ],
+  "config": {
+    "es_index_settings":{
       "doc_type":"ElasticSearchIndexSettings",
       "number_of_shards":2,
       "refresh_interval":"5s"
@@ -453,17 +462,16 @@
    },
    "backend_id":"SQL",
    "disable_destructive_rebuild":false,
-   "description":"(mobile)Household with access to Latrine by type Data Source",
+   "description":"Household with access to Latrine by type Data Source",
    "referenced_doc_type":"CommCareCase",
    "engine_id":"ucr",
-   "last_modified":"2019-02-11T13:55:56.700056Z",
-   "display_name":"(mobile)Household with access to Latrine by type Data Source",
+   "display_name":"Household with access to Latrine by type Data Source",
    "named_expressions":{
 
    },
    "doc_type":"DataSourceConfiguration",
    "icds_rebuild_related_docs":false,
-   "table_id":"(mobile)household_with_access_to_Latrine_by_type_data_source",
+   "table_id":"static-household_with_access_to_Latrine_by_type_data_source",
    "named_filters":{
 
    },
@@ -471,4 +479,5 @@
    "sql_column_indexes":[
 
    ]
+}
 }

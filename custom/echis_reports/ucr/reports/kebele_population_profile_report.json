@@ -1,18 +1,18 @@
 {
-   "doc_type":"ReportConfiguration",
-   "domain":"fmoh-echis-staging",
-   "config_id":"dab63d3ec8e6ac18568978f839192d22",
-   "description":"",
-   "report_meta":{
-      "doc_type":"ReportMeta",
-      "edited_manually":true,
-      "builder_report_type":"table",
-      "created_by_builder":true,
-      "builder_source_type":null,
-      "report_builder_version":"2.0",
-      "last_modified":"2019-02-11T13:34:30.485097Z"
-   },
-   "title":"(mobile) Kebele Population Profile Report",
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-kebele_population_profile_report",
+   "data_source_table":"static-kebele_population_profile_data_source",
+   "config":{
+   "description":"", 
+   "title":"Kebele Population Profile Report",
    "filters":[
       {
          "comment":null,
@@ -55,9 +55,7 @@
       "health_post_id",
       "health_post_name"
    ],
-   "custom_query_provider":null,
-   "soft_rollout":"0",
-   "_id":"5e24431c7931dfd8017afb0adc407932",
+ 
    "sort_expression":[
 
    ],
@@ -315,4 +313,5 @@
          "display":"No of HH in the WDA Networks"
       }
    ]
+}
 }
