@@ -6,7 +6,6 @@ from django.test import TestCase
 
 from corehq.apps.export.models import ExportInstance
 from corehq.apps.export.models.new import DAILY_SAVED_EXPORT_ATTACHMENT_NAME
-from couchexport.models import ExportConfiguration
 
 
 class DailySavedExportSavingTest(TestCase):
@@ -27,7 +26,3 @@ class DailySavedExportSavingTest(TestCase):
         self.assertEqual(export.file_size, 7)
         with export.get_payload(stream=True) as fh:
             self.assertEqual(fh.read(), b"content")
-
-
-def _mk_config(name='some export name', index='dummy_index'):
-    return ExportConfiguration(index=index, name=name, format='xlsx')
