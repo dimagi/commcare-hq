@@ -311,13 +311,20 @@ hqDefine('app_manager/js/app_manager', function () {
             // another, do a check to see if this is the sortable list we're moving the item to
             if ($sortable.find(ui.item).length < 1) { return; }
 
-            var toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
+            if ($sortable.hasClass('sortable-forms')) {
+                rearrangeForms(ui, $sortable);
+            } else {
+                rearrangeModules($sortable);
+            }
+        }
+        function rearrangeForms(ui, $sortable) {
+            var url = initialPageData.reverse('rearrange', 'forms'),
+                toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
                 fromModuleUid = ui.item.data('moduleuid'),
-                sortingForms = $sortable.hasClass('sortable-forms'),
-                movingFormToNewModule = sortingForms && toModuleUid !== fromModuleUid;
+                movingToNewModule = toModuleUid !== fromModuleUid;
 
             var move;
-            if (movingFormToNewModule) {
+            if (movingToNewModule) {
                 move = calculateMoveFormToNewModule($sortable, ui, toModuleUid);
             } else {
                 move = calculateMoveWithinScope($sortable);
@@ -325,13 +332,22 @@ hqDefine('app_manager/js/app_manager', function () {
             var from = move[0],
                 to = move[1];
 
-            if (to !== from || movingFormToNewModule) {
+            if (to !== from || movingToNewModule) {
                 resetIndexes($sortable);
-                if (movingFormToNewModule) {
+                if (movingToNewModule) {
                     resetOldModuleIndices($sortable, fromModuleUid);
                 }
-                saveRearrangement(from, to, fromModuleUid, toModuleUid, sortingForms);
-                hqImport("app_manager/js/menu").setPublishStatus(true);
+                saveRearrangement(url, from, to, fromModuleUid, toModuleUid);
+            }
+        }
+        function rearrangeModules($sortable) {
+            var url = initialPageData.reverse('rearrange', 'modules'),
+                move = calculateMoveWithinScope($sortable),
+                from = move[0],
+                to = move[1];
+
+            if (to !== from) {
+                saveRearrangement(url, from, to);
             }
         }
         function calculateMoveFormToNewModule($sortable, ui, toModuleUid) {
@@ -385,16 +401,14 @@ hqDefine('app_manager/js/app_manager', function () {
                 }
             });
         }
-        function saveRearrangement(from, to, fromModuleUid, toModuleUid, sortingForms) {
-            var url = initialPageData.reverse('rearrange', sortingForms ? 'forms' : 'modules');
+        function saveRearrangement(url, from, to, fromModuleUid, toModuleUid) {
+            resetIndexes($sortable);
             var data = {
                 from: from,
                 to: to,
+                from_module_uid: fromModuleUid,
+                to_module_uid: toModuleUid,
             };
-            if (sortingForms) {
-                data['from_module_uid'] = fromModuleUid;
-                data['to_module_uid'] = toModuleUid;
-            }
             $.ajax(url, {
                 method: 'POST',
                 data: data,
@@ -405,6 +419,7 @@ hqDefine('app_manager/js/app_manager', function () {
                     hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
                 },
             });
+            hqImport("app_manager/js/menu").setPublishStatus(true);
         }
 
     };
