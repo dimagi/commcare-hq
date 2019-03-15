@@ -41,20 +41,8 @@ class ExampleUserLoginForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ExampleUserLoginForm, self).__init__(*args, **kwargs)
 
-        # Here's what makes the form a Crispy Form:
+        # Here's what makes the form a Crispy Form and adds in a few Bootstrap classes
         self.helper = hqcrispy.HQFormHelper()
-
-        # This is necessary to make the form a horizontal form
-        self.helper.form_class = 'form-horizontal'
-
-        # What do all these col-sm-3, col-md-2, col-lg-6 things mean? They
-        # specify the column sizes for the label and field columns depending
-        # on what the screen size is. This is called Responsive Design, and
-        # you should visit
-        # [Bootstrap 3's Responsive Docs](http://getbootstrap.com/css/#responsive-utilities)
-        # for more information.
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         # This is the layout of the form where we can explicitly specify the
         # order of fields and group fields into fieldsets.

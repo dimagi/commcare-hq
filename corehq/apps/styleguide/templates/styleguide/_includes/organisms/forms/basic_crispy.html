@@ -37,8 +37,6 @@ class BasicCrispyForm(forms.Form):
         self.helper.form_method = 'POST'
         self.helper.form_action = '#'
 
-        self.helper = hqcrispy.HQFormHelper()
-
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
