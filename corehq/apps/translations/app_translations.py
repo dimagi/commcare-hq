@@ -283,20 +283,22 @@ def get_bulk_multimedia_sheet_rows(lang, app):
                                                      [module.audio_by_language(lang)]))
 
         # Detail case properties, etc.
-        for row in get_module_rows([lang], module):
-            rows.append(prefix + list(row))
+        if not isinstance(module, ReportModule):
+            for row in get_module_rows([lang], module):
+                rows.append(prefix + list(row))
 
-        for form_index, form in enumerate(module.forms):
-            prefix = [get_form_sheet_name(form), '']
+            for form_index, form in enumerate(module.forms):
+                prefix = [get_form_sheet_name(form), '']
 
-            # Name / menu media row
-            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
-                                                     [form.icon_by_language(lang)],
-                                                     [form.audio_by_language(lang)]))
+                # Name / menu media row
+                rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
+                                                        [form.icon_by_language(lang)],
+                                                        [form.audio_by_language(lang)]))
 
-            # Questions
-            for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row)
+                # Questions
+                if form.form_type != 'shadow_form':
+                    for row in get_form_question_rows([lang], form):
+                        rows.append(prefix + row)
 
     return rows
 
@@ -402,7 +404,8 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                     unique_id=form.unique_id
                 ))
 
-                rows[form_sheet_name] = get_form_question_rows(app.langs, form)
+                if form.form_type != 'shadow_form':
+                    rows[form_sheet_name] = get_form_question_rows(app.langs, form)
 
     return rows
 
@@ -514,11 +517,8 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
 
 
 def get_form_question_rows(langs, form):
-    if form.form_type == 'shadow_form':
-        return None
 
     rows = []
-
     xform = form.wrapped_xform()
     itext_items = OrderedDict()
     nodes = []
