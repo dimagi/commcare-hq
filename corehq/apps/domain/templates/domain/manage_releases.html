@@ -1,0 +1,61 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'app_manager/js/manage_releases' %}
+
+{% block page_content %}
+    {% initial_page_data 'enabled_app_releases' enabled_app_releases %}
+    {% registerurl 'location_search' domain %}
+    {% registerurl 'deactivate_release_restriction' domain '---'%}
+    {% registerurl 'activate_release_restriction' domain '---'%}
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel panel-modern-gray panel-form-only">
+                <div class="panel-body">
+                    <form class="form-horizontal disable-on-submit" id="manage_app_releases" action="" method='post'>
+                        {% crispy manage_releases_form %}
+                    </form>
+                {% if enabled_app_releases %}
+                    <table id="managed_releases" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Application</th>
+                                <th>Location</th>
+                                <th>Version</th>
+                                <th>Last Activity</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach: enabledAppReleases, visible: enabledAppReleases">
+                            <tr data-bind="attr: {id: dom_id}, style: { background: rowBgColor() } ">
+                                <td data-bind="text: app"></td>
+                                <td data-bind="text: location"></td>
+                                <td data-bind="text: version"></td>
+                                <td>
+                                    <div data-bind="visible: activatedOn"> Activated On :
+                                        <span data-bind="text: activatedOn"></span>
+                                    </div>
+                                    <div data-bind="visible: deactivatedOn"> Deactivated On :
+                                        <span data-bind="text: deactivatedOn"></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="#" data-bind =
+                                    "click: toggleRestriction, text: actionText, visible: !ajaxInProgress()"></a>
+                                    <span class="spinner fa fa-spinner" data-bind="visible: ajaxInProgress"></span>
+                                    <br/>
+                                    <span class="error-message label label-danger" data-bind="visible: error">
+                                        {% trans 'Could not update!' %}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

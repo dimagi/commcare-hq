@@ -7,12 +7,17 @@ import logging
 import re
 import sys
 import uuid
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -72,8 +77,8 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     is_downgrade
 )
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_version_build_id, get_brief_apps_in_domain
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, LatestEnabledAppReleases
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
@@ -2377,3 +2382,87 @@ class SelectSubscriptionTypeForm(forms.Form):
                     css_class="disabled"
                 )
             )
+
+
+class ManageAppReleasesForm(forms.Form):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
+    location_id = forms.ChoiceField(label=ugettext_lazy("Location"), choices=(), required=False)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False)
+
+    def __init__(self, request, domain, *args, **kwargs):
+        self.domain = domain
+        super(ManageAppReleasesForm, self).__init__(*args, **kwargs)
+        self.fields['app_id'].choices = self.app_id_choices()
+        if request.GET.get('app_id'):
+            self.fields['app_id'].initial = request.GET.get('app_id')
+        self.fields['location_id'].choices = self.location_id_choices()
+        if request.GET.get('location_id'):
+            self.fields['location_id'].initial = request.GET.get('location_id')
+        if request.GET.get('version'):
+            self.fields['version'].initial = request.GET.get('version')
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Field('app_id', id='app_id_search_select'),
+            crispy.Field('location_id', id='location_search_select', name='location_search'),
+            crispy.Field('version', id='version_input'),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
+                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                    Submit('submit', ugettext_lazy("Add Release Restriction"))
+                )
+            )
+        )
+
+    def app_id_choices(self):
+        choices = ([(None, 'Select Application')])
+        for app in get_brief_apps_in_domain(self.domain):
+            choices.append((app.id, app.name))
+        return choices
+
+    def location_id_choices(self):
+        choices = ([(None, 'Select Location')])
+        for location in SQLLocation.active_objects.filter(domain=self.domain):
+            choices.append((location.location_id, location.name))
+        return choices
+
+    @property
+    def version_build_id(self):
+        app_id = self.cleaned_data['app_id']
+        version = self.cleaned_data['version']
+        return get_version_build_id(self.domain, app_id, version)
+
+    def clean_app_id(self):
+        if not self.cleaned_data.get('app_id'):
+            self.add_error('app_id', _("Please select application"))
+        return self.cleaned_data.get('app_id')
+
+    def clean_location_id(self):
+        if not self.cleaned_data.get('location_id'):
+            self.add_error('location_id', _("Please select location"))
+        return self.cleaned_data.get('location_id')
+
+    def clean_version(self):
+        if not self.cleaned_data.get('version'):
+            self.add_error('version', _("Please enter version"))
+        return self.cleaned_data.get('version')
+
+    def clean(self):
+        app_id = self.cleaned_data.get('app_id')
+        version = self.cleaned_data.get('version')
+        if app_id and version:
+            try:
+                self.version_build_id
+            except BuildNotFoundException as e:
+                self.add_error('version', e)
+
+    def save(self):
+        location_id = self.cleaned_data['location_id']
+        version = self.cleaned_data['version']
+        app_id = self.cleaned_data['app_id']
+        LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id, version,
+                                               True)
