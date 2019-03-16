@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.schema import Index
+from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
@@ -47,15 +47,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return get_indicator_table(self.config)
 
     @memoized
-    def get_sqlalchemy_mapping(self):
+    def get_sqlalchemy_orm_table(self):
         table = self.get_table()
         Base = declarative_base(metadata=metadata)
-        properties = dict(table.columns)
-        properties['__tablename__'] = table.name
-        properties['__table_args__'] = ({'extend_existing': True},)
 
-        type_ = type("TemporaryTableDef" if six.PY3 else b"TemporaryTableDef", (Base,), properties)
-        return type_
+        class TemporaryTableDef(Base):
+            __table__ = table
+
+        return TemporaryTableDef
 
     def _install_partition(self):
         if self.config.sql_settings.partition_config:
@@ -65,7 +64,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 constraint=config.constraint, column=config.column, db=self.engine.url,
                 orm='sqlalchemy', return_null=True
             )
-            mapping = self.get_sqlalchemy_mapping()
+            mapping = self.get_sqlalchemy_orm_table()
             partition(mapping)
             mapping.architect.partition.get_partition().prepare()
 
@@ -220,7 +219,8 @@ def get_indicator_table(indicator_config, custom_metadata=None):
             _assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
             _assert(False, "Invalid index specified on {}".format(table_name))
             break
-    columns_and_indices = sql_columns + extra_indices
+    constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
+    columns_and_indices = sql_columns + extra_indices + constraints
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
     # is that valid?
     return sqlalchemy.Table(

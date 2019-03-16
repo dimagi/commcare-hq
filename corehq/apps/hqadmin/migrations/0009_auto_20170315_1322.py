@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunPython
+
 from pillowtop.utils import safe_force_seq_int
 
 
@@ -40,5 +40,5 @@ class Migration(migrations.Migration):
             old_name='ESRestorePillowCheckpoints',
             new_name='HistoricalPillowCheckpoint',
         ),
-        HqRunPython(set_seq_int),
+        migrations.RunPython(set_seq_int),
     ]

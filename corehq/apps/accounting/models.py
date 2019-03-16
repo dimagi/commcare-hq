@@ -2140,6 +2140,10 @@ class CustomerInvoice(InvoiceBase):
         return contact_emails
 
     @property
+    def contact_emails(self):
+        return self.account.enterprise_admin_emails
+
+    @property
     def subtotal(self):
         """
         This will be inserted in the subtotal field on the printed invoice.

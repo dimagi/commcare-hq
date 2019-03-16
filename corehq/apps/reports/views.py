@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 import copy
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
 import itertools
 import json
@@ -29,6 +29,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 import langcodes
@@ -77,35 +78,24 @@ from casexml.apps.case.util import (
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
-import couchexport
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import UserRequestedRebuild
 
-from couchexport.exceptions import (
-    CouchExportException,
-    SchemaMismatchException
-)
 from couchexport.export import Format, export_from_tables
-from couchexport.models import DefaultExportSchema, SavedBasicExport
-from couchexport.shortcuts import (export_data_shared, export_raw_data,
-                                   export_response)
-from couchexport.tasks import rebuild_schemas
-from couchexport.util import SerializableFunction
-from couchforms.filters import instances
+from couchexport.models import SavedBasicExport
+from couchexport.shortcuts import export_response
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
-                                  string_to_datetime, json_format_date)
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
@@ -119,8 +109,6 @@ from corehq.apps.domain.decorators import (
     api_auth,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
-from corehq.apps.export.custom_export_helpers import make_custom_export_helper
-from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.models import CaseExportDataSchema
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
@@ -150,17 +138,10 @@ from corehq.util.view_utils import (
 )
 
 from .dispatcher import ProjectReportDispatcher
-from .export import (
-    ApplicationBulkExportHelper,
-    CustomBulkExportHelper,
-)
-from .exportfilters import default_form_filter
-from .filters.users import UserTypeFilter
 from .forms import SavedReportConfigForm
 from .models import (
     ReportConfig,
     ReportNotification,
-    DefaultFormExportSchema,
     HQGroupExportConfiguration
 )
 
@@ -171,16 +152,9 @@ from .tasks import (
     rebuild_export_async,
     send_delayed_report,
 )
-from .util import (
-    create_export_filter,
-    get_group,
-    group_filter,
-    users_matching_filter,
-)
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
-    use_jquery_ui,
     use_select2_v4,
     use_datatables,
     use_multiselect,
@@ -382,222 +356,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
-
-
-@requires_privilege_json_response(privileges.API_ACCESS)
-@login_or_digest
-@require_form_export_permission
-@datespan_default
-@require_GET
-def export_data(req, domain):
-    """
-    Download all data for a couchdbkit model
-    """
-    try:
-        export_tag = json.loads(req.GET.get("export_tag", "null") or "null")
-    except ValueError:
-        return HttpResponseBadRequest()
-
-    include_errors = string_to_boolean(req.GET.get("include_errors", False))
-
-    kwargs = {"format": req.GET.get("format", Format.XLS_2007),
-              "previous_export_id": req.GET.get("previous_export", None),
-              "filename": export_tag,
-              "use_cache": string_to_boolean(req.GET.get("use_cache", "True")),
-              "max_column_size": int(req.GET.get("max_column_size", 2000)),
-              "separator": req.GET.get("separator", "|")}
-
-    user_filter, _ = UserTypeFilter.get_user_filter(req)
-
-    if user_filter:
-        filtered_users = users_matching_filter(domain, user_filter)
-
-        def _ufilter(user):
-            try:
-                return user['form']['meta']['userID'] in filtered_users
-            except KeyError:
-                return False
-        filter = _ufilter
-    else:
-        group = get_group(**json_request(req.GET))
-        filter = SerializableFunction(group_filter, group=group)
-
-    errors_filter = instances if not include_errors else None
-
-    kwargs['filter'] = couchexport.util.intersect_functions(filter, errors_filter)
-    if kwargs['format'] == 'raw':
-        resp = export_raw_data([domain, export_tag], filename=export_tag)
-    else:
-        try:
-            resp = export_data_shared([domain, export_tag], **kwargs)
-        except CouchExportException as e:
-            return HttpResponseBadRequest(e)
-    if resp:
-        return resp
-    else:
-        messages.error(req, "Sorry, there was no data found for the tag '%s'." % export_tag)
-        raise Http404()
-
-
-@require_form_export_permission
-@login_and_domain_required
-@datespan_default
-@require_GET
-def export_data_async(request, domain):
-    """
-    Download all data for a couchdbkit model
-    """
-    try:
-        export_tag = json.loads(request.GET.get("export_tag", "null") or "null")
-        export_type = request.GET.get("type", "form")
-    except ValueError:
-        return HttpResponseBadRequest()
-    assert(export_tag[0] == domain)
-    format = request.GET.get("format", Format.XLS_2007)
-    filename = request.GET.get("filename", None)
-    previous_export_id = request.GET.get("previous_export", None)
-
-    filter = create_export_filter(request, domain, export_type=export_type)
-
-    def _export_tag_or_bust(request):
-        export_tag = request.GET.get("export_tag", "")
-        if not export_tag:
-            raise Exception("You must specify a model to download!")
-        try:
-            # try to parse this like a compound json list
-            export_tag = json.loads(request.GET.get("export_tag", ""))
-        except ValueError:
-            pass  # assume it was a string
-        return export_tag
-
-    export_tag = _export_tag_or_bust(request)
-    export_object = DefaultExportSchema(index=export_tag)
-
-    return export_object.export_data_async(
-        filter=filter,
-        filename=filename,
-        previous_export_id=previous_export_id,
-        format=format
-    )
-
-
-@login_or_digest
-@datespan_default
-def export_default_or_custom_data(request, domain, export_id=None, bulk_export=False):
-    """
-    Export data from a saved export schema
-    """
-    r = request.POST if request.method == 'POST' else request.GET
-    deid = r.get('deid') == 'true'
-    if deid:
-        return _export_deid(request, domain, export_id, bulk_export=bulk_export)
-    else:
-        return _export_no_deid(request, domain, export_id, bulk_export=bulk_export)
-
-
-@require_permission('view_report', DEID_EXPORT_PERMISSION, login_decorator=None)
-def _export_deid(request, domain, export_id=None, bulk_export=False):
-    return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export, safe_only=True)
-
-
-@require_form_export_permission
-def _export_no_deid(request, domain, export_id=None, bulk_export=False):
-    return _export_default_or_custom_data(request, domain, export_id, bulk_export=bulk_export)
-
-
-def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=False, safe_only=False):
-    req = request.POST if request.method == 'POST' else request.GET
-    async = req.get('async') == 'true'
-    format = req.get("format", "")
-    export_type = req.get("type", "form")
-    previous_export_id = req.get("previous_export", None)
-    filename = req.get("filename", None)
-    max_column_size = int(req.get("max_column_size", 2000))
-    limit = int(req.get("limit", 0))
-
-    filter = create_export_filter(request, domain, export_type=export_type)
-    if bulk_export:
-        try:
-            is_custom = json.loads(req.get("is_custom", "false"))
-            export_tags = json.loads(req.get("export_tags", "null") or "null")
-        except ValueError:
-            return HttpResponseBadRequest()
-
-        export_helper = (CustomBulkExportHelper if is_custom else ApplicationBulkExportHelper)(
-            domain=domain,
-            safe_only=safe_only
-        )
-
-        if export_type == 'form':
-            filter &= SerializableFunction(instances)
-
-        return export_helper.prepare_export(export_tags, filter)
-
-    elif export_id:
-        # this is a custom export
-        try:
-            export_object = make_custom_export_helper(request, export_type, domain, export_id).custom_export
-            if safe_only and not export_object.is_safe:
-                return HttpResponseForbidden()
-        except ResourceNotFound:
-            raise Http404()
-        except BadExportConfiguration as e:
-            return HttpResponseBadRequest(str(e))
-
-    elif safe_only:
-        return HttpResponseForbidden()
-    else:
-        if not async:
-            # this function doesn't support synchronous export without a custom export object
-            # if we ever want that (i.e. for HTML Preview) then we just need to give
-            # FakeSavedExportSchema a download_data function (called below)
-            return HttpResponseBadRequest()
-        try:
-            export_tag = json.loads(req.get("export_tag", "null") or "null")
-        except ValueError:
-            return HttpResponseBadRequest()
-        assert(export_tag[0] == domain)
-        # hack - also filter instances here rather than mess too much with trying to make this
-        # look more like a FormExportSchema
-        export_class = DefaultExportSchema
-        if export_type == 'form':
-            filter &= SerializableFunction(instances)
-            export_class = DefaultFormExportSchema
-
-        export_object = export_class(index=export_tag)
-
-    if export_type == 'form':
-        _filter = filter
-        filter = SerializableFunction(default_form_filter, filter=_filter)
-
-    if not filename:
-        filename = export_object.name
-    filename += ' ' + date.today().isoformat()
-
-    if async:
-        return export_object.export_data_async(
-            filter=filter,
-            filename=filename,
-            previous_export_id=previous_export_id,
-            format=format,
-            max_column_size=max_column_size,
-        )
-    else:
-        try:
-            resp = export_object.download_data(format, filter=filter, limit=limit)
-        except SchemaMismatchException as e:
-            rebuild_schemas.delay(export_object.index)
-            messages.error(
-                request,
-                "Sorry, the export failed for %s, please try again later" \
-                    % export_object.name
-            )
-            raise Http404()
-        if resp:
-            return resp
-        else:
-            messages.error(request, "Sorry, there was no data found for the tag '%s'." % export_object.name)
-            raise Http404()
 
 
 @csrf_exempt
@@ -989,7 +747,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
             try:
-                self.report_notification.update_attributes(self.scheduled_report_form.cleaned_data.items())
+                self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
             except ValidationError as err:
                 kwargs['error'] = six.text_type(err)
                 messages.error(request, ugettext_lazy(kwargs['error']))
@@ -2307,8 +2065,10 @@ def resave_form_view(request, domain, instance_id):
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     if isinstance(end, six.string_types):
+        soft_assert_type_text(end)
         end = parse_date(end)
     if isinstance(start, six.string_types):
+        soft_assert_type_text(start)
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

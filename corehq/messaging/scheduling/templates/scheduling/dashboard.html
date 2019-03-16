@@ -100,7 +100,8 @@
                             </span>
                             <span data-bind="visible: uses_restricted_time_windows() && within_allowed_sms_times()">
                                 {% blocktrans %}
-                                Your project restricts the times of day at which SMS can be sent, but no restrictions are currently active.
+                                Your project restricts the times of day at which SMS can be sent. SMS sending is currently active. The next restricted period begins at
+                                <span data-bind="text: sms_resume_time"></span> (<span data-bind="text: project_timezone"></span>).
                                 {% endblocktrans %}
                             </span>
                             {% if request.couch_user.is_domain_admin %}

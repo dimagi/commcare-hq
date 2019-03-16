@@ -26,6 +26,11 @@ hqDefine('aaa/js/filters/filters_modal', [
             };
 
             self.applyFilters = function () {
+                _.each(self.filters, function (filter) {
+                    if(filter.hasOwnProperty('applyFilter')) {
+                        filter.applyFilter();
+                    }
+                });
                 self.localStorage.showModal(false);
                 params.callback();
             };

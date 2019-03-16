@@ -47,6 +47,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
 from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
@@ -73,8 +74,10 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 def _try_date_conversion(date_or_string):
+    if isinstance(date_or_string, bytes):
+        date_or_string = date_or_string.decode('utf-8')
     if (
-        isinstance(date_or_string, six.string_types) and
+        isinstance(date_or_string, six.text_type) and
         ALLOWED_DATE_REGEX.match(date_or_string)
     ):
         try:
@@ -518,6 +521,7 @@ class AutomaticUpdateRule(models.Model):
         for case_id in query.scroll():
             if not isinstance(case_id, six.string_types):
                 raise ValueError("Something is wrong with the query, expected ids only")
+            soft_assert_type_text(case_id)
 
             yield case_id
 
@@ -826,6 +830,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             if value is None:
                 continue
             if isinstance(value, six.string_types) and not value.strip():
+                soft_assert_type_text(value)
                 continue
             return True
 
@@ -842,6 +847,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
 
         for value in self.get_case_values(case):
             if isinstance(value, six.string_types):
+                soft_assert_type_text(value)
                 try:
                     if regex.match(value):
                         return True
@@ -1403,6 +1409,12 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
 
 
 class CaseRuleSubmission(models.Model):
+    """This model records which forms were submitted as a result of a case
+    update rule. This serves both as a log as well as providing the ability
+    to undo the effects of rules in case of errors.
+
+    This data is not stored permanently but is removed after 90 days (see tasks file)
+    """
     domain = models.CharField(max_length=126)
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
 
