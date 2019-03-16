@@ -19,6 +19,7 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.domain.views.releases import ManageReleases
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -829,6 +830,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
+            ))
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Manage Releases'),
+                url=(reverse(ManageReleases.urlname, args=[self.domain])),
             ))
         return submenu_context
 

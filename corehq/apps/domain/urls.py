@@ -15,6 +15,9 @@ from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
+from corehq.apps.domain.views.releases import (
+    ManageReleases,
+)
 from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
     DefaultProjectSettingsView,
@@ -222,6 +225,6 @@ domain_settings = [
     url(r'^recovery_measures_history/$',
         RecoveryMeasuresHistory.as_view(),
         name=RecoveryMeasuresHistory.urlname),
-
+    url(r'^manage_releases/$', ManageReleases.as_view(), name=ManageReleases.urlname),
     DomainReportDispatcher.url_pattern()
 ]
