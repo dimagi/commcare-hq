@@ -30,6 +30,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError,
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
@@ -636,6 +637,30 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
                             .first())
     if latest_enabled_build:
         return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_app_release(domain, location_id, app_id):
+    """
+    for a location search for enabled app releases for all parent locations.
+    Child location's setting takes precedence over parent
+    """
+    from corehq.apps.app_manager.models import LatestEnabledAppReleases
+    location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+    if not location:
+        raise Exception("Location not found")
+    location_and_hierarchy = location.get_ancestors(include_self=True).reverse()
+    location_and_hierarchy_ids = [l.location_id for l in location_and_hierarchy]
+    latest_enabled_releases = {
+        enabled_release.location_id: enabled_release.build_id
+        for enabled_release in
+        LatestEnabledAppReleases.objects.filter(
+            location_id__in=location_and_hierarchy_ids, app_id=app_id, domain=domain, active=True)
+    }
+    for loc_id in location_and_hierarchy_ids:
+        build_id = latest_enabled_releases.get(loc_id)
+        if build_id:
+            return get_app(domain, build_id)
 
 
 @quickcache(['app_id'], timeout=24 * 60 * 60)
