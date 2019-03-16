@@ -17,7 +17,7 @@ from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
 
 
-@method_decorator([toggles.RELEASE_BUILDS_PER_PROFILE.required_decorator()], name='dispatch')
+@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
 class ManageReleases(BaseProjectSettingsView):
     template_name = 'domain/manage_releases.html'
     urlname = 'manage_releases'
@@ -52,7 +52,7 @@ class ManageReleases(BaseProjectSettingsView):
 @login_and_domain_required
 @require_POST
 def deactivate_release_restriction(request, domain, restriction_id):
-    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
+    if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
     latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
     latest_enabled_app_release.deactivate()
@@ -70,7 +70,7 @@ def deactivate_release_restriction(request, domain, restriction_id):
 @login_and_domain_required
 @require_POST
 def activate_release_restriction(request, domain, restriction_id):
-    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
+    if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
     latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
     latest_enabled_app_release.activate()

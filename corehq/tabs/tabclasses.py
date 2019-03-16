@@ -831,7 +831,7 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(self._request):
+        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Manage Releases'),
                 url=(reverse(ManageReleases.urlname, args=[self.domain])),

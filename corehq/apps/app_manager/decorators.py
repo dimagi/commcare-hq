@@ -73,7 +73,7 @@ def safe_cached_download(f):
             request.GET.pop('username')
 
         latest_enabled_build = None
-        if latest and username and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        if latest and username and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
             user = CommCareUser.get_by_username(normalize_username(username, domain))
             user_location_id = user.location_id
             parent_app_id = get_app(domain, app_id).copy_of

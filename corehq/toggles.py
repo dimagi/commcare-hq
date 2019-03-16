@@ -1690,6 +1690,13 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+MANAGE_RELEASES_PER_LOCATION = StaticToggle(
+    'manage_releases_per_location',
+    'Manage releases per location',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
