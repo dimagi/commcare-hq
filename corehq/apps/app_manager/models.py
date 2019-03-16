@@ -62,6 +62,7 @@ from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSui
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
@@ -135,6 +136,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
+    get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -148,6 +150,7 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
+    get_latest_enabled_app_release,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5947,7 +5950,86 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
+class LatestEnabledAppReleases(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
+    build_id = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=False)
+    active = models.BooleanField(default=True)
+    activated_on = models.DateTimeField(null=True)
+    deactivated_on = models.DateTimeField(null=True)
+
+    @staticmethod
+    def expire_cache(domain, location_id, app_id):
+        """
+        expire cache for all location and its descendants for the app
+        why? : Latest enabled release for a location is dependent on restrictions added for
+        itself and its ancestors. Hence we expire the cache for location and its descendants for which the
+        latest enabled release would depend on this location
+        :param domain: domain name
+        :param location_id: location for which the restriction is being updated
+        :param app_id: app id
+        """
+        location = SQLLocation.active_objects.get(location_id=location_id)
+        location_and_descendats = location.get_descendants(include_self=True)
+        for loc in location_and_descendats:
+            get_latest_enabled_app_release.clear(domain, loc.location_id, app_id)
+
+    @classmethod
+    def update_status(cls, domain, app_id, build_id, location_id, version, status):
+        """
+        create a new object or just set the status of an existing one with provided
+        domain, app_id, build_id, location_id and version to the status passed
+        :param domain: domain name
+        :param app_id: app id
+        :param build_id: id of the build corresponding to the version
+        :param location_id: location_id of location
+        :param version: version number
+        :param status: expected status
+        """
+        current_release, created = cls.objects.get_or_create(
+            domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version)
+        current_release.activate() if status else current_release.deactivate()
+
+    def deactivate(self):
+        self.active = False
+        self.deactivated_on = datetime.datetime.utcnow()
+        self.save()
+        self.expire_cache(self.domain, self.location.location_id, self.app_id)
+
+    def activate(self):
+        self.active = True
+        self.activated_on = datetime.datetime.utcnow()
+        self.save()
+        self.expire_cache(self.domain, self.location.location_id, self.app_id)
+
+    @classmethod
+    def to_json(cls, domain, location_id, app_id, version):
+        restrictions = cls.objects.filter(domain=domain)
+        if location_id:
+            restrictions = restrictions.filter(location_id=location_id)
+        if app_id:
+            restrictions = restrictions.filter(app_id=app_id)
+        if version:
+            restrictions = restrictions.filter(version=version)
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(domain, include_remote=True)}
+        return [{
+            'location': restriction.location.name,
+            'app': app_names.get(restriction.app_id, restriction.app_id),
+            'build_id': restriction.build_id,
+            'version': restriction.version,
+            'active': restriction.active,
+            'id': restriction.id,
+            'activated_on': (datetime.datetime.strftime(restriction.activated_on, '%Y-%m-%d  %H:%M:%S')
+                             if restriction.activated_on else None),
+            'deactivated_on': (datetime.datetime.strftime(restriction.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if restriction.deactivated_on else None),
+        } for restriction in restrictions]
+
+
 class LatestEnabledBuildProfiles(models.Model):
+    # ToDo: Deprecate this model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
