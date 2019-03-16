@@ -48,3 +48,38 @@ class ManageReleases(BaseProjectSettingsView):
         else:
             return self.get(request, *args, **kwargs)
 
+
+@login_and_domain_required
+@require_POST
+def deactivate_release_restriction(request, domain, restriction_id):
+    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
+        return HttpResponseForbidden()
+    latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
+    latest_enabled_app_release.deactivate()
+    response_content = {
+        'id': restriction_id,
+        'success': True,
+        'activated_on': (datetime.strftime(latest_enabled_app_release.activated_on, '%Y-%m-%d %H:%M:%S')
+                         if latest_enabled_app_release.activated_on else None),
+        'deactivated_on': (datetime.strftime(latest_enabled_app_release.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                           if latest_enabled_app_release.deactivated_on else None),
+    }
+    return HttpResponse(json.dumps(response_content), content_type='application/json')
+
+
+@login_and_domain_required
+@require_POST
+def activate_release_restriction(request, domain, restriction_id):
+    if not toggles.RELEASE_BUILDS_PER_PROFILE.enabled_for_request(request):
+        return HttpResponseForbidden()
+    latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
+    latest_enabled_app_release.activate()
+    response_content = {
+        'id': restriction_id,
+        'success': True,
+        'activated_on': (datetime.strftime(latest_enabled_app_release.activated_on, '%Y-%m-%d %H:%M:%S')
+                         if latest_enabled_app_release.activated_on else None),
+        'deactivated_on': (datetime.strftime(latest_enabled_app_release.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                           if latest_enabled_app_release.deactivated_on else None),
+    }
+    return HttpResponse(json.dumps(response_content), content_type='application/json')
