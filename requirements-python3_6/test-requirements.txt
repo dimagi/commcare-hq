@@ -14,10 +14,10 @@ attrs==18.2.0
 babel==2.6.0
 backports.functools-lru-cache==1.5  # via soupsieve
 beautifulsoup4==4.7.1
-billiard==3.5.0.4
+billiard==3.6.0.0
 boto3==1.9.108
 botocore==1.12.108
-celery==4.1.1
+celery==4.3.0rc2
 certifi==2018.11.29
 cffi==1.12.2
 chardet==3.0.4
@@ -92,7 +92,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==4.2.2.post1
+kombu==4.4.0
 laboratory==0.2.0
 linecache2==1.0.0         # via traceback2
 lxml==4.3.2

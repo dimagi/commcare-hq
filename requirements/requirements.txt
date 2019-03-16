@@ -10,10 +10,10 @@ amqp==2.4.2               # via kombu
 asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
-billiard==3.5.0.4
+billiard==3.6.0.0
 boto3==1.9.108
 botocore==1.12.108        # via boto3, s3transfer
-celery==4.1.1
+celery==4.3.0rc2
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
@@ -86,7 +86,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==4.2.2.post1
+kombu==4.4.0
 laboratory==0.2.0
 lxml==4.3.2
 mako==1.0.7               # via alembic
