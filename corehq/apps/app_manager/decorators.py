@@ -11,10 +11,11 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile
+from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile, get_latest_enabled_app_release
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.util import normalize_username
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -66,13 +67,17 @@ def safe_cached_download(f):
         # make endpoints that call the user fail hard
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
+        username = request.GET.get('username')
         if request.GET.get('username'):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
         latest_enabled_build = None
-        if latest and request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_enabled_build = get_latest_enabled_build_for_profile(domain, request.GET.get('profile'))
+        if latest and username and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            user = CommCareUser.get_by_username(normalize_username(username, domain))
+            user_location_id = user.location_id
+            parent_app_id = get_app(domain, app_id).copy_of
+            latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
