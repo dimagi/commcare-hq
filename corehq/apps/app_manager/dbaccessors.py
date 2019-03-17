@@ -5,6 +5,7 @@ from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
+from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from django.http import Http404
@@ -475,7 +476,7 @@ def get_version_build_id(domain, app_id, version):
     for app_built_version in built_app_ids:
         if app_built_version.version == version:
             return app_built_version.build_id
-    raise Exception("Build for version requested not found")
+    raise BuildNotFoundException("Build for version requested not found")
 
 
 def get_case_types_from_apps(domain):
