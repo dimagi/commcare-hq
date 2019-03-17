@@ -81,8 +81,9 @@ def safe_cached_download(f):
                 return HttpResponse(status=406, content=json.dumps(content_response))
             user = CommCareUser.get_by_username(normalize_username(username, domain))
             user_location_id = user.location_id
-            parent_app_id = get_app(domain, app_id).copy_of
-            latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
+            if user_location_id:
+                parent_app_id = get_app(domain, app_id).copy_of
+                latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
