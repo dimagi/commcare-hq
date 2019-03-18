@@ -1,13 +1,12 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 
 import six
-from alembic.autogenerate.api import compare_metadata
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
@@ -17,6 +16,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -26,13 +26,6 @@ from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
-from fluff.signals import (
-    migrate_tables,
-    get_migration_context,
-    get_tables_to_migrate,
-    get_tables_to_rebuild,
-    reformat_alembic_diffs
-)
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -165,15 +158,12 @@ class ConfigurableReportTableManagerMixin(object):
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
-            engine = connection_manager.get_engine(engine_id)
             table_names = list(table_map)
-            with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_names)
-                raw_diffs = compare_metadata(migration_context, metadata)
-                diffs = reformat_alembic_diffs(raw_diffs)
+            engine = connection_manager.get_engine(engine_id)
+            diffs = get_table_diffs(engine, table_names, metadata)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
-            for table_name in tables_to_rebuild:
+            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            for table_name in tables_to_act_on.rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
@@ -183,9 +173,7 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
-            tables_to_migrate -= tables_to_rebuild
-            migrate_tables(engine, raw_diffs, tables_to_migrate)
+            migrate_tables(engine, diffs.raw, tables_to_act_on.migrate)
 
     def rebuild_table(self, adapter):
         config = adapter.config
