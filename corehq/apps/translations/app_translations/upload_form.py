@@ -76,69 +76,6 @@ def update_app_from_form_sheet(app, rows, identifier):
                 new_trans_el.set('default', '')
             itext.xml.append(new_trans_el)
 
-    def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
-        if delete_node and not new_translation:
-            # Remove the node if it already exists
-            if value_node.exists():
-                value_node.xml.getparent().remove(value_node.xml)
-            return
-
-        # Create the node if it does not already exist
-        if not value_node.exists():
-            e = etree.Element(
-                "{f}value".format(**namespaces), attributes
-            )
-            text_node.xml.append(e)
-            value_node = WrappedNode(e)
-        # Update the translation
-        value_node.xml.tail = ''
-        for node in value_node.findall("./*"):
-            node.xml.getparent().remove(node.xml)
-        escaped_trans = escape_output_value(new_translation)
-        value_node.xml.text = escaped_trans.text
-        for n in escaped_trans.getchildren():
-            value_node.xml.append(n)
-
-    def _looks_like_markdown(str):
-        return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
-
-    def get_markdown_node(text_node_):
-        return text_node_.find("./{f}value[@form='markdown']")
-
-    def get_value_node(text_node_):
-        try:
-            return next(
-                n for n in text_node_.findall("./{f}value")
-                if 'form' not in n.attrib or n.get('form') == 'default'
-            )
-        except StopIteration:
-            return WrappedNode(None)
-
-    def had_markdown(text_node_):
-        """
-        Returns True if a Markdown node currently exists for a translation.
-        """
-        markdown_node_ = get_markdown_node(text_node_)
-        return markdown_node_.exists()
-
-    def is_markdown_vetoed(text_node_):
-        """
-        Return True if the value looks like Markdown but there is no
-        Markdown node. It means the user has explicitly told form
-        builder that the value isn't Markdown.
-        """
-        value_node_ = get_value_node(text_node_)
-        if not value_node_.exists():
-            return False
-        old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
-        return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
-
-    def has_translation(row_, langs):
-        for lang_ in langs:
-            for trans_type_ in ['default', 'image', 'audio', 'video']:
-                if row_.get(_get_col_key(trans_type_, lang_)):
-                    return True
-
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     msgs = []
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
@@ -150,13 +87,13 @@ def update_app_from_form_sheet(app, rows, identifier):
         for row in rows:
             label_id = row['label']
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
-            vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
-            markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
+            vetoes[label_id] = vetoes[label_id] or _is_markdown_vetoed(text_node)
+            markdowns[label_id] = markdowns[label_id] or _had_markdown(text_node)
     # skip labels that have no translation provided
     skip_label = set()
     if form.is_registration_form():
         for row in rows:
-            if not has_translation(row, app.langs):
+            if not _has_translation(row, app.langs):
                 skip_label.add(row['label'])
         for label in skip_label:
             msgs.append((
@@ -216,7 +153,7 @@ def update_app_from_form_sheet(app, rows, identifier):
                         # have a Markdown node, always keep it. FB 183536
                         _update_translation_node(
                             new_translation,
-                            get_markdown_node(text_node),
+                            _get_markdown_node(text_node),
                             {'form': 'markdown'},
                             # If all translations have been deleted, allow the
                             # Markdown node to be deleted just as we delete
@@ -225,7 +162,7 @@ def update_app_from_form_sheet(app, rows, identifier):
                         )
                     _update_translation_node(
                         new_translation,
-                        get_value_node(text_node),
+                        _get_value_node(text_node),
                         {'form': 'default'},
                         delete_node=(not keep_value_node)
                     )
@@ -237,6 +174,70 @@ def update_app_from_form_sheet(app, rows, identifier):
 
     save_xform(app, form, etree.tostring(xform.xml))
     return msgs
+
+
+def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
+    if delete_node and not new_translation:
+        # Remove the node if it already exists
+        if value_node.exists():
+            value_node.xml.getparent().remove(value_node.xml)
+        return
+
+    # Create the node if it does not already exist
+    if not value_node.exists():
+        e = etree.Element(
+            "{f}value".format(**namespaces), attributes
+        )
+        text_node.xml.append(e)
+        value_node = WrappedNode(e)
+    # Update the translation
+    value_node.xml.tail = ''
+    for node in value_node.findall("./*"):
+        node.xml.getparent().remove(node.xml)
+    escaped_trans = escape_output_value(new_translation)
+    value_node.xml.text = escaped_trans.text
+    for n in escaped_trans.getchildren():
+        value_node.xml.append(n)
+
+def _looks_like_markdown(str):
+    return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
+
+def _get_markdown_node(text_node_):
+    return text_node_.find("./{f}value[@form='markdown']")
+
+def _get_value_node(text_node_):
+    try:
+        return next(
+            n for n in text_node_.findall("./{f}value")
+            if 'form' not in n.attrib or n.get('form') == 'default'
+        )
+    except StopIteration:
+        return WrappedNode(None)
+
+def _had_markdown(text_node_):
+    """
+    Returns True if a Markdown node currently exists for a translation.
+    """
+    markdown_node_ = _get_markdown_node(text_node_)
+    return markdown_node_.exists()
+
+def _is_markdown_vetoed(text_node_):
+    """
+    Return True if the value looks like Markdown but there is no
+    Markdown node. It means the user has explicitly told form
+    builder that the value isn't Markdown.
+    """
+    value_node_ = _get_value_node(text_node_)
+    if not value_node_.exists():
+        return False
+    old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
+    return _looks_like_markdown(old_trans) and not _had_markdown(text_node_)
+
+def _has_translation(row_, langs):
+    for lang_ in langs:
+        for trans_type_ in ['default', 'image', 'audio', 'video']:
+            if row_.get(_get_col_key(trans_type_, lang_)):
+                return True
 
 
 def _get_form_from_sheet_name(app, sheet_name):
