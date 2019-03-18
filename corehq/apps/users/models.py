@@ -2491,7 +2491,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
     def get_location_ids(self, domain):
-        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', [])
 
     @memoized
     def get_sql_locations(self, domain=None):
