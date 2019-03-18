@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/summary/form_summary',[
+hqDefine('app_manager/js/summary/form_diff',[
     'jquery',
     'underscore',
     'knockout',
@@ -11,6 +11,7 @@ hqDefine('app_manager/js/summary/form_summary',[
     'hqwebapp/js/knockout_bindings.ko', // popover
     'hqwebapp/js/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models, formModels, utils) {
+
     $(function () {
         var lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
@@ -34,18 +35,30 @@ hqDefine('app_manager/js/summary/form_summary',[
             viewAllItems: gettext("View All Forms"),
         });
 
-        var formSummaryContent = formModels.formSummaryModel({
-            errors: initialPageData.get("errors"),
+
+        var firstFormSummaryContent = formModels.formSummaryModel({
+            errors: initialPageData.get("first.errors"),
             form_name_map: initialPageData.get("form_name_map"),
             lang: lang,
             langs: langs,
-            modules: initialPageData.get("modules"),
-            read_only: initialPageData.get("read_only"),
+            modules: initialPageData.get("first.modules"),
+            read_only: initialPageData.get("first.read_only"),
         });
 
-        var formSummaryController = formModels.formSummaryControlModel([formSummaryContent]);
+        var secondFormSummaryContent = formModels.formSummaryModel({
+            errors: initialPageData.get("second.errors"),
+            form_name_map: initialPageData.get("form_name_map"),
+            lang: lang,
+            langs: langs,
+            modules: initialPageData.get("second.modules"),
+            read_only: initialPageData.get("second.read_only"),
+        });
+
+
+        var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent]);
         $("#form-summary-header").koApplyBindings(formSummaryController);
-        models.initMenu([formSummaryContent], formSummaryMenu);
-        models.initSummary(formSummaryContent, formSummaryController, "#form-summary");
+        models.initMenu([firstFormSummaryContent, secondFormSummaryContent], formSummaryMenu);
+        models.initSummary(firstFormSummaryContent, formSummaryController, "#first-app-summary");
+        models.initSummary(secondFormSummaryContent, formSummaryController, "#second-app-summary");
     });
 });

@@ -100,6 +100,71 @@ class AppFormSummaryView(AppSummaryView):
         return context
 
 
+class FormSummaryDiffView(AppSummaryView):
+    urlname = "app_form_summary_diff"
+    template_name = 'app_manager/form_summary_diff.html'
+
+    @property
+    def first_app_id(self):
+        return self.kwargs.get('first_app_id')
+
+    @property
+    def second_app_id(self):
+        return self.kwargs.get('second_app_id')
+
+    @property
+    def first_app(self):
+        return self.get_app(self.first_app_id)
+
+    @property
+    def app(self):
+        return self.first_app
+
+    @property
+    def second_app(self):
+        return self.get_app(self.second_app_id)
+
+    def _app_dict(self, lang, langs, app, modules, errors):
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': _get_name_map(app),
+            'lang': lang,
+            'langs': langs,
+            'app_langs': app.langs,
+            'app_id': app.id,
+            'app_name': app.name,
+            'read_only': app.doc_type == 'LinkedApplication',
+            'app_version': app.version,
+            'latest_app_id': app.master_id,
+            'modules': modules,
+            'errors': errors,
+        }
+
+    @property
+    def page_context(self):
+        context = super(FormSummaryDiffView, self).page_context
+        first_app_summary, first_errors = get_app_summary_formdata(
+            self.domain, self.first_app, include_shadow_forms=False
+        )
+        second_app_summary, second_errors = get_app_summary_formdata(
+            self.domain, self.second_app, include_shadow_forms=False
+        )
+        lang, langs = get_langs(self.request, self.app)
+        context.update({
+            'first': self._app_dict(lang, langs, self.first_app, first_app_summary, first_errors),
+            'second': self._app_dict(lang, langs, self.second_app, second_app_summary, second_errors),
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        pass
+
+    @property
+    def page_url(self):
+        pass
+
+
 class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 
     urlname = 'app_data_json'
