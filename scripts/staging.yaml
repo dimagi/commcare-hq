@@ -55,4 +55,5 @@ branches:
   - mk-434 # MK March 12
   - dmr/kill-old-exports  # Danny March 14
   - jls/upload-mm-translations  # Jenny March 14
+  - rn_avoid_chrome_autofill # Rohit March 18
 submodules: {}
