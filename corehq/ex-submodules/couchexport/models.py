@@ -2,10 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from six.moves.urllib.error import URLError
 
-from corehq.blobs import CODES
-from dimagi.ext.couchdbkit import Document
-from corehq.blobs.mixin import BlobMixin
-
 
 class Format(object):
     """
@@ -69,7 +65,3 @@ class Format(object):
         if format not in cls.VALID_FORMATS:
             raise URLError("Unsupported export format: %s!" % format)
         return cls(format, **cls.FORMAT_DICT[format])
-
-
-class SavedBasicExport(BlobMixin, Document):
-    _blobdb_type_code = CODES.basic_export

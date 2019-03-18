@@ -8,7 +8,6 @@ COUCH_DOC_TYPE_CODES = {
     "CommCareBuild": CODES.commcarebuild,
     "Domain": CODES.domain,
     "InvoicePdf": CODES.invoice,
-    "SavedBasicExport": CODES.basic_export,
 
     "CommCareCase": CODES._default,
     "CommCareCase-deleted": CODES._default,
