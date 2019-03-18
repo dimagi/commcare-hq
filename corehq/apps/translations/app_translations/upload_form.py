@@ -51,33 +51,10 @@ def update_app_from_form_sheet(app, rows, identifier):
         # Can't do anything with this form. Ignore it.
         return []
 
-    # Make language nodes for each language if they don't yet exist
-    #
-    # Currently operating under the assumption that every xForm has at least
-    # one translation element, that each translation element has a text node
-    # for each question and that each text node has a value node under it
-    template_translation_el = None
-    # Get a translation element to be used as a template for new elements
-    for lang in app.langs:
-        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
-        if trans_el.exists():
-            template_translation_el = trans_el
-    assert(template_translation_el is not None)
-    # Add missing translation elements
-    for lang in app.langs:
-        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
-        if not trans_el.exists():
-            new_trans_el = copy.deepcopy(template_translation_el.xml)
-            new_trans_el.set('lang', lang)
-            if lang != app.langs[0]:
-                # If the language isn't the default language
-                new_trans_el.attrib.pop('default', None)
-            else:
-                new_trans_el.set('default', '')
-            itext.xml.append(new_trans_el)
+    template_translation_el = _get_template_translation_el(app, itext)
+    _add_missing_translation_elements_to_itext(app, template_translation_el, itext)
 
     # Aggregate Markdown vetoes, and translations that currently have Markdown
-    msgs = []
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
     for lang in app.langs:
@@ -89,7 +66,9 @@ def update_app_from_form_sheet(app, rows, identifier):
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or _is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or _had_markdown(text_node)
+
     # skip labels that have no translation provided
+    msgs = []
     skip_label = set()
     if form.is_registration_form():
         for row in rows:
@@ -174,6 +153,36 @@ def update_app_from_form_sheet(app, rows, identifier):
 
     save_xform(app, form, etree.tostring(xform.xml))
     return msgs
+
+
+def _get_template_translation_el(app, itext):
+    # Make language nodes for each language if they don't yet exist
+    #
+    # Currently operating under the assumption that every xForm has at least
+    # one translation element, that each translation element has a text node
+    # for each question and that each text node has a value node under it
+    template_translation_el = None
+    # Get a translation element to be used as a template for new elements
+    for lang in app.langs:
+        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
+        if trans_el.exists():
+            template_translation_el = trans_el
+    assert(template_translation_el is not None)
+    return template_translation_el
+
+
+def _add_missing_translation_elements_to_itext(app, template_translation_el, itext):
+    for lang in app.langs:
+        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
+        if not trans_el.exists():
+            new_trans_el = copy.deepcopy(template_translation_el.xml)
+            new_trans_el.set('lang', lang)
+            if lang != app.langs[0]:
+                # If the language isn't the default language
+                new_trans_el.attrib.pop('default', None)
+            else:
+                new_trans_el.set('default', '')
+            itext.xml.append(new_trans_el)
 
 
 def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
