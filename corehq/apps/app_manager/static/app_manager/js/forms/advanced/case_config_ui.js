@@ -227,6 +227,8 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     $('.hq-help-template').each(function () {
                         hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                     });
+
+                    $("#case-load-accordion").sortable("option", "handle", ".panel-heading-case-action");
                 });
             };
             return self;
