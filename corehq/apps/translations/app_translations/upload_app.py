@@ -229,8 +229,9 @@ def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='shee
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
     This does not save the changes to the database.
-    :param rows:
     :param app:
+    :param sheet: Iterable of rows
+    :param identifying_header: Column header that contains the "menuX_formY"-type value for each row.
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
