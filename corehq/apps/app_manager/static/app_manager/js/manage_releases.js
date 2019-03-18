@@ -23,6 +23,7 @@ hqDefine('app_manager/js/manage_releases', [
             self.location = details.location;
             self.activatedOn = ko.observable(details.activated_on);
             self.deactivatedOn = ko.observable(details.deactivated_on);
+            self.errorMessage = ko.observable();
             self.dom_id = "restriction_" + self.id;
             self.ajaxInProgress = ko.observable(false);
             self.actionText = ko.computed(function(){
@@ -55,6 +56,7 @@ hqDefine('app_manager/js/manage_releases', [
                             self.error(false);
                         } else {
                             self.active(old_status);
+                            self.errorMessage(data.message)
                         }
                     },
                     error: function () {

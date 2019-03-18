@@ -33,6 +33,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from django.db import models
+from django.core.exceptions import ValidationError
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -5975,6 +5976,13 @@ class LatestEnabledAppReleases(models.Model):
         location_and_descendats = location.get_descendants(include_self=True)
         for loc in location_and_descendats:
             get_latest_enabled_app_release.clear(domain, loc.location_id, app_id)
+
+    def clean(self):
+        enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)
+        if enabled_release:
+            if enabled_release.version > self.version:
+                raise ValidationError({'version': _("Higher version {} already enabled for this application and "
+                                                    "location").format(enabled_release.version)})
 
     @classmethod
     def update_status(cls, domain, app_id, build_id, location_id, version, status):

@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 from django.shortcuts import redirect
 from django.http.response import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError
 
 from corehq import toggles
 from corehq.apps.app_manager.models import LatestEnabledAppReleases
@@ -78,13 +79,20 @@ def activate_release_restriction(request, domain, restriction_id):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
     latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
-    latest_enabled_app_release.activate()
-    response_content = {
-        'id': restriction_id,
-        'success': True,
-        'activated_on': (datetime.strftime(latest_enabled_app_release.activated_on, '%Y-%m-%d %H:%M:%S')
-                         if latest_enabled_app_release.activated_on else None),
-        'deactivated_on': (datetime.strftime(latest_enabled_app_release.deactivated_on, '%Y-%m-%d %H:%M:%S')
-                           if latest_enabled_app_release.deactivated_on else None),
-    }
+    try:
+        latest_enabled_app_release.full_clean()
+    except ValidationError as e:
+        response_content = {
+            'message': ','.join(e.messages)
+        }
+    else:
+        latest_enabled_app_release.activate()
+        response_content = {
+            'id': restriction_id,
+            'success': True,
+            'activated_on': (datetime.strftime(latest_enabled_app_release.activated_on, '%Y-%m-%d %H:%M:%S')
+                             if latest_enabled_app_release.activated_on else None),
+            'deactivated_on': (datetime.strftime(latest_enabled_app_release.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if latest_enabled_app_release.deactivated_on else None),
+        }
     return HttpResponse(json.dumps(response_content), content_type='application/json')

@@ -15,6 +15,7 @@ from six.moves.urllib.parse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
+from corehq.apps.app_manager.util import get_latest_enabled_app_release
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.locations.models import SQLLocation
@@ -2454,11 +2455,19 @@ class ManageAppReleasesForm(forms.Form):
     def clean(self):
         app_id = self.cleaned_data.get('app_id')
         version = self.cleaned_data.get('version')
+        location_id = self.cleaned_data.get('location_id')
         if app_id and version:
             try:
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
+        enabled_release = get_latest_enabled_app_release(self.domain, location_id, app_id)
+        if enabled_release:
+            if enabled_release.version > version:
+                self.add_error('version',
+                               _("Higher version {} already enabled for this application and location").format(
+                                   enabled_release.version
+                               ))
 
     def save(self):
         location_id = self.cleaned_data['location_id']
