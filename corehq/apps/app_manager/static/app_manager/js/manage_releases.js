@@ -3,6 +3,7 @@ hqDefine('app_manager/js/manage_releases', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/widgets_v4',
 ], function (
     $,
     ko,

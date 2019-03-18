@@ -2407,7 +2407,7 @@ class ManageAppReleasesForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Field('app_id', id='app_id_search_select'),
-            crispy.Field('location_id', id='location_search_select', name='location_search'),
+            crispy.Field('location_id', id='location_search_select', name='location_search', css_class="ko-select2"),
             crispy.Field('version', id='version_input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
