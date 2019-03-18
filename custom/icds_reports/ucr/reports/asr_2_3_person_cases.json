@@ -22,7 +22,7 @@
     "icds"
   ],
   "report_id": "static-asr_2_3_person_cases",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "ASR - 2,3 - Person Cases (Static)",
     "description": "",
@@ -32,290 +32,232 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
         "display": "Date of Birth",
-        "field": "dob",
+        "slug": "dob",
         "type": "date",
-        "slug": "dob"
+        "field": "dob",
+        "datatype": "date"
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by AWW",
         "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by AWW"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Supervisor",
         "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Supervisor"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Block",
         "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by Block"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by District",
         "slug": "district_id",
+        "type": "dynamic_choice_list",
         "field": "district_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by District"
+        }
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by State",
         "slug": "state_id",
+        "type": "dynamic_choice_list",
         "field": "state_id",
         "choice_provider": {
           "type": "location"
-        },
-        "display": "Filter by State"
+        }
       }
     ],
     "columns": [
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "owner_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
-        "aggregation": "simple"
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "open_count",
         "column_id": "open_count",
-        "field": "open_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "open_count"
+        "whens": {
+          "closed_on IS NULL": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_st_count",
         "column_id": "F_st_count",
-        "field": "F_st_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "F_st_count"
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_sc_count",
         "column_id": "F_sc_count",
-        "field": "F_sc_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "F_sc_count"
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_other_count",
         "column_id": "F_other_count",
-        "field": "F_other_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "F_other_count"
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_minority_count",
         "column_id": "F_minority_count",
-        "field": "F_minority_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "F_minority_count"
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' and hh_minority = 1": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "F_disabled_count",
         "column_id": "F_disabled_count",
-        "field": "F_disabled_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "F_disabled_count"
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' and disabled = 1": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_st_count",
         "column_id": "M_st_count",
-        "field": "M_st_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "M_st_count"
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_sc_count",
         "column_id": "M_sc_count",
-        "field": "M_sc_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "M_sc_count"
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_other_count",
         "column_id": "M_other_count",
-        "field": "M_other_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "M_other_count"
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc')": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_minority_count",
         "column_id": "M_minority_count",
-        "field": "M_minority_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "M_minority_count"
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', '0') and hh_minority = 1": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "M_disabled_count",
         "column_id": "M_disabled_count",
-        "field": "M_disabled_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "M_disabled_count"
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', '0') and disabled = 1": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_movement_count",
         "column_id": "disabled_movement_count",
-        "field": "disabled_movement_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "disabled_movement_count"
+        "whens": {
+          "closed_on IS NULL AND disability_type ~ '\\y1\\y'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_mental_count",
         "column_id": "disabled_mental_count",
-        "field": "disabled_mental_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "disabled_mental_count"
+        "whens": {
+          "closed_on IS NULL AND disability_type ~ '\\y2\\y'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_seeing_count",
         "column_id": "disabled_seeing_count",
-        "field": "disabled_seeing_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "disabled_seeing_count"
+        "whens": {
+          "closed_on IS NULL AND disability_type ~ '\\y3\\y'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_hearing_count",
         "column_id": "disabled_hearing_count",
-        "field": "disabled_hearing_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "disabled_hearing_count"
+        "whens": {
+          "closed_on IS NULL AND disability_type ~ '\\y4\\y'": 1
+        }
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "sum",
+        "display": "disabled_speaking_count",
         "column_id": "disabled_speaking_count",
-        "field": "disabled_speaking_count",
-        "transform": {},
+        "type": "sum_when",
+        "aggregation": "sum",
         "calculate_total": true,
-        "type": "field",
-        "display": "disabled_speaking_count"
+        "whens": {
+          "closed_on IS NULL AND disability_type ~ '\\y5\\y'": 1
+        }
       }
     ],
     "sort_expression": [],
