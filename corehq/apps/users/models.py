@@ -45,7 +45,6 @@ from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from memoized import memoized
-from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
 from casexml.apps.case.mock import CaseBlock
@@ -1812,7 +1811,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def retire(self):
         suffix = DELETED_SUFFIX
-        deletion_id = random_hex()
+        deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
