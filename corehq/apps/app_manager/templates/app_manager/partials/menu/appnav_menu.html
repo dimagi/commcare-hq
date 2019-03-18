@@ -2,41 +2,27 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
+{% registerurl 'rearrange' domain app.id '---' %}
+
 <ul class="sortable appmanager-main-menu appnav-menu appnav-module sortable-modules">
-    <li class="sort-action hide sort-disabled">
-        <form method="post"
-              action="{% url "rearrange" domain app.id 'modules' %}">
-              {% csrf_token %}
-              <input name="ajax" value="true" type="hidden" />
-        </form>
-    </li>
     {% with module as selected_module %}
         {% for module in app.get_modules %}
             <li class="edit-module-li js-sorted-li module"
                 data-index="{{ module.id }}"
                 data-uid="{{ module.unique_id }}"
-                data-rootmoduleuid="{{ module.root_module_id|default:"" }}"
-                data-indexvar="moduleid">
+                data-rootmoduleuid="{{ module.root_module_id|default:"" }}">
 
                 {% include 'app_manager/partials/menu/module_link.html' %}
 
                 <ul class="appnav-menu appnav-menu-nested see sortable sortable-forms
                            {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %}
-                           {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}"
-                    data-parentvar="moduleid">
-                    <li class="sort-action hide sort-disabled">
-                        <form method="post"
-                              action="{% url "rearrange" domain app.id 'forms' %}">
-                              {% csrf_token %}
-                              <input name="ajax" value="true" type="hidden" />
-                        </form>
-                    </li>
+                           {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}">
                     {% with nav_form as selected_form %}
                         {% for form in module.get_forms %}
                             <li class="edit-form-li js-sorted-li"
                                 data-moduleuid="{{ module.unique_id }}"
                                 data-index="{{ form.id }}"
-                                data-indexvar="formid"
+                                data-uid="{{ form.unique_id }}"
                                 {% if form.get_action_type == 'open' %}data-appear="first"{% endif %}
                             >
                                 {% include 'app_manager/partials/menu/form_link.html' %}

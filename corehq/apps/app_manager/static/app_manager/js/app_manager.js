@@ -1,6 +1,7 @@
 /* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
     var module = hqImport("hqwebapp/js/main").eventize({});
     var _private = {};
     _private.appendedPageTitle = "";
@@ -256,6 +257,7 @@ hqDefine('app_manager/js/app_manager', function () {
             var modulesByUid = {},
                 childModules = [];
             $(".module").each(function (index, element) {
+                // Set index here so we know whether we've rearranged anything
                 $(element).data('index', index);
                 modulesByUid[ $(element).data('uid') ] = element;
                 if ($(element).data('rootmoduleuid')) {
@@ -288,12 +290,6 @@ hqDefine('app_manager/js/app_manager', function () {
         function promptToSaveOrdering() {
             $("#reorder_modules_modal").modal('show');
         }
-        function updateRelatedTags($elem, name, value) {
-            var relatedTags = $elem.find("[data-" + name + "]");
-            _.each(relatedTags, function (related) {
-                $(related).data(name, value);
-            });
-        }
         function initSortable($sortable) {
             var options = {
                 handle: '.drag_handle ',
@@ -310,95 +306,56 @@ hqDefine('app_manager/js/app_manager', function () {
             // another, do a check to see if this is the sortable list we're moving the item to
             if ($sortable.find(ui.item).length < 1) { return; }
 
-            var toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
-                fromModuleUid = ui.item.data('moduleuid'),
-                sortingForms = $sortable.hasClass('sortable-forms'),
-                movingFormToNewModule = sortingForms && toModuleUid !== fromModuleUid;
-
-            var move;
-            if (movingFormToNewModule) {
-                move = calculateMoveFormToNewModule($sortable, ui, toModuleUid);
+            if ($sortable.hasClass('sortable-forms')) {
+                rearrangeForms(ui, $sortable);
             } else {
-                move = calculateMoveWithinScope($sortable);
+                rearrangeModules(ui, $sortable);
             }
-            var from = move[0],
-                to = move[1];
+            resetIndexes();
+        }
+        function rearrangeForms(ui, $sortable) {
+            var url = initialPageData.reverse('rearrange', 'forms'),
+                toModuleUid = $sortable.parents('.edit-module-li').data('uid'),
+                fromModuleUid = ui.item.data('moduleuid'),
+                from = ui.item.data('index'),
+                to = _.findIndex($sortable.children().not('.sort-disabled'), function (form) {
+                    return $(form).data('uid') === ui.item.data('uid');
+                });
 
-            if (to !== from || movingFormToNewModule) {
-                var $form = $sortable.find('> .sort-action form');
-                storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms);
-                resetIndexes($sortable);
-                if (movingFormToNewModule) {
-                    resetOldModuleIndices($sortable, fromModuleUid);
-                }
-                submitReorderForm($form);
-                hqImport("app_manager/js/menu").setPublishStatus(true);
+            if (to !== from || toModuleUid !== fromModuleUid) {
+                saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
             }
         }
-        function calculateMoveFormToNewModule($sortable, ui, toModuleUid) {
-            var from = -1, to = -1;
-            $sortable.children().not('.sort-disabled').each(function (i) {
-                if ($(this).data('moduleuid') !== toModuleUid) {
-                    to = i;
-                    from = parseInt(ui.item.data('index'), 10);
-                    return false;
-                }
-            });
-            return [from, to];
-        }
-        function calculateMoveWithinScope($sortable) {
-            var from = -1, to = -1;
-            $sortable.children().not('.sort-disabled').each(function (i) {
-                var index = parseInt($(this).data('index'), 10);
-                if (from !== -1) {
-                    if (from === index) {
-                        to = i;
-                        return false;
-                    }
-                }
-                if (i !== index) {
-                    if (i + 1 === index) {
-                        from = i;
-                    } else {
-                        to = i;
-                        from = index;
-                        return false;
-                    }
-                }
-            });
-            return [from, to];
-        }
-        function storeRearrangementInForm($form, from, to, fromModuleUid, toModuleUid, sortingForms) {
-            $form.find('[name="from"], [name="to"]').remove();
-            $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-            $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
-            if (sortingForms) {
-                $form.append('<input type="hidden" name="from_module_uid" value="' + fromModuleUid + '" />');
-                $form.append('<input type="hidden" name="to_module_uid"   value="' + toModuleUid + '" />');
+        function rearrangeModules(ui, $sortable) {
+            var url = initialPageData.reverse('rearrange', 'modules'),
+                from = ui.item.data('index'),
+                to = _.findIndex($(".module"), function (module) {
+                    return $(module).data('uid') === ui.item.data('uid');
+                });
+
+            if (to !== from) {
+                saveRearrangement($sortable, url, from, to);
             }
         }
-        function resetOldModuleIndices($sortable, fromModuleUid) {
-            var $parentSortable = $sortable.parents(".sortable"),
-                $fromSortable = $parentSortable.find("[data-uid=" + fromModuleUid + "] .sortable");
-            resetIndexes($fromSortable);
-        }
-        function resetIndexes($sortable) {
-            var parentVar = $sortable.data('parentvar');
-            var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
-            _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
-                $(elem).data('index', i);
-                var indexVar = $(elem).data('indexvar');
-                updateRelatedTags($(elem), indexVar, i);
-                if (parentVar) {
-                    $(elem).data(parentVar, parentValue);
-                    updateRelatedTags($(elem), parentVar, parentValue);
-                }
+        function resetIndexes() {
+            $(".module").each(function (index, module) {
+                $(module).data('index', index);
+                $(module).children("ul.sortable-forms").first().children("li").each(function (index, form) {
+                    $(form).data('index', index);
+                    $(form).data('moduleuid', $(module).data('uid'));
+                });
             });
         }
-        function submitReorderForm($form) {
-            $.ajax($form.attr('action'), {
+        function saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid) {
+            var data = {
+                from: from,
+                to: to,
+                from_module_uid: fromModuleUid,
+                to_module_uid: toModuleUid,
+            };
+            $.ajax(url, {
                 method: 'POST',
-                data: $form.serialize(),
+                data: data,
                 success: function () {
                     hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
                 },
@@ -406,6 +363,7 @@ hqDefine('app_manager/js/app_manager', function () {
                     hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
                 },
             });
+            hqImport("app_manager/js/menu").setPublishStatus(true);
         }
 
     };
