@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import ghdiff
+import six
 
 import io
 from django.contrib import messages
@@ -24,6 +25,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import update_app_from_form_sheet
 from corehq.apps.translations.app_translations.upload_module import update_app_from_module_sheet
+from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 def validate_bulk_app_translation_upload(app, workbook, email):
@@ -68,9 +70,10 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
 
     processed_sheets = set()
     for sheet in workbook.worksheets:
-        error = _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
-        if error:
-            msgs.append((messages.error, error))
+        try:
+            error = _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
+        except BulkAppTranslationsException as e:
+            msgs.append((messages.error, six.text_type(e)))
             continue
 
         processed_sheets.add(sheet.worksheet.title)
@@ -149,11 +152,13 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     expected_sheets = {h[0]: h[1] for h in headers}
 
     if sheet.worksheet.title in processed_sheets:
-        return _('Sheet "%s" was repeated. Only the first occurrence has been processed.') % sheet.worksheet.title
+        raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
+                                             'processed.') % sheet.worksheet.title)
 
     expected_headers = _get_expected_headers(sheet, expected_sheets)
     if expected_headers is None:
-        return _('Skipping sheet "%s", did not recognize title') % sheet.worksheet.title
+        raise BulkAppTranslationsException(_('Skipping sheet "%s", did not recognize title') %
+                                           sheet.worksheet.title)
 
     num_required_headers = 0
     if is_modules_and_forms_sheet(sheet.worksheet.title):
@@ -168,10 +173,11 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     expected_required_headers = tuple(expected_headers[:num_required_headers])
     actual_required_headers = tuple(sheet.headers[:num_required_headers])
     if expected_required_headers != actual_required_headers:
-        return _('Skipping sheet {title}: expected first columns to be {expected}').format(
-            title=sheet.worksheet.title,
-            expected=", ".join(expected_required_headers),
-        )
+        raise BulkAppTranslationsException(_('Skipping sheet {title}: expected first columns to be '
+                                             '{expected}').format(
+                                                 title=sheet.worksheet.title,
+                                                 expected=", ".join(expected_required_headers),
+                                             ))
 
 
 def _get_expected_headers(sheet, expected_sheets):
