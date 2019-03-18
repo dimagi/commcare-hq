@@ -12,5 +12,8 @@ _soft_assert_type_text = soft_assert(
 
 
 # After PY3 migration: remove
-def soft_assert_type_text(value):
-    _soft_assert_type_text(isinstance(value, six.text_type), 'expected unicode, got: %s' % type(value))
+def soft_assert_type_text(value, data=None):
+    _soft_assert_type_text(
+        isinstance(value, six.text_type),
+        'expected unicode, got: %s%s' % (type(value), "; %s" % data if data is not None else '')
+    )

@@ -952,8 +952,7 @@ class GenericTabularReport(GenericReportView):
         """
         return dict(num=1, width=200)
 
-    @staticmethod
-    def _strip_tags(value):
+    def _strip_tags(self, value):
         """
         Strip HTML tags from a value
         """
@@ -964,7 +963,7 @@ class GenericTabularReport(GenericReportView):
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
         if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+            soft_assert_type_text(value, data=(self.domain, six.text_type(self)))
             return re.sub('<[^>]*?>', '', value)
         return value
 
