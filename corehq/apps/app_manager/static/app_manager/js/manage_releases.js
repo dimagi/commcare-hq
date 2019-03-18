@@ -12,7 +12,6 @@ hqDefine('app_manager/js/manage_releases', [
 ) {
     'use strict';
     $(function () {
-        var deactivate_release_restriction_url = initialPageData.reverse('deactivate_release_restriction');
         var enabledAppRelease = function (details) {
             var self = {};
             self.id = details.id;
@@ -26,25 +25,25 @@ hqDefine('app_manager/js/manage_releases', [
             self.errorMessage = ko.observable();
             self.dom_id = "restriction_" + self.id;
             self.ajaxInProgress = ko.observable(false);
-            self.actionText = ko.computed(function(){
+            self.actionText = ko.computed(function () {
                 return (self.active() ? "Remove" : "Add");
             });
-            self.rowBgColor = ko.computed(function() {
+            self.rowBgColor = ko.computed(function () {
                 return (self.active() ? "lightblue" : "lightgrey");
             });
-            self.toggleStatus = function() {
-                self.active(!self.active())
-            }
+            self.toggleStatus = function () {
+                self.active(!self.active());
+            };
             self.error = ko.observable();
-            self.requestUrl = function() {
+            self.requestUrl = function () {
                 if (self.active()) {
                     return initialPageData.reverse('deactivate_release_restriction', self.id);
                 }
-                return initialPageData.reverse('activate_release_restriction', self.id)
-            }
-            self.toggleRestriction = function(){
+                return initialPageData.reverse('activate_release_restriction', self.id);
+            };
+            self.toggleRestriction = function () {
                 self.ajaxInProgress(true);
-                var old_status = self.active();
+                var oldStatus = self.active();
                 $.ajax({
                     method: 'POST',
                     url: self.requestUrl(),
@@ -55,48 +54,48 @@ hqDefine('app_manager/js/manage_releases', [
                             self.deactivatedOn(data.deactivated_on);
                             self.error(false);
                         } else {
-                            self.active(old_status);
-                            self.errorMessage(data.message)
+                            self.active(oldStatus);
+                            self.errorMessage(data.message);
                         }
                     },
                     error: function () {
-                        self.active(old_status);
+                        self.active(oldStatus);
                     },
-                    complete: function() {
+                    complete: function () {
                         self.ajaxInProgress(false);
-                        if (self.active() == old_status) {
+                        if (self.active() === oldStatus) {
                             self.error(true);
                         }
-                    }
+                    },
                 });
-            }
+            };
             return self;
-        }
+        };
 
         function manageReleasesViewModel(enabledAppReleases) {
             var self = {};
             self.enabledAppReleases = ko.observableArray(enabledAppReleases);
             return self;
         }
-        var enabledAppReleases = _.map(initialPageData.get('enabled_app_releases'), function(enabled_app_release) {
-            return enabledAppRelease(enabled_app_release);
-        })
+        var enabledAppReleases = _.map(initialPageData.get('enabled_app_releases'), function (appRelease) {
+            return enabledAppRelease(appRelease);
+        });
         var viewModel = manageReleasesViewModel(enabledAppReleases);
         if (enabledAppReleases.length) {
             $('#managed_releases').koApplyBindings(viewModel);
         }
         function manageReleaseSearchViewModel() {
             var self = {};
-            self.search = function() {
-                var app_id = $("#app_id_search_select").val();
-                var location_id = $("#location_search_select").val();
+            self.search = function () {
+                var appId = $("#app_id_search_select").val();
+                var locationId = $("#location_search_select").val();
                 var version = $("#version_input").val();
-                window.location.search = ("location_id=" + location_id + "&app_id=" + app_id + "&version=" +
+                window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
                     version);
-            }
-            self.clear = function() {
+            };
+            self.clear = function () {
                 window.location.search = "";
-            }
+            };
             return self;
         }
         var searchViewModel = manageReleaseSearchViewModel();
