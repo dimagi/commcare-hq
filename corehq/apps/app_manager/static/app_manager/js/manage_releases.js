@@ -3,16 +3,11 @@ hqDefine('app_manager/js/manage_releases', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'analytix/js/google',
-    'locations/js/utils',
-    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    googleAnalytics,
-    locationUtils
 ) {
     'use strict';
     $(function () {
@@ -53,7 +48,6 @@ hqDefine('app_manager/js/manage_releases', [
                     url: self.requestUrl(),
                     success: function (data) {
                         if (data.success) {
-                            debugger
                             self.toggleStatus();
                             self.activatedOn(data.activated_on);
                             self.deactivatedOn(data.deactivated_on);
@@ -88,7 +82,6 @@ hqDefine('app_manager/js/manage_releases', [
         if (enabledAppReleases.length) {
             $('#managed_releases').koApplyBindings(viewModel);
         }
-//        locationUtils.enableLocationSearchSelect()
         function manageReleaseSearchViewModel() {
             var self = {};
             self.search = function() {
