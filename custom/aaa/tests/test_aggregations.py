@@ -13,7 +13,7 @@ import sqlalchemy
 from django.test.utils import override_settings
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager
 from custom.aaa.models import (
     AggAwc,
