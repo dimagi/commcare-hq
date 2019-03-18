@@ -13,7 +13,12 @@ def fixture_upload_async(domain, download_id, replace):
     result = upload_fixture_file(domain, download_ref.get_filename(), replace, task)
     DownloadBase.set_progress(task, 100, 100)
     return {
-        'messages': result,
+        'messages': {
+            'success': result.success,
+            'messages': result.messages,
+            'errors': result.errors,
+            'number_of_fixtures': result.number_of_fixtures,
+        },
     }
 
 
