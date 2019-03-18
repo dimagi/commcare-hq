@@ -5996,9 +5996,17 @@ class LatestEnabledAppReleases(models.Model):
         :param version: version number
         :param status: expected status
         """
-        current_release, created = cls.objects.get_or_create(
-            domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version)
-        current_release.activate() if status else current_release.deactivate()
+        try:
+            enabled_app_release = LatestEnabledAppReleases.objects.get(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        except cls.DoesNotExist:
+            enabled_app_release = LatestEnabledAppReleases(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        enabled_app_release.active = status
+        enabled_app_release.full_clean()
+        enabled_app_release.activate() if status else enabled_app_release.deactivate()
 
     def deactivate(self):
         self.active = False

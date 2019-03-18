@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from django.http.response import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
+from django.contrib import messages
 
 from corehq import toggles
 from corehq.apps.app_manager.models import LatestEnabledAppReleases
@@ -49,8 +50,12 @@ class ManageReleases(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         if self.manage_releases_form.is_valid():
-            self.manage_releases_form.save()
-            return redirect(self.urlname, self.domain)
+            success, error_message = self.manage_releases_form.save()
+            if success:
+                return redirect(self.urlname, self.domain)
+            else:
+                messages.error(request, error_message)
+                return self.get(request, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
 

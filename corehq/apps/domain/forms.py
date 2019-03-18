@@ -43,6 +43,7 @@ from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.core.exceptions import ValidationError
 from django_countries.data import COUNTRIES
 from PIL import Image
 from pyzxcvbn import zxcvbn
@@ -2455,23 +2456,18 @@ class ManageAppReleasesForm(forms.Form):
     def clean(self):
         app_id = self.cleaned_data.get('app_id')
         version = self.cleaned_data.get('version')
-        location_id = self.cleaned_data.get('location_id')
         if app_id and version:
             try:
                 self.version_build_id
             except BuildNotFoundException as e:
                 self.add_error('version', e)
-        enabled_release = get_latest_enabled_app_release(self.domain, location_id, app_id)
-        if enabled_release:
-            if enabled_release.version > version:
-                self.add_error('version',
-                               _("Higher version {} already enabled for this application and location").format(
-                                   enabled_release.version
-                               ))
 
     def save(self):
         location_id = self.cleaned_data['location_id']
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
-        LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id, version,
-                                               True)
+        try:
+            LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id, version,
+                                                   True)
+        except ValidationError as e:
+            return False, ','.join(e.messages)
