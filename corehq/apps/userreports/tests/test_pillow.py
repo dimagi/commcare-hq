@@ -829,6 +829,33 @@ class RebuildTableTest(TestCase):
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
 
+    def test_remove_column(self):
+        self._setup_data_source('remove_column')
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+
+        # remove the column
+        config = self._get_config('remove_column')
+        self.addCleanup(config.delete)
+        config.configured_indicators.remove({
+            "column_id": "priority",
+            "type": "raw",
+            "display_name": "Priority",
+            "datatype": "integer",
+            "property_name": "priority"
+        })
+        config.save()
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+
+        # mock rebuild table to ensure the column is added without rebuild table
+        pillow = get_case_pillow(ucr_configs=[config])
+        pillow.processors[0].rebuild_table = mock.MagicMock()
+        self.assertFalse(pillow.processors[0].rebuild_table.called)
+        insp = reflection.Inspector.from_engine(engine)
+        self.assertEqual(
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'priority']), 0
+        )
+
     def test_implicit_pk(self):
         self._setup_data_source('implicit_pk')
         insp = reflection.Inspector.from_engine(self.engine)
