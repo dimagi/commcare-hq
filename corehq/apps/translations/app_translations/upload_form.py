@@ -255,7 +255,7 @@ def _check_for_shadow_form_warning(form):
 def escape_output_value(value):
     try:
         return etree.fromstring("<value>{}</value>".format(
-            re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
+            re.sub(r"(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:
         # if something went horribly wrong just don't bother with escaping
