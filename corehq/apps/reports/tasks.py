@@ -32,6 +32,7 @@ from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
+from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from django.http import HttpRequest
 from django.utils.translation import ugettext as _
 
@@ -71,9 +72,6 @@ from io import open
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
-LARGE_FILE_SIZE_ERROR_CODE = 552
-# ICDS TCL gateway uses non-standard code
-LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
 
 
 def send_delayed_report(report_id):
@@ -266,15 +264,14 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     )[0]
     body = render_full_report_notification(None, content).content
 
-    error_codes = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
     try:
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=error_codes)
+                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) in error_codes:
+        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = {
