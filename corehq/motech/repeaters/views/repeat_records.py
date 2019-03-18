@@ -264,7 +264,7 @@ class RepeatRecordView(View):
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
-            payload = pformat_json(payload)
+            payload = pformat_json(payload, domain=domain)
 
         return json_response({
             'payload': payload,

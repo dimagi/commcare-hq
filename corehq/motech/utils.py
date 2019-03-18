@@ -73,7 +73,7 @@ def b64_aes_decrypt(message):
     return plaintext.rstrip(PAD_CHAR)
 
 
-def pformat_json(data):
+def pformat_json(data, domain=None):
     """
     Pretty-formats `data` for readability, or returns the original
     value if it can't be parsed as JSON.
@@ -82,7 +82,7 @@ def pformat_json(data):
     """
     try:
         if isinstance(data, six.string_types):
-            soft_assert_type_text(data)
+            soft_assert_type_text(data, data=domain)
         json_data = json.loads(data) if isinstance(data, six.string_types) else data
         return json.dumps(json_data, indent=2, sort_keys=True)
     except ValueError:
