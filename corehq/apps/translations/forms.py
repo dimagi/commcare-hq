@@ -1,21 +1,26 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import openpyxl
-import langcodes
 
-from django import forms
-from django.forms.widgets import Select
 from zipfile import ZipFile
 
-from crispy_forms.helper import FormHelper
+import openpyxl
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms import bootstrap as twbscrispy
-from django.utils.translation import ugettext as _, ugettext_lazy
+from crispy_forms.helper import FormHelper
+from django import forms
+from django.forms.widgets import Select
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
-from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
+import langcodes
+from corehq.apps.app_manager.dbaccessors import (
+    get_available_versions_for_app,
+    get_brief_app,
+    get_brief_apps_in_domain,
+)
+from corehq.apps.app_manager.models import Application
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
 from corehq.motech.utils import b64_aes_decrypt
 
@@ -307,6 +312,20 @@ class AddTransifexBlacklistForm(forms.ModelForm):
         )
         self.fields['action'].initial = 'blacklist'
         self.fields['domain'].initial = domain
+
+    def clean(self):
+        cleaned_data = super(AddTransifexBlacklistForm, self).clean()
+        app_id = cleaned_data.get('app_id')
+        module_id = cleaned_data.get('module_id')
+
+        app_json = Application.get_db().get(app_id)
+        for module in app_json['modules']:
+            if module_id == module['unique_id']:
+                break
+        else:
+            domain = cleaned_data.get('domain')
+            app_name = get_brief_app(domain, app_id).name
+            raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_name))
 
     class Meta(object):
         model = TransifexBlacklist
