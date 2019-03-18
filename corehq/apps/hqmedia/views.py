@@ -490,7 +490,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
                                                 author=self.author,
                                                 attribution_notes=self.attribution_notes)
         else:
-            process_bulk_upload_zip(processing_id, self.domain, self.app_id,
+            process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
                                     username=self.username,
                                     share_media=self.share_media,
                                     license_name=self.license_used,
