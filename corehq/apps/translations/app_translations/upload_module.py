@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import itertools
 import re
 from six.moves import zip
+from collections import namedtuple
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -12,6 +13,10 @@ from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import get_unicode_dicts, update_translation_dict
+
+
+CondensedRowsValue = namedtuple('CondensedRowsValue', ['rows', 'tab_headers', 'case_list_form_label', 'errors'])
+DetailValidationValue = namedtuple('DetailValidationValue', ['partial_upload', 'errors'])
 
 
 def update_app_from_module_sheet(app, rows, identifier):
@@ -35,12 +40,13 @@ def update_app_from_module_sheet(app, rows, identifier):
     if isinstance(module, ReportModule):
         return msgs
 
-    (condensed_rows, detail_tab_headers, case_list_form_label, errors) = _get_condensed_rows(module, rows)
-    msgs = msgs + errors
+    condensed_rows = _get_condensed_rows(module, rows)
+    msgs = msgs + condensed_rows.errors
 
-    (errors, partial_upload) = _check_for_detail_length_errors(module, condensed_rows)
-    if errors:
-        return [(messages.error, e) for e in errors]
+    validation_value = _check_for_detail_length_errors(module, condensed_rows.rows)
+
+    if validation_value.errors:
+        return [(messages.error, e) for e in validation_value.errors]
 
     # Update the translations
     def _update_translation(row, language_dict, require_translation=True):
@@ -120,19 +126,19 @@ def update_app_from_module_sheet(app, rows, identifier):
 
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
-    list_rows = [row for row in condensed_rows if row['list_or_detail'] == 'list']
-    detail_rows = [row for row in condensed_rows if row['list_or_detail'] == 'detail']
-    if partial_upload:
+    list_rows = [row for row in condensed_rows.rows if row['list_or_detail'] == 'list']
+    detail_rows = [row for row in condensed_rows.rows if row['list_or_detail'] == 'detail']
+    if validation_value.partial_upload:
         _partial_upload(list_rows, short_details)
         _partial_upload(detail_rows, long_details)
     else:
         _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
 
-    for index, tab in enumerate(detail_tab_headers):
+    for index, tab in enumerate(condensed_rows.tab_headers):
         if tab:
             _update_translation(tab, module.case_details.long.tabs[index].header)
-    if case_list_form_label:
-        _update_translation(case_list_form_label, module.case_list_form.label)
+    if condensed_rows.case_list_form_label:
+        _update_translation(condensed_rows.case_list_form_label, module.case_list_form.label)
 
     return msgs
 
@@ -212,7 +218,8 @@ def _get_condensed_rows(module, rows):
             row['id'] = row['case_property']
             condensed_rows.append(row)
 
-    return (condensed_rows, detail_tab_headers, case_list_form_label, msgs)
+    return CondensedRowsValue(rows=condensed_rows, tab_headers=detail_tab_headers,
+                              case_list_form_label=case_list_form_label, errors=msgs)
 
 
 def _remove_description_from_case_property(row):
@@ -247,7 +254,7 @@ def _check_for_detail_length_errors(module, condensed_rows):
                     list_or_detail=list_or_detail)
             )
 
-    return (errors, partial_upload)
+    return DetailValidationValue(partial_upload=partial_upload, errors=errors)
 
 
 def _get_module_from_sheet_name(app, identifier):
