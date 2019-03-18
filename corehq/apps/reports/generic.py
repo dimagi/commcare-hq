@@ -652,16 +652,19 @@ class GenericReportView(object):
         old_file = io.BytesIO()
         export_from_tables(self.export_table, old_file, self.export_format)
 
-
         # Then do it the new way
         user_generator = self.user_generator
         new_file = io.BytesIO()
-
         for single_user in user_generator:
             formatted_user = self.format_user_data(single_user)
-            report_data_chunk = self.get_report_data_for_one_user(formatted_user)
+            formatted_data_row = self.get_report_data_for_one_user(formatted_user)
 
-        return old_file
+            # Go in here and modify the code to get the individual rows eventually
+            exportable_data_chunk = self.format_report_data_for_excel(formatted_data_row, formatted_user)
+            # # Write the report_data_chunk to the file.
+            export_from_tables(exportable_data_chunk, new_file, self.export_format)
+
+        return new_file
 
     @property
     def user_generator(self):

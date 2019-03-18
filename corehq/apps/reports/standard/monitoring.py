@@ -1667,6 +1667,65 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
+    def _format_single_user_row(self, report_data, user):
+        rows = []
+        last_form_by_user = self.es_last_submissions()
+
+        owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
+        active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+        total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+
+        cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
+        cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
+
+        if today_or_tomorrow(self.datespan.enddate):
+            active_cases_cell = util.numcell(
+                self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                active_cases,
+            )
+        else:
+            active_cases_cell = util.numcell(active_cases)
+
+        rows.append([
+            # Username
+            user["username_in_report"],
+            # Forms Submitted
+            self._submit_history_link(
+                user['user_id'],
+                report_data.submissions_by_user.get(user["user_id"], 0),
+            ),
+            # Average Forms submitted
+            util.numcell(
+                int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) // self.num_avg_intervals
+            ),
+            # Last Form submission
+            last_form_by_user.get(user["user_id"]) or _(self.NO_FORMS_TEXT),
+            # Cases opened
+            util.numcell(
+                self._html_anchor_tag(self._case_list_url_cases_opened_by(user['user_id']), cases_opened),
+                cases_opened,
+            ),
+            # Cases Closed
+            util.numcell(
+                self._html_anchor_tag(self._case_list_url_cases_closed_by(user['user_id']), cases_closed),
+                cases_closed,
+            ),
+            # Active Cases
+            active_cases_cell,
+            # Total Cases
+            util.numcell(
+                self._html_anchor_tag(self._case_list_url_total_cases(user['user_id']), total_cases),
+                total_cases,
+            ),
+            # Percent active
+            util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            ),
+
+        ])
+
+        return rows
+
     def _rows_by_user(self, report_data):
         rows = []
         last_form_by_user = self.es_last_submissions()
@@ -1764,6 +1823,42 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 self.domain, self.datespan, self.case_types, user_ids=user_id, export=export
             ),
         )
+
+    def format_report_data_for_excel(self, formatted_data_row, formatted_user):
+        """
+        Exports the report as excel.
+        When rendering a complex cell, it will assign a value in the following order:
+        1. cell['raw']
+        2. cell['sort_key']
+        3. str(cell)
+        """
+        headers = self.headers
+
+        def _unformat_row(row):
+            def _unformat_val(val):
+                if isinstance(val, dict):
+                    return val.get('raw', val.get('sort_key', val))
+                return self._strip_tags(val)
+
+            return [_unformat_val(val) for val in row]
+
+        table = headers.as_export_table
+
+        # Format the report data
+        rows = []
+
+        formatted_rows = self._format_single_user_row(formatted_data_row, formatted_user)
+
+        self.total_row = self._total_row(rows, formatted_data_row)
+
+        rows = [_unformat_row(row) for row in formatted_rows]
+        table.extend(rows)
+        if self.total_row:
+            table.append(_unformat_row(self.total_row))
+        if self.statistics_rows:
+            table.extend([_unformat_row(row) for row in self.statistics_rows])
+
+        return [[self.export_sheet_name, table]]
 
     def _report_data(self):
         export = self.rendered_as == 'export'
