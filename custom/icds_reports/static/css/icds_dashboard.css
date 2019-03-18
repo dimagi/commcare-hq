@@ -874,23 +874,11 @@ hr {
     vertical-align: middle;
 }
 
-#serviceDeliveryDashboardTable .sorting_asc, .sorting_desc, .sorting {
-    background: #2F5597 !important;
-    color: white;
-}
-
-#serviceDeliveryDashboardTable > tbody > tr:nth-of-type(2n+1) {
-    background-color: #CFD5EA;
-}
-#serviceDeliveryDashboardTable > tbody > tr:nth-of-type(2n) {
-    background-color: #E9EBF5;
-}
-
-#serviceDeliveryDashboardTable .headerTooplip {
+#serviceDeliveryDashboardTable .headerTooltip {
     position: relative;
     display: inline-block;
 }
-#serviceDeliveryDashboardTable .headerTooplip .headerTooplipText {
+#serviceDeliveryDashboardTable .headerTooltip .headerTooltipText {
     opacity: 0;
     display: none;
     transition: opacity 1s;
@@ -910,7 +898,7 @@ hr {
     right: 105%;
     z-index: 1;
 }
-#serviceDeliveryDashboardTable .headerTooplip:hover .headerTooplipText {
+#serviceDeliveryDashboardTable .headerTooltip:hover .headerTooltipText {
     opacity: 1;
     display: block;
 }
