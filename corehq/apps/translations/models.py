@@ -112,10 +112,13 @@ Usually the string in either case list or detail under 'property'.
 This could be an xpath or case property name.
 If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
 For the values each value should be '<id mapping value> (ID Mapping Value)'.
-Example: case detail for tasks_type would have entries:
-    tasks_type (ID Mapping Text)
-    child (ID Mapping Value)
-    pregnancy (ID Mapping Value)
+<br>
+Example: case detail for tasks_type could have entries:
+<ul>
+    <li>tasks_type (ID Mapping Text)</li>
+    <li>child (ID Mapping Value)</li>
+    <li>pregnancy (ID Mapping Value)</li>
+</ul>
 """
 
 
@@ -140,6 +143,7 @@ class TransifexBlacklist(models.Model):
     )
     field_name = models.TextField(help_text=FIELD_NAME_HELP)
     display_text = models.TextField(
+        blank=True,
         help_text="The default language's translation for this detail/list. "
         "If display_text is not filled out then all translations that match "
         "the field_type and field_name will be blacklisted")
