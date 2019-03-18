@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import copy
+import six
 import re
 from collections import defaultdict
 
@@ -16,6 +17,7 @@ from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
 from corehq.apps.translations.app_translations.utils import get_unicode_dicts
+from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 def update_app_from_form_sheet(app, rows, identifier):
@@ -25,16 +27,17 @@ def update_app_from_form_sheet(app, rows, identifier):
 
     :param app:
     :param rows: Iterable of rows from a WorksheetJSONReader
-    :param identifier: String like "menu1_form_2"
+    :param identifier: String like "menu1_form2"
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
     form = _get_form_from_sheet_name(app, identifier)
     rows = get_unicode_dicts(rows)
 
-    warning = _check_for_shadow_form_warning(form)
-    if warning:
-        return [(messages.warning, warning)]
+    try:
+        _check_for_shadow_form_error(form)
+    except BulkAppTranslationsException as e:
+        return [(messages.error, six.text_type(e))]
 
     if form.source:
         xform = form.wrapped_xform()
@@ -243,10 +246,10 @@ def _get_form_from_sheet_name(app, sheet_name):
     return app.get_module(module_index).get_form(form_index)
 
 
-def _check_for_shadow_form_warning(form):
+def _check_for_shadow_form_error(form):
     if isinstance(form, ShadowForm):
-        return _('Form {index}, "{name}", is a shadow form. '
-                 'Cannot translate shadow forms, skipping.').format(index=form.id + 1, name=form.default_name())
+        raise BulkAppTranslationsException(_('Form {index}, "{name}", is a shadow form. '
+                 'Cannot translate shadow forms, skipping.').format(index=form.id + 1, name=form.default_name()))
 
 
 def escape_output_value(value):
