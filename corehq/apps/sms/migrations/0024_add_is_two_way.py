@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from __future__ import absolute_import
-from corehq.sql_db.operations import HqRunPython
+
 from django.db import migrations, models
 import datetime
 
@@ -42,5 +42,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=False),
             preserve_default=False,
         ),
-        HqRunPython(set_pending_verification_numbers, reverse_code=noop),
+        migrations.RunPython(set_pending_verification_numbers, reverse_code=noop),
     ]

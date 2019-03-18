@@ -855,3 +855,34 @@ class RebuildTableTest(TestCase):
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'priority']), 0
         )
+
+    def test_implicit_pk(self):
+        self._setup_data_source('implicit_pk')
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        pk = insp.get_pk_constraint(table_name)
+        expected_pk = ['doc_id']
+        self.assertEqual(expected_pk, pk['constrained_columns'])
+
+    def test_ordered_pk(self):
+        self._setup_data_source('ordered_pk')
+        config = self._get_config('ordered_pk')
+        config.configured_indicators.append({
+            "column_id": "pk_key",
+            "type": "raw",
+            "datatype": "string",
+            "property_name": "owner_id",
+            "is_primary_key": True
+        })
+        config.save()
+        adapter = get_indicator_adapter(config)
+        engine = adapter.engine
+        config.sql_settings.primary_key = ['pk_key', 'doc_id']
+
+        # rebuild table
+        get_case_pillow(ucr_configs=[config])
+        insp = reflection.Inspector.from_engine(engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        pk = insp.get_pk_constraint(table_name)
+        expected_pk = ['pk_key', 'doc_id']
+        self.assertEqual(expected_pk, pk['constrained_columns'])

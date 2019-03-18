@@ -45,6 +45,14 @@
              </div>
         </div>
     </div>
+    <!-- ko if: errors.length -->
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-circle"></i>
+        {% blocktrans %}
+            Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.
+        {% endblocktrans %}
+    </div>
+    <!-- /ko -->
 
     <!-- ko foreach: errors -->
         <div class="alert alert-danger">
@@ -99,8 +107,8 @@
                     <!-- /ko -->
                     <ol data-bind="foreach: questions">
                         <li data-bind="visible: isVisible">
-                            <i data-bind="attr: { 'class': $root.questionIcon($data) }" title="type"></i>
-                            <!-- ko text: $root.showIds() ? value :  $root.translateQuestion($data) --><!-- /ko -->
+                            <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
+                            <a data-bind="attr: { 'href': $parent.url + hashtagValue }, text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
                             <!-- ko if: required -->
                             <span title="{% trans "This question is required"|escapejs %}">*</span>
                             <!-- /ko -->

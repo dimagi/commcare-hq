@@ -97,8 +97,8 @@ hqDefine("aaa/js/models/eligible_couple", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.personDetails.person(personUtils.personModel(data.person));
-                self.personDetails.husband(personUtils.personModel(data.husband));
+                self.personDetails.person(personUtils.personModel(data.person, self.postData));
+                self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
                 self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             })
         };
@@ -111,7 +111,7 @@ hqDefine("aaa/js/models/eligible_couple", [
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 _.forEach(data.children, function(child) {
-                    self.childDetails.push(childUtils.childModel(child));
+                    self.childDetails.push(childUtils.childModel(child, self.postData));
                 });
                 while (self.childDetails().length % 4 > 0) {
                     self.childDetails.push({})

@@ -77,6 +77,25 @@ function usage() {
             echo "Remove all containers, images and volumes"
             echo ""
             ;;
+        citus)
+            echo "Manage citus containers"
+            echo ""
+            echo "$0 citus [COMMAND]"
+            echo ""
+            echo "OPTIONS are passed to docker compose."
+            echo ""
+            echo "Examples:"
+            echo ""
+            echo "  # run citus containers in the background
+            echo "  $0 citus up -d"
+            echo ""
+            echo "  # list citus containers"
+            echo "  $0 citus ps"
+            echo ""
+            echo "  # stop citus containers"
+            echo "  $0 citus stop"
+            echo ""
+            ;;
         *)
             echo "Manage docker services for CommCare HQ"
             echo ""
@@ -133,7 +152,23 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
-        export VOLUME_PREFIX="${COMPOSE_PROJECT_NAME}-"
+        # Since we don't want to persist tests data beyond the lifecycle of the container
+        # we don't want to specify a volume path. Prior to v2 of docker compse this wasn't
+        # an issue since not specifying a path resulted in using named volumes which docker
+        # would dynamically create. From >v2 docker compose requires declaring named volumes
+        # in the compose file which means we can't use the same compose file using named volumes
+        # in one instance and unnamed in another.
+        # The solution was to specify a blank path in tests rather than a volume name. Docker compose
+        # will then create the volume as before.
+        # Making this work relies on a exploiting variable substitution:
+        #     ${VARIABLE-default} evaluates to default only if VARIABLE is unset in the environment.
+        # In normal operations we set VOLUME_PREFIX and leave BLANK_IF_TESTS unset which will cause
+        # this "${BLANK_IF_TESTS-vol1:}" to evaluate to "vol1:" (note the ':'). During tests we set "BLANK_IF_TESTS"
+        # to an empty string and the result of the above expression is an empty string.
+        # Note: I also tried using the long syntax for volume specification but wasn't able to get it to work.
+        # See https://docs.docker.com/compose/compose-file/compose-file-v2/#volumes
+        export VOLUME_PREFIX=""
+        export BLANK_IF_TESTS=""
     fi
 else
     if [[ "$CMD" =~ ^(runserver|bash|shell|ps)$ ]]; then
@@ -148,6 +183,13 @@ else
             elif [ -z "$CMD" ]; then
                 CMD="up"
             fi
+        fi
+    elif [ "$CMD" == "citus" ]; then
+        SERVICES="citus"
+        CMD="$1"
+        shift
+        if [ -z "$CMD" ]; then
+            CMD="help"
         fi
     else
         SERVICES="services"
@@ -225,7 +267,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
-    docker-compose pull --parallel couch postgres redis elasticsearch kafka riakcs
+    docker-compose pull
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"

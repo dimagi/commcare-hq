@@ -29,6 +29,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
 
@@ -172,18 +173,22 @@ def process_bulk_app_translation_upload(app, workbook):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
-            # It's the first sheet
-            ms = _process_modules_and_forms_sheet(rows, app)
-            msgs.extend(ms)
-        elif sheet.headers[0] == "case_property":
-            # It's a module sheet
-            ms = _update_case_list_translations(sheet, rows, app)
-            msgs.extend(ms)
-        else:
-            # It's a form sheet
-            ms = update_form_translations(sheet, rows, missing_cols, app)
-            msgs.extend(ms)
+        try:
+            if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
+                # It's the first sheet
+                ms = _process_modules_and_forms_sheet(rows, app)
+                msgs.extend(ms)
+            elif sheet.headers[0] == "case_property":
+                # It's a module sheet
+                ms = _update_case_list_translations(sheet, rows, app)
+                msgs.extend(ms)
+            else:
+                # It's a form sheet
+                ms = update_form_translations(sheet, rows, missing_cols, app)
+                msgs.extend(ms)
+        except ValueError:
+            msgs.append((messages.error, _("There was a problem loading sheet {} and was skipped.").format(
+                sheet.worksheet.title)))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -232,6 +237,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
     assert isinstance(unique_id, six.string_types)
+    soft_assert_type_text(unique_id)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages
@@ -793,6 +799,10 @@ def escape_output_value(value):
         return element
 
 
+def _remove_description_from_case_property(row):
+    return re.match('.*(?= \()', row['case_property']).group()
+
+
 def _update_case_list_translations(sheet, rows, app):
     """
     Modify the translations of a module case list and detail display properties
@@ -826,34 +836,35 @@ def _update_case_list_translations(sheet, rows, app):
     detail_tab_headers = [None for i in module.case_details.long.tabs]
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
+
     for i, row in enumerate(rows):
         # If it's an enum case property, set index_of_last_enum_in_condensed
         if row['case_property'].endswith(" (ID Mapping Text)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = _remove_description_from_case_property(row)
             condensed_rows.append(row)
             index_of_last_enum_in_condensed = len(condensed_rows) - 1
 
         # If it's an enum value, add it to it's parent enum property
         elif row['case_property'].endswith(" (ID Mapping Value)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = _remove_description_from_case_property(row)
             parent = condensed_rows[index_of_last_enum_in_condensed]
             parent['mappings'] = parent.get('mappings', []) + [row]
 
         # If it's a graph case property, set index_of_last_graph_in_condensed
         elif row['case_property'].endswith(" (graph)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = _remove_description_from_case_property(row)
             condensed_rows.append(row)
             index_of_last_graph_in_condensed = len(condensed_rows) - 1
 
         # If it's a graph configuration item, add it to its parent
         elif row['case_property'].endswith(" (graph config)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = _remove_description_from_case_property(row)
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['configs'] = parent.get('configs', []) + [row]
 
         # If it's a graph series configuration item, add it to its parent
         elif row['case_property'].endswith(" (graph series config)"):
-            row['id'] = row['case_property'].split(" ")[0]
+            row['id'] = _remove_description_from_case_property(row)
             row['series_index'] = row['case_property'].split(" ")[1]
             parent = condensed_rows[index_of_last_graph_in_condensed]
             parent['series_configs'] = parent.get('series_configs', []) + [row]

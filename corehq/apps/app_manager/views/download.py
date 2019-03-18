@@ -411,9 +411,9 @@ def download_index(request, domain, app_id):
         )
     enabled_build_profiles = []
     latest_enabled_build_profiles = {}
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+    if request.app.is_released and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
         latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
-        enabled_build_profiles = [id for id, version in latest_enabled_build_profiles.items()
+        enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
                                   if version == request.app.version]
 
     return render(request, "app_manager/download_index.html", {

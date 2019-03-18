@@ -171,7 +171,7 @@ class WrappedNode(object):
     def __init__(self, xml, namespaces=namespaces):
         if isinstance(xml, bytes):
             xml = xml.decode('utf-8')
-        if isinstance(xml, six.string_types):
+        if isinstance(xml, six.text_type):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -667,7 +667,7 @@ class XForm(WrappedNode):
     def media_references(self, form, lang=None):
         lang_condition = '[@lang="%s"]' % lang if lang else ''
         nodes = self.itext_node.findall('{f}translation%s/{f}text/{f}value[@form="%s"]' % (lang_condition, form))
-        return list(set([n.text for n in nodes]))
+        return list(set([six.text_type(n.text) for n in nodes]))
 
     @property
     def odk_intents(self):

@@ -36,6 +36,7 @@ from corehq.apps.locations.tasks import download_locations_async, import_locatio
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.couch import get_redis_lock, release_lock
 
 from .analytics import users_have_locations
@@ -297,6 +298,8 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
+            if isinstance(pk, six.string_types):
+                soft_assert_type_text(pk)
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative, has_user,

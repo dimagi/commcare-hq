@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 from django.db import connections
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 
 
-def build_location_filters(location_id):
+def build_location_filters(location_id, ministry):
     try:
         location = SQLLocation.objects.get(location_id=location_id)
     except SQLLocation.DoesNotExist:
@@ -21,12 +22,20 @@ def build_location_filters(location_id):
     }
 
     location_type = location.location_type
-    # currently gets the first location type returned
-    # should pick between the MWCD and MoH hierarchy when different users types are implemented
-    child_location_type = LocationType.objects.filter(
-        domain=location_type.domain, parent_type=location_type
-    ).first()
-    filters["{}_id".format(child_location_type.code)] = 'All'
+
+    params = dict(
+        domain=location_type.domain
+    )
+
+    if location_type.code == 'district' and ministry == MINISTRY_MOHFW:
+        params.update(dict(code='taluka'))
+    elif location_type.code == 'district' and ministry == MINISTRY_MWCD:
+        params.update(dict(code='block'))
+    else:
+        params.update(dict(parent_type=location_type))
+    child_location_type = LocationType.objects.filter(**params).first()
+    if child_location_type is not None:
+        filters["{}_id".format(child_location_type.code)] = 'All'
 
     return filters
 

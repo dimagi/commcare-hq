@@ -17,9 +17,10 @@ class PushIncomingView(IncomingBackendView):
         return PushBackend
 
     def clean_value(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, six.text_type):
             return unescape(value.strip())
-
         return value
 
     def get_number_and_message(self, request):

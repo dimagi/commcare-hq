@@ -29,6 +29,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 import langcodes
@@ -945,8 +946,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form = ScheduledReportForm(*args, **kwargs)
         form.fields['config_ids'].choices = self.config_choices
         form.fields['recipient_emails'].choices = [(e, e) for e in web_user_emails]
-        if not toggles.SET_SCHEDULED_REPORT_START_DATE.enabled(self.domain):
-            form.fields.pop('start_date')
 
         form.fields['hour'].help_text = "This scheduled report's timezone is %s (%s GMT)" % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
@@ -990,9 +989,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.scheduled_report_form.is_valid():
-            for k, v in self.scheduled_report_form.cleaned_data.items():
-                setattr(self.report_notification, k, v)
-
+            try:
+                self.report_notification.update_attributes(list(self.scheduled_report_form.cleaned_data.items()))
+            except ValidationError as err:
+                kwargs['error'] = six.text_type(err)
+                messages.error(request, ugettext_lazy(kwargs['error']))
+                return self.get(request, *args, **kwargs)
             time_difference = get_timezone_difference(self.domain)
             (self.report_notification.hour, day_change) = calculate_hour(
                 self.report_notification.hour, int(time_difference[:3]), int(time_difference[3:])
@@ -2306,8 +2308,10 @@ def resave_form_view(request, domain, instance_id):
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
     if isinstance(end, six.string_types):
+        soft_assert_type_text(end)
         end = parse_date(end)
     if isinstance(start, six.string_types):
+        soft_assert_type_text(start)
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

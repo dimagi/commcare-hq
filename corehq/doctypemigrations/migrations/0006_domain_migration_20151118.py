@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from django.db import migrations
 from corehq.doctypemigrations.djangomigrations import assert_initial_complete
 from corehq.doctypemigrations.migrator_instances import domains_migration
-from corehq.sql_db.operations import HqRunPython
+
 
 
 class Migration(migrations.Migration):
@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        HqRunPython(assert_initial_complete(domains_migration))
+        migrations.RunPython(assert_initial_complete(domains_migration))
     }

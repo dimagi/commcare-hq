@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from copy import copy
 import hashlib
 import json
 import logging
@@ -15,6 +16,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -479,6 +481,7 @@ class ApplicationMediaReference(object):
 
         if not isinstance(path, six.string_types):
             path = ''
+        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -725,7 +728,7 @@ class FormMediaMixin(MediaMixin):
     def all_media(self, lang=None):
         kwargs = self.get_media_ref_kwargs()
 
-        media = self.menu_media(self, lang=lang)
+        media = copy(self.menu_media(self, lang=lang))
 
         # Form questions
         parsed = self.wrapped_xform()
@@ -794,7 +797,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             return self.multimedia_map
 
-        requested_media = self.logo_paths   # logos aren't language-specific
+        requested_media = copy(self.logo_paths)   # logos aren't language-specific
         for lang in build_profile.langs:
             requested_media |= self.all_media_paths(lang=lang)
 

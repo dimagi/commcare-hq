@@ -27,7 +27,7 @@ from corehq.apps.smsbillables.management.commands.bootstrap_usage_fees import \
     bootstrap_usage_fees
 from corehq.apps.smsbillables.management.commands.bootstrap_yo_gateway import \
     bootstrap_yo_gateway
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def sync_sms_docs(apps, schema_editor):
@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(sync_sms_docs),
-        HqRunPython(bootstrap_currency),
-        HqRunPython(bootstrap_sms),
+        migrations.RunPython(sync_sms_docs),
+        migrations.RunPython(bootstrap_currency),
+        migrations.RunPython(bootstrap_sms),
     ]

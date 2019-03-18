@@ -241,7 +241,7 @@ class FormProcessorCouch(object):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
     @staticmethod
-    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(case_id, lock=False, wrap=False):
 
         def _get_case():
             if wrap:
@@ -250,9 +250,7 @@ class FormProcessorCouch(object):
                 return CommCareCase.get_db().get(case_id)
 
         try:
-            if strip_history:
-                case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
-            elif lock:
+            if lock:
                 try:
                     case, lock = CommCareCase.get_locked_obj(_id=case_id)
                     if case and not wrap:

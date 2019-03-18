@@ -23,6 +23,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     Invoice,
     LineItem,
+    SoftwarePlan,
     SoftwarePlanEdition,
     Subscriber,
     Subscription,
@@ -44,14 +45,16 @@ from corehq.apps.users.models import WebUser
 
 
 class BaseInvoiceTestCase(BaseAccountingTest):
+
+    is_using_test_plans = False
     min_subscription_length = 3
 
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
 
-        # TODO - only call for subclasses that actually need the test plans
-        # generator.bootstrap_test_software_plan_versions()
+        if cls.is_using_test_plans:
+            generator.bootstrap_test_software_plan_versions()
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
@@ -78,6 +81,10 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+
+        if cls.is_using_test_plans:
+            for software_plan in SoftwarePlan.objects.all():
+                SoftwarePlan.get_version.clear(software_plan)
 
         super(BaseInvoiceTestCase, cls).tearDownClass()
 
@@ -315,6 +322,8 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
 
 class TestUserLineItem(BaseInvoiceTestCase):
+
+    is_using_test_plans = True
 
     def setUp(self):
         super(TestUserLineItem, self).setUp()

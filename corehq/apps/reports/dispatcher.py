@@ -21,6 +21,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 import six
 
@@ -54,6 +55,8 @@ class ReportDispatcher(View):
     def __init__(self, **kwargs):
         if not self.map_name or not isinstance(self.map_name, six.string_types):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
+        if isinstance(self.map_name, six.string_types):
+            soft_assert_type_text(self.map_name)
         super(ReportDispatcher, self).__init__(**kwargs)
 
     @property
