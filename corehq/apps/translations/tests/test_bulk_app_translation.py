@@ -167,9 +167,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_data = (
         (MODULES_AND_FORMS_SHEET_NAME, (
             ("Menu", "menu1", "My & awesome module", "", "", "", "", "",
-                  "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+             "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
             ("Form", "menu1_form1", "My more & awesome form", "", "", "", "", "", "", "",
-                  "93ea2a40df57d8f33b472f5b2b023882281722d4")
+             "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("menu1", (
           ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
@@ -224,9 +224,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_no_change_data = (
         (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'menu1', 'My & awesome module', '', '', '', '', '',
-            '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+           '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
           ('Form', 'menu1_form1', 'My more & awesome form', '', '', '', '', '', '', '',
-            '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
+           '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('menu1',
          (('name', 'list', 'Name', ''),
           ('name', 'detail', 'Name', ''),

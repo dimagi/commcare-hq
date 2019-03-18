@@ -157,7 +157,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
 
     expected_headers = _get_expected_headers(sheet, expected_sheets)
     if expected_headers is None:
-        raise BulkAppTranslationsException(_('Skipping sheet "%s", did not recognize title') %
+        raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
 
     num_required_headers = 0

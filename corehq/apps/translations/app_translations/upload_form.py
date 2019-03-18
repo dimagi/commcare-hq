@@ -15,10 +15,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import (
-    get_bulk_app_sheet_headers,
-    get_unicode_dicts,
-)
+from corehq.apps.translations.app_translations.utils import get_unicode_dicts
 
 
 def update_app_from_form_sheet(app, rows, identifier):
