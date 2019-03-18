@@ -479,6 +479,12 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     def parent_pages(self):
         return []
 
+    def dispatch(self, request, *args, **kwargs):
+        # for some reason, even though this export is not marked @location_safe
+        #   it is getting marked as location_safe due to some logic in the parent
+        #   dispatch method, this is a dirty hack to unmark it location_safe
+        return super(DownloadNewSmsExportView, self).dispatch(request, *args, **kwargs)
+
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
