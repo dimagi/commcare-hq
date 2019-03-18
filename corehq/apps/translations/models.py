@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
 
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.motech.utils import b64_aes_decrypt
 
 
@@ -142,6 +143,17 @@ class TransifexBlacklist(models.Model):
         help_text="The default language's translation for this detail/list. "
         "If display_text is not filled out then all translations that match "
         "the field_type and field_name will be blacklisted")
+
+    @classmethod
+    def translations_with_app_name(cls, domain):
+        blacklisted = TransifexBlacklist.objects.filter(domain=domain).all().values()
+        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(domain)}
+        ret = []
+        for trans in blacklisted:
+            r = trans.copy()
+            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
+            ret.append(r)
+        return ret
 
 
 class TransifexOrganization(models.Model):
