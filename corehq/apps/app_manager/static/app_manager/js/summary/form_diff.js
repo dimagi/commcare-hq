@@ -7,14 +7,23 @@ hqDefine('app_manager/js/summary/form_diff',[
     'app_manager/js/summary/models',
     'app_manager/js/summary/form_models',
     'app_manager/js/summary/utils',
+    'hqwebapp/js/layout',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
     'hqwebapp/js/components.ko',    // search box
-], function ($, _, ko, initialPageData, assertProperties, models, formModels, utils) {
+], function ($, _, ko, initialPageData, assertProperties, models, formModels, utils, layout) {
 
     $(function () {
         var lang = initialPageData.get('lang'),
             langs = initialPageData.get('langs');
+
+        var resizeViewPort = function () {
+            var availableHeight = layout.getAvailableContentHeight();
+            $("#form-summary-diff").css('height', availableHeight);
+        };
+        resizeViewPort();
+
+        $(window).resize(function(){ resizeViewPort(); });
 
         var formSummaryMenu = models.menuModel({
             items: _.map(initialPageData.get("modules"), function (module) {
