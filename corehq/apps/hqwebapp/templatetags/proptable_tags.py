@@ -39,7 +39,9 @@ register = template.Library()
 
 
 def _is_list_like(val):
-    if isinstance(val, six.string_types):
+    if six.PY2 and isinstance(val, bytes):
+        val = val.decode('utf-8')
+    if isinstance(val, (six.text_type, bytes)):
         soft_assert_type_text(val)
     return (isinstance(val, collections.Iterable) and
             not isinstance(val, six.string_types))
