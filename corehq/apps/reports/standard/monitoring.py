@@ -1737,6 +1737,34 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
+    def get_report_data_for_one_user(self, user):
+        export = self.rendered_as == 'export'
+        avg_datespan = self.avg_datespan
+
+        case_owners = _get_owner_ids_from_users([user])
+        user_id = user.user_id
+
+        return WorkerActivityReportData(
+            avg_submissions_by_user=get_submission_counts_by_user(
+                self.domain, avg_datespan, user_ids=user_id, export=export
+            ),
+            submissions_by_user=get_submission_counts_by_user(
+                self.domain, self.datespan, user_ids=user_id, export=export
+            ),
+            active_cases_by_owner=get_active_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+            ),
+            total_cases_by_owner=get_total_case_counts_by_owner(
+                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+            ),
+            cases_closed_by_user=get_case_counts_closed_by_user(
+                self.domain, self.datespan, self.case_types, user_ids=user_id, export=export
+            ),
+            cases_opened_by_user=get_case_counts_opened_by_user(
+                self.domain, self.datespan, self.case_types, user_ids=user_id, export=export
+            ),
+        )
+
     def _report_data(self):
         export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
@@ -1803,6 +1831,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         return util.get_paginated_user_query(user_query)
+
+    def format_user_data(self, user):
+        return util._report_user_dict(user)
 
     @property
     def rows(self):

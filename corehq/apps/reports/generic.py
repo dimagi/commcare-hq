@@ -658,7 +658,8 @@ class GenericReportView(object):
         new_file = io.BytesIO()
 
         for single_user in user_generator:
-            dummy = 5
+            formatted_user = self.format_user_data(single_user)
+            report_data_chunk = self.get_report_data_for_one_user(formatted_user)
 
         return old_file
 
