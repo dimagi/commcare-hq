@@ -1034,6 +1034,19 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LEGACY_CHILD_MODULES = StaticToggle(
+    'legacy_child_modules',
+    'Legacy, non-nested child modules',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Child Menus are now displayed nested under their parent menu. Some "
+        "apps built before this change will require that their modules be "
+        "reordered to fit this paradigm. This feature flag exists to support "
+        "those applications until they're transitioned."
+    )
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
