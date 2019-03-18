@@ -15,7 +15,6 @@ from six.moves.urllib.parse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
-from corehq.apps.app_manager.util import get_latest_enabled_app_release
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.locations.models import SQLLocation
@@ -2409,7 +2408,7 @@ class ManageAppReleasesForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Field('app_id', id='app_id_search_select'),
-            crispy.Field('location_id', id='location_search_select', name='location_search', css_class="ko-select2"),
+            crispy.Field('location_id', id='location_search_select', css_class="ko-select2"),
             crispy.Field('version', id='version_input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -2467,7 +2466,7 @@ class ManageAppReleasesForm(forms.Form):
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
         try:
-            LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id, version,
-                                                   True)
+            LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id,
+                                                   version, True)
         except ValidationError as e:
             return False, ','.join(e.messages)

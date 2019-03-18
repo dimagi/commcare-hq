@@ -8,7 +8,7 @@ hqDefine('app_manager/js/manage_releases', [
     $,
     ko,
     _,
-    initialPageData,
+    initialPageData
 ) {
     'use strict';
     $(function () {
