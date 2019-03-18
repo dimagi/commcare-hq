@@ -129,8 +129,8 @@ class TransifexBlacklist(models.Model):
     """
 
     domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=32)
-    module_id = models.CharField(max_length=32)
+    app_id = models.CharField(max_length=255)
+    module_id = models.CharField(max_length=255)
     field_type = models.CharField(
         max_length=100,
         choices=(
