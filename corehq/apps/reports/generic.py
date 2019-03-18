@@ -648,9 +648,24 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
-        file = io.BytesIO()
-        export_from_tables(self.export_table, file, self.export_format)
-        return file
+        # First do it the old way
+        old_file = io.BytesIO()
+        export_from_tables(self.export_table, old_file, self.export_format)
+
+
+        # Then do it the new way
+        user_generator = self.user_generator
+        new_file = io.BytesIO()
+
+        for single_user in user_generator:
+            dummy = 5
+
+        return old_file
+
+    @property
+    def user_generator(self):
+        return self.user_generator()
+
 
     @property
     @request_cache(expiry=60 * 10)

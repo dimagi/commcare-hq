@@ -1798,6 +1798,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return total_row
 
     @property
+    def user_generator(self):
+        user_query = EMWF.user_es_query(
+            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+        )
+        return util.get_paginated_user_query(user_query)
+
+    @property
     def rows(self):
         report_data = self._report_data()
 
