@@ -90,7 +90,6 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         # todo: will probably need to make this configurable at some point
         return []
 
-    @memoized
     def get_columns(self):
         for adapter in self.get_column_adapters():
             yield adapter.to_ucr_column_spec()
@@ -116,7 +115,7 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
     def pk_columns(self):
         columns = []
         for col in self.get_columns():
-            if col.is_primary_key():
+            if col.is_primary_key:
                 column_name = decode_column_name(col)
                 columns.append(column_name)
         return columns
