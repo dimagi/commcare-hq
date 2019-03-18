@@ -36,14 +36,14 @@ from custom.icds_reports.tests import CSVTestCase
 from six.moves import range
 
 FILE_NAME_TO_TABLE_MAPPING = {
-    'awc': 'config_report_reach-test_reach-awc_location_4646cfd7',
-    'ccs_record': 'config_report_reach-test_reach-ccs_record_cases_eaef76c6',
-    'child_health': 'config_report_reach-test_reach-child_health_cases_10a84c1d',
-    'eligible_couple_forms': 'config_report_reach-test_reach-eligible_couple_forms_002d1d07',
-    'growth_monitoring': 'config_report_reach-test_reach-growth_monitoring_forms_66bc5792',
-    'household': 'config_report_reach-test_reach-household_cases_73b9e4e8',
-    'person': 'config_report_reach-test_reach-person_cases_26a9647f',
-    'village': 'config_report_reach-test_reach-village_location_569fb159',
+    'awc': get_table_name('reach-test', 'reach-awc_location'),
+    'ccs_record': get_table_name('reach-test', 'reach-ccs_record_cases'),
+    'child_health': get_table_name('reach-test', 'reach-child_health_cases'),
+    'eligible_couple_forms': get_table_name('reach-test', 'reach-eligible_couple_forms'),
+    'growth_monitoring': get_table_name('reach-test', 'reach-growth_monitoring_forms'),
+    'household': get_table_name('reach-test', 'reach-household_cases'),
+    'person': get_table_name('reach-test', 'reach-person_cases'),
+    'village': get_table_name('reach-test', 'reach-village_location'),
 }
 INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
