@@ -301,7 +301,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
         ]
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                "Add translation to blacklist",
+                ugettext_lazy("Add translation to blacklist"),
                 *form_fields
             ),
         )

@@ -1351,15 +1351,15 @@ class TranslationsTab(UITab):
                 items.append((_('Translations'), [
                     {
                         'url': reverse('app_translations', args=[self.domain]),
-                        'title': 'Manage App Translations'
+                        'title': _('Manage App Translations')
                     },
                     {
                         'url': reverse('pull_resource', args=[self.domain]),
-                        'title': 'Pull Resource'
+                        'title': _('Pull Resource')
                     },
                     {
                         'url': reverse('blacklist_translations', args=[self.domain]),
-                        'title': 'Blacklist Translations'
+                        'title': _('Blacklist Translations')
                     },
                 ]))
         return items
