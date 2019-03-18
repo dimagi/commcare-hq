@@ -16,7 +16,7 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.userreports.rebuild_utils import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
+from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
