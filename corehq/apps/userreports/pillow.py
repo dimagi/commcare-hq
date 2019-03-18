@@ -265,21 +265,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in deleting changes chunk {ids}: {ex}".format(
-                        ids=delete_ids, ex=ex))
+            except Exception:
                 retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
         # bulk update by adapter
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
                 adapter.save_rows(rows)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in saving changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_update], ex=repr(ex)))
+            except Exception:
                 retry_changes.update(to_update)
         if async_configs_by_doc_id:
             doc_type_by_id = {
