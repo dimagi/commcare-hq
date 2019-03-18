@@ -80,30 +80,31 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
             unique_id=module.unique_id,
         ))
 
-        rows[module_sheet_name] = []
-        if not isinstance(module, ReportModule):
-            rows[module_sheet_name] += get_module_rows(app.langs, module)
+        rows[module_sheet_name] = get_module_rows(app.langs, module)
 
-            for form_index, form in enumerate(module.get_forms()):
-                if exclude_form is not None and exclude_form(form):
-                    continue
+        for form_index, form in enumerate(module.get_forms()):
+            if exclude_form is not None and exclude_form(form):
+                continue
 
-                form_sheet_name = get_form_sheet_name(form)
-                rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
-                    row_type="Form",
-                    sheet_name=form_sheet_name,
-                    languages=[form.name.get(lang) for lang in app.langs],
-                    media_image=[form.icon_by_language(lang) for lang in app.langs],
-                    media_audio=[form.audio_by_language(lang) for lang in app.langs],
-                    unique_id=form.unique_id
-                ))
+            form_sheet_name = get_form_sheet_name(form)
+            rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
+                row_type="Form",
+                sheet_name=form_sheet_name,
+                languages=[form.name.get(lang) for lang in app.langs],
+                media_image=[form.icon_by_language(lang) for lang in app.langs],
+                media_audio=[form.audio_by_language(lang) for lang in app.langs],
+                unique_id=form.unique_id
+            ))
 
-                rows[form_sheet_name] = get_form_question_rows(app.langs, form)
+            rows[form_sheet_name] = get_form_question_rows(app.langs, form)
 
     return rows
 
 
 def get_module_rows(langs, module):
+    if isinstance(module, ReportModule):
+        return []
+
     return get_module_case_list_form_rows(langs, module) + get_module_detail_rows(langs, module)
 
 
@@ -211,7 +212,7 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
 
 def get_form_question_rows(langs, form):
     if form.form_type == 'shadow_form':
-        return None
+        return []
 
     rows = []
 
