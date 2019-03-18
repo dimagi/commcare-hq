@@ -697,7 +697,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == LS_REPORT_EXPORT:
         data_type = 'Lady_Supervisor'
-        config['aggregation_level'] = 4  # this report is explicitly not aggregated
+        config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
         excel_data = LadySupervisorExport(
             config=config,
             loc_level=aggregation_level,
