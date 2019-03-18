@@ -11,10 +11,10 @@ The single-sheet format allows editing all of the same content, just with all ro
 
 The UI defaults to the multi-sheet download. There's a feature flagged ability to select a single language, which downloads the single sheet format for that language. There's no technical reason that the single sheet download is also a single language download.
 
-For domains with Transifex integration, Transifex generates generates excel files in the multi-sheet format that HQ accepts.
+For domains with Transifex integration, Transifex generates Excel files in the multi-sheet format that HQ accepts.
 
 Code is organized into
-- `download.py` Generation of excel downloads
+- `download.py` Generation of Excel downloads
 - `upload_app.py` Entry point to upload code
 - `upload_module.py` Helper functions to update module content
 - `upload_form.py` Helper functions to update form content
