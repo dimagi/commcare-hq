@@ -176,8 +176,7 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
         raise BulkAppTranslationsException(_('Skipping sheet {title}: expected first columns to be '
                                              '{expected}').format(
                                                  title=sheet.worksheet.title,
-                                                 expected=", ".join(expected_required_headers),
-                                             ))
+                                                 expected=", ".join(expected_required_headers)))
 
 
 def _get_expected_headers(sheet, expected_sheets):
