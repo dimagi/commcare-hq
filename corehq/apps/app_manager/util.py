@@ -645,7 +645,7 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     for a location search for enabled app releases for all parent locations.
     Child location's setting takes precedence over parent
     """
-    from corehq.apps.app_manager.models import LatestEnabledAppReleases
+    from corehq.apps.app_manager.models import LatestEnabledAppRelease
     location = SQLLocation.active_objects.get_or_None(location_id=location_id)
     if not location:
         raise Exception("Location not found")
@@ -654,7 +654,7 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     latest_enabled_releases = {
         enabled_release.location_id: enabled_release.build_id
         for enabled_release in
-        LatestEnabledAppReleases.objects.filter(
+        LatestEnabledAppRelease.objects.filter(
             location_id__in=location_and_hierarchy_ids, app_id=app_id, domain=domain, active=True)
     }
     for loc_id in location_and_hierarchy_ids:

@@ -79,7 +79,7 @@ from corehq.apps.accounting.utils import (
     is_downgrade
 )
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_version_build_id, get_brief_apps_in_domain
-from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, LatestEnabledAppReleases
+from corehq.apps.app_manager.models import Application, FormBase, RemoteApp, LatestEnabledAppRelease
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
@@ -2466,7 +2466,7 @@ class ManageAppReleasesForm(forms.Form):
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
         try:
-            LatestEnabledAppReleases.update_status(self.domain, app_id, self.version_build_id, location_id,
+            LatestEnabledAppRelease.update_status(self.domain, app_id, self.version_build_id, location_id,
                                                    version, True)
         except ValidationError as e:
             return False, ','.join(e.messages)

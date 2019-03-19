@@ -5951,7 +5951,7 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
-class LatestEnabledAppReleases(models.Model):
+class LatestEnabledAppRelease(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
     location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
@@ -5997,11 +5997,11 @@ class LatestEnabledAppReleases(models.Model):
         :param status: expected status
         """
         try:
-            enabled_app_release = LatestEnabledAppReleases.objects.get(
+            enabled_app_release = LatestEnabledAppRelease.objects.get(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
         except cls.DoesNotExist:
-            enabled_app_release = LatestEnabledAppReleases(
+            enabled_app_release = LatestEnabledAppRelease(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
         enabled_app_release.active = status

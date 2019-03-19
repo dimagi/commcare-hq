@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 from corehq import toggles
-from corehq.apps.app_manager.models import LatestEnabledAppReleases
+from corehq.apps.app_manager.models import LatestEnabledAppRelease
 from corehq.apps.domain.forms import ManageAppReleasesForm
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -43,7 +43,7 @@ class ManageReleases(BaseProjectSettingsView):
     def page_context(self):
         return {
             'manage_releases_form': self.manage_releases_form,
-            'enabled_app_releases': LatestEnabledAppReleases.to_json(
+            'enabled_app_releases': LatestEnabledAppRelease.to_json(
                 self.domain, self.request.GET.get('location_id'), self.request.GET.get('app_id'),
                 self.request.GET.get('version'))
         }
@@ -65,7 +65,7 @@ class ManageReleases(BaseProjectSettingsView):
 def deactivate_release_restriction(request, domain, restriction_id):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
-    latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
+    latest_enabled_app_release = LatestEnabledAppRelease.objects.get(id=restriction_id, domain=domain)
     latest_enabled_app_release.deactivate()
     response_content = {
         'id': restriction_id,
@@ -83,7 +83,7 @@ def deactivate_release_restriction(request, domain, restriction_id):
 def activate_release_restriction(request, domain, restriction_id):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
-    latest_enabled_app_release = LatestEnabledAppReleases.objects.get(id=restriction_id, domain=domain)
+    latest_enabled_app_release = LatestEnabledAppRelease.objects.get(id=restriction_id, domain=domain)
     try:
         latest_enabled_app_release.full_clean()
     except ValidationError as e:
