@@ -23,7 +23,7 @@ hqDefine('app_manager/js/manage_releases', [
             self.activatedOn = ko.observable(details.activated_on);
             self.deactivatedOn = ko.observable(details.deactivated_on);
             self.errorMessage = ko.observable();
-            self.dom_id = "restriction_" + self.id;
+            self.domId = "restriction_" + self.id;
             self.ajaxInProgress = ko.observable(false);
             self.actionText = ko.computed(function () {
                 return (self.active() ? "Remove" : "Add");
