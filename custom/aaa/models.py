@@ -370,6 +370,11 @@ class CcsRecord(LocationDenormalizedModel):
     lmp = models.DateField(null=True)
     preg_reg_date = models.DateField(null=True)
     woman_weight_at_preg_reg = models.DecimalField(null=True, max_digits=6, decimal_places=2)
+    pnc1_date = models.DateField(null=True)
+    pnc2_date = models.DateField(null=True)
+    pnc3_date = models.DateField(null=True)
+    pnc4_date = models.DateField(null=True)
+    num_anc_checkups = models.PositiveSmallIntegerField(null=True)
 
     @classmethod
     def agg_from_ccs_record_case_ucr(cls, domain, window_start, window_end):
@@ -380,7 +385,8 @@ class CcsRecord(LocationDenormalizedModel):
         return """
         INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
-            hrp, child_birth_location, add, edd, lmp, preg_reg_date, woman_weight_at_preg_reg
+            hrp, child_birth_location, add, edd, lmp, preg_reg_date, woman_weight_at_preg_reg,
+            pnc1_date, pnc2_date, pnc3_date, pnc4_date
         ) (
             SELECT
                 %(domain)s,
@@ -394,7 +400,8 @@ class CcsRecord(LocationDenormalizedModel):
                 edd,
                 lmp,
                 preg_reg_date,
-                woman_weight_at_preg_reg
+                woman_weight_at_preg_reg,
+                pnc1_date, pnc2_date, pnc3_date, pnc4_date
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
@@ -405,7 +412,11 @@ class CcsRecord(LocationDenormalizedModel):
            edd = EXCLUDED.edd,
            lmp = EXCLUDED.lmp,
            preg_reg_date = EXCLUDED.preg_reg_date,
-           woman_weight_at_preg_reg = EXCLUDED.woman_weight_at_preg_reg
+           woman_weight_at_preg_reg = EXCLUDED.woman_weight_at_preg_reg,
+           pnc1_date = EXCLUDED.pnc1_date,
+           pnc2_date = EXCLUDED.pnc2_date,
+           pnc3_date = EXCLUDED.pnc3_date,
+           pnc4_date = EXCLUDED.pnc4_date
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
@@ -453,12 +464,34 @@ class CcsRecord(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_birth_preparedness_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-birth_preparedness')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{ccs_record_tablename}" AS ccs_record SET
+            num_anc_checkups = bp_forms.num_anc_checkups
+        FROM (
+            SELECT ccs_record_case_id, COUNT(*) as num_anc_checkups
+            FROM "{bp_forms_ucr_tablename}"
+            WHERE ccs_record_case_id IS NOT NULL
+            GROUP BY ccs_record_case_id
+        ) bp_forms
+        WHERE ccs_record.ccs_record_case_id = bp_forms.ccs_record_case_id
+        """.format(
+            ccs_record_tablename=cls._meta.db_table,
+            bp_forms_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
     @classproperty
     def aggregation_queries(self):
         return [
             self.agg_from_ccs_record_case_ucr,
             self.agg_from_person_case_ucr,
             self.agg_from_household_case_ucr,
+            self.agg_from_birth_preparedness_forms_ucr,
             self.agg_from_village_ucr,
             self.agg_from_awc_ucr,
         ]

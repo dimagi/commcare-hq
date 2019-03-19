@@ -143,13 +143,13 @@
       },
       {
         "column_id": "ifa_tablets_issued_pre",
-        "datatype": "string",
+        "datatype": "small_integer",
         "type": "raw",
         "property_name": "ifa_tablets_issued_pre"
       },
       {
         "column_id": "ifa_tablets_issued_post",
-        "datatype": "string",
+        "datatype": "small_integer",
         "type": "raw",
         "property_name": "ifa_tablets_issued_post"
       },
