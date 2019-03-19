@@ -21,11 +21,11 @@
                     <table id="managed_releases" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Application</th>
-                                <th>Location</th>
-                                <th>Version</th>
-                                <th>Last Activity</th>
-                                <th>Action</th>
+                                <th>{% trans 'Application' %}</th>
+                                <th>{% trans 'Location' %}</th>
+                                <th>{% trans 'Version' %}</th>
+                                <th>{% trans 'Last Activity' %}</th>
+                                <th>{% trans 'Action' %}</th>
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: enabledAppReleases, visible: enabledAppReleases">
@@ -34,10 +34,12 @@
                                 <td data-bind="text: location"></td>
                                 <td data-bind="text: version"></td>
                                 <td>
-                                    <div data-bind="visible: activatedOn"> Activated On :
+                                    <div data-bind="visible: activatedOn">
+                                        {% trans 'Activated On : ' %}
                                         <span data-bind="text: activatedOn"></span>
                                     </div>
-                                    <div data-bind="visible: deactivatedOn"> Deactivated On :
+                                    <div data-bind="visible: deactivatedOn">
+                                        {% trans 'Deactivated On : ' %}
                                         <span data-bind="text: deactivatedOn"></span>
                                     </div>
                                 </td>
