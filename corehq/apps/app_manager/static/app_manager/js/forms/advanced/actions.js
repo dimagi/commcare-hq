@@ -391,6 +391,39 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                     return null;
 
                 });
+
+                self.moveable = ko.computed(function () {
+                    // load / update case actions implicitly depend on the previously defined
+                    // case when a subcase relationship is defined because of this implicit
+                    // relationship, we do not support moving their position in the case management screen
+
+                    if (!self.caseConfig.caseConfigViewModel) {
+                        // The view model hasn't been initialized meaning there are no case actions defined
+                        // If no case actions are defined, we can't have a parent reference
+                        return true;
+                    }
+                    if (self.subcase()) {
+                        // this action has the subcase of a previous case checked
+                        return false;
+                    }
+
+                    var load_actions = self.caseConfig.caseConfigViewModel.load_update_cases(),
+                        found_self = false,
+                        next_action = _.find(load_actions, function (action) {
+                            if (found_self) {
+                                return true;
+                            }
+                            if (action.case_tag() == self.case_tag()) {
+                                found_self = true;
+                            }
+                        });
+
+                    if (next_action) {
+                        // if the action following the action defined by self is using a subcase, it cannot be moved
+                        return !next_action.subcase();
+                    }
+                    return true;
+                });
             };
 
             if (!self.caseConfig.caseConfigViewModel) {
@@ -555,6 +588,12 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
             };
 
             self.relationshipTypes = actionBase.relationshipTypes;
+
+            self.moveable = ko.computed(function () {
+                // open case actions are always moveable as they explicitly define their case tags
+                // instead of relying on the previously defined case action
+                return true;
+            });
 
             var add_circular = function () {
                 self.allow_subcase = ko.computed(function () {
