@@ -521,7 +521,7 @@
               </h4>
             </div>
             <div class="panel-body">
-                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListItems: function () { return 'div:not(not-droppable)'; }">
+                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListSelector: function () { return 'div:not(not-droppable)'; }">
                     <!-- ko if: auto_select -->
                     <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                     <!-- /ko -->
