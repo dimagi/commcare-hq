@@ -5961,21 +5961,11 @@ class LatestEnabledAppRelease(models.Model):
     activated_on = models.DateTimeField(null=True, blank=True)
     deactivated_on = models.DateTimeField(null=True, blank=True)
 
-    @staticmethod
-    def expire_cache(domain, location_id, app_id):
-        """
-        expire cache for all location and its descendants for the app
-        why? : Latest enabled release for a location is dependent on restrictions added for
-        itself and its ancestors. Hence we expire the cache for location and its descendants for which the
-        latest enabled release would depend on this location
-        :param domain: domain name
-        :param location_id: location for which the restriction is being updated
-        :param app_id: app id
-        """
-        location = SQLLocation.active_objects.get(location_id=location_id)
-        location_and_descendats = location.get_descendants(include_self=True)
-        for loc in location_and_descendats:
-            get_latest_enabled_app_release.clear(domain, loc.location_id, app_id)
+    def save(self, *args, **kwargs):
+        super(LatestEnabledAppRelease, self).save(*args, **kwargs)
+        from corehq.apps.app_manager import signals
+        signals.latest_enabled_app_release_post_save.send(LatestEnabledAppRelease,
+                                                          latest_enabled_app_release=self)
 
     def clean(self):
         enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)
@@ -6003,21 +5993,19 @@ class LatestEnabledAppRelease(models.Model):
             enabled_app_release = LatestEnabledAppRelease(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
-        enabled_app_release.active = active
-        enabled_app_release.full_clean()
         enabled_app_release.activate() if active else enabled_app_release.deactivate()
 
     def deactivate(self):
         self.active = False
         self.deactivated_on = datetime.datetime.utcnow()
+        self.full_clean()
         self.save()
-        self.expire_cache(self.domain, self.location.location_id, self.app_id)
 
     def activate(self):
         self.active = True
         self.activated_on = datetime.datetime.utcnow()
+        self.full_clean()
         self.save()
-        self.expire_cache(self.domain, self.location.location_id, self.app_id)
 
     @classmethod
     def to_json(cls, domain, **kwargs):
