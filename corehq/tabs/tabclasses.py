@@ -1264,7 +1264,7 @@ class ProjectUsersTab(UITab):
                 'description': _(
                     "View and manage user roles."),
                 'subpages': [],
-                'show_in_dropdown': False,
+                'show_in_dropdown': True,
             })
 
         return menu
