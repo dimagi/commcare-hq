@@ -869,11 +869,6 @@ hr {
     min-width: 150px;
 }
 
-#serviceDeliveryDashboardTable .medium-col {
-    text-align: center;
-    vertical-align: middle;
-}
-
 #serviceDeliveryDashboardTable .headerTooltip {
     position: relative;
     display: inline-block;
