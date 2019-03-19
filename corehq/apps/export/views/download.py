@@ -370,7 +370,7 @@ def poll_custom_export_download(request, domain):
     return json_response(context)
 
 
-@method_decorator(location_safe, 'dispatch')
+@location_safe
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     export_filter_class = ExpandedMobileWorkerFilter
@@ -452,7 +452,7 @@ def has_multimedia(request, domain):
     })
 
 
-@method_decorator(location_safe, 'dispatch')
+@location_safe
 class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
     export_filter_class = CaseListFilter
