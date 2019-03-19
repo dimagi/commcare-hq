@@ -407,20 +407,20 @@ hqDefine('app_manager/js/forms/advanced/actions', function () {
                         return false;
                     }
 
-                    var load_actions = self.caseConfig.caseConfigViewModel.load_update_cases(),
-                        found_self = false,
-                        next_action = _.find(load_actions, function (action) {
-                            if (found_self) {
+                    var loadActions = self.caseConfig.caseConfigViewModel.load_update_cases(),
+                        foundSelf = false,
+                        nextAction = _.find(loadActions, function (action) {
+                            if (foundSelf) {
                                 return true;
                             }
-                            if (action.case_tag() == self.case_tag()) {
-                                found_self = true;
+                            if (action.case_tag() === self.case_tag()) {
+                                foundSelf = true;
                             }
                         });
 
-                    if (next_action) {
+                    if (nextAction) {
                         // if the action following the action defined by self is using a subcase, it cannot be moved
-                        return !next_action.subcase();
+                        return !nextAction.subcase();
                     }
                     return true;
                 });

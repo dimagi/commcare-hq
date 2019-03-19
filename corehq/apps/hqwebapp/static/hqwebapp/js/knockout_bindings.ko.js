@@ -689,7 +689,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                 },
             });
             if (items) {
-                $(element).sortable("option", "items", items())
+                $(element).sortable("option", "items", items());
             }
         },
     };
