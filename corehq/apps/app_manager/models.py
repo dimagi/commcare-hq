@@ -6022,7 +6022,10 @@ class LatestEnabledAppRelease(models.Model):
         self.expire_cache(self.domain, self.location.location_id, self.app_id)
 
     @classmethod
-    def to_json(cls, domain, location_id, app_id, version):
+    def to_json(cls, domain, **kwargs):
+        location_id = kwargs.get('location_id')
+        app_id = kwargs.get('app_id')
+        version = kwargs.get('version')
         restrictions = cls.objects.filter(domain=domain)
         if location_id:
             restrictions = restrictions.filter(location_id=location_id)

@@ -44,8 +44,8 @@ class ManageReleases(BaseProjectSettingsView):
         return {
             'manage_releases_form': self.manage_releases_form,
             'enabled_app_releases': LatestEnabledAppRelease.to_json(
-                self.domain, self.request.GET.get('location_id'), self.request.GET.get('app_id'),
-                self.request.GET.get('version'))
+                self.domain, location_id=self.request.GET.get('location_id'),
+                app_id=self.request.GET.get('app_id'), version=self.request.GET.get('version'))
         }
 
     def post(self, request, *args, **kwargs):
