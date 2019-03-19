@@ -17,7 +17,7 @@ Conventions followed in this file:
 from __future__ import absolute_import, unicode_literals
 
 from django.contrib.postgres.fields import ArrayField, DateRangeField
-from django.db import models
+from django.db import connections, models
 from django.utils.decorators import classproperty
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
@@ -496,6 +496,48 @@ class CcsRecord(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
+    def birth_preparedness_form_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-birth_preparedness')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = dictfetchall(cursor)
+
+        return result
+
+    def postnatal_care_form_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-postnatal_care')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = dictfetchall(cursor)
+
+        return result
+
+    def thr_form_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-thr_forms')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = dictfetchall(cursor)
+
+        return result
+
 
 class Child(LocationDenormalizedModel):
     """Represents a child registered in the AAA Convergence program.
@@ -713,6 +755,42 @@ class Child(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
             self.agg_from_delivery_forms_ucr,
         ]
+
+    def task_case_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-tasks_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            result = dictfetchall(cursor)
+
+        return result
+
+    def immunizaton_form_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-immunization_forms')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            result = dictfetchall(cursor)
+
+        return result
+
+    def postnatal_care_form_details(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-postnatal_care')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        ucr_tablename = get_table_name(self.domain, config.table_id)
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.exectue(
+                'SELECT * FROM "{}" WHERE child_health_case_id = %s'.format(ucr_tablename),
+                [self.child_health_case_id]
+            )
+            result = dictfetchall(cursor)
+
+        return result
 
 
 class ChildHistory(models.Model):
@@ -969,3 +1047,12 @@ class AggregationInformation(models.Model):
     step = models.TextField(help_text="Slug for the step of the aggregation")
     aggregation_window_start = models.DateTimeField()
     aggregation_window_end = models.DateTimeField()
+
+
+def dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
