@@ -221,15 +221,15 @@ def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
         return [(messages.success, _("No issues found."))]
 
 
-def _email_app_translations_discrepancies(msgs, text_messages, email, app_name, result_wb):
+def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb):
     """
     :param msgs: messages for app translation discrepancies
-    :param text_messages: text message for issues found by translation checker
+    :param checker_messages: messages for issues found by translation checker
     :param email: email to
     :param app_name: name of the application
     :param result_wb: result wb of translation checker to attach with the email
     """
-    def _form_email_content(msgs, text_messages):
+    def _form_email_content(msgs, checker_messages):
         if msgs:
             html_content = ghdiff.default_css
             for sheet_name, msg in msgs.items():
@@ -238,8 +238,9 @@ def _email_app_translations_discrepancies(msgs, text_messages, email, app_name, 
         else:
             html_content = None
             text_content = _("Hi, No discrepancies found for app translations.\n")
-        if text_messages:
-            text_content += _("Issues found with the workbook are as follows :\n %s." % '\n'.join(text_messages))
+        if checker_messages:
+            text_content += _("Issues found with the workbook are as follows :\n %s." % '\n'.join(
+                checker_messages))
         else:
             text_content += _("No issues found with the workbook.")
         return html_content, text_content
@@ -248,7 +249,7 @@ def _email_app_translations_discrepancies(msgs, text_messages, email, app_name, 
         return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    html_content, text_content = _form_email_content(msgs, text_messages)
+    html_content, text_content = _form_email_content(msgs, checker_messages)
     attachments = []
     if html_content:
         attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_content)))
