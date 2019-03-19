@@ -128,21 +128,27 @@ class AppManagerTest(TestCase):
         self.app.delete_module(self.app.modules[0].unique_id)
         self.assertEqual(len(self.app.modules), 2)
 
-    def testSwapModules(self):
-        m0 = self.app.modules[0].name['en']
-        m1 = self.app.modules[1].name['en']
-        self.app.rearrange_modules(1, 0)
-        self.assertEqual(self.app.modules[0].name['en'], m1)
-        self.assertEqual(self.app.modules[1].name['en'], m0)
+    def assertModuleOrder(self, actual_modules, expected_modules):
+        self.assertEqual([m.name['en'] for m in actual_modules],
+                         [m.name['en'] for m in expected_modules])
 
-    def testRearrangeModuleswithChildren(self):
+    def testSwapModules(self):
         m0, m1, m2 = self.app.modules
-        self.app.modules[2].root_module_id = m1.unique_id
         self.app.rearrange_modules(1, 0)
-        # m2 is a child of m1, so when m1 moves to to the top, m2 should follow
-        self.assertEqual(self.app.modules[0].name['en'], m1.name['en'])
-        self.assertEqual(self.app.modules[1].name['en'], m2.name['en'])
-        self.assertEqual(self.app.modules[2].name['en'], m0.name['en'])
+        self.assertModuleOrder(self.app.modules, [m1, m0, m2])
+
+    def testRearrangeModuleWithChildrenHigher(self):
+        m0, m1, m2 = self.app.modules
+        m2.root_module_id = m1.unique_id
+        self.app.rearrange_modules(1, 0)
+        # m2 is a child of m1, so when m1 moves to the top, m2 should follow
+        self.assertModuleOrder(self.app.modules, [m1, m2, m0])
+
+    def testRearrangeModuleWithChildrenLower(self):
+        m0, m1, m2 = self.app.modules
+        m1.root_module_id = m0.unique_id
+        self.app.rearrange_modules(0, 1)
+        self.assertModuleOrder(self.app.modules, [m2, m0, m1])
 
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
