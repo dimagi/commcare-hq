@@ -31,7 +31,7 @@ from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
-    'ccs_monthly': get_table_name('icds-cas', 'static-ccs_record_cases_monthly'),
+    'ccs_monthly': get_table_name('icds-cas', 'static-ccs_record_cases_monthly_tableau_v2'),
     "ccs_cases": get_table_name('icds-cas', 'static-ccs_record_cases'),
     'child_cases': get_table_name('icds-cas', 'static-child_health_cases'),
     'daily_feeding': get_table_name('icds-cas', 'static-daily_feeding_forms'),
@@ -42,20 +42,20 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'person_cases': get_table_name('icds-cas', 'static-person_cases_v3'),
     'usage': get_table_name('icds-cas', 'static-usage_forms'),
     'vhnd': get_table_name('icds-cas', 'static-vhnd_form'),
-    'complementary_feeding': get_table_name('icds-cas', 'static-complementary_feeding_fo'),
+    'complementary_feeding': get_table_name('icds-cas', 'static-complementary_feeding_forms'),
     'aww_user': get_table_name('icds-cas', 'static-commcare_user_cases'),
     'child_tasks': get_table_name('icds-cas', 'static-child_tasks_cases'),
     'pregnant_tasks': get_table_name('icds-cas', 'static-pregnant-tasks_cases'),
     'thr_form': get_table_name('icds-cas', 'static-dashboard_thr_forms'),
     'gm_form': get_table_name('icds-cas', 'static-dashboard_growth_monitor'),
     'pnc_forms': get_table_name('icds-cas', 'static-postnatal_care_forms'),
-    'dashboard_daily_feeding': get_table_name('icds-cas', 'dashboard_child_health_daily_fe'),
+    'dashboard_daily_feeding': get_table_name('icds-cas', 'dashboard_child_health_daily_feeding_forms'),
     'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
-    'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_fill'),
+    'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
     'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
     'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'agg_awc': 'agg_awc',
-    'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_prepared'),
+    'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
     'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
 }
 
