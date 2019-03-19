@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -77,7 +78,7 @@ def safe_cached_download(f):
         if latest and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
             if not username:
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
-                                        default_response="Please log in the app to check for update.")
+                                        default_response=_("Please log in to the app to check for an update."))
                 return HttpResponse(status=406, content=json.dumps(content_response))
             user = CommCareUser.get_by_username(normalize_username(username, domain))
             user_location_id = user.location_id
