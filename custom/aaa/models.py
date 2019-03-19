@@ -642,7 +642,7 @@ class Child(LocationDenormalizedModel):
 
     @classmethod
     def agg_from_tasks_case_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_tasks_cases')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-tasks_cases')
         config, _ = get_datasource_config(doc_id, domain)
         ucr_tablename = get_table_name(domain, config.table_id)
 
@@ -650,10 +650,11 @@ class Child(LocationDenormalizedModel):
         UPDATE "{child_tablename}" AS child SET
             tasks_case_id = tasks.doc_id
         FROM (
-            SELECT doc_id, child_health_case_id
+            SELECT doc_id, parent_id
             FROM "{tasks_cases_ucr_tablename}"
+            WHERE tasks_type = 'child'
         ) tasks
-        WHERE child.child_health_case_id = tasks.child_health_case_id
+        WHERE child.child_health_case_id = tasks.parent_id
         """.format(
             child_tablename=cls._meta.db_table,
             tasks_cases_ucr_tablename=ucr_tablename,
