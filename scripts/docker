@@ -218,7 +218,6 @@ else
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
 # export variables for compose file (they must be set or it complains)
-export DATA_VOLUME_PREFIX=${VOLUME_PREFIX}
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export PYTHON_VERSION="${PYTHON_VERSION:-py2}"
 export JS_SETUP="${JS_SETUP:-no}"
