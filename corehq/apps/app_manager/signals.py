@@ -6,7 +6,7 @@ from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
-    get_latest_enabled_app_release,
+    expire_get_latest_enabled_app_release,
 )
 from corehq.apps.app_manager.util import get_latest_enabled_versions_per_profile
 from corehq import toggles
@@ -49,18 +49,8 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
         get_latest_enabled_versions_per_profile.clear(application.copy_of)
 
 
-def expire_get_latest_enabled_app_release(sender, latest_enabled_app_release, **kwargs):
-    """
-    expire cache for the location and its descendants for the app corresponding to this enabled app release
-    why? : Latest enabled release for a location is dependent on restrictions added for
-    itself and its ancestors. Hence we expire the cache for location and its descendants for which the
-    latest enabled release would depend on this location
-    """
-    location = SQLLocation.active_objects.get(location_id=latest_enabled_app_release.location_id)
-    location_and_descendats = location.get_descendants(include_self=True)
-    for loc in location_and_descendats:
-        get_latest_enabled_app_release.clear(latest_enabled_app_release.domain, loc.location_id,
-                                             latest_enabled_app_release.app_id)
+def _expire_get_latest_enabled_app_release(sender, latest_enabled_app_release, **kwargs):
+    expire_get_latest_enabled_app_release(latest_enabled_app_release)
 
 
 app_post_save = Signal(providing_args=['application'])
@@ -71,4 +61,4 @@ app_post_save.connect(expire_latest_enabled_build_profiles)
 
 app_post_release = Signal(providing_args=['application'])
 latest_enabled_app_release_post_save = Signal(providing_args=['latest_enabled_app_release'])
-latest_enabled_app_release_post_save.connect(expire_get_latest_enabled_app_release)
+latest_enabled_app_release_post_save.connect(_expire_get_latest_enabled_app_release)

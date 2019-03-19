@@ -665,6 +665,20 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
             return get_app(domain, build_id)
 
 
+def expire_get_latest_enabled_app_release(latest_enabled_app_release):
+    """
+    expire cache for the location and its descendants for the app corresponding to this enabled app release
+    why? : Latest enabled release for a location is dependent on restrictions added for
+    itself and its ancestors. Hence we expire the cache for location and its descendants for which the
+    latest enabled release would depend on this location
+    """
+    location = SQLLocation.active_objects.get(location_id=latest_enabled_app_release.location_id)
+    location_and_descendats = location.get_descendants(include_self=True)
+    for loc in location_and_descendats:
+        get_latest_enabled_app_release.clear(latest_enabled_app_release.domain, loc.location_id,
+                                             latest_enabled_app_release.app_id)
+
+
 @quickcache(['app_id'], timeout=24 * 60 * 60)
 def get_latest_enabled_versions_per_profile(app_id):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
