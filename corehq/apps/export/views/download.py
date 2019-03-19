@@ -370,7 +370,7 @@ def poll_custom_export_download(request, domain):
     return json_response(context)
 
 
-@location_safe
+@method_decorator(location_safe, 'dispatch')
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
     export_filter_class = ExpandedMobileWorkerFilter
@@ -452,7 +452,7 @@ def has_multimedia(request, domain):
     })
 
 
-@location_safe
+@method_decorator(location_safe, 'dispatch')
 class DownloadNewCaseExportView(BaseDownloadExportView):
     urlname = 'new_export_download_cases'
     export_filter_class = CaseListFilter
@@ -478,12 +478,6 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
     @property
     def parent_pages(self):
         return []
-
-    def dispatch(self, request, *args, **kwargs):
-        # for some reason, even though this export is not marked @location_safe
-        #   it is getting marked as location_safe due to some logic in the parent
-        #   dispatch method, this is a dirty hack to unmark it location_safe
-        return super(DownloadNewSmsExportView, self).dispatch(request, *args, **kwargs)
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
