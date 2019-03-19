@@ -26,10 +26,7 @@ hqDefine('app_manager/js/manage_releases', [
             self.domId = "restriction_" + self.id;
             self.ajaxInProgress = ko.observable(false);
             self.actionText = ko.computed(function () {
-                return (self.active() ? "Remove" : "Add");
-            });
-            self.rowBgColor = ko.computed(function () {
-                return (self.active() ? "lightblue" : "lightgrey");
+                return (self.active() ? gettext("Remove") : gettext("Add"));
             });
             self.toggleStatus = function () {
                 self.active(!self.active());
