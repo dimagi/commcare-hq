@@ -306,6 +306,8 @@ hqDefine('app_manager/js/app_manager', function () {
                     } else {
                         addChildModuleToParent(module, modulesByUid[newRoot]);
                     }
+                    rearrangeModules($(module));
+                    resetIndexes();
                 }
             });
         }
@@ -336,7 +338,7 @@ hqDefine('app_manager/js/app_manager', function () {
             if ($sortable.hasClass('sortable-forms')) {
                 rearrangeForms(ui, $sortable);
             } else {
-                rearrangeModules(ui, $sortable);
+                rearrangeModules(ui.item);
             }
             resetIndexes();
         }
@@ -350,18 +352,18 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
 
             if (to !== from || toModuleUid !== fromModuleUid) {
-                saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
+                saveRearrangement(url, from, to, fromModuleUid, toModuleUid);
             }
         }
-        function rearrangeModules(ui, $sortable) {
+        function rearrangeModules($module) {
             var url = initialPageData.reverse('rearrange', 'modules'),
-                from = ui.item.data('index'),
+                from = $module.data('index'),
                 to = _.findIndex($(".module"), function (module) {
-                    return $(module).data('uid') === ui.item.data('uid');
+                    return $(module).data('uid') === $module.data('uid');
                 });
 
             if (to !== from) {
-                saveRearrangement($sortable, url, from, to);
+                saveRearrangement(url, from, to);
             }
         }
         function resetIndexes() {
@@ -373,7 +375,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             });
         }
-        function saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid) {
+        function saveRearrangement(url, from, to, fromModuleUid, toModuleUid) {
             var data = {
                 from: from,
                 to: to,
