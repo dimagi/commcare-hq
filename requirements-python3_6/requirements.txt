@@ -18,6 +18,7 @@ certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.11.0          # via jsonobject-couchdbkit
+commcaretranslationchecker==0.9.3.3
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 cryptography==2.6.1       # via pyopenssl, requests
