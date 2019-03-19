@@ -5958,8 +5958,6 @@ class LatestEnabledAppRelease(models.Model):
     build_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
     active = models.BooleanField(default=True)
-    activated_on = models.DateTimeField(null=True)
-    deactivated_on = models.DateTimeField(null=True)
     activated_on = models.DateTimeField(null=True, blank=True)
     deactivated_on = models.DateTimeField(null=True, blank=True)
 
