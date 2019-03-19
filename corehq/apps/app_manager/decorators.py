@@ -13,7 +13,7 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import get_latest_enabled_app_release
+from corehq.apps.app_manager.util import get_latest_enabled_app_release, get_latest_enabled_build_for_profile
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -85,6 +85,11 @@ def safe_cached_download(f):
             if user_location_id:
                 parent_app_id = get_app(domain, app_id).copy_of
                 latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
+        if not latest_enabled_build:
+            # Fall back to the old logic to support migration
+            # ToDo: Remove this block once migration is complete
+            if latest and request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+                latest_enabled_build = get_latest_enabled_build_for_profile(domain, request.GET.get('profile'))
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
