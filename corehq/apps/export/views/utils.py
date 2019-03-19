@@ -97,7 +97,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case is None:
+        if not self.form_or_case:
             return self.has_form_export_permissions or self.has_case_export_permissions
         elif self.form_or_case == "form":
             return self.has_form_export_permissions
