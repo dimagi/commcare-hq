@@ -10,6 +10,7 @@
   ],
   "config": {
     "es_index_settings":{
+  "server_environment": [
       "doc_type":"ElasticSearchIndexSettings",
       "number_of_shards":2,
       "refresh_interval":"5s"
