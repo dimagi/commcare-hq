@@ -6045,7 +6045,8 @@ class LatestEnabledAppRelease(models.Model):
 
 
 class LatestEnabledBuildProfiles(models.Model):
-    # ToDo: Deprecate this model
+    # ToDo: this would be deprecated after LatestEnabledAppRelease is released and
+    # this model's entries are migrated to the new location specific model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
