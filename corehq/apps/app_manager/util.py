@@ -649,11 +649,15 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     location = SQLLocation.active_objects.get(location_id=location_id)
     location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
         'location_id', flat=True).reverse()
+    # get all active enabled releases and order by version desc to get one with the highest version in the end
+    # for a location. Do not use the first object itself in order to respect the location hierarchy and use
+    # the closest location to determine the valid active release
     latest_enabled_releases = {
         enabled_release.location_id: enabled_release.build_id
         for enabled_release in
         LatestEnabledAppRelease.objects.filter(
-            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True)
+            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
+            'version')
     }
     for loc_id in location_and_ancestor_ids:
         build_id = latest_enabled_releases.get(loc_id)
