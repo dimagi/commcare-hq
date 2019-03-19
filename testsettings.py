@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import settingshelper as helper
 from settings import *
+
+USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
 # a weird travis issue with kafka. if for any reason this order causes problems
@@ -11,6 +14,17 @@ INSTALLED_APPS = (
     'testapps.test_elasticsearch',
     'testapps.test_pillowtop',
 ) + tuple(INSTALLED_APPS)
+
+if USING_CITUS:
+    if 'testapps.citus_master' not in INSTALLED_APPS:
+        INSTALLED_APPS = (
+            'testapps.citus_master',
+            'testapps.citus_worker',
+        ) + tuple(INSTALLED_APPS)
+
+    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
+        # this router must go first
+        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -51,7 +65,7 @@ del key, value
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
 
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}
@@ -98,6 +112,20 @@ LOGGING = {
     'loggers': {},
 }
 
+# Required in Python 3 to prevent transient but frequent travis errors.
+# Probably is caused by some race condition.
+if 'icds-ucr' not in DATABASES:
+    DATABASES['icds-ucr'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'icds_commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        }
+    }
 # Define an aaa-data database if its not already defined
 # This is necessary because REPORTING_DATABASES references aaa-data.
 # We must have aaa-data in a separate database
@@ -108,19 +136,20 @@ if 'aaa-data' not in DATABASES:
         'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
+        'HOST': 'localhost',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
         }
     }
+helper.assign_test_db_names(DATABASES)
 
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'icds-ucr': 'default',
-    'icds-ucr-non-dashboard': 'default',
-    'icds-test-ucr': 'default',
+    'icds-ucr': 'icds-ucr',
+    'icds-ucr-non-dashboard': 'icds-ucr',
+    'icds-test-ucr': 'icds-ucr',
     'aaa-data': 'aaa-data',
 }
 

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
 from couchdbkit import ResourceNotFound
-import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
@@ -30,7 +29,7 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
             )
 
     def _iter_cases(self, case_ids):
-        for case in iter_cases(case_ids, self.strip_history, self.wrap):
+        for case in iter_cases(case_ids, self.wrap):
             yield case
 
     def get_cases_for_saving(self, now):

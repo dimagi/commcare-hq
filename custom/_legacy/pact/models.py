@@ -22,6 +22,8 @@ from pact.regimen import regimen_string_from_doc
 import six
 from six.moves import range
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 def make_uuid():
     return uuid.uuid4().hex
@@ -460,6 +462,7 @@ class CObservation(OldDocument):
         for prop_name in ints:
             val = obj.get(prop_name)
             if val and isinstance(val, six.string_types):
+                soft_assert_type_text(val)
                 obj[prop_name] = int(val)
         return super(CObservation, cls).wrap(obj)
 

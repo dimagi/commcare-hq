@@ -704,6 +704,10 @@ class CcsRecordMonthlyView(models.Model):
     eating_extra = models.SmallIntegerField(blank=True, null=True)
     resting = models.SmallIntegerField(blank=True, null=True)
     immediate_breastfeeding = models.SmallIntegerField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

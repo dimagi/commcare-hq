@@ -242,7 +242,6 @@ LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
-    type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
 
     def get_load_properties(self, form_id, path):
         """gets all case types with a list of properties which load into a form question
@@ -721,7 +720,10 @@ class _AppSummaryFormDataGenerator(object):
         self.errors = []
 
         self._seen_save_to_case = defaultdict(list)
-        self._case_meta = self.app.get_case_metadata()
+        try:
+            self._case_meta = self.app.get_case_metadata()
+        except XFormException:
+            self._case_meta = AppCaseMetadata()
 
     def generate(self):
         return [self._compile_module(module) for module in self.app.get_modules()], self.errors
@@ -762,7 +764,6 @@ class _AppSummaryFormDataGenerator(object):
             form_meta['questions'] = []
             form_meta['error'] = {
                 'details': six.text_type(exception),
-                'edit_url': reverse('form_source', args=[self.domain, self.app._id, form.unique_id]),
             }
             self.errors.append(form_meta)
         return form_meta

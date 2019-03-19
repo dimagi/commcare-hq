@@ -55,8 +55,6 @@ from .views import (
     resave_form_view,
     unarchive_form,
     project_health_user_details,
-    export_data,
-    export_default_or_custom_data,
     hq_download_saved_export,
     hq_deid_download_saved_export,
     export_report,
@@ -126,19 +124,8 @@ urlpatterns = [
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
         name='project_health_user_details'),
 
-    # export API
-    url(r"^export/$", export_data, name='export_data'),
-
     # Download Exports
     # todo should eventually be moved to corehq.apps.export
-    # Custom
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", export_default_or_custom_data,
-        name="export_custom_data"),
-    # Default
-    url(r"^export/default/download/$", export_default_or_custom_data, name="export_default_data"),
-    # Bulk
-    url(r"^export/bulk/download/$", export_default_or_custom_data,
-        name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
     url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export,
         name="hq_download_saved_export"),

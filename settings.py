@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -159,7 +154,6 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
-    'custom.icds_reports.middleware.ICDSAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -190,7 +184,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -372,35 +366,6 @@ HQ_APPS = (
     'custom.aaa',
 )
 
-# also excludes any app starting with 'django.'
-APPS_TO_EXCLUDE_FROM_TESTS = (
-    'captcha',
-    'couchdbkit.ext.django',
-    'corehq.apps.ivr',
-    'corehq.messaging.smsbackends.mach',
-    'corehq.messaging.smsbackends.http',
-    'corehq.apps.settings',
-    'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.yo',
-    'corehq.messaging.smsbackends.smsgh',
-    'corehq.messaging.smsbackends.push',
-    'corehq.messaging.smsbackends.apposit',
-    'crispy_forms',
-    'django_extensions',
-    'django_prbac',
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'djcelery',
-    'gunicorn',
-    'langcodes',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'two_factor',
-    'custom.apps.crs_reports',
-    'custom.m4change',
-)
-
 # any built-in management commands we want to override should go in hqscripts
 INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
 
@@ -539,11 +504,14 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
 
-CELERY_ANNOTATIONS = {
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -558,7 +526,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
@@ -703,10 +671,8 @@ GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
-LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-LOCAL_REPEATERS = ()
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -1092,7 +1058,7 @@ LOGGING = {
         },
         'ucr_diff': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
             'formatter': 'ucr_diff',
             'filename': UCR_DIFF_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -1279,7 +1245,10 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
+
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
 }
@@ -1399,8 +1368,6 @@ COUCHDB_APPS = [
     ('app_manager', APPS_DB),
 ]
 
-COUCHDB_APPS += LOCAL_COUCHDB_APPS
-
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
@@ -1421,6 +1388,8 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
+if 'icds-ucr' in DATABASES:
+    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1810,7 +1779,7 @@ PILLOWTOPS = {
     ]
 }
 
-BASE_REPEATERS = (
+REPEATERS = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
@@ -1822,8 +1791,6 @@ BASE_REPEATERS = (
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [

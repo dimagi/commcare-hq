@@ -36,6 +36,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     """
         Responsible for processing the uploaded zip from Bulk Upload.
     """
+
     status = BulkMultimediaStatusCache.get(processing_id)
 
     if not status:

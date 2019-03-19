@@ -32,6 +32,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.util.python_compatibility import soft_assert_type_text
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
 from corehq.apps.es.domains import DomainES
@@ -1342,6 +1343,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
         if isinstance(value, six.string_types):
+            soft_assert_type_text(value)
             return apply_leniency(value.strip())
 
         return None

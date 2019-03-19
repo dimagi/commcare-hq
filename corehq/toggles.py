@@ -561,13 +561,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     notification_emails=['jemord']
 )
 
-EXPORT_NO_SORT = StaticToggle(
-    'export_no_sort',
-    'Do not sort exports',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LOCATIONS_IN_UCR = StaticToggle(
     'locations_in_ucr',
     'ICDS: Add Locations as one of the Source Types for User Configurable Reports',
@@ -1250,13 +1243,6 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ALLOW_LOCATION_UPDATE_OVER_SMS = StaticToggle(
-    'allow_location_update_over_sms',
-    'Allow users to update their location over SMS.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1284,14 +1270,6 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     'Uses latest build for Web Apps instead of latest published',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
-    'language_linked_multimedia',
-    'Add a setting to link multimedia to the default language',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
 )
 
 CAUTIOUS_MULTIMEDIA = StaticToggle(
@@ -1719,15 +1697,6 @@ RELEASE_BUILDS_PER_PROFILE = StaticToggle(
 )
 
 
-SET_SCHEDULED_REPORT_START_DATE = StaticToggle(
-    'set_scheduled_report_start_date',
-    'Allow users to set an effective start date for scheduled reports.',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This toggle is for QA of the Effective Start Date feature on Scheduled Reports.'
-)
-
-
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
     'Do not show modal on mobile that mobile hq experience is bad',
@@ -1757,4 +1726,12 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     'Enable uploading a subset of translations in the UI Translations Excel upload',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
+    'demo_workflow_v2_ab_variant',
+    'Enables the "variant" version of the Demo Workflow A/B test after login',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_USER],
 )

@@ -25,13 +25,12 @@ from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
-from couchexport.files import Temp
 from couchexport.groupexports import rebuild_export
-from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
+from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from django.http import HttpRequest
 from django.utils.translation import ugettext as _
 
@@ -43,6 +42,7 @@ from corehq.apps.domain.calculations import (
     calced_props,
     CALC_FNS,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.elastic import (
     stream_es_query,
@@ -71,7 +71,6 @@ from io import open
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
-LARGE_FILE_SIZE_ERROR_CODE = 552
 
 
 def send_delayed_report(report_id):
@@ -149,11 +148,15 @@ def update_calculated_properties():
     all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
+        domain_obj = Domain.get_by_name(dom)
+        if not domain_obj:
+            send_to_elasticsearch("domains", r, delete=True)
+            continue
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
-            props = calced_props(dom, r["_id"], all_stats)
+            props = calced_props(domain_obj, r["_id"], all_stats)
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
             if props['cp_last_form'] is None:
@@ -268,10 +271,10 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=[LARGE_FILE_SIZE_ERROR_CODE])
+                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
+        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = {

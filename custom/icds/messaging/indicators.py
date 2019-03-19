@@ -53,7 +53,7 @@ def get_report_configs(domain):
     app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
-        for module in app.modules if isinstance(module, ReportModule)
+        for module in app.get_report_modules()
         for report_config in module.report_configs
         if report_config.report_id in REPORT_IDS
     }

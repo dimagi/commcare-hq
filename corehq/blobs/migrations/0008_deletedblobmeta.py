@@ -6,8 +6,8 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import migrations, models, ProgrammingError
 
-from corehq.sql_db.operations import HqRunPython, RawSQLMigration
 from corehq.sql_db.migrations import partitioned
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'blobs', 'sql_templates'), {})
 
@@ -61,5 +61,5 @@ class Migration(migrations.Migration):
             migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
             apply_to_proxy=False,
         ),
-        HqRunPython(_drop_empty_default_blobmeta_table, migrations.RunPython.noop),
+        migrations.RunPython(_drop_empty_default_blobmeta_table, migrations.RunPython.noop),
     ]

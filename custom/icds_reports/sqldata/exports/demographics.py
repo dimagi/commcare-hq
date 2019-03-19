@@ -50,6 +50,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -117,6 +118,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -288,7 +290,7 @@ class DemographicsExport(ExportableMixin):
             },
             {
                 'header': (
-                    'Total number of beneficiaries (Children under 6 years old,  pregnant women and lactating '
+                    'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating '
                     'women, alive and seeking services) who have an Aadhaar ID'
                 ),
                 'slug': 'person_has_aadhaar'

@@ -10,7 +10,7 @@
 {% endblock page_title %}
 
 {% block app_profiles %}
-    {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+    {% if app.is_released and request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
         <h2>App Profiles</h2>
         <table class="table table-condensed">
             <thead>
@@ -66,7 +66,18 @@
         {% endif %}
         <tr>
             <td>
-                <a href="#download_ccz" data-toggle="modal"  class='download-zip'>CommCare.ccz</a>
+                <a href="#download_ccz" data-toggle="modal"  class='download-zip'>
+                    <i class="fa fa-file-zip-o"></i>
+                    CommCare.ccz
+                </a>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="{% url "download_bulk_app_translations" app.domain app.id %}">
+                    <i class="fa fa-file-excel-o"></i>
+                    {% trans "Bulk application translations" %}
+                </a>
             </td>
         </tr>
     </table>

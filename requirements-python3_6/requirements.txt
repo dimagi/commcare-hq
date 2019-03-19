@@ -6,20 +6,20 @@
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
-amqp==1.4.9               # via kombu
-anyjson==0.3.3            # via kombu
+amqp==2.4.2               # via kombu
 asn1crypto==0.24.0        # via cryptography
 attrs==18.2.0
 babel==2.6.0              # via django-phonenumber-field
-billiard==3.3.0.23        # via celery
-boto3==1.9.105
-botocore==1.12.105        # via boto3, s3transfer
-celery==3.1.25
+billiard==3.5.0.4
+boto3==1.9.108
+botocore==1.12.108        # via boto3, s3transfer
+celery==4.1.1
 certifi==2018.11.29       # via requests
 cffi==1.12.2              # via cryptography, csiphash
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.11.0          # via jsonobject-couchdbkit
-concurrentloghandler==0.9.1
+commcaretranslationchecker==0.9.3.3
+concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 cryptography==2.6.1       # via pyopenssl, requests
 csiphash==0.0.5
@@ -31,10 +31,10 @@ defusedxml==0.5.0
 diff-match-patch==20120106
 dimagi-memoized==1.1.1
 django-angular==0.7.16
-django-appconf==1.0.2     # via django-compressor, django-statici18n
+django-appconf==1.0.3     # via django-compressor, django-statici18n
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -73,7 +73,7 @@ greenlet==0.4.12
 gunicorn==19.9.0
 hiredis==0.2.0
 html5lib==1.0.1           # via xhtml2pdf
-httpagentparser==1.8.1
+httpagentparser==1.8.2
 idna==2.8                 # via email-validator, requests
 ipaddress==1.0.22         # via cryptography, faker
 iso8601==0.1.12
@@ -86,7 +86,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37             # via celery
+kombu==4.2.2.post1
 laboratory==0.2.0
 lxml==4.3.2
 mako==1.0.7               # via alembic
@@ -94,7 +94,7 @@ markdown==2.2.1
 markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0
 msgpack-python==0.5.6     # via ddtrace
-openpyxl==2.6.0
+openpyxl==2.6.1
 pbr==5.1.3                # via mock
 phonenumberslite==8.10.6
 pillow==5.4.1
@@ -149,6 +149,7 @@ ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
 urllib3==1.24.1           # via botocore, dropbox, elasticsearch, py-kissmetrics, requests
 user-agents==1.1.0        # via django-user-agents
+vine==1.2.0               # via amqp
 webencodings==0.5.1       # via html5lib
 werkzeug==0.11.15
 wrapt==1.11.1             # via ddtrace

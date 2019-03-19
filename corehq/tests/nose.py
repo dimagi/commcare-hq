@@ -217,6 +217,10 @@ class HqdbContext(DatabaseContext):
         print("", file=sys.__stdout__)  # newline for creating database message
         if self.reuse_db:
             print("REUSE_DB={} ".format(self.reuse_db), file=sys.__stdout__, end="")
+        if self.skip_setup_for_reuse_db:
+            # pass this on to the Django runner to avoid creating databases
+            # that already exist
+            self.runner.keepdb = True
         super(HqdbContext, self).setup()
 
     def _databases_ok(self):
@@ -259,6 +263,8 @@ class HqdbContext(DatabaseContext):
         from corehq.sql_db.connections import connection_manager
         connection_manager.dispose_all()
 
+        # in case this was set before we want to remove it now
+        self.runner.keepdb = False
         super(HqdbContext, self).teardown()
 
 

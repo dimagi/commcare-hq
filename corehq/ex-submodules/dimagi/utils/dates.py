@@ -28,6 +28,8 @@ def force_to_date(val):
     elif isinstance(val, datetime.date):
         return val
     elif isinstance(val, six.string_types):
+        from corehq.util.python_compatibility import soft_assert_type_text
+        soft_assert_type_text(val)
         return string_to_datetime(val).date()
     else:
         raise ValueError("object must be date or datetime!")
@@ -42,6 +44,8 @@ def force_to_datetime(val):
     elif isinstance(val, datetime.date):
         return datetime.datetime.combine(val, datetime.time())
     elif isinstance(val, six.string_types):
+        from corehq.util.python_compatibility import soft_assert_type_text
+        soft_assert_type_text(val)
         return string_to_datetime(val)
     else:
         raise ValueError("object must be date or datetime!")
