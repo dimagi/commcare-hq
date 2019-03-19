@@ -30,7 +30,6 @@ class TestUtils(TestCase):
 
         for location_type in location_types:
             if location_type['parent'] is not None:
-                print(location_type['parent'])
                 parent_tape = LocationType.objects.get(domain=domain_name, name=location_type['parent'])
             else:
                 parent_tape = None
