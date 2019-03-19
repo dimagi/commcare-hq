@@ -646,9 +646,7 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     Child location's setting takes precedence over parent
     """
     from corehq.apps.app_manager.models import LatestEnabledAppRelease
-    location = SQLLocation.active_objects.get_or_None(location_id=location_id)
-    if not location:
-        raise Exception("Location not found")
+    location = SQLLocation.active_objects.get(location_id=location_id)
     location_and_hierarchy = location.get_ancestors(include_self=True).reverse()
     location_and_hierarchy_ids = [l.location_id for l in location_and_hierarchy]
     latest_enabled_releases = {
