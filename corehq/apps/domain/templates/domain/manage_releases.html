@@ -13,11 +13,12 @@
         <div class="col-sm-12">
             <div class="panel panel-modern-gray panel-form-only">
                 <div class="panel-body">
-                    <form class="form-horizontal disable-on-submit" id="manage_app_releases" action="" method='post'>
+                    <form class="form-horizontal disable-on-submit" id="manage-app-releases" action=""
+                          method='post'>
                         {% crispy manage_releases_form %}
                     </form>
                 {% if enabled_app_releases %}
-                    <table id="managed_releases" class="table table-striped">
+                    <table id="managed-releases" class="table table-striped">
                         <thead>
                             <tr>
                                 <th>{% trans 'Application' %}</th>

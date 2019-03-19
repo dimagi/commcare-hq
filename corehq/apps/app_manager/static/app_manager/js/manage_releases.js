@@ -82,14 +82,14 @@ hqDefine('app_manager/js/manage_releases', [
         });
         var viewModel = manageReleasesViewModel(enabledAppReleases);
         if (enabledAppReleases.length) {
-            $('#managed_releases').koApplyBindings(viewModel);
+            $('#managed-releases').koApplyBindings(viewModel);
         }
         function manageReleaseSearchViewModel() {
             var self = {};
             self.search = function () {
-                var appId = $("#app_id_search_select").val();
-                var locationId = $("#location_search_select").val();
-                var version = $("#version_input").val();
+                var appId = $("#app-id-search-select").val();
+                var locationId = $("#location-search-select").val();
+                var version = $("#version-input").val();
                 window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
                     version);
             };
@@ -99,6 +99,6 @@ hqDefine('app_manager/js/manage_releases', [
             return self;
         }
         var searchViewModel = manageReleaseSearchViewModel();
-        $("#manage_app_releases").koApplyBindings(searchViewModel);
+        $("#manage-app-releases").koApplyBindings(searchViewModel);
     });
 });
