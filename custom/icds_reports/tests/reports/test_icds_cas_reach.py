@@ -23,17 +23,16 @@ class TestICDSCASReach(TestCase):
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
                             'help_text': awcs_launched_help_text()
                         }, 
                         {
-                            'all': 51, 
+                            'all': 21,
                             'format': 'div', 
                             'color': 'green', 
                             'percent': 127.27272727272728, 
@@ -103,10 +102,9 @@ class TestICDSCASReach(TestCase):
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
@@ -114,7 +112,7 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
-                            'all': 51,
+                            'all': 21,
                             'format': 'div',
                             'color': 'green',
                             'percent': 'Data in the previous reporting period was 0',
@@ -185,10 +183,9 @@ class TestICDSCASReach(TestCase):
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
@@ -196,7 +193,7 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
-                            'all': 51,
+                            'all': 21,
                             'format': 'div',
                             'color': 'green',
                             'percent': 'Data in the previous reporting period was 0',

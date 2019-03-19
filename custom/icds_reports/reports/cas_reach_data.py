@@ -41,7 +41,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_awcs'),
+            awcs=Sum('num_launched_awcs'),
             daily_attendance=Sum('daily_attendance_open')
         )
         if not show_test:
@@ -90,7 +90,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'color': 'green' if monthly_attendance_percent > 0 else 'red',
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
-            'all': get_value(awc_this_month_data, 'all_awcs'),
+            'all': get_value(awc_this_month_data, 'awcs'),
             'format': 'div',
             'frequency': 'month',
         }
@@ -101,14 +101,10 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                 {
                     'label': _('AWCs Launched'),
                     'help_text': awcs_launched_help_text(),
-                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
-                    'color': 'green' if percent_increase(
-                        'awcs',
-                        awc_this_month_data,
-                        awc_prev_month_data) > 0 else 'red',
+                    'percent': None,
                     'value': get_value(awc_this_month_data, 'awcs'),
-                    'all': get_value(awc_this_month_data, 'all_awcs'),
-                    'format': 'div',
+                    'all': None,
+                    'format': 'number',
                     'frequency': 'month',
                     'redirect': 'icds_cas_reach/awcs_covered'
                 },
