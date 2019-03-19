@@ -647,15 +647,15 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     """
     from corehq.apps.app_manager.models import LatestEnabledAppRelease
     location = SQLLocation.active_objects.get(location_id=location_id)
-    location_and_hierarchy = location.get_ancestors(include_self=True).reverse()
-    location_and_hierarchy_ids = [l.location_id for l in location_and_hierarchy]
+    location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
+        'location_id', flat=True).reverse()
     latest_enabled_releases = {
         enabled_release.location_id: enabled_release.build_id
         for enabled_release in
         LatestEnabledAppRelease.objects.filter(
-            location_id__in=location_and_hierarchy_ids, app_id=app_id, domain=domain, active=True)
+            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True)
     }
-    for loc_id in location_and_hierarchy_ids:
+    for loc_id in location_and_ancestor_ids:
         build_id = latest_enabled_releases.get(loc_id)
         if build_id:
             return get_app(domain, build_id)
