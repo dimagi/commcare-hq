@@ -25,8 +25,36 @@ hqDefine('app_manager/js/summary/form_diff',[
 
         $(window).resize(function(){ resizeViewPort(); });
 
+        var getModuleIntersection = function () {
+            // returns a list of all modules and forms from both versions
+
+            // deep copy these datastructures so we don't overwrite the underlying data
+            var allModules = firstModules = JSON.parse(JSON.stringify(initialPageData.get('first.modules'))),
+                secondModules = JSON.parse(JSON.stringify(initialPageData.get('second.modules'))),
+                firstModulesById = _.indexBy(firstModules, 'id'),
+                secondModulesById = _.indexBy(secondModules, 'id');
+            // given the list of modules in the first list
+            // if the element from the second is in the first, check the forms, and label them
+            // otherwise just add the second element
+            _.each(secondModules, function (secondModule) {
+                var firstModule = firstModulesById[secondModule.id];
+                if (firstModule) { // both versions have this module, check that all the forms are the same
+                    // find all forms;
+                    var firstModuleFormIds = _.pluck(firstModule.forms, 'id'),
+                        secondModuleFormsById = _.indexBy(secondModule.forms, 'id'),
+                        inSecondNotFirst = _.difference(_.keys(secondModuleFormsById), firstModuleFormIds);
+                    _.each(inSecondNotFirst, function (extraFormId) {
+                        firstModule.forms.push(secondModuleFormsById[extraFormId]);
+                    });
+                } else {
+                    allModules.push(secondModule);
+                }
+            });
+            return allModules;
+        };
+
         var formSummaryMenu = models.menuModel({
-            items: _.map(initialPageData.get("modules"), function (module) {
+            items: _.map(getModuleIntersection(), function (module) {
                 return models.menuItemModel({
                     id: module.id,
                     name: utils.translateName(module.name, lang, langs),

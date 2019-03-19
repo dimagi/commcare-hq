@@ -128,8 +128,6 @@ class FormSummaryDiffView(AppSummaryView):
         return {
             'VELLUM_TYPES': VELLUM_TYPES,
             'form_name_map': _get_name_map(app),
-            'lang': lang,
-            'langs': langs,
             'app_langs': app.langs,
             'app_id': app.id,
             'app_name': app.name,
@@ -151,6 +149,8 @@ class FormSummaryDiffView(AppSummaryView):
         )
         lang, langs = get_langs(self.request, self.app)
         context.update({
+            'lang': lang,
+            'langs': langs,
             'first': self._app_dict(lang, langs, self.first_app, first_app_summary, first_errors),
             'second': self._app_dict(lang, langs, self.second_app, second_app_summary, second_errors),
         })
