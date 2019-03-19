@@ -394,7 +394,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
             sheet_name = get_form_sheet_name(form)
             headers.append([
                 sheet_name,
-                ["label"] + languages_list + audio_lang_list + image_lang_list + video_lang_list
+                ["label"] + languages_list + image_lang_list + audio_lang_list + video_lang_list
             ])
     return headers
 
