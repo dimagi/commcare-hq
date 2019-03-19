@@ -235,6 +235,7 @@ hqDefine('app_manager/js/app_manager', function () {
     var _initMenuItemSorting = function () {
         if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
+            initChildModuleUpdateListener();
         }
         if (modulesWereReordered()) {
             promptToSaveOrdering();
@@ -254,12 +255,11 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         }
         function nestChildModules() {
-            var modulesByUid = {},
+            var modulesByUid = getModulesByUid(),
                 childModules = [];
             $(".module").each(function (index, element) {
                 // Set index here so we know whether we've rearranged anything
                 $(element).data('index', index);
-                modulesByUid[ $(element).data('uid') ] = element;
                 if ($(element).data('rootmoduleuid')) {
                     childModules.push(element);
                 }
@@ -267,12 +267,18 @@ hqDefine('app_manager/js/app_manager', function () {
             _.each(childModules, function (childModule) {
                 var parent = modulesByUid[$(childModule).data('rootmoduleuid')];
                 if (!parent) {
-                    // This child module is orphaned, throw it at the end
-                    $("ul.appnav-module").append(childModule);
+                    moveModuleToBottom(childModule);
                 } else {
                     addChildModuleToParent(childModule, parent);
                 }
             });
+        }
+        function getModulesByUid() {
+            var modulesByUid = {};
+            $(".module").each(function (index, element) {
+                modulesByUid[ $(element).data('uid') ] = element;
+            });
+            return modulesByUid;
         }
         function addChildModuleToParent(childModule, parent) {
             var childList = $(parent).find("ul.child-modules");
@@ -281,6 +287,27 @@ hqDefine('app_manager/js/app_manager', function () {
                 $(parent).append(childList);
             }
             childList.append(childModule);
+        }
+        function moveModuleToBottom(module) {
+            $("ul.appnav-module").append(module);
+        }
+        function initChildModuleUpdateListener() {
+            // If a child module is created or removed, update the sidebar
+            $('#module-settings-form').on('saved-app-manager-form', function () {
+                var modulesByUid = getModulesByUid(),
+                    module = modulesByUid[$('#module-settings-form').data('moduleuid')],
+                    oldRoot = $(module).data('rootmoduleuid'),
+                    newRoot = $('select[name=root_module_id]').val();
+
+                if (newRoot !== oldRoot) {
+                    $(module).data('rootmoduleuid', newRoot);
+                    if (!newRoot) {
+                        moveModuleToBottom(module);
+                    } else {
+                        addChildModuleToParent(module, modulesByUid[newRoot]);
+                    }
+                }
+            });
         }
         function modulesWereReordered() {
             return _.some($(".module"), function (element, index) {
