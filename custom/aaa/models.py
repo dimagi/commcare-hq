@@ -22,7 +22,7 @@ from django.utils.decorators import classproperty
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from custom.aaa.const import ALL
+from custom.aaa.const import ALL, PRODUCT_CODES
 
 
 class LocationDenormalizedModel(models.Model):
@@ -544,6 +544,10 @@ class Child(LocationDenormalizedModel):
     child_cried = models.TextField(null=True)
     ccs_record_case_id = models.TextField(null=True)
 
+    # immunization information
+    last_immunization_date = models.DateField(null=True)
+    last_immunization_type = models.TextField(null=True)
+
     @classmethod
     def agg_from_child_health_case_ucr(cls, domain, window_start, window_end):
         doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_health_cases')
@@ -645,19 +649,34 @@ class Child(LocationDenormalizedModel):
         doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-tasks_cases')
         config, _ = get_datasource_config(doc_id, domain)
         ucr_tablename = get_table_name(domain, config.table_id)
+        column_names = ', '.join('due_list_{}'.format(code) for code in PRODUCT_CODES)
 
         return """
         UPDATE "{child_tablename}" AS child SET
-            tasks_case_id = tasks.doc_id
+            tasks_case_id = tasks.doc_id,
+            last_immunization_type = tasks.last_immunization_type,
+            last_immunization_date = tasks.last_immunization_date
         FROM (
-            SELECT doc_id, parent_id
-            FROM "{tasks_cases_ucr_tablename}"
-            WHERE tasks_type = 'child'
+            SELECT
+                doc_id AS doc_id,
+                parent_id AS parent_id,
+                LAST_VALUE(product_code) AS last_immunization_type,
+                LAST_VALUE(product_date) AS last_immunization_date
+            FROM (
+                SELECT doc_id, parent_id,
+                       unnest(array[{product_codes}]) AS product_code,
+                       unnest(array[{column_names}]) AS product_date
+                FROM "{tasks_cases_ucr_tablename}"
+                WHERE tasks_type = 'child'
+            )
+            WINDOW w AS (PARTITION BY doc_id, parent_id ORDER BY product_date DESC)
         ) tasks
         WHERE child.child_health_case_id = tasks.parent_id
         """.format(
             child_tablename=cls._meta.db_table,
             tasks_cases_ucr_tablename=ucr_tablename,
+            product_codes=', '.join(PRODUCT_CODES),
+            column_names=column_names,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
