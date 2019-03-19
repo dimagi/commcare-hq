@@ -313,6 +313,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def page_context(self):
         from corehq.apps.domain.views.sms import SMSRatesView
+        subs = self.current_subscription
         return {
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -326,7 +327,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
             ),
-            'can_change_subscription': self.current_subscription.user_can_change_subscription(self.request.user)
+            'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
         }
 
 
