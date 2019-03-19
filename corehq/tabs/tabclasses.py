@@ -41,6 +41,8 @@ from corehq.apps.translations.integrations.transifex.utils import transifex_deta
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
+    can_view_form_exports,
+    can_view_case_exports,
     can_view_sms_exports,
     can_download_data_files,
 )
@@ -404,13 +406,11 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_view_form_exports(self):
-        from corehq.apps.export.views.utils import can_view_form_exports
         return can_view_form_exports(self.couch_user, self.domain)
 
     @property
     @memoized
     def can_view_case_exports(self):
-        from corehq.apps.export.views.utils import can_view_case_exports
         return can_view_case_exports(self.couch_user, self.domain)
 
     @property
