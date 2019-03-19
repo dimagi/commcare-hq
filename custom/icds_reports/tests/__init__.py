@@ -47,7 +47,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'child_tasks': get_table_name('icds-cas', 'static-child_tasks_cases'),
     'pregnant_tasks': get_table_name('icds-cas', 'static-pregnant-tasks_cases'),
     'thr_form': get_table_name('icds-cas', 'static-dashboard_thr_forms'),
-    'gm_form': get_table_name('icds-cas', 'static-dashboard_growth_monitor'),
+    'gm_form': get_table_name('icds-cas', 'static-dashboard_growth_monitoring_forms'),
     'pnc_forms': get_table_name('icds-cas', 'static-postnatal_care_forms'),
     'dashboard_daily_feeding': get_table_name('icds-cas', 'dashboard_child_health_daily_feeding_forms'),
     'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
