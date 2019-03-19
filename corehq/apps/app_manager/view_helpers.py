@@ -23,8 +23,6 @@ class ApplicationViewMixin(DomainViewMixin):
     @memoized
     def app(self):
         try:
-            # if get_app is mainly used for views,
-            # maybe it should be a classmethod of this mixin? todo
             return get_app(self.domain, self.app_id)
         except Http404 as e:
             raise e
