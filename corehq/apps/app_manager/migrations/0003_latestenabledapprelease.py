@@ -26,7 +26,8 @@ class Migration(migrations.Migration):
                 ('active', models.BooleanField(default=True)),
                 ('activated_on', models.DateTimeField(blank=True, null=True)),
                 ('deactivated_on', models.DateTimeField(blank=True, null=True)),
-                ('location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='locations.SQLLocation', to_field='location_id')),
+                ('location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                               to='locations.SQLLocation', to_field='location_id')),
             ],
         ),
     ]
