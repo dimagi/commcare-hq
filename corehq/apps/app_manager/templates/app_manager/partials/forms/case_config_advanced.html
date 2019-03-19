@@ -190,7 +190,7 @@
 
 <script type="text/html" id="case-config:case-action">
     <div class="panel-heading clickable panel-heading-case-action" data-toggle="collapse"
-         data-bind="attr: {href: '#' + actionType + $index()}, css: {not_droppable: moveable()}">
+         data-bind="attr: {href: '#' + actionType + $index()}, css: {'not-droppable': moveable()}">
         <h4 class="panel-title panel-title-nolink" data-bind="html: header"></h4>
     </div>
     <div class="panel-case-actions-actions">
@@ -521,7 +521,7 @@
               </h4>
             </div>
             <div class="panel-body">
-                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListItems: function () { return 'div:not(not_droppable)'; }">
+                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases, sortableList: load_update_cases, sortableListItems: function () { return 'div:not(not-droppable)'; }">
                     <!-- ko if: auto_select -->
                     <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                     <!-- /ko -->
