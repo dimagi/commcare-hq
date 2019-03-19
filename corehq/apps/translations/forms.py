@@ -16,7 +16,6 @@ from django.utils.translation import ugettext_lazy
 import langcodes
 from corehq.apps.app_manager.dbaccessors import (
     get_available_versions_for_app,
-    get_brief_app,
     get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.models import Application
@@ -323,9 +322,7 @@ class AddTransifexBlacklistForm(forms.ModelForm):
             if module_id == module['unique_id']:
                 break
         else:
-            domain = cleaned_data.get('domain')
-            app_name = get_brief_app(domain, app_id).name
-            raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_name))
+            raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_json['name']))
 
     class Meta(object):
         model = TransifexBlacklist
