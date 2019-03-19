@@ -2467,7 +2467,7 @@ class ManageAppReleasesForm(forms.Form):
         app_id = self.cleaned_data['app_id']
         try:
             LatestEnabledAppRelease.update_status(self.domain, app_id, self.version_build_id, location_id,
-                                                  version, status=True)
+                                                  version, active=True)
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None

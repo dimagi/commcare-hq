@@ -5984,7 +5984,7 @@ class LatestEnabledAppRelease(models.Model):
                                                 "location").format(enabled_release.version)})
 
     @classmethod
-    def update_status(cls, domain, app_id, build_id, location_id, version, status):
+    def update_status(cls, domain, app_id, build_id, location_id, version, active):
         """
         create a new object or just set the status of an existing one with provided
         domain, app_id, build_id, location_id and version to the status passed
@@ -5993,7 +5993,7 @@ class LatestEnabledAppRelease(models.Model):
         :param build_id: id of the build corresponding to the version
         :param location_id: location_id of location
         :param version: version number
-        :param status: expected status
+        :param active: set value for active
         """
         try:
             enabled_app_release = LatestEnabledAppRelease.objects.get(
@@ -6003,9 +6003,9 @@ class LatestEnabledAppRelease(models.Model):
             enabled_app_release = LatestEnabledAppRelease(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
-        enabled_app_release.active = status
+        enabled_app_release.active = active
         enabled_app_release.full_clean()
-        enabled_app_release.activate() if status else enabled_app_release.deactivate()
+        enabled_app_release.activate() if active else enabled_app_release.deactivate()
 
     def deactivate(self):
         self.active = False
