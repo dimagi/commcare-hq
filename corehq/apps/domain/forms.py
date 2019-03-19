@@ -2470,3 +2470,4 @@ class ManageAppReleasesForm(forms.Form):
                                                   version, status=True)
         except ValidationError as e:
             return False, ','.join(e.messages)
+        return True, None

@@ -5960,6 +5960,8 @@ class LatestEnabledAppRelease(models.Model):
     active = models.BooleanField(default=True)
     activated_on = models.DateTimeField(null=True)
     deactivated_on = models.DateTimeField(null=True)
+    activated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
 
     @staticmethod
     def expire_cache(domain, location_id, app_id):
