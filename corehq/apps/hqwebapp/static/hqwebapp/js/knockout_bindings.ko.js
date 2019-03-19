@@ -667,6 +667,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         init: function (element, valueAccessor) {
             var list = valueAccessor();
             $(element).sortable({
+                handle: '.grip',
+                cursor: 'move',
                 update: function (event, ui) {
                     //retrieve our actual data item
                     var item = ko.dataFor(ui.item.get(0));
