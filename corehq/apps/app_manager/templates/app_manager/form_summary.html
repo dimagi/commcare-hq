@@ -11,7 +11,16 @@
     {% initial_page_data 'modules' modules %}
     {% registerurl 'form_source' domain app_id '---' %}
     {% registerurl 'view_module' domain app_id '---' %}
-    {% include 'app_manager/partials/form_summary_header.html' %}
+    <div class="page-header ko-template" style="margin-top: 0;" id="form-summary-header">
+        <h3>
+            <i class="fa fa-file-text-o"></i>
+            {% trans "Form Summary" %}  - {% trans "Version" %} {{ app_version }}
+            {% if app_id != latest_app_id %}
+                <small><a href="{% url 'app_form_summary' domain  latest_app_id %}">{% trans "See latest" %}</a> </small>
+            {% endif %}
+        </h3>
+        {% include 'app_manager/partials/form_summary_header.html' %}
+    </div>
     <div id="form-summary" class="ko-template">
         {% include 'app_manager/form_summary_base.html' with modules=modules errors=errors %}
     </div>
