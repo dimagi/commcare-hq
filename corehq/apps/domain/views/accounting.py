@@ -228,7 +228,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'css_class': "label-plan label-plan-%s" % plan_version.plan.edition.lower(),
             'do_not_invoice': subscription.do_not_invoice if subscription is not None else False,
             'is_trial': subscription.is_trial if subscription is not None else False,
-            'trial_length': trial_length if subscription.is_trial else None,
+            'trial_length': trial_length if subscription is not None and subscription.is_trial else None,
             'date_start': (subscription.date_start.strftime(USER_DATE_FORMAT)
                            if subscription is not None else None),
             'date_end': date_end,
