@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django import forms
 from django.utils.translation import ugettext_lazy, ugettext as _
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -24,14 +23,10 @@ class BasicCrispyForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(BasicCrispyForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
 
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
         self.helper.form_action = '#'
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
@@ -69,14 +64,10 @@ class CheckboxesForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(CheckboxesForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = hqcrispy.HQFormHelper()
 
         self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
         self.helper.form_action = '#'
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(

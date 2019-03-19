@@ -8,6 +8,7 @@ import attr
 import datetime
 import logging
 import gevent
+import time
 
 from django.core import cache
 from django.conf import settings
@@ -132,6 +133,11 @@ def check_celery():
     if celery_status.success and celery_worker_status.success:
         return celery_status
     else:
+        # Retry because of https://github.com/celery/celery/issues/4758
+        if not celery_worker_status.success:
+            time.sleep(5)
+            celery_worker_status = _check_celery_workers()
+
         message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
         return ServiceStatus(False, message)
 

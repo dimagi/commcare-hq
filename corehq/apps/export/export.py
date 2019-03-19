@@ -10,6 +10,7 @@ import datetime
 
 from couchdbkit import ResourceConflict
 
+from corehq.apps.couch_sql_migration.couchsqlmigration import TIMING_BUCKETS
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
@@ -466,7 +467,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export')
+@datadog_track_errors('rebuild_export', duration_buckets=TIMING_BUCKETS)
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance

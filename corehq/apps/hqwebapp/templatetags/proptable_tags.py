@@ -28,6 +28,7 @@ from django.utils.html import escape, conditional_escape
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from dimagi.utils.dates import safe_strftime
 import six
@@ -38,6 +39,10 @@ register = template.Library()
 
 
 def _is_list_like(val):
+    if six.PY2 and isinstance(val, bytes):
+        val = val.decode('utf-8')
+    if isinstance(val, (six.text_type, bytes)):
+        soft_assert_type_text(val)
     return (isinstance(val, collections.Iterable) and
             not isinstance(val, six.string_types))
 

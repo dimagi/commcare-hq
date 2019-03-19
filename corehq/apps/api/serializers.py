@@ -14,6 +14,8 @@ import defusedxml.lxml as lxml
 from lxml.etree import Element
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class CommCareCaseSerializer(Serializer):
     '''
@@ -100,6 +102,7 @@ class CustomXMLSerializer(Serializer):
 
     def to_etree(self, data, options=None, name=None, depth=0):
         if isinstance(name, six.string_types):
+            soft_assert_type_text(name)
             # need to strip any whitespace from xml tag names
             name = name.strip()
         etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)

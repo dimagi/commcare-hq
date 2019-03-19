@@ -29,6 +29,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
@@ -190,6 +191,7 @@ class ICDSMixin(object):
 
                     def check_condition(v):
                         if isinstance(v, six.string_types):
+                            soft_assert_type_text(v)
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)
@@ -990,3 +992,13 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
     icds_file.save()
     return file_hash
+
+
+def get_datatables_ordering_info(request):
+    # retrive table ordering provided by datatables plugin upon clicking on column header
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
+    order_by_number_column = request.GET.get('order[0][column]')
+    order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
+    order_dir = request.GET.get('order[0][dir]', 'asc')
+    return start, length, order_by_number_column, order_by_name_column, order_dir
