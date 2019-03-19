@@ -300,6 +300,8 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         self.user_rate = self.subscription.plan_version.feature_rates \
             .filter(feature__feature_type=FeatureType.USER).get()
         self.advanced_rate = self.advanced_plan.feature_rates.filter(feature__feature_type=FeatureType.USER).get()
+        self.invoice_date = utils.months_from_date(self.subscription.date_start,
+                                                   random.randint(2, self.subscription_length))
 
     def test_under_limit(self):
         num_users = random.randint(0, self.user_rate.monthly_limit)
@@ -308,9 +310,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_advanced = random.randint(0, self.advanced_rate.monthly_limit)
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
@@ -333,9 +333,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         num_users_advanced = self.advanced_rate.monthly_limit + 1
         generator.arbitrary_commcare_users_for_domain(self.domain2.name, num_users_advanced)
 
-        invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
-        tasks.generate_invoices(invoice_date)
+        tasks.generate_invoices(self.invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 1)
 
         invoice = CustomerInvoice.objects.first()
