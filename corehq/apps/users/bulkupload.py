@@ -1,8 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import uuid
-import logging
 
+import logging
+import uuid
+
+import six
+from couchdbkit.exceptions import (
+    BulkSaveError,
+    MultipleResultsFound,
+    ResourceNotFound,
+)
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -10,39 +17,31 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
-    alphanumeric_sort_key
-from dimagi.utils.parsing import string_to_boolean
-
-from couchdbkit.exceptions import (
-    BulkSaveError,
-    MultipleResultsFound,
-    ResourceNotFound,
-)
-from couchexport.writers import Excel2007ExportWriter
-from soil import DownloadBase
+from six.moves import map
+from six.moves import range
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.groups.models import Group
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
-    get_user_docs_by_username,
-)
+    get_existing_usernames)
 from corehq.apps.users.models import UserRole
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
+    alphanumeric_sort_key
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import string_to_boolean
+from soil import DownloadBase
 from soil.util import get_download_file_path, expose_download
-
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
-import six
-from six.moves import range
-from six.moves import map
 
 
 class UserUploadError(Exception):
@@ -117,7 +116,9 @@ def check_existing_usernames(user_specs, domain):
     if invalid_usernames:
         raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
 
-    existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
+    existing_usernames = set()
+    for usernames in chunked(usernames_without_ids, 500):
+        existing_usernames.update(get_existing_usernames(usernames))
 
     if existing_usernames:
         raise UserUploadError(_("The following usernames already exist and must "
@@ -234,7 +235,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
             loc_type.name for loc_type in Domain.get_by_name(domain).location_types
             if not loc_type.administrative
         ]
-        return super(SiteCodeToLocationCache, self).__init__(domain)
+        super(SiteCodeToLocationCache, self).__init__(domain)
 
     def lookup(self, site_code):
         """

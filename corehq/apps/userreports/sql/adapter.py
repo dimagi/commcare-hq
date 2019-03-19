@@ -177,8 +177,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def _best_effort_save_rows(self, rows, doc):
         try:
             self.save_rows(rows)
-        except IntegrityError:
-            pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             self.handle_exception(doc, e)
 

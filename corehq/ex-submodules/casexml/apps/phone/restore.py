@@ -648,7 +648,13 @@ class RestoreConfig(object):
             # store the task id in cache
             self.async_restore_task_id_cache.set_value(task.id)
         try:
-            response = task.get(timeout=self._get_task_timeout(new_task))
+            response_or_name = task.get(timeout=self._get_task_timeout(new_task))
+            if isinstance(response_or_name, bytes):
+                response_or_name = response_or_name.decode('utf-8')
+            if isinstance(response_or_name, six.text_type):
+                response = CachedResponse(response_or_name)
+            else:
+                response = response_or_name
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
@@ -745,7 +751,7 @@ class RestoreConfig(object):
             'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         maybe_add_domain_tag(self.domain, tags)
-        timer_buckets = (5, 20, 60, 120)
+        timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]

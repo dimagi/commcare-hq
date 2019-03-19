@@ -441,9 +441,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.module.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
         self.module.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
 
-        with flag_enabled('LANGUAGE_LINKED_MULTIMEDIA'):
-            en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
-            hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
 

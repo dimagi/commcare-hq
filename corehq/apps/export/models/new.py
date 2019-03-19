@@ -649,13 +649,13 @@ class ExportInstanceFilters(DocumentSchema):
 
 class CaseExportInstanceFilters(ExportInstanceFilters):
     sharing_groups = ListProperty(StringProperty)
-    show_all_data = BooleanProperty(default=True)
-    show_project_data = BooleanProperty()
+    show_all_data = BooleanProperty()
+    show_project_data = BooleanProperty(default=True)
     show_deactivated_data = BooleanProperty()
 
 
 class FormExportInstanceFilters(ExportInstanceFilters):
-    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE])
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.ACTIVE, HQUserType.DEACTIVATED])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -988,7 +988,7 @@ class ExportInstance(BlobMixin, Document):
         Get the pre-computed export for this instance.
         Only daily saved exports could have a pre-computed export.
         """
-        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream, return_bytes=True)
 
     def copy_export(self):
         export_json = self.to_json()

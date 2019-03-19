@@ -1259,27 +1259,12 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-LANGUAGE_LINKED_MULTIMEDIA = StaticToggle(
-    'language_linked_multimedia',
-    'Add a setting to link multimedia to the default language',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/ccinternal/Linking+multimedia+to+the+default+language"
-)
-
 CAUTIOUS_MULTIMEDIA = StaticToggle(
     'cautious_multimedia',
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds', 'icds-cas'},
-)
-
-PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
-    'profile_bulk_multimedia_upload',
-    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(
