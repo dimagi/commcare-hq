@@ -3,7 +3,7 @@ hqDefine('app_manager/js/manage_releases', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets_v4',
+    'hqwebapp/js/widgets_v4', // using select2/dist/js/select2.full.min for ko-select2 on location select
 ], function (
     $,
     ko,
