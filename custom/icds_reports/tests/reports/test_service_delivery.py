@@ -8,7 +8,7 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 
 class TestServiceDelivery(TestCase):
 
-    def test_get_service_delivery_data(self):
+    def test_get_service_delivery_data_0_3(self):
         data = get_service_delivery_data(
             0,
             10,
@@ -19,7 +19,130 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
+            '0_3',
+        )
+        expected = {
+            'aggregationLevel': 1,
+            'recordsTotal': 3,
+            'recordsFiltered': 3,
+            'data': [
+                {
+                    'state_name': 'st1',
+                    'num_awcs_conducted_vhnd': 2,
+                    'gm': '58.04 %',
+                    'supervisor_name': 'Data Not Entered',
+                    'total_thr_candidates': 274,
+                    'awc_name': 'Data Not Entered',
+                    'num_awcs_conducted_cbe': 1,
+                    'thr_given_21_days': 80,
+                    'valid_visits': 0,
+                    'expected_visits': 322,
+                    'thr': '29.20 %',
+                    'num_launched_awcs': 9,
+                    'block_name': 'Data Not Entered',
+                    'children_0_3': 143,
+                    'gm_0_3': 83,
+                    'district_name': 'Data Not Entered',
+                    'home_visits': '0.00 %'
+                },
+                {
+                    'state_name': 'st2',
+                    'num_awcs_conducted_vhnd': 6,
+                    'gm': '81.29 %',
+                    'supervisor_name': 'Data Not Entered',
+                    'total_thr_candidates': 311,
+                    'awc_name': 'Data Not Entered',
+                    'num_awcs_conducted_cbe': 1,
+                    'thr_given_21_days': 181,
+                    'valid_visits': 0,
+                    'expected_visits': 340,
+                    'thr': '58.20 %',
+                    'num_launched_awcs': 11,
+                    'block_name': 'Data Not Entered',
+                    'children_0_3': 171,
+                    'gm_0_3': 139,
+                    'district_name': 'Data Not Entered',
+                    'home_visits': '0.00 %'
+                },
+                {
+                    'state_name': 'st7',
+                    'num_awcs_conducted_vhnd': 0,
+                    'gm': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'total_thr_candidates': 1,
+                    'awc_name': 'Data Not Entered',
+                    'num_awcs_conducted_cbe': 0,
+                    'thr_given_21_days': 0,
+                    'valid_visits': 0,
+                    'expected_visits': 1,
+                    'thr': '0.00 %',
+                    'num_launched_awcs': 1,
+                    'block_name': 'Data Not Entered',
+                    'children_0_3': 0,
+                    'gm_0_3': 0,
+                    'district_name': 'Data Not Entered',
+                    'home_visits': '0.00 %'
+                }
+            ],
+            'ageSDD': '0_3',
+        }
+        self.assertDictEqual(expected, data)
+
+    def test_get_service_delivery_data_state_0_3(self):
+        data = get_service_delivery_data(
+            0,
+            10,
+            'district_name',
+            False,
+            {
+                'aggregation_level': 2,
+                'state_id': 'st1',
+            },
+            2017,
+            5,
+            '0_3',
+        )
+        expected = {
+            'aggregationLevel': 2,
+            'recordsTotal': 1,
+            'recordsFiltered': 1,
+            'data': [
+                {
+                    'state_name': 'st1',
+                    'num_awcs_conducted_vhnd': 2,
+                    'gm': '58.04 %',
+                    'supervisor_name': 'Data Not Entered',
+                    'total_thr_candidates': 274,
+                    'awc_name': 'Data Not Entered',
+                    'num_awcs_conducted_cbe': 1,
+                    'thr_given_21_days': 80,
+                    'valid_visits': 0,
+                    'expected_visits': 322,
+                    'thr': '29.20 %',
+                    'num_launched_awcs': 9,
+                    'block_name': 'Data Not Entered',
+                    'children_0_3': 143,
+                    'gm_0_3': 83,
+                    'district_name': 'd1',
+                    'home_visits': '0.00 %'
+                }
+            ],
+            'ageSDD': '0_3',
+        }
+        self.assertDictEqual(expected, data)
+
+    def test_get_service_delivery_data_3_6(self):
+        data = get_service_delivery_data(
+            0,
+            10,
             None,
+            False,
+            {
+                'aggregation_level': 1,
+            },
+            2017,
+            5,
+            '3_6',
         )
         expected = {
             'aggregationLevel': 1,
@@ -72,11 +195,11 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered'
                 }
             ],
-            'ageSDD': None,
+            'ageSDD': '3_6',
         }
         self.assertDictEqual(expected, data)
 
-    def test_get_service_delivery_data_state(self):
+    def test_get_service_delivery_data_state_3_6(self):
         data = get_service_delivery_data(
             0,
             10,
@@ -88,7 +211,7 @@ class TestServiceDelivery(TestCase):
             },
             2017,
             5,
-            None,
+            '3_6',
         )
         expected = {
             'aggregationLevel': 2,
@@ -111,6 +234,6 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered'
                 }
             ],
-            'ageSDD': None,
+            'ageSDD': '3_6',
         }
         self.assertDictEqual(expected, data)
