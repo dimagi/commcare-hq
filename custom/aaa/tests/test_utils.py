@@ -141,6 +141,7 @@ class TestUtils(TestCase):
             'state_id': self.state.location_id,
         }
         result = build_location_filters(self.taluka.location_id, MINISTRY_MOHFW)
+        self.assertDictEqual(result, expected_output)
 
     def test_build_location_filters_for_district_MOHFW(self):
         expected_output = {
@@ -157,7 +158,6 @@ class TestUtils(TestCase):
             'state_id': self.state.location_id,
         }
         result = build_location_filters(self.state.location_id, MINISTRY_MOHFW)
-        self.assertDictEqual(result, expected_output)
         self.assertDictEqual(result, expected_output)
 
     def test_build_location_filters_for_national_MOHFW(self):
