@@ -15,7 +15,7 @@ from six.moves import range
 class DailySavedExportSavingTest(TestCase):
 
     def test_file_save_and_load(self):
-        payload = 'something small and simple'
+        payload = b'something small and simple'
         export = ExportInstance(daily_saved_export=True, domain="test")
         export.save()
         export.set_payload(payload)
