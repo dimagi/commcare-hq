@@ -14,7 +14,7 @@
             <!-- /ko -->
             <span data-bind="text: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
             <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>
-            <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>
+            <span class="inline-edit-icon" data-bind="css: containerClass, visible: allow_edit"><i class="fa fa-pencil"></i></span>
         </div>
         <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">
             <div class="form-group langcode-container" data-bind="css: {'has-lang': lang}">

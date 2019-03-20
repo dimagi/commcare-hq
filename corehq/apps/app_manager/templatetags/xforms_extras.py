@@ -86,7 +86,7 @@ def input_trans(name, langs=None, input_name='name'):
 
 @register.simple_tag
 def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
-        containerClass='', iconClass='', readOnlyClass=''):
+        containerClass='', iconClass='', readOnlyClass='', allow_edit='true'):
     template = '''
         <inline-edit params="
             name: 'name',
@@ -100,8 +100,9 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
             iconClass: '{}',
             readOnlyClass: '{}',
             postSave: {},
+            allow_edit: '{}',
         "></inline-edit>
-    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave)
+    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave, allow_edit)
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 
