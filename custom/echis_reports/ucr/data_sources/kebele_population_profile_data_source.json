@@ -1125,31 +1125,10 @@
          "column_id":"hh_in_the_wda_networks_count"
       }
    ],
-   "meta":{
-      "doc_type":"DataSourceMeta",
-      "build":{
-         "doc_type":"DataSourceBuildInformation",
-         "initiated":null,
-         "rebuilt_asynchronously":false,
-         "app_id":null,
-         "initiated_in_place":"2018-10-17T11:37:34.147416Z",
-         "finished":false,
-         "source_id":null,
-         "app_version":null,
-         "finished_in_place":true
-      }
-   },
-   "asynchronous":false,
    "base_item_expression":{
 
    },
-   "is_deactivated":false,
-   "sql_settings":{
-      "doc_type":"SQLSettings",
-      "partition_config":[
-
-      ]
-   },
+ 
    "configured_filter":{
       "type":"and",
       "filters":[
@@ -1242,18 +1221,13 @@
          }
       ]
    },
-   "backend_id":"SQL",
-   "disable_destructive_rebuild":false,
+ 
    "description":"",
    "referenced_doc_type":"CommCareCase",
-   "engine_id":"ucr",
+   "table_id":"static-kebele_population_profile_data_source",
    "display_name":"Kebele Population Profile Data Source",
    "named_expressions":{
-
    },
-   "doc_type":"DataSourceConfiguration",
-   "icds_rebuild_related_docs":false,
-   "table_id":"static-kebele_population_profile_data_source",
  
    "sql_column_indexes":[
 
