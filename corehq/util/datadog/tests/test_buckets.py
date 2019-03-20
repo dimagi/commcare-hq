@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import timedelta
 
 from corehq.util.datadog.utils import make_bucket_from_timedeltas, DAY_SCALE_TIME_BUCKETS
