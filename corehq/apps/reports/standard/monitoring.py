@@ -1800,7 +1800,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def get_all_rows(self):
-        # Note, you can get rid of user_generator() if this works.
         user_query = EMWF.user_es_query(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
@@ -1811,6 +1810,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         formatted_data = self._report_data(users_to_iterate=user_list, user_ids=[a.user_id for a in user_list])
 
         formatted_rows = self._rows_by_user(formatted_data, user_list)
+
+        self.total_row = self._total_row(formatted_rows, formatted_data)
 
         return formatted_rows
 
