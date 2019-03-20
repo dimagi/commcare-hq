@@ -197,6 +197,10 @@ class ESError(Exception):
     pass
 
 
+class ESShardFailure(ESError):
+    pass
+
+
 def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
@@ -536,3 +540,6 @@ def report_shard_failures(search_result):
 
     if search_result.get('_shards', {}).get('failed'):
         datadog_counter('commcare.es.partial_results', value=1)
+        # Example message:
+        #   "_shards: {'successful': 2, 'failed': 0, 'total': 2}"
+        raise ESShardFailure('_shards: {!r}'.format(search_result.get('_shards')))
