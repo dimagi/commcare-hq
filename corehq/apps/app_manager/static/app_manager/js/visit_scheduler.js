@@ -404,28 +404,6 @@ hqDefine('app_manager/js/visit_scheduler', function () {
 });
 
 // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-//connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-    init: function (element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            update: function (event, ui) {
-                //retrieve our actual data item
-                var item = ko.dataFor(ui.item.get(0));
-                //figure out its new position
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                //remove the item and add it back in the right spot
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);
-                }
-                ui.item.remove();
-            },
-        });
-    },
-};
-
-// Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //control visibility, give element focus, and select the contents (in order)
 ko.bindingHandlers.visibleAndSelect = {
     update: function (element, valueAccessor) {
