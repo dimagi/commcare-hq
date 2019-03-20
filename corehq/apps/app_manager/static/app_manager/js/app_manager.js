@@ -233,6 +233,7 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initMenuItemSorting = function () {
+        var MODULE_SELECTOR = ".appmanager-main-menu .module";
         if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
             initChildModuleUpdateListener();
@@ -247,8 +248,9 @@ hqDefine('app_manager/js/app_manager', function () {
         }
 
         function initDragHandles() {
-            $('.drag_handle').addClass('fa fa-arrows-v');
-            $('.js-appnav-drag-module').on('mouseenter', function () {
+            var $scope = $(".appmanager-main-menu");
+            $scope.find('.drag_handle').addClass('fa fa-arrows-v');
+            $scope.find('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
                 $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
@@ -257,7 +259,7 @@ hqDefine('app_manager/js/app_manager', function () {
         function nestChildModules() {
             var modulesByUid = getModulesByUid(),
                 childModules = [];
-            $(".module").each(function (index, element) {
+            $(MODULE_SELECTOR).each(function (index, element) {
                 // Set index here so we know whether we've rearranged anything
                 $(element).data('index', index);
                 if ($(element).data('rootmoduleuid')) {
@@ -275,7 +277,7 @@ hqDefine('app_manager/js/app_manager', function () {
         }
         function getModulesByUid() {
             var modulesByUid = {};
-            $(".module").each(function (index, element) {
+            $(MODULE_SELECTOR).each(function (index, element) {
                 modulesByUid[ $(element).data('uid') ] = element;
             });
             return modulesByUid;
@@ -289,15 +291,16 @@ hqDefine('app_manager/js/app_manager', function () {
             childList.append(childModule);
         }
         function moveModuleToBottom(module) {
-            $("ul.appnav-module").append(module);
+            $("ul.appmanager-main-menu").append(module);
         }
         function initChildModuleUpdateListener() {
             // If a child module is created or removed, update the sidebar
             $('#module-settings-form').on('saved-app-manager-form', function () {
-                var modulesByUid = getModulesByUid(),
-                    module = modulesByUid[$('#module-settings-form').data('moduleuid')],
+                var $form = $(this),
+                    modulesByUid = getModulesByUid(),
+                    module = modulesByUid[$form.data('moduleuid')],
                     oldRoot = $(module).data('rootmoduleuid'),
-                    newRoot = $('select[name=root_module_id]').val();
+                    newRoot = $form.find('select[name=root_module_id]').val();
 
                 if (newRoot !== oldRoot) {
                     $(module).data('rootmoduleuid', newRoot);
@@ -312,7 +315,7 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         }
         function modulesWereReordered() {
-            return _.some($(".module"), function (element, index) {
+            return _.some($(MODULE_SELECTOR), function (element, index) {
                 return index !== $(element).data('index');
             });
         }
@@ -358,7 +361,7 @@ hqDefine('app_manager/js/app_manager', function () {
         function rearrangeModules($module) {
             var url = initialPageData.reverse('rearrange', 'modules'),
                 from = $module.data('index'),
-                to = _.findIndex($(".module"), function (module) {
+                to = _.findIndex($(MODULE_SELECTOR), function (module) {
                     return $(module).data('uid') === $module.data('uid');
                 });
 
@@ -367,7 +370,7 @@ hqDefine('app_manager/js/app_manager', function () {
             }
         }
         function resetIndexes() {
-            $(".module").each(function (index, module) {
+            $(MODULE_SELECTOR).each(function (index, module) {
                 $(module).data('index', index);
                 $(module).children("ul.sortable-forms").first().children("li").each(function (index, form) {
                     $(form).data('index', index);
