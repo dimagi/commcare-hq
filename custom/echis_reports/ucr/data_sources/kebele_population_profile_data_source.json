@@ -9,12 +9,6 @@
     "echis"
   ],
   "config": {
-  
-   "es_index_settings":{
-      "doc_type":"ElasticSearchIndexSettings",
-      "number_of_shards":2,
-      "refresh_interval":"5s"
-   },
    "configured_indicators":[
       {
          "comment":null,
@@ -1260,10 +1254,7 @@
    "doc_type":"DataSourceConfiguration",
    "icds_rebuild_related_docs":false,
    "table_id":"static-kebele_population_profile_data_source",
-   "named_filters":{
-
-   },
-   "_id":"dab63d3ec8e6ac18568978f839192d22",
+ 
    "sql_column_indexes":[
 
    ]

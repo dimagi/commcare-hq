@@ -9,11 +9,7 @@
     "echis"
   ],
   "config": {
-    "es_index_settings":{
-      "doc_type":"ElasticSearchIndexSettings",
-      "number_of_shards":2,
-      "refresh_interval":"5s"
-   },
+ 
    "configured_indicators":[
       {
          "comment":null,
@@ -472,10 +468,6 @@
    "doc_type":"DataSourceConfiguration",
    "icds_rebuild_related_docs":false,
    "table_id":"static-household_with_access_to_Latrine_by_type_data_source",
-   "named_filters":{
-
-   },
-   "_id":"41ccd1feb600226be0c7b31bc1b1d794",
    "sql_column_indexes":[
 
    ]
