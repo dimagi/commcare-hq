@@ -34,6 +34,8 @@ DATABASES.update({
         'PORT': '5600',
         'TEST': {
             'SERIALIZE': False,
+            # this ensures the master gets created after / destroyed before the workers
+            'DEPENDENCIES': ['citus-ucr-worker1', 'citus-ucr-worker2'],
         },
         'ROLE': 'citus_master'
     },
@@ -47,8 +49,6 @@ DATABASES.update({
         'PORT': '5601',
         'TEST': {
             'SERIALIZE': False,
-            # this ensures the master gets created / destroyed before the workers
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker1:5432'
@@ -63,7 +63,6 @@ DATABASES.update({
         'PORT': '5602',
         'TEST': {
             'SERIALIZE': False,
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker2:5432'
