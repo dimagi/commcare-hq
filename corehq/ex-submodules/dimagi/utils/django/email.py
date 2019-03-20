@@ -15,6 +15,11 @@ is only supported in HTML. Please set your email client to display this message
 in HTML, or use an email client that supports HTML emails.
 """
 
+LARGE_FILE_SIZE_ERROR_CODE = 552
+# ICDS TCL gateway uses non-standard code
+LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
+LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
+
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
@@ -55,7 +60,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 'subject': subject,
             }
 
-            if e.smtp_code == 552:
+            if e.smtp_code in LARGE_FILE_SIZE_ERROR_CODES:
                 error_text = _('Could not send email: file size is too large.')
             else:
                 error_text = e.smtp_error

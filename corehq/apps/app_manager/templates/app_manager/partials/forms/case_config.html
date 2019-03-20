@@ -141,11 +141,13 @@
                                 <span data-bind="text: $parent.getCaseTypeLabel(case_type())"></span>
                             </h4>
                         </div>
-                        <a href="#"
-                           class="case-action-remove btn btn-purple"
-                           data-bind="openModal: 'remove-subcase-modal-template'">
-                            <i class="fa fa-trash"></i>
-                        </a>
+                        <div class="panel-case-actions-actions">
+                            <a href="#"
+                               class="case-action-remove btn btn-purple"
+                               data-bind="openModal: 'remove-subcase-modal-template'">
+                                <i class="fa fa-trash"></i>
+                            </a>
+                        </div>
                         <div class="panel-body">
                             <div class="panel panel-appmanager">
                                 <div class="panel-heading">

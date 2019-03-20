@@ -2,6 +2,7 @@ hqDefine("aaa/js/models/child", [
     'jquery',
     'knockout',
     'underscore',
+    'moment/moment',
     'hqwebapp/js/initial_page_data',
     'aaa/js/models/person',
     'aaa/js/models/model_utils',
@@ -10,6 +11,7 @@ hqDefine("aaa/js/models/child", [
     $,
     ko,
     _,
+    moment,
     initialPageData,
     personUtils,
     modelUtils,
@@ -35,9 +37,9 @@ hqDefine("aaa/js/models/child", [
         self.age = ko.computed(function () {
             var age = parseInt(self.age());
             if (age < 12) {
-                return age + " Mon"
-            } else if (age === 12) {
-                return "1 Yr"
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
             } else {
                 return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
             }
@@ -67,7 +69,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.id = data.id || null;
         self.name = data.name || null;
-        self.age = data.age || null;
+        self.dob = data.dob || null;
 
         self.pregnancyLength = ko.observable();
         self.breastfeedingInitiated = ko.observable();
@@ -104,12 +106,23 @@ hqDefine("aaa/js/models/child", [
         self.wasting = ko.observable();
         self.wastingStatus = ko.observable();
 
+        self.age = ko.computed(function () {
+            var age = Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
+            if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
+
         self.linkName = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'child');
             url = url.replace('beneficiary_id', 1);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
-            return '<a href="' + url + '">' + self.name + ' (' + self.age + ' Yrs)' + '</a>';
+            return '<a href="' + url + '">' + self.name + ' (' + self.age()  + ')</a>';
         });
         
         self.updateModel = function (data) {
@@ -145,7 +158,6 @@ hqDefine("aaa/js/models/child", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             mother: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
 
         self.infantDetails = ko.observable(childModel({}, postData));
@@ -178,7 +190,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#weight_for_age_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -200,15 +212,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                )
+            }
+            d3.select('#weight_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -231,7 +248,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#height_for_age_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -253,15 +270,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                   {
+                       key: 'line',
+                       type: 'line',
+                       values: data.points,
+                       color: 'black',
+                       strokeWidth: 2,
+                       yAxis: 1,
+                   }
+                )
+            }
+            d3.select('#height_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -283,7 +305,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#weight_for_height_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -305,15 +327,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                )
+            }
+            d3.select('#weight_for_height_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -327,7 +354,6 @@ hqDefine("aaa/js/models/child", [
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.mother(personUtils.personModel(data.mother, self.postData));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             });
         };
 

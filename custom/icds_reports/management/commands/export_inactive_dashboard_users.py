@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-import csv
+from csv342 import csv
 import re
 from datetime import datetime, timedelta
 
@@ -9,6 +9,7 @@ from django.core.management import BaseCommand
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from corehq.apps.users.models import CommCareUser
 from custom.icds_reports.models import ICDSAuditEntryRecord
+from io import open
 
 
 dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
@@ -78,7 +79,7 @@ def output(usernames, path):
         for username in usernames:
             user = CommCareUser.get_by_username(username)
             loc = user.sql_location
-            loc_name = loc.name.encode('utf8') if loc else ''
+            loc_name = loc.name if loc else ''
             state = loc.get_ancestor_of_type('state') if loc else None
-            state_name = state.name.encode('utf8') if state else ''
+            state_name = state.name if state else ''
             writer.writerow([username, loc_name, state_name])

@@ -1,19 +1,18 @@
-from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
-from collections import namedtuple, defaultdict
-from functools import partial
+
 import logging
+from collections import namedtuple
+from functools import partial
 
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
-from alembic.operations import Operations
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
 
 from corehq.sql_db.connections import connection_manager
-from corehq.util.soft_assert import soft_assert
 from fluff.util import metadata as fluff_metadata
 
 logger = logging.getLogger('fluff')
@@ -93,7 +92,6 @@ def catch_signal(sender, **kwargs):
 
 
 SimpleDiff = namedtuple('SimpleDiff', 'type table_name item_name')
-SimpleIndexDiff = namedtuple('SimpleIndexDiff', 'action index')
 
 
 def reformat_alembic_diffs(raw_diffs):
@@ -148,105 +146,6 @@ def get_tables_to_rebuild(diffs, table_names):
         if diff.table_name in table_names and diff.type in DiffTypes.TYPES_FOR_REBUILD
     }
 
-
-def get_tables_with_index_changes(diffs, table_names):
-    return {
-        diff.table_name
-        for diff in diffs
-        if diff.table_name in table_names and diff.type in DiffTypes.INDEX_TYPES
-    }
-
-
-def _get_indexes_to_change(raw_diffs, table_names):
-    # raw diffs come in as a list of (action, index)
-    index_diffs = [
-        SimpleIndexDiff(action=diff[0], index=diff[1])
-        for diff in raw_diffs if diff[0] in DiffTypes.INDEX_TYPES
-    ]
-    index_diffs_by_table_and_col = defaultdict(list)
-
-    for index_diff in index_diffs:
-        index = index_diff.index
-        if index.table.name not in table_names:
-            continue
-
-        column_names = tuple(index.columns.keys())
-        index_diffs_by_table_and_col[(index.table.name, column_names)].append(index_diff)
-
-    indexes_to_change = []
-
-    for index_diffs in index_diffs_by_table_and_col.values():
-        if len(index_diffs) == 1:
-            indexes_to_change.append(index_diffs[0])
-        else:
-            # tests when alembic tries to remove/add the same index
-            assert len(index_diffs) == 2
-            actions = [diff.action for diff in index_diffs]
-            assert DiffTypes.ADD_INDEX in actions
-            assert DiffTypes.REMOVE_INDEX in actions
-
-    return indexes_to_change
-
-
-def apply_index_changes(engine, raw_diffs, table_names):
-    indexes = _get_indexes_to_change(raw_diffs, table_names)
-    remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
-    add_indexes = [index.index for index in indexes if index.action == DiffTypes.ADD_INDEX]
-
-    with engine.begin() as conn:
-        for index in add_indexes:
-            index.create(conn)
-
-    # don't remove indexes automatically because we want to be able to add them
-    # concurrently without the code removing them
-    _assert = soft_assert(to="@".join(["jemord", "dimagi.com"]))
-    for index in remove_indexes:
-        _assert(False, "Index {} can be removed".format(index.name))
-
-
-def get_tables_with_added_nullable_columns(diffs, table_names):
-    return {
-        diff.table_name
-        for diff in diffs
-        if (
-            diff.table_name in table_names
-            and diff.type == DiffTypes.ADD_NULLABLE_COLUMN
-        )
-    }
-
-
-def _get_columns_to_add(raw_diffs, table_names):
-    # raw diffs come in as a list of (action, index)
-    return [
-        diff[3]
-        for diff in raw_diffs
-        if diff[0] in DiffTypes.ADD_COLUMN and diff[3].nullable is True
-    ]
-
-
-def add_columns(engine, raw_diffs, table_names):
-    with engine.begin() as conn:
-        ctx = get_migration_context(conn, table_names)
-        op = Operations(ctx)
-        columns = _get_columns_to_add(raw_diffs, table_names)
-
-        for col in columns:
-            table_name = col.table.name
-            # the column has a reference to a table definition that already
-            # has the column defined, so remove that and add the column
-            col.table = None
-            op.add_column(table_name, col)
-
-
-def get_tables_to_migrate(diffs, table_names):
-    tables_with_indexes = get_tables_with_index_changes(diffs, table_names)
-    tables_with_added_columns = get_tables_with_added_nullable_columns(diffs, table_names)
-    return tables_with_indexes | tables_with_added_columns
-
-
-def migrate_tables(engine, raw_diffs, table_names):
-    add_columns(engine, raw_diffs, table_names)
-    apply_index_changes(engine, raw_diffs, table_names)
 
 
 def rebuild_table(engine, pillow, indicator_doc):
