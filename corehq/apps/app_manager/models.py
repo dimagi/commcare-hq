@@ -4029,7 +4029,7 @@ class LazyBlobDoc(BlobMixin):
 
             if content is None:
                 try:
-                    content = self.fetch_attachment(name, return_bytes=True)
+                    content = self.fetch_attachment(name)
                 except ResourceNotFound as e:
                     # django cache will pickle this exception for you
                     # but e.response isn't picklable
@@ -4965,7 +4965,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                         previous_form = previous_version.get_form(form.unique_id)
                         # take the previous version's compiled form as-is
                         # (generation code may have changed since last build)
-                        previous_source = previous_version.fetch_attachment(filename, return_bytes=True)
+                        previous_source = previous_version.fetch_attachment(filename)
                     except (ResourceNotFound, FormNotFoundException):
                         form.version = None
                     else:
@@ -5719,7 +5719,7 @@ class RemoteApp(ApplicationBase):
 
             def fetch(location):
                 filepath = self.strip_location(location)
-                return self.fetch_attachment('files/%s' % filepath, return_bytes=True)
+                return self.fetch_attachment('files/%s' % filepath)
 
             profile_xml = _parse_xml(fetch('profile.xml'))
             suite_location = profile_xml.find(self.SUITE_XPATH).text

@@ -917,7 +917,7 @@ class SavedBasicExport(BlobMixin, Document):
         self.put_attachment(payload, self.get_attachment_name(), domain=UNKNOWN_DOMAIN)
 
     def get_payload(self, stream=False):
-        return self.fetch_attachment(self.get_attachment_name(), stream=stream, return_bytes=True)
+        return self.fetch_attachment(self.get_attachment_name(), stream=stream)
 
     @classmethod
     def by_index(cls, index):
