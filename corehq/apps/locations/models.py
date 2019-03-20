@@ -6,7 +6,7 @@ from datetime import datetime
 from functools import partial
 import uuid
 
-from bulk_update.helper import bulk_update as bulk_update_helper
+from django_bulk_update.helper import bulk_update as bulk_update_helper
 
 import jsonfield
 from django.db import models, transaction
@@ -856,6 +856,7 @@ class LocationRelation(models.Model):
     location_b = models.ForeignKey(
         SQLLocation, on_delete=models.CASCADE, related_name="+", to_field='location_id')
     distance = models.PositiveSmallIntegerField(null=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
     def from_locations(cls, locations):

@@ -360,8 +360,33 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
 
     @property
     def export_table(self):
-        reports = [r['report_table'] for r in self.report_context['reports']]
-        return [self._export_table(r['title'], r['headers'], r['rows'], total_row=r['total_row']) for r in reports]
+        export_tables = []
+        for individual_report in self.report_context['reports']:
+            report_table = individual_report['report_table']
+            extracted_rows = self._sanitize_all_rows(report_table)
+            extracted_total_row = self._sanitize_single_row(report_table['total_row'])
+            export_tables.append(self._export_table(report_table['title'],
+                                                    report_table['headers'],
+                                                    extracted_rows, extracted_total_row))
+        return export_tables
+
+    def _sanitize_all_rows(self, report_table):
+        extracted_rows = []
+        for row in report_table['rows']:
+            extracted_rows.append(self._sanitize_single_row(row))
+        return extracted_rows
+
+    @staticmethod
+    def _sanitize_single_row(row):
+        extracted_row_values = []
+        for row_value in row:
+            if isinstance(row_value, dict):
+                # If keys are dicts, they contain html info (ie: row_value = {'html': 'title'})
+                extracted_row_values.append(row_value['html'])
+            else:
+                extracted_row_values = row
+                break
+        return extracted_row_values
 
     def _export_table(self, export_sheet_name, headers, formatted_rows, total_row=None):
         def _unformat_row(row):

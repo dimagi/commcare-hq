@@ -103,6 +103,7 @@ class CcsRecordMonthly(models.Model):
     lactating = models.IntegerField(blank=True, null=True)
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    institutional_delivery = models.IntegerField(blank=True, null=True)
     add = models.DateField(blank=True, null=True)
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
     caste = models.TextField(blank=True, null=True)
@@ -438,6 +439,10 @@ class AggAwc(models.Model):
     num_launched_blocks = models.IntegerField(null=True)
     num_launched_supervisors = models.IntegerField(null=True)
     num_launched_awcs = models.IntegerField(null=True)
+
+    num_awcs_conducted_cbe = models.IntegerField(null=True)
+    num_awcs_conducted_vhnd = models.IntegerField(null=True)
+
     cases_household = models.IntegerField(null=True)
     cases_person = models.IntegerField(null=True)
     cases_person_all = models.IntegerField(null=True)
@@ -696,6 +701,7 @@ class AggChildHealth(models.Model):
     rations_21_plus_distributed = models.IntegerField()
     pse_eligible = models.IntegerField()
     pse_attended_16_days = models.IntegerField()
+    pse_attended_21_days = models.IntegerField()
     born_in_month = models.IntegerField()
     low_birth_weight_in_month = models.IntegerField()
     bf_at_birth = models.IntegerField()
@@ -1388,6 +1394,34 @@ class AggregateBirthPreparednesForms(models.Model):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+    play_birth_preparedness_vid = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Case has ever been counseled about birth preparedness with a video"
+    )
+    play_family_planning_vid = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Case has ever been counseled about family planning with a video"
+    )
+    counsel_preparation = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp2/counsel_preparation = 'yes'"
+    )
+    conceive = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/conceive = 'yes'"
+    )
+    counsel_accessible_ppfp = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/family_planning_group/counsel_accessible_ppfp='yes'"
+    )
+    ifa_last_seven_days = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of ifa taken in last seven days"
+    )
+    using_ifa = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Has ever had /data/bp1/using_ifa='yes'"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
@@ -1443,6 +1477,10 @@ class AggregateCcsRecordDeliveryForms(models.Model):
     valid_visits = models.PositiveSmallIntegerField(
         help_text="number of qualified visits for the incentive report",
         default=0
+    )
+    where_born = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Where the child is born"
     )
 
     class Meta(object):

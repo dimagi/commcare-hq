@@ -66,12 +66,22 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
     ):
         return True
 
-    return (
-        locations_queryset.filter(last_modified__gte=last_sync.date).exists()
-        or LocationType.objects.filter(domain=restore_user.domain,
-                                       last_modified__gte=last_sync.date).exists()
-    )
+    if (locations_queryset.filter(last_modified__gte=last_sync.date).exists()
+        or LocationType.objects.filter(
+            domain=restore_user.domain, last_modified__gte=last_sync.date).exists()):
+        return True
 
+    if toggles.RELATED_LOCATIONS.enabled(restore_user.domain):
+        return _location_relation_changed(locations_queryset, last_sync.date)
+
+    return False
+
+
+def _location_relation_changed(locations_queryset, time):
+    return (LocationRelation.objects
+            .filter(last_modified__gte=time)
+            .filter(Q(location_a__in=locations_queryset) | Q(location_b__in=locations_queryset))
+            .exists())
 
 class LocationFixtureProvider(FixtureProvider):
 
@@ -260,24 +270,36 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
         if not toggles.RELATED_LOCATIONS.enabled(restore_state.domain):
             return []
 
-        location_relations = self._users_related_locations(restore_state.restore_user)
+        user = restore_state.restore_user
+        changed, location_relations = self._query_users_related_locations(user, restore_state.last_sync_log)
+        if not changed:
+            return []
 
-        root_node = Element('fixture', {'id': self.id,
-                                        'user_id': restore_state.restore_user.user_id,
-                                        'indexed': 'true'})
-        outer_node = SubElement(root_node, 'locations')
+        xml_node = self._users_related_locations_for_xml(user, location_relations)
 
-        for location, relations in location_relations:
-            location_node = SubElement(outer_node, 'location', {'id': location.location_id})
-            for location, distance in relations:
-                node = SubElement(location_node, 'related_location')
-                node.text = location.location_id
-                if distance:
-                    node.attrib['distance'] = str(distance)
+        return [get_index_schema_node(self.id, ['@id']), xml_node]
 
-        return [get_index_schema_node(self.id, ['@id']), root_node]
+    def _query_users_related_locations(self, restore_user, last_sync_log):
+        user_location_ids = restore_user.get_location_ids(restore_user.domain)
+        if len(user_location_ids) == 0:
+            # If a user doesn't have any locations, force empty the fixture
+            return True, []
 
-    def _users_related_locations(self, restore_user):
+        user_locations_with_descendants = SQLLocation.objects.get_descendants(
+            Q(domain=restore_user.domain, location_id__in=user_location_ids)
+        )
+
+        location_relations = LocationRelation.objects.filter(
+            Q(location_a__in=user_locations_with_descendants) | Q(location_b__in=user_locations_with_descendants)
+        ).prefetch_related('location_a', 'location_a__location_type', 'location_b', 'location_b__location_type')
+
+        changed = True
+        if last_sync_log and last_sync_log.date:
+            changed = any(rel.last_modified >= last_sync_log.date for rel in location_relations)
+
+        return changed, location_relations
+
+    def _users_related_locations_for_xml(self, restore_user, location_relations):
         """Returns a sorted list of location relations:
             [
                 (location_a, [(location_b, distance), ...]),
@@ -287,26 +309,32 @@ class RelatedLocationsFixtureProvider(FixtureProvider):
         Sorted by the location's name, and each associated list is sorted by its location names.
         This is purely for deterministicly ordered outputs, and can be changed if needed.
         """
-        user_location_ids = restore_user.get_location_ids(restore_user.domain)
-        user_locations_with_descendants = SQLLocation.objects.get_descendants(
-            Q(domain=restore_user.domain, location_id__in=user_location_ids)
-        )
-        location_relations = LocationRelation.objects.filter(
-            Q(location_a__in=user_locations_with_descendants) | Q(location_b__in=user_locations_with_descendants)
-        ).prefetch_related('location_a', 'location_a__location_type', 'location_b', 'location_b__location_type')
-
-        related_location_dict = defaultdict(list)
+        relations_by_location = defaultdict(list)
 
         for relation in location_relations:
-            related_location_dict[relation.location_a].append((relation.location_b, relation.distance))
-            related_location_dict[relation.location_b].append((relation.location_a, relation.distance))
+            relations_by_location[relation.location_a].append((relation.location_b, relation.distance))
+            relations_by_location[relation.location_b].append((relation.location_a, relation.distance))
 
-        for loc in related_location_dict:
-            related_location_dict[loc].sort(key=lambda tup: tup[0].name)
+        for loc in relations_by_location:
+            relations_by_location[loc].sort(key=lambda tup: tup[0].name)
 
-        related_locations = list(related_location_dict.items())
+        related_locations = list(relations_by_location.items())
         related_locations.sort(key=lambda tup: tup[0].name)
-        return related_locations
+
+        root_node = Element('fixture', {'id': self.id,
+                                        'user_id': restore_user.user_id,
+                                        'indexed': 'true'})
+        outer_node = SubElement(root_node, 'locations')
+
+        for location, relations in related_locations:
+            location_node = SubElement(outer_node, 'location', {'id': location.location_id})
+            for related_location, distance in relations:
+                node = SubElement(location_node, 'related_location')
+                node.text = related_location.location_id
+                if distance:
+                    node.attrib['distance'] = str(distance)
+
+        return root_node
 
 
 related_locations_fixture_generator = RelatedLocationsFixtureProvider()

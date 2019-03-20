@@ -419,22 +419,22 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
     role = forms.ChoiceField(choices=(), label="Project Role")
 
     def __init__(self, data=None, excluded_emails=None, *args, **kwargs):
-        domain = None
+        domain_obj = None
         location = None
         if 'domain' in kwargs:
-            domain = Domain.get_by_name(kwargs['domain'])
+            domain_obj = Domain.get_by_name(kwargs['domain'])
             del kwargs['domain']
         if 'location' in kwargs:
             location = kwargs['location']
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
-        if domain and domain.commtrack_enabled:
-            widget = LocationSelectWidget(domain.name, select2_version='v3')
+        if domain_obj and domain_obj.commtrack_enabled:
+            widget = LocationSelectWidget(domain_obj.name, select2_version='v3')
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=widget,
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain.name, wrap=False)
+            programs = Program.by_domain(domain_obj.name, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices

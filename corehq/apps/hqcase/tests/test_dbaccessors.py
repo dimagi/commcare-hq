@@ -22,7 +22,6 @@ from corehq.apps.hqcase.dbaccessors import (
     get_cases_in_domain,
     get_case_ids_in_domain,
     get_case_ids_in_domain_by_owner,
-    get_case_properties,
 )
 from corehq.elastic import get_es_new, EsMeta
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -160,16 +159,6 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(
             get_all_case_owner_ids(self.domain),
             {'XXX', 'ZZZ'},
-        )
-
-    def test_get_case_properties(self):
-        self.assertItemsEqual(
-            get_case_properties(self.domain),
-            {prop
-             for case in self.cases if case.domain == self.domain
-             for action in case.actions
-             for prop in (list(action.updated_known_properties) +
-                          list(action.updated_unknown_properties))}
         )
 
 

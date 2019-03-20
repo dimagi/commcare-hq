@@ -750,12 +750,12 @@ class SubscriptionForm(forms.Form):
         return transfer_account
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
+        domain = self.cleaned_data['domain']
         if self.fields['domain'].required:
-            domain = Domain.get_by_name(domain_name)
-            if domain is None:
+            domain_obj = Domain.get_by_name(domain)
+            if domain_obj is None:
                 raise forms.ValidationError(_("A valid project space is required."))
-        return domain_name
+        return domain
 
     def clean(self):
         if not self.cleaned_data.get('active_accounts') and not self.cleaned_data.get('account'):
@@ -1891,10 +1891,10 @@ class TriggerInvoiceForm(forms.Form):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
-        domain = Domain.get_by_name(self.cleaned_data['domain'])
-        self.clean_previous_invoices(invoice_start, invoice_end, domain.name)
+        domain_obj = Domain.get_by_name(self.cleaned_data['domain'])
+        self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
         invoice_factory = DomainInvoiceFactory(
-            invoice_start, invoice_end, domain, recipients=[settings.ACCOUNTS_EMAIL]
+            invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
         )
         invoice_factory.create_invoices()
 

@@ -375,7 +375,7 @@ def get_possible_reports(domain_name):
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
                   CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
-    domain = Domain.get_by_name(domain_name)
+    domain_obj = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
             if getattr(model, 'parent_report_class', None):
@@ -383,14 +383,14 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain_obj):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
                 })
 
     for slug, name, is_visible in get_extra_permissions():
-        if is_visible(domain):
+        if is_visible(domain_obj):
             reports.append({'path': slug, 'name': name})
     return reports
 

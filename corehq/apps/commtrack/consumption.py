@@ -46,9 +46,9 @@ def get_consumption_for_ledger_json(ledger_json):
     from dimagi.utils.parsing import string_to_utc_datetime
 
     domain_name = ledger_json['domain']
-    domain = Domain.get_by_name(domain_name)
-    if domain and domain.commtrack_settings:
-        consumption_calc = domain.commtrack_settings.get_consumption_config()
+    domain_obj = Domain.get_by_name(domain_name)
+    if domain_obj and domain_obj.commtrack_settings:
+        consumption_calc = domain_obj.commtrack_settings.get_consumption_config()
     else:
         consumption_calc = None
     daily_consumption = compute_daily_consumption(

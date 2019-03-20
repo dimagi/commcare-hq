@@ -79,7 +79,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file
+    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
@@ -109,7 +109,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
-    {'type': 'person', 'name': 'static-person_cases_v2'},
+    {'type': 'person', 'name': 'static-person_cases_v3'},
     {'type': 'usage', 'name': 'static-usage_forms'},
     {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
@@ -671,7 +671,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             block_id=location,
             aggregation_level=3
         ).first()
-        if file_format == 'xlsx' and beta:
+        if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
                 excel_data,
                 data_type,
@@ -683,7 +683,10 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     if indicator != AWW_INCENTIVE_REPORT:
-        cache_key = create_excel_file(excel_data, data_type, file_format)
+        if file_format == 'xlsx' and beta:
+            cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
     params = {
         'domain': domain,
         'uuid': cache_key,
