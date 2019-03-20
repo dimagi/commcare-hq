@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
+from six.moves import range
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client
@@ -133,7 +134,10 @@ def check_celery():
         return celery_status
     else:
         # Retry because of https://github.com/celery/celery/issues/4758
-        if not celery_worker_status.success:
+        num_retries = 4
+        for _ in range(num_retries):
+            if celery_worker_status.success:
+                break
             time.sleep(5)
             celery_worker_status = _check_celery_workers()
 
