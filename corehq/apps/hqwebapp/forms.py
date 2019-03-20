@@ -107,26 +107,23 @@ class BulkUploadForm(forms.Form):
 
 
 class AppTranslationsBulkUploadForm(BulkUploadForm):
+    language = forms.CharField(widget=forms.HiddenInput)
     validate = forms.BooleanField(label="Just validate and not update translations", required=False,
                                   initial=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_select_language'):
+            crispy_form_fields.extend([
+                InlineField('language', data_bind="value: lang")
+            ])
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate')
+                crispy.Div(
+                    InlineField('validate'),
+                    data_bind="visible: !lang()",
+                )
             ])
-        return crispy_form_fields
-
-
-class MultimediaTranslationsBulkUploadForm(BulkUploadForm):
-    language = forms.CharField(widget=forms.HiddenInput)
-
-    def crispy_form_fields(self, context):
-        crispy_form_fields = super(MultimediaTranslationsBulkUploadForm, self).crispy_form_fields(context)
-        crispy_form_fields.extend([
-            InlineField('language', data_bind="value: lang")
-        ])
         return crispy_form_fields
 
 
