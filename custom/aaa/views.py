@@ -178,22 +178,22 @@ class UnifiedBeneficiaryReport(ReachDashboardView):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class UnifiedBeneficiaryReportAPI(View):
     def post(self, request, *args, **kwargs):
-        # TODO add query to database
-        # Prepared to the ajax pagination, remember that we need to return number of rows = length
-        # start - selected page on the UI (if first page selected then start = 0)
-        # sortColumn - name of the sorting column
-        # sortColumnDir - asc or desc
-
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_date = date(selected_year, selected_month, 1)
         selected_location = self.request.POST.get('selectedLocation')
+        selected_ministry = self.request.POST.get('selectedMinistry')
         beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
         draw = self.request.POST.get('draw', 0)
-        length = self.request.POST.get('length', 0)
-        start = self.request.POST.get('start', 0)
-        sortColumn = self.request.POST.get('sortColumn', 0)
-        sortColumnDir = self.request.POST.get('sortColumnDir', 0)
+        length = int(self.request.POST.get('length', 0))
+        start = int(self.request.POST.get('start', 0))
+        sort_column = self.request.POST.get('sortColumn', 'name')
+        sort_column_dir = self.request.POST.get('sortColumnDir', 'asc')
+
+        location_filters = build_location_filters(selected_location, selected_ministry, with_child=False)
+
+        if sort_column_dir == 'desc':
+            sort_column = '-' + sort_column
         data = []
         if beneficiary_type == 'child':
             data = (
@@ -202,66 +202,73 @@ class UnifiedBeneficiaryReportAPI(View):
                 ).filter(
                     domain=request.domain,
                     age__range=(0, 5),
+                    **location_filters
                 ).extra(
                     select={
-                        'lastImmunizationType': 1,
-                        'lastImmunizationDate': '2018-03-03',
+                        'lastImmunizationType': '\'N/A\'',
+                        'lastImmunizationDate': '\'N/A\'',
                         'gender': 'sex',
                         'id': 'person_case_id'
                     }
                 ).values(
                     'id', 'name', 'age', 'gender',
                     'lastImmunizationType', 'lastImmunizationDate'
-                )
-            )[:10]
+                ).order_by(sort_column)
+            )
         elif beneficiary_type == 'eligible_couple':
             data = (
                 Woman.objects.annotate(
                     age=ExtractYear(Func(F('dob'), function='age')),
                 ).filter(
-                    # should filter for location
                     domain=request.domain,
                     age__range=(15, 49),
                     marital_status='married',
+                    **location_filters
                 ).exclude(migration_status='yes').extra(
                     select={
-                        'currentFamilyPlanningMethod': 0,
-                        'adoptionDateOfFamilyPlaning': '2018-03-01',
+                        'currentFamilyPlanningMethod': '\'N/A\'',
+                        'adoptionDateOfFamilyPlaning': '\'N/A\'',
                         'id': 'person_case_id',
                     },
                     where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
                 ).values(
                     'id', 'name', 'age',
-                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning')
-            )[:10]
+                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning'
+                ).order_by(sort_column)
+            )
         elif beneficiary_type == 'pregnant_women':
             data = (
                 Woman.objects.annotate(
                     age=ExtractYear(Func(F('dob'), function='age')),
                 ).filter(
-                    # should filter for location
                     domain=request.domain,
+                    **location_filters
                 ).extra(
                     select={
-                        'highRiskPregnancy': 1,
-                        'noOfAncCheckUps': 8,
-                        'pregMonth': '2018-03-03',
+                        'highRiskPregnancy': '\'N/A\'',
+                        'noOfAncCheckUps': '\'N/A\'',
+                        'pregMonth': '\'N/A\'',
                         'id': 'person_case_id',
                     },
                     where=["daterange(%s, %s) && any(pregnant_ranges)"],
                     params=[selected_date, selected_date + relativedelta(months=1)]
                 ).values(
-                    'id', 'name', 'age',
+                    'id', 'name', 'age', 'pregMonth',
                     'highRiskPregnancy', 'noOfAncCheckUps'
-                )
-            )[:10]
+                ).order_by(sort_column)
+            )
+        if data:
+            number_of_data = data.count()
+            data = data[start:start + length]
+        else:
+            number_of_data = 0
         data = list(data)
         return JsonResponse(data={
             'rows': data,
             'draw': draw,
-            'recordsTotal': len(data),
-            'recordsFiltered': len(data),
+            'recordsTotal': number_of_data,
+            'recordsFiltered': number_of_data,
         })
 
 
@@ -369,20 +376,25 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 'religion': 'hh_religion',
                 'caste': 'hh_caste',
                 'bplOrApl': 'hh_bpl_apl',
-                'subcentre': '\'Rasidpur\'',
-                'village': '\'Rasidpur\'',
-                'anganwadiCentre': '\'Aspataal Ward\''
+                'subcentre': 'sc_id',
+                'village': 'village_id',
+                'anganwadiCentre': 'awc_id'
             }
 
             if section != 'child':
                 extra_select.update({
                     'status': 'migration_status',
-                    'marriedAt': 'age_marriage'
+                    'marriedAt': 'age_marriage',
+                    'husband_name': 'husband_name'
+                })
+            else:
+                extra_select.update({
+                    'mother_case_id': 'mother_case_id'
                 })
 
             extra_select_values = list(extra_select.keys())
             extra_select_values.extend(
-                ['dob', 'name', 'husband_name']
+                ['dob', 'name']
             )
             person = person_model.objects.extra(
                 select=extra_select
@@ -390,6 +402,13 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 domain=request.domain,
                 person_case_id=beneficiary_id
             )
+
+            subsentre = SQLLocation.objects.get(domain=request.domain, location_id=person['subcentre']).name
+            village = SQLLocation.objects.get(domain=request.domain, location_id=person['village']).name
+            anganwadiCentre = SQLLocation.objects.get(domain=request.domain, location_id=person['anganwadiCentre']).name
+            person['subcentre'] = subsentre
+            person['village'] = village
+            person['anganwadiCentre'] = anganwadiCentre
 
             data = dict(
                 person=person,
@@ -400,7 +419,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     select={
                         'id': 'person_case_id'
                     }
-                ).values('id', 'name').get(person_case_id=beneficiary_id)
+                ).values('id', 'name').get(person_case_id=person['mother_case_id'])
                 data.update(dict(mother=mother))
             else:
                 # TODO update when the model will be created
@@ -433,8 +452,8 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     'breastFeeding': 'comp_feeding',
                     'handwash': 'hand_wash',
                     'exclusivelyBreastfed': 'is_exclusive_breastfeeding',
-                    'babyCried': '\'Yes\'',
-                    'pregnancyLength': '\'Pre-term\'',
+                    'babyCried': '\'N/A\'',
+                    'pregnancyLength': '\'N/A\'',
                 }
 
                 data = Child.objects.extra(
@@ -448,18 +467,11 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 data = dict(
                     visits=[
                         dict(
-                            pncDate='2019-08-20',
-                            breastfeeding=0,
-                            skinToSkinContact=1,
-                            wrappedUpAdequately=0,
-                            awakeActive=0,
-                        ),
-                        dict(
-                            pncDate='2019-08-22',
-                            breastfeeding=0,
-                            skinToSkinContact=1,
-                            wrappedUpAdequately=0,
-                            awakeActive=0,
+                            pncDate='N/A',
+                            breastfeeding='N/A',
+                            skinToSkinContact='N/A',
+                            wrappedUpAdequately='N/A',
+                            awakeActive='N/A',
                         )
                     ]
                 )
@@ -470,18 +482,18 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='BCG',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Hepatitis B - 1',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='OPV - 0',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -490,28 +502,28 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='OPV - 1',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Pentavalent - 1',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Fractional IPV - 1',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Rotavirus - 1',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='PCV - 1',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -520,18 +532,18 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='OPV - 2',
-                                date='2019-08-20',
-                                adverseEffects='no AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Pentavalent - 2',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Rotavirus - 2',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -540,28 +552,28 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='OPV - 3',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Pentavalent - 3',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Fractional IPV - 2',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Rotavirus - 3',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='PCV - 2',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -570,23 +582,23 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='PCV Booster',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 1',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Measles - 1',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='JE - 1',
-                                date='2019-08-20',
-                                adverseEffects='Serious',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -595,33 +607,33 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='DPT Booster - 1',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Measles - 2',
-                                date='2019-08-20',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='OPV Booster',
-                                date='2019-08-20',
-                                adverseEffects='Non-serious AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='JE - 2',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 2',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 3',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                         ]
                     )
@@ -630,90 +642,99 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                         vitamins=[
                             dict(
                                 vitaminName='Vit. A - 4',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 5',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 6',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 7',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 8',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='Vit. A - 9',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             ),
                             dict(
                                 vitaminName='DPT Booster - 2',
-                                date='Not Given',
-                                adverseEffects='No AEFI',
+                                date='N/A',
+                                adverseEffects='N/A',
                             )
                         ]
                     )
             elif sub_section == 'growth_monitoring':
                 data = dict(
-                    currentWeight=30,
-                    nrcReferred='Yes',
-                    growthMonitoringStatus='MAM',
-                    referralDate='2019-04-09',
-                    previousGrowthMonitoringStatus='Normal',
-                    underweight='Yes',
-                    underweightStatus='Moderate',
-                    stunted='No',
-                    stuntedStatus='Not applicable',
-                    wasting='Yes',
-                    wastingStatus='Severe',
+                    currentWeight='N/A',
+                    nrcReferred='N/A',
+                    growthMonitoringStatus='N/A',
+                    referralDate='N/A',
+                    previousGrowthMonitoringStatus='N/A',
+                    underweight='N/A',
+                    underweightStatus='N/A',
+                    stunted='N/A',
+                    stuntedStatus='N/A',
+                    wasting='N/A',
+                    wastingStatus='N/A',
                 )
             elif sub_section == 'weight_for_age_chart':
                 child = Child.objects.get(person_case_id=beneficiary_id)
-                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                points = []
-                for recorded_weight in child_history.weight_child_history:
-                    month = relativedelta(recorded_weight[0], child.dob).months
-                    points.append(dict(x=month, y=recorded_weight[1]))
+                try:
+                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                    points = []
+                    for recorded_weight in child_history.weight_child_history:
+                        month = relativedelta(recorded_weight[0], child.dob).months
+                        points.append(dict(x=month, y=recorded_weight[1]))
+                except ChildHistory.DoesNotExist:
+                    points = []
                 data = dict(
                     points=points
                 )
             elif sub_section == 'height_for_age_chart':
                 child = Child.objects.get(person_case_id=beneficiary_id)
-                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                points = []
-                for recorded_height in child_history.weight_child_history:
-                    month = relativedelta(recorded_height[0], child.dob).months
-                    points.append(dict(x=month, y=recorded_height[1]))
+                try:
+                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                    points = []
+                    for recorded_height in child_history.height_child_history:
+                        month = relativedelta(recorded_height[0], child.dob).months
+                        points.append(dict(x=month, y=recorded_height[1]))
+                except ChildHistory.DoesNotExist:
+                    points = []
                 data = dict(
                     points=points
                 )
             elif sub_section == 'weight_for_height_chart':
                 child = Child.objects.get(person_case_id=beneficiary_id)
-                child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                points = {}
-                for recorded_weight in child_history.weight_child_history:
-                    month = relativedelta(recorded_weight[0], child.dob).months
-                    points.update({month: dict(x=recorded_weight[1])})
-                for recorded_height in child_history.weight_child_history:
-                    month = relativedelta(recorded_height[0], child.dob).months
-                    if month in points:
-                        points[month].update(dict(y=recorded_height[1]))
-                    else:
-                        points.update({month: dict(y=recorded_height[1])})
+                try:
+                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+                    points = {}
+                    for recorded_weight in child_history.weight_child_history:
+                        month = relativedelta(recorded_weight[0], child.dob).months
+                        points.update({month: dict(x=recorded_weight[1])})
+                    for recorded_height in child_history.height_child_history:
+                        month = relativedelta(recorded_height[0], child.dob).months
+                        if month in points:
+                            points[month].update(dict(y=recorded_height[1]))
+                        else:
+                            points.update({month: dict(y=recorded_height[1])})
+                except ChildHistory.DoesNotExist:
+                    points = {}
                 data = dict(
-                    points=[point for point in points if 'x' in point and 'y']
+                    points=[point for point in points.values() if 'x' in point and 'y']
                 )
         elif section == 'pregnant_women':
             if sub_section == 'pregnancy_details':
@@ -738,75 +759,60 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 )
             elif sub_section == 'pregnancy_risk':
                 data = dict(
-                    riskPregnancy='Yes',
-                    referralDate='2019-06-17',
-                    hrpSymptoms='Bleeding',
-                    illnessHistory='Yes',
-                    referredOutFacilityType='CHC',
-                    pastIllnessDetails='Tuberculosis',
+                    riskPregnancy='N/A',
+                    referralDate='N/A',
+                    hrpSymptoms='N/A',
+                    illnessHistory='N/A',
+                    referredOutFacilityType='N/A',
+                    pastIllnessDetails='N/A',
                 )
             elif sub_section == 'consumables_disbursed':
                 data = dict(
-                    ifaTablets='180',
-                    thrDisbursed='Yes',
+                    ifaTablets='N/A',
+                    thrDisbursed='N/A',
                 )
             elif sub_section == 'immunization_counseling_details':
                 data = dict(
-                    ttDoseOne='2019-01-10',
-                    ttDoseTwo='2019-02-10',
-                    ttBooster='Not Done',
-                    birthPreparednessVisitsByAsha=2,
-                    birthPreparednessVisitsByAww=1,
-                    counsellingOnMaternal='Yes',
-                    counsellingOnEbf='Yes',
+                    ttDoseOne='N/A',
+                    ttDoseTwo='N/A',
+                    ttBooster='N/A',
+                    birthPreparednessVisitsByAsha='N/A',
+                    birthPreparednessVisitsByAww='N/A',
+                    counsellingOnMaternal='N/A',
+                    counsellingOnEbf='N/A',
                 )
             elif sub_section == 'abortion_details':
                 data = dict(
-                    abortionDate='2019-03-18',
-                    abortionType='Spontaneous',
-                    abortionDays=27,
+                    abortionDate='N/A',
+                    abortionType='N/A',
+                    abortionDays='N/A',
                 )
             elif sub_section == 'maternal_death_details':
                 data = dict(
-                    maternalDeathOccurred='Yes',
-                    maternalDeathPlace='Rasidpur',
-                    maternalDeathDate='2019-04-19',
-                    authoritiesInformed='Yes',
+                    maternalDeathOccurred='N/A',
+                    maternalDeathPlace='N/A',
+                    maternalDeathDate='N/A',
+                    authoritiesInformed='N/A',
                 )
             elif sub_section == 'delivery_details':
                 data = dict(
-                    dod='2019-08-15',
-                    assistanceOfDelivery='Midwife',
-                    timeOfDelivery='08:25',
-                    dateOfDischarge='2019-08-17',
-                    typeOfDelivery='Caesarean',
-                    timeOfDischarge='17:11',
-                    placeOfBirth='Rasidpur',
-                    deliveryComplications='Yes',
-                    placeOfDelivery='Hospital',
-                    complicationDetails='Postpartum Haemorrhage',
-                    hospitalType='Private',
+                    dod='N/A',
+                    assistanceOfDelivery='N/A',
+                    timeOfDelivery='N/A',
+                    dateOfDischarge='N/A',
+                    typeOfDelivery='N/A',
+                    timeOfDischarge='N/A',
+                    placeOfBirth='N/A',
+                    deliveryComplications='N/A',
+                    placeOfDelivery='N/A',
+                    complicationDetails='N/A',
+                    hospitalType='N/A',
                 )
             elif sub_section == 'postnatal_care_details':
                 data = dict(
                     visits=[
                         dict(
                             pncDate='2019-08-20',
-                            postpartumHeamorrhage=0,
-                            fever=1,
-                            convulsions=0,
-                            abdominalPain=0,
-                            painfulUrination=0,
-                            congestedBreasts=1,
-                            painfulNipples=0,
-                            otherBreastsIssues=0,
-                            managingBreastProblems=0,
-                            increasingFoodIntake=1,
-                            possibleMaternalComplications=1,
-                            beneficiaryStartedEating=0,
-                        ),
-                        dict(
-                            pncDate='2019-08-22',
                             postpartumHeamorrhage=0,
                             fever=1,
                             convulsions=0,
@@ -826,37 +832,28 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 data = dict(
                     visits=[
                         dict(
-                            ancDate='2019-01-10',
-                            ancLocation='PHC Shahzadpur',
-                            pwWeight=55,
-                            bloodPressure='118/76',
-                            hb=13.1,
-                            abdominalExamination='Yes',
-                            abnormalitiesDetected='Yes',
+                            ancDate='N/A',
+                            ancLocation='N/A',
+                            pwWeight='N/A',
+                            bloodPressure='N/A',
+                            hb='N/A',
+                            abdominalExamination='N/A',
+                            abnormalitiesDetected='N/A',
                         ),
-                        dict(
-                            ancDate='2019-03-19',
-                            ancLocation='PHC Shahzadpur',
-                            pwWeight=57,
-                            bloodPressure='117/74',
-                            hb=14,
-                            abdominalExamination='No',
-                            abnormalitiesDetected='No',
-                        )
                     ]
                 )
         elif section == 'eligible_couple':
             if sub_section == 'eligible_couple_details':
                 data = dict(
-                    maleChildrenBorn=3,
-                    femaleChildrenBorn=2,
-                    maleChildrenAlive=2,
-                    femaleChildrenAlive=2,
-                    familyPlaningMethod='OC pills',
-                    familyPlanningMethodDate='2018-07-14',
-                    ashaVisit='2019-01-11',
-                    previousFamilyPlanningMethod='Condom',
-                    preferredFamilyPlaningMethod='Male sterilization'
+                    maleChildrenBorn='N/A',
+                    femaleChildrenBorn='N/A',
+                    maleChildrenAlive='N/A',
+                    femaleChildrenAlive='N/A',
+                    familyPlaningMethod='N/A',
+                    familyPlanningMethodDate='N/A',
+                    ashaVisit='N/A',
+                    previousFamilyPlanningMethod='N/A',
+                    preferredFamilyPlaningMethod='N/A'
                 )
 
         if not data:

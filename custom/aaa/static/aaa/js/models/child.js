@@ -158,7 +158,6 @@ hqDefine("aaa/js/models/child", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             mother: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
 
         self.infantDetails = ko.observable(childModel({}, postData));
@@ -191,7 +190,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#weight_for_age_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -213,15 +212,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                )
+            }
+            d3.select('#weight_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -244,7 +248,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#height_for_age_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -266,15 +270,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                   {
+                       key: 'line',
+                       type: 'line',
+                       values: data.points,
+                       color: 'black',
+                       strokeWidth: 2,
+                       yAxis: 1,
+                   }
+                )
+            }
+            d3.select('#height_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -296,7 +305,7 @@ hqDefine("aaa/js/models/child", [
             chart.yAxis.tickFormat(d3.format(".1f"));
             chart.yAxis.rotateLabels(-90);
             chart.useInteractiveGuideline(true);
-            d3.select('#weight_for_height_chart svg').datum([
+            var datum = [
                 {
                     key: 'green',
                     type: 'area',
@@ -318,15 +327,20 @@ hqDefine("aaa/js/models/child", [
                     color: 'red',
                     area: true,
                 },
-                {
-                    key: 'line',
-                    type: 'line',
-                    values: data.points,
-                    color: 'black',
-                    strokeWidth: 2,
-                    yAxis: 1,
-                },
-            ]).call(chart);
+            ];
+            if (data.points.length > 0) {
+                datum.push(
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                )
+            }
+            d3.select('#weight_for_height_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
             return chart;
         };
@@ -340,7 +354,6 @@ hqDefine("aaa/js/models/child", [
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.mother(personUtils.personModel(data.mother, self.postData));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             });
         };
 
