@@ -7,7 +7,7 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_table_name
+from corehq.apps.userreports.util import get_table_name, UCR_TABLE_PREFIX
 from corehq.sql_db.connections import connection_manager
 
 
@@ -42,8 +42,8 @@ class Command(BaseCommand):
                   FROM information_schema.tables
                 WHERE table_schema='public'
                   AND table_type='BASE TABLE'
-                  AND table_name LIKE 'config_report_%%';
-                """).fetchall()
+                  AND table_name LIKE '{}%%';
+                """.format(UCR_TABLE_PREFIX)).fetchall()
                 tables_in_db = {r[0] for r in results}
 
             tables_to_remove_by_engine[engine_id] = tables_in_db - expected_tables
