@@ -10,51 +10,54 @@ hqDefine('app_manager/js/summary/form_summary',[
     'hqwebapp/js/knockout_bindings.ko', // popover
     'hqwebapp/js/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models, utils) {
-    var formSummaryModel = function (options) {
-        var self = models.contentModel(_.extend(options, {
-            query_label: gettext("Filter questions or cases"),
+
+    var formSummaryControlModel = function (viewModels) {
+        var self = {};
+        _.extend(self, models.controlModel({
             onQuery: function (query) {
                 var match = function (needle, haystack) {
                     return !needle || haystack.toLowerCase().indexOf(needle.trim().toLowerCase()) !== -1;
                 };
-                _.each(self.modules, function (module) {
-                    var moduleIsVisible = match(query, self.translate(module.name));
-                    _.each(module.forms, function (form) {
-                        var formIsVisible = match(query, self.translate(form.name));
-                        _.each(form.questions, function (question) {
-                            var questionIsVisible = match(query, question.value + self.translateQuestion(question));
-                            questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
-                                return match(query, option.value + self.translateQuestion(option));
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.modules, function (module) {
+                        var moduleIsVisible = match(query, viewModel.translate(module.name));
+                        _.each(module.forms, function (form) {
+                            var formIsVisible = match(query, viewModel.translate(form.name));
+                            _.each(form.questions, function (question) {
+                                var questionIsVisible = match(query, question.value + viewModel.translateQuestion(question));
+                                questionIsVisible = questionIsVisible || _.find(question.options, function (option) {
+                                    return match(query, option.value + viewModel.translateQuestion(option));
+                                });
+                                var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
+                                    return match(query, prop[0]) || match(query, prop[1]);
+                                });
+                                if (!viewModel.showCaseProperties() && casePropsVisible) {
+                                    viewModel.showCaseProperties(true);
+                                }
+                                questionIsVisible = questionIsVisible || casePropsVisible;
+                                question.matchesQuery(questionIsVisible);
+                                formIsVisible = formIsVisible || questionIsVisible;
                             });
-                            var casePropsVisible = _.find(question.load_properties.concat(question.save_properties), function (prop) {
-                                return match(query, prop[0]) || match(query, prop[1]);
-                            });
-                            if (!self.showCaseProperties() && casePropsVisible) {
-                                self.showCaseProperties(true);
-                            }
-                            questionIsVisible = questionIsVisible || casePropsVisible;
-                            question.matchesQuery(questionIsVisible);
-                            formIsVisible = formIsVisible || questionIsVisible;
+                            form.matchesQuery(formIsVisible);
+                            moduleIsVisible = moduleIsVisible || formIsVisible;
                         });
-                        form.matchesQuery(formIsVisible);
-                        moduleIsVisible = moduleIsVisible || formIsVisible;
+                        module.matchesQuery(moduleIsVisible);
                     });
-                    module.matchesQuery(moduleIsVisible);
-                });
+                })
+                ;
             },
+            query_label: gettext("Filter questions or cases"),
             onSelectMenuItem: function (selectedId) {
-                _.each(self.modules, function (module) {
-                    module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function (f) { return selectedId === f.id; }));
-                    _.each(module.forms, function (form) {
-                        form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.modules, function (module) {
+                        module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function (f) { return selectedId === f.id; }));
+                        _.each(module.forms, function (form) {
+                            form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
+                        });
                     });
                 });
             },
         }));
-
-        assertProperties.assertRequired(options, ['errors', 'modules']);
-        self.errors = options.errors;
-        self.modules = _.map(options.modules, moduleModel);
 
         self.showCalculations = ko.observable(false);
         self.toggleCalculations = function () {
@@ -89,27 +92,12 @@ hqDefine('app_manager/js/summary/form_summary',[
         return self;
     };
 
-    var moduleModel = function (module) {
-        var self = models.contentItemModel(module);
+    var formSummaryModel = function (options) {
+        var self = models.contentModel(options);
 
-        self.url = initialPageData.reverse("view_module", self.id);
-        self.icon = utils.moduleIcon(self) + ' hq-icon';
-        self.forms = _.map(self.forms, formModel);
-
-        return self;
-    };
-
-    var formModel = function (form) {
-        var self = models.contentItemModel(form);
-
-        self.url = initialPageData.reverse("form_source", self.id);
-        self.icon = utils.formIcon(self) + ' hq-icon';
-        self.questions = _.map(self.questions, function (question) {
-            return models.contentItemModel(_.defaults(question, {
-                options: [],
-            }));
-        });
-
+        assertProperties.assertRequired(options, ['errors', 'modules']);
+        self.errors = options.errors;
+        self.modules = _.map(options.modules, models.moduleModel);
         return self;
     };
 
@@ -145,6 +133,9 @@ hqDefine('app_manager/js/summary/form_summary',[
             read_only: initialPageData.get("read_only"),
         });
 
-        models.initSummary(formSummaryMenu, formSummaryContent);
+        var formSummaryController = formSummaryControlModel([formSummaryContent]);
+        $("#form-summary-header").koApplyBindings(formSummaryController);
+        models.initMenu([formSummaryContent], formSummaryMenu);
+        models.initSummary(formSummaryContent, formSummaryController, "#form-summary");
     });
 });

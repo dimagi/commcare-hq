@@ -50,12 +50,10 @@ trunk: master
 name: autostaging
 branches:
   - bmb/users-perms-ui  # Biyeun Feb 20
-  - jls/download-mm-translations  # Jenny Feb 23
-  - inconsistent-user-filters-exports  # Gabriella March 2
-  - inconsistent-user-filters-reports  # Gabriella March 2
   - es/module-display  # Ethan March 4th
   #- jls/log-media-map-app-id # Jenny March 7
-  - downgrade-banner  # Nick March 11
   - mk-434 # MK March 12
-  - je/soil # J$ March 12
+  - dmr/kill-old-exports  # Danny March 14
+  - jls/upload-mm-translations  # Jenny March 14
+  - rn_avoid_chrome_autofill # Rohit March 18
 submodules: {}

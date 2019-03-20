@@ -22,6 +22,7 @@ from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
@@ -318,8 +319,10 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, six.string_types):
+            if not isinstance(key, (six.text_type, bytes)):
                 raise BadSpecError("Properties in a dict expression must be strings!")
+            if six.PY3:
+                soft_assert_type_text(key)
         self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):
@@ -510,6 +513,7 @@ class SplitStringExpressionSpec(JsonObject):
         string_value = self._string_expression(item, context)
         if not isinstance(string_value, six.string_types):
             return None
+        soft_assert_type_text(string_value)
 
         index_value = None
         if self.index_expression is not None:

@@ -20,6 +20,7 @@ from corehq.blobs import get_blob_db
 import six
 from io import open
 
+from corehq.util.python_compatibility import soft_assert_type_text
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -106,6 +107,7 @@ class DownloadBase(object):
         headers and causes the download to fail.
         """
         if isinstance(content_disposition, six.string_types):
+            soft_assert_type_text(content_disposition)
             return re.compile('[\r\n]').sub('', content_disposition)
 
         return content_disposition

@@ -59,7 +59,7 @@ class IndicatorAdapter(object):
         if not is_rate_limited(key):
             notify_exception(
                 None,
-                'unexpected error saving UCR doc: {}'.format(exception),
+                'unexpected error saving UCR doc',
                 details={
                     'domain': self.config.domain,
                     'doc_id': doc.get('_id', '<unknown>'),

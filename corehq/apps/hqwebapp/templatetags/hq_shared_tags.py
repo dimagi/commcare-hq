@@ -19,7 +19,6 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from corehq.motech.utils import pformat_json
-from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
@@ -212,6 +211,8 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, bytes):
+        name_or_instance = name_or_instance.decode('utf-8')
     if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
@@ -642,6 +643,8 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def trans_html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(_(value))
@@ -649,6 +652,8 @@ def trans_html_attr(value):
 
 @register.simple_tag
 def html_attr(value):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
     if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)

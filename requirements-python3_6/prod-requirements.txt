@@ -6,21 +6,21 @@
 #
 git+git://github.com/dimagi/architect@v0.5.7a3#egg=architect==0.5.7a3
 alembic==0.8.6
-amqp==1.4.9
-anyjson==0.3.3
+amqp==2.4.2
 asn1crypto==0.24.0
 attrs==18.2.0
 babel==2.6.0
 backports-abc==0.5        # via tornado
 backports.shutil-get-terminal-size==1.0.0  # via ipython
-billiard==3.3.0.23
+billiard==3.5.0.4
 boto3==1.9.108
 botocore==1.12.108
-celery==3.1.25
+celery==4.1.1
 certifi==2018.11.29
 cffi==1.12.2
 chardet==3.0.4
 cloudant==2.11.0
+commcaretranslationchecker==0.9.3.3
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 cryptography==2.6.1
@@ -36,7 +36,7 @@ django-angular==0.7.16
 django-appconf==1.0.3
 django-braces==1.13.0
 django-bulk-update==2.2.0
-django-celery==3.2.1
+django-celery-results==1.0.4
 django-compressor==2.1
 django-countries==4.6
 django-crispy-forms==1.7.0
@@ -93,7 +93,7 @@ jsonobject-couchdbkit==0.9.16
 jsonobject==0.9.8
 jsonpath-rw==1.4.0
 kafka-python==1.4.4
-kombu==3.0.37
+kombu==4.2.2.post1
 laboratory==0.2.0
 lxml==4.3.2
 mako==1.0.7
@@ -134,7 +134,7 @@ python-levenshtein==0.12.0
 python-magic==0.4.15
 python-mimeparse==1.6.0
 pytz==2018.9
-pyyaml==3.13
+pyyaml==5.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache==0.5.3
@@ -171,6 +171,7 @@ unidecode==0.04.20
 urllib3==1.24.1
 user-agents==1.1.0
 uwsgi==2.0.18
+vine==1.2.0
 wcwidth==0.1.7            # via prompt-toolkit
 webencodings==0.5.1
 werkzeug==0.11.15

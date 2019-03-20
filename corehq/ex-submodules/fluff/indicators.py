@@ -4,6 +4,8 @@ import functools
 from couchdbkit.ext.django import schema
 import datetime
 import sqlalchemy
+
+from corehq.util.python_compatibility import soft_assert_type_text
 from .util import get_indicator_model, default_null_value_placeholder
 from .calculators import Calculator
 from .const import ALL_TYPES, TYPE_STRING
@@ -32,6 +34,7 @@ class FlatField(schema.StringProperty):
     def calculate(self, item):
         result = self.fn(item)
         assert isinstance(result, six.string_types)
+        soft_assert_type_text(result)
         return result
 
 
@@ -112,6 +115,7 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
     def wrapped_group_by(self):
         def _wrap_if_necessary(string_or_attribute_getter):
             if isinstance(string_or_attribute_getter, six.string_types):
+                soft_assert_type_text(string_or_attribute_getter)
                 getter = AttributeGetter(string_or_attribute_getter)
             else:
                 getter = string_or_attribute_getter

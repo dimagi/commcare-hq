@@ -302,6 +302,9 @@ def _update_aggregate_locations_tables():
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_aggregation_task(self, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
@@ -327,6 +330,9 @@ def icds_aggregation_task(self, date, func):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_state_aggregation_task(self, state_id, date, func):
+    if six.PY2 and isinstance(date, bytes):
+        date = date.decode('utf-8')
+
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return
@@ -546,6 +552,8 @@ def _agg_awc_table_weekly(day):
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
+    if six.PY2 and isinstance(aggregation_date, bytes):
+        aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
     _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
     celery_task_logger.info("Aggregation has completed")

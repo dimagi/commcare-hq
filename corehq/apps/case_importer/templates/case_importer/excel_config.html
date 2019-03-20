@@ -20,7 +20,7 @@
                     {% trans "Case type" %}
                 </label>
                 <div class="col-sm-6">
-                    <select class="form-control" name="case_type" id="case_type">
+                    <select class="form-control ko-select2" name="case_type" id="case_type">
                         <option disabled>{% trans "Used in existing applications:" %}</option>
                         {% for case_type in case_types_from_apps %}
                         <option value="{{case_type|escape}}">{{case_type|escape}}</option>
@@ -42,7 +42,7 @@
                     {% trans "Excel column" %}
                 </label>
                 <div class="col-sm-6">
-                    <select class="form-control" name="search_column" id="search_column">
+                    <select class="form-control ko-select2" name="search_column" id="search_column">
                         {% for column in columns %}
                         <option value="{{column|escape}}">
                             {{column|escape}}
@@ -57,14 +57,15 @@
                     {% trans "Corresponding case field" %}
                 </label>
                 <div class="col-sm-6">
-                    <select class="form-control" name="search_field" id="search_field">
-                        <option value="case_id">
-                            {% trans "Case ID" %}
-                        </option>
-                        <option value="external_id">
-                            {% trans "External ID" %}
-                        </option>
-                    </select>
+                    <select-toggle params="id: 'search_field',
+                                           name: 'search_field',
+                                           options: [{
+                                               id: 'case_id',
+                                               text: '{% trans_html_attr 'Case ID' %}',
+                                           }, {
+                                               id: 'external_id',
+                                               text: '{% trans_html_attr 'External ID' %}',
+                                           }]"></select-toggle>
                 </div>
             </div>
 

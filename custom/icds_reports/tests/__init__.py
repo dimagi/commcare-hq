@@ -18,7 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -30,32 +30,32 @@ from six.moves import range
 from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
-    'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
-    "ccs_cases": "config_report_icds-cas_static-ccs_record_cases_cedcca39",
-    'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
-    'daily_feeding': 'config_report_icds-cas_static-daily_feeding_forms_85b1167f',
-    'household_cases': 'config_report_icds-cas_static-household_cases_eadc276d',
-    'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
-    'infrastructure_v2': 'config_report_icds-cas_static-infrastructure_form_v2_36e9ebb0',
-    'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
-    'person_cases': 'config_report_icds-cas_static-person_cases_v3_2ae0879a',
-    'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
-    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
-    'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
-    'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
-    'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
-    'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
-    'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
-    'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
-    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
-    'ls_awc_mgt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
-    'ls_home_vists': 'config_report_icds-cas_static-ls_home_visit_forms_fill_53a43d79',
-    'ls_vhnd': 'config_report_icds-cas_static-ls_vhnd_form_f2b97e26',
-    'cbe_form': 'config_report_icds-cas_static-cbe_form_f7988a04',
+    'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
+    "ccs_cases": get_table_name('icds-cas', 'static-ccs_record_cases'),
+    'child_cases': get_table_name('icds-cas', 'static-child_health_cases'),
+    'daily_feeding': get_table_name('icds-cas', 'static-daily_feeding_forms'),
+    'household_cases': get_table_name('icds-cas', 'static-household_cases'),
+    'infrastructure': get_table_name('icds-cas', 'static-infrastructure_form'),
+    'infrastructure_v2': get_table_name('icds-cas', 'static-infrastructure_form_v2'),
+    'location_ucr': get_table_name('icds-cas', 'static-awc_location'),
+    'person_cases': get_table_name('icds-cas', 'static-person_cases_v3'),
+    'usage': get_table_name('icds-cas', 'static-usage_forms'),
+    'vhnd': get_table_name('icds-cas', 'static-vhnd_form'),
+    'complementary_feeding': get_table_name('icds-cas', 'static-complementary_feeding_forms'),
+    'aww_user': get_table_name('icds-cas', 'static-commcare_user_cases'),
+    'child_tasks': get_table_name('icds-cas', 'static-child_tasks_cases'),
+    'pregnant_tasks': get_table_name('icds-cas', 'static-pregnant-tasks_cases'),
+    'thr_form': get_table_name('icds-cas', 'static-dashboard_thr_forms'),
+    'gm_form': get_table_name('icds-cas', 'static-dashboard_growth_monitoring_forms'),
+    'pnc_forms': get_table_name('icds-cas', 'static-postnatal_care_forms'),
+    'dashboard_daily_feeding': get_table_name('icds-cas', 'dashboard_child_health_daily_feeding_forms'),
+    'ls_awc_mgt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
+    'ls_home_vists': get_table_name('icds-cas', 'static-ls_home_visit_forms_filled'),
+    'ls_vhnd': get_table_name('icds-cas', 'static-ls_vhnd_form'),
+    'cbe_form': get_table_name('icds-cas', 'static-cbe_form'),
     'agg_awc': 'agg_awc',
-    'birth_preparedness': 'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
-    'delivery_form': 'config_report_icds-cas_static-dashboard_delivery_forms_946d56bd',
+    'birth_preparedness': get_table_name('icds-cas', 'static-dashboard_birth_preparedness_forms'),
+    'delivery_form': get_table_name('icds-cas', 'static-dashboard_delivery_forms'),
 }
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
