@@ -11,8 +11,9 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assert(options, [], ['url', 'width', 'idValue']);
+        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue']);
         var idValue = options.idValue || 'id';
+
         $select.select2({
             ajax: {
                 url: options.url || initialPageData.reverse('paginate_releases'),
@@ -38,6 +39,13 @@ hqDefine("app_manager/js/widgets_v4", [
             },
             width: options.width || '200px',
         });
+
+        if (options.initialValue) {
+            // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
+            var option = new Option(options.initialValue.text, options.initialValue.id, true, true);
+            $select.append(option).trigger('change');
+            $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
+        }
     };
 
     $(function () {
