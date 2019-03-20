@@ -22,7 +22,7 @@ ghdiff==0.4
 gunicorn
 lxml~=4.3.0
 kafka-python~=1.4
-kombu!=4.3.0
+kombu==4.2.2.post1
 billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery/billiard/issues/260
 mock==2.0.0
 Pillow~=5.2
