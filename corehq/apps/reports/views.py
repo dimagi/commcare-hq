@@ -9,7 +9,6 @@ import csv342 as csv
 
 from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
-from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.domain.views.base import BaseDomainView
@@ -140,18 +139,17 @@ from corehq.util.view_utils import (
 from .dispatcher import ProjectReportDispatcher
 from .forms import SavedReportConfigForm
 from .models import (
-    ReportConfig,
-    ReportNotification,
     HQGroupExportConfiguration
 )
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 
 from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
     rebuild_export_async,
-    send_delayed_report,
 )
+from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_report
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import re
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -20,8 +19,6 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
-from corehq.apps.users.models import CouchUser
-from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
@@ -29,10 +26,6 @@ from couchexport.groupexports import rebuild_export
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request
-from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
-from django.http import HttpRequest
-from django.utils.translation import ugettext as _
 
 from soil import DownloadBase
 from soil.util import expose_download
@@ -56,13 +49,9 @@ from .analytics.esaccessors import (
     scroll_case_names,
 )
 from .models import (
-    ReportConfig,
     FormExportSchema,
-    ReportNotification,
-    UnsupportedScheduledReportError,
 )
 
-from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
 from six.moves import filter
@@ -71,70 +60,6 @@ from io import open
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
-
-
-def send_delayed_report(report_id):
-    """
-    Sends a scheduled report, via celery background task.
-    """
-    domain = ReportNotification.get(report_id).domain
-    if (
-        settings.SERVER_ENVIRONMENT == 'production' and
-        any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
-    ):
-        # This is to prevent a few scheduled reports from clogging up
-        # the background queue.
-        # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
-        send_report_throttled.delay(report_id)
-    else:
-        send_report.delay(report_id)
-
-
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
-def send_report(notification_id):
-    notification = ReportNotification.get(notification_id)
-
-    # If the report's start date is later than today, return and do not send the email
-    if notification.start_date and notification.start_date > datetime.today().date():
-        daily_reports()
-        return
-
-    try:
-        notification.send()
-    except UnsupportedScheduledReportError:
-        pass
-
-
-@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
-def send_report_throttled(notification_id):
-    send_report(notification_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def daily_reports():
-    for report_id in get_scheduled_report_ids('daily'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def weekly_reports():
-    for report_id in get_scheduled_report_ids('weekly'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def monthly_reports():
-    for report_id in get_scheduled_report_ids('monthly'):
-        send_delayed_report(report_id)
 
 
 @task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
@@ -199,93 +124,6 @@ def apps_update_calculated_properties():
     for r in results:
         props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
-
-
-@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_emails, domain, report_slug, report_type,
-                      request_data, once, cleaned_data):
-    """
-    Function invokes send_HTML_email to email the html text report.
-    If the report is too large to fit into email then a download link is
-    sent via email to download report
-    :Parameter recipient_list:
-            list of recipient to whom email is to be sent
-    :Parameter domain:
-            domain name
-    :Parameter report_slug:
-            report slug
-    :Parameter report_type:
-            type of the report
-    :Parameter request_data:
-            Dict containing request data
-    :Parameter once
-            boolean argument specifying whether the report is once off report
-            or scheduled report
-    :Parameter cleaned_data:
-            Dict containing cleaned data from the submitted form
-    """
-    from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
-
-    user_id = request_data['couch_user']
-    couch_user = CouchUser.get_by_user_id(user_id)
-    mock_request = HttpRequest()
-
-    mock_request.method = 'GET'
-    mock_request.GET = request_data['GET']
-
-    config = ReportConfig()
-
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
-        config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(six.iterlists(request_data['GET']))
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if field not in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
-    subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
-
-    content = _render_report_configs(
-        mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-        notes=cleaned_data['notes'], once=once
-    )[0]
-    body = render_full_report_notification(None, content).content
-
-    try:
-        for recipient in recipient_emails:
-            send_HTML_email(subject, recipient,
-                            body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
-
-    except Exception as er:
-        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES:
-            # If the smtp server rejects the email because of its large size.
-            # Then sends the report download link in the email.
-            report_state = {
-                'request': request_data,
-                'request_params': json_request(request_data['GET']),
-                'domain': domain,
-                'context': {},
-            }
-            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
-        else:
-            self.retry(exc=er)
 
 
 @task(serializer='pickle', ignore_result=True)
