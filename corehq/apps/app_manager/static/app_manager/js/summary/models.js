@@ -13,7 +13,7 @@ hqDefine('app_manager/js/summary/models',[
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout) {
 
     var menuItemModel = function (options) {
-        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors', 'versions']);
+        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
         var self = _.extend({
             has_errors: false,
         }, options);

@@ -95,10 +95,7 @@
                                 <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
                                     <a class="appnav-link-full">
                                         <i data-bind="attr: { 'class': $data.icon }"></i>
-                                        <span>
-                                            <!-- ko text: name --><!-- /ko -->
-                                            (<!-- ko foreach: versions -->v.<!-- ko text: $data --><!-- /ko --><!-- ko if: $index() < $parent.versions.length - 1 -->, <!-- /ko --><!-- /ko -->)
-                                        </span>
+                                        <span data-bind="text: name"></span>
                                         <i class="fa fa-exclamation-triangle text-danger" data-bind="visible: has_errors"></i>
                                     </a>
                                 </div>
@@ -108,10 +105,7 @@
                                             <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">
                                                 <a class="appnav-link-full">
                                                     <i data-bind="attr: { 'class': $data.icon }"></i>
-                                                    <span>
-                                                        <!-- ko text: name --><!-- /ko -->
-                                                        (<!-- ko foreach: versions -->v.<!-- ko text: $data --><!-- /ko --><!-- ko if: $index() < $parent.versions.length - 1 -->, <!-- /ko --><!-- /ko -->)
-                                                    </span>
+                                                    <span data-bind="text: name"></span>
                                                 </a>
                                             </div>
                                         </li>
