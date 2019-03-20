@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import copy
 import six
 import re
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -18,6 +18,9 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
 from corehq.apps.translations.app_translations.utils import get_unicode_dicts
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+
+
+MarkdownStats = namedtuple('MarkdownStats', ['markdowns', 'vetoes'])
 
 
 def update_app_from_form_sheet(app, rows, identifier):
@@ -53,33 +56,12 @@ def update_app_from_form_sheet(app, rows, identifier):
 
     template_translation_el = _get_template_translation_el(app, itext)
     _add_missing_translation_elements_to_itext(app, template_translation_el, itext)
+    markdown_stats = _get_markdown_stats(app, rows, itext)
 
-    # Aggregate Markdown vetoes, and translations that currently have Markdown
-    vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
-    markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
-    for lang in app.langs:
-        # If Markdown is vetoed for one language, we apply that veto to other languages too. i.e. If a user has
-        # told HQ that "**stars**" in an app's English translation is not Markdown, then we must assume that
-        # "**étoiles**" in the French translation is not Markdown either.
-        for row in rows:
-            label_id = row['label']
-            text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
-            vetoes[label_id] = vetoes[label_id] or _is_markdown_vetoed(text_node)
-            markdowns[label_id] = markdowns[label_id] or _had_markdown(text_node)
-
-    # skip labels that have no translation provided
     msgs = []
-    skip_label = set()
-    if form.is_registration_form():
-        for row in rows:
-            if not _has_translation(row, app.langs):
-                skip_label.add(row['label'])
-        for label in skip_label:
-            msgs.append((
-                messages.error,
-                _("You must provide at least one translation"
-                  " for the label '%s' in form %s") % (label, form.id + 1)
-            ))
+    (label_ids_to_skip, errors) = _get_label_ids_to_skip(form, rows)
+    for error in errors:
+        msgs.append((messages.error, error))
 
     # Update the translations
     for lang in app.langs:
@@ -87,71 +69,16 @@ def update_app_from_form_sheet(app, rows, identifier):
         assert(translation_node.exists())
 
         for row in rows:
-            label_id = row['label']
-            if label_id in skip_label:
+            if row['label'] in label_ids_to_skip:
                 continue
-            text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
-            if not text_node.exists():
-                msgs.append((
-                    messages.warning,
-                    _("Unrecognized translation label {0} in form {1}. That row"
-                      " has been skipped").format(label_id, form.id + 1)
-                ))
-                continue
-
-            translations = dict()
-            for trans_type in ['default', 'image', 'audio', 'video']:
-                try:
-                    col_key = _get_col_key(trans_type, lang)
-                    translations[trans_type] = row[col_key]
-                except KeyError:
-                    # has already been logged as unrecoginzed column
-                    continue
-
-            keep_value_node = any(v for k, v in translations.items())
-
-            # Add or remove translations
-            for trans_type, new_translation in translations.items():
-                if not new_translation:
-                    # If the cell corresponding to the label for this question
-                    # in this language is empty, fall back to another language
-                    for l in app.langs:
-                        key = _get_col_key(trans_type, l)
-                        if key not in row:
-                            continue
-                        fallback = row[key]
-                        if fallback:
-                            new_translation = fallback
-                            break
-
-                if trans_type == 'default':
-                    # plaintext/Markdown
-                    if _looks_like_markdown(new_translation) and not vetoes[label_id] or markdowns[label_id]:
-                        # If it looks like Markdown, add it ... unless it
-                        # looked like Markdown before but it wasn't. If we
-                        # have a Markdown node, always keep it. FB 183536
-                        _update_translation_node(
-                            new_translation,
-                            _get_markdown_node(text_node),
-                            {'form': 'markdown'},
-                            # If all translations have been deleted, allow the
-                            # Markdown node to be deleted just as we delete
-                            # the plaintext node
-                            delete_node=(not keep_value_node)
-                        )
-                    _update_translation_node(
-                        new_translation,
-                        _get_value_node(text_node),
-                        {'form': 'default'},
-                        delete_node=(not keep_value_node)
-                    )
-                else:
-                    # audio/video/image
-                    _update_translation_node(new_translation,
-                                             text_node.find("./{f}value[@form='%s']" % trans_type),
-                                             {'form': trans_type})
+            try:
+                _add_or_remove_translations(app, lang, row, itext, markdown_stats)
+            except BulkAppTranslationsException as e:
+                msgs.append((messages.warning, six.text_type(e)))
 
     save_xform(app, form, etree.tostring(xform.xml))
+
+    msgs = [(t, _('Error in {identifier}: ').format(identifier=identifier) + m) for (t, m) in msgs]
     return msgs
 
 
@@ -185,6 +112,103 @@ def _add_missing_translation_elements_to_itext(app, template_translation_el, ite
             itext.xml.append(new_trans_el)
 
 
+def _get_markdown_stats(app, rows, itext):
+    # Aggregate Markdown vetoes, and translations that currently have Markdown
+    vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
+    markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
+    for lang in app.langs:
+        # If Markdown is vetoed for one language, we apply that veto to other languages too. i.e. If a user has
+        # told HQ that "**stars**" in an app's English translation is not Markdown, then we must assume that
+        # "**étoiles**" in the French translation is not Markdown either.
+        for row in rows:
+            label_id = row['label']
+            text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
+            vetoes[label_id] = vetoes[label_id] or _is_markdown_vetoed(text_node)
+            markdowns[label_id] = markdowns[label_id] or _had_markdown(text_node)
+    return MarkdownStats(markdowns=markdowns, vetoes=vetoes)
+
+
+# skip labels that have no translation provided
+def _get_label_ids_to_skip(form, rows):
+    label_ids_to_skip = set()
+    errors = []
+    if form.is_registration_form():
+        for row in rows:
+            if not _has_translation(row, app.langs):
+                label_ids_to_skip.add(row['label'])
+        for label in label_ids_to_skip:
+            errors.append(_("You must provide at least one translation for the label '%s'.") % (label))
+    return (label_ids_to_skip, errors)
+
+
+def _get_text_node(translation_node, label_id):
+    text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
+    if text_node.exists():
+        return text_node
+    raise BulkAppTranslationsException(_("Unrecognized translation label {0}. "
+                                         "That row has been skipped").format(label_id))
+
+
+def _add_or_remove_translations(app, lang, row, itext, markdown_stats):
+    label_id = row['label']
+    translations = _get_translations_for_row(row, lang)
+    translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
+    keep_value_node = any(v for k, v in translations.items())
+    text_node = _get_text_node(translation_node, label_id)
+    for trans_type, new_translation in translations.items():
+        if not new_translation:
+            # If the cell corresponding to the label for this question
+            # in this language is empty, fall back to another language
+            for l in app.langs:
+                key = _get_col_key(trans_type, l)
+                if key not in row:
+                    continue
+                fallback = row[key]
+                if fallback:
+                    new_translation = fallback
+                    break
+
+        if trans_type == 'default':
+            # plaintext/Markdown
+            markdown_allowed = not markdown_stats.vetoes[label_id] or markdown_stats.markdowns[label_id]
+            if _looks_like_markdown(new_translation) and markdown_allowed:
+                # If it looks like Markdown, add it ... unless it
+                # looked like Markdown before but it wasn't. If we
+                # have a Markdown node, always keep it. FB 183536
+                _update_translation_node(
+                    new_translation,
+                    _get_markdown_node(text_node),
+                    {'form': 'markdown'},
+                    # If all translations have been deleted, allow the
+                    # Markdown node to be deleted just as we delete
+                    # the plaintext node
+                    delete_node=(not keep_value_node)
+                )
+            _update_translation_node(
+                new_translation,
+                _get_value_node(text_node),
+                {'form': 'default'},
+                delete_node=(not keep_value_node)
+            )
+        else:
+            # audio/video/image
+            _update_translation_node(new_translation,
+                                     text_node.find("./{f}value[@form='%s']" % trans_type),
+                                     {'form': trans_type})
+
+
+def _get_translations_for_row(row, lang):
+    translations = dict()
+    for trans_type in ['default', 'image', 'audio', 'video']:
+        try:
+            col_key = _get_col_key(trans_type, lang)
+            translations[trans_type] = row[col_key]
+        except KeyError:
+            # has already been logged as unrecognized column
+            pass
+    return translations
+
+
 def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
     if delete_node and not new_translation:
         # Remove the node if it already exists
@@ -199,6 +223,7 @@ def _update_translation_node(new_translation, value_node, attributes=None, delet
         )
         text_node.xml.append(e)
         value_node = WrappedNode(e)
+
     # Update the translation
     value_node.xml.tail = ''
     for node in value_node.findall("./*"):
@@ -208,11 +233,14 @@ def _update_translation_node(new_translation, value_node, attributes=None, delet
     for n in escaped_trans.getchildren():
         value_node.xml.append(n)
 
+
 def _looks_like_markdown(str):
     return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
 
+
 def _get_markdown_node(text_node_):
     return text_node_.find("./{f}value[@form='markdown']")
+
 
 def _get_value_node(text_node_):
     try:
@@ -223,12 +251,14 @@ def _get_value_node(text_node_):
     except StopIteration:
         return WrappedNode(None)
 
+
 def _had_markdown(text_node_):
     """
     Returns True if a Markdown node currently exists for a translation.
     """
     markdown_node_ = _get_markdown_node(text_node_)
     return markdown_node_.exists()
+
 
 def _is_markdown_vetoed(text_node_):
     """
@@ -241,6 +271,7 @@ def _is_markdown_vetoed(text_node_):
         return False
     old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
     return _looks_like_markdown(old_trans) and not _had_markdown(text_node_)
+
 
 def _has_translation(row_, langs):
     for lang_ in langs:
