@@ -7,7 +7,7 @@ from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
 
-_soft_assert = soft_assert(exponential_backoff=True)
+_soft_assert = soft_assert(exponential_backoff=False)
 
 
 def get_scheduled_report_ids(period, as_of=None):
