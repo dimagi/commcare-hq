@@ -19,13 +19,11 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
 from corehq.apps.users.models import CouchUser
 from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
-from couchexport.groupexports import rebuild_export
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -57,7 +55,6 @@ from .analytics.esaccessors import (
 )
 from .models import (
     ReportConfig,
-    FormExportSchema,
     ReportNotification,
     UnsupportedScheduledReportError,
 )
@@ -135,11 +132,6 @@ def weekly_reports():
 def monthly_reports():
     for report_id in get_scheduled_report_ids('monthly'):
         send_delayed_report(report_id)
-
-
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def rebuild_export_async(config, schema):
-    rebuild_export(config, schema)
 
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
@@ -335,7 +327,7 @@ def build_form_multimedia_zip(
         export_id,
         zip_name,
         download_id,
-        export_is_legacy,
+        export_is_legacy=False,  # always False
         user_types=None,
         group=None):
 
@@ -348,7 +340,7 @@ def build_form_multimedia_zip(
         group=group,
         user_types=user_types,
     )
-    properties = _get_export_properties(export_id, export_is_legacy)
+    properties = _get_export_properties(export_id)
 
     if not app_id:
         zip_name = 'Unrelated Form'
@@ -443,28 +435,21 @@ def _convert_legacy_indices_to_export_properties(indices):
     ))
 
 
-def _get_export_properties(export_id, export_is_legacy):
+def _get_export_properties(export_id):
     """
     Return a list of strings corresponding to form questions that are
     included in the export.
     """
     properties = set()
     if export_id:
-        if export_is_legacy:
-            schema = FormExportSchema.get(export_id)
-            for table in schema.tables:
-                properties |= _convert_legacy_indices_to_export_properties(
-                    [column.index for column in table.columns]
-                )
-        else:
-            from corehq.apps.export.models import FormExportInstance
-            export = FormExportInstance.get(export_id)
-            for table in export.tables:
-                for column in table.columns:
-                    if column.selected and column.item:
-                        path_parts = [n.name for n in column.item.path]
-                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
-                        properties.add("-".join(path_parts))
+        from corehq.apps.export.models import FormExportInstance
+        export = FormExportInstance.get(export_id)
+        for table in export.tables:
+            for column in table.columns:
+                if column.selected and column.item:
+                    path_parts = [n.name for n in column.item.path]
+                    path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                    properties.add("-".join(path_parts))
     return properties
 
 
