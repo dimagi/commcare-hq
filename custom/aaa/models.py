@@ -231,7 +231,7 @@ class Woman(LocationDenormalizedModel):
             pregnant_ranges = ccs_record.pregnant_ranges
         FROM (
             SELECT person_case_id, array_agg(pregnant_range) as pregnant_ranges
-            FROM(
+            FROM (
                 SELECT person_case_id,
                        daterange(opened_on::date, add, '[]') as pregnant_range
                 FROM "{ccs_record_cases_ucr_tablename}"
@@ -258,8 +258,11 @@ class Woman(LocationDenormalizedModel):
         FROM (
             SELECT person_case_id, array_agg(fp_current_method_range) AS fp_current_method_ranges
             FROM (
-                SELECT person_case_id, fp_current_method, daterange(timeend::date, next_timeend::date) AS fp_current_method_range
-                FROM(
+                SELECT
+                    person_case_id,
+                    fp_current_method,
+                    daterange(timeend::date, next_timeend::date) AS fp_current_method_range
+                FROM (
                     SELECT person_case_id,
                            fp_current_method,
                            timeend,
@@ -691,7 +694,8 @@ class Child(LocationDenormalizedModel):
         doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-tasks_cases')
         config, _ = get_datasource_config(doc_id, domain)
         ucr_tablename = get_table_name(domain, config.table_id)
-        column_names = ', '.join('due_list_{}'.format(code) for code in PRODUCT_CODES)
+        product_codes = ', '.join("'{}'".format(code) for code in PRODUCT_CODES)
+        column_names = ', '.join('due_list_date_{}'.format(code) for code in PRODUCT_CODES)
 
         return """
         UPDATE "{child_tablename}" AS child SET
@@ -701,23 +705,23 @@ class Child(LocationDenormalizedModel):
         FROM (
             SELECT
                 doc_id AS doc_id,
-                parent_id AS parent_id,
-                LAST_VALUE(product_code) AS last_immunization_type,
-                LAST_VALUE(product_date) AS last_immunization_date
+                parent_case_id AS parent_case_id,
+                LAST_VALUE(product_code) OVER w AS last_immunization_type,
+                LAST_VALUE(product_date) OVER w AS last_immunization_date
             FROM (
-                SELECT doc_id, parent_id,
+                SELECT doc_id, parent_case_id,
                        unnest(array[{product_codes}]) AS product_code,
                        unnest(array[{column_names}]) AS product_date
                 FROM "{tasks_cases_ucr_tablename}"
                 WHERE tasks_type = 'child'
-            )
-            WINDOW w AS (PARTITION BY doc_id, parent_id ORDER BY product_date DESC)
+            ) AS _tasks
+            WINDOW w AS (PARTITION BY doc_id, parent_case_id ORDER BY product_date DESC)
         ) tasks
-        WHERE child.child_health_case_id = tasks.parent_id
+        WHERE child.child_health_case_id = tasks.parent_case_id
         """.format(
             child_tablename=cls._meta.db_table,
             tasks_cases_ucr_tablename=ucr_tablename,
-            product_codes=', '.join(PRODUCT_CODES),
+            product_codes=product_codes,
             column_names=column_names,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
