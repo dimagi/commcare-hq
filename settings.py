@@ -2168,6 +2168,13 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
+if UNIT_TESTING or DEBUG:
+    try:
+        from ddtrace import tracer
+        tracer.enabled = False
+    except ImportError:
+        pass
+
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
