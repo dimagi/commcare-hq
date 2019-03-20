@@ -98,7 +98,7 @@ class TestUtils(TestCase):
         cls.domain.delete()
         super(TestUtils, cls).tearDownClass()
 
-    def test_build_location_filters_for_village(self):
+    def test_build_location_filters_for_village_MOHFW(self):
         expected_output = {
             'village_id': self.village.location_id,
             'sc_id': self.sc.location_id,
@@ -110,7 +110,7 @@ class TestUtils(TestCase):
         result = build_location_filters(self.village.location_id, MINISTRY_MOHFW)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_sc(self):
+    def test_build_location_filters_for_sc_MOHFW(self):
         expected_output = {
             'village_id': ALL,
             'sc_id': self.sc.location_id,
@@ -122,7 +122,7 @@ class TestUtils(TestCase):
         result = build_location_filters(self.sc.location_id, MINISTRY_MOHFW)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_phc(self):
+    def test_build_location_filters_for_phc_MOHFW(self):
         expected_output = {
             'sc_id': ALL,
             'phc_id': self.phc.location_id,
@@ -133,7 +133,7 @@ class TestUtils(TestCase):
         result = build_location_filters(self.phc.location_id, MINISTRY_MOHFW)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_taluka(self):
+    def test_build_location_filters_for_taluka_MOHFW(self):
         expected_output = {
             'phc_id': ALL,
             'taluka_id': self.taluka.location_id,
@@ -141,9 +141,33 @@ class TestUtils(TestCase):
             'state_id': self.state.location_id,
         }
         result = build_location_filters(self.taluka.location_id, MINISTRY_MOHFW)
+
+    def test_build_location_filters_for_district_MOHFW(self):
+        expected_output = {
+            'taluka_id': ALL,
+            'district_id': self.district.location_id,
+            'state_id': self.state.location_id,
+        }
+        result = build_location_filters(self.district.location_id, MINISTRY_MOHFW)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_awc(self):
+    def test_build_location_filters_for_state_MOHFW(self):
+        expected_output = {
+            'district_id': ALL,
+            'state_id': self.state.location_id,
+        }
+        result = build_location_filters(self.state.location_id, MINISTRY_MOHFW)
+        self.assertDictEqual(result, expected_output)
+        self.assertDictEqual(result, expected_output)
+
+    def test_build_location_filters_for_national_MOHFW(self):
+        expected_output = {
+            'state_id': ALL,
+        }
+        result = build_location_filters('', MINISTRY_MOHFW)
+        self.assertDictEqual(result, expected_output)
+
+    def test_build_location_filters_for_awc_MWCD(self):
         expected_output = {
             'awc_id': self.awc.location_id,
             'supervisor_id': self.supervisor.location_id,
@@ -154,7 +178,7 @@ class TestUtils(TestCase):
         result = build_location_filters(self.awc.location_id, MINISTRY_MWCD)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_supervisor(self):
+    def test_build_location_filters_for_supervisor_MWCD(self):
         expected_output = {
             'awc_id': ALL,
             'supervisor_id': self.supervisor.location_id,
@@ -165,7 +189,7 @@ class TestUtils(TestCase):
         result = build_location_filters(self.supervisor.location_id, MINISTRY_MWCD)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_block(self):
+    def test_build_location_filters_for_block_MWCD(self):
         expected_output = {
             'supervisor_id': ALL,
             'block_id': self.block.location_id,
@@ -184,19 +208,17 @@ class TestUtils(TestCase):
         result = build_location_filters(self.district.location_id, MINISTRY_MWCD)
         self.assertDictEqual(result, expected_output)
 
-    def test_build_location_filters_for_district_MOHFW(self):
-        expected_output = {
-            'taluka_id': ALL,
-            'district_id': self.district.location_id,
-            'state_id': self.state.location_id,
-        }
-        result = build_location_filters(self.district.location_id, MINISTRY_MOHFW)
-        self.assertDictEqual(result, expected_output)
-
-    def test_build_location_filters_for_state(self):
+    def test_build_location_filters_for_state_MWCD(self):
         expected_output = {
             'district_id': ALL,
             'state_id': self.state.location_id,
         }
-        result = build_location_filters(self.state.location_id, MINISTRY_MOHFW)
+        result = build_location_filters(self.state.location_id, MINISTRY_MWCD)
+        self.assertDictEqual(result, expected_output)
+
+    def test_build_location_filters_for_national_MWCD(self):
+        expected_output = {
+            'state_id': ALL,
+        }
+        result = build_location_filters('', MINISTRY_MWCD)
         self.assertDictEqual(result, expected_output)
