@@ -404,30 +404,8 @@
          "column_id":"cbhi_enrolment"
       }
    ],
-   "meta":{
-      "doc_type":"DataSourceMeta",
-      "build":{
-         "doc_type":"DataSourceBuildInformation",
-         "initiated":"2019-02-11T13:53:15.896670Z",
-         "rebuilt_asynchronously":false,
-         "app_id":null,
-         "initiated_in_place":"2018-11-01T14:02:38.659276Z",
-         "finished":true,
-         "source_id":null,
-         "app_version":null,
-         "finished_in_place":true
-      }
-   },
-   "asynchronous":false,
    "base_item_expression":{
 
-   },
-   "is_deactivated":false,
-   "sql_settings":{
-      "doc_type":"SQLSettings",
-      "partition_config":[
-
-      ]
    },
    "configured_filter":{
       "type":"and",
@@ -483,7 +461,6 @@
          }
       ]
    },
-   "backend_id":"SQL",
    "disable_destructive_rebuild":false,
    "description":"",
    "referenced_doc_type":"CommCareCase",
@@ -492,8 +469,6 @@
    "named_expressions":{
 
    },
-   "doc_type":"DataSourceConfiguration",
-   "icds_rebuild_related_docs":false,
    "table_id":"static-household_characterstics_data_source",
   
    "sql_column_indexes":[
