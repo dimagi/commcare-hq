@@ -652,19 +652,19 @@ class GenericReportView(object):
         old_file = io.BytesIO()
         export_from_tables(self.export_table, old_file, self.export_format)
 
-        # Then do it the new way
-        user_generator = self.user_generator
-        new_file = io.BytesIO()
-        for single_user in user_generator:
-            formatted_user = self.format_user_data(single_user)
-            formatted_data_row = self.get_report_data_for_one_user(formatted_user)
+        # # Then do it the new way
+        # user_generator = self.user_generator
+        # new_file = io.BytesIO()
+        # for single_user in user_generator:
+        #     formatted_user = self.format_user_data(single_user)
+        #     formatted_data_row = self.get_report_data_for_one_user(formatted_user)
+        #
+        #     # Go in here and modify the code to get the individual rows eventually
+        #     exportable_data_chunk = self.format_report_data_for_excel(formatted_data_row, formatted_user)
+        #     # # Write the report_data_chunk to the file.
+        #     export_from_tables(exportable_data_chunk, new_file, self.export_format)
 
-            # Go in here and modify the code to get the individual rows eventually
-            exportable_data_chunk = self.format_report_data_for_excel(formatted_data_row, formatted_user)
-            # # Write the report_data_chunk to the file.
-            export_from_tables(exportable_data_chunk, new_file, self.export_format)
-
-        return new_file
+        return old_file
 
     @property
     def user_generator(self):
@@ -1023,15 +1023,20 @@ class GenericTabularReport(GenericReportView):
 
             return [_unformat_val(val) for val in row]
 
-        table = headers.as_export_table
-        rows = [_unformat_row(row) for row in self.export_rows]
-        table.extend(rows)
-        if self.total_row:
-            table.append(_unformat_row(self.total_row))
-        if self.statistics_rows:
-            table.extend([_unformat_row(row) for row in self.statistics_rows])
+        from itertools import chain
 
-        return [[self.export_sheet_name, table]]
+        table_generator = headers.as_export_table
+        rows_generator = (_unformat_row(row) for row in self.export_rows)
+        rows = rows_generator
+        table_generator = chain(table_generator, rows)
+        if self.total_row:
+            table_generator = chain(_unformat_row(self.total_row), table_generator)
+            # table_generator.append(_unformat_row(self.total_row))
+        if self.statistics_rows:
+            table_generator = chain(table_generator, [_unformat_row(row) for row in self.statistics_rows])
+            # table_generator.extend([_unformat_row(row) for row in self.statistics_rows])
+
+        return [[self.export_sheet_name, table_generator]]
 
     @property
     def export_rows(self):

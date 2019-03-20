@@ -1350,6 +1350,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
+    exportable_all = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1858,7 +1859,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         if self.statistics_rows:
             table.extend([_unformat_row(row) for row in self.statistics_rows])
 
-        return [[self.export_sheet_name, table]]
+        return rows[0] # [self.export_sheet_name, table]
 
     def _report_data(self):
         export = self.rendered_as == 'export'
@@ -1929,6 +1930,26 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     def format_user_data(self, user):
         return util._report_user_dict(user)
+
+    @property
+    def get_all_rows(self):
+        # Note, you can get rid of user_generator() if this works.
+        user_query = EMWF.user_es_query(
+            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+        )
+        paginated_user_query = util.get_paginated_user_query(user_query)
+
+        return (self.data_row_generator(single_user)  for single_user in paginated_user_query)
+
+    def data_row_generator(self, single_user):
+        formatted_user = self.format_user_data(single_user)
+        formatted_data_row = self.get_report_data_for_one_user(formatted_user)
+
+        # Go in here and modify the code to get the individual rows eventually
+        exportable_data_chunk = self.format_report_data_for_excel(formatted_data_row, formatted_user)
+
+        yield exportable_data_chunk
+
 
     @property
     def rows(self):
