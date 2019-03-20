@@ -133,6 +133,7 @@ def _get_label_ids_to_skip(form, rows):
     label_ids_to_skip = set()
     errors = []
     if form.is_registration_form():
+        app = form.get_app()
         for row in rows:
             if not _has_translation(row, app.langs):
                 label_ids_to_skip.add(row['label'])
@@ -177,6 +178,7 @@ def _add_or_remove_translations(app, lang, row, itext, markdown_stats):
                 # have a Markdown node, always keep it. FB 183536
                 _update_translation_node(
                     new_translation,
+                    text_node,
                     _get_markdown_node(text_node),
                     {'form': 'markdown'},
                     # If all translations have been deleted, allow the
@@ -186,6 +188,7 @@ def _add_or_remove_translations(app, lang, row, itext, markdown_stats):
                 )
             _update_translation_node(
                 new_translation,
+                text_node,
                 _get_value_node(text_node),
                 {'form': 'default'},
                 delete_node=(not keep_value_node)
@@ -193,6 +196,7 @@ def _add_or_remove_translations(app, lang, row, itext, markdown_stats):
         else:
             # audio/video/image
             _update_translation_node(new_translation,
+                                     text_node,
                                      text_node.find("./{f}value[@form='%s']" % trans_type),
                                      {'form': trans_type})
 
@@ -209,7 +213,7 @@ def _get_translations_for_row(row, lang):
     return translations
 
 
-def _update_translation_node(new_translation, value_node, attributes=None, delete_node=True):
+def _update_translation_node(new_translation, text_node, value_node, attributes=None, delete_node=True):
     if delete_node and not new_translation:
         # Remove the node if it already exists
         if value_node.exists():
@@ -296,7 +300,7 @@ def _check_for_shadow_form_error(form):
 def escape_output_value(value):
     try:
         return etree.fromstring("<value>{}</value>".format(
-            re.sub(r"(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
+            re.sub(r"(?<!/)>", "&gt;", re.sub(r"<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:
         # if something went horribly wrong just don't bother with escaping
