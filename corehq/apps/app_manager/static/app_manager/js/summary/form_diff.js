@@ -25,6 +25,17 @@ hqDefine('app_manager/js/summary/form_diff',[
 
         $(window).resize(function(){ resizeViewPort(); });
 
+
+        var firstModulesAndFormsIdsByID = {};
+        _.each(initialPageData.get('first.modules'), function (module) {
+            firstModulesAndFormsIdsByID[module.id] = _.pluck(module.forms, 'id');
+        });
+
+        var secondModulesAndFormsIdsByID = {};
+        _.each(initialPageData.get('second.modules'), function (module) {
+            secondModulesAndFormsIdsByID[module.id] = _.pluck(module.forms, 'id');
+        });
+
         var getModuleIntersection = function () {
             // returns a list of all modules and forms from both versions
 
@@ -33,13 +44,12 @@ hqDefine('app_manager/js/summary/form_diff',[
                 secondModules = JSON.parse(JSON.stringify(initialPageData.get('second.modules'))),
                 firstModulesById = _.indexBy(firstModules, 'id'),
                 secondModulesById = _.indexBy(secondModules, 'id');
-            // given the list of modules in the first list
-            // if the element from the second is in the first, check the forms, and label them
-            // otherwise just add the second element
+
+            // For modules that exist in both versions, ensure the forms from the both versions are represented
             _.each(secondModules, function (secondModule) {
                 var firstModule = firstModulesById[secondModule.id];
-                if (firstModule) { // both versions have this module, check that all the forms are the same
-                    // find all forms;
+                if (firstModule) {
+                    // both versions have this module, add forms from second that aren't in first
                     var firstModuleFormIds = _.pluck(firstModule.forms, 'id'),
                         secondModuleFormsById = _.indexBy(secondModule.forms, 'id'),
                         inSecondNotFirst = _.difference(_.keys(secondModuleFormsById), firstModuleFormIds);
@@ -47,11 +57,35 @@ hqDefine('app_manager/js/summary/form_diff',[
                         firstModule.forms.push(secondModuleFormsById[extraFormId]);
                     });
                 } else {
+                    // this module didn't exist in the first version
                     allModules.push(secondModule);
                 }
             });
             return allModules;
         };
+
+        var getModuleVersions = function (module) {
+            var versions = [];
+            if (module.id in firstModulesAndFormsIdsByID) {
+                versions.push(initialPageData.get('first.app_version'));
+            }
+            if (module.id in secondModulesAndFormsIdsByID) {
+                versions.push(initialPageData.get('second.app_version'));
+            }
+            return versions;
+        };
+
+        var getFormVersions = function (module, form) {
+            var versions = [];
+             if (module.id in firstModulesAndFormsIdsByID && firstModulesAndFormsIdsByID[module.id].includes(form.id)) {
+                versions.push(initialPageData.get('first.app_version'));
+            }
+            if (module.id in secondModulesAndFormsIdsByID && secondModulesAndFormsIdsByID[module.id].includes(form.id)) {
+                versions.push(initialPageData.get('second.app_version'));
+            }
+            return versions;
+        };
+
 
         var formSummaryMenu = models.menuModel({
             items: _.map(getModuleIntersection(), function (module) {
@@ -59,12 +93,14 @@ hqDefine('app_manager/js/summary/form_diff',[
                     id: module.id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
+                    versions: getModuleVersions(module),
                     has_errors: false,
                     subitems: _.map(module.forms, function (form) {
                         return models.menuItemModel({
                             id: form.id,
                             name: utils.translateName(form.name, lang, langs),
                             icon: utils.formIcon(form),
+                            versions: getFormVersions(module, form),
                         });
                     }),
                 });
