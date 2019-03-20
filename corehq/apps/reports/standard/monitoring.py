@@ -1350,6 +1350,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
+    exportable_all = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1667,10 +1668,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
-    def _rows_by_user(self, report_data):
+    def _rows_by_user(self, report_data, users):
         rows = []
         last_form_by_user = self.es_last_submissions()
-        for user in self.users_to_iterate:
+        for user in users:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
@@ -1737,12 +1738,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
-    def _report_data(self):
+    def _report_data(self, users_to_iterate):
+        user_ids = [a.user_id for a in users_to_iterate]
         export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
-        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
-        user_ids = self.user_ids
+        case_owners = _get_owner_ids_from_users(users_to_iterate)
+        user_ids = user_ids
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1798,14 +1800,28 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return total_row
 
     @property
+    def get_all_rows(self):
+        user_es_query = EMWF.user_es_query(
+            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
+        )
+        user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
+        user_list = [util._report_user_dict(user) for user in user_query_generator]
+        formatted_data = self._report_data(users_to_iterate=user_list)
+        formatted_rows = self._rows_by_user(formatted_data, user_list)
+
+        self.total_row = self._total_row(formatted_rows, formatted_data)
+
+        return formatted_rows
+
+    @property
     def rows(self):
-        report_data = self._report_data()
+        report_data = self._report_data(self.users_to_iterate)
 
         rows = []
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            rows = self._rows_by_user(report_data)
+            rows = self._rows_by_user(report_data, self.users_to_iterate)
 
         self.total_row = self._total_row(rows, report_data)
         return rows
