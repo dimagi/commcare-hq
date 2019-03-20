@@ -10,7 +10,6 @@ import datetime
 
 from couchdbkit import ResourceConflict
 
-from corehq.apps.couch_sql_migration.couchsqlmigration import TIMING_BUCKETS
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
@@ -22,7 +21,7 @@ from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
-from corehq.util.datadog.utils import load_counter
+from corehq.util.datadog.utils import load_counter, DAY_SCALE_TIME_BUCKETS
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -467,7 +466,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export', duration_buckets=TIMING_BUCKETS)
+@datadog_track_errors('rebuild_export', duration_buckets=DAY_SCALE_TIME_BUCKETS)
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
