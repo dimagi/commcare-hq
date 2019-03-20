@@ -1295,6 +1295,8 @@ class ProjectUsersTab(UITab):
                 LocationImportStatusView,
                 LocationFieldsView,
             )
+            is_view_only = (hasattr(self._request, 'is_view_only')
+                            and self._request.is_view_only)
             menu.append({
                 'title': _(LocationsListView.page_title),
                 'url': reverse(LocationsListView.urlname, args=[self.domain]),
@@ -1305,7 +1307,8 @@ class ProjectUsersTab(UITab):
                         'urlname': NewLocationView.urlname,
                     },
                     {
-                        'title': _(EditLocationView.page_title),
+                        'title': _("View Location") if is_view_only
+                        else _(EditLocationView.page_title),
                         'urlname': EditLocationView.urlname,
                     },
                     {
