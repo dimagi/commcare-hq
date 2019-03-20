@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
+import six
 import sqlagg
 import sqlalchemy
 from sqlalchemy import select
@@ -323,7 +324,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             return tuple(getattr(row, key_component) for key_component in self.report_data_source.group_by)
 
         def _row_proxy_to_dict(row):
-            return dict(row.items())
+            return dict(six.iteritems(row))
 
         return OrderedDict([
             (_extract_aggregate_key(row), _row_proxy_to_dict(row)) for row in results

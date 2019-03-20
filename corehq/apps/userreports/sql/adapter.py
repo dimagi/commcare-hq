@@ -1,26 +1,29 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import hashlib
-import six
 
+import hashlib
+import logging
+
+import six
+import sqlalchemy
 from architect import install
 from django.utils.translation import ugettext as _
-import sqlalchemy
+from memoized import memoized
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
-    ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
-    MissingColumnWarning, translate_programming_error)
+    ColumnNotFoundError, TableRebuildError, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
-from memoized import memoized
+
+logger = logging.getLogger(__name__)
 
 
 metadata = sqlalchemy.MetaData()
@@ -56,23 +59,57 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
         return TemporaryTableDef
 
-    def _install_partition(self):
+    def _apply_sql_addons(self):
+        distributed = False
+        if self.config.sql_settings.citus_config.distribution_type:
+            distributed = self._distribute_table()
+
         if self.config.sql_settings.partition_config:
-            config = self.config.sql_settings.partition_config[0]
-            partition = install(
-                'partition', type='range', subtype=config.subtype,
-                constraint=config.constraint, column=config.column, db=self.engine.url,
-                orm='sqlalchemy', return_null=True
-            )
-            mapping = self.get_sqlalchemy_orm_table()
-            partition(mapping)
-            mapping.architect.partition.get_partition().prepare()
+            if distributed:
+                logger.warning(
+                    'Skipping installing partitions since table is distributed in CitusDB: %s', self.table_id
+                )
+            else:
+                self._install_partition()
+
+    def _distribute_table(self):
+        config = self.config.sql_settings.citus_config
+        self.session_helper.Session.remove()
+        if not self.session_helper.is_citus_db:
+            # only do this if the database contains the citus extension
+            return
+
+        with self.engine.begin() as connection:
+            if config.distribution_type == 'hash':
+                if config.distribution_column not in self.get_table().columns:
+                    raise ColumnNotFoundError("Column '{}' not found.".format(config.distribution_column))
+                connection.execute("select create_distributed_table('{}', '{}')".format(
+                    self.get_table().name, config.distribution_column
+                ))
+            elif config.distribution_type == 'reference':
+                connection.execute("select create_reference_table('{}')".format(
+                    self.get_table().name
+                ))
+            else:
+                raise ValueError("unknown distribution type: %r" % config.distribution_type)
+            return True
+
+    def _install_partition(self):
+        config = self.config.sql_settings.partition_config[0]
+        partition = install(
+            'partition', type='range', subtype=config.subtype,
+            constraint=config.constraint, column=config.column, db=self.engine.url,
+            orm='sqlalchemy', return_null=True
+        )
+        mapping = self.get_sqlalchemy_orm_table()
+        partition(mapping)
+        mapping.architect.partition.get_partition().prepare()
 
     def rebuild_table(self):
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
-            self._install_partition()
+            self._apply_sql_addons()
         except ProgrammingError as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
@@ -82,7 +119,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
-            self._install_partition()
+            self._apply_sql_addons()
         except ProgrammingError as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
@@ -95,10 +132,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
+            table = self.get_table()
             if self.config.sql_settings.partition_config:
-                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=self.get_table().name))
+                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=table.name))
             else:
-                self.get_table().drop(connection, checkfirst=True)
+                table.drop(connection, checkfirst=True)
+            metadata.remove(table)
 
     @unit_testing_only
     def clear_table(self):
@@ -238,6 +277,7 @@ def _custom_index_name(table_name, column_ids):
 def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
+        metadata.remove(table)
         table.create(connection)
 
 

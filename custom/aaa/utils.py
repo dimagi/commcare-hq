@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.db import connections
 
 from corehq.apps.locations.models import LocationType, SQLLocation
-from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD
+from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 
 
@@ -35,7 +35,7 @@ def build_location_filters(location_id, ministry):
         params.update(dict(parent_type=location_type))
     child_location_type = LocationType.objects.filter(**params).first()
     if child_location_type is not None:
-        filters["{}_id".format(child_location_type.code)] = 'All'
+        filters["{}_id".format(child_location_type.code)] = ALL
 
     return filters
 

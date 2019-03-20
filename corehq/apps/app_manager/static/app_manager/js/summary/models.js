@@ -7,9 +7,10 @@ hqDefine('app_manager/js/summary/models',[
     'knockout',
     'underscore',
     'app_manager/js/summary/utils',
+    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-], function ($, ko, _, utils, assertProperties, hqLayout) {
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout) {
 
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
@@ -66,9 +67,8 @@ hqDefine('app_manager/js/summary/models',[
         return self;
     };
 
-    var contentModel = function (options) {
-        assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'query_label', 'read_only', 'onQuery', 'onSelectMenuItem']);
-
+    var controlModel = function (options) {
+        assertProperties.assertRequired(options, ['onQuery', 'onSelectMenuItem']);
         var self = {};
 
         // Connection to menu
@@ -84,6 +84,25 @@ hqDefine('app_manager/js/summary/models',[
             options.onQuery(self.query());
         };
 
+        // Handling of id/label switcher
+        self.showLabels = ko.observable(true);
+        self.showIds = ko.computed(function () {
+            return !self.showLabels();
+        });
+        self.turnLabelsOn = function () {
+            self.showLabels(true);
+        };
+        self.turnIdsOn = function () {
+            self.showLabels(false);
+        };
+
+        return self;
+    };
+
+    var contentModel = function (options) {
+        assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'read_only']);
+        var self = {};
+
         // Utilities
         self.lang = options.lang;
         self.langs = options.langs;
@@ -96,18 +115,6 @@ hqDefine('app_manager/js/summary/models',[
                 return utils.translateName(question.translations, self.lang, self.langs);
             }
             return question.label;  // hidden values don't have translations
-        };
-
-        // Handling of id/label switcher
-        self.showLabels = ko.observable(true);
-        self.showIds = ko.computed(function () {
-            return !self.showLabels();
-        });
-        self.turnLabelsOn = function () {
-            self.showLabels(true);
-        };
-        self.turnIdsOn = function () {
-            self.showLabels(false);
         };
 
         // Create "module -> form" link/text markup
@@ -138,17 +145,50 @@ hqDefine('app_manager/js/summary/models',[
             });
         };
 
+        self.initController = function (controller) {
+            _.extend(self, controller);
+        };
+
         return self;
     };
 
-    var initSummary = function (menuInstance, contentInstance) {
-        menuInstance.selectedItemId.subscribe(function (newValue) {
-            contentInstance.selectedItemId(newValue);
+    var moduleModel = function (module) {
+        var self = contentItemModel(module);
+
+        self.url = initialPageData.reverse("view_module", self.id);
+        self.icon = utils.moduleIcon(self) + ' hq-icon';
+        self.forms = _.map(self.forms, formModel);
+
+        return self;
+    };
+
+    var formModel = function (form) {
+        var self = contentItemModel(form);
+
+        self.url = initialPageData.reverse("form_source", self.id);
+        self.icon = utils.formIcon(self) + ' hq-icon';
+        self.questions = _.map(self.questions, function (question) {
+            return contentItemModel(_.defaults(question, {
+                options: [],
+            }));
         });
 
-        hqLayout.setIsAppbuilderResizing(true);
+        return self;
+    };
+
+    var initMenu = function (contentInstances, menuInstance) {
+        menuInstance.selectedItemId.subscribe(function (newValue) {
+            _.each(contentInstances, function (contentInstance) {
+                contentInstance.selectedItemId(newValue);
+            });
+        });
         $("#hq-sidebar > nav").koApplyBindings(menuInstance);
-        $("#js-appmanager-body").koApplyBindings(contentInstance);
+    };
+
+    var initSummary = function (contentInstance, controller, contentDiv) {
+        hqLayout.setIsAppbuilderResizing(true);
+        contentInstance.initController(controller);
+        $(contentDiv).koApplyBindings(contentInstance);
     };
 
     return {
@@ -156,6 +196,9 @@ hqDefine('app_manager/js/summary/models',[
         contentItemModel: contentItemModel,
         menuItemModel: menuItemModel,
         menuModel: menuModel,
+        moduleModel: moduleModel,
+        initMenu: initMenu,
         initSummary: initSummary,
+        controlModel: controlModel,
     };
 });
