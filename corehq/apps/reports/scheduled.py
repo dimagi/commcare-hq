@@ -7,7 +7,10 @@ from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
 
-_soft_assert = soft_assert(exponential_backoff=False)
+_soft_assert = soft_assert(
+    to='{}@{}'.format('supportteam', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 def get_scheduled_report_ids(period, as_of=None):
