@@ -34,14 +34,14 @@ hqDefine('aaa/js/filters/location_filter', [
             self.selectedMinistry = ko.observable(self.userRoleType);
 
             self._initHierarchy = function () {
-                var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: self.userLocationIds[0], postData: params.postData});
-                var district = locationModel.locationModel({slug: 'district', name: 'District', parent: state, userLocationId: self.userLocationIds[1], postData: params.postData});
+                var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: self.userLocationIds[0], postData: params.postData, callback: params.callback});
+                var district = locationModel.locationModel({slug: 'district', name: 'District', parent: state, userLocationId: self.userLocationIds[1], postData: params.postData, callback: params.callback});
                 state.setChild(district);
                 if (self.selectedMinistry() === reachUtils.USERROLETYPES.MOHFW) {
-                    var taluka = locationModel.locationModel({slug: 'taluka', name: 'Taluka', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData});
-                    var phc = locationModel.locationModel({slug: 'phc', name: 'Primary Health Centre (PHC)', parent: taluka, userLocationId: self.userLocationIds[3], postData: params.postData});
-                    var sc = locationModel.locationModel({slug: 'sc', name: 'Sub-centre (SC)', parent: phc, userLocationId: self.userLocationIds[4], postData: params.postData});
-                    var village = locationModel.locationModel({slug: 'village', name: 'Village', parent: sc, userLocationId: self.userLocationIds[5], postData: params.postData});
+                    var taluka = locationModel.locationModel({slug: 'taluka', name: 'Taluka', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback});
+                    var phc = locationModel.locationModel({slug: 'phc', name: 'Primary Health Centre (PHC)', parent: taluka, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback});
+                    var sc = locationModel.locationModel({slug: 'sc', name: 'Sub-centre (SC)', parent: phc, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback});
+                    var village = locationModel.locationModel({slug: 'village', name: 'Village', parent: sc, userLocationId: self.userLocationIds[5], postData: params.postData, callback: params.callback});
                     district.setChild((taluka));
                     taluka.setChild(phc);
                     phc.setChild(sc);
@@ -55,9 +55,9 @@ hqDefine('aaa/js/filters/location_filter', [
                         village,
                     ]);
                 } else {
-                    var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData});
-                    var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData});
-                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: self.userLocationIds[4], postData: params.postData});
+                    var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback});
+                    var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback});
+                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback});
                     district.setChild((block));
                     block.setChild(supervisor);
                     supervisor.setChild(awc);
@@ -83,7 +83,7 @@ hqDefine('aaa/js/filters/location_filter', [
 
             params.filters[self.slug].resetFilters = function () {
                 _.each(self.hierarchyConfig(), function (location) {
-                    location.setDefaultOption();
+                    location.setDefaultOption(false);
                 });
             };
 
