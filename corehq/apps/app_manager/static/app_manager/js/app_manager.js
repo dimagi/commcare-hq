@@ -233,8 +233,10 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initMenuItemSorting = function () {
+        var MODULE_SELECTOR = ".appmanager-main-menu .module";
         if (!hqImport('hqwebapp/js/toggles').toggleEnabled('LEGACY_CHILD_MODULES')) {
             nestChildModules();
+            initChildModuleUpdateListener();
         }
         if (modulesWereReordered()) {
             promptToSaveOrdering();
@@ -246,20 +248,20 @@ hqDefine('app_manager/js/app_manager', function () {
         }
 
         function initDragHandles() {
-            $('.drag_handle').addClass('fa fa-arrows-v');
-            $('.js-appnav-drag-module').on('mouseenter', function () {
+            var $scope = $(".appmanager-main-menu");
+            $scope.find('.drag_handle').addClass('fa fa-arrows-v');
+            $scope.find('.js-appnav-drag-module').on('mouseenter', function () {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
                 $(this).closest('.js-sorted-li').removeClass('appnav-highlight');
             });
         }
         function nestChildModules() {
-            var modulesByUid = {},
+            var modulesByUid = getModulesByUid(),
                 childModules = [];
-            $(".module").each(function (index, element) {
+            $(MODULE_SELECTOR).each(function (index, element) {
                 // Set index here so we know whether we've rearranged anything
                 $(element).data('index', index);
-                modulesByUid[ $(element).data('uid') ] = element;
                 if ($(element).data('rootmoduleuid')) {
                     childModules.push(element);
                 }
@@ -267,12 +269,18 @@ hqDefine('app_manager/js/app_manager', function () {
             _.each(childModules, function (childModule) {
                 var parent = modulesByUid[$(childModule).data('rootmoduleuid')];
                 if (!parent) {
-                    // This child module is orphaned, throw it at the end
-                    $("ul.appnav-module").append(childModule);
+                    moveModuleToBottom(childModule);
                 } else {
                     addChildModuleToParent(childModule, parent);
                 }
             });
+        }
+        function getModulesByUid() {
+            var modulesByUid = {};
+            $(MODULE_SELECTOR).each(function (index, element) {
+                modulesByUid[ $(element).data('uid') ] = element;
+            });
+            return modulesByUid;
         }
         function addChildModuleToParent(childModule, parent) {
             var childList = $(parent).find("ul.child-modules");
@@ -282,8 +290,32 @@ hqDefine('app_manager/js/app_manager', function () {
             }
             childList.append(childModule);
         }
+        function moveModuleToBottom(module) {
+            $("ul.appmanager-main-menu").append(module);
+        }
+        function initChildModuleUpdateListener() {
+            // If a child module is created or removed, update the sidebar
+            $('#module-settings-form').on('saved-app-manager-form', function () {
+                var $form = $(this),
+                    modulesByUid = getModulesByUid(),
+                    module = modulesByUid[$form.data('moduleuid')],
+                    oldRoot = $(module).data('rootmoduleuid'),
+                    newRoot = $form.find('select[name=root_module_id]').val();
+
+                if (newRoot !== oldRoot) {
+                    $(module).data('rootmoduleuid', newRoot);
+                    if (!newRoot) {
+                        moveModuleToBottom(module);
+                    } else {
+                        addChildModuleToParent(module, modulesByUid[newRoot]);
+                    }
+                    rearrangeModules($(module));
+                    resetIndexes();
+                }
+            });
+        }
         function modulesWereReordered() {
-            return _.some($(".module"), function (element, index) {
+            return _.some($(MODULE_SELECTOR), function (element, index) {
                 return index !== $(element).data('index');
             });
         }
@@ -309,7 +341,7 @@ hqDefine('app_manager/js/app_manager', function () {
             if ($sortable.hasClass('sortable-forms')) {
                 rearrangeForms(ui, $sortable);
             } else {
-                rearrangeModules(ui, $sortable);
+                rearrangeModules(ui.item);
             }
             resetIndexes();
         }
@@ -323,22 +355,22 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
 
             if (to !== from || toModuleUid !== fromModuleUid) {
-                saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid);
+                saveRearrangement(url, from, to, fromModuleUid, toModuleUid);
             }
         }
-        function rearrangeModules(ui, $sortable) {
+        function rearrangeModules($module) {
             var url = initialPageData.reverse('rearrange', 'modules'),
-                from = ui.item.data('index'),
-                to = _.findIndex($(".module"), function (module) {
-                    return $(module).data('uid') === ui.item.data('uid');
+                from = $module.data('index'),
+                to = _.findIndex($(MODULE_SELECTOR), function (module) {
+                    return $(module).data('uid') === $module.data('uid');
                 });
 
             if (to !== from) {
-                saveRearrangement($sortable, url, from, to);
+                saveRearrangement(url, from, to);
             }
         }
         function resetIndexes() {
-            $(".module").each(function (index, module) {
+            $(MODULE_SELECTOR).each(function (index, module) {
                 $(module).data('index', index);
                 $(module).children("ul.sortable-forms").first().children("li").each(function (index, form) {
                     $(form).data('index', index);
@@ -346,7 +378,7 @@ hqDefine('app_manager/js/app_manager', function () {
                 });
             });
         }
-        function saveRearrangement($sortable, url, from, to, fromModuleUid, toModuleUid) {
+        function saveRearrangement(url, from, to, fromModuleUid, toModuleUid) {
             var data = {
                 from: from,
                 to: to,

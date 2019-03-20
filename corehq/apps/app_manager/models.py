@@ -5410,17 +5410,15 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def rearrange_modules(self, from_index, to_index):
         modules = self.modules
         try:
+            # remove module
             moving_module = modules.pop(from_index)
-            module_id = moving_module.unique_id
-            modules.insert(to_index, moving_module)
 
-            non_children = [m for m in modules if m.root_module_id != module_id]
-            children = [m for m in modules if m.root_module_id == module_id]
-            modules = []
-            for module in non_children:
-                modules.append(module)
-                if module.unique_id == module_id:
-                    modules.extend(children)
+            # remove its children
+            children = [m for m in modules if m.root_module_id == moving_module.unique_id]
+            modules = [m for m in modules if m.root_module_id != moving_module.unique_id]
+
+            # add back in module and children
+            modules = modules[:to_index] + [moving_module] + children + modules[to_index:]
 
         except IndexError:
             raise RearrangeError()
