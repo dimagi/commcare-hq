@@ -170,6 +170,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
+        global_task = chain()
+
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             stage_1_tasks = [
@@ -221,23 +223,22 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
-            res = group(*stage_1_tasks).apply_async()
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
-            res.get()
+            res = group(*stage_1_tasks)
 
+            res_daily = icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table)
             res_child = chain(
+                _child_health_monthly_table(
+                    state_ids=state_ids, day=calculation_date,
+                ),
                 icds_state_aggregation_task.si(
-                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table_finish
                 ),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
-            ).apply_async()
+            )
             res_ccs = chain(
                 icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
-            ).apply_async()
-            res_daily.get()
-            res_ccs.get()
-            res_child.get()
+            )
 
             res_ls_tasks = list()
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
@@ -256,20 +257,33 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
                             *res_ls_tasks
-                            ).apply_async()
+                            )
 
-            res_awc.get()
-
+            create_mbt_for_month_tasks = []
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
-                create_mbt_for_month.delay(state_id, first_of_month_string)
+                create_mbt_for_month_tasks.append(
+                    create_mbt_for_month.si(state_id=state_id, month=first_of_month_string)
+                )
+
+            global_task = chain(
+                global_task, res, group(res_ccs, res_child, res_daily), res_awc, group(*create_mbt_for_month_tasks)
+            )
+
+        final_tasks = []
+
         if date.weekday() == 5:
-            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
-        chain(
-            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
-        ).delay()
-        _bust_awc_cache.delay()
+            final_tasks.append(
+                icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
+            )
+        final_tasks.append(
+            chain(
+                icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
+                email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
+            )
+        )
+        final_tasks.append(_bust_awc_cache.si())
+        chain(global_task, group(*final_tasks)).apply_async()
 
 
 def _create_aggregate_functions(cursor):
@@ -465,8 +479,13 @@ def _child_health_monthly_table(state_ids, day):
     sub_aggregations = group([
         _child_health_helper.si(query=query, params=params)
         for query, params in helper.pre_aggregation_queries()
-    ]).apply_async()
-    sub_aggregations.get()
+    ])
+    return sub_aggregations
+
+
+@track_time
+def _child_health_monthly_table_finish(state_ids, day):
+    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
