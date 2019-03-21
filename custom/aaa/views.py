@@ -440,9 +440,9 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             elif sub_section == 'growth_monitoring':
                 data = helper.growth_monitoring()
             elif sub_section == 'weight_for_age_chart':
-                data = helper.weight_for_age_chart()
+                data = {'points': helper.weight_for_age_chart()}
             elif sub_section == 'height_for_age_chart':
-                data = helper.height_for_age_chart()
+                data = {'points': helper.height_for_age_chart()}
             elif sub_section == 'weight_for_height_chart':
                 data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':

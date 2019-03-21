@@ -125,3 +125,38 @@ class TestChildBeneficiarySections(TestCase):
                 {'vitaminName': 'Vit. A - 9', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'DPT Booster - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
             ])
+
+    def test_growth_monitoring(self):
+        self.assertEqual(
+            ChildQueryHelper(self.domain, 'person_case_id').growth_monitoring(),
+            {
+                'currentWeight': 'N/A',
+                'nrcReferred': 'N/A',
+                'growthMonitoringStatus': 'N/A',
+                'referralDate': 'N/A',
+                'previousGrowthMonitoringStatus': 'N/A',
+                'underweight': 'N/A',
+                'underweightStatus': 'N/A',
+                'stunted': 'N/A',
+                'stuntedStatus': 'N/A',
+                'wasting': 'N/A',
+                'wastingStatus': 'N/A',
+            })
+
+    def test_weight_for_age_chart(self):
+        self.assertEqual(
+            ChildQueryHelper(self.domain, 'person_case_id').weight_for_age_chart(),
+            []
+        )
+
+    def test_height_for_age_chart(self):
+        self.assertEqual(
+            ChildQueryHelper(self.domain, 'person_case_id').height_for_age_chart(),
+            []
+        )
+
+    def test_weight_for_height_chart(self):
+        self.assertEqual(
+            ChildQueryHelper(self.domain, 'person_case_id').weight_for_height_chart(),
+            []
+        )

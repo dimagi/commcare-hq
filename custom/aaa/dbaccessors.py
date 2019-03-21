@@ -97,23 +97,23 @@ class ChildQueryHelper(object):
             ]
 
     def growth_monitoring(self):
-        return dict(
-            currentWeight='N/A',
-            nrcReferred='N/A',
-            growthMonitoringStatus='N/A',
-            referralDate='N/A',
-            previousGrowthMonitoringStatus='N/A',
-            underweight='N/A',
-            underweightStatus='N/A',
-            stunted='N/A',
-            stuntedStatus='N/A',
-            wasting='N/A',
-            wastingStatus='N/A',
-        )
+        return {
+            'currentWeight': 'N/A',
+            'nrcReferred': 'N/A',
+            'growthMonitoringStatus': 'N/A',
+            'referralDate': 'N/A',
+            'previousGrowthMonitoringStatus': 'N/A',
+            'underweight': 'N/A',
+            'underweightStatus': 'N/A',
+            'stunted': 'N/A',
+            'stuntedStatus': 'N/A',
+            'wasting': 'N/A',
+            'wastingStatus': 'N/A',
+        }
 
     def weight_for_age_chart(self):
         child = Child.objects.get(person_case_id=self.person_case_id)
-        points = {}
+        points = []
         try:
             child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
@@ -121,13 +121,13 @@ class ChildQueryHelper(object):
         else:
             for recorded_weight in child_history.weight_child_history:
                 month = relativedelta(recorded_weight[0], child.dob).months
-                points[month] = recorded_weight[1]
+                points.append({'x': month, 'y': recorded_weight[1]})
 
         return points
 
     def height_for_age_chart(self):
         child = Child.objects.get(person_case_id=self.person_case_id)
-        points = {}
+        points = []
         try:
             child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
@@ -135,7 +135,7 @@ class ChildQueryHelper(object):
         else:
             for recorded_height in child_history.height_child_history:
                 month = relativedelta(recorded_height[0], child.dob).months
-                points[month] = recorded_height[1]
+                points.append({'x': month, 'y': recorded_height[1]})
 
         return points
 
