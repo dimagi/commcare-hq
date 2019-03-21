@@ -100,7 +100,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
             iconClass: '{}',
             readOnlyClass: '{}',
             postSave: {},
-            allow_edit: '{}',
+            allow_edit: {},
         "></inline-edit>
     '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave, allow_edit)
     return _input_trans(template, name, langs=langs, allow_blank=False)

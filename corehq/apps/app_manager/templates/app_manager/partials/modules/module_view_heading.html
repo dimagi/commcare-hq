@@ -26,7 +26,7 @@
     url: '{% url "edit_module_attr" domain app.id module.unique_id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,
-    allow_edit: '{{ request.couch_user.can_edit_apps|yesno:"true,false" }}',
+    allow_edit: {{ request.couch_user.can_edit_apps|yesno:"true,false" }},
 "></inline-edit>
 <br />
 
