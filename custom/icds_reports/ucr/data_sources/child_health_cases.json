@@ -180,7 +180,7 @@
         "display_name": null,
         "datatype": "string",
         "type": "expression",
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
         "is_nullable": true,
         "expression": {
@@ -1610,13 +1610,11 @@
     },
     "engine_id": "icds-ucr",
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "state_id",
-          "subtype": "string_lastchars",
-          "constraint": "3"
-        }
-      ]
+     "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
     },
     "sql_column_indexes": [
       {
