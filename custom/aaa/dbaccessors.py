@@ -120,7 +120,7 @@ class ChildQueryHelper(object):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = []
         try:
-            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
@@ -134,7 +134,7 @@ class ChildQueryHelper(object):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = []
         try:
-            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
@@ -148,7 +148,7 @@ class ChildQueryHelper(object):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = {}
         try:
-            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
