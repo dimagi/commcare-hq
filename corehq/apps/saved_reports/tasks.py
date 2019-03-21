@@ -14,8 +14,10 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import UnsupportedScheduledReportError
 from corehq.apps.saved_reports.models import ReportNotification, ReportConfig
-from corehq.apps.saved_reports.scheduled import get_scheduled_report_ids
+from corehq.apps.saved_reports.scheduled import get_scheduled_report_ids, \
+    create_records_for_scheduled_reports
 from corehq.apps.users.models import CouchUser
+from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.web import json_request
@@ -62,26 +64,13 @@ def send_report_throttled(notification_id):
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
-def daily_reports():
-    for report_id in get_scheduled_report_ids('daily'):
-        send_delayed_report(report_id)
+def initiate_queue_scheduled_reports():
+    queue_scheduled_reports.delay()
 
 
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def weekly_reports():
-    for report_id in get_scheduled_report_ids('weekly'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def monthly_reports():
-    for report_id in get_scheduled_report_ids('monthly'):
+@serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def queue_scheduled_reports():
+    for report_id in create_records_for_scheduled_reports():
         send_delayed_report(report_id)
 
 

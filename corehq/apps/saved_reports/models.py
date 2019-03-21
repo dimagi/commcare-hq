@@ -9,6 +9,8 @@ import six
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
+
+from django.db import models
 from six.moves.urllib.parse import urlencode
 from six.moves import range
 
@@ -701,3 +703,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     def verify_start_date(self, start_date):
         if start_date != self.start_date and start_date < datetime.today().date():
             raise ValidationError("You can not specify a start date in the past.")
+
+
+class ScheduledReportsCheckpoint(models.Model):
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(db_index=True)
+
+    @classmethod
+    def get_latest(cls):
+        try:
+            return cls.objects.order_by('-end_date')[0]
+        except IndexError:
+            return None

@@ -52,7 +52,7 @@ class ScheduledReportTest(TestCase):
             report.delete()
 
     def _check(self, period, as_of, count):
-        self.assertEqual(count, len(list(get_scheduled_report_ids(period, as_of))))
+        self.assertEqual(count, len(list(get_scheduled_report_ids(period, end_datetime=as_of))))
 
     def testDefaultValue(self):
         now = datetime.utcnow()
@@ -63,7 +63,7 @@ class ScheduledReportTest(TestCase):
         else:
             self.assertRaises(
                 ValueError,
-                lambda: list(get_scheduled_report_ids('daily', None))
+                lambda: list(get_scheduled_report_ids('daily', end_datetime=None))
             )
 
     def testDailyReportEmptyMinute(self):
@@ -82,7 +82,7 @@ class ScheduledReportTest(TestCase):
         # but not too lenient
         self.assertRaises(
             ValueError,
-            lambda: list(get_scheduled_report_ids('daily', datetime(2014, 10, 31, 12, 6)))
+            lambda: list(get_scheduled_report_ids('daily', end_datetime=datetime(2014, 10, 31, 12, 6)))
         )
 
     def testDailyReportWithMinuteHalfHour(self):

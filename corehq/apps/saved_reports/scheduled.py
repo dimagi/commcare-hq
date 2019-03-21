@@ -2,7 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from calendar import monthrange
 from datetime import datetime, timedelta
-from corehq.apps.saved_reports.models import ReportNotification
+
+from django.db import transaction
+
+from corehq.apps.saved_reports.models import ReportNotification, ScheduledReportsCheckpoint
 from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
@@ -55,21 +58,41 @@ def _make_all_notification_view_keys(period, target):
                     }
 
 
-def get_scheduled_report_ids(period, as_of=None):
-    as_of = as_of or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly'), period
+@transaction.atomic
+def create_records_for_scheduled_reports():
+    end_datetime = datetime.utcnow()
+    last_checkpoint = ScheduledReportsCheckpoint.get_latest()
+    start_datetime = last_checkpoint.end_datetime or _get_default_start_datetime(end_datetime)
+    new_checkpoint = ScheduledReportsCheckpoint(start_datetime=start_datetime, end_datetime=end_datetime)
+    report_ids = []
+    for period in ('daily', 'weekly', 'monthly'):
+        for report_id in get_scheduled_report_ids(period, start_datetime, end_datetime):
+            report_ids.append(report_id)
+    new_checkpoint.save()
+    return report_ids
 
-    target_minute = guess_reporting_minute(as_of)
-    target_point_in_time = as_of.replace(minute=target_minute, second=0, microsecond=0)
-    keys = _make_all_notification_view_keys(period, target_point_in_time)
-    for key in keys:
-        for result in ReportNotification.view(
-            "reportconfig/all_notifications",
-            reduce=False,
-            include_docs=False,
-            **key
-        ).all():
-            yield result['id']
+
+def _get_default_start_datetime(end_datetime):
+    target_minute = guess_reporting_minute(end_datetime)
+    return end_datetime.replace(minute=target_minute, second=0, microsecond=0)
+
+
+def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
+    end_datetime = end_datetime or datetime.utcnow()
+    assert period in ('daily', 'weekly', 'monthly'), period
+    if not start_datetime:
+        start_datetime = _get_default_start_datetime(end_datetime)
+
+    for target_point_in_time in _iter_15_minute_marks_in_range(start_datetime, end_datetime):
+        keys = _make_all_notification_view_keys(period, target_point_in_time)
+        for key in keys:
+            for result in ReportNotification.view(
+                "reportconfig/all_notifications",
+                reduce=False,
+                include_docs=False,
+                **key
+            ).all():
+                yield result['id']
 
 
 def guess_reporting_minute(now=None):
