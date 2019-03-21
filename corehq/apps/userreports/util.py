@@ -11,6 +11,8 @@ from django_prbac.utils import has_privilege
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import DocumentNotFound
 
+UCR_TABLE_PREFIX = 'ucr_'
+
 
 def localize(value, lang):
     """
@@ -143,13 +145,13 @@ def get_table_name(domain, table_id):
     domain = domain.encode('unicode-escape').decode('utf-8')
     table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
-        'cr_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
+        '{}{}_{}_{}'.format(UCR_TABLE_PREFIX, domain, table_id, _hash(domain, table_id)),
         from_left=False
     )
 
 
 def is_ucr_table(table_name):
-    return table_name.startswith('config_report_')
+    return table_name.startswith(UCR_TABLE_PREFIX)
 
 
 def truncate_value(value, max_length=52, from_left=True):

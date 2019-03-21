@@ -15,6 +15,8 @@ INDICATOR_LIST = {
 MINISTRY_MOHFW = 'MoHFW'
 MINISTRY_MWCD = 'MWCD'
 
+ALL = 'ALL'
+
 NUMERIC = 'numeric'
 PERCENT = 'percent'
 

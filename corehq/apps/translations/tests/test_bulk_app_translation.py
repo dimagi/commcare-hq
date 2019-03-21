@@ -580,7 +580,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'icon_filepath_en',
                                         'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
-        ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
+        ('module1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en'))
     )
 
     excel_data = (
@@ -624,7 +624,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['Modules_and_forms', ['Type', 'sheet_name', 'default_en',
              'icon_filepath_en', 'audio_filepath_en', 'unique_id']],
             ['module1', ['case_property', 'list_or_detail', 'default_en']],
-            ['module1_form1', ['label', 'default_en', 'audio_en', 'image_en', 'video_en']]
+            ['module1_form1', ['label', 'default_en', 'image_en', 'audio_en', 'video_en']]
         ])
 
         self.assertEqual(get_bulk_multimedia_sheet_headers('fra'),

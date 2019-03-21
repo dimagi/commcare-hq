@@ -58,9 +58,9 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.weightOfPw = ko.observable();
         self.dateOfRegistration = ko.observable();
         self.edd = ko.observable();
-        self.twelveWeeksPregnancyRegistration = ko.observable();
+        self.add = ko.observable();
+        self.lmp = ko.observable();
         self.bloodGroup = ko.observable();
-        self.pregnancyStatus = ko.observable();
         // pregnancy_risk
         self.riskPregnancy = ko.observable();
         self.referralDate = ko.observable();
@@ -138,6 +138,26 @@ hqDefine("aaa/js/models/pregnant_women", [
             }
         };
 
+        self.twelveWeeksPregnancyRegistration = ko.computed(function () {
+            var diffAddAndLmp = Math.floor(moment(self.add(), "YYYY-MM-DD").diff(moment(self.lmp(), "YYYY-MM-DD"),'weeks',true));
+            return diffAddAndLmp < 12 ? 'Yes' : 'No';
+        });
+
+        self.pregnancyStatus = ko.computed(function () {
+            // 3 - PNC
+            // 2 - Due for delivery
+            // 1 - Pregnancy
+            var diffEddAndLmp = Math.floor(moment(self.edd(), "YYYY-MM-DD").diff(moment(self.lmp(), "YYYY-MM-DD"), 'days', true));
+            var diffNowAndAdd = Math.floor(moment(new Date()).diff(moment(self.add(), "YYYY-MM-DD"), 'days', true));
+            if (diffNowAndAdd <= 42) {
+                return 3;
+            } else if (diffEddAndLmp <= 90) {
+                return 2;
+            } else {
+                return 1;
+            }
+        });
+
         return self;
     };
 
@@ -146,7 +166,6 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             husband: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
 
@@ -177,7 +196,6 @@ hqDefine("aaa/js/models/pregnant_women", [
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             })
         };
 

@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import uuid
+from io import open
+
 from django.core.files.uploadedfile import UploadedFile
+from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from django.test import TestCase
-from dimagi.utils.make_uuid import random_hex
-from io import open
 
 DOMAIN = 'test-attachments'
 FORM_XML = """<?xml version='1.0' ?>
@@ -48,7 +50,7 @@ class AttachmentsTest(TestCase):
 
     @staticmethod
     def _create_form(app_id, xmlns, with_attachment):
-        xml = FORM_XML.format(doc_id=random_hex(), xmlns=xmlns)
+        xml = FORM_XML.format(doc_id=uuid.uuid4().hex, xmlns=xmlns)
         attachments = {}
         if with_attachment:
             attachment = open('./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg', 'rb')
