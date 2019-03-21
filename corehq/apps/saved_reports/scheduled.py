@@ -13,8 +13,7 @@ _soft_assert = soft_assert(
 )
 
 
-def _keys(period, as_of):
-    minute = guess_reporting_minute(as_of)
+def _make_all_notification_view_keys(period, as_of, minute):
     if minute == 0:
         # for legacy purposes, on the hour also include reports that didn't have a minute set
         minutes = (None, minute)
@@ -50,8 +49,9 @@ def get_scheduled_report_ids(period, as_of=None):
     as_of = as_of or datetime.utcnow()
     assert period in ('daily', 'weekly', 'monthly'), period
 
-    keys = _keys(period, as_of)
+    minute = guess_reporting_minute(as_of)
 
+    keys = _make_all_notification_view_keys(period, as_of, minute)
     for key in keys:
         for result in ReportNotification.view(
             "reportconfig/all_notifications",
