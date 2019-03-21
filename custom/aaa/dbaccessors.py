@@ -30,7 +30,7 @@ class ChildQueryHelper(object):
             person_case_id=self.person_case_id,
         )
 
-    def postanatal_care_details(self):
+    def postnatal_care_details(self):
         # TODO update when CcsRecord will have properties from PNC form
         return [{
             'pncDate': 'N/A',
