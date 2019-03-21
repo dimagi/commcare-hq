@@ -63,6 +63,7 @@ from corehq.apps.registration.forms import (
 )
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
     VERIFICATION__ALREADY_IN_USE,
     VERIFICATION__ALREADY_VERIFIED,
@@ -1053,15 +1054,19 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = six.moves.urllib.parse.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    result = initiate_sms_verification_workflow(user, phone_number)
-    if result == VERIFICATION__ALREADY_IN_USE:
-        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
-    elif result == VERIFICATION__ALREADY_VERIFIED:
-        messages.error(request, _('Phone number is already verified.'))
-    elif result == VERIFICATION__RESENT_PENDING:
-        messages.success(request, _('Verification message resent.'))
-    elif result == VERIFICATION__WORKFLOW_STARTED:
-        messages.success(request, _('Verification workflow started.'))
+    try:
+        result = initiate_sms_verification_workflow(user, phone_number)
+    except BadSMSConfigException as error:
+        messages.error(request, _('Bad SMS configuration: {error}').format(error=error))
+    else:
+        if result == VERIFICATION__ALREADY_IN_USE:
+            messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+        elif result == VERIFICATION__ALREADY_VERIFIED:
+            messages.error(request, _('Phone number is already verified.'))
+        elif result == VERIFICATION__RESENT_PENDING:
+            messages.success(request, _('Verification message resent.'))
+        elif result == VERIFICATION__WORKFLOW_STARTED:
+            messages.success(request, _('Verification workflow started.'))
 
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])
