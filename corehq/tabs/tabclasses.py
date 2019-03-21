@@ -1349,12 +1349,18 @@ class TranslationsTab(UITab):
         if transifex_details_available_for_domain(self.domain):
             if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
                 items.append((_('Translations'), [
-                    {'url': reverse('app_translations', args=[self.domain]),
-                     'title': 'Manage App Translations'
-                     },
-                    {'url': reverse('pull_resource', args=[self.domain]),
-                     'title': 'Pull Resource'
-                     }
+                    {
+                        'url': reverse('app_translations', args=[self.domain]),
+                        'title': _('Manage App Translations')
+                    },
+                    {
+                        'url': reverse('pull_resource', args=[self.domain]),
+                        'title': _('Pull Resource')
+                    },
+                    {
+                        'url': reverse('blacklist_translations', args=[self.domain]),
+                        'title': _('Blacklist Translations')
+                    },
                 ]))
         return items
 
