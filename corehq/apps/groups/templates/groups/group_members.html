@@ -104,7 +104,7 @@
         <div class="tab-content">
             <div role="tabpanel" class="tab-pane" id="membership-tab">
                 <div class="panel-body">
-                    {% if request.is_view_only %}
+                    {% if request.is_view_only or not can_edit_group_membership %}
                         <div class="form form-horizontal">
                             <legend>
                                 {% trans "View Group Membership" %}
@@ -128,6 +128,15 @@
                                 </div>
                             </div>
                         </div>
+                        {% if not can_edit_group_membership %}
+                            <div class="alert alert-info">
+                                {% blocktrans %}
+                                    Your permissions allow you to <strong>create &amp; delete groups</strong>
+                                    and <strong>update group details &amp; data</strong>, but your project administrator
+                                    has not granted you permission to add mobile workers to groups.
+                                {% endblocktrans %}
+                            </div>
+                        {% endif %}
                     {% else %}
                         <div class="row">
                             <div class="col-sm-12">
@@ -142,7 +151,6 @@
                                       action="{% url "update_group_membership" domain group.get_id %}" method='post'>
                                         {% crispy group_membership_form %}
                                 </form>
-
 
                             </div>
                         </div>
