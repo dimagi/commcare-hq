@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from datetime import date
 
+from django.utils.functional import cached_property
+
 from corehq.apps.locations.models import SQLLocation
 
 import hashlib
@@ -121,4 +123,52 @@ class BaseICDSAggregationHelper(object):
         (SQL query, query parameters) that will return any rows that are
         inconsistent from the old data to the new.
         """
+        raise NotImplementedError
+
+
+class TempTableAggHelper(object):
+    @cached_property
+    def temp_tablename(self):
+        return '{}_temp'.format(self.tablename)
+
+    def temp_table_create(self, cols):
+        col_list = ',\n'.join(["{} {}".format(*col) for col in cols])
+        return """
+        CREATE UNLOGGED TABLE {temp_table} (
+            {columns}
+        )
+        """.format(
+            temp_table=self.temp_tablename,
+            columns=col_list
+        ), {}
+
+    def temp_table_drop(self):
+        return 'DROP TABLE IF EXISTS {}'.format(self.temp_tablename), {}
+
+    def temp_table_insert(self, ucr_query, ucr_query_params):
+        return "INSERT INTO {temp_table} ({ucr_table_query})".format(
+            temp_table=self.temp_tablename,
+            ucr_table_query=ucr_query
+        ), ucr_query_params
+
+    def temp_table_distribute(self):
+        return "SELECT create_distributed_table('{}', 'supervisor_id')".format(self.temp_tablename), {}
+
+    def aggregation_query(self):
+        return [
+            self.temp_table_drop(),
+            self.temp_table_create(self.temp_table_columns()),
+            self.temp_table_distribute(),
+            self.temp_table_insert(*self.data_from_ucr_query()),
+            self.insert_query(),
+            self.temp_table_drop()
+        ]
+
+    def data_from_ucr_query(self):
+        raise NotImplementedError
+
+    def temp_table_columns(self):
+        raise NotImplementedError
+
+    def insert_query(self):
         raise NotImplementedError
