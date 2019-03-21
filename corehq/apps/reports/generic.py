@@ -1005,7 +1005,7 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        rows = [_unformat_row(row) for row in self.export_rows]
+        rows = (_unformat_row(row) for row in self.export_rows)
         table.extend(rows)
         if self.total_row:
             table.append(_unformat_row(self.total_row))
