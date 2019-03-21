@@ -152,6 +152,7 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
     get_latest_enabled_app_release,
+    expire_get_latest_enabled_app_release_cache,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5963,9 +5964,7 @@ class LatestEnabledAppRelease(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledAppRelease, self).save(*args, **kwargs)
-        from corehq.apps.app_manager import signals
-        signals.latest_enabled_app_release_post_save.send(LatestEnabledAppRelease,
-                                                          latest_enabled_app_release=self)
+        expire_get_latest_enabled_app_release_cache(self)
 
     def clean(self):
         enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)

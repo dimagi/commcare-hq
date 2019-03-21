@@ -6,13 +6,10 @@ from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
-    expire_get_latest_enabled_app_release,
 )
 from corehq.apps.app_manager.util import get_latest_enabled_versions_per_profile
 from corehq import toggles
 from dimagi.utils.logging import notify_exception
-
-from corehq.apps.locations.models import SQLLocation
 
 
 def create_app_structure_repeat_records(sender, application, **kwargs):
@@ -49,10 +46,6 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
         get_latest_enabled_versions_per_profile.clear(application.copy_of)
 
 
-def _expire_get_latest_enabled_app_release(sender, latest_enabled_app_release, **kwargs):
-    expire_get_latest_enabled_app_release(latest_enabled_app_release)
-
-
 app_post_save = Signal(providing_args=['application'])
 
 app_post_save.connect(create_app_structure_repeat_records)
@@ -60,5 +53,3 @@ app_post_save.connect(update_callcenter_config)
 app_post_save.connect(expire_latest_enabled_build_profiles)
 
 app_post_release = Signal(providing_args=['application'])
-latest_enabled_app_release_post_save = Signal(providing_args=['latest_enabled_app_release'])
-latest_enabled_app_release_post_save.connect(_expire_get_latest_enabled_app_release)

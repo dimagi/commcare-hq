@@ -665,7 +665,7 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
             return get_app(domain, build_id)
 
 
-def expire_get_latest_enabled_app_release(latest_enabled_app_release):
+def expire_get_latest_enabled_app_release_cache(latest_enabled_app_release):
     """
     expire cache for the location and its descendants for the app corresponding to this enabled app release
     why? : Latest enabled release for a location is dependent on restrictions added for
