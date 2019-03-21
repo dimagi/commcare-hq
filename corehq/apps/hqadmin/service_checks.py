@@ -134,7 +134,7 @@ def check_celery():
     # Retry because of https://github.com/celery/celery/issues/4758
     num_retries = 4
     for _ in range(num_retries):
-        if celery_worker_status.success:
+        if celery_worker_status.success or not celery_status.success:
             break
         time.sleep(5)
         celery_worker_status = _check_celery_workers()
