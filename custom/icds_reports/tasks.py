@@ -221,9 +221,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
-            res = group(*stage_1_tasks).apply_async()
             res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
-            res.get()
+
+            # https://github.com/celery/celery/issues/4274
+            stage_1_task_results = [stage_1_task.delay() for stage_1_task in stage_1_tasks]
+            for stage_1_task_result in stage_1_task_results:
+                stage_1_task_result.get(disable_sync_subtasks=False)
 
             res_child = chain(
                 icds_state_aggregation_task.si(
@@ -235,9 +238,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
             ).apply_async()
-            res_daily.get()
-            res_ccs.get()
-            res_child.get()
+            res_daily.get(disable_sync_subtasks=False)
+            res_ccs.get(disable_sync_subtasks=False)
+            res_child.get(disable_sync_subtasks=False)
 
             res_ls_tasks = list()
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
@@ -258,7 +261,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             *res_ls_tasks
                             ).apply_async()
 
-            res_awc.get()
+            res_awc.get(disable_sync_subtasks=False)
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -462,11 +465,13 @@ def _child_health_monthly_table(state_ids, day):
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
 
-    sub_aggregations = group([
-        _child_health_helper.si(query=query, params=params)
+    # https://github.com/celery/celery/issues/4274
+    sub_aggregations = [
+        _child_health_helper.delay(query=query, params=params)
         for query, params in helper.pre_aggregation_queries()
-    ]).apply_async()
-    sub_aggregations.get()
+    ]
+    for sub_aggregation in sub_aggregations:
+        sub_aggregation.get(disable_sync_subtasks=False)
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
