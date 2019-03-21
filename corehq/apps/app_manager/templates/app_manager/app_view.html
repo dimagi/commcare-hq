@@ -52,7 +52,7 @@
         rows: 1,
         saveValueName: 'name',
         nodeName: 'input',
-        allow_edit: {{ request.couch_user.can_edit_apps|yesno:"true,false" }},
+        disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
 
@@ -63,7 +63,7 @@
         placeholder: '{% trans "Enter app description here"|escapejs %}',
         saveValueName: 'comment',
         cols: 50,
-        allow_edit: {{ request.couch_user.can_edit_apps|yesno:"true,false" }},
+        disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
 {% endblock %}

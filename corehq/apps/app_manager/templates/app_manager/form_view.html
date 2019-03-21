@@ -96,15 +96,15 @@
     </div>
 
     <div class="appmanager-edit-title">
-      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" allow_edit=request.couch_user.can_edit_apps|yesno:"true,false" %}
+      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" disallow_edit=request.couch_user.can_edit_apps|yesno:"false,true" %}
       {% if form.get_action_type == 'open' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave allow_edit=allow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave disallow_edit=disallow_edit %}
       {% elif form.requires_case %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave allow_edit=allow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave disallow_edit=disallow_edit %}
       {% elif form.form_type == 'shadow_form' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave allow_edit=allow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave disallow_edit=disallow_edit %}
       {% else %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave allow_edit=allow_edit %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave disallow_edit=disallow_edit %}
       {% endif %}
       {% endwith %}
     </div>
@@ -118,7 +118,7 @@
           url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
           saveValueName: 'comment',
           cols: 50,
-          allow_edit: {{ request.couch_user.can_edit_apps|yesno:"true,false" }},
+          disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
       "></inline-edit>
     </div>
 
