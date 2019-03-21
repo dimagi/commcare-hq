@@ -278,7 +278,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
             )
         )
-        final_tasks.append(_bust_awc_cache)
+        final_tasks.append(_bust_awc_cache.si())
         chain(global_task, group(*final_tasks)).apply_async()
 
 
