@@ -436,7 +436,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 data = {'visits': helper.postnatal_care_details()}
             elif sub_section == 'vaccination_details':
                 period = self.request.POST.get('period', 'atBirth')
-                data = helper.vaccination_details(period)
+                data = {'vitamins': helper.vaccination_details(period)}
             elif sub_section == 'growth_monitoring':
                 data = helper.growth_monitoring()
             elif sub_section == 'weight_for_age_chart':

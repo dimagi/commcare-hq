@@ -42,205 +42,59 @@ class ChildQueryHelper(object):
 
     def vaccination_details(self, period):
         if period == 'atBirth':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='BCG',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Hepatitis B - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='OPV - 0',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'BCG', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Hepatitis B - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 0', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'sixWeek':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='OPV - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Pentavalent - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Fractional IPV - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Rotavirus - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='PCV - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'OPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Fractional IPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Rotavirus - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'PCV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'tenWeek':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='OPV - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Pentavalent - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Rotavirus - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'OPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Rotavirus - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'fourteenWeek':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='OPV - 3',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Pentavalent - 3',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Fractional IPV - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Rotavirus - 3',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='PCV - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'OPV - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Rotavirus - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'nineTwelveMonths':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='PCV Booster',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Measles - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='JE - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Measles - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'JE - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'sixTeenTwentyFourMonth':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='DPT Booster - 1',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Measles - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='OPV Booster',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='JE - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 3',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                ]
-            )
+            return [
+                {'vitaminName': 'DPT Booster - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Measles - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'JE - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
         elif period == 'twentyTwoSeventyTwoMonth':
-            return dict(
-                vitamins=[
-                    dict(
-                        vitaminName='Vit. A - 4',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 5',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 6',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 7',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 8',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='Vit. A - 9',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    ),
-                    dict(
-                        vitaminName='DPT Booster - 2',
-                        date='N/A',
-                        adverseEffects='N/A',
-                    )
-                ]
-            )
+            return [
+                {'vitaminName': 'Vit. A - 4', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 5', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 6', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 7', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 8', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 9', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'DPT Booster - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+            ]
 
     def growth_monitoring(self):
         return dict(
