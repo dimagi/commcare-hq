@@ -13,35 +13,45 @@ _soft_assert = soft_assert(
 )
 
 
-def _make_all_notification_view_keys(period, as_of, minute):
-    if minute == 0:
+def _make_all_notification_view_keys(period, target):
+    """
+
+    :param period: 'daily', 'weekly', or 'monthly'
+    :param target: The 15-minute-aligned point in time we are targeting for a match
+    :return: generator of couch view kwargs to use in view query for 'reportconfig/all_notifications'
+    """
+    assert target.minute % 15 == 0
+    assert target.second == 0
+    assert target.microsecond == 0
+
+    if target.minute == 0:
         # for legacy purposes, on the hour also include reports that didn't have a minute set
-        minutes = (None, minute)
+        minutes = (None, target.minute)
     else:
-        minutes = (minute,)
+        minutes = (target.minute,)
 
     if period == 'daily':
         for minute in minutes:
             yield {
-                'startkey': [period, as_of.hour, minute],
-                'endkey': [period, as_of.hour, minute, {}],
+                'startkey': [period, target.hour, minute],
+                'endkey': [period, target.hour, minute, {}],
             }
     elif period == 'weekly':
         for minute in minutes:
             yield {
-                'key': [period, as_of.hour, minute, as_of.weekday()],
+                'key': [period, target.hour, minute, target.weekday()],
             }
     else:
         # monthly
         for minute in minutes:
             yield {
-                'key': [period, as_of.hour, minute, as_of.day]
+                'key': [period, target.hour, minute, target.day]
             }
-        if as_of.day == monthrange(as_of.year, as_of.month)[1]:
-            for day in range(as_of.day + 1, 32):
+        if target.day == monthrange(target.year, target.month)[1]:
+            for day in range(target.day + 1, 32):
                 for minute in minutes:
                     yield {
-                        'key': [period, as_of.hour, minute, day]
+                        'key': [period, target.hour, minute, day]
                     }
 
 
@@ -49,9 +59,9 @@ def get_scheduled_report_ids(period, as_of=None):
     as_of = as_of or datetime.utcnow()
     assert period in ('daily', 'weekly', 'monthly'), period
 
-    minute = guess_reporting_minute(as_of)
-
-    keys = _make_all_notification_view_keys(period, as_of, minute)
+    target_minute = guess_reporting_minute(as_of)
+    target_point_in_time = as_of.replace(minute=target_minute, second=0, microsecond=0)
+    keys = _make_all_notification_view_keys(period, target_point_in_time)
     for key in keys:
         for result in ReportNotification.view(
             "reportconfig/all_notifications",
