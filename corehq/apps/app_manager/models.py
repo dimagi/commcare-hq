@@ -137,7 +137,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
-    get_brief_apps_in_domain,
 )
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -6004,31 +6003,19 @@ class LatestEnabledAppRelease(models.Model):
         self.full_clean()
         self.save()
 
-    @classmethod
-    def to_json(cls, domain, **kwargs):
-        location_id = kwargs.get('location_id')
-        app_id = kwargs.get('app_id')
-        version = kwargs.get('version')
-        restrictions = cls.objects.filter(domain=domain)
-        if location_id:
-            restrictions = restrictions.filter(location_id=location_id)
-        if app_id:
-            restrictions = restrictions.filter(app_id=app_id)
-        if version:
-            restrictions = restrictions.filter(version=version)
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(domain, include_remote=True)}
-        return [{
-            'location': restriction.location.name,
-            'app': app_names.get(restriction.app_id, restriction.app_id),
-            'build_id': restriction.build_id,
-            'version': restriction.version,
-            'active': restriction.active,
-            'id': restriction.id,
-            'activated_on': (datetime.datetime.strftime(restriction.activated_on, '%Y-%m-%d  %H:%M:%S')
-                             if restriction.activated_on else None),
-            'deactivated_on': (datetime.datetime.strftime(restriction.deactivated_on, '%Y-%m-%d %H:%M:%S')
-                               if restriction.deactivated_on else None),
-        } for restriction in restrictions]
+    def to_json(self):
+        return {
+            'location': self.location.name,
+            'app': self.app_id,
+            'build_id': self.build_id,
+            'version': self.version,
+            'active': self.active,
+            'id': self._get_pk_val(),
+            'activated_on': (datetime.datetime.strftime(self.activated_on, '%Y-%m-%d  %H:%M:%S')
+                             if self.activated_on else None),
+            'deactivated_on': (datetime.datetime.strftime(self.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if self.deactivated_on else None),
+        }
 
 
 class LatestEnabledBuildProfiles(models.Model):

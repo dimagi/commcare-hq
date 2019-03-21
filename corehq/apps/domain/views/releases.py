@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.models import LatestEnabledAppRelease
 from corehq.apps.domain.forms import ManageAppReleasesForm
 from corehq.apps.domain.views import BaseProjectSettingsView
@@ -26,6 +27,7 @@ class ManageReleases(BaseProjectSettingsView):
     urlname = 'manage_releases'
     page_title = ugettext_lazy("Manage Releases")
 
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(ManageReleases, self).dispatch(request, *args, **kwargs)
 
@@ -40,11 +42,21 @@ class ManageReleases(BaseProjectSettingsView):
 
     @property
     def page_context(self):
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        q = LatestEnabledAppRelease.objects.filter(domain=self.domain)
+        if self.request.GET.get('location_id'):
+            q = q.filter(location_id=self.request.GET.get('location_id'))
+        if self.request.GET.get('app_id'):
+            q = q.filter(app_id=self.request.GET.get('app_id'))
+        if self.request.GET.get('version'):
+            q = q.filter(location_id=self.request.GET.get('version'))
+
+        enabled_app_releases = [release.to_json() for release in q]
+        for r in enabled_app_releases:
+            r['app'] = app_names.get(r['app'], r['app'])
         return {
             'manage_releases_form': self.manage_releases_form,
-            'enabled_app_releases': LatestEnabledAppRelease.to_json(
-                self.domain, location_id=self.request.GET.get('location_id'),
-                app_id=self.request.GET.get('app_id'), version=self.request.GET.get('version'))
+            'enabled_app_releases': enabled_app_releases
         }
 
     def post(self, request, *args, **kwargs):
