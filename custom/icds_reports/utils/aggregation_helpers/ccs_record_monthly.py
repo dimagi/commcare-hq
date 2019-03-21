@@ -11,7 +11,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE)
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, month_formatter
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
@@ -47,10 +47,10 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def tablename(self):
-        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+        return self.base_tablename
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': month_formatter(self.month)}
 
     @property
     def person_case_ucr_tablename(self):
@@ -114,6 +114,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         columns = (
             ('awc_id', 'case_list.awc_id'),
             ('case_id', 'case_list.case_id'),
+            ('supervisor_id', 'case_list.supervisor_id'),
             ('month', self.month.strftime("'%Y-%m-%d'")),
             ('age_in_months', 'trunc({})'.format(age_in_months_end)),
             ('ccs_status', "CASE WHEN {} THEN 'pregnant' ELSE CASE WHEN {} THEN "

@@ -54,14 +54,14 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def tablename(self):
-        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+        return self.base_tablename
 
     @property
     def temporary_tablename(self):
         return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}"'.format(self.tablename)
+        return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
 
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
@@ -89,6 +89,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         columns = (
             ("awc_id", "child_health.awc_id"),
             ("case_id", "child_health.doc_id"),
+            ("supervisor_id", "child_health.supervisor_id"),
             ("month", self.month.strftime("'%Y-%m-%d'")),
             ("sex", "child_health.sex"),
             ("age_tranche",
@@ -335,7 +336,10 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def create_temporary_table(self):
-        return "CREATE TABLE \"{}\" (LIKE child_health_monthly INCLUDING INDEXES)".format(self.temporary_tablename)
+        return """
+        CREATE TABLE \"{table}\" (LIKE child_health_monthly INCLUDING INDEXES);
+        SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.temporary_tablename)
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)

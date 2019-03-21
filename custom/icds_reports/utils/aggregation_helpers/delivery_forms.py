@@ -11,9 +11,13 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
     aggregate_child_table_prefix = 'icds_db_delivery_form_'
 
+    def drop_table_query(self):
+        tablename = self.aggregate_parent_table
+        return 'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(tablename=self.aggregate_parent_table), {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}
+
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
+        tablename = self.aggregate_parent_table
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
@@ -45,7 +49,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 case_load_ccs_record0 IS NOT NULL
           WINDOW w AS (
-            PARTITION BY case_load_ccs_record0
+            PARTITION BY supervisor_id, case_load_ccs_record0
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
           )
         )
