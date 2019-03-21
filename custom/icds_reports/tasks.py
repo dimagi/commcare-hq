@@ -225,8 +225,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
             res_child = chain(
+                _child_health_monthly_table(
+                    state_id=state_ids, date=calculation_date,
+                ),
                 icds_state_aggregation_task.si(
-                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table_finish
                 ),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
             )
@@ -472,8 +475,12 @@ def _child_health_monthly_table(state_ids, day):
     sub_aggregations = group([
         _child_health_helper.si(query=query, params=params)
         for query, params in helper.pre_aggregation_queries()
-    ]).apply_async()
-    sub_aggregations.get()
+    ])
+    return sub_aggregations
+
+@track_time
+def _child_health_monthly_table_finish(state_ids, day):
+    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
