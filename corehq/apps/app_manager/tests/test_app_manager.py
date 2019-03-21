@@ -226,7 +226,7 @@ class AppManagerTest(TestCase):
             lang = path.split("/")[1]
             data_path = os.path.join(os.path.dirname(__file__), 'data', 'yesno_{}_app_strings.txt'.format(lang))
             with open(data_path, encoding='utf-8') as f:
-                self.assertEqual(f.read().strip(), copy.fetch_attachment(path).strip())
+                self.assertEqual(f.read().strip(), copy.fetch_attachment(path).decode('utf-8').strip())
 
         self._check_legacy_odk_files(copy)
 

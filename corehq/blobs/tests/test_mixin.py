@@ -107,7 +107,7 @@ class TestBlobMixin(BaseTestCase):
         name = "test.1"
         content = "\u4500 is not ascii"
         self.obj.put_attachment(content, name)
-        self.assertEqual(self.obj.fetch_attachment(name), content)
+        self.assertEqual(self.obj.fetch_attachment(name).decode('utf-8'), content)
 
     def test_fetch_attachment_stream(self):
         name = "test.1"
