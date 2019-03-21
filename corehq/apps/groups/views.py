@@ -15,7 +15,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
-require_can_edit_groups = require_permission(Permissions.edit_commcare_users)
+require_can_edit_groups = require_permission(Permissions.edit_groups)
 
 
 @require_POST
