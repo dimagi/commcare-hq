@@ -262,7 +262,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 )
 
             global_task = chain(
-                res, group(res_ccs, res_child, res_daily), res_awc, group(*create_mbt_for_month_tasks)
+                global_task, res, group(res_ccs, res_child, res_daily), res_awc, group(*create_mbt_for_month_tasks)
             )
 
         if date.weekday() == 5:
