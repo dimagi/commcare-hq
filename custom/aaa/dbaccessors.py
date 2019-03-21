@@ -180,7 +180,7 @@ class PregnantWomanQueryHelper(object):
             }
         ).values(
             'lmp', 'weightOfPw', 'dateOfRegistration', 'edd', 'add'
-        ).get(self.domain, person_case_id=self.person_case_id)
+        ).get(domain=self.domain, person_case_id=self.person_case_id)
         # I think we should consider to add blood_group to the CcsRecord to don't have two queries
         data.update(
             Woman.objects.extra(
