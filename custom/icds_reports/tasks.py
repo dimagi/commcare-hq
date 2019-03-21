@@ -223,7 +223,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             res = group(*stage_1_tasks)
 
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
+            res_daily = icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table)
             res_child = chain(
                 _child_health_monthly_table(
                     state_id=state_ids, date=calculation_date,
