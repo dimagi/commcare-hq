@@ -369,47 +369,32 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         if sub_section == 'person_details':
             person_model = Woman if section != 'child' else Child
 
-            extra_select = {
-                'gender': 'sex',
-                'aadhaarNo': 'has_aadhar_number',
-                'address': 'hh_address',
-                'phone': 'contact_phone_number',
-                'religion': 'hh_religion',
-                'caste': 'hh_caste',
-                'bplOrApl': 'hh_bpl_apl',
-                'subcentre': 'sc_id',
-                'village': 'village_id',
-                'anganwadiCentre': 'awc_id'
-            }
+            values = [
+                'dob', 'name', 'sex', 'has_aadhar_number', 'hh_address', 'contact_phone_number',
+                'hh_religion', 'hh_caste', 'hh_bpl_apl', 'sc_id', 'village_id', 'awc_id'
+            ]
 
             if section != 'child':
-                extra_select.update({
-                    'status': 'migration_status',
-                    'marriedAt': 'age_marriage',
-                    'husband_name': 'husband_name'
-                })
+                values.extend([
+                    'migration_status',
+                    'age_marriage',
+                    'husband_name'
+                ])
             else:
-                extra_select.update({
-                    'mother_case_id': 'mother_case_id'
-                })
+                values.append('mother_case_id')
 
-            extra_select_values = list(extra_select.keys())
-            extra_select_values.extend(
-                ['dob', 'name']
-            )
-            person = person_model.objects.extra(
-                select=extra_select
-            ).values(*extra_select_values).get(
+            person = person_model.objects.values(*values).get(
                 domain=request.domain,
                 person_case_id=beneficiary_id
             )
 
-            subsentre = SQLLocation.objects.get(domain=request.domain, location_id=person['subcentre']).name
-            village = SQLLocation.objects.get(domain=request.domain, location_id=person['village']).name
-            anganwadiCentre = SQLLocation.objects.get(domain=request.domain, location_id=person['anganwadiCentre']).name
-            person['subcentre'] = subsentre
-            person['village'] = village
-            person['anganwadiCentre'] = anganwadiCentre
+            location_details = SQLLocation.objects.filter(
+                domain=request.domain,
+                location_id__in=[person['sc_id'], person['village_id'], person['awc_id']]
+            )
+
+            for location in location_details:
+                person[location.location_type.code] = location.name
 
             data = dict(
                 person=person,
@@ -426,10 +411,10 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 # TODO update when the model will be created
                 husband = dict(
                     name=person['husband_name'],
-                    gender='Female',
+                    sex='Female',
                     dob=date(1991, 5, 11),
-                    marriedAt=26,
-                    aadhaarNo='Yes'
+                    age_marriage=26,
+                    has_aadhar_number='Yes'
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':
@@ -459,7 +444,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             elif sub_section == 'height_for_age_chart':
                 data = helper.height_for_age_chart()
             elif sub_section == 'weight_for_height_chart':
-                data = {points: helper.weight_for_height_chart()}
+                data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':
             if sub_section == 'pregnancy_details':
                 data = CcsRecord.objects.extra(
