@@ -5,10 +5,12 @@ import functools
 import hashlib
 import json
 import logging
+import six
 import uuid
 from collections import defaultdict, namedtuple
 from datetime import datetime
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+from six.moves import range
 
 from couchdbkit.ext.django.schema import StringProperty, StringListProperty, BooleanProperty, \
     IntegerProperty, DateProperty, DictProperty
@@ -28,8 +30,9 @@ from corehq.apps.reports.daterange import get_all_daterange_slugs, \
     get_daterange_start_end_dates
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.exceptions import UnsupportedScheduledReportError, \
-    UnsupportedSavedReportError, InvalidDaterangeException
+from corehq.apps.reports.exceptions import InvalidDaterangeException
+from corehq.apps.saved_reports.exceptions import UnsupportedSavedReportError, \
+    UnsupportedScheduledReportError
 from corehq.apps.userreports.util import default_language as ucr_default_language, \
     localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
