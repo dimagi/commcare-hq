@@ -2419,8 +2419,7 @@ class ManageAppReleasesForm(forms.Form):
 
     def location_id_choices(self):
         choices = [(None, _('Select Location'))]
-        for location in SQLLocation.active_objects.filter(domain=self.domain).values_list('id', 'name'):
-            choices.append((location.location_id, location.name))
+        choices.extend(SQLLocation.active_objects.filter(domain=self.domain).values_list('location_id', 'name'))
         return choices
 
     @cached_property

@@ -20,7 +20,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 
 
-@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(), use_select2_v4], name='dispatch')
+@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
 class ManageReleases(BaseProjectSettingsView):
     template_name = 'domain/manage_releases.html'
     urlname = 'manage_releases'
