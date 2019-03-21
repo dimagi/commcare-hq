@@ -13,41 +13,42 @@ _soft_assert = soft_assert(
 )
 
 
+def _keys(period, as_of):
+    minute = guess_reporting_minute(as_of)
+    if minute == 0:
+        # for legacy purposes, on the hour also include reports that didn't have a minute set
+        minutes = (None, minute)
+    else:
+        minutes = (minute,)
+
+    if period == 'daily':
+        for minute in minutes:
+            yield {
+                'startkey': [period, as_of.hour, minute],
+                'endkey': [period, as_of.hour, minute, {}],
+            }
+    elif period == 'weekly':
+        for minute in minutes:
+            yield {
+                'key': [period, as_of.hour, minute, as_of.weekday()],
+            }
+    else:
+        # monthly
+        for minute in minutes:
+            yield {
+                'key': [period, as_of.hour, minute, as_of.day]
+            }
+        if as_of.day == monthrange(as_of.year, as_of.month)[1]:
+            for day in range(as_of.day + 1, 32):
+                for minute in minutes:
+                    yield {
+                        'key': [period, as_of.hour, minute, day]
+                    }
+
+
 def get_scheduled_report_ids(period, as_of=None):
     as_of = as_of or datetime.utcnow()
     assert period in ('daily', 'weekly', 'monthly'), period
-
-    def _keys(period, as_of):
-        minute = guess_reporting_minute(as_of)
-        if minute == 0:
-            # for legacy purposes, on the hour also include reports that didn't have a minute set
-            minutes = (None, minute)
-        else:
-            minutes = (minute,)
-
-        if period == 'daily':
-            for minute in minutes:
-                yield {
-                    'startkey': [period, as_of.hour, minute],
-                    'endkey': [period, as_of.hour, minute, {}],
-                }
-        elif period == 'weekly':
-            for minute in minutes:
-                yield {
-                    'key': [period, as_of.hour, minute, as_of.weekday()],
-                }
-        else:
-            # monthly
-            for minute in minutes:
-                yield {
-                    'key': [period, as_of.hour, minute, as_of.day]
-                }
-            if as_of.day == monthrange(as_of.year, as_of.month)[1]:
-                for day in range(as_of.day + 1, 32):
-                    for minute in minutes:
-                        yield {
-                            'key': [period, as_of.hour, minute, day]
-                        }
 
     keys = _keys(period, as_of)
 
