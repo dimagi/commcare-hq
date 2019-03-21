@@ -3,17 +3,21 @@ hqDefine('app_manager/js/manage_releases', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/widgets_v4', // using select2/dist/js/select2.full.min for ko-select2 on location select
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    assertProperties,
 ) {
     'use strict';
     $(function () {
         var enabledAppRelease = function (details) {
             var self = {};
+            assertProperties.assert(details, [], ['id', 'build_id', 'active', 'app', 'version', 'location',
+                                                  'activated_on', 'deactivated_on']);
             self.id = details.id;
             self.build_id = details.build_id;
             self.active = ko.observable(details.active);
@@ -74,21 +78,19 @@ hqDefine('app_manager/js/manage_releases', [
             self.enabledAppReleases = ko.observableArray(enabledAppReleases);
             return self;
         }
-        var enabledAppReleases = _.map(initialPageData.get('enabled_app_releases'), function (appRelease) {
-            return enabledAppRelease(appRelease);
-        });
+        var enabledAppReleases = _.map(initialPageData.get('enabled_app_releases'), enabledAppRelease);
         var viewModel = manageReleasesViewModel(enabledAppReleases);
         if (enabledAppReleases.length) {
             $('#managed-releases').koApplyBindings(viewModel);
         }
         function manageReleaseSearchViewModel() {
             var self = {};
+            self.appIdSearchValue = ko.observable();
+            self.locationIdSearchValue = ko.observable();
+            self.versionSearchValue = ko.observable();
             self.search = function () {
-                var appId = $("#app-id-search-select").val();
-                var locationId = $("#location-search-select").val();
-                var version = $("#version-input").val();
-                window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
-                    version);
+                window.location.search = ("location_id=" + self.locationIdSearchValue + "&app_id=" +
+                    self.appIdSearchValue + "&version=" + self.versionSearchValue);
             };
             self.clear = function () {
                 window.location.search = "";

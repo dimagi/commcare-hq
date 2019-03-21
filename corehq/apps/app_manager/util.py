@@ -673,8 +673,8 @@ def expire_get_latest_enabled_app_release(latest_enabled_app_release):
     latest enabled release would depend on this location
     """
     location = SQLLocation.active_objects.get(location_id=latest_enabled_app_release.location_id)
-    location_and_descendats = location.get_descendants(include_self=True)
-    for loc in location_and_descendats:
+    location_and_descendants = location.get_descendants(include_self=True)
+    for loc in location_and_descendants:
         get_latest_enabled_app_release.clear(latest_enabled_app_release.domain, loc.location_id,
                                              latest_enabled_app_release.app_id)
 

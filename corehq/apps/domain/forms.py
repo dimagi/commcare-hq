@@ -17,6 +17,7 @@ from captcha.fields import CaptchaField
 from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
@@ -2401,15 +2402,17 @@ class ManageAppReleasesForm(forms.Form):
             self.fields['location_id'].initial = request.GET.get('location_id')
         if request.GET.get('version'):
             self.fields['version'].initial = request.GET.get('version')
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select'),
-            crispy.Field('location_id', id='location-search-select', css_class="ko-select2"),
-            crispy.Field('version', id='version-input'),
+            crispy.Field('app_id', id='app-id-search-select', data_bind="click: appIdSearchValue",
+                         css_class="ko-select2"),
+            crispy.Field('location_id', id='location-search-select', css_class="ko-select2",
+                         data_bind="click: locationIdSearchValue"),
+            crispy.Field('version', id='version-input', data_bind="click: versionSearchValue"),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
@@ -2420,13 +2423,13 @@ class ManageAppReleasesForm(forms.Form):
         )
 
     def app_id_choices(self):
-        choices = ([(None, 'Select Application')])
+        choices = ([(None, _('Select Application'))])
         for app in get_brief_apps_in_domain(self.domain):
             choices.append((app.id, app.name))
         return choices
 
     def location_id_choices(self):
-        choices = ([(None, 'Select Location')])
+        choices = ([(None, _('Select Location'))])
         for location in SQLLocation.active_objects.filter(domain=self.domain):
             choices.append((location.location_id, location.name))
         return choices

@@ -21,11 +21,11 @@
                     <table id="managed-releases" class="table">
                         <thead>
                             <tr>
-                                <th>{% trans 'Application' %}</th>
-                                <th>{% trans 'Location' %}</th>
-                                <th>{% trans 'Version' %}</th>
-                                <th>{% trans 'Last Activity' %}</th>
-                                <th>{% trans 'Action' %}</th>
+                                <th class="col-sm-2">{% trans 'Application' %}</th>
+                                <th class="col-sm-2">{% trans 'Location' %}</th>
+                                <th class="col-sm-2">{% trans 'Version' %}</th>
+                                <th class="col-sm-4">{% trans 'Last Activity' %}</th>
+                                <th class="col-sm-2">{% trans 'Action' %}</th>
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: enabledAppReleases, visible: enabledAppReleases">
@@ -44,9 +44,11 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <a href="#" data-bind =
-                                    "click: toggleRestriction, text: actionText, visible: !ajaxInProgress()"></a>
-                                    <span class="spinner fa fa-spinner" data-bind="visible: ajaxInProgress"></span>
+                                    <button type="button" class="" data-bind="click: toggleRestriction">
+                                        <span data-bind="text: actionText"></span>
+                                        <i class="spinner fa-spin fa fa-refresh"
+                                           data-bind="visible: ajaxInProgress"></i>
+                                    </button>
                                     <br/>
                                     <span class="error-message label label-danger" data-bind="visible: error">
                                         {% trans 'Could not update!' %}
