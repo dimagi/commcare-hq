@@ -40,6 +40,7 @@ from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
+from django.utils.functional import cached_property
 from django.core.exceptions import ValidationError
 from django_countries.data import COUNTRIES
 from PIL import Image
@@ -2411,18 +2412,18 @@ class ManageAppReleasesForm(forms.Form):
         )
 
     def app_id_choices(self):
-        choices = ([(None, _('Select Application'))])
+        choices = [(None, _('Select Application'))]
         for app in get_brief_apps_in_domain(self.domain):
             choices.append((app.id, app.name))
         return choices
 
     def location_id_choices(self):
-        choices = ([(None, _('Select Location'))])
-        for location in SQLLocation.active_objects.filter(domain=self.domain):
+        choices = [(None, _('Select Location'))]
+        for location in SQLLocation.active_objects.filter(domain=self.domain).values_list('id', 'name'):
             choices.append((location.location_id, location.name))
         return choices
 
-    @property
+    @cached_property
     def version_build_id(self):
         app_id = self.cleaned_data['app_id']
         version = self.cleaned_data['version']

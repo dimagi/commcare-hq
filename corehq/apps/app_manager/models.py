@@ -5962,6 +5962,9 @@ class LatestEnabledAppRelease(models.Model):
     activated_on = models.DateTimeField(null=True, blank=True)
     deactivated_on = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        unique_together = (("domain", "build_id", "location", "version"),)
+
     def save(self, *args, **kwargs):
         super(LatestEnabledAppRelease, self).save(*args, **kwargs)
         expire_get_latest_enabled_app_release_cache(self)
@@ -5977,12 +5980,7 @@ class LatestEnabledAppRelease(models.Model):
         """
         create a new object or just set the status of an existing one with provided
         domain, app_id, build_id, location_id and version to the status passed
-        :param domain: domain name
-        :param app_id: app id
         :param build_id: id of the build corresponding to the version
-        :param location_id: location_id of location
-        :param version: version number
-        :param active: set value for active
         """
         try:
             enabled_app_release = LatestEnabledAppRelease.objects.get(

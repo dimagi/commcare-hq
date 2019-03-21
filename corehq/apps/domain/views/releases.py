@@ -20,13 +20,12 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 
 
-@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
+@method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator(), use_select2_v4], name='dispatch')
 class ManageReleases(BaseProjectSettingsView):
     template_name = 'domain/manage_releases.html'
     urlname = 'manage_releases'
     page_title = ugettext_lazy("Manage Releases")
 
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(ManageReleases, self).dispatch(request, *args, **kwargs)
 
@@ -63,35 +62,28 @@ class ManageReleases(BaseProjectSettingsView):
 @login_and_domain_required
 @require_POST
 def deactivate_release_restriction(request, domain, restriction_id):
-    if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
-        return HttpResponseForbidden()
-    latest_enabled_app_release = LatestEnabledAppRelease.objects.get(id=restriction_id, domain=domain)
-    latest_enabled_app_release.deactivate()
-    response_content = {
-        'id': restriction_id,
-        'success': True,
-        'activated_on': (datetime.strftime(latest_enabled_app_release.activated_on, '%Y-%m-%d %H:%M:%S')
-                         if latest_enabled_app_release.activated_on else None),
-        'deactivated_on': (datetime.strftime(latest_enabled_app_release.deactivated_on, '%Y-%m-%d %H:%M:%S')
-                           if latest_enabled_app_release.deactivated_on else None),
-    }
-    return HttpResponse(json.dumps(response_content), content_type='application/json')
+    return update_release_restriction(request, domain, restriction_id, active=False)
 
 
 @login_and_domain_required
 @require_POST
 def activate_release_restriction(request, domain, restriction_id):
+    return update_release_restriction(request, domain, restriction_id, active=True)
+
+
+def update_release_restriction(request, domain, restriction_id, active):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
     latest_enabled_app_release = LatestEnabledAppRelease.objects.get(id=restriction_id, domain=domain)
     try:
-        latest_enabled_app_release.full_clean()
+        if active:
+            latest_enabled_app_release.full_clean()
     except ValidationError as e:
         response_content = {
             'message': ','.join(e.messages)
         }
     else:
-        latest_enabled_app_release.activate()
+        latest_enabled_app_release.activate() if active else latest_enabled_app_release.deactivate()
         response_content = {
             'id': restriction_id,
             'success': True,
