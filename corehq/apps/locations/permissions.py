@@ -76,6 +76,7 @@ from functools import wraps
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.http import Http404
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
@@ -169,11 +170,7 @@ def location_safe(view):
 
         # Django class-based views
         if issubclass(view, View):
-            # `View.as_view()` preserves stuff set on `dispatch`
-            if six.PY3:
-                view.dispatch.is_location_safe = True
-            else:
-                view.dispatch.__func__.is_location_safe = True
+            view = method_decorator(location_safe, 'dispatch')(view)
 
         # tastypie resources
         if issubclass(view, Resource):
@@ -197,10 +194,7 @@ def conditionally_location_safe(conditional_function):
 
             # Django class-based views
             if issubclass(view_fn, View):
-                if six.PY3:
-                    view_fn.dispatch._conditionally_location_safe_function = conditional_function
-                else:
-                    view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+                view_fn = method_decorator(_inner, 'dispatch')(view_fn)
 
             # HQ report classes
             if issubclass(view_fn, GenericReportView):

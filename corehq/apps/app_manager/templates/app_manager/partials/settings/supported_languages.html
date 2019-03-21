@@ -10,8 +10,11 @@
                 <i class="fa fa-arrows-v" data-bind="visible: $root.canSortLanguages"></i>
             </td>
             <td class="col-sm-3">
-                <input class="short form-control"
+                <form>
+                    <input class="short form-control"
                        data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
+                </form>
+
             </td>
             <td class="col-sm-1">
                 <span class="label label-default" data-bind="visible: isDefaultLang()">default</span>

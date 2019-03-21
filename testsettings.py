@@ -16,12 +16,15 @@ INSTALLED_APPS = (
 ) + tuple(INSTALLED_APPS)
 
 if USING_CITUS:
-    INSTALLED_APPS = (
-        'testapps.citus_master',
-        'testapps.citus_worker',
-    ) + tuple(INSTALLED_APPS)
+    if 'testapps.citus_master' not in INSTALLED_APPS:
+        INSTALLED_APPS = (
+            'testapps.citus_master',
+            'testapps.citus_worker',
+        ) + tuple(INSTALLED_APPS)
 
-    DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
+    if 'testapps.citus_master.citus_router.CitusDBRouter' not in DATABASE_ROUTERS:
+        # this router must go first
+        DATABASE_ROUTERS = ['testapps.citus_master.citus_router.CitusDBRouter'] + DATABASE_ROUTERS
 
 TEST_RUNNER = 'django_nose.BasicNoseRunner'
 NOSE_ARGS = [
@@ -62,7 +65,7 @@ del key, value
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
 
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS
 PILLOWTOPS = {}

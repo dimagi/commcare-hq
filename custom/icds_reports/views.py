@@ -40,8 +40,8 @@ from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
-    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -99,11 +99,13 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
+from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
+    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
+    get_datatables_ordering_info
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -331,6 +333,34 @@ class LadySupervisorView(BaseReportView):
 
         data = get_lady_supervisor_data(
             domain, config, include_test
+        )
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ServiceDeliveryDashboardView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+        age_sdd = request.GET.get('ageSDD', '0_3')
+
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
+        reversed_order = True if order_dir == 'desc' else False
+
+        data = get_service_delivery_data(
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            age_sdd,
         )
         return JsonResponse(data=data)
 
@@ -616,13 +646,11 @@ class AwcReportsView(BaseReportView):
             if age:
                 filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
                 elif order_by_name_column == 'current_month_nutrition_status':
@@ -651,12 +679,10 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
@@ -673,12 +699,10 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
@@ -767,7 +791,8 @@ class ExportIndicatorView(View):
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
+                         LS_REPORT_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,

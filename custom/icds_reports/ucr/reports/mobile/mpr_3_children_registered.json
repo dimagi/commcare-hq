@@ -19,7 +19,7 @@
     "icds"
   ],
   "report_id": "static-mpr_3_children_registered",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR 3 - Children Registered (Static)",
     "description": "New children registered during month.  Displays person cases grouped by month opened, owner ID, and age group at time of registration",
@@ -99,7 +99,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -125,34 +125,42 @@
       {
         "display": "F_resident_count",
         "column_id": "F_resident_count",
-        "type": "field",
-        "field": "F_resident_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
+        }
       },
       {
         "display": "M_resident_count",
         "column_id": "M_resident_count",
-        "type": "field",
-        "field": "M_resident_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
+        }
       },
       {
         "display": "F_migrant_count",
         "column_id": "F_migrant_count",
-        "type": "field",
-        "field": "F_migrant_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident IS DISTINCT FROM 1": 1
+        }
       },
       {
         "display": "M_migrant_count",
         "column_id": "M_migrant_count",
-        "type": "field",
-        "field": "M_migrant_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident IS DISTINCT FROM 1": 1
+        }
       }
     ],
     "sort_expression": [],

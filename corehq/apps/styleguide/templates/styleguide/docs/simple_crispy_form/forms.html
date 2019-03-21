@@ -5,7 +5,6 @@
         <div class="col-lg-4"></div>
         <div class="col-lg-8"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
 <span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_noop</span><span class="p">,</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
-<span class="kn">from</span> <span class="nn">crispy_forms.helper</span> <span class="kn">import</span> <span class="n">FormHelper</span>
 <span class="kn">from</span> <span class="nn">crispy_forms</span> <span class="kn">import</span> <span class="n">layout</span> <span class="k">as</span> <span class="n">crispy</span>
 <span class="kn">from</span> <span class="nn">crispy_forms</span> <span class="kn">import</span> <span class="n">bootstrap</span> <span class="k">as</span> <span class="n">twbscrispy</span>
 <span class="kn">from</span> <span class="nn">corehq.apps.hqwebapp</span> <span class="kn">import</span> <span class="n">crispy</span> <span class="k">as</span> <span class="n">hqcrispy</span></pre></div></div>
@@ -49,22 +48,8 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">ExampleUserLoginForm</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></pre></div></div>
     </div>
     <div class="row">
-        <div class="col-lg-4"><p>Here's what makes the form a Crispy Form:</p></div>
-        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span> <span class="o">=</span> <span class="n">FormHelper</span><span class="p">()</span></pre></div></div>
-    </div>
-    <div class="row">
-        <div class="col-lg-4"><p>This is necessary to make the form a horizontal form</p></div>
-        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">form_class</span> <span class="o">=</span> <span class="s">&#39;form-horizontal&#39;</span></pre></div></div>
-    </div>
-    <div class="row">
-        <div class="col-lg-4"><p>What do all these col-sm-3, col-md-2, col-lg-6 things mean? They
-specify the column sizes for the label and field columns depending
-on what the screen size is. This is called Responsive Design, and
-you should visit
-<a href="http://getbootstrap.com/css/#responsive-utilities">Bootstrap 3's Responsive Docs</a>
-for more information.</p></div>
-        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">label_class</span> <span class="o">=</span> <span class="s">&#39;col-sm-3 col-md-2 col-lg-2&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">field_class</span> <span class="o">=</span> <span class="s">&#39;col-sm-9 col-md-8 col-lg-6&#39;</span></pre></div></div>
+        <div class="col-lg-4"><p>Here's what makes the form a Crispy Form. It also adds a few Bootstrap classes so the form has standard proportions.</p></div>
+        <div class="col-lg-8"><div class="highlight"><pre>        <span class="bp">self</span><span class="o">.</span><span class="n">helper</span> <span class="o">=</span> <span class="n">hqcrispy.HQFormHelper</span><span class="p">()</span></pre></div></div>
     </div>
     <div class="row">
         <div class="col-lg-4"><p>This is the layout of the form where we can explicitly specify the

@@ -6,13 +6,14 @@ from django.core.management.base import BaseCommand
 
 from django.db import connections
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.log import with_progress_bar
 from custom.icds_reports.models import ChildHealthMonthly
 
 
-FROM_TABLENAME = "config_report_icds-cas_static-person_cases_v2_b4b5d57a"
-TO_TABLENAME = "config_report_icds-cas_static-person_cases_v3_2ae0879a"
+FROM_TABLENAME = get_table_name("icds-cas", "static-person_cases_v2")
+TO_TABLENAME = get_table_name("icds-cas", "static-person_cases_v3")
 TO_TABLENAME_PREFIX = "tbl_8700431e9d81e782b2499d5e5704a271_"
 
 

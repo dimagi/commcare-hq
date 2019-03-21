@@ -25,7 +25,7 @@ hqDefine("aaa/js/models/eligible_couple", [
 
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
-            url = url.replace('details_type', 'eligible_couples');
+            url = url.replace('details_type', 'eligible_couple');
             url = url.replace('beneficiary_id', self.id);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
             return '<a href="' + url + '">' + self.name() + '</a>';
@@ -92,20 +92,19 @@ hqDefine("aaa/js/models/eligible_couple", [
 
         self.getPersonDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'person_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
-                self.personDetails.other(personUtils.personOtherInfoModel(data.other));
             })
         };
 
         self.getChildDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'child_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
@@ -121,7 +120,7 @@ hqDefine("aaa/js/models/eligible_couple", [
 
         self.getEligibleCoupleDetails = function () {
             var params = Object.assign({
-                section: 'eligible_couples',
+                section: 'eligible_couple',
                 subsection: 'eligible_couple_details',
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);

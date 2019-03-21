@@ -193,6 +193,7 @@ class AwcLocation(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
+    ls_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)

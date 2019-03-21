@@ -1,22 +1,26 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import openpyxl
-import langcodes
 
-from django import forms
-from django.forms.widgets import Select
 from zipfile import ZipFile
 
-from crispy_forms.helper import FormHelper
+import openpyxl
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms import bootstrap as twbscrispy
-from django.utils.translation import ugettext as _, ugettext_lazy
+from crispy_forms.helper import FormHelper
+from django import forms
+from django.forms.widgets import Select
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
-from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
+import langcodes
+from corehq.apps.app_manager.dbaccessors import (
+    get_available_versions_for_app,
+    get_brief_apps_in_domain,
+)
+from corehq.apps.app_manager.models import Application
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.translations.models import TransifexProject
+from corehq.apps.translations.models import TransifexBlacklist, TransifexProject
 from corehq.motech.utils import b64_aes_decrypt
 
 
@@ -271,3 +275,55 @@ class TransifexOrganizationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TransifexOrganizationForm, self).__init__(*args, **kwargs)
         self.initial['api_token'] = b64_aes_decrypt(self.instance.api_token)
+
+
+class AddTransifexBlacklistForm(forms.ModelForm):
+    app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=True)
+    action = forms.CharField(widget=forms.HiddenInput)
+    domain = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, domain, *args, **kwargs):
+        super(AddTransifexBlacklistForm, self).__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper()
+
+        self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
+        form_fields = [
+            hqcrispy.Field('app_id'),
+            hqcrispy.Field('module_id'),
+            hqcrispy.Field('field_type'),
+            hqcrispy.Field('field_name'),
+            hqcrispy.Field('display_text'),
+            hqcrispy.Field('domain'),
+            hqcrispy.Field('action'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Add"),
+                    type="submit",
+                    css_class="btn-primary disable-on-submit",
+                )
+            )
+        ]
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                ugettext_lazy("Add translation to blacklist"),
+                *form_fields
+            ),
+        )
+        self.fields['action'].initial = 'blacklist'
+        self.fields['domain'].initial = domain
+
+    def clean(self):
+        cleaned_data = super(AddTransifexBlacklistForm, self).clean()
+        app_id = cleaned_data.get('app_id')
+        module_id = cleaned_data.get('module_id')
+
+        app_json = Application.get_db().get(app_id)
+        for module in app_json['modules']:
+            if module_id == module['unique_id']:
+                break
+        else:
+            raise forms.ValidationError("Module {} not found in app {}".format(module_id, app_json['name']))
+
+    class Meta(object):
+        model = TransifexBlacklist
+        fields = '__all__'

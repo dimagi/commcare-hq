@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
 from corehq.util.global_request import get_request
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from corehq.util.dates import iso_string_to_datetime
 
@@ -60,6 +61,7 @@ def get_timezone_for_user(couch_user_or_id, domain):
             requesting_user = couch_user_or_id
         else:
             assert isinstance(couch_user_or_id, six.string_types)
+            soft_assert_type_text(couch_user_or_id)
             try:
                 requesting_user = WebUser.get_by_user_id(couch_user_or_id)
             except CouchUser.AccountTypeError:

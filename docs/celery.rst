@@ -136,11 +136,8 @@ If calling with ``CELERY_ALWAYS_EAGER = True`` (i.e. a dev environment), the exc
 
     @task
     def my_cool_task():
-        try:
-            # do some stuff
-        except SomeError as err:
-            errors = [err]
-            raise SomeError(errors)
+        # do some stuff
+        raise SomeError("my uncool error")
 
 Testing
 =======

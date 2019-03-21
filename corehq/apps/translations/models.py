@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
 
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.motech.utils import b64_aes_decrypt
 
 
@@ -111,10 +112,13 @@ Usually the string in either case list or detail under 'property'.
 This could be an xpath or case property name.
 If it is an ID Mapping then the property should be '<property> (ID Mapping Text)'.
 For the values each value should be '<id mapping value> (ID Mapping Value)'.
-Example: case detail for tasks_type would have entries:
-    tasks_type (ID Mapping Text)
-    child (ID Mapping Value)
-    pregnancy (ID Mapping Value)
+<br>
+Example: case detail for tasks_type could have entries:
+<ul>
+    <li>tasks_type (ID Mapping Text)</li>
+    <li>child (ID Mapping Value)</li>
+    <li>pregnancy (ID Mapping Value)</li>
+</ul>
 """
 
 
@@ -128,8 +132,8 @@ class TransifexBlacklist(models.Model):
     """
 
     domain = models.CharField(max_length=255)
-    app_id = models.CharField(max_length=32)
-    module_id = models.CharField(max_length=32)
+    app_id = models.CharField(max_length=255)
+    module_id = models.CharField(max_length=255)
     field_type = models.CharField(
         max_length=100,
         choices=(
@@ -139,9 +143,21 @@ class TransifexBlacklist(models.Model):
     )
     field_name = models.TextField(help_text=FIELD_NAME_HELP)
     display_text = models.TextField(
+        blank=True,
         help_text="The default language's translation for this detail/list. "
         "If display_text is not filled out then all translations that match "
         "the field_type and field_name will be blacklisted")
+
+    @classmethod
+    def translations_with_app_name(cls, domain):
+        blacklisted = TransifexBlacklist.objects.filter(domain=domain).all().values()
+        app_ids_to_name = {app.id: app.name for app in get_brief_apps_in_domain(domain)}
+        ret = []
+        for trans in blacklisted:
+            r = trans.copy()
+            r['app_name'] = app_ids_to_name.get(trans['app_id'], trans['app_id'])
+            ret.append(r)
+        return ret
 
 
 class TransifexOrganization(models.Model):
@@ -168,3 +184,4 @@ class TransifexProject(models.Model):
 
 
 admin.site.register(TransifexProject)
+admin.site.register(TransifexBlacklist)

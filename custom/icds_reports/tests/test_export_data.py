@@ -12,6 +12,7 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastruc
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 
@@ -2020,4 +2021,101 @@ class TestExportData(TestCase):
                     ]
                 ]
             ])
+        )
+
+    def test_lady_supervisor_export(self):
+        data = LadySupervisorExport(
+            config={
+                'domain': 'icds-cas',
+                'aggregation_level': 4,
+                'month': date(2017, 5, 1),
+                'state_id': 'st1',
+            },
+            loc_level=1,
+        ).get_excel_data('st1')
+        expected = [
+            [
+                'Lady Supervisor',
+                [
+                    [
+                        'State',
+                        'District',
+                        'Block',
+                        'Sector Name',
+                        'Name of Lady Supervisor',
+                        'Total No. of AWCs visited',
+                        'Total No. of Beneficiaries Visited',
+                        'Total No. of VHNDs observed'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b1',
+                        's1',
+                        'Data Not Entered',
+                        1,
+                        2,
+                        'Data Not Entered'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b1',
+                        's2',
+                        'Data Not Entered',
+                        1,
+                        1,
+                        2
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b2',
+                        's3',
+                        'Data Not Entered',
+                        'Data Not Entered',
+                        2,
+                        'Data Not Entered'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b2',
+                        's4',
+                        'Data Not Entered',
+                        'Data Not Entered',
+                        'Data Not Entered',
+                        1
+                    ],
+                ]
+            ],
+            [
+                'Export Info',
+                [
+                    [
+                        'Generated at',
+                        '16:21:11 15 November 2017'
+                    ],
+                    [
+                        'State',
+                        'st1'
+                    ],
+                    [
+                        'Grouped By',
+                        'Supervisor'
+                    ],
+                    [
+                        'Month',
+                        'May'
+                    ],
+                    [
+                        'Year',
+                        2017
+                    ]
+                ]
+            ]
+        ]
+        self.assertListEqual(
+            data,
+            expected
         )

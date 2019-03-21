@@ -56,6 +56,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('district_map_location_name', 'district_map_location_name'),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
+            ('ls_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
             ('state_is_test', 'state_is_test'),
             ('district_is_test', 'district_is_test'),
@@ -83,11 +84,13 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         return """
             UPDATE "{tablename}" awc_loc SET
               aww_name = ut.aww_name,
+              ls_name = ut.ls_name,
               contact_phone_number = ut.contact_phone_number
             FROM (
               SELECT
                 commcare_location_id,
                 aww_name,
+                ls_name,
                 contact_phone_number
               FROM "{ucr_aww_tablename}"
             ) ut
@@ -119,6 +122,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('district_map_location_name', lambda col: col if aggregation_level > 1 else "'All'"),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
+            ('ls_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
             ('state_is_test', 'MAX(state_is_test)'),
             (

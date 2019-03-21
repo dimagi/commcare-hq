@@ -4,6 +4,8 @@ from dimagi.ext.couchdbkit import *
 from memoized import memoized
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class WisePillDeviceEvent(Document):
     """
@@ -24,6 +26,7 @@ class WisePillDeviceEvent(Document):
         """
         result = {}
         if isinstance(self.data, six.string_types):
+            soft_assert_type_text(self.data)
             items = self.data.strip().split(',')
             for item in items:
                 parts = item.partition('=')
@@ -41,6 +44,7 @@ class WisePillDeviceEvent(Document):
     def timestamp(self):
         raw = self.data_as_dict.get('T', None)
         if isinstance(raw, six.string_types) and len(raw) == 12:
+            soft_assert_type_text(raw)
             return "20%s-%s-%s %s:%s:%s" % (
                 raw[4:6],
                 raw[2:4],

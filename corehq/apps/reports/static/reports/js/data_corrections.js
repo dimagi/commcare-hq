@@ -112,9 +112,7 @@ hqDefine("reports/js/data_corrections", [
         // Handle modal size: small, large or full-screen, with one, two, or three columns, respectively.
         self.itemsPerColumn = 12;
         self.columnsPerPage = ko.observable(1);
-        self.itemsPerPage = ko.computed(function () {
-            return self.itemsPerColumn * self.columnsPerPage();
-        });
+        self.itemsPerPage = ko.observable();
         self.columnClass = ko.observable('');
         self.isFullScreenModal = ko.observable(false);
         self.isLargeModal = ko.observable(false);
@@ -123,6 +121,7 @@ hqDefine("reports/js/data_corrections", [
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
             self.isLargeModal(self.columnsPerPage() === 2);
             self.isFullScreenModal(self.columnsPerPage() === 3);
+            self.itemsPerPage(self.itemsPerColumn * self.columnsPerPage());
             self.generateSearchableNames();
         });
 

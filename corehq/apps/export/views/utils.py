@@ -97,7 +97,7 @@ class ExportsPermissionsManager(object):
 
     @property
     def has_view_permissions(self):
-        if self.form_or_case is None:
+        if not self.form_or_case:
             return self.has_form_export_permissions or self.has_case_export_permissions
         elif self.form_or_case == "form":
             return self.has_form_export_permissions
@@ -111,12 +111,12 @@ class ExportsPermissionsManager(object):
         return user_can_view_deid_exports(self.domain, self.couch_user)
 
     def access_list_exports_or_404(self, is_deid=False):
-        if not (self.has_edit_permissions or self.has_view_permissions
+        if not (self.has_view_permissions
                 or (is_deid and self.has_deid_view_permissions)):
             raise Http404()
 
     def access_download_export_or_404(self):
-        if not (self.has_edit_permissions or self.has_view_permissions or self.has_deid_view_permissions):
+        if not (self.has_view_permissions or self.has_deid_view_permissions):
             raise Http404()
 
 
@@ -311,3 +311,11 @@ class DataFileDownloadDetail(BaseProjectDataView):
             raise Http404
         data_file.delete()
         return HttpResponse(status=204)
+
+
+def can_view_form_exports(couch_user, domain):
+    return ExportsPermissionsManager('form', domain, couch_user).has_form_export_permissions
+
+
+def can_view_case_exports(couch_user, domain):
+    return ExportsPermissionsManager('case', domain, couch_user).has_form_export_permissions

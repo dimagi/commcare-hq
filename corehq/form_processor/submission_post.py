@@ -27,8 +27,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
-    has_permission_to_view_report
+from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -162,6 +161,7 @@ class SubmissionPost(object):
             return _('Form successfully saved!')
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
+        from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
         from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
