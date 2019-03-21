@@ -63,7 +63,7 @@ class CommCareBuild(BlobMixin, Document):
     def fetch_file(self, path, filename=None):
         if filename:
             path = '/'.join([path, filename])
-        attachment = self.fetch_attachment(path, return_bytes=True)
+        attachment = self.fetch_attachment(path)
         try:
             return attachment.decode('utf-8')
         except UnicodeDecodeError:

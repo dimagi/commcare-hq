@@ -259,7 +259,7 @@ def download_file(request, domain, app_id, path):
         try:
             try:
                 # look for file guaranteed to exist if profile is created
-                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile), return_bytes=True)
+                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
             except ResourceNotFound:
                 request.app.create_build_files(build_profile_id=build_profile)
                 request.app.save()
@@ -272,11 +272,11 @@ def download_file(request, domain, app_id, path):
         assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
-            payload = request.app.fetch_attachment(full_path, return_bytes=True)
+            payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
             if build_profile in request.app.build_profiles and build_profile_access:
                 create_build_files_if_necessary_handling_conflicts()
-                payload = request.app.fetch_attachment(full_path, return_bytes=True)
+                payload = request.app.fetch_attachment(full_path)
             else:
                 raise
         if path in ['profile.xml', 'media_profile.xml']:
@@ -474,7 +474,7 @@ def download_index_files(app, build_profile_id=None):
             # profile hasnt been built yet
             app.create_build_files(build_profile_id=build_profile_id)
             app.save()
-        files = [(path[len(prefix):], app.fetch_attachment(path, return_bytes=True))
+        files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
         files = list(app.create_all_files().items())

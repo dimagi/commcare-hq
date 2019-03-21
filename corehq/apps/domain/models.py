@@ -1018,7 +1018,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return None
 
         return (
-            self.fetch_attachment(LOGO_ATTACHMENT, return_bytes=True),
+            self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
 

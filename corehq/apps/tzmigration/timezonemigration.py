@@ -100,7 +100,7 @@ def commit_plan(domain, planning_db):
 
 
 def _get_submission_xml(xform, db):
-    return BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml', return_bytes=True)
+    return BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
 
 
 def _get_new_form_json(xml, xform_id):
