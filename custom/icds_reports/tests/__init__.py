@@ -21,6 +21,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from corehq.sql_db.routers import db_for_read_write
+from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -76,6 +77,8 @@ def setUpModule():
     _call_center_domain_mock.start()
 
     domain = create_domain('icds-cas')
+    SQLLocation.objects.all().delete()
+    LocationType.objects.all().delete()
     location_type = LocationType.objects.create(
         domain=domain.name,
         name='block',
@@ -173,6 +176,30 @@ def setUpModule():
                         f, table, engine, format='csv' if six.PY3 else b'csv',
                         null='' if six.PY3 else b'', columns=columns
                     )
+
+        # move to migrations
+        distribute = [
+            (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
+            (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id')
+        ]
+        for table, col in distribute:
+            with engine.begin() as conn:
+                res = conn.execute(
+                    """
+                    SELECT c.relname AS child
+                    FROM
+                        pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
+                        JOIN pg_class as p ON (inhparent=p.oid)
+                        where p.relname = %s;
+                    """,
+                    table
+                )
+                for child in [row.child for row in res]:
+                    # only need this because of reusedb if testing on master and this branch
+                    conn.execute('drop table if exists "{}"'.format(child))
+                res = conn.execute("select 1 from pg_dist_partition where logicalrelid = %s::regclass", table)
+                if not list(res):
+                    conn.execute("select create_distributed_table(%s, %s)", [table, col])
 
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
