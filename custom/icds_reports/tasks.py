@@ -271,7 +271,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         final_tasks = []
 
         if date.weekday() == 5:
-            final_tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly))
+            final_tasks.append(
+                icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
+            )
         final_tasks.append(
             chain(
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
@@ -477,6 +479,7 @@ def _child_health_monthly_table(state_ids, day):
         for query, params in helper.pre_aggregation_queries()
     ])
     return sub_aggregations
+
 
 @track_time
 def _child_health_monthly_table_finish(state_ids, day):
