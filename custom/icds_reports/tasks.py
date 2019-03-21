@@ -173,55 +173,55 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             stage_1_tasks = [
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_gm_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
                 for state_id in state_ids
             ]
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_df_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_df_forms')
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_cf_forms')
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_cf_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_cf_forms')
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_child_health_thr_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_thr_forms')
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_ccs_record_thr_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_thr_forms')
                 for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_child_health_pnc_forms'
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_ccs_record_pnc_forms
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_ccs_record_pnc_forms'
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_delivery_forms
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_delivery_forms'
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_bp_forms
+                    state_id=state_id, date=monthly_date, func_name='_aggregate_bp_forms'
                 ) for state_id in state_ids
             ])
             stage_1_tasks.extend([
-                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_awc_infra_forms)
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_awc_infra_forms')
                 for state_id in state_ids
             ])
-            stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
+            stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
 
             # https://github.com/celery/celery/issues/4274
             stage_1_task_results = [stage_1_task.delay() for stage_1_task in stage_1_tasks]
@@ -230,13 +230,13 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_child = chain(
                 icds_state_aggregation_task.si(
-                    state_id=state_ids, date=calculation_date, func=_child_health_monthly_table
+                    state_id=state_ids, date=calculation_date, func_name='_child_health_monthly_table'
                 ),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+                icds_aggregation_task.si(date=calculation_date, func_name='_agg_child_health_table'),
             ).apply_async()
             res_ccs = chain(
-                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
+                icds_aggregation_task.si(date=calculation_date, func_name='_ccs_record_monthly_table'),
+                icds_aggregation_task.si(date=calculation_date, func_name='_agg_ccs_record_table'),
             ).apply_async()
             res_daily.get(disable_sync_subtasks=False)
             res_ccs.get(disable_sync_subtasks=False)
@@ -244,20 +244,20 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_ls_tasks = list()
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func=_agg_ls_awc_mgt_form)
+                                                                func_name='_agg_ls_awc_mgt_form')
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func=_agg_ls_vhnd_form)
+                                                                func_name='_agg_ls_vhnd_form')
                                  for state_id in state_ids
                                  ])
             res_ls_tasks.extend([icds_state_aggregation_task.si(state_id=state_id, date=calculation_date,
-                                                                func=_agg_beneficiary_form)
+                                                                func_name='_agg_beneficiary_form')
                                  for state_id in state_ids
                                  ])
-            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_agg_ls_table))
+            res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
 
-            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+            res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
 
@@ -267,9 +267,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             for state_id in state_ids:
                 create_mbt_for_month.delay(state_id, first_of_month_string)
         if date.weekday() == 5:
-            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
+            icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
-            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
         _bust_awc_cache.delay()
@@ -313,7 +313,19 @@ def _update_aggregate_locations_tables():
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
-def icds_aggregation_task(self, date, func):
+def icds_aggregation_task(self, date, func_name):
+    func = {
+        '_agg_ls_table': _agg_ls_table,
+        '_update_months_table': _update_months_table,
+        '_daily_attendance_table': _daily_attendance_table,
+        '_agg_child_health_table': _agg_child_health_table,
+        '_ccs_record_monthly_table': _ccs_record_monthly_table,
+        '_agg_ccs_record_table': _agg_ccs_record_table,
+        '_agg_awc_table': _agg_awc_table,
+        '_agg_awc_table_weekly': _agg_awc_table_weekly,
+        'aggregate_awc_daily': aggregate_awc_daily,
+    }[func_name]
+
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
@@ -341,7 +353,25 @@ def icds_aggregation_task(self, date, func):
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
-def icds_state_aggregation_task(self, state_id, date, func):
+def icds_state_aggregation_task(self, state_id, date, func_name):
+    func = {
+        '_aggregate_gm_forms': _aggregate_gm_forms,
+        '_aggregate_df_forms': _aggregate_df_forms,
+        '_aggregate_cf_forms': _aggregate_cf_forms,
+        '_aggregate_ccs_cf_forms': _aggregate_ccs_cf_forms,
+        '_aggregate_child_health_thr_forms': _aggregate_child_health_thr_forms,
+        '_aggregate_ccs_record_thr_forms': _aggregate_ccs_record_thr_forms,
+        '_aggregate_child_health_pnc_forms': _aggregate_child_health_pnc_forms,
+        '_aggregate_ccs_record_pnc_forms': _aggregate_ccs_record_pnc_forms,
+        '_aggregate_delivery_forms': _aggregate_delivery_forms,
+        '_aggregate_bp_forms': _aggregate_bp_forms,
+        '_aggregate_awc_infra_forms': _aggregate_awc_infra_forms,
+        '_child_health_monthly_table': _child_health_monthly_table,
+        '_agg_ls_awc_mgt_form': _agg_ls_awc_mgt_form,
+        '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
+        '_agg_beneficiary_form': _agg_beneficiary_form,
+    }[func_name]
+
     if six.PY2 and isinstance(date, bytes):
         date = date.decode('utf-8')
 
