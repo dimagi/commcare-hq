@@ -23,6 +23,7 @@ from django.utils.decorators import classproperty
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
+from dimagi.utils.dates import force_to_date
 
 
 class LocationDenormalizedModel(models.Model):
@@ -344,6 +345,27 @@ class WomanHistory(models.Model):
         return [
             cls.agg_from_eligible_couple_forms_ucr,
         ]
+
+    def date_filter(self, date):
+        sorted_family_planning_method = sorted([
+            method for method in (self.fp_current_method_history or [])
+            if force_to_date(method[0]) <= date
+        ], key=lambda method: force_to_date(method[0]))
+        sorted_preferred_family_planning_method = sorted([
+            method for method in (self.fp_preferred_method_history or [])
+            if force_to_date(method[0]) <= date
+        ], key=lambda method: force_to_date(method[0]))
+        family_planning_forms = sorted(
+            timeend
+            for timeend in (self.family_planning_form_history or [])
+            if timeend <= date
+        )
+
+        return {
+            'family_planning_method': sorted_family_planning_method,
+            'preferred_family_planning_methods': sorted_preferred_family_planning_method,
+            'last_family_planning_form': family_planning_forms[-1] if family_planning_forms else None
+        }
 
 
 class CcsRecord(LocationDenormalizedModel):

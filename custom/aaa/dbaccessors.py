@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
 from dateutil.relativedelta import relativedelta
+from django.db.models import Case, IntegerField, Sum, When
 
 from custom.aaa.models import (
     CcsRecord,
     Child,
     ChildHistory,
     Woman,
+    WomanHistory,
 )
 
 
@@ -281,19 +283,54 @@ class PregnantWomanQueryHelper(object):
 
 
 class EligibleCoupleQueryHelper(object):
-    def __init__(self, domain, person_case_id):
+    def __init__(self, domain, person_case_id, month_end):
         self.domain = domain
         self.person_case_id = person_case_id
+        self.month_end = month_end
 
     def eligible_couple_details(self):
-        return {
-            'maleChildrenBorn': 'N/A',
-            'femaleChildrenBorn': 'N/A',
-            'maleChildrenAlive': 'N/A',
-            'femaleChildrenAlive': 'N/A',
+        woman = Woman.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        children_by_sex = Child.objects.filter(mother_case_id=self.person_case_id).aggregate(
+            male=Sum(Case(When(sex='M', then=1), output_field=IntegerField())),
+            female=Sum(Case(When(sex='F', then=1), output_field=IntegerField())),
+        )
+        try:
+            male_children_died = int(woman.num_male_children_died)
+        except TypeError:
+            male_children_died = 0
+        try:
+            female_children_died = int(woman.num_female_children_died)
+        except TypeError:
+            female_children_died = 0
+
+        data = {
+            'maleChildrenBorn': max(0, children_by_sex['male']) + max(0, male_children_died),
+            'femaleChildrenBorn': max(0, children_by_sex['female']) + max(0, female_children_died),
+            'maleChildrenAlive': max(0, children_by_sex['male']),
+            'femaleChildrenAlive': max(0, children_by_sex['female']),
             'familyPlaningMethod': 'N/A',
             'familyPlanningMethodDate': 'N/A',
             'ashaVisit': 'N/A',
             'previousFamilyPlanningMethod': 'N/A',
             'preferredFamilyPlaningMethod': 'N/A',
         }
+
+        history = WomanHistory.objects.filter(person_case_id=self.person_case_id).first()
+        safe_history = {}
+        if history:
+            safe_history = history.date_filter(self.month_end)
+
+        planning_methods = safe_history.get('family_planning_method')
+        if planning_methods:
+            data['familyPlaningMethod'] = planning_methods[-1][1]
+            data['familyPlanningMethodDate'] = planning_methods[-1][0]
+            if len(planning_methods) > 1:
+                data['previousFamilyPlanningMethod'] = planning_methods[-2][1]
+
+        preferred_methods = safe_history.get('preferred_family_planning_methods')
+        if preferred_methods:
+            data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1]
+
+        data['ashaVisit'] = safe_history.get('last_family_planning_form') or 'N/A'
+
+        return data

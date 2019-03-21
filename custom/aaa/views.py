@@ -361,6 +361,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
     def post(self, request, *args, **kwargs):
         selected_month = int(self.request.POST.get('selectedMonth', 0))
         selected_year = int(self.request.POST.get('selectedYear', 0))
+        month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
         section = self.request.POST.get('section', '')
         sub_section = self.request.POST.get('subsection', '')
         beneficiary_id = self.request.POST.get('beneficiaryId', '')
@@ -467,8 +468,9 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             elif sub_section == 'antenatal_care_details':
                 data = {'visits': helper.antenatal_care_details()}
         elif section == 'eligible_couple':
+            helper = EligibleCoupleQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'eligible_couple_details':
-                data = EligibleCoupleQueryHelper(request.domain, beneficiary_id).eligible_couples_details()
+                data = helper.eligible_couples_details()
 
         if not data:
             raise Http404()
