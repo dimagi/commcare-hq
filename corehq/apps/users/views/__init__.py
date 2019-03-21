@@ -702,6 +702,12 @@ def post_user_role(request, domain):
     if role.permissions.edit_locations:
         role.permissions.view_locations = True
 
+    if not role.permissions.edit_groups:
+        role.permissions.edit_users_in_groups = False
+
+    if not role.permissions.edit_locations:
+        role.permissions.edit_users_in_locations = False
+
     role.save()
     role.__setattr__('hasUsersAssigned',
                      True if len(role.ids_of_assigned_users) > 0 else False)
