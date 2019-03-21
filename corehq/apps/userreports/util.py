@@ -11,7 +11,7 @@ from django_prbac.utils import has_privilege
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import DocumentNotFound
 
-UCR_TABLE_PREFIX = 'config_report_'
+UCR_TABLE_PREFIX = 'ucr_'
 
 
 def localize(value, lang):
@@ -133,7 +133,15 @@ def get_indicator_adapter(config, raise_errors=False):
     return IndicatorSqlAdapter(config)
 
 
-def get_table_name(domain, table_id):
+def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
+    """
+    :param domain:
+    :param table_id:
+    :param max_length: Max allowable length of table. Default of 50 to prevent long table
+                       name issues with CitusDB. PostgreSQL max is 63.
+    :param prefix: Table prefix. Configurable to allow migration from old to new prefix.
+    :return:
+    """
     def _hash(domain, table_id):
         return hashlib.sha1(
             '{}_{}'.format(
@@ -145,7 +153,8 @@ def get_table_name(domain, table_id):
     domain = domain.encode('unicode-escape').decode('utf-8')
     table_id = table_id.encode('unicode-escape').decode('utf-8')
     return truncate_value(
-        '{}{}_{}_{}'.format(UCR_TABLE_PREFIX, domain, table_id, _hash(domain, table_id)),
+        '{}{}_{}_{}'.format(prefix, domain, table_id, _hash(domain, table_id)),
+        max_length=max_length,
         from_left=False
     )
 
