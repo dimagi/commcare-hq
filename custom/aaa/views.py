@@ -24,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.dbaccessors import ChildQueryHelper
+from custom.aaa.dbaccessors import ChildQueryHelper, PregnantWomanQueryHelper
 from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
 from custom.aaa.tasks import (
     update_agg_awc_table,
@@ -446,111 +446,25 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             elif sub_section == 'weight_for_height_chart':
                 data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':
+            helper = PregnantWomanQueryHelper(request.domain, beneficiary_id)
             if sub_section == 'pregnancy_details':
-                data = CcsRecord.objects.extra(
-                    select={
-                        'dateOfLmp': 'lmp',
-                        'weightOfPw': 'woman_weight_at_preg_reg',
-                        'dateOfRegistration': 'preg_reg_date',
-                    }
-                ).values(
-                    'lmp', 'weightOfPw', 'dateOfRegistration', 'edd', 'add'
-                ).get(person_case_id=beneficiary_id)
-                # I think we should consider to add blood_group to the CcsRecord to don't have two queries
-                data.update(
-                    Woman.objects.extra(
-                        select={
-                            'bloodGroup': 'blood_group'
-                        }
-                    ).values('bloodGroup').get(
-                        person_case_id=beneficiary_id
-                    )
-                )
+                data = helper.pregnancy_details()
             elif sub_section == 'pregnancy_risk':
-                data = dict(
-                    riskPregnancy='N/A',
-                    referralDate='N/A',
-                    hrpSymptoms='N/A',
-                    illnessHistory='N/A',
-                    referredOutFacilityType='N/A',
-                    pastIllnessDetails='N/A',
-                )
+                data = helper.pregnancy_risk()
             elif sub_section == 'consumables_disbursed':
-                data = dict(
-                    ifaTablets='N/A',
-                    thrDisbursed='N/A',
-                )
+                data = helper.consumables_disbursed()
             elif sub_section == 'immunization_counseling_details':
-                data = dict(
-                    ttDoseOne='N/A',
-                    ttDoseTwo='N/A',
-                    ttBooster='N/A',
-                    birthPreparednessVisitsByAsha='N/A',
-                    birthPreparednessVisitsByAww='N/A',
-                    counsellingOnMaternal='N/A',
-                    counsellingOnEbf='N/A',
-                )
+                data = helper.immunization_counseling_details()
             elif sub_section == 'abortion_details':
-                data = dict(
-                    abortionDate='N/A',
-                    abortionType='N/A',
-                    abortionDays='N/A',
-                )
+                data = helper.abortion_details()
             elif sub_section == 'maternal_death_details':
-                data = dict(
-                    maternalDeathOccurred='N/A',
-                    maternalDeathPlace='N/A',
-                    maternalDeathDate='N/A',
-                    authoritiesInformed='N/A',
-                )
+                data = helper.maternal_death_details()
             elif sub_section == 'delivery_details':
-                data = dict(
-                    dod='N/A',
-                    assistanceOfDelivery='N/A',
-                    timeOfDelivery='N/A',
-                    dateOfDischarge='N/A',
-                    typeOfDelivery='N/A',
-                    timeOfDischarge='N/A',
-                    placeOfBirth='N/A',
-                    deliveryComplications='N/A',
-                    placeOfDelivery='N/A',
-                    complicationDetails='N/A',
-                    hospitalType='N/A',
-                )
+                data = helper.delivery_details()
             elif sub_section == 'postnatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            pncDate='2019-08-20',
-                            postpartumHeamorrhage=0,
-                            fever=1,
-                            convulsions=0,
-                            abdominalPain=0,
-                            painfulUrination=0,
-                            congestedBreasts=1,
-                            painfulNipples=0,
-                            otherBreastsIssues=0,
-                            managingBreastProblems=0,
-                            increasingFoodIntake=1,
-                            possibleMaternalComplications=1,
-                            beneficiaryStartedEating=0,
-                        )
-                    ]
-                )
+                data = {'visits': helper.postnatal_care_details()}
             elif sub_section == 'antenatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            ancDate='N/A',
-                            ancLocation='N/A',
-                            pwWeight='N/A',
-                            bloodPressure='N/A',
-                            hb='N/A',
-                            abdominalExamination='N/A',
-                            abnormalitiesDetected='N/A',
-                        ),
-                    ]
-                )
+                data = {'visits': helper.antenatal_care_details()}
         elif section == 'eligible_couple':
             if sub_section == 'eligible_couple_details':
                 data = dict(

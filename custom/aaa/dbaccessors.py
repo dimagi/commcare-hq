@@ -2,7 +2,12 @@ from __future__ import absolute_import, unicode_literals
 
 from dateutil.relativedelta import relativedelta
 
-from custom.aaa.models import Child, ChildHistory
+from custom.aaa.models import (
+    CcsRecord,
+    Child,
+    ChildHistory,
+    Woman,
+)
 
 
 class ChildQueryHelper(object):
@@ -112,10 +117,10 @@ class ChildQueryHelper(object):
         }
 
     def weight_for_age_chart(self):
-        child = Child.objects.get(person_case_id=self.person_case_id)
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = []
         try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
@@ -126,10 +131,10 @@ class ChildQueryHelper(object):
         return points
 
     def height_for_age_chart(self):
-        child = Child.objects.get(person_case_id=self.person_case_id)
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = []
         try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
@@ -140,10 +145,10 @@ class ChildQueryHelper(object):
         return points
 
     def weight_for_height_chart(self):
-        child = Child.objects.get(person_case_id=self.person_case_id)
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         points = {}
         try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
+            child_history = ChildHistory.objects.get(domain=self.domain, child_health_case_id=child.child_health_case_id)
         except ChildHistory.DoesNotExist:
             pass
         else:
@@ -158,3 +163,118 @@ class ChildQueryHelper(object):
                     points.update({month: dict(y=recorded_height[1])})
 
         return [point for point in points.values() if 'x' in point and 'y' in point]
+
+
+class PregnantWomanQueryHelper(object):
+    def __init__(self, domain, person_case_id):
+        # TODO this needs to be changed to ccs_record id
+        self.domain = domain
+        self.person_case_id = person_case_id
+
+    def pregnancy_details(self):
+        data = CcsRecord.objects.extra(
+            select={
+                'dateOfLmp': 'lmp',
+                'weightOfPw': 'woman_weight_at_preg_reg',
+                'dateOfRegistration': 'preg_reg_date',
+            }
+        ).values(
+            'lmp', 'weightOfPw', 'dateOfRegistration', 'edd', 'add'
+        ).get(self.domain, person_case_id=self.person_case_id)
+        # I think we should consider to add blood_group to the CcsRecord to don't have two queries
+        data.update(
+            Woman.objects.extra(
+                select={
+                    'bloodGroup': 'blood_group'
+                }
+            ).values('bloodGroup').get(
+                domain=self.domain, person_case_id=self.person_case_id
+            )
+        )
+
+        return data
+
+    def pregnancy_risk(self):
+        return {
+            'riskPregnancy': 'N/A',
+            'referralDate': 'N/A',
+            'hrpSymptoms': 'N/A',
+            'illnessHistory': 'N/A',
+            'referredOutFacilityType': 'N/A',
+            'pastIllnessDetails': 'N/A',
+        }
+
+    def consumables_disbursed(self):
+        return {
+            'ifaTablets': 'N/A',
+            'thrDisbursed': 'N/A',
+        }
+
+    def immunization_counseling_details(self):
+        return {
+            'ttDoseOne': 'N/A',
+            'ttDoseTwo': 'N/A',
+            'ttBooster': 'N/A',
+            'birthPreparednessVisitsByAsha': 'N/A',
+            'birthPreparednessVisitsByAww': 'N/A',
+            'counsellingOnMaternal': 'N/A',
+            'counsellingOnEbf': 'N/A',
+        }
+
+    def abortion_details(self):
+        return {
+            'abortionDate': 'N/A',
+            'abortionType': 'N/A',
+            'abortionDays': 'N/A',
+        }
+
+    def maternal_death_details(self):
+        return {
+            'maternalDeathOccurred': 'N/A',
+            'maternalDeathPlace': 'N/A',
+            'maternalDeathDate': 'N/A',
+            'authoritiesInformed': 'N/A',
+        }
+
+    def delivery_details(self):
+        return {
+            'dod': 'N/A',
+            'assistanceOfDelivery': 'N/A',
+            'timeOfDelivery': 'N/A',
+            'dateOfDischarge': 'N/A',
+            'typeOfDelivery': 'N/A',
+            'timeOfDischarge': 'N/A',
+            'placeOfBirth': 'N/A',
+            'deliveryComplications': 'N/A',
+            'placeOfDelivery': 'N/A',
+            'complicationDetails': 'N/A',
+            'hospitalType': 'N/A',
+        }
+
+    def postnatal_care_details(self):
+        return [{
+            'pncDate': '2019-08-20',
+            'postpartumHeamorrhage': 0,
+            'fever': 1,
+            'convulsions': 0,
+            'abdominalPain': 0,
+            'painfulUrination': 0,
+            'congestedBreasts': 1,
+            'painfulNipples': 0,
+            'otherBreastsIssues': 0,
+            'managingBreastProblems': 0,
+            'increasingFoodIntake': 1,
+            'possibleMaternalComplications': 1,
+            'beneficiaryStartedEating': 0,
+        }]
+
+    def antenatal_care_details(self):
+        return [{
+            'ancDate': 'N/A',
+            'ancLocation': 'N/A',
+            'pwWeight': 'N/A',
+            'bloodPressure': 'N/A',
+            'hb': 'N/A',
+            'abdominalExamination': 'N/A',
+            'abnormalitiesDetected': 'N/A',
+        }]
