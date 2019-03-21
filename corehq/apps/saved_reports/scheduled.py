@@ -49,11 +49,7 @@ def get_scheduled_report_ids(period, as_of=None):
                             'key': [period, as_of.hour, minute, day]
                         }
 
-    try:
-        keys = _keys(period, as_of)
-    except ValueError:
-        _soft_assert(False, "Celery was probably down for a while. Lots of reports are getting dropped!")
-        raise StopIteration
+    keys = _keys(period, as_of)
 
     for key in keys:
         for result in ReportNotification.view(
