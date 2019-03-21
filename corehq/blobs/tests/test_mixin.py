@@ -82,13 +82,13 @@ class TestBlobMixin(BaseTestCase):
         name = "test.0"
         data = "\u4500 content"
         obj.put_attachment(data, name)
-        self.assertEqual(obj.fetch_attachment(name), data)
+        self.assertEqual(obj.fetch_attachment(name).decode('utf-8'), data)
 
     def test_put_attachment_unicode(self):
         name = "test.1"
         data = "\u4500 content"
         self.obj.put_attachment(data, name)
-        self.assertEqual(self.obj.fetch_attachment(name), data)
+        self.assertEqual(self.obj.fetch_attachment(name).decode('utf-8'), data)
 
     def test_put_attachment_bytes(self):
         name = "test.1"
@@ -100,7 +100,7 @@ class TestBlobMixin(BaseTestCase):
         content = BytesIO(b"content")
         content.name = "test.1"
         self.obj.put_attachment(content)
-        self.assertEqual(self.obj.fetch_attachment(content.name), "content")
+        self.assertEqual(self.obj.fetch_attachment(content.name), b"content")
         self.assertTrue(self.obj.saved)
 
     def test_fetch_attachment_with_unicode(self):
@@ -237,7 +237,7 @@ class TestBlobMixin(BaseTestCase):
         blob2 = self.get_blob(self.obj.blobs[name].key)
         self.assertNotEqual(blob1.path, blob2.path)
         self.assertFalse(blob1.exists(), "found unexpected file: " + blob1.path)
-        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content 2")
 
     def test_put_attachment_failed_save_does_not_delete_replaced_blob(self):
         name = "test.\u4500"
@@ -249,7 +249,7 @@ class TestBlobMixin(BaseTestCase):
         blob = self.get_blob(old_blob.key)
         doc.blobs[name] = old_blob  # simulate get from couch
         self.assertTrue(blob.exists(), "not found: " + blob.path)
-        self.assertEqual(doc.fetch_attachment(name), "content 1")
+        self.assertEqual(doc.fetch_attachment(name), b"content 1")
 
     def test_blobs_property(self):
         doc = self.make_doc(FallbackToCouchDocument)
@@ -269,7 +269,7 @@ class TestBlobMixin(BaseTestCase):
             self.obj.put_attachment("content", name)
         self.assertTrue(self.obj.saved)
         self.assertEqual(self.obj._id, _id)
-        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content")
         self.assertIn(name, self.obj.blobs)
 
     def test_atomic_blobs_success_and_new_id(self):
@@ -280,7 +280,7 @@ class TestBlobMixin(BaseTestCase):
             obj.put_attachment("content", name)
         self.assertTrue(obj.saved)
         self.assertTrue(obj._id is not None)
-        self.assertEqual(obj.fetch_attachment(name), "content")
+        self.assertEqual(obj.fetch_attachment(name), b"content")
         self.assertIn(name, obj.blobs)
 
     def test_atomic_blobs_deletes_replaced_blob(self):
@@ -293,7 +293,7 @@ class TestBlobMixin(BaseTestCase):
         blob2 = self.get_blob(self.obj.blobs[name].key)
         self.assertNotEqual(blob1.path, blob2.path)
         self.assertFalse(blob1.exists(), "found unexpected blob: " + blob1.path)
-        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content 2")
 
     def test_atomic_blobs_deletes_replaced_blob_in_same_context(self):
         name = "test.\u4500"
@@ -304,7 +304,7 @@ class TestBlobMixin(BaseTestCase):
         blob2 = self.get_blob(self.obj.blobs[name].key)
         self.assertNotEqual(blob1.path, blob2.path)
         self.assertFalse(blob1.exists(), "found unexpected blob: " + blob1.path)
-        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content 2")
 
     def test_atomic_blobs_deletes_replaced_blob_in_nested_context(self):
         name = "test.\u4500"
@@ -316,7 +316,7 @@ class TestBlobMixin(BaseTestCase):
         blob2 = self.get_blob(self.obj.blobs[name].key)
         self.assertNotEqual(blob1.path, blob2.path)
         self.assertFalse(blob1.exists(), "found unexpected blob: " + blob1.path)
-        self.assertEqual(self.obj.fetch_attachment(name), "content 2")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content 2")
 
     def test_atomic_blobs_preserves_blob_replaced_in_failed_nested_context(self):
         name = "test.\u4500"
@@ -330,7 +330,7 @@ class TestBlobMixin(BaseTestCase):
                     raise BlowUp("fail")
         self.assertNotEqual(blob1.path, blob2.path)
         self.assertFalse(blob2.exists(), "found unexpected blob: " + blob2.path)
-        self.assertEqual(self.obj.fetch_attachment(name), "content 1")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content 1")
 
     def test_atomic_blobs_fail(self):
         name = "test.1"
@@ -362,7 +362,7 @@ class TestBlobMixin(BaseTestCase):
                 self.obj.put_attachment("new content", name)
                 raise BlowUp("while saving atomic blobs")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
-        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content")
         # verify cleanup
         blob = self.get_blob(self.obj.blobs[name].key)
         self.assertEqual(blob.listdir(), blob_files)
@@ -377,7 +377,7 @@ class TestBlobMixin(BaseTestCase):
                 self.obj.delete_attachment(name)
                 raise BlowUp("while deleting blob")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
-        self.assertEqual(self.obj.fetch_attachment(name), "content")
+        self.assertEqual(self.obj.fetch_attachment(name), b"content")
         # verify cleanup
         self.assertEqual(blob.listdir(), blob_files)
 
@@ -395,7 +395,7 @@ class TestBlobMixin(BaseTestCase):
             self.obj.put_attachment("new content", "new")
         self.assertTrue(saved)
         # bug caused old blobs (not modifed in atomic context) to be deleted
-        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+        self.assertEqual(self.obj.fetch_attachment("file"), b"file content")
 
     def test_atomic_blobs_bug_deleting_existing_blob_on_save_failure(self):
         self.obj.put_attachment("file content", "file")
@@ -411,7 +411,7 @@ class TestBlobMixin(BaseTestCase):
                 self.obj.put_attachment("new content", "new")
         self.assertNotIn("new", self.obj.blobs)
         # bug caused old blobs (not modifed in atomic context) to be deleted
-        self.assertEqual(self.obj.fetch_attachment("file"), "file content")
+        self.assertEqual(self.obj.fetch_attachment("file"), b"file content")
 
     def test_migrating_flag_not_in_doc_json(self):
         obj_type = type(self.obj)
@@ -584,7 +584,7 @@ class TestBlobHelper(BaseTestCase):
 
     def test_put_and_fetch_attachment_from_couch(self):
         obj = self.make_doc(doc={"_attachments": {}})
-        content = "test couch"
+        content = b"test couch"
         self.assertFalse(self.couch.data)
         obj.put_attachment(content, "file.txt", content_type="text/plain")
         self.assertEqual(obj.fetch_attachment("file.txt"), content)
@@ -661,8 +661,8 @@ class TestBlobHelper(BaseTestCase):
             },
         })
         self.assertTrue(obj._migrating_blobs_from_couch)
-        self.assertEqual(obj.fetch_attachment("couch.txt"), "couch")
-        self.assertEqual(obj.fetch_attachment("blob.txt"), "blob")
+        self.assertEqual(obj.fetch_attachment("couch.txt"), b"couch")
+        self.assertEqual(obj.fetch_attachment("blob.txt"), b"blob")
         self.assertFalse(self.couch.save_log)
 
     def test_atomic_blobs_with_couch_attachments(self):
@@ -679,7 +679,7 @@ class TestBlobHelper(BaseTestCase):
             }])
             obj.put_attachment("test", "file.txt", content_type="text/plain")
         self.assertEqual(len(self.couch.save_log), 1)  # no new save
-        self.assertEqual(obj.fetch_attachment("file.txt"), "test")
+        self.assertEqual(obj.fetch_attachment("file.txt"), b"test")
         self.assertTrue(self.couch.data)
 
     def test_atomic_blobs_with_external_blobs(self):
@@ -705,7 +705,7 @@ class TestBlobHelper(BaseTestCase):
                 },
             },
         }])
-        self.assertEqual(obj.fetch_attachment("file.txt"), "test")
+        self.assertEqual(obj.fetch_attachment("file.txt"), b"test")
         self.assertFalse(self.couch.data)
 
     def test_atomic_blobs_with_migrating_couch_attachments(self):
@@ -731,7 +731,7 @@ class TestBlobHelper(BaseTestCase):
         self.assertNotIn("doc.txt", obj.doc["_attachments"])
         self.assertEqual(self.couch.meta, {})
         # fetch from blob db
-        self.assertEqual(obj.fetch_attachment("doc.txt"), "doc")
+        self.assertEqual(obj.fetch_attachment("doc.txt"), b"doc")
         self.assertEqual(self.couch.save_log, [{
             "doc_type": "FakeDoc",
             "_id": obj._id,
@@ -786,7 +786,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.obj.put_attachment("data", "name")
             self.assertIn("name", self.obj.blobs)
         self.assertFalse(self.obj.saved)
-        self.assertEqual(self.obj.fetch_attachment("name"), "data")
+        self.assertEqual(self.obj.fetch_attachment("name"), b"data")
 
     def test_bulk_atomic_blobs_with_deferred_blobs(self):
         obj = self.make_doc(DeferredPutBlobDocument)
