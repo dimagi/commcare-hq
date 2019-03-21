@@ -43,7 +43,9 @@ from corehq.apps.domain.calculations import (
     CALC_FNS,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
+from corehq.apps.es.forms import FormES
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -144,7 +146,10 @@ def rebuild_export_async(config, schema):
 
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
+    results = DomainES().filter(
+        get_domains_to_update_es_filter()
+    ).fields(["name", "_id", "cp_last_updated"]).scroll()
+
     all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
@@ -153,9 +158,6 @@ def update_calculated_properties():
             send_to_elasticsearch("domains", r, delete=True)
             continue
         try:
-            last_form_submission = CALC_FNS["last_form_submission"](dom, False)
-            if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
-                continue
             props = calced_props(domain_obj, r["_id"], all_stats)
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
@@ -168,23 +170,25 @@ def update_calculated_properties():
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 
-def _skip_updating_domain_stats(last_updated=None, last_form_submission=None):
+def get_domains_to_update_es_filter():
     """
-    Skip domain if no forms submitted in the last day
-    AND stats were updated less than a week ago.
-
-    :return: True to skip domain
-     """
-    if not last_updated:
-        return False
-
-    last_updated_ago = datetime.utcnow() - iso_string_to_datetime(last_updated)
-    if last_form_submission:
-        last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
-        new_data = last_form_ago < timedelta(days=1)
-    else:
-        new_data = False
-    return last_updated_ago < timedelta(days=7) and not new_data
+    Returns ES filter to filter domains that are never updated or
+        domains that haven't been updated since a week or domains that
+        have been updated within last week but have new form submissions
+        in the last day.
+    """
+    last_week = datetime.utcnow() - timedelta(days=7)
+    more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
+    less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
+    not_updated = filters.missing('cp_last_updated')
+    domains_submitted_today = filters.term('name',
+        set(FormES().submitted(gte=datetime.utcnow() - timedelta(days=1)).values_list('domain', flat=True))
+    )
+    return filters.OR(
+        not_updated,
+        more_than_a_week_ago,
+        filters.AND(less_than_a_week_ago, domains_submitted_today)
+    )
 
 
 def is_app_active(app_id, domain):
