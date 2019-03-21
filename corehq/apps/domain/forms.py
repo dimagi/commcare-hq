@@ -8,7 +8,6 @@ import re
 import sys
 import uuid
 
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from six.moves.urllib.parse import urlparse, parse_qs
 
@@ -19,7 +18,6 @@ from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -34,7 +32,6 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
                                  ImageField, IntegerField, Field)
 from django.forms.widgets import Select
@@ -61,11 +58,8 @@ from corehq.apps.accounting.models import (
     PreOrPostPay,
     ProBonoStatus,
     SoftwarePlanEdition,
-    SoftwarePlanVersion,
     Subscription,
-    SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
-    SubscriptionAdjustmentReason,
     SubscriptionType,
     EntryPoint,
     FundingSource
@@ -75,7 +69,6 @@ from corehq.apps.accounting.utils import (
     cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
-    get_privileges,
     log_accounting_error,
     is_downgrade
 )
@@ -86,16 +79,11 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.fields import MultiCharField
-from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2AjaxV4
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import WebUser, CouchUser
-from corehq.privileges import (
-    REPORT_BUILDER_5,
-    REPORT_BUILDER_ADD_ON_PRIVS,
-    REPORT_BUILDER_TRIAL,
-)
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
