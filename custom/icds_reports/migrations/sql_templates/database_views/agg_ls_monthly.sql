@@ -16,6 +16,7 @@ SELECT
 "awc_location_months"."block_map_location_name" AS "block_map_location_name",
 "awc_location_months"."district_map_location_name" AS "district_map_location_name",
 "awc_location_months"."state_map_location_name" AS "state_map_location_name",
+"awc_location_months"."ls_name" AS "ls_name",
 agg_ls.awc_visits as awc_visits,
 agg_ls.vhnd_observed as vhnd_observed,
 agg_ls.beneficiary_vists as beneficiary_vists,

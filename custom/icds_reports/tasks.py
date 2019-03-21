@@ -43,7 +43,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
     DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
-    AWW_INCENTIVE_REPORT, THREE_MONTHS
+    AWW_INCENTIVE_REPORT, THREE_MONTHS, LS_REPORT_EXPORT
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -77,10 +77,12 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastruc
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl
+    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, \
+    create_lady_supervisor_excel_file
 from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 from dimagi.utils.chunked import chunked
@@ -695,7 +697,25 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
-    if indicator != AWW_INCENTIVE_REPORT:
+    elif indicator == LS_REPORT_EXPORT:
+        data_type = 'Lady_Supervisor'
+        config['aggregation_level'] = 4  # this report on all levels shows data (row) per sector
+        excel_data = LadySupervisorExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        if file_format == 'xlsx':
+            cache_key = create_lady_supervisor_excel_file(
+                excel_data,
+                data_type,
+                config['month'].strftime("%B %Y"),
+                aggregation_level,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+    if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
