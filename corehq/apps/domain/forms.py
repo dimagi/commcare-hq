@@ -2389,7 +2389,7 @@ class SelectSubscriptionTypeForm(forms.Form):
 class ManageAppReleasesForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
     location_id = forms.ChoiceField(label=ugettext_lazy("Location"), choices=(), required=False)
-    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False)
+    version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain

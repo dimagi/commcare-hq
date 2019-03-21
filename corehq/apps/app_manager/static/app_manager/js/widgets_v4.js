@@ -28,7 +28,7 @@ hqDefine("app_manager/js/widgets_v4", [
                     return {
                         results: _.map(data.apps, function (build) {
                             return {
-                                id: build.id,
+                                id: build.version,
                                 text: build.version + ": " + (build.build_comment || gettext("no comment")),
                             };
                         }),
