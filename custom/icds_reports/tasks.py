@@ -268,18 +268,18 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 global_task, res, group(res_ccs, res_child, res_daily), res_awc, group(*create_mbt_for_month_tasks)
             )
 
+        final_tasks = []
+
         if date.weekday() == 5:
-            global_task = chain(
-                global_task, icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly)
-            )
-        chain(
-            global_task,
+            final_tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=_agg_awc_table_weekly))
+        final_tasks.append(
             chain(
                 icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
                 email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
-            ),
-            _bust_awc_cache
-        ).apply_async()
+            )
+        )
+        final_tasks.append(_bust_awc_cache)
+        chain(global_task, group(*final_tasks)).apply_async()
 
 
 def _create_aggregate_functions(cursor):
