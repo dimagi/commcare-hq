@@ -43,7 +43,7 @@ hqDefine('hqwebapp/js/components/inline_edit', [
             self.serverValue = self.readOnlyValue;
             self.value = ko.isObservable(params.value) ? params.value : ko.observable(self.readOnlyValue);
             self.lang = params.lang || '';
-            self.disallow_edit = (params.disallow_edit === undefined)? false : params.disallow_edit;
+            self.disallow_edit = (params.disallow_edit === undefined) ? false : params.disallow_edit;
 
             // Styling
             self.nodeName = params.nodeName || 'textarea';
