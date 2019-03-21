@@ -278,3 +278,22 @@ class PregnantWomanQueryHelper(object):
             'abdominalExamination': 'N/A',
             'abnormalitiesDetected': 'N/A',
         }]
+
+
+class EligibleCoupleQueryHelper(object):
+    def __init__(self, domain, person_case_id):
+        self.domain = domain
+        self.person_case_id = person_case_id
+
+    def eligible_couple_details(self):
+        return {
+            'maleChildrenBorn': 'N/A',
+            'femaleChildrenBorn': 'N/A',
+            'maleChildrenAlive': 'N/A',
+            'femaleChildrenAlive': 'N/A',
+            'familyPlaningMethod': 'N/A',
+            'familyPlanningMethodDate': 'N/A',
+            'ashaVisit': 'N/A',
+            'previousFamilyPlanningMethod': 'N/A',
+            'preferredFamilyPlaningMethod': 'N/A',
+        }

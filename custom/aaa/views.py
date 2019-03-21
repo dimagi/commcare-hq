@@ -24,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.dbaccessors import ChildQueryHelper, PregnantWomanQueryHelper
+from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
 from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
 from custom.aaa.tasks import (
     update_agg_awc_table,
@@ -428,6 +428,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     }
                 ).values('id', 'name', 'dob'))
             )
+
         if section == 'child':
             helper = ChildQueryHelper(request.domain, beneficiary_id)
             if sub_section == 'infant_details':
@@ -467,17 +468,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 data = {'visits': helper.antenatal_care_details()}
         elif section == 'eligible_couple':
             if sub_section == 'eligible_couple_details':
-                data = dict(
-                    maleChildrenBorn='N/A',
-                    femaleChildrenBorn='N/A',
-                    maleChildrenAlive='N/A',
-                    femaleChildrenAlive='N/A',
-                    familyPlaningMethod='N/A',
-                    familyPlanningMethodDate='N/A',
-                    ashaVisit='N/A',
-                    previousFamilyPlanningMethod='N/A',
-                    preferredFamilyPlaningMethod='N/A'
-                )
+                data = EligibleCoupleQueryHelper(request.domain, beneficiary_id).eligible_couples_details()
 
         if not data:
             raise Http404()
