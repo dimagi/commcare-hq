@@ -17,7 +17,15 @@ class TestChildBeneficiarySections(TestCase):
             domain=cls.domain,
             person_case_id='person_case_id',
             child_health_case_id='child_health_case_id',
-            opened_on='2019-01-01'
+            opened_on='2019-01-01',
+            breastfed_within_first='yes',
+            comp_feeding='yes',
+            diet_diversity='yes',
+            diet_quantity='no',
+            birth_weight=3000,
+            hand_wash='no',
+            is_exclusive_breastfeeding='no',
+            child_cried='no',
         )
 
     @classmethod
@@ -29,14 +37,14 @@ class TestChildBeneficiarySections(TestCase):
         self.assertEqual(
             ChildQueryHelper(self.domain, 'person_case_id').infant_details(),
             {
-                'breastfeedingInitiated': None,
-                'dietDiversity': None,
-                'birthWeight': None,
-                'dietQuantity': None,
-                'breastFeeding': None,
-                'handwash': None,
-                'exclusivelyBreastfed': None,
-                'babyCried': None,
+                'breastfeedingInitiated': 'yes',
+                'dietDiversity': 'yes',
+                'birthWeight': 3000,
+                'dietQuantity': 'no',
+                'breastFeeding': 'yes',
+                'handwash': 'no',
+                'exclusivelyBreastfed': 'no',
+                'babyCried': 'no',
                 'pregnancyLength': 'N/A',
             })
 
