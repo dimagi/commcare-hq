@@ -130,17 +130,18 @@ def check_blobdb():
 def check_celery():
     celery_status = _check_celery()
     celery_worker_status = _check_celery_workers()
+
+    # Retry because of https://github.com/celery/celery/issues/4758
+    num_retries = 4
+    for _ in range(num_retries):
+        if celery_worker_status.success:
+            break
+        time.sleep(5)
+        celery_worker_status = _check_celery_workers()
+
     if celery_status.success and celery_worker_status.success:
         return celery_status
     else:
-        # Retry because of https://github.com/celery/celery/issues/4758
-        num_retries = 4
-        for _ in range(num_retries):
-            if celery_worker_status.success:
-                break
-            time.sleep(5)
-            celery_worker_status = _check_celery_workers()
-
         message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
         return ServiceStatus(False, message)
 
