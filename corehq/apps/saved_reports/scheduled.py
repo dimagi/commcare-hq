@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from calendar import monthrange
-from datetime import datetime
+from datetime import datetime, timedelta
 from corehq.apps.saved_reports.models import ReportNotification
 from corehq.util.soft_assert import soft_assert
 from six.moves import range
@@ -88,3 +88,22 @@ def guess_reporting_minute(now=None):
             return reporting_minute
 
     raise ValueError("Couldn't guess reporting minute for time: {}".format(now))
+
+
+def _round_datetime_up_to_the_nearest_minute(dt):
+    rounded_down = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    if dt == rounded_down:
+        return rounded_down
+    else:
+        return rounded_down + timedelta(minutes=1)
+
+
+def _iter_15_minute_marks_in_range(start_datetime, end_datetime):
+    first_minute_mark = _round_datetime_up_to_the_nearest_minute(start_datetime)
+    number_of_minutes_until_divisible_by_15 = (0 - first_minute_mark.minute) % 15
+    current_15_minute_mark = first_minute_mark + timedelta(minutes=number_of_minutes_until_divisible_by_15)
+    assert current_15_minute_mark.minute % 15 == 0
+
+    while current_15_minute_mark < end_datetime:
+        yield current_15_minute_mark
+        current_15_minute_mark += timedelta(minutes=15)
