@@ -178,7 +178,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                     current_config.meta.build.finished = True
             current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.after_table_build()
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)

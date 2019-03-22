@@ -42,8 +42,6 @@ class Command(BaseCommand):
         for config in configs:
             adapter = get_indicator_adapter(config)
             adapter.build_table()
-            # normally called after rebuilding finishes
-            adapter.after_table_build()
 
         self.domain = domain
         self.case_type_or_xmlns = case_type_or_xmlns

@@ -125,9 +125,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def after_table_build(self):
-        pass
-
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
