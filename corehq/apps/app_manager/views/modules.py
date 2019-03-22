@@ -277,7 +277,6 @@ def _get_report_module_context(app, module):
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
         'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
-        'legacy_select2': True,
     }
     return context
 
