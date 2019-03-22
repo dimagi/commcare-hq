@@ -142,18 +142,6 @@
         "property_name": "child_birth_location"
       },
       {
-        "column_id": "ifa_tablets_issued_pre",
-        "datatype": "small_integer",
-        "type": "raw",
-        "property_name": "ifa_tablets_issued_pre"
-      },
-      {
-        "column_id": "ifa_tablets_issued_post",
-        "datatype": "small_integer",
-        "type": "raw",
-        "property_name": "ifa_tablets_issued_post"
-      },
-      {
         "column_id": "complication_type",
         "datatype": "string",
         "type": "raw",
