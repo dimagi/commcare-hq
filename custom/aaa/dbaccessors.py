@@ -3,8 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import Case, F, Func, IntegerField, Q, Sum, When
-from django.db.models.functions import ExtractYear
+from django.db.models import Case, IntegerField, Sum, When
 
 from custom.aaa.models import (
     CcsRecord,
