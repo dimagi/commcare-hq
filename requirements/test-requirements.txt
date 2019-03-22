@@ -22,7 +22,7 @@ certifi==2018.11.29
 cffi==1.12.2
 chardet==3.0.4
 cloudant==2.11.0
-commcaretranslationchecker==0.9.3.3
+commcaretranslationchecker==0.9.3.5
 concurrent-log-handler==0.9.12
 contextlib2==0.5.5
 coverage==4.5.1
