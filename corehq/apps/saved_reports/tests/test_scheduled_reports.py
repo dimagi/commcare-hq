@@ -61,18 +61,6 @@ class ScheduledReportTest(TestCase):
         as_of += timedelta(microseconds=1)
         self.assertEqual(count, len(list(get_scheduled_report_ids(period, end_datetime=as_of))))
 
-    def testDefaultValue(self):
-        now = datetime.utcnow()
-        # This line makes sure that the date of the ReportNotification is an increment of 15 minutes
-        ReportNotification(hour=now.hour, minute=(now.minute // 15) * 15, interval='daily').save()
-        if now.minute % 15 <= 5:
-            self._check('daily', None, 1)
-        else:
-            self.assertRaises(
-                ValueError,
-                lambda: list(get_scheduled_report_ids('daily', end_datetime=None))
-            )
-
     def testDailyReportEmptyMinute(self):
         ReportNotification(hour=12, minute=None, interval='daily').save()
         self._check('daily', datetime(2014, 10, 31, 12, 0), 1)
