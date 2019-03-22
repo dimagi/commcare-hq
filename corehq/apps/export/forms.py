@@ -28,22 +28,11 @@ from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import (
-    group_filter,
-    users_matching_filter,
-    users_filter,
-    datespan_export_filter,
-    app_export_filter,
-    case_group_filter,
-    case_users_filter,
-    datespan_from_beginning,
-)
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
-from crispy_forms.bootstrap import InlineField
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
 from crispy_forms.layout import Layout
@@ -232,7 +221,7 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
-        :param export: FormExportSchema instance or CaseExportSchema instance
+        :param export: FormExportInstance instance or FormExportInstance instance
         :return: url to edit the export
         """
         raise NotImplementedError("must implement get_edit_url")
@@ -982,7 +971,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             'app_id': export.app_id,
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
-            'export_is_legacy': False,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
             'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
             'download_id': download_id

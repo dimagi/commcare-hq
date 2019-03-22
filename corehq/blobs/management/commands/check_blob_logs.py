@@ -6,7 +6,6 @@ import logging
 
 import couchforms.models as xform
 from couchdbkit.exceptions import ResourceNotFound
-from couchexport.models import SavedBasicExport
 from django.core.management import BaseCommand, CommandError
 from gevent.pool import Pool
 
@@ -27,7 +26,6 @@ USAGE = "Usage: ./manage.py check_blob_logs [options] FILE [FILE [FILE]]"
 BLOB_MIXIN_MODELS = {
     CODES.application: apps.Application,
     CODES.data_export: exports.CaseExportInstance,
-    CODES.basic_export: SavedBasicExport,
     CODES.form_xml: xform.XFormInstance,
     CODES.form_attachment: xform.XFormInstance,
     CODES.multimedia: hqmedia.CommCareMultimedia,
