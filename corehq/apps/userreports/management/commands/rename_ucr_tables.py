@@ -81,19 +81,15 @@ class Command(BaseCommand):
     help = "Helper for renaming UCR tables"
 
     def add_arguments(self, parser):
-        parser.add_argument('--create-views', action='store_true', default=False)
-        parser.add_argument('--rename-tables', action='store_true', default=False)
+        parser.add_argument('action', choices=('create-views', 'rename-tables'))
 
-    def handle(self, create_views, rename_tables, **options):
-        if sum([create_views, rename_tables]) != 1:
-            raise CommandError("Exactly one action argument must be given.")
-
+    def handle(self, action, **options):
         def confirm(action):
             return input("Are you sure you want to {}? y/n\n".format(action)) == 'y'
 
-        if create_views:
+        if action == 'create-views':
             # no confirmation needed here since it idempotent and additive
             create_ucr_views()
 
-        if rename_tables and confirm("rename all UCR tables"):
+        if action == 'rename-tables' and confirm("rename all UCR tables"):
             _rename_tables()
