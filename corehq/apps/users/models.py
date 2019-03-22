@@ -2739,9 +2739,6 @@ class AnonymousCouchUser(object):
     def can_view_groups(self):
         return False
 
-    def can_view_groups(self):
-        return False
-
     def can_edit_users_in_groups(self):
         return False
 
