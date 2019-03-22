@@ -18,7 +18,7 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import metadata
+from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
@@ -160,7 +160,7 @@ class ConfigurableReportTableManagerMixin(object):
         for engine_id, table_map in tables_by_engine.items():
             table_names = list(table_map)
             engine = connection_manager.get_engine(engine_id)
-            diffs = get_table_diffs(engine, table_names, metadata)
+            diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
             for table_name in tables_to_act_on.rebuild:
