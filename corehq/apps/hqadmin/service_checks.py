@@ -130,21 +130,11 @@ def check_blobdb():
 def check_celery():
     celery_status = _check_celery()
     celery_worker_status = _check_celery_workers()
-
-    if celery_status.success:
-        if celery_worker_status.success:
-            return celery_status
-        else:
-            # Retry because of https://github.com/celery/celery/issues/4758
-            num_retries = 4
-            for _ in range(num_retries):
-                time.sleep(5)
-                celery_worker_status = _check_celery_workers()
-                if celery_worker_status.success:
-                    return celery_status
-
-    message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
-    return ServiceStatus(False, message)
+    if celery_status.success and celery_worker_status.success:
+        return celery_status
+    else:
+        message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
+        return ServiceStatus(False, message)
 
 
 def _check_celery():
@@ -172,18 +162,30 @@ def _check_celery_workers():
 
         celery = Celery()
         celery.config_from_object(settings)
-        worker_responses = celery.control.ping(timeout=10)
-        pings = parse_celery_pings(worker_responses)
 
-        for hostname in expected_running:
-            if hostname not in pings or not pings[hostname]:
-                bad_workers.append('* {} celery worker down'.format(hostname))
+        expected_running = set(expected_running)
+        responses_any = set()
+        responses_all = set()
 
-        for hostname in expected_stopped:
-            if hostname in pings:
-                bad_workers.append(
-                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
-                )
+        # Retry because of https://github.com/celery/celery/issues/4758 (?)
+        for _ in range(20):
+            pings = {
+                hostname
+                for hostname, value in parse_celery_pings(celery.control.ping(timeout=1))
+                if value
+            }
+            responses_any |= pings
+            responses_all &= pings
+            if expected_running == responses_any:
+                break
+
+        for hostname in expected_running - responses_any:
+            bad_workers.append('* {} celery worker down'.format(hostname))
+
+        for hostname in expected_stopped & responses_all:
+            bad_workers.append(
+                '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
+            )
 
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))
