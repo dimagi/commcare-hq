@@ -157,7 +157,7 @@ class TestBlobMixin(BaseTestCase):
         name = "test.1"
         content = b"<xml />"
         obj.deferred_put_attachment(content, name, content_type="text/xml")
-        self.assertEqual(obj.fetch_attachment(name).encode('utf-8'), content)
+        self.assertEqual(obj.fetch_attachment(name), content)
 
     def test_delete_attachment_deletes_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
