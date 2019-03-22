@@ -1113,7 +1113,7 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     case_list.lookup_action = "com.simprints.id.IDENTIFY"
     case_list.lookup_name = _("Scan Fingerprint")
     case_list.lookup_extras = list([
-        dict(key=key, value=value)
+        dict(key=key, value="'{}'".format(value))
         for key, value in app.biometric_context.items()
     ])
     case_list.lookup_responses = [
