@@ -16,6 +16,8 @@ Conventions followed in this file:
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
@@ -24,6 +26,8 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
 from dimagi.utils.dates import force_to_date
+
+logger = logging.getLogger(__name__)
 
 
 class LocationDenormalizedModel(models.Model):
@@ -782,11 +786,11 @@ class Child(LocationDenormalizedModel):
         ]
 
     def task_case_details(self):
-        ucr_tablename = self._ucr_tablename('reach-task_cases')
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.execute('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
-            result = _dictfetchall(cursor)
+            result = _dictfetchone(cursor)
 
         return result
 
@@ -1075,3 +1079,15 @@ def _dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+
+def _dictfetchone(cursor):
+    ret = _dictfetchall(cursor)
+
+    if len(ret) > 1:
+        logger.error("More than one result found")
+
+    if ret:
+        return ret[0]
+
+    return {}
