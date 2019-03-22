@@ -18,12 +18,25 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
     get_overdue_repeat_record_count,
 )
-from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.datadog.gauges import (
+    datadog_bucket_timer,
+    datadog_counter,
+    datadog_gauge_task,
+)
+from corehq.util.datadog.utils import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
+_check_repeaters_buckets = make_buckets_from_timedeltas(
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=5),
+    timedelta(hours=1),
+    timedelta(hours=5),
+    timedelta(hours=10),
+)
 _soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
 logging = get_task_logger(__name__)
 
@@ -44,14 +57,20 @@ def check_repeaters():
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
+        datadog_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
-        for record in iterate_repeat_records(start):
-            if datetime.utcnow() > six_hours_later:
-                _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
-                break
-            record.attempt_forward_now()
+        with datadog_bucket_timer(
+            "commcare.repeaters.check.processing",
+            buckets=_check_repeaters_buckets,
+        ):
+            for record in iterate_repeat_records(start):
+                if datetime.utcnow() > six_hours_later:
+                    _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
+                    break
+                datadog_counter("commcare.repeaters.check.attempt_forward")
+                record.attempt_forward_now()
     finally:
         check_repeater_lock.release()
 
