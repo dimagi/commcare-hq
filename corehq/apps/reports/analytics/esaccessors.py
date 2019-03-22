@@ -37,7 +37,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan):
         return string_to_datetime(date).date() if date else None
 
     query = (
-        FormES()
+        FormES(es_instance_alias='export')
         .domain(domain)
         .user_id(user_ids)
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
