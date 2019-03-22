@@ -796,9 +796,9 @@ class RepeatRecord(Document):
         try:
             self.save()
         except ResourceConflict:
-            # Another process beat us to the punch. This takes advantage of
-            # the fact Couch uses optimistic locking to prevent one process
-            # from overwriting the work of another with stale data.
+            # Another process beat us to the punch. This takes advantage
+            # of Couch DB's optimistic locking, which prevents a process
+            # with stale data from overwriting the work of another.
             return
         process_repeat_record.delay(self)
 
