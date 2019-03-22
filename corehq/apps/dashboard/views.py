@@ -1,5 +1,8 @@
 from __future__ import absolute_import, division
 from __future__ import unicode_literals
+
+from datetime import date
+
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -21,6 +24,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.hqwebapp.utils import get_overdue_invoice
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
@@ -90,6 +94,12 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         context.update({
             'domain': self.domain,
         })
+        overdue_invoice = get_overdue_invoice(self.domain)
+        context['domain_has_overdue_invoice'] = overdue_invoice is not None
+        if overdue_invoice:
+            days_overdue = (date.today() - overdue_invoice.date_due).days
+            context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
+            context['days_until_downgrade'] = max(1, 61 - days_overdue)
         return context
 
     @property

@@ -1,4 +1,5 @@
 hqDefine("hqwebapp/js/base_main", [
+    'hqwebapp/js/downgrade_modal',
     'hqwebapp/js/hq.helpers',
     'hqwebapp/js/layout',
     'hqwebapp/js/hq-bug-report',
