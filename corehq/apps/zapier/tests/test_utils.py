@@ -24,16 +24,3 @@ def bootrap_domain_for_zapier(domain_name):
     web_user = WebUser.create(domain_name, 'test', '******')
     api_key_object, _ = ApiKey.objects.get_or_create(user=web_user.get_django_user())
     return ZapierDomainConfig(domain_object, web_user, api_key_object.key)
-
-
-def cleanup_repeaters_for_domain(domain):
-    for repeater in FormRepeater.by_domain(domain):
-            repeater.delete()
-    for case_repeater_class in CASE_TYPE_REPEATER_CLASS_MAP.values():
-        for repeater in case_repeater_class.by_domain(domain):
-            repeater.delete()
-
-
-def cleanup_repeat_records_for_domain(domain):
-    for repeat_record in RepeatRecord.all(domain=domain):
-        repeat_record.delete()
