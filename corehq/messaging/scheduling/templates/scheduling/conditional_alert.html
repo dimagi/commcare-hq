@@ -48,6 +48,12 @@
     for more information.
     {% endblocktrans %}
 </p>
+<p id="required_error_message" class="help-block alert alert-danger hidden">
+    <i class="fa fa-warning"></i>
+    {% blocktrans %}
+    Please fill the required fields marked with *
+    {% endblocktrans %}
+</p>
 {% endif %}
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
@@ -63,13 +69,13 @@
         {% include 'scheduling/partials/custom_event_templates.html' %}
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
             <ul class="nav nav-tabs">
-                <li class="{% if not criteria_form_active and not schedule_form_active %}active{% endif %}">
+                <li id="basic-nav" class="{% if not criteria_form_active and not schedule_form_active %}active{% endif %}">
                     <a href="#basic" data-toggle="tab">{% trans "Basic Information" %}</a>
                 </li>
-                <li class="{% if criteria_form.errors %}has-error{% endif %} {% if criteria_form_active %}active{% endif %}">
+                <li id="rule-nav" class="{% if criteria_form.errors %}has-error{% endif %} {% if criteria_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
                     <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
                 </li>
-                <li class="{% if schedule_form.errors %}has-error{% endif %} {% if schedule_form_active %}active{% endif %}">
+                <li id="schedule-nav" class="{% if schedule_form.errors %}has-error{% endif %} {% if schedule_form_active %}active{% endif %} {% if new_rule %}hidden{% endif %}">
                     <a href="#schedule" data-toggle="tab">{% trans "Schedule & Recipients" %}</a>
                 </li>
             </ul>
@@ -78,6 +84,9 @@
                     <div class="row">
                         <div class="panel-body">
                             {% crispy basic_info_form %}
+                            {% if new_rule %}
+                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" %}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -85,6 +94,9 @@
                     <div class="row">
                         <div class="panel-body">
                             {% crispy criteria_form %}
+                            {% if new_rule %}
+                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="criteria_continue" %}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -92,15 +104,14 @@
                     <div class="panel-body">
                         {% include 'scheduling/partials/schedule_form.html' %}
                     </div>
+                    {% if new_rule %}
+                        {% include 'scheduling/partials/conditional_alert_save.html' %}
+                    {% endif %}
                 </div>
             </div>
-
-            <div class="form-actions">
-                <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
-                    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
-                    <a href="{% url 'conditional_alert_list' domain %}" class="btn btn-default">Cancel</a>
-                </div>
-            </div>
+            {% if not new_rule %}
+                {% include 'scheduling/partials/conditional_alert_save.html' %}
+            {% endif %}
         </form>
     </div>
 </div>
