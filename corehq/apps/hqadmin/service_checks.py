@@ -164,6 +164,7 @@ def _check_celery_workers():
         celery.config_from_object(settings)
 
         expected_running = set(expected_running)
+        expected_stopped = set(expected_stopped)
         responses_any = set()
         responses_all = set()
 
