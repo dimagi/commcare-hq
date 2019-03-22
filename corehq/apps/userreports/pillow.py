@@ -148,9 +148,8 @@ class ConfigurableReportTableManagerMixin(object):
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
-            sql_adapter = get_indicator_adapter(adapter.config)
             try:
-                tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+                tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
             except BadSpecError:
                 _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
                 _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
