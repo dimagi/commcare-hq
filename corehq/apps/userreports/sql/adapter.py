@@ -4,12 +4,11 @@ from __future__ import unicode_literals
 import hashlib
 import logging
 
-import six
 import sqlalchemy
 from architect import install
 from django.utils.translation import ugettext as _
 from memoized import memoized
-from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
@@ -18,7 +17,8 @@ from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.util import get_table_name
+from corehq.apps.userreports.sql.util import view_exists
+from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
@@ -108,6 +108,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def rebuild_table(self):
         self.session_helper.Session.remove()
         try:
+            self._drop_legacy_table_and_view()
             rebuild_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -118,6 +119,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def build_table(self):
         self.session_helper.Session.remove()
         try:
+            self._drop_legacy_table_and_view()
             build_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -128,6 +130,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
+        self._drop_legacy_table_and_view()
         with self.engine.begin() as connection:
             table = self.get_table()
             if self.config.sql_settings.partition_config:
@@ -135,6 +138,18 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 table.drop(connection, checkfirst=True)
             metadata.remove(table)
+
+    def _drop_legacy_table_and_view(self):
+        legacy_table_name = get_legacy_table_name(self.config.domain, self.config.table_id)
+        view_name = get_table_name(self.config.domain, self.config.table_id)
+        with self.engine.begin() as connection:
+            if view_exists(connection, view_name):
+                # Can't use `DROP VIEW IF EXISTS` since PG raises an error if there ther
+                # is a table with the same name
+                connection.execute("""
+                    DROP VIEW "{view}";
+                    DROP TABLE "{table}" CASCADE
+                """.format(view=view_name, table=legacy_table_name))
 
     @unit_testing_only
     def clear_table(self):
