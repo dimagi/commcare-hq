@@ -40,26 +40,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         },
     };
 
-    ko.bindingHandlers.staticChecked = {
-        init: function (element) {
-            $('<span class="icon"></span>').appendTo(element);
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor());
-            var span = $('span', element);
-            var allBindings = allBindingsAccessor();
-            var DEFAULT_ICON = 'fa fa-check';
-            var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || DEFAULT_ICON,
-                iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
-
-            if (value) {
-                span.removeClass(iconFalse).addClass(iconTrue);
-            } else {
-                span.removeClass(iconTrue).addClass(iconFalse);
-            }
-        },
-    };
-
     ko.bindingHandlers.langcode = {
         init: function (element, valueAccessor, allBindings) {
             ko.bindingHandlers.value.init(element, valueAccessor, (function () {

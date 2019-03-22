@@ -25,6 +25,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django_otp.plugins.otp_static.models import StaticToken
 
 from couchdbkit.exceptions import ResourceNotFound
+
+from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
@@ -65,7 +67,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_angular_js,
     use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.decorators import require_can_edit_web_users, require_permission_to_edit_user
+from corehq.apps.users.decorators import (
+    require_can_edit_web_users,
+    require_can_edit_or_view_web_users,
+    require_permission_to_edit_user,
+    require_can_view_roles,
+)
 
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
@@ -140,14 +147,44 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
         redirect = None
         user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
         if user:
-            if user.has_permission(self.domain, 'edit_commcare_users'):
+            if (user.has_permission(self.domain, 'edit_commcare_users')
+                    or user.has_permission(self.domain, 'view_commcare_users')):
                 from corehq.apps.users.views.mobile import MobileWorkerListView
-                redirect = reverse(MobileWorkerListView.urlname, args=[self.domain])
-            elif user.has_permission(self.domain, 'edit_web_users'):
+                redirect = reverse(
+                    MobileWorkerListView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_groups')
+                    or user.has_permission(self.domain, 'view_groups')):
+                from corehq.apps.users.views.mobile import GroupsListView
+                redirect = reverse(
+                    GroupsListView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_web_users')
+                    or user.has_permission(self.domain, 'view_web_users')):
                 redirect = reverse(
                     ListWebUsersView.urlname,
                     args=[self.domain]
                 )
+
+            elif user.has_permission(self.domain, 'view_roles'):
+                from corehq.apps.users.views import ListRolesView
+                redirect = reverse(
+                    ListRolesView.urlname,
+                    args=[self.domain]
+                )
+
+            elif (user.has_permission(self.domain, 'edit_locations')
+                    or user.has_permission(self.domain, 'view_locations')):
+                from corehq.apps.locations.views import LocationsListView
+                redirect = reverse(
+                    LocationsListView.urlname,
+                    args=[self.domain]
+                )
+
         return redirect
 
     def get(self, request, *args, **kwargs):
@@ -294,6 +331,12 @@ class EditWebUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Web User")
 
     @property
+    def page_name(self):
+        if self.request.is_view_only:
+            return _("Edit Web User (View Only)")
+        return self.page_title
+
+    @property
     @memoized
     def form_user_update(self):
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
@@ -337,6 +380,8 @@ class EditWebUserView(BaseEditUserView):
             'form_uneditable': BaseUserInfoForm(),
             'can_edit_role': self.can_change_user_roles,
         }
+        if self.request.is_view_only:
+            make_form_readonly(self.commtrack_form)
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
@@ -347,7 +392,7 @@ class EditWebUserView(BaseEditUserView):
 
         return ctx
 
-    @method_decorator(require_can_edit_web_users)
+    @method_decorator(require_can_edit_or_view_web_users)
     def dispatch(self, request, *args, **kwargs):
         return super(EditWebUserView, self).dispatch(request, *args, **kwargs)
 
@@ -355,6 +400,9 @@ class EditWebUserView(BaseEditUserView):
         return super(EditWebUserView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        if self.request.is_view_only:
+            return self.get(request, *args, **kwargs)
+
         if self.request.POST['form_type'] == "update-user-permissions" and self.can_grant_superuser_access:
             is_super_user = True if 'super_user' in self.request.POST and self.request.POST['super_user'] == 'on' else False
             if self.form_user_update_permissions.update_user_permission(couch_user=self.request.couch_user,
@@ -383,19 +431,13 @@ def get_domain_languages(domain):
 
 
 @location_safe_for_ews_ils
-class ListWebUsersView(BaseUserSettingsView):
-    template_name = 'users/web_users.html'
-    page_title = ugettext_lazy("Web Users & Roles")
-    urlname = 'web_users'
-
-    @method_decorator(require_can_edit_web_users)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
+class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
     def can_restrict_access_by_location(self):
-        return self.domain_object.has_privilege(privileges.RESTRICT_ACCESS_BY_LOCATION)
+        return self.domain_object.has_privilege(
+            privileges.RESTRICT_ACCESS_BY_LOCATION)
 
     @property
     @memoized
@@ -431,10 +473,15 @@ class ListWebUsersView(BaseUserSettingsView):
             )
         return user_roles
 
-    @property
-    def can_edit_roles(self):
-        return has_privilege(self.request, privileges.ROLE_BASED_ACCESS) \
-            and self.couch_user.is_domain_admin
+
+class ListWebUsersView(BaseRoleAccessView):
+    template_name = 'users/web_users.html'
+    page_title = ugettext_lazy("Web Users")
+    urlname = 'web_users'
+
+    @method_decorator(require_can_edit_or_view_web_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListWebUsersView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -454,6 +501,34 @@ class ListWebUsersView(BaseUserSettingsView):
         return invitations
 
     @property
+    def page_context(self):
+        return {
+            'invitations': self.invitations,
+            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
+            'admins': WebUser.get_admins_by_domain(self.domain),
+            'domain_object': self.domain_object,
+        }
+
+
+class ListRolesView(BaseRoleAccessView):
+    template_name = 'users/roles_and_permissions.html'
+    page_title = ugettext_lazy("Roles & Permissions")
+    urlname = 'roles_and_permissions'
+
+    @method_decorator(require_can_view_roles)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ListRolesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def can_edit_roles(self):
+        return (has_privilege(self.request, privileges.ROLE_BASED_ACCESS)
+                and self.couch_user.is_domain_admin)
+
+    @property
+    def is_location_safety_exempt(self):
+        return toggles.LOCATION_SAFETY_EXEMPTION.enabled(self.domain)
+
+    @property
     def landing_page_choices(self):
         return [
             {'id': None, 'name': _('Use Default')}
@@ -465,9 +540,8 @@ class ListWebUsersView(BaseUserSettingsView):
     @property
     def page_context(self):
         if (not self.can_restrict_access_by_location
-            and any(not role.permissions.access_all_locations
-                    for role in self.user_roles)
-        ):
+                and any(not role.permissions.access_all_locations
+                        for role in self.user_roles)):
             messages.warning(self.request, _(
                 "This project has user roles that restrict data access by "
                 "organization, but the software plan no longer supports that. "
@@ -481,12 +555,11 @@ class ListWebUsersView(BaseUserSettingsView):
             'report_list': get_possible_reports(self.domain),
             'web_apps_list': get_cloudcare_apps(self.domain),
             'apps_list': get_brief_apps_in_domain(self.domain),
-            'invitations': self.invitations,
-            'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
-            'admins': WebUser.get_admins_by_domain(self.domain),
+            'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'is_location_safety_exempt': self.is_location_safety_exempt,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
@@ -495,7 +568,7 @@ class ListWebUsersView(BaseUserSettingsView):
         }
 
 
-@require_can_edit_web_users
+@require_can_edit_or_view_web_users
 @require_GET
 @location_safe_for_ews_ils
 def paginate_web_users(request, domain):
@@ -617,16 +690,23 @@ def post_user_role(request, domain):
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
 
-    # temporarily assign new permissions until migration has finished, then we
-    # can update the UI accordingly.
-    role.permissions.view_web_users = role.permissions.edit_web_users
-    role.permissions.view_roles = role.permissions.edit_web_users
+    if role.permissions.edit_web_users:
+        role.permissions.view_web_users = True
 
-    role.permissions.view_commcare_users = role.permissions.edit_commcare_users
-    role.permissions.edit_groups = role.permissions.edit_commcare_users
-    role.permissions.view_groups = role.permissions.edit_commcare_users
+    if role.permissions.edit_commcare_users:
+        role.permissions.view_commcare_users = True
 
-    role.permissions.view_locations = role.permissions.edit_locations
+    if role.permissions.edit_groups:
+        role.permissions.view_groups = True
+
+    if role.permissions.edit_locations:
+        role.permissions.view_locations = True
+
+    if not role.permissions.edit_groups:
+        role.permissions.edit_users_in_groups = False
+
+    if not role.permissions.edit_locations:
+        role.permissions.edit_users_in_locations = False
 
     role.save()
     role.__setattr__('hasUsersAssigned',
