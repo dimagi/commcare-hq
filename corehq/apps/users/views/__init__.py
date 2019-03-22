@@ -1,71 +1,79 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from datetime import datetime
-import json
+from __future__ import absolute_import, unicode_literals
 
-from django.utils.safestring import mark_safe
+import json
+import logging
+from datetime import datetime
 
 import langcodes
-import logging
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
-from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
-
-from django_otp.plugins.otp_static.models import StaticToken
 
 from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from corehq.apps.users.landing_pages import get_allowed_landing_pages
-from corehq.util.view_utils import json_error
-from dimagi.utils.couch import CriticalSection
-from memoized import memoized
-from dimagi.utils.web import json_response
 from django_digest.decorators import httpdigest
+from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
-from no_exceptions.exceptions import Http403
+from memoized import memoized
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
-    track_workflow, send_hubspot_form,
-    HUBSPOT_INVITATION_SENT_FORM, HUBSPOT_NEW_USER_INVITE_FORM,
-    HUBSPOT_EXISTING_USER_INVITE_FORM)
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+    HUBSPOT_EXISTING_USER_INVITE_FORM,
+    HUBSPOT_INVITATION_SENT_FORM,
+    HUBSPOT_NEW_USER_INVITE_FORM,
+    send_hubspot_form,
+    track_workflow,
+)
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.domain.decorators import (
+    domain_admin_required,
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.locations.permissions import (location_safe, user_can_access_other_user,
-                                               conditionally_location_safe)
-from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
+from corehq.apps.locations.permissions import (
+    conditionally_location_safe,
+    location_safe,
+    user_can_access_other_user,
+)
+from corehq.apps.registration.forms import (
+    AdminInvitesUserForm,
+    WebUserInvitationForm,
+)
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
+from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
-    initiate_sms_verification_workflow,
     VERIFICATION__ALREADY_IN_USE,
     VERIFICATION__ALREADY_VERIFIED,
     VERIFICATION__RESENT_PENDING,
     VERIFICATION__WORKFLOW_STARTED,
+    initiate_sms_verification_workflow,
 )
-from corehq.apps.hqwebapp.decorators import (
-    use_angular_js,
-    use_select2)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import (
     require_can_edit_web_users,
@@ -73,22 +81,31 @@ from corehq.apps.users.decorators import (
     require_permission_to_edit_user,
     require_can_view_roles,
 )
-
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     DomainRequestForm,
+    SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
-    SetUserPasswordForm,
 )
-from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
-                                      DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
-                                      DomainMembershipError)
+from corehq.apps.users.landing_pages import get_allowed_landing_pages
+from corehq.apps.users.models import (
+    AdminUserRole,
+    CommCareUser,
+    CouchUser,
+    DomainMembershipError,
+    DomainRemovalRecord,
+    DomainRequest,
+    Invitation,
+    UserRole,
+    WebUser,
+)
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
-from corehq import toggles
-from django.views.decorators.csrf import csrf_exempt
+from corehq.util.view_utils import json_error
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 
 
 def _is_exempt_from_location_safety(view_fn, *args, **kwargs):
@@ -1115,15 +1132,19 @@ def verify_phone_number(request, domain, couch_user_id):
     phone_number = six.moves.urllib.parse.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
-    result = initiate_sms_verification_workflow(user, phone_number)
-    if result == VERIFICATION__ALREADY_IN_USE:
-        messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
-    elif result == VERIFICATION__ALREADY_VERIFIED:
-        messages.error(request, _('Phone number is already verified.'))
-    elif result == VERIFICATION__RESENT_PENDING:
-        messages.success(request, _('Verification message resent.'))
-    elif result == VERIFICATION__WORKFLOW_STARTED:
-        messages.success(request, _('Verification workflow started.'))
+    try:
+        result = initiate_sms_verification_workflow(user, phone_number)
+    except BadSMSConfigException as error:
+        messages.error(request, _('Bad SMS configuration: {error}').format(error=error))
+    else:
+        if result == VERIFICATION__ALREADY_IN_USE:
+            messages.error(request, _('Cannot start verification workflow. Phone number is already in use.'))
+        elif result == VERIFICATION__ALREADY_VERIFIED:
+            messages.error(request, _('Phone number is already verified.'))
+        elif result == VERIFICATION__RESENT_PENDING:
+            messages.success(request, _('Verification message resent.'))
+        elif result == VERIFICATION__WORKFLOW_STARTED:
+            messages.success(request, _('Verification workflow started.'))
 
     from corehq.apps.users.views.mobile import EditCommCareUserView
     redirect = reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id])

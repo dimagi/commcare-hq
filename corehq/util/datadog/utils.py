@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from datetime import timedelta
 from functools import wraps
 
 from datadog import api
@@ -84,6 +85,21 @@ def get_url_group(url):
 def update_datadog_metrics(metrics):
     for metric, value in metrics.items():
         statsd.gauge(metric, value)
+
+
+def make_bucket_from_timedeltas(*timedeltas):
+    return [td.total_seconds() for td in timedeltas]
+
+
+DAY_SCALE_TIME_BUCKETS = make_bucket_from_timedeltas(
+    timedelta(seconds=1),
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=10),
+    timedelta(hours=1),
+    timedelta(hours=12),
+    timedelta(hours=24),
+)
 
 
 def bucket_value(value, buckets, unit=''):

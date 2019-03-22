@@ -197,6 +197,10 @@ class ESError(Exception):
     pass
 
 
+class ESShardFailure(ESError):
+    pass
+
+
 def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
@@ -219,7 +223,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
             raise
     try:
         results = es_instance.search(es_meta.index, es_meta.type, body=q)
-        report_shard_failures(results)
+        report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
@@ -446,7 +450,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
 
     try:
         result = es.search(meta.index, meta.type, body=q)
-        report_shard_failures(result)
+        report_and_fail_on_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -528,11 +532,18 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
     return facet_mapping
 
 
-def report_shard_failures(search_result):
-    """Report es shard failures to datadog
+def report_and_fail_on_shard_failures(search_result):
+    """
+    Raise an ESShardFailure if there are shard failures in an ES search result (JSON)
+
+    and report to datadog.
+    The commcare.es.partial_results metric counts 1 per ES request with any shard failure.
     """
     if not isinstance(search_result, dict):
         return
 
     if search_result.get('_shards', {}).get('failed'):
         datadog_counter('commcare.es.partial_results', value=1)
+        # Example message:
+        #   "_shards: {'successful': 4, 'failed': 1, 'total': 5}"
+        raise ESShardFailure('_shards: {!r}'.format(search_result.get('_shards')))
