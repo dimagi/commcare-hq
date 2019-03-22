@@ -1129,8 +1129,12 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
+        from corehq.apps.hqwebapp.utils import get_overdue_invoice
+
         super(Subscription, self).save(*args, **kwargs)
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        get_overdue_invoice.clear(self.subscriber.domain)
+
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -2001,6 +2005,12 @@ class Invoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.hqwebapp.utils import get_overdue_invoice
+
+        super(Invoice, self).save(*args, **kwargs)
+        get_overdue_invoice.clear(self.subscription.subscriber.domain)
 
     @property
     def email_recipients(self):

@@ -16,6 +16,7 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import get_request
 from custom.nic_compliance.utils import get_raw_password
 
@@ -150,3 +151,17 @@ def update_session_language(req, old_lang, new_lang):
         req.session[LANGUAGE_SESSION_KEY] = new_lang
         # and activate it for the current thread so the response page is translated too
         activate(new_lang)
+
+
+@quickcache(['domain_name'], timeout=60 * 60)
+def get_overdue_invoice(domain_name):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.accounting.tasks import (
+        get_unpaid_invoices_over_threshold_by_domain,
+        is_subscription_eligible_for_downgrade_process,
+    )
+
+    current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
+    if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
+        overdue_invoice, _ = get_unpaid_invoices_over_threshold_by_domain(date.today(), domain_name)
+        return overdue_invoice
