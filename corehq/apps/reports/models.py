@@ -576,16 +576,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 },
                 None,
             )
-        except ESError:
-            raise ESError
-        except Exception:
-            notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
-                'domain': self.domain,
-                'user': self.owner.username,
-                'report': self.report_slug,
-                'report config': self.get_id
-            })
-            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_active(self):
