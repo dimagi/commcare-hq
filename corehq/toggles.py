@@ -462,7 +462,7 @@ CASE_LIST_LOOKUP = StaticToggle(
 
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
-    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    "Enables biometric integration (simprints) features.",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
