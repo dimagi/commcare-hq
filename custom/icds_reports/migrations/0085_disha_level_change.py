@@ -28,8 +28,7 @@ class Migration(migrations.Migration):
         ('icds_reports', '0084_anc_abnormalities'),
     ]
 
-    operations = get_all_disha_migrations()
-    operations.extend([
+    operations = [
         migrations.RemoveField(
             model_name='dishaindicatorview',
             name='awc_id',
@@ -46,4 +45,4 @@ class Migration(migrations.Migration):
             model_name='dishaindicatorview',
             name='supervisor_name',
         )
-    ])
+    ]

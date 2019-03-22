@@ -19,7 +19,7 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import get_indicator_table
+from corehq.apps.userreports.sql import get_indicator_table, get_metadata
 from corehq.apps.userreports.sql.util import table_exists
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_legacy_table_name
@@ -179,13 +179,13 @@ class ConfigurableReportTableManagerMixin(object):
                         # popultate metadata with the table schema
                         get_indicator_table(
                             sql_adapter.config,
-                            custom_metadata=diff_metadata,
+                            metadata=diff_metadata,
                             override_table_name=legacy_table_name
                         )
                         table_names_for_diff.append(legacy_table_name)
                     else:
                         # popultate metadata with the table schema
-                        get_indicator_table(sql_adapter.config, custom_metadata=diff_metadata)
+                        get_indicator_table(sql_adapter.config, metadata=diff_metadata)
                         table_names_for_diff.append(table_name)
 
             diffs = get_table_diffs(engine, table_names_for_diff, diff_metadata)

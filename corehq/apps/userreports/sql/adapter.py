@@ -26,7 +26,11 @@ from corehq.util.test_utils import unit_testing_only
 logger = logging.getLogger(__name__)
 
 
-metadata = sqlalchemy.MetaData()
+engine_metadata = {}
+
+
+def get_metadata(engine_id):
+    return engine_metadata.setdefault(engine_id, sqlalchemy.MetaData())
 
 
 class IndicatorSqlAdapter(IndicatorAdapter):
@@ -47,12 +51,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     @memoized
     def get_table(self):
-        return get_indicator_table(self.config)
+        return get_indicator_table(self.config, get_metadata(self.engine_id))
 
     @memoized
     def get_sqlalchemy_orm_table(self):
         table = self.get_table()
-        Base = declarative_base(metadata=metadata)
+        Base = declarative_base(metadata=get_metadata(self.engine_id))
 
         class TemporaryTableDef(Base):
             __table__ = table
@@ -137,7 +141,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=table.name))
             else:
                 table.drop(connection, checkfirst=True)
-            metadata.remove(table)
+            get_metadata(self.engine_id).remove(table)
 
     def _drop_legacy_table_and_view(self):
         legacy_table_name = get_legacy_table_name(self.config.domain, self.config.table_id)
@@ -253,7 +257,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
-def get_indicator_table(indicator_config, custom_metadata=None, override_table_name=None):
+def get_indicator_table(indicator_config, metadata, override_table_name=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
@@ -274,7 +278,7 @@ def get_indicator_table(indicator_config, custom_metadata=None, override_table_n
     # is that valid?
     return sqlalchemy.Table(
         table_name,
-        custom_metadata or metadata,
+        metadata,
         extend_existing=True,
         *columns_and_indices
     )
@@ -289,7 +293,6 @@ def _custom_index_name(table_name, column_ids):
 def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
-        metadata.remove(table)
         table.create(connection)
 
 
