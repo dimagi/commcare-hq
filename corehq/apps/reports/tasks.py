@@ -44,6 +44,7 @@ from corehq.apps.domain.calculations import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
+from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.elastic import (
@@ -181,9 +182,13 @@ def get_domains_to_update_es_filter():
     more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
     less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
     not_updated = filters.missing('cp_last_updated')
-    domains_submitted_today = filters.term('name',
-        set(FormES().submitted(gte=datetime.utcnow() - timedelta(days=1)).values_list('domain', flat=True))
-    )
+    domains_submitted_today = [
+        agg.domain
+        for agg in NestedTermAggregationsHelper(
+            base_query=FormES().submitted(gte=datetime.utcnow() - timedelta(days=1)),
+            terms=[AggregationTerm('domain', 'domain')]
+        ).get_data()
+    ]
     return filters.OR(
         not_updated,
         more_than_a_week_ago,
