@@ -144,7 +144,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         view_name = get_table_name(self.config.domain, self.config.table_id)
         with self.engine.begin() as connection:
             if view_exists(connection, view_name):
-                # Can't use `DROP VIEW IF EXISTS` since PG raises an error if there ther
+                # Can't use `DROP VIEW IF EXISTS` since PG raises an error if there
                 # is a table with the same name
                 connection.execute("""
                     DROP VIEW "{view}";
