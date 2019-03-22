@@ -35,7 +35,8 @@ from corehq.apps.reminders.views import (
 )
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
+from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.userreports.util import has_report_builder_access

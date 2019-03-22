@@ -32,7 +32,6 @@ class TestMigrateBackend(TestCase):
         "RemoteApp-Deleted": mod.apps.RemoteApp,
         "SavedAppBuild": mod.apps.SavedAppBuild,
         "CommCareBuild": mod.CommCareBuild,
-        "SavedBasicExport": mod.SavedBasicExport,
         "Domain": mod.Domain,
         "InvoicePdf": mod.acct.InvoicePdf,
         "CommCareAudio": mod.hqmedia.CommCareAudio,

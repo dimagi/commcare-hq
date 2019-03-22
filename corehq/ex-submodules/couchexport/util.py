@@ -19,15 +19,6 @@ def force_tag_to_list(export_tag):
     return export_tag
 
 
-def get_schema_index_view_keys(export_tag):
-    """
-    Get the view start and end keys to query the schema_index view
-    """
-    export_tag = force_tag_to_list(export_tag)
-    return {'startkey': export_tag,
-            'endkey': export_tag + [{}]}
-
-
 def intersect_functions(*functions):
     functions = [fn for fn in functions if fn]
     if functions:

@@ -10,15 +10,12 @@ from soil.progress import get_task_status
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.utils import get_export
-from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
-from couchexport.groupexports import export_for_group
 from couchexport.models import Format
 from soil.util import expose_blob_download, process_email_request
 
@@ -150,20 +147,9 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
     _cached_add_inferred_export_properties(sender, domain, case_type, properties)
 
 
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True, acks_late=True)
-def export_for_group_async(group_config_id):
-    # exclude exports not accessed within the last 7 days
-    last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-    group_config = HQGroupExportConfiguration.get(group_config_id)
-    export_for_group(group_config, last_access_cutoff=last_access_cutoff)
-
-
 @periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
-    for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
-        export_for_group_async.delay(group_config_id)
-
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     for daily_saved_export_id in get_daily_saved_export_ids_for_auto_rebuild(last_access_cutoff):
         rebuild_saved_export(daily_saved_export_id, manual=False)
