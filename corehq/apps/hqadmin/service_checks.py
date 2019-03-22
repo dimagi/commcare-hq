@@ -170,8 +170,8 @@ def _check_celery_workers():
         # Retry because of https://github.com/celery/celery/issues/4758 (?)
         for _ in range(20):
             pings = {
-                hostname
-                for hostname, value in parse_celery_pings(celery.control.ping(timeout=1))
+                hostname for hostname, value in parse_celery_pings(
+                    celery.control.ping(timeout=1)).items()
                 if value
             }
             responses_any |= pings
