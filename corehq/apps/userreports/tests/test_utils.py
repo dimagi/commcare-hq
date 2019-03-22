@@ -43,7 +43,7 @@ class UtilitiesTestCase(SimpleTestCase):
 
     def test_long_table_name(self):
         name = get_table_name('this_is_a_long_domain', 'and_a_long_table_name')
-        name_expected = '{}this_is_a_long_domain_and_a_long_table_n_6ac28759'.format(UCR_TABLE_PREFIX)
+        name_expected = '{}this_is_a_long_domain_and_a_long_tabl_3509038f'.format(UCR_TABLE_PREFIX)
         self.assertEqual(name, name_expected)
 
     def test_column_unicode(self):
