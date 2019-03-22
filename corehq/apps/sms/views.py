@@ -37,7 +37,6 @@ from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.hqwebapp.decorators import (
     use_timepicker,
     use_typeahead,
-    use_select2,    # TODO: remove
     use_select2_v4,
     use_jquery_ui,
     use_datatables,
@@ -1713,7 +1712,7 @@ class SMSLanguagesView(BaseMessagingSectionView):
     page_title = ugettext_noop("Languages")
 
     @use_jquery_ui
-    @use_select2
+    @use_select2_v4
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)

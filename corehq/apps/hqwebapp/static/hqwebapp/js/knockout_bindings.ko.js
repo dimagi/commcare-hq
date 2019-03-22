@@ -62,7 +62,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
 
     ko.bindingHandlers.langcode = {
         init: function (element, valueAccessor, allBindings) {
-            ko.bindingHandlers.value.init(element, valueAccessor, (function () {
+            var originalValue = ko.utils.unwrapObservable(valueAccessor());
+            ko.bindingHandlers.value.init(element, valueAccessor, function () {
                 var valueUpdate = allBindings.get('valueUpdate') || [];
                 if (typeof valueUpdate === 'string') {
                     valueUpdate = [valueUpdate];
@@ -85,8 +86,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                         }
                     },
                 };
-            }()));
-            $(element).langcodes();
+            }());
+            $(element).langcodes(originalValue);
         },
         update: ko.bindingHandlers.value.update,
     };
