@@ -5465,8 +5465,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 else:
                     orphaned_modules.append(module)
 
-        self.modules = [m for modules in modules_by_parent_id.values() for m in modules]
-        self.modules += orphaned_modules
+        normal_modules = [m for modules in modules_by_parent_id.values() for m in modules]
+        self.modules = normal_modules + orphaned_modules
 
     def scrub_source(self, source):
         source = update_form_unique_ids(source)
