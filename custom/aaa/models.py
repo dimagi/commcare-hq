@@ -93,6 +93,11 @@ class LocationDenormalizedModel(models.Model):
             awc_location_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    def _ucr_tablename(self, ucr_name):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, ucr_name)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
 
 class Woman(LocationDenormalizedModel):
     """Represents a woman registered in the AAA Convergence program.
@@ -522,44 +527,38 @@ class CcsRecord(LocationDenormalizedModel):
         ]
 
     def birth_preparedness_form_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-birth_preparedness')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
     def postnatal_care_form_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-postnatal_care')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
     def thr_form_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-thr_forms')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-thr_forms')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
@@ -783,38 +782,32 @@ class Child(LocationDenormalizedModel):
         ]
 
     def task_case_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-tasks_cases')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-task_cases')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
     def immunizaton_form_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-immunization_forms')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-immunization_forms')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
     def postnatal_care_form_details(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'reach-postnatal_care')
-        config, _ = get_datasource_config(doc_id, self.domain)
-        ucr_tablename = get_table_name(self.domain, config.table_id)
+        ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.exectue(
                 'SELECT * FROM "{}" WHERE child_health_case_id = %s'.format(ucr_tablename),
                 [self.child_health_case_id]
             )
-            result = dictfetchall(cursor)
+            result = _dictfetchall(cursor)
 
         return result
 
@@ -1075,7 +1068,7 @@ class AggregationInformation(models.Model):
     aggregation_window_end = models.DateTimeField()
 
 
-def dictfetchall(cursor):
+def _dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
     return [
