@@ -45,7 +45,6 @@ def send_report(notification_id):
 
     # If the report's start date is later than today, return and do not send the email
     if notification.start_date and notification.start_date > datetime.today().date():
-        daily_reports()
         return
 
     try:
