@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import hashlib
 import json
 
@@ -477,6 +477,20 @@ def maintenance_alert(request):
         )
     else:
         return ''
+
+
+@quickcache(['domain_name'], timeout=60 * 60)
+def get_overdue_invoice(domain_name):
+    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.accounting.tasks import (
+        get_domains_with_invoices_over_threshold_by_domain,
+        is_subscription_eligible_for_downgrade_process,
+    )
+
+    current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
+    if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
+        overdue_invoice, _ = get_domains_with_invoices_over_threshold_by_domain(date.today(), domain_name)
+        return overdue_invoice
 
 
 @register.simple_tag
