@@ -4,10 +4,12 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
 import attr
+from django.conf import settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
+from corehq.elastic import ESError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -61,19 +63,24 @@ def is_midnight_for_domain(midnight_form_domain, error_margin=15, current_time=N
 
 
 def get_call_center_domains():
-    result = (
-        DomainES()
-        .is_active()
-        .filter(filters.term('call_center_config.enabled', True))
-        .source([
-            'name',
-            'default_timezone',
-            'call_center_config.case_type',
-            'call_center_config.case_owner_id',
-            'call_center_config.use_user_location_as_owner',
-            'call_center_config.use_fixtures'])
-        .run()
-    )
+    try:
+        result = (
+            DomainES()
+            .is_active()
+            .filter(filters.term('call_center_config.enabled', True))
+            .source([
+                'name',
+                'default_timezone',
+                'call_center_config.case_type',
+                'call_center_config.case_owner_id',
+                'call_center_config.use_user_location_as_owner',
+                'call_center_config.use_fixtures'])
+            .run()
+        )
+    except ESError as e:
+        if 'IndexMissingException' in str(e) and settings.UNIT_TESTING:
+            return []
+        raise
 
     def to_domain_lite(hit):
         config = hit.get('call_center_config', {})
