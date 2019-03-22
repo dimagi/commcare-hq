@@ -15,22 +15,7 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, ge
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.const import AggregationLevels
 from dimagi.utils.logging import notify_exception
-from custom.icds_reports.const import (
-    AGG_COMP_FEEDING_TABLE,
-    AGG_CCS_RECORD_CF_TABLE,
-    AGG_CCS_RECORD_PNC_TABLE,
-    AGG_CHILD_HEALTH_PNC_TABLE,
-    AGG_CHILD_HEALTH_THR_TABLE,
-    AGG_CCS_RECORD_THR_TABLE,
-    AGG_CCS_RECORD_BP_TABLE,
-    AGG_CCS_RECORD_DELIVERY_TABLE,
-    AGG_DAILY_FEEDING_TABLE,
-    AGG_GROWTH_MONITORING_TABLE,
-    AGG_INFRASTRUCTURE_TABLE,
-    AWW_INCENTIVE_TABLE
-)
 
-DAILY_ATTENDANCE_TABLE = 'daily_attendance'
 
 Base = declarative_base()
 logger = logging.getLogger('backfill_supervisor_id')
@@ -84,7 +69,7 @@ def get_sql_scripts(state_id):
         'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
         # some forms are from deleted locations, so loc table doesn't have data on some rows
         'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    ] + [AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE, DAILY_ATTENDANCE_TABLE]
+    ]
 
     child_health_ucrs = [
         # child_health_cases_a46c129f loc table has some empty supervisor_id
@@ -93,17 +78,6 @@ def get_sql_scripts(state_id):
         'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
         'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
         'config_report_icds-cas_static-complementary_feeding_fo_4676987e'
-    ]
-    child_health_db_tables = [
-        AGG_COMP_FEEDING_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, AGG_CHILD_HEALTH_THR_TABLE,
-        AGG_DAILY_FEEDING_TABLE, AGG_GROWTH_MONITORING_TABLE
-    ]
-    ccs_record_db_tables = [
-        AGG_CCS_RECORD_CF_TABLE,
-        AGG_CCS_RECORD_PNC_TABLE,
-        AGG_CCS_RECORD_THR_TABLE,
-        AGG_CCS_RECORD_BP_TABLE,
-        AGG_CCS_RECORD_DELIVERY_TABLE
     ]
 
     # some supervisor_id on loc table are null
@@ -122,17 +96,9 @@ def get_sql_scripts(state_id):
             'config_report_icds-cas_static-child_health_cases_a46c129f',
             'child_health_case_id',
             'doc_id')),
-        (child_health_db_tables, (
-            'config_report_icds-cas_static-child_health_cases_a46c129f',
-            'case_id',
-            'doc_id')),
         (ccs_record_ucrs, (
             'config_report_icds-cas_static-ccs_record_cases_cedcca39',
             'ccs_record_case_id',
-            'doc_id')),
-        (ccs_record_db_tables, (
-            'config_report_icds-cas_static-ccs_record_cases_cedcca39',
-            'case_id',
             'doc_id')),
         (unclear_ccs_record, (
             'config_report_icds-cas_static-ccs_record_cases_cedcca39',
@@ -207,7 +173,7 @@ class Command(BaseCommand):
         for ucr_id in ucr_ids:
             for state_id in state_ids:
                 rows = self.get_session().query(BackfillScriptStub).filter_by(state_id=state_id, ucr_id=ucr_id).all()
-                assert len(rows) == 1, "There should be just one row"
+                assert len(rows) == 1, ("There should be just one row", ucr_id, state_id)
                 if rows[0].status in [Status.NOT_STARTED, Status.FAILED]:
                     self.run_sql_script(state_id, ucr_id)
                 else:
