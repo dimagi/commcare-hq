@@ -141,7 +141,8 @@ def update_group_data(request, domain, group_id):
 @require_can_edit_groups
 @require_POST
 def update_group_membership(request, domain, group_id):
-    if not request.couch_user.can_edit_users_in_groups():
+    if not (request.couch_user.can_edit_users_in_groups()
+            or request.couch_user.can_edit_commcare_users()):
         return HttpResponseForbidden()
     with CriticalSection(['update-group-membership-%s' % group_id]):
         return _update_group_membership(request, domain, group_id)

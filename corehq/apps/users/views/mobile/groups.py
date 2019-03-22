@@ -227,7 +227,8 @@ class EditGroupMembersView(BaseGroupsView):
             'bulk_sms_verification_enabled': bulk_sms_verification_enabled,
             'num_users': len(self.members),
             'group_membership_form': self.group_membership_form,
-            'can_edit_group_membership': self.couch_user.can_edit_users_in_groups(),
+            'can_edit_group_membership': (self.couch_user.can_edit_users_in_groups()
+                                          or self.couch_user.can_edit_commcare_users()),
             'domain_uses_case_sharing': self.domain_uses_case_sharing,
         }
 
