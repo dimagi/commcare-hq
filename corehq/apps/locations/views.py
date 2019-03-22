@@ -727,8 +727,7 @@ class EditLocationView(BaseEditLocationView):
     @property
     @memoized
     def users_form(self):
-        if (not (self.can_edit_commcare_users or self.can_view_commcare_users)
-                or not self.can_access_all_locations):
+        if not (self.can_edit_commcare_users or self.can_access_all_locations):
             return None
         form = UsersAtLocationForm(
             domain_object=self.domain_object,
@@ -772,8 +771,9 @@ class EditLocationView(BaseEditLocationView):
         return self.request.couch_user.can_edit_commcare_users()
 
     @property
-    def can_view_commcare_users(self):
-        return self.request.couch_user.can_view_commcare_users()
+    def can_edit_users_in_location(self):
+        return (self.request.couch_user.can_edit_users_in_locations()
+                or self.request.couch_user.can_edit_commcare_users())
 
     @property
     def page_context(self):
@@ -784,9 +784,8 @@ class EditLocationView(BaseEditLocationView):
             make_form_readonly(self.location_form.custom_location_data.form)
             make_form_readonly(self.products_form)
             make_form_readonly(self.related_location_form)
-            if not self.can_edit_commcare_users:
-                make_form_readonly(self.users_form)
-        elif not self.can_edit_commcare_users:
+            make_form_readonly(self.users_form)
+        elif not self.can_edit_users_in_location:
             make_form_readonly(self.users_form)
 
         context.update({
@@ -794,7 +793,7 @@ class EditLocationView(BaseEditLocationView):
             'users_per_location_form': self.users_form,
             'related_location_form': self.related_location_form,
             'can_edit_commcare_users': self.can_edit_commcare_users,
-            'can_view_commcare_users': self.can_view_commcare_users,
+            'can_edit_users_in_location': self.can_edit_users_in_location,
         })
         return context
 
@@ -826,19 +825,19 @@ class EditLocationView(BaseEditLocationView):
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
+        if self.request.is_view_only:
+            messages.error(request,
+                           _("You do not have permission to edit locations."))
+            return super(EditLocationView, self).get(request, *args, **kwargs)
+
         if self.request.POST['form_type'] == "location-users":
-            if self.can_edit_commcare_users:
+            if self.can_edit_users_in_location:
                 return self.users_form_post(request, *args, **kwargs)
             else:
                 messages.error(
                     request, _("You do not have permission to edit Mobile Workers.")
                 )
                 return super(EditLocationView, self).get(request, *args, **kwargs)
-
-        if self.request.is_view_only:
-            messages.error(request,
-                           _("You do not have permission to edit locations."))
-            return super(EditLocationView, self).get(request, *args, **kwargs)
 
         if self.request.POST['form_type'] == "location-settings":
             return self.settings_form_post(request, *args, **kwargs)

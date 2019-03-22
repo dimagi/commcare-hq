@@ -54,7 +54,7 @@
           <a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a>
         </li>
 
-        {% if users_per_location_form and can_view_commcare_users %}
+        {% if users_per_location_form %}
           <li class="{% if form_tab == "users" %}active{% endif %}">
             <a href="#users" data-toggle="tab">{% trans "Users" %}</a>
           </li>
@@ -140,10 +140,11 @@
 
         </div>
 
-        {% if users_per_location_form and can_view_commcare_users  %}
+        {% if users_per_location_form %}
           <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
             <div class="row">
               <div class="col-sm-12">
+
                 {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' and can_edit_commcare_users %}
                 <p>
                   <a href="#new_user" role="button" class="btn btn-default" data-toggle="modal">
@@ -151,14 +152,25 @@
                   </a>
                 </p>
                 {% endif %}
+
                 <div class="panel panel-modern-gray panel-form-only">
                   <div class="panel-body">
-                    <form class="form-horizontal disable-on-submit{% if not can_edit_commcare_users %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
+                    <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
                       {% crispy users_per_location_form %}
                       <input type="hidden" name="form_type" value="location-users" />
                     </form>
                   </div>
                 </div>
+
+                {% if not request.is_view_only and not can_edit_users_in_location %}
+                  <div class="alert alert-info">
+                    {% blocktrans %}
+                      Your permissions allow you to <strong>create, update, and delete locations</strong>
+                      and <strong>modify location settings</strong>. However, your project
+                      administrator has not granted you access add mobile workers to locations.
+                    {% endblocktrans %}
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
