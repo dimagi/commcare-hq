@@ -9,15 +9,14 @@ from django.core.management.base import BaseCommand
 from six.moves import input
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_table_name
+from corehq.apps.userreports.sql.util import table_exists, view_exists
+from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.couch.database import iter_docs
 
-OLD_UCR_TABLE_PREFIX = 'config_report_'
-
 
 def _table_names(domain, table_id):
-    old_table = get_table_name(domain, table_id, max_length=63, prefix=OLD_UCR_TABLE_PREFIX)
+    old_table = get_legacy_table_name(domain, table_id)
     new_table = get_table_name(domain, table_id)
     return old_table, new_table
 
@@ -39,17 +38,8 @@ def _get_old_new_tablenames():
     return by_engine_id
 
 
-def _table_exists(conn, table_name):
-    res = conn.execute("select 1 from pg_tables where tablename = %s", table_name)
-    return bool(list(res))
-
-
 def _should_add_view(conn, table_name, view_name):
-    if _table_exists(conn, table_name):
-        res = conn.execute("select 1 from pg_views where viewname = %s", view_name)
-        view_exists = bool(list(res))
-        return not view_exists
-    return False
+    return table_exists(conn, table_name) and not view_exists(conn, view_name)
 
 
 def create_ucr_views():
@@ -82,7 +72,7 @@ def _rename_tables():
             ALTER TABLE "{old_table}" RENAME TO "{new_table}";
             """.format(old_table=old_table, new_table=new_table)
             with engine.begin() as conn:
-                if _table_exists(conn, old_table):
+                if table_exists(conn, old_table):
                     print('\t\tRenaming table "{}" to "{}"'.format(old_table, new_table))
                     conn.execute(drop_view_rename_table)
 

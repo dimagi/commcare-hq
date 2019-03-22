@@ -12,6 +12,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import DocumentNotFound
 
 UCR_TABLE_PREFIX = 'ucr_'
+LEGACY_UCR_TABLE_PREFIX = 'config_report_'
 
 
 def localize(value, lang):
@@ -131,6 +132,10 @@ def get_indicator_adapter(config, raise_errors=False):
     if raise_errors:
         return ErrorRaisingIndicatorSqlAdapter(config)
     return IndicatorSqlAdapter(config)
+
+
+def get_legacy_table_name(domain, table_id):
+    return get_table_name(domain, table_id, max_length=63, prefix=LEGACY_UCR_TABLE_PREFIX)
 
 
 def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
