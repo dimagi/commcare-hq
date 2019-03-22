@@ -698,45 +698,56 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
 def run_downgrade_process():
     today = datetime.date.today()
 
-    for domain, oldest_unpaid_invoice, total in _get_domains_with_subscription_invoices_over_threshold(today):
+    for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
-        if _is_subscription_eligible_for_downgrade_process(current_subscription):
+        if is_subscription_eligible_for_downgrade_process(current_subscription):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today, current_subscription)
 
-    for oldest_unpaid_invoice, total in _get_accounts_with_customer_invoices_over_threshold(today):
+    for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_over_threshold(today):
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
-        if _is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
+        if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
 
 
-def _get_domains_with_subscription_invoices_over_threshold(today):
-    unpaid_saas_invoices = Invoice.objects.filter(
-        is_hidden=False,
-        subscription__service_type=SubscriptionType.PRODUCT,
-        date_paid__isnull=True
-    )
+def get_domains_with_subscription_invoices_over_threshold(today):
+    for domain in get_unpaid_saas_invoices_in_downgrade_daterange(today).values_list(
+        'subscription__subscriber__domain'
+    ).distinct():
+        overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
+        if overdue_invoice:
+            yield domain, overdue_invoice, total_overdue_to_date
 
-    overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
+
+def get_unpaid_invoices_over_threshold_by_domain(today, domain):
+    for overdue_invoice in get_unpaid_saas_invoices_in_downgrade_daterange(today).filter(
+        subscription__subscriber__domain=domain
+    ):
+        total_overdue_by_domain_and_invoice_date = get_all_unpaid_saas_invoices().filter(
+            Q(date_due__lte=overdue_invoice.date_due)
+            | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+            subscription__subscriber__domain=domain,
+        ).aggregate(Sum('balance'))['balance__sum']
+        if total_overdue_by_domain_and_invoice_date >= 100:
+            return overdue_invoice, total_overdue_by_domain_and_invoice_date
+    return None, None
+
+
+def get_unpaid_saas_invoices_in_downgrade_daterange(today):
+    return get_all_unpaid_saas_invoices().filter(
         date_due__lte=today - datetime.timedelta(days=1),
         date_due__gte=today - datetime.timedelta(days=61)
     ).order_by('date_due').select_related('subscription__subscriber')
 
-    domains = set()
 
-    for overdue_invoice in overdue_saas_invoices_in_downgrade_daterange:
-        domain = overdue_invoice.get_domain()
-        if domain not in domains:
-            total_overdue_to_date = unpaid_saas_invoices.filter(
-                Q(date_due__lte=overdue_invoice.date_due)
-                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
-                subscription__subscriber__domain=domain
-            ).aggregate(Sum('balance'))['balance__sum']
-            if total_overdue_to_date >= 100:
-                domains.add(domain)
-                yield domain, overdue_invoice, total_overdue_to_date
+def get_all_unpaid_saas_invoices():
+    return Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
 
 
-def _get_accounts_with_customer_invoices_over_threshold(today):
+def get_accounts_with_customer_invoices_over_threshold(today):
     unpaid_customer_invoices = CustomerInvoice.objects.filter(
         is_hidden=False,
         date_paid__isnull=True
@@ -765,7 +776,7 @@ def _get_accounts_with_customer_invoices_over_threshold(today):
                 yield overdue_invoice, total_overdue_to_date
 
 
-def _is_subscription_eligible_for_downgrade_process(subscription):
+def is_subscription_eligible_for_downgrade_process(subscription):
     return (
         subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
         and not subscription.skip_auto_downgrade
