@@ -1062,6 +1062,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
@@ -1440,6 +1441,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     urlname = 'list_global_backends'
     page_title = ugettext_noop("SMS Connectivity")
 
+    @use_select2_v4
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
