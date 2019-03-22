@@ -44,7 +44,7 @@ def _table_exists(conn, table_name):
     return bool(list(res))
 
 
-def _add_view(conn, table_name, view_name):
+def _should_add_view(conn, table_name, view_name):
     if _table_exists(conn, table_name):
         res = conn.execute("select 1 from pg_views where viewname = %s", view_name)
         view_exists = bool(list(res))
@@ -60,7 +60,7 @@ def create_ucr_views():
         view_creates = []
         with engine.begin() as conn:
             for old_table, new_table in tables:
-                if _add_view(conn, old_table, new_table):
+                if _should_add_view(conn, old_table, new_table):
                     view_creates.append('CREATE VIEW "{}" AS SELECT * FROM "{}";'.format(new_table, old_table))
 
         if view_creates:
