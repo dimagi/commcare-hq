@@ -489,7 +489,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': True
+            'show_plan': True,
+            'hide_overdue_invoice_modal': True,
         })
         return pagination_context
 
