@@ -51,7 +51,8 @@ def check_repeaters():
             if datetime.utcnow() > six_hours_later:
                 _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
                 break
-            record.attempt_forward_now()
+            if acquire_redis_lock(record):
+                record.attempt_forward_now()
     finally:
         check_repeater_lock.release()
 
@@ -85,6 +86,20 @@ def process_repeat_record(repeat_record):
                 repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
+
+
+def acquire_redis_lock(record):
+    # TODO: Drop this lock at least 48 hours after PR #23580 is deployed
+    # By that time all repeat records will have next_check set in the future.
+
+    # Including _rev in the key means that the record will be unlocked
+    # for processing every time we execute a `save()` call.
+    return get_redis_lock(
+        'repeat_record_in_progress-{}_{}'.format(record._id, record._rev),
+        timeout=48 * 60 * 60,
+        name="repeat_record",
+        track_unreleased=False,
+    ).acquire()
 
 
 repeaters_overdue = datadog_gauge_task(
