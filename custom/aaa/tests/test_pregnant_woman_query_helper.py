@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date
+
 from django.test.testcases import TestCase
 
 from custom.aaa.dbaccessors import PregnantWomanQueryHelper
@@ -17,12 +19,19 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             domain=cls.domain,
             person_case_id='person_case_id',
             opened_on='2019-01-01',
+            blood_group='b_pos',
         )
         CcsRecord.objects.create(
             domain=cls.domain,
             person_case_id='person_case_id',
             ccs_record_case_id='ccs_record_case_id',
             opened_on='2019-01-01',
+            hrp='yes',
+            lmp='2018-12-03',
+            woman_weight_at_preg_reg=54,
+            preg_reg_date='2018-12-31',
+            edd='2019-07-27',
+            add='2019-07-31',
         )
 
     @classmethod
@@ -35,19 +44,19 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             PregnantWomanQueryHelper(self.domain, 'person_case_id').pregnancy_details(),
             {
-                'lmp': None,
-                'weightOfPw': None,
-                'dateOfRegistration': None,
-                'edd': None,
-                'add': None,
-                'bloodGroup': None,
+                'lmp': date(2018, 12, 03),
+                'weightOfPw': 54,
+                'dateOfRegistration': date(2018, 12, 31),
+                'edd': date(2019, 7, 27),
+                'add': date(2019, 7, 31),
+                'bloodGroup': 'b_pos',
             })
 
     def test_pregnancy_risk(self):
         self.assertEqual(
             PregnantWomanQueryHelper(self.domain, 'person_case_id').pregnancy_risk(),
             {
-                'riskPregnancy': 'N/A',
+                'riskPregnancy': 'yes',
                 'referralDate': 'N/A',
                 'hrpSymptoms': 'N/A',
                 'illnessHistory': 'N/A',

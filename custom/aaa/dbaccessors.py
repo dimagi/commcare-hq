@@ -176,7 +176,6 @@ class PregnantWomanQueryHelper(object):
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
             select={
-                'dateOfLmp': 'lmp',
                 'weightOfPw': 'woman_weight_at_preg_reg',
                 'dateOfRegistration': 'preg_reg_date',
             }
@@ -197,8 +196,16 @@ class PregnantWomanQueryHelper(object):
         return data
 
     def pregnancy_risk(self):
+        data = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id)
+            .values('hrp').first()
+        )
+        if data is None:
+            data = {}
+
         return {
-            'riskPregnancy': 'N/A',
+            'riskPregnancy': data.get('hrp') or 'N/A',
             'referralDate': 'N/A',
             'hrpSymptoms': 'N/A',
             'illnessHistory': 'N/A',
