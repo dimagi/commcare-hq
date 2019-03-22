@@ -1,7 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
+from datetime import date
+
 from dateutil.relativedelta import relativedelta
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import Case, F, Func, IntegerField, Q, Sum, When
+from django.db.models.functions import ExtractYear
 
 from custom.aaa.models import (
     CcsRecord,
@@ -48,59 +51,69 @@ class ChildQueryHelper(object):
         }]
 
     def vaccination_details(self, period):
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        task_case = child.task_case_details()
+
+        def _safe_date_get(name):
+            ret = task_case.get('due_list_date_{}'.format(name), 'N/A')
+            if ret == date(1970, 1, 1):
+                # This is the default date in the UCR framework, but will never happen in the project
+                return 'N/A'
+            return ret
+
         if period == 'atBirth':
             return [
-                {'vitaminName': 'BCG', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Hepatitis B - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'OPV - 0', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'BCG', 'date': _safe_date_get('1g_bcg'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Hepatitis B - 1', 'date': _safe_date_get('1g_hep_b_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 0', 'date': _safe_date_get('0g_opv_0'), 'adverseEffects': 'N/A'},
             ]
         elif period == 'sixWeek':
             return [
-                {'vitaminName': 'OPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Pentavalent - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Fractional IPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Rotavirus - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'PCV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 1', 'date': _safe_date_get('1g_opv_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 1', 'date': _safe_date_get('1g_penta_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Fractional IPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'Rotavirus - 1', 'date': _safe_date_get('1g_rv_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'PCV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
             ]
         elif period == 'tenWeek':
             return [
-                {'vitaminName': 'OPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Pentavalent - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Rotavirus - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 2', 'date': _safe_date_get('2g_opv_2'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 2', 'date': _safe_date_get('2g_penta_2'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Rotavirus - 2', 'date': _safe_date_get('2g_rv_2'), 'adverseEffects': 'N/A'},
             ]
         elif period == 'fourteenWeek':
             return [
-                {'vitaminName': 'OPV - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Pentavalent - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Rotavirus - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 3', 'date': _safe_date_get('3g_opv_3'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Pentavalent - 3', 'date': _safe_date_get('3g_penta_3'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'Rotavirus - 3', 'date': _safe_date_get('3g_rv_3'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
             ]
         elif period == 'nineTwelveMonths':
             return [
-                {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Measles - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'JE - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'Vit. A - 1', 'date': _safe_date_get('4g_vit_a_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Measles - 1', 'date': _safe_date_get('4g_measles'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'JE - 1', 'date': _safe_date_get('4g_je_1'), 'adverseEffects': 'N/A'},
             ]
         elif period == 'sixTeenTwentyFourMonth':
             return [
-                {'vitaminName': 'DPT Booster - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Measles - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'OPV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'JE - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'DPT Booster - 1', 'date': _safe_date_get('1g_dpt_1'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Measles - 2', 'date': _safe_date_get('5g_measles_booster'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV Booster', 'date': _safe_date_get('5g_opv_booster'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'JE - 2', 'date': _safe_date_get('5g_je_2'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 2', 'date': _safe_date_get('5g_vit_a_2'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 3', 'date': _safe_date_get('6g_vit_a_3'), 'adverseEffects': 'N/A'},
             ]
         elif period == 'twentyTwoSeventyTwoMonth':
             return [
-                {'vitaminName': 'Vit. A - 4', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 5', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 6', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 7', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 8', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Vit. A - 9', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'DPT Booster - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 4', 'date': _safe_date_get('6g_vit_a_4'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 5', 'date': _safe_date_get('6g_vit_a_5'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 6', 'date': _safe_date_get('6g_vit_a_6'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 7', 'date': _safe_date_get('6g_vit_a_7'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 8', 'date': _safe_date_get('6g_vit_a_8'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Vit. A - 9', 'date': _safe_date_get('6g_vit_a_9'), 'adverseEffects': 'N/A'},
+                {'vitaminName': 'DPT Booster - 2', 'date': _safe_date_get('7gdpt_booster_2'), 'adverseEffects': 'N/A'},
             ]
 
     def growth_monitoring(self):

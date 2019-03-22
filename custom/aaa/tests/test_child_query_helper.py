@@ -1,12 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.test.testcases import TestCase
+from datetime import date
 
+from django.test import override_settings
+from django.test.testcases import TestCase
+from mock import patch
+
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
 from custom.aaa.dbaccessors import ChildQueryHelper
 from custom.aaa.models import Child
 
 
+@override_settings(SERVER_ENVIRONMENT='icds')
 class TestChildBeneficiarySections(TestCase):
     domain = 'reach-test'
 
@@ -17,6 +24,7 @@ class TestChildBeneficiarySections(TestCase):
             domain=cls.domain,
             person_case_id='person_case_id',
             child_health_case_id='child_health_case_id',
+            tasks_case_id='tasks_case',
             opened_on='2019-01-01',
             breastfed_within_first='yes',
             comp_feeding='yes',
@@ -27,9 +35,22 @@ class TestChildBeneficiarySections(TestCase):
             is_exclusive_breastfeeding='no',
             child_cried='no',
         )
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-tasks_cases')
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        cls.adapter = get_indicator_adapter(datasource)
+        cls.adapter.build_table()
+        immun_dates = {'1g_bcg': 32, '2g_opv_2': 85, '3g_rv_3': 11}
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=immun_dates):
+            cls.adapter.save({
+                '_id': 'tasks_case',
+                'domain': cls.domain,
+                'doc_type': "CommCareCase",
+                'type': 'tasks',
+            })
 
     @classmethod
     def tearDownClass(cls):
+        cls.adapter.drop_table()
         Child.objects.all().delete()
         super(TestChildBeneficiarySections, cls).tearDownClass()
 
@@ -63,7 +84,7 @@ class TestChildBeneficiarySections(TestCase):
         self.assertEqual(
             ChildQueryHelper(self.domain, 'person_case_id').vaccination_details('atBirth'),
             [
-                {'vitaminName': 'BCG', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'BCG', 'date': date(1970, 2, 2), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Hepatitis B - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'OPV - 0', 'date': 'N/A', 'adverseEffects': 'N/A'},
             ])
@@ -83,7 +104,7 @@ class TestChildBeneficiarySections(TestCase):
         self.assertEqual(
             ChildQueryHelper(self.domain, 'person_case_id').vaccination_details('tenWeek'),
             [
-                {'vitaminName': 'OPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'OPV - 2', 'date': date(1970, 3, 27), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Rotavirus - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
             ])
@@ -95,7 +116,7 @@ class TestChildBeneficiarySections(TestCase):
                 {'vitaminName': 'OPV - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Rotavirus - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
+                {'vitaminName': 'Rotavirus - 3', 'date': date(1970, 1, 12), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
             ])
 
