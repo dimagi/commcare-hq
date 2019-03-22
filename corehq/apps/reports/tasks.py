@@ -46,7 +46,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
-    get_es_new, ES_META)
+    get_es_new, ES_META, ESError)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.view_utils import absolute_reverse
 
@@ -274,7 +274,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                             smtp_exception_skip_list=[LARGE_FILE_SIZE_ERROR_CODE])
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE:
+        if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE or type(er) == ESError:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
             report_state = {
