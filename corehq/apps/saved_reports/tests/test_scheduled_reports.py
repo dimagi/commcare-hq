@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
@@ -52,6 +52,13 @@ class ScheduledReportTest(TestCase):
             report.delete()
 
     def _check(self, period, as_of, count):
+        # get_scheduled_report_ids relies on end_datetime
+        # being strictly greater than start_datetime
+        # for tests targeting an exact minute mark,
+        # we need to add a small amount to make it after.
+        # This is a reasonable thing to do because in production,
+        # it'll always run a short time after the periodic task is fired
+        as_of += timedelta(microseconds=1)
         self.assertEqual(count, len(list(get_scheduled_report_ids(period, end_datetime=as_of))))
 
     def testDefaultValue(self):
