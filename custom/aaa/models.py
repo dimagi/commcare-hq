@@ -530,7 +530,7 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
+            cursor.execute(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
@@ -542,7 +542,7 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
+            cursor.execute(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
@@ -554,7 +554,7 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-thr_forms')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
+            cursor.execute(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
@@ -785,7 +785,7 @@ class Child(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-task_cases')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            cursor.execute('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
             result = _dictfetchall(cursor)
 
         return result
@@ -794,7 +794,7 @@ class Child(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-immunization_forms')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            cursor.execute('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
             result = _dictfetchall(cursor)
 
         return result
@@ -803,7 +803,7 @@ class Child(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
+            cursor.execute(
                 'SELECT * FROM "{}" WHERE child_health_case_id = %s'.format(ucr_tablename),
                 [self.child_health_case_id]
             )
