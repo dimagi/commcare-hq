@@ -58,7 +58,10 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
-    if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
+    if (
+        repeat_record.state == RECORD_FAILURE_STATE and
+        repeat_record.overall_tries >= repeat_record.max_possible_tries
+    ):
         repeat_record.cancel()
         repeat_record.save()
         return
