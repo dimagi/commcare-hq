@@ -29,7 +29,6 @@ from corehq.apps.users.models import CommCareUser
 
 import casexml.apps.case.models as cases
 import couchforms.models as xform
-from couchexport.models import SavedBasicExport
 from custom.icds_reports.models.helper import IcdsFile
 
 
@@ -317,7 +316,6 @@ DOMAIN_MAP = {
     "CommCareImage": get_shared_domain,
     "CommCareVideo": get_shared_domain,
     "CommCareMultimedia": get_shared_domain,
-    "SavedBasicExport": (lambda doc: UNKNOWN_DOMAIN),
 }
 
 
@@ -330,7 +328,6 @@ migrate_metadata = MultiDbMigrator("migrate_metadata",
         ("RemoteApp-Deleted", apps.RemoteApp),
         apps.SavedAppBuild,
         CommCareBuild,
-        SavedBasicExport,
         Domain,
         acct.InvoicePdf,
         hqmedia.CommCareAudio,
