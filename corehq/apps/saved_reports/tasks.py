@@ -14,8 +14,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import UnsupportedScheduledReportError
 from corehq.apps.saved_reports.models import ReportNotification, ReportConfig
-from corehq.apps.saved_reports.scheduled import get_scheduled_report_ids, \
-    create_records_for_scheduled_reports
+from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports
 from corehq.apps.users.models import CouchUser
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
