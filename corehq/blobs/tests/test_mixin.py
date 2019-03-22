@@ -679,7 +679,7 @@ class TestBlobHelper(BaseTestCase):
             }])
             obj.put_attachment("test", "file.txt", content_type="text/plain")
         self.assertEqual(len(self.couch.save_log), 1)  # no new save
-        self.assertEqual(obj.fetch_attachment("file.txt"), b"test")
+        self.assertEqual(obj.fetch_attachment("file.txt"), "test")
         self.assertTrue(self.couch.data)
 
     def test_atomic_blobs_with_external_blobs(self):
