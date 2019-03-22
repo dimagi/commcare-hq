@@ -62,7 +62,10 @@ def _make_all_notification_view_keys(period, target):
 def create_records_for_scheduled_reports():
     end_datetime = datetime.utcnow()
     last_checkpoint = ScheduledReportsCheckpoint.get_latest()
-    start_datetime = last_checkpoint.end_datetime or _get_default_start_datetime(end_datetime)
+    if last_checkpoint:
+        start_datetime = last_checkpoint.end_datetime
+    else:
+        start_datetime = _get_default_start_datetime(end_datetime)
     new_checkpoint = ScheduledReportsCheckpoint(start_datetime=start_datetime, end_datetime=end_datetime)
     report_ids = []
     for period in ('daily', 'weekly', 'monthly'):

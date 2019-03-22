@@ -712,6 +712,6 @@ class ScheduledReportsCheckpoint(models.Model):
     @classmethod
     def get_latest(cls):
         try:
-            return cls.objects.order_by('-end_date')[0]
+            return cls.objects.order_by('-end_datetime')[0]
         except IndexError:
             return None
