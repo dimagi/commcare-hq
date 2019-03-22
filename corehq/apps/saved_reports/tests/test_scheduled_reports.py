@@ -41,7 +41,7 @@ class GuessReportingMinuteTest(SimpleTestCase):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
 
-def _delete_all_report_notifications():
+def delete_all_report_notifications():
     for report in ReportNotification.view(
             'reportconfig/all_notifications',
             include_docs=True,
@@ -56,7 +56,7 @@ class ScheduledReportTest(TestCase):
         pass
 
     def tearDown(self):
-        _delete_all_report_notifications()
+        delete_all_report_notifications()
 
     def _check(self, period, as_of, count):
         # get_scheduled_report_ids relies on end_datetime
@@ -183,7 +183,7 @@ class ScheduledReportSendingTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.user.delete()
-        _delete_all_report_notifications()
+        delete_all_report_notifications()
         super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):
