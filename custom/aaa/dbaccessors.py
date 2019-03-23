@@ -372,15 +372,27 @@ class PregnantWomanQueryHelper(object):
         return ret
 
     def antenatal_care_details(self):
-        return [{
-            'ancDate': 'N/A',
-            'ancLocation': 'N/A',
-            'pwWeight': 'N/A',
-            'bloodPressure': 'N/A',
-            'hb': 'N/A',
-            'abdominalExamination': 'N/A',
-            'abnormalitiesDetected': 'N/A',
-        }]
+        ret = []
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+
+        bp_forms = self._bp_form_details(ccs_record)
+        bp_forms.reverse()
+        for form in bp_forms:
+            _ret = {
+                'ancDate': form['date_task'],
+                'ancLocation': form['anc_facility'],
+                'pwWeight': form['anc_weight'],
+                'bloodPressure': "{} / {}".format(form['bp_sys'], form['bp_dias']),
+                'hb': form['anc_hemoglobin'],
+                'abdominalExamination': form['anc_abdominal_exam'],
+                'abnormalitiesDetected': form['anc_abnormalities'],
+            }
+            ret.append(_ret)
+
+        return ret
 
     def _most_recent_bp_form_details(self, ccs_record):
         bp_form_details = self._bp_form_details(ccs_record)

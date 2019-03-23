@@ -59,6 +59,11 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "date_referral": "2018-12-07",
                 "place_referral": "chc",
+                "bp1": {
+                    "iteration": {
+                        "item": [{
+                            "filter": {
+                                "anc_details": {"bp_sys": 120, "bp_dias": 80}}}]}},
                 "bp2": {"inform_danger_signs": 'yes'},
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
@@ -265,11 +270,11 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.antenatal_care_details(),
             [{
-                'ancDate': 'N/A',
-                'ancLocation': 'N/A',
-                'pwWeight': 'N/A',
-                'bloodPressure': 'N/A',
-                'hb': 'N/A',
-                'abdominalExamination': 'N/A',
-                'abnormalitiesDetected': 'N/A',
+                'ancDate': None,
+                'ancLocation': None,
+                'pwWeight': None,
+                'bloodPressure': '120 / 80',
+                'hb': None,
+                'abdominalExamination': None,
+                'abnormalitiesDetected': None,
             }])
