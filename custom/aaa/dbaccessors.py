@@ -297,10 +297,18 @@ class PregnantWomanQueryHelper(object):
         return ret
 
     def abortion_details(self):
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        details = ccs_record.ccs_record_details()
+        pregnancy_length = 'N/A'
+        if details['date_abortion'] and details['lmp']:
+            pregnancy_length = details['date_abortion'] - details['lmp']
         return {
-            'abortionDate': 'N/A',
-            'abortionType': 'N/A',
-            'abortionDays': 'N/A',
+            'abortionDate': details['date_abortion'] or 'N/A',
+            'abortionType': details['abortion_type'] or 'N/A',
+            'abortionDays': pregnancy_length,
         }
 
     def maternal_death_details(self):
