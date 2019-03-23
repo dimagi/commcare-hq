@@ -74,7 +74,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
             var $el = $(element);
             $el.data(self.SOURCE_KEY, []);
             return {
-                placeholder: ' ',
+                placeholder: $el.attr("placeholder") || ' ',
                 multiple: false,
                 width: "100%",
                 data: $el.data(self.SOURCE_KEY),
@@ -110,7 +110,9 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
 
             // Update the selected item
             $el.val(newValue);
-            $el.val(newValue);
+            _.delay(function() {
+                $el.trigger("change.select2");  // get select2 to display value
+            });
         };
 
         return self;
