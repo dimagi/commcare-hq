@@ -48,28 +48,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
             }
             $elem.$edit_view.select2({
                 minimumInputLength: 0,
-                delay: 0,
-                data: {
-                    results: _.map(options, function (o) {
-                        return {
-                            id: o,
-                            text: o,
-                        };
-                    }),
-                },
-                // Allow manually entered text in drop down, which is not supported by legacy select2.
-                createSearchChoice: function (term, data) {
-                    if (!_.find(data, function (d) { return d.text === term; })) {
-                        return {
-                            id: term,
-                            text: term,
-                        };
-                    }
-                },
+                width: '100%',
+                tags: true,
                 escapeMarkup: function (m) {
                     return DOMPurify.sanitize(m);
                 },
-                formatResult: function (result) {
+                templateResult: function (result) {
                     var formatted = result.id;
                     if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
                         formatted = (

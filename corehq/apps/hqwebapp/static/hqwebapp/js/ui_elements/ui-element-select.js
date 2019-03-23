@@ -23,7 +23,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
         });
         for (i = 0; i < this.options.length; i += 1) {
             option = this.options[i];
-            $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
+            var label = option.label === undefined ? option : option.label,
+                value = option.value === undefined ? option : option.value;
+            $('<option/>').text(label).val(value).appendTo(this.$edit_view);
         }
 
         this.$noedit_view = $('<span class="ui-element-select"/>');
