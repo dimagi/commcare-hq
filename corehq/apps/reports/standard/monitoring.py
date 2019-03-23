@@ -1783,7 +1783,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum([x for x in [row[col].get('sort_key', 0) for row in rows] if not math.isnan(x)])
                 )
             else:
-                total_row.append('---')
+                total_row.append(None)
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
         case_owners = _get_owner_ids_from_users(self.users_to_iterate)
         total_row[6] = sum(
@@ -1800,9 +1800,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     if report_data.submissions_by_user.get(user['user_id'], False):
                         active_users.add(user['user_id'])
                     all_users.add(user['user_id'])
-            total_row[3] = '%s / %s' % (len(active_users), len(all_users))
+            total_row[3] = {'numerator': len(active_users), 'demoninator': len(all_users)}
         else:
-            total_row[3] = '%s / %s' % (num, len(rows))
+            total_row[3] = {'numerator': num, 'denominator': len(rows)}
         return total_row
 
     @property
@@ -1818,22 +1818,52 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 rows = self._rows_by_group(formatted_data)
             else:
                 rows = self._rows_by_user(formatted_data, users)
-            self.total_row = self._total_row(rows, formatted_data)
+            this_row = self._total_row(rows, formatted_data)
+            total_row = self.sum_rows_together(self.total_row, this_row)
             for row in rows:
                 yield row
+        self.total_row = self.format_total_row(total_row)
         yield self.total_row
+
+    @staticmethod
+    def format_total_row(unformatted_total_row):
+        formatted_total_row = []
+        for entry in unformatted_total_row:
+            if isinstance(entry, dict):
+                formatted_total_row.append("{} / {}".format(entry['numerator'], entry['denominator']))
+            elif not entry:
+                formatted_total_row.append("---")
+            else:
+                formatted_total_row.append(entry)
+        return formatted_total_row
+
+    @staticmethod
+    def sum_rows_together(original_row, row_to_add):
+        if not original_row:
+            new_row = row_to_add
+        else:
+            new_row = []
+            for index, entry in enumerate(row_to_add):
+                if isinstance(entry, int):
+                    new_row.append(row_to_add[index] + entry)
+                elif isinstance(entry, dict):
+                    new_row.append({'numerator': original_row[index]['numerator'] + entry['numerator'],
+                                    'denominator': original_row[index]['denominator'] + entry['denominator']})
+                else:
+                    new_row.append(original_row[index])
+
+        return new_row
 
     @property
     def rows(self):
         report_data = self._report_data(self.users_to_iterate)
 
-        rows = []
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
-        self.total_row = self._total_row(rows, report_data)
+        self.total_row = self.format_total_row(self._total_row(rows, report_data))
         return rows
 
 
