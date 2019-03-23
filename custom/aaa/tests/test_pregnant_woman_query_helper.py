@@ -5,6 +5,8 @@ from datetime import date
 
 from django.test.testcases import TestCase
 
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
 from custom.aaa.dbaccessors import PregnantWomanQueryHelper
 from custom.aaa.models import CcsRecord, Woman
 
@@ -33,16 +35,57 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             edd='2019-07-27',
             add='2019-07-31',
         )
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-add_pregnancy')
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        add_preg_adapter = get_indicator_adapter(datasource)
+        add_preg_adapter.build_table()
+        add_preg_adapter.save({
+            '_id': 'bp_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/362f76b242d0cfdcec66776f9586dc3620e9cce5',
+            'form': {
+                "case_open_ccs_record_1": {"case": {"@case_id": 'ccs_record_case_id'}},
+                "pregnancy": {"past_illness": "malaria", "past_illness_details": "took_malarone"},
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
+            },
+        })
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-birth_preparedness')
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        bp_adapter = get_indicator_adapter(datasource)
+        bp_adapter.build_table()
+        bp_adapter.save({
+            '_id': 'bp_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB',
+            'form': {
+                "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
+                "date_referral": "2018-12-07",
+                "place_referral": "chc",
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
+            },
+        })
+        cls.adapters = [
+            add_preg_adapter,
+            bp_adapter,
+        ]
 
     @classmethod
     def tearDownClass(cls):
+        for adapter in cls.adapters:
+            adapter.drop_table()
         CcsRecord.objects.all().delete()
         Woman.objects.all().delete()
         super(TestPregnantWomanBeneficiarySections, cls).tearDownClass()
 
+    @property
+    def _helper(self):
+        return PregnantWomanQueryHelper(self.domain, 'person_case_id', date(2019, 2, 1))
+
     def test_pregnancy_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').pregnancy_details(),
+            self._helper.pregnancy_details(),
             {
                 'lmp': date(2018, 12, 03),
                 'weightOfPw': 54,
@@ -54,19 +97,19 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_pregnancy_risk(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').pregnancy_risk(),
+            self._helper.pregnancy_risk(),
             {
                 'riskPregnancy': 'yes',
-                'referralDate': 'N/A',
+                'referralDate': date(2018, 12, 7),
+                'referredOutFacilityType': 'chc',
                 'hrpSymptoms': 'N/A',
-                'illnessHistory': 'N/A',
-                'referredOutFacilityType': 'N/A',
-                'pastIllnessDetails': 'N/A',
+                'illnessHistory': 'malaria',
+                'pastIllnessDetails': 'took_malarone',
             })
 
     def test_consumables_disbursed(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').consumables_disbursed(),
+            self._helper.consumables_disbursed(),
             {
                 'ifaTablets': 'N/A',
                 'thrDisbursed': 'N/A',
@@ -74,7 +117,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_immunization_counseling_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').immunization_counseling_details(),
+            self._helper.immunization_counseling_details(),
             {
                 'ttDoseOne': 'N/A',
                 'ttDoseTwo': 'N/A',
@@ -87,7 +130,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_abortion_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').abortion_details(),
+            self._helper.abortion_details(),
             {
                 'abortionDate': 'N/A',
                 'abortionType': 'N/A',
@@ -96,7 +139,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_maternal_death_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').maternal_death_details(),
+            self._helper.maternal_death_details(),
             {
                 'maternalDeathOccurred': 'N/A',
                 'maternalDeathPlace': 'N/A',
@@ -106,7 +149,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_delivery_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').delivery_details(),
+            self._helper.delivery_details(),
             {
                 'dod': 'N/A',
                 'assistanceOfDelivery': 'N/A',
@@ -123,7 +166,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_postnatal_care_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').postnatal_care_details(),
+            self._helper.postnatal_care_details(),
             [{
                 'pncDate': '2019-08-20',
                 'postpartumHeamorrhage': 0,
@@ -142,7 +185,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
 
     def test_antenatal_care_details(self):
         self.assertEqual(
-            PregnantWomanQueryHelper(self.domain, 'person_case_id').antenatal_care_details(),
+            self._helper.antenatal_care_details(),
             [{
                 'ancDate': 'N/A',
                 'ancLocation': 'N/A',

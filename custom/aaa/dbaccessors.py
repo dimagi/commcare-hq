@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from datetime import date
+from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Case, IntegerField, Sum, When
@@ -180,10 +180,11 @@ class ChildQueryHelper(object):
 
 
 class PregnantWomanQueryHelper(object):
-    def __init__(self, domain, person_case_id):
+    def __init__(self, domain, person_case_id, date_):
         # TODO this needs to be changed to ccs_record id
         self.domain = domain
         self.person_case_id = person_case_id
+        self.date_ = date_
 
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
@@ -208,22 +209,36 @@ class PregnantWomanQueryHelper(object):
         return data
 
     def pregnancy_risk(self):
-        data = (
-            CcsRecord.objects
-            .filter(domain=self.domain, person_case_id=self.person_case_id)
-            .values('hrp').first()
-        )
-        if data is None:
-            data = {}
-
-        return {
-            'riskPregnancy': data.get('hrp') or 'N/A',
+        ret = {
+            'riskPregnancy': 'N/A',
+            'hrpSymptoms': 'N/A',  # not populated yet
             'referralDate': 'N/A',
-            'hrpSymptoms': 'N/A',
-            'illnessHistory': 'N/A',
             'referredOutFacilityType': 'N/A',
+            'illnessHistory': 'N/A',
             'pastIllnessDetails': 'N/A',
         }
+
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        if ccs_record is None:
+            return ret
+
+        if ccs_record.hrp:
+            ret['riskPregnancy'] = ccs_record.hrp
+
+        bp_details = self._most_recent_bp_form_details(ccs_record)
+        if bp_details:
+            ret['referralDate'] = bp_details['date_referral'] or 'N/A'
+            ret['referredOutFacilityType'] = bp_details['place_referral'] or 'N/A'
+
+        add_preg_details = ccs_record.add_pregnancy_form_details()
+        if add_preg_details:
+            ret['illnessHistory'] = add_preg_details['past_illness'] or 'N/A'
+            ret['pastIllnessDetails'] = add_preg_details['past_illness_details'] or 'N/A'
+
+        return ret
 
     def consumables_disbursed(self):
         return {
@@ -299,6 +314,19 @@ class PregnantWomanQueryHelper(object):
             'abdominalExamination': 'N/A',
             'abnormalitiesDetected': 'N/A',
         }]
+
+    def _most_recent_bp_form_details(self, ccs_record):
+        bp_form_details = self._bp_form_details(ccs_record)
+        if not bp_form_details:
+            return {}
+        return sorted(
+            [form for form in bp_form_details
+                if form['timeend'] <= datetime.combine(self.date_, datetime.min.time())],
+            key=lambda f: f['timeend']
+        )[-1]
+
+    def _bp_form_details(self, ccs_record):
+        return ccs_record.birth_preparedness_form_details()
 
 
 class EligibleCoupleQueryHelper(object):

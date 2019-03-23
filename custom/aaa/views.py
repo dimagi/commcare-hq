@@ -448,7 +448,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             elif sub_section == 'weight_for_height_chart':
                 data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':
-            helper = PregnantWomanQueryHelper(request.domain, beneficiary_id)
+            helper = PregnantWomanQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'pregnancy_details':
                 data = helper.pregnancy_details()
             elif sub_section == 'pregnancy_risk':

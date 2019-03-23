@@ -530,6 +530,18 @@ class CcsRecord(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
+    def add_pregnancy_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-add_pregnancy')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
     def birth_preparedness_form_details(self):
         ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
