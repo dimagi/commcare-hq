@@ -77,20 +77,20 @@ hqDefine('app_manager/js/details/screen_config', function () {
         var self = {};
         params = params || {};
 
-        self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
-        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.textField, params.properties);
+        self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
+        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return module.detailScreenConfig.field_val_re.test(self.textField.val());
+            return module.detailScreenConfig.field_val_re.test(self.selectField.val());
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
             self.notifyButton();
         });
         self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
-        self.textField.on('change', function () {
+        self.selectField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);
             } else {
@@ -900,7 +900,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     if (self.containsSortConfiguration) {
                         data.sort_elements = JSON.stringify(_.map(self.config.sortRows.sortRows(), function (row) {
                             return {
-                                field: row.textField.val(),
+                                field: row.selectField.val(),
                                 type: row.type(),
                                 direction: row.direction(),
                                 blanks: row.blanks(),
