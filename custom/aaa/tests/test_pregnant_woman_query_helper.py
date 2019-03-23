@@ -76,6 +76,18 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
+        delivery_adapter = cls._init_table('reach-delivery_forms')
+        delivery_adapter.save({
+            '_id': 'del_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2',
+            'form': {
+                "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
+                'where_born': 'hospital',
+            },
+        })
         person_adapter = cls._init_table('reach-person_cases')
         person_adapter.save({
             '_id': 'person_case_id',
@@ -201,13 +213,13 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.delivery_details(),
             {
-                'dod': 'N/A',
+                'dod': date(2019, 7, 31),
                 'assistanceOfDelivery': 'N/A',
                 'timeOfDelivery': 'N/A',
                 'dateOfDischarge': 'N/A',
                 'typeOfDelivery': 'N/A',
                 'timeOfDischarge': 'N/A',
-                'placeOfBirth': 'N/A',
+                'placeOfBirth': 'hospital',
                 'deliveryComplications': 'N/A',
                 'placeOfDelivery': 'N/A',
                 'complicationDetails': 'N/A',

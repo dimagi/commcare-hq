@@ -325,18 +325,24 @@ class PregnantWomanQueryHelper(object):
         }
 
     def delivery_details(self):
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        details = ccs_record.delivery_form_details()
+        ccs_details = ccs_record.ccs_record_details()
         return {
-            'dod': 'N/A',
-            'assistanceOfDelivery': 'N/A',
-            'timeOfDelivery': 'N/A',
-            'dateOfDischarge': 'N/A',
-            'typeOfDelivery': 'N/A',
-            'timeOfDischarge': 'N/A',
-            'placeOfBirth': 'N/A',
-            'deliveryComplications': 'N/A',
-            'placeOfDelivery': 'N/A',
+            'dod': ccs_record.add or 'N/A',
+            'timeOfDelivery': details['time_birth'] or 'N/A',
+            'placeOfDelivery': details['which_village'] or 'N/A',
+            'typeOfDelivery': details['delivery_nature'] or 'N/A',
+            'placeOfBirth': details['where_born'] or 'N/A',
+            'hospitalType': details['which_hospital'] or 'N/A',
+            'dateOfDischarge': details['discharge_date'] or 'N/A',
+            'timeOfDischarge': details['discharge_time'] or 'N/A',
+            'assistanceOfDelivery': details['who_assisted'] or 'N/A',
+            'deliveryComplications': ccs_details['complication_type'] or 'N/A',
             'complicationDetails': 'N/A',
-            'hospitalType': 'N/A',
         }
 
     def postnatal_care_details(self):
