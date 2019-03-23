@@ -222,10 +222,7 @@ class PregnantWomanQueryHelper(object):
             CcsRecord.objects
             .filter(domain=self.domain, person_case_id=self.person_case_id).first()
         )
-        if ccs_record is None:
-            return ret
-
-        if ccs_record.hrp:
+        if ccs_record and ccs_record.hrp:
             ret['riskPregnancy'] = ccs_record.hrp
 
         bp_details = self._most_recent_bp_form_details(ccs_record)
@@ -241,9 +238,28 @@ class PregnantWomanQueryHelper(object):
         return ret
 
     def consumables_disbursed(self):
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        thr = ccs_record.thr_form_details(self.date_)
+        thr_disbursed = 'N/A'
+        if thr:
+            thr_disbursed = (
+                (thr['thr_amount_1'] or 0)
+                + (thr['thr_amount_2'] or 0)
+                + (thr['thr_amount_3'] or 0)
+                + (thr['thr_amount_4'] or 0)
+                + (thr['thr_amount_5'] or 0)
+                + (thr['thr_amount_6'] or 0)
+                + (thr['thr_amount_7'] or 0)
+                + (thr['thr_amount_8'] or 0)
+            )
+
+        deets = ccs_record.ccs_record_details()
         return {
-            'ifaTablets': 'N/A',
-            'thrDisbursed': 'N/A',
+            'ifaTablets': (deets['ifa_tablets_issued_pre'] or 0) + (deets['ifa_tablets_issued_post'] or 0),
+            'thrDisbursed': thr_disbursed,
         }
 
     def immunization_counseling_details(self):

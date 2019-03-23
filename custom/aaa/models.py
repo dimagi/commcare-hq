@@ -566,15 +566,33 @@ class CcsRecord(LocationDenormalizedModel):
 
         return result
 
-    def thr_form_details(self):
+    def thr_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-thr_forms')
 
         with connections['aaa-data'].cursor() as cursor:
+            # We only ever need the last THR form, so order by timeend and return one result
             cursor.execute(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                LIMIT 1
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def ccs_record_details(self):
+        ucr_tablename = self._ucr_tablename('reach-ccs_record_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
-            result = _dictfetchall(cursor)
+            result = _dictfetchone(cursor)
 
         return result
 

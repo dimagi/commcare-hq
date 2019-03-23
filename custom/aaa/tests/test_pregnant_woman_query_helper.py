@@ -35,10 +35,8 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             edd='2019-07-27',
             add='2019-07-31',
         )
-        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-add_pregnancy')
-        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
-        add_preg_adapter = get_indicator_adapter(datasource)
-        add_preg_adapter.build_table()
+        cls.adapters = []
+        add_preg_adapter = cls._init_table('reach-add_pregnancy')
         add_preg_adapter.save({
             '_id': 'bp_form',
             'domain': cls.domain,
@@ -50,10 +48,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
-        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-birth_preparedness')
-        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
-        bp_adapter = get_indicator_adapter(datasource)
-        bp_adapter.build_table()
+        bp_adapter = cls._init_table('reach-birth_preparedness')
         bp_adapter.save({
             '_id': 'bp_form',
             'domain': cls.domain,
@@ -66,10 +61,28 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
-        cls.adapters = [
-            add_preg_adapter,
-            bp_adapter,
-        ]
+        thr_adapter = cls._init_table('reach-thr_forms')
+        thr_adapter.save({
+            '_id': 'thr_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A',
+            'form': {
+                "case_load_ccs_record_0": {"case": {"@case_id": 'ccs_record_case_id'}},
+                "thr_amount_1": 30,
+                "thr_amount_2": 45,
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
+            },
+        })
+        ccs_adapter = cls._init_table('reach-ccs_record_cases')
+        ccs_adapter.save({
+            '_id': 'ccs_record_case_id',
+            'domain': cls.domain,
+            'doc_type': "CommCareCase",
+            'type': 'ccs_record',
+            'ifa_tablets_issued_pre': 48,
+            'ifa_tablets_issued_post': 2,
+        })
 
     @classmethod
     def tearDownClass(cls):
@@ -78,6 +91,15 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         CcsRecord.objects.all().delete()
         Woman.objects.all().delete()
         super(TestPregnantWomanBeneficiarySections, cls).tearDownClass()
+
+    @classmethod
+    def _init_table(cls, data_source_id):
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        adapter = get_indicator_adapter(datasource)
+        adapter.build_table()
+        cls.adapters.append(adapter)
+        return adapter
 
     @property
     def _helper(self):
@@ -111,8 +133,8 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.consumables_disbursed(),
             {
-                'ifaTablets': 'N/A',
-                'thrDisbursed': 'N/A',
+                'ifaTablets': 50,
+                'thrDisbursed': 75,
             })
 
     def test_immunization_counseling_details(self):
