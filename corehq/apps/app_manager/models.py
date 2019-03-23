@@ -5346,10 +5346,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         return self.get_module(-1)
 
     def delete_module(self, module_unique_id):
-        try:
-            module = self.get_module_by_unique_id(module_unique_id)
-        except ModuleNotFoundException:
-            return None
+        module = self.get_module_by_unique_id(module_unique_id)
         record = DeleteModuleRecord(
             domain=self.domain,
             app_id=self.id,
