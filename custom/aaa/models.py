@@ -570,13 +570,17 @@ class CcsRecord(LocationDenormalizedModel):
 
         return result
 
-    def postnatal_care_form_details(self):
+    def postnatal_care_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.execute(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
-                [self.ccs_record_case_id]
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
             )
             result = _dictfetchall(cursor)
 

@@ -346,21 +346,30 @@ class PregnantWomanQueryHelper(object):
         }
 
     def postnatal_care_details(self):
-        return [{
-            'pncDate': '2019-08-20',
-            'postpartumHeamorrhage': 0,
-            'fever': 1,
-            'convulsions': 0,
-            'abdominalPain': 0,
-            'painfulUrination': 0,
-            'congestedBreasts': 1,
-            'painfulNipples': 0,
-            'otherBreastsIssues': 0,
-            'managingBreastProblems': 0,
-            'increasingFoodIntake': 1,
-            'possibleMaternalComplications': 1,
-            'beneficiaryStartedEating': 0,
-        }]
+        ret = []
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        details = ccs_record.postnatal_care_form_details(self.date_)
+        for detail in details:
+            ret.append({
+                'pncDate': detail['timeend'],
+                'postpartumHeamorrhage': detail['bleeding'],
+                'fever': detail['fever'],
+                'convulsions': detail['convulsions'],
+                'abdominalPain': detail['abdominal_pain'],
+                'painfulUrination': detail['pain_urination'],
+                'congestedBreasts': detail['congested'],
+                'painfulNipples': detail['painful_nipples'],
+                'otherBreastsIssues': detail['other_issues'],
+                'managingBreastProblems': detail['counsel_breast'],
+                'increasingFoodIntake': detail['counsel_increase_food_bf'],
+                'possibleMaternalComplications': detail['counsel_maternal_comp'],
+                'beneficiaryStartedEating': detail['eating_well'],
+            })
+        ret.reverse()  # postnatal_care_details returns in descending order, but we want ascending
+        return ret
 
     def antenatal_care_details(self):
         return [{
@@ -377,7 +386,7 @@ class PregnantWomanQueryHelper(object):
         bp_form_details = self._bp_form_details(ccs_record)
         if not bp_form_details:
             return {}
-        return bp_form_details[-1]
+        return bp_form_details[0]
 
     def _bp_form_details(self, ccs_record):
         return ccs_record.birth_preparedness_form_details(self.date_)

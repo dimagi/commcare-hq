@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from datetime import date
+from datetime import date, datetime
 
 from django.test.testcases import TestCase
 from mock import patch
@@ -86,6 +86,22 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
                 'where_born': 'hospital',
+            },
+        })
+        pnc_adapter = cls._init_table('reach-postnatal_care')
+        pnc_adapter.save({
+            '_id': 'pnc_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
+            'form': {
+                "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
+                "child": {
+                    "item": [{}],
+                },
+                'bleeding': 'yes',
+                'fever': 'no',
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
         person_adapter = cls._init_table('reach-person_cases')
@@ -230,19 +246,19 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.postnatal_care_details(),
             [{
-                'pncDate': '2019-08-20',
-                'postpartumHeamorrhage': 0,
-                'fever': 1,
-                'convulsions': 0,
-                'abdominalPain': 0,
-                'painfulUrination': 0,
-                'congestedBreasts': 1,
-                'painfulNipples': 0,
-                'otherBreastsIssues': 0,
-                'managingBreastProblems': 0,
-                'increasingFoodIntake': 1,
-                'possibleMaternalComplications': 1,
-                'beneficiaryStartedEating': 0,
+                'pncDate': datetime(2019, 1, 1, 10, 37, 00),
+                'postpartumHeamorrhage': 'yes',
+                'fever': 'no',
+                'convulsions': None,
+                'abdominalPain': None,
+                'painfulUrination': None,
+                'congestedBreasts': None,
+                'painfulNipples': None,
+                'otherBreastsIssues': None,
+                'managingBreastProblems': None,
+                'increasingFoodIntake': None,
+                'possibleMaternalComplications': None,
+                'beneficiaryStartedEating': None,
             }])
 
     def test_antenatal_care_details(self):
