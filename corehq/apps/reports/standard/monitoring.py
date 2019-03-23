@@ -1748,7 +1748,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         avg_datespan = self.avg_datespan
 
         case_owners = _get_owner_ids_from_users(users_to_iterate)
-        user_ids = user_ids
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1805,12 +1804,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def get_all_rows(self):
-        user_query = EMWF.user_es_query(
+        user_es_query = EMWF.user_es_query(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
-        paginated_user_query = util.get_paginated_user_query(user_query)
-        formatted_user_generator = (util._report_user_dict(single_user) for single_user in paginated_user_query)
-        user_list = [user for user in formatted_user_generator]
+        user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
+        user_list = [util._report_user_dict(user) for user in user_query_generator]
         formatted_data = self._report_data(users_to_iterate=user_list, user_ids=[a.user_id for a in user_list])
         formatted_rows = self._rows_by_user(formatted_data, user_list)
 
