@@ -335,7 +335,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(self.original.field) ?
                     'fa fa-paperclip' : null);
-                self.field = uiElement.input(self.original.field).setIcon(icon);
+                self.field = undefined;
+                if (self.original.hasAutocomplete) {
+                    self.field = uiElement.select();
+                } else {
+                    self.field = uiElement.input(self.original.field);
+                }
+                self.field.setIcon(icon);
 
                 // Make it possible to observe changes to self.field
                 // note self observableVal is read only!
@@ -698,6 +704,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     });
                     if (column.original.hasAutocomplete) {
+                        column.field.setOptions(self.properties);
+                        column.field.val(column.original.field);
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
                     }
                     return column;
