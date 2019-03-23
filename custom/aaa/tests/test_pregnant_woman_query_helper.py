@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from datetime import date
 
 from django.test.testcases import TestCase
+from mock import patch
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -58,6 +59,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "case_load_ccs_record0": {"case": {"@case_id": 'ccs_record_case_id'}},
                 "date_referral": "2018-12-07",
                 "place_referral": "chc",
+                "bp2": {"inform_danger_signs": 'yes'},
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
@@ -83,6 +85,25 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             'ifa_tablets_issued_pre': 48,
             'ifa_tablets_issued_post': 2,
         })
+
+        tasks_adapter = cls._init_table('reach-tasks_cases')
+        immun_dates = {'tt_1': 32, 'tt_2': 85}
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=immun_dates):
+            tasks_adapter.save({
+                '_id': 'tasks_case',
+                'domain': cls.domain,
+                'doc_type': "CommCareCase",
+                'type': 'tasks',
+                "indices": [
+                    {
+                        "case_id": "tasks_case",
+                        "identifier": "parent",
+                        "referenced_id": "ccs_record_case_id",
+                        "referenced_type": "ccs_record",
+                        "relationship": "extension"
+                    }
+                ],
+            })
 
     @classmethod
     def tearDownClass(cls):
@@ -141,13 +162,13 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.immunization_counseling_details(),
             {
-                'ttDoseOne': 'N/A',
-                'ttDoseTwo': 'N/A',
+                'ttDoseOne': date(1970, 2, 2),
+                'ttDoseTwo': date(1970, 3, 27),
                 'ttBooster': 'N/A',
-                'birthPreparednessVisitsByAsha': 'N/A',
-                'birthPreparednessVisitsByAww': 'N/A',
-                'counsellingOnMaternal': 'N/A',
-                'counsellingOnEbf': 'N/A',
+                'birthPreparednessVisitsByAsha': 0,
+                'birthPreparednessVisitsByAww': 0,
+                'counsellingOnMaternal': True,
+                'counsellingOnEbf': False,
             })
 
     def test_abortion_details(self):

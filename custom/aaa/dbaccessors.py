@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from datetime import date, datetime
+from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Case, IntegerField, Sum, When
@@ -263,7 +263,7 @@ class PregnantWomanQueryHelper(object):
         }
 
     def immunization_counseling_details(self):
-        return {
+        ret = {
             'ttDoseOne': 'N/A',
             'ttDoseTwo': 'N/A',
             'ttBooster': 'N/A',
@@ -272,6 +272,29 @@ class PregnantWomanQueryHelper(object):
             'counsellingOnMaternal': 'N/A',
             'counsellingOnEbf': 'N/A',
         }
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        tasks_case = ccs_record.task_case_details()
+        if tasks_case:
+            keys_to_col_names = (
+                ('ttDoseOne', 'due_list_date_tt_1'),
+                ('ttDoseTwo', 'due_list_date_tt_2'),
+                ('ttBooster', 'due_list_date_tt_booster'),
+            )
+            for key, col_name in keys_to_col_names:
+                if tasks_case[col_name] != date(1970, 1, 1):
+                    ret[key] = tasks_case[col_name]
+
+        bp_forms = self._bp_form_details(ccs_record)
+        if bp_forms:
+            ret['birthPreparednessVisitsByAsha'] = sum(1 for bp in bp_forms if bp['user_role'] == 'asha')
+            ret['birthPreparednessVisitsByAww'] = sum(1 for bp in bp_forms if bp['user_role'] == 'aww')
+            ret['counsellingOnMaternal'] = any(True for bp in bp_forms if bp['inform_danger_signs'] == 'yes')
+            ret['counsellingOnEbf'] = any(True for bp in bp_forms if bp['immediate_breastfeeding'] == 'yes')
+
+        return ret
 
     def abortion_details(self):
         return {
@@ -335,14 +358,10 @@ class PregnantWomanQueryHelper(object):
         bp_form_details = self._bp_form_details(ccs_record)
         if not bp_form_details:
             return {}
-        return sorted(
-            [form for form in bp_form_details
-                if form['timeend'] <= datetime.combine(self.date_, datetime.min.time())],
-            key=lambda f: f['timeend']
-        )[-1]
+        return bp_form_details[-1]
 
     def _bp_form_details(self, ccs_record):
-        return ccs_record.birth_preparedness_form_details()
+        return ccs_record.birth_preparedness_form_details(self.date_)
 
 
 class EligibleCoupleQueryHelper(object):

@@ -542,13 +542,17 @@ class CcsRecord(LocationDenormalizedModel):
 
         return result
 
-    def birth_preparedness_form_details(self):
+    def birth_preparedness_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
         with connections['aaa-data'].cursor() as cursor:
             cursor.execute(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
-                [self.ccs_record_case_id]
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend < %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
             )
             result = _dictfetchall(cursor)
 
@@ -592,6 +596,15 @@ class CcsRecord(LocationDenormalizedModel):
                 'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def task_case_details(self):
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute('SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename), [self.ccs_record_case_id])
             result = _dictfetchone(cursor)
 
         return result
