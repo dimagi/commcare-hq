@@ -3,6 +3,8 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block locations_widgets %}<script src="{% static "locations/js/widgets_main_v4.js" %}"></script>{% endblock %}
+
 {% block page_content %}
     <form class="form-horizontal" method="post" action="">{% csrf_token %}
         <legend>{% trans 'Information for new Web User' %}</legend>
