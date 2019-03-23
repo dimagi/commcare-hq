@@ -32,12 +32,12 @@ from six.moves import map
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_users(domain, user_ids, datespan):
+def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_alias=ES_DEFAULT_INSTANCE):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
 
     query = (
-        FormES(es_instance_alias='export')
+        FormES(es_instance_alias=es_instance_alias)
         .domain(domain)
         .user_id(user_ids)
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
