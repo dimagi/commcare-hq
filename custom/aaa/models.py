@@ -588,6 +588,18 @@ class CcsRecord(LocationDenormalizedModel):
 
         return result
 
+    def person_details(self):
+        ucr_tablename = self._ucr_tablename('reach-person_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
+                [self.person_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
     def ccs_record_details(self):
         ucr_tablename = self._ucr_tablename('reach-ccs_record_cases')
 

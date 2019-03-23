@@ -312,11 +312,16 @@ class PregnantWomanQueryHelper(object):
         }
 
     def maternal_death_details(self):
+        ccs_record = (
+            CcsRecord.objects
+            .filter(domain=self.domain, person_case_id=self.person_case_id).first()
+        )
+        details = ccs_record.person_details()
         return {
-            'maternalDeathOccurred': 'N/A',
-            'maternalDeathPlace': 'N/A',
-            'maternalDeathDate': 'N/A',
-            'authoritiesInformed': 'N/A',
+            'maternalDeathOccurred': details['female_death_type'] is not None,
+            'maternalDeathDate': details['date_death'] or 'N/A',
+            'maternalDeathPlace': details['site_death'] or 'N/A',
+            'authoritiesInformed': details['death_informed_authorities'] or 'N/A',
         }
 
     def delivery_details(self):

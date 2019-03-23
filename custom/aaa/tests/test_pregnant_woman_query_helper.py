@@ -76,6 +76,13 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
             },
         })
+        person_adapter = cls._init_table('reach-person_cases')
+        person_adapter.save({
+            '_id': 'person_case_id',
+            'domain': cls.domain,
+            'doc_type': "CommCareCase",
+            'type': 'person',
+        })
         ccs_adapter = cls._init_table('reach-ccs_record_cases')
         ccs_adapter.save({
             '_id': 'ccs_record_case_id',
@@ -184,7 +191,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.maternal_death_details(),
             {
-                'maternalDeathOccurred': 'N/A',
+                'maternalDeathOccurred': False,
                 'maternalDeathPlace': 'N/A',
                 'maternalDeathDate': 'N/A',
                 'authoritiesInformed': 'N/A',
