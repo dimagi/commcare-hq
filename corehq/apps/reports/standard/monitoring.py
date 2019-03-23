@@ -30,6 +30,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
@@ -1810,14 +1811,17 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
-        user_list = [util._report_user_dict(user) for user in user_query_generator]
-        formatted_data = self._report_data(users_to_iterate=user_list)
-        if self.view_by_groups:
-            formatted_rows = self._rows_by_group(formatted_data)
-        else:
-            formatted_rows = self._rows_by_user(formatted_data, user_list)
-        self.total_row = self._total_row(formatted_rows, formatted_data)
-        return formatted_rows
+        user_generator = (util._report_user_dict(user) for user in user_query_generator)
+        for users in chunked(user_generator, 10000):
+            formatted_data = self._report_data(users_to_iterate=users)
+            if self.view_by_groups:
+                rows = self._rows_by_group(formatted_data)
+            else:
+                rows = self._rows_by_user(formatted_data, users)
+            self.total_row = self._total_row(rows, formatted_data)
+            for row in rows:
+                yield row
+        yield self.total_row
 
     @property
     def rows(self):
