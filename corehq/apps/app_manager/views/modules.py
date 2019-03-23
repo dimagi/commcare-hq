@@ -148,7 +148,6 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         },
-        'legacy_select2': True,
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
@@ -277,7 +276,6 @@ def _get_report_module_context(app, module):
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
         'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
-        'legacy_select2': True,
     }
     return context
 
