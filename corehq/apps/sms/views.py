@@ -1358,7 +1358,6 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(DomainSmsGatewayListView.urlname, args=[self.domain]))
 
-    @use_select2
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
@@ -1590,7 +1589,6 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     def redirect_to_gateway_list(self):
         return HttpResponseRedirect(reverse(GlobalSmsGatewayListView.urlname))
 
-    @use_select2
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
