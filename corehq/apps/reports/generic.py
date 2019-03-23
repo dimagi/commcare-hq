@@ -44,6 +44,7 @@ from couchexport.export import get_writer
 import six
 from six.moves import zip
 from six.moves import range
+from itertools import chain
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -1007,12 +1008,13 @@ class GenericTabularReport(GenericReportView):
 
         table = headers.as_export_table
         self.exporting_as_excel = True
+
         rows = (_unformat_row(row) for row in self.export_rows)
-        table.extend(rows)
+        table = chain(table, rows)
         if self.total_row:
-            table.append(_unformat_row(self.total_row))
+            table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
-            table.extend([_unformat_row(row) for row in self.statistics_rows])
+            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
 
