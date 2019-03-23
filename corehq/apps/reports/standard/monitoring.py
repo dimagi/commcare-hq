@@ -16,6 +16,7 @@ from memoized import memoized
 from pygooglechart import ScatterChart
 
 from corehq import toggles
+from corehq.elastic import ES_DEFAULT_INSTANCE
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.es import cases as case_es, filters
 from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
@@ -1485,7 +1486,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan)
+        if self.exporting_as_excel:
+            es_instance_alias = 'export'
+        else:
+            es_instance_alias = ES_DEFAULT_INSTANCE
+        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan, es_instance_alias=es_instance_alias)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):

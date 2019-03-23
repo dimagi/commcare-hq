@@ -829,6 +829,7 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
+    exporting_as_excel = False
 
     # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
     sortable = True
@@ -1006,6 +1007,7 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
+        self.exporting_as_excel = True
         rows = (_unformat_row(row) for row in self.export_rows)
         table = chain(table, rows)
         if self.total_row:
