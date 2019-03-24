@@ -997,19 +997,16 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_CF_TABLE
-        unique_together = ('supervisor_id', 'case_id')
+        unique_together = ('supervisor_id', 'case_id', 'month')
 
     @classmethod
     def aggregate(cls, state_id, month):
         helper = ComplementaryFormsCcsRecordAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
+        drop_query, drop_params = helper.drop_table_query()
         agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(drop_query, drop_params)
             cursor.execute(agg_query, agg_params)
 
 
