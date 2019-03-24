@@ -547,7 +547,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
 
-    @use_select2
+    @use_select2_v4
     @use_angular_js
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, *args, **kwargs):
