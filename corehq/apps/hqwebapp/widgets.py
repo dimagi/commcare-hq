@@ -18,6 +18,7 @@ from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
 import six
 from six.moves import range
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import html_attr
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -159,3 +160,23 @@ class DateRangePickerWidget(Input):
                 {}
             </div>
         """.format(output))
+
+
+class SelectToggle(forms.Select):
+
+    def __init__(self, choices=None, attrs=None):
+        self.params = {}
+        self.params['value'] = attrs.get('ko_value', '')
+        super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
+
+    def render(self, name, value, attrs=None):
+        return '''
+            <select-toggle data-apply-bindings="false"
+                           params="name: '{name}',
+                                   id: '{id}',
+                                   value: {value},
+                                   options: {options}"></select-toggle>
+        '''.format(name=name,
+                   id=html_attr(attrs.get('id', '')),
+                   value=html_attr(self.params['value']),
+                   options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
