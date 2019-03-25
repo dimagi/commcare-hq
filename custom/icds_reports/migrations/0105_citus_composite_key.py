@@ -75,7 +75,7 @@ def get_sql_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0103_aggregateccsrecordcomplementaryfeedingforms_supervisor_id'),
+        ('icds_reports', '0104_agg_ls_monthly_ls_name'),
     ]
 
     operations = get_sql_operations()
