@@ -44,11 +44,11 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        previous_month = month_formatter(month - relativedelta(months=1))
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
+            "previous_month": month_formatter(month - relativedelta(months=1)),
             "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
@@ -66,11 +66,12 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
           COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id and ucr.supervisor_id = prev_month.supervisor_id and ucr.month::DATE=prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s and coalesce(prev_month.month, '{previous_month}') = '{previous_month}'
+          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
         )
         """.format(
             ucr_table_query=ucr_query,
-            previous_month=previous_month,
             tablename=self.tablename
         ), query_params
