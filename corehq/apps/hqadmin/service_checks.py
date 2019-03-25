@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
+from six.moves import range
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client
@@ -129,16 +130,21 @@ def check_blobdb():
 def check_celery():
     celery_status = _check_celery()
     celery_worker_status = _check_celery_workers()
-    if celery_status.success and celery_worker_status.success:
-        return celery_status
-    else:
-        # Retry because of https://github.com/celery/celery/issues/4758
-        if not celery_worker_status.success:
-            time.sleep(5)
-            celery_worker_status = _check_celery_workers()
 
-        message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
-        return ServiceStatus(False, message)
+    if celery_status.success:
+        if celery_worker_status.success:
+            return celery_status
+        else:
+            # Retry because of https://github.com/celery/celery/issues/4758
+            num_retries = 4
+            for _ in range(num_retries):
+                time.sleep(5)
+                celery_worker_status = _check_celery_workers()
+                if celery_worker_status.success:
+                    return celery_status
+
+    message = '\n'.join(status.msg for status in [celery_status, celery_worker_status])
+    return ServiceStatus(False, message)
 
 
 def _check_celery():
