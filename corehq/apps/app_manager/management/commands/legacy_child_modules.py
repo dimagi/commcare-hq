@@ -1,14 +1,22 @@
+# This management command is a one-off and can certainly be removed after say May 2019
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import migrations
+from django.core.management import BaseCommand
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_current_app
 from corehq.util.log import with_progress_bar
 
 
-def flag_legacy_child_module_domains(*args, **kwargs):
+class Command(BaseCommand):
+    help = "Turn on legacy behavior flag where needed"
+
+    def handle(self, **options):
+        flag_legacy_child_module_domains()
+
+
+def flag_legacy_child_module_domains():
     """Enable the LEGACY_CHILD_MODULES flag for domains that need it"""
     domains = set(toggles.BASIC_CHILD_MODULE.get_enabled_domains() +
                   toggles.APP_BUILDER_ADVANCED.get_enabled_domains())
@@ -17,9 +25,6 @@ def flag_legacy_child_module_domains(*args, **kwargs):
             if has_misordered_modules(app):
                 if needs_legacy_flag(app):
                     toggles.LEGACY_CHILD_MODULES.set(domain, True, toggles.NAMESPACE_DOMAIN)
-                else:
-                    app.move_child_modules_after_parents()
-                    app.save()
 
 
 def get_apps(domain):
@@ -59,14 +64,3 @@ def uses_custom_case_tile_xml(app):
             for detail in [module.case_details.short, module.case_details.long]:
                 if detail.custom_xml:
                     return True
-
-
-def noop(*args, **kwargs):
-    pass
-
-
-class Migration(migrations.Migration):
-    dependencies = [('app_manager', '0002_latestenabledbuildprofiles')]
-    operations = [
-        migrations.RunPython(flag_legacy_child_module_domains, reverse_code=noop),
-    ]
