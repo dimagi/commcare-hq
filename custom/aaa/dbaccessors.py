@@ -213,6 +213,29 @@ class PregnantWomanQueryHelper(object):
         self.person_case_id = person_case_id
         self.date_ = date_
 
+    @classmethod
+    def list(cls, domain, date_, location_filters, sort_column):
+        return (
+            Woman.objects.annotate(
+                age=ExtractYear(Func(F('dob'), function='age')),
+            ).filter(
+                domain=domain,
+                **location_filters
+            ).extra(
+                select={
+                    'highRiskPregnancy': '\'N/A\'',
+                    'noOfAncCheckUps': '\'N/A\'',
+                    'pregMonth': '\'N/A\'',
+                    'id': 'person_case_id',
+                },
+                where=["daterange(%s, %s) && any(pregnant_ranges)"],
+                params=[date_, date_ + relativedelta(months=1)]
+            ).values(
+                'id', 'name', 'age', 'pregMonth',
+                'highRiskPregnancy', 'noOfAncCheckUps'
+            ).order_by(sort_column)
+        )
+
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
             select={

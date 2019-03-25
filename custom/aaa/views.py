@@ -202,26 +202,7 @@ class UnifiedBeneficiaryReportAPI(View):
         elif beneficiary_type == 'eligible_couple':
             data = EligibleCoupleQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
         elif beneficiary_type == 'pregnant_women':
-            data = (
-                Woman.objects.annotate(
-                    age=ExtractYear(Func(F('dob'), function='age')),
-                ).filter(
-                    domain=request.domain,
-                    **location_filters
-                ).extra(
-                    select={
-                        'highRiskPregnancy': '\'N/A\'',
-                        'noOfAncCheckUps': '\'N/A\'',
-                        'pregMonth': '\'N/A\'',
-                        'id': 'person_case_id',
-                    },
-                    where=["daterange(%s, %s) && any(pregnant_ranges)"],
-                    params=[selected_date, selected_date + relativedelta(months=1)]
-                ).values(
-                    'id', 'name', 'age', 'pregMonth',
-                    'highRiskPregnancy', 'noOfAncCheckUps'
-                ).order_by(sort_column)
-            )
+            data = PregnantWomanQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
         if data:
             number_of_data = data.count()
             data = data[start:start + length]
