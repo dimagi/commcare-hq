@@ -107,7 +107,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 if app.doc_type == 'LinkedApplication'
             }
             models_seen = set()
-            history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
+            history = DomainLinkHistory.objects.filter(link=master_link, hidden=False).annotate(row_number=RawSQL(
                 'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
                 []
             ))
