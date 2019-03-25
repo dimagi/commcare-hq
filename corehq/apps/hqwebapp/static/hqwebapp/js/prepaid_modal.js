@@ -35,12 +35,11 @@ hqDefine("hqwebapp/js/prepaid_modal", [
         $modal.on('click', '.flag-snooze', function () {
             $modal.modal('hide');
             snooze(slug, domain);
+            kissmetrics.track.event('[Prepaid Credits Notification] Clicked Remind me later');
         });
-    });
 
-    $(function () {
-        $("#prepaid-link").on('click', function () {
-            kissmetrics.track.event('[Prepaid Credits Modal] Clicked link');
+        $modal.on('click', '.flag-link', function () {
+            kissmetrics.track.event('[Prepaid Credits Notification] Clicked link');
         });
     });
 });
