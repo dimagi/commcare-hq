@@ -164,19 +164,22 @@ class DateRangePickerWidget(Input):
 
 class SelectToggle(forms.Select):
 
-    def __init__(self, choices=None, attrs=None):
+    def __init__(self, choices=None, attrs=None, apply_bindings=False):
+        self.apply_bindings = apply_bindings
         self.params = {}
+        attrs = attrs or {}
         self.params['value'] = attrs.get('ko_value', '')
         super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
 
     def render(self, name, value, attrs=None):
         return '''
-            <select-toggle data-apply-bindings="false"
+            <select-toggle data-apply-bindings="{apply_bindings}"
                            params="name: '{name}',
                                    id: '{id}',
                                    value: {value},
                                    options: {options}"></select-toggle>
-        '''.format(name=name,
+        '''.format(apply_bindings="true" if self.apply_bindings else "false",
+                   name=name,
                    id=html_attr(attrs.get('id', '')),
-                   value=html_attr(self.params['value']),
+                   value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
                    options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
