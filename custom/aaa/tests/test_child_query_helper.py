@@ -193,17 +193,17 @@ class TestChildBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.growth_monitoring(),
             {
-                'currentWeight': 'N/A',
+                'currentWeight': '10',
+                'growthMonitoringStatus': 'yellow',
+                'previousGrowthMonitoringStatus': 'green',
+                'underweight': True,
+                'underweightStatus': 'yellow',
+                'stunted': True,
+                'stuntedStatus': 'yellow',
+                'wasting': True,
+                'wastingStatus': 'yellow',
                 'nrcReferred': 'N/A',
-                'growthMonitoringStatus': 'N/A',
                 'referralDate': 'N/A',
-                'previousGrowthMonitoringStatus': 'N/A',
-                'underweight': 'N/A',
-                'underweightStatus': 'N/A',
-                'stunted': 'N/A',
-                'stuntedStatus': 'N/A',
-                'wasting': 'N/A',
-                'wastingStatus': 'N/A',
             })
 
     def test_weight_for_age_chart(self):

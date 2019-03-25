@@ -118,21 +118,28 @@ class ChildQueryHelper(object):
             ]
 
     def growth_monitoring(self):
-        ret = {
-            'currentWeight': 'N/A',
-            'nrcReferred': 'N/A',
-            'growthMonitoringStatus': 'N/A',
-            'referralDate': 'N/A',
-            'previousGrowthMonitoringStatus': 'N/A',
-            'underweight': 'N/A',
-            'underweightStatus': 'N/A',
-            'stunted': 'N/A',
-            'stuntedStatus': 'N/A',
-            'wasting': 'N/A',
-            'wastingStatus': 'N/A',
-        }
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
         history_values = ChildHistory.before_date(child.child_health_case_id, self.date_)
+
+        def _safe_last_val_access(key, index=-1):
+            try:
+                return history_values.get(key)[index][1]
+            except IndexError:
+                return 'N/A'
+
+        ret = {
+            'currentWeight': _safe_last_val_access('weight_child_history'),
+            'growthMonitoringStatus': _safe_last_val_access('zscore_grading_wfa_history'),
+            'previousGrowthMonitoringStatus': _safe_last_val_access('zscore_grading_wfa_history', -2),
+            'underweight': _safe_last_val_access('zscore_grading_wfa_history') != 'green',
+            'underweightStatus': _safe_last_val_access('zscore_grading_wfa_history'),
+            'stunted': _safe_last_val_access('zscore_grading_hfa_history') != 'green',
+            'stuntedStatus': _safe_last_val_access('zscore_grading_hfa_history'),
+            'wasting': _safe_last_val_access('zscore_grading_wfh_history') != 'green',
+            'wastingStatus': _safe_last_val_access('zscore_grading_wfh_history'),
+            'nrcReferred': 'N/A',
+            'referralDate': 'N/A',
+        }
 
         return ret
 
@@ -173,6 +180,7 @@ class ChildQueryHelper(object):
                 points_by_date[date_]['x'] = height
 
         return points_by_date.values()
+
 
 class PregnantWomanQueryHelper(object):
     def __init__(self, domain, person_case_id, date_):
