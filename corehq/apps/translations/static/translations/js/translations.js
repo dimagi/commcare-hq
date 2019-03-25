@@ -17,7 +17,11 @@ hqDefine("translations/js/translations", function () {
                 var Translation = function (key, value) {
                     var that = this;
                     this.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
-                    this.value = hqImport('hqwebapp/js/ui-element').input().val(value);
+                    var options = value ? [{label: value, value: value}] : []
+                    this.value = hqImport('hqwebapp/js/ui-element').select(options);
+                    if (value) {
+                        this.value.val(value);
+                    }
                     this.solid = true;
 
                     this.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function () {
@@ -58,34 +62,22 @@ hqDefine("translations/js/translations", function () {
 
                     this.value.on('change', helperFunction);
 
-                    this.value.ui.find('input').select2({
+                    this.value.ui.find('select').select2({
                         minimumInputLength: 0,
-                        delay: 100,
                         allowClear: 1,
                         placeholder: ' ', // allowClear requires a placeholder
-                        initSelection: function (element, callback) {
-                            callback({
-                                id: element.val(),
-                                text: element.val(),
-                            });
-                        },
-                        createSearchChoice: function (term, data) {
-                            if (term !== "" && !_.find(data, function (d) { return d.text === term; })) {
-                                return {
-                                    id: term,
-                                    text: term,
-                                };
-                            }
-                        },
+                        tags: true,
+                        width: '100%',
                         ajax: {
+                            quietMillis: 100,
                             url: suggestionURL,
-                            data: function (term, page) {
+                            data: function (params) {
                                 return {
                                     lang: translation_ui.lang,
                                     key: that.key.val(),
                                 };
                             },
-                            results: function (data, page) {
+                            processResults: function (data) {
                                 return {
                                     results: _.map(_.compact(data), function (item) {
                                         return {
