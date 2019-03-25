@@ -5,11 +5,11 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_COMP_FEEDING_TABLE
 from custom.icds_reports.utils.aggregation_helpers import (
-    BaseICDSAggregationHelper, month_formatter, TempTableAggHelper
+    BaseICDSAggregationHelper, month_formatter
 )
 
 
-class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper, TempTableAggHelper):
+class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
     tablename = AGG_COMP_FEEDING_TABLE
 
@@ -27,7 +27,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper, TempTableAg
         SELECT DISTINCT child_health_case_id AS case_id,
         %(current_month_start)s::date AS month,
         %(state_id)s AS state_id,
-        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
+        supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
         MAX(comp_feeding) OVER w AS comp_feeding_ever,
@@ -49,29 +49,16 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper, TempTableAg
             "state_id": self.state_id
         }
 
-    def temp_table_columns(self):
-        return [
-            ('case_id', 'text'),
-            ('month', 'date'),
-            ('state_id', 'text'),
-            ('supervisor_id', 'text'),
-            ('latest_time_end', 'timestamp'),
-            ('play_comp_feeding_vid', 'smallint'),
-            ('comp_feeding_ever', 'smallint'),
-            ('demo_comp_feeding', 'smallint'),
-            ('counselled_pediatric_ifa', 'smallint'),
-            ('comp_feeding_latest', 'smallint'),
-            ('diet_diversity', 'smallint'),
-            ('diet_quantity', 'smallint'),
-            ('hand_wash', 'smallint'),
-        ]
-
-    def insert_query(self):
+    def aggregation_query(self):
         month = self.month.replace(day=1)
         query_params = {
             "month": month_formatter(month),
+            "previous_month": month_formatter(month - relativedelta(months=1)),
             "state_id": self.state_id
         }
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params.update(ucr_query_params)
 
         # GREATEST calculations are for when we want to know if a thing has
         # ever happened to a case.
@@ -107,14 +94,15 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper, TempTableAg
             CASE WHEN ucr.latest_time_end IS NOT NULL
                  THEN ucr.hand_wash ELSE prev_month.hand_wash
             END AS hand_wash
-          FROM {temp_table} ucr
+          FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
             AND ucr.month = prev_month.month + INTERVAL '1 month'
             AND ucr.state_id = prev_month.state_id
-          WHERE ucr.month = %(month)s  -- this limits the join with the base table to the correct month
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
         )
         """.format(
             tablename=self.tablename,
-            temp_table=self.temp_tablename
+            ucr_table_query=ucr_query
         ), query_params
