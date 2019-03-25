@@ -93,7 +93,8 @@
 
          },
          "calculate_total":false,
-         "type":"field",
+         "type":"field", 
+         "visible": false, 
          "display":"Health Post Id"
       },
       {
