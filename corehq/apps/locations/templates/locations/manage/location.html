@@ -29,7 +29,7 @@
 
         <div class="btn-toolbar" style="margin-bottom: 20px;">
 
-          {% if location.get_id and location.location_type_object.can_have_children %}
+          {% if location.get_id and location.location_type_object.can_have_children and not request.is_view_only %}
           <a class="btn btn-primary" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
             <i class="fa fa-plus"></i> {% trans "New Child Location" %}
           </a>
@@ -120,6 +120,7 @@
                   {% endfor %}
                 {% endif %}
 
+                {% if not request.is_view_only %}
                 <div class="form-actions">
                   <div class="col-sm-offset-3 col-md-offset-4 col-lg-offset-2">
                     <button type="submit" class="btn btn-primary">
@@ -132,6 +133,7 @@
                     </button>
                   </div>
                 </div>
+                {% endif %}
               </form>
             </div>
           </div>
@@ -142,21 +144,33 @@
           <div class="tab-pane {% if form_tab == "users" %}active{% endif %}" id="users">
             <div class="row">
               <div class="col-sm-12">
-                {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' %}
+
+                {% if request|toggle_enabled:'ADD_USERS_FROM_LOCATION' and can_edit_commcare_users %}
                 <p>
                   <a href="#new_user" role="button" class="btn btn-default" data-toggle="modal">
                     <i class="fa fa-plus"></i> {% trans "Create Mobile Worker at this Location" %}
                   </a>
                 </p>
                 {% endif %}
+
                 <div class="panel panel-modern-gray panel-form-only">
                   <div class="panel-body">
-                    <form class="form-horizontal disable-on-submit" id="edit_users" action="" method='post'>
+                    <form class="form-horizontal disable-on-submit{% if not can_edit_users_in_location %} form-hide-actions{% endif %}" id="edit_users" action="" method='post'>
                       {% crispy users_per_location_form %}
                       <input type="hidden" name="form_type" value="location-users" />
                     </form>
                   </div>
                 </div>
+
+                {% if not request.is_view_only and not can_edit_users_in_location %}
+                  <div class="alert alert-info">
+                    {% blocktrans %}
+                      Your permissions allow you to <strong>create, update, and delete locations</strong>
+                      and <strong>modify location settings</strong>. However, your project
+                      administrator has not granted you access add mobile workers to locations.
+                    {% endblocktrans %}
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -168,7 +182,7 @@
               <div class="col-sm-12">
                 <div class="panel panel-modern-gray panel-form-only">
                   <div class="panel-body">
-                    <form class="form-horizontal disable-on-submit" id="edit_products" action="" method='post'>
+                    <form class="form-horizontal disable-on-submit{% if request.is_view_only %} form-hide-actions{% endif %}" id="edit_products" action="" method='post'>
                       <input type="hidden" name="form_type" value="location-products" />
                       {% crispy products_per_location_form %}
                     </form>
@@ -181,21 +195,25 @@
 
         {% if related_location_form %}
           <div class="tab-pane {% if form_tab == "related_location" %}active{% endif %}" id="related_location">
-            <form id="group_form" class="form-horizontal" name="" method="post">
-                {% csrf_token %}
-              <fieldset>
-                  <legend>{% trans 'Related Locations' %}</legend>
-                  {% crispy related_location_form %}
-                  <input type="hidden" name="form_type" value="related_location" />
-              </fieldset>
-              <div class="form-actions">
-                  <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                      <button type="submit" class="btn btn-primary disable-on-submit">
-                          {% trans 'Update Related Locations' %}
-                      </button>
+            <div class="panel panel-modern-gray panel-form-only">
+              <div class="panel-body">
+                <form id="group_form" class="form-horizontal{% if request.is_view_only %} form-hide-actions{% endif %}" name="" method="post">
+                    {% csrf_token %}
+                  <fieldset>
+                      <legend>{% trans 'Related Locations' %}</legend>
+                      {% crispy related_location_form %}
+                      <input type="hidden" name="form_type" value="related_location" />
+                  </fieldset>
+                  <div class="form-actions">
+                      <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+                          <button type="submit" class="btn btn-primary disable-on-submit">
+                              {% trans 'Update Related Locations' %}
+                          </button>
+                      </div>
                   </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         {% endif %}
       </div>
@@ -204,7 +222,7 @@
     {% endblock %}
 
     {% block modals %}{{ block.super }}
-
+    {% if can_edit_commcare_users %}
     <div id="new_user" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -223,4 +241,5 @@
             </div>
         </div>
     </div>
+    {% endif %}
 {% endblock %}
