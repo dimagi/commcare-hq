@@ -1,20 +1,23 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import json
 from functools import wraps
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
 from couchdbkit.exceptions import ResourceConflict
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import get_latest_enabled_build_for_profile
+from corehq.apps.app_manager.util import get_latest_enabled_app_release, get_latest_enabled_build_for_profile
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.users.util import normalize_username
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -49,6 +52,21 @@ def safe_download(f):
     return _safe_download
 
 
+def get_latest_enabled_build(latest, domain, username, app_id, profile_id):
+    latest_enabled_build = None
+    user = CommCareUser.get_by_username(normalize_username(username, domain))
+    user_location_id = user.location_id
+    if user_location_id:
+        parent_app_id = get_app(domain, app_id).copy_of
+        latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
+    if not latest_enabled_build:
+        # Fall back to the old logic to support migration
+        # ToDo: Remove this block once migration is complete
+        if latest and profile_id and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+            latest_enabled_build = get_latest_enabled_build_for_profile(domain, profile_id)
+    return latest_enabled_build
+
+
 def safe_cached_download(f):
     """
     Same as safe_download, but makes it possible for the browser to cache.
@@ -66,13 +84,19 @@ def safe_cached_download(f):
         # make endpoints that call the user fail hard
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
+        username = request.GET.get('username')
         if request.GET.get('username'):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
         latest_enabled_build = None
-        if latest and request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_enabled_build = get_latest_enabled_build_for_profile(domain, request.GET.get('profile'))
+        if latest and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+            if not username:
+                content_response = dict(error="app.update.not.allowed.user.logged_out",
+                                        default_response=_("Please log in to the app to check for an update."))
+                return HttpResponse(status=406, content=json.dumps(content_response))
+            latest_enabled_build = get_latest_enabled_build(latest, domain, username, app_id,
+                                                            request.GET.get('profile'))
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build

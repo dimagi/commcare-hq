@@ -30,6 +30,7 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError,
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
@@ -635,6 +636,46 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
                             .first())
     if latest_enabled_build:
         return get_app(domain, latest_enabled_build.build_id)
+
+
+@quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
+def get_latest_enabled_app_release(domain, location_id, app_id):
+    """
+    for a location search for enabled app releases for all parent locations.
+    Child location's setting takes precedence over parent
+    """
+    from corehq.apps.app_manager.models import LatestEnabledAppRelease
+    location = SQLLocation.active_objects.get(location_id=location_id)
+    location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
+        'location_id', flat=True).reverse()
+    # get all active enabled releases and order by version desc to get one with the highest version in the end
+    # for a location. Do not use the first object itself in order to respect the location hierarchy and use
+    # the closest location to determine the valid active release
+    latest_enabled_releases = {
+        enabled_release.location_id: enabled_release.build_id
+        for enabled_release in
+        LatestEnabledAppRelease.objects.filter(
+            location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
+            'version')
+    }
+    for loc_id in location_and_ancestor_ids:
+        build_id = latest_enabled_releases.get(loc_id)
+        if build_id:
+            return get_app(domain, build_id)
+
+
+def expire_get_latest_enabled_app_release_cache(latest_enabled_app_release):
+    """
+    expire cache for the location and its descendants for the app corresponding to this enabled app release
+    why? : Latest enabled release for a location is dependent on restrictions added for
+    itself and its ancestors. Hence we expire the cache for location and its descendants for which the
+    latest enabled release would depend on this location
+    """
+    location = SQLLocation.active_objects.get(location_id=latest_enabled_app_release.location_id)
+    location_and_descendants = location.get_descendants(include_self=True)
+    for loc in location_and_descendants:
+        get_latest_enabled_app_release.clear(latest_enabled_app_release.domain, loc.location_id,
+                                             latest_enabled_app_release.app_id)
 
 
 @quickcache(['app_id'], timeout=24 * 60 * 60)
