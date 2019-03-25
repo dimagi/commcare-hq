@@ -12,8 +12,8 @@ from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
-def get_cas_reach_data(domain, now_date, config, show_test=False):
+@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
+def get_cas_reach_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -41,7 +41,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_launched_awcs'),
+            awcs=Sum('num_launched_awcs' if beta else 'num_awcs'),
             daily_attendance=Sum('daily_attendance_open')
         )
         if not show_test:
@@ -90,7 +90,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'color': 'green' if monthly_attendance_percent > 0 else 'red',
             'percent': monthly_attendance_percent,
             'value': get_value(awc_this_month_data, 'awc_num_open'),
-            'all': get_value(awc_this_month_data, 'awcs'),
+            'all': get_value(awc_this_month_data, 'awcs' if beta else 'all_awcs'),
             'format': 'div',
             'frequency': 'month',
         }
@@ -101,10 +101,16 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                 {
                     'label': _('AWCs Launched'),
                     'help_text': awcs_launched_help_text(),
-                    'percent': None,
+                    'color': None if beta else ('green' if percent_increase(
+                        'awcs',
+                        awc_this_month_data,
+                        awc_prev_month_data) > 0 else 'red'),
+                    'percent': None if beta else percent_increase(
+                        'awcs', awc_this_month_data, awc_prev_month_data
+                    ),
                     'value': get_value(awc_this_month_data, 'awcs'),
-                    'all': None,
-                    'format': 'number',
+                    'all': None if beta else get_value(awc_this_month_data, 'all_awcs'),
+                    'format': 'number' if beta else 'div',
                     'frequency': 'month',
                     'redirect': 'icds_cas_reach/awcs_covered'
                 },
