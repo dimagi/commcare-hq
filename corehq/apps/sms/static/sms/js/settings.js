@@ -3,6 +3,7 @@ hqDefine("sms/js/settings", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler_v4',
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function(
     $,
     ko,

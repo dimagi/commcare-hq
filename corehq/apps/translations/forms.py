@@ -100,8 +100,8 @@ class PullResourceForm(forms.Form):
                 tuple((project.slug, project) for project in projects)
             )
         self.helper.layout = crispy.Layout(
-            crispy.Field('transifex_project_slug', css_class="ko-select2"),
-            crispy.Field('target_lang', css_class="ko-select2"),
+            crispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
+            crispy.Field('target_lang', css_class="hqwebapp-select2"),
             'resource_slug',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -175,10 +175,10 @@ class AppTranslationsForm(forms.Form):
 
     def form_fields(self):
         return [
-            hqcrispy.Field('app_id', css_class="ko-select2"),
+            hqcrispy.Field('app_id', css_class="hqwebapp-select2"),
             hqcrispy.Field('version'),
             hqcrispy.Field('use_version_postfix'),
-            hqcrispy.Field('transifex_project_slug', css_class="ko-select2"),
+            hqcrispy.Field('transifex_project_slug', css_class="hqwebapp-select2"),
             hqcrispy.Field('action')
         ]
 
@@ -222,7 +222,7 @@ class CreateAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(CreateAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('source_lang', css_class="ko-select2"))
+        form_fields.append(hqcrispy.Field('source_lang', css_class="hqwebapp-select2"))
         return form_fields
 
 
@@ -235,7 +235,7 @@ class PushAppTranslationsForm(AppTranslationsForm):
 
     def form_fields(self):
         form_fields = super(PushAppTranslationsForm, self).form_fields()
-        form_fields.append(hqcrispy.Field('target_lang', css_class="ko-select2"))
+        form_fields.append(hqcrispy.Field('target_lang', css_class="hqwebapp-select2"))
         return form_fields
 
 
@@ -251,7 +251,7 @@ class PullAppTranslationsForm(AppTranslationsForm):
     def form_fields(self):
         form_fields = super(PullAppTranslationsForm, self).form_fields()
         form_fields.extend([
-            hqcrispy.Field('target_lang', css_class="ko-select2"),
+            hqcrispy.Field('target_lang', css_class="hqwebapp-select2"),
             hqcrispy.Field('lock_translations'),
             hqcrispy.Field('perform_translated_check'),
         ])
