@@ -97,6 +97,7 @@ class CustomDataEditor(object):
                     label=field.label,
                     required=field.is_required,
                     choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+                    widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
                 )
             else:
                 choice_field = forms.MultipleChoiceField(
