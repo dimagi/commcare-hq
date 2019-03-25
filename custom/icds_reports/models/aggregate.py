@@ -950,12 +950,11 @@ class AggregateComplementaryFeedingForms(models.Model):
     def aggregate(cls, state_id, month):
         helper = ComplementaryFormsAggregationHelper(state_id, month)
         drop_query, drop_params = helper.drop_table_query()
-        agg_queries = helper.aggregation_query()
+        agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
             cursor.execute(drop_query, drop_params)
-            for query, params in agg_queries:
-                cursor.execute(query, params)
+            cursor.execute(agg_query, agg_params)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
