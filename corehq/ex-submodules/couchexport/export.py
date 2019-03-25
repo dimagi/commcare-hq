@@ -444,54 +444,30 @@ class FormattedRow(object):
 
         ret = []
 
-        import types
         from itertools import chain, tee
 
-        print('(PV) wrap 1')
         for name, rows in tables:
-            print('(PV) wrap 2')
-            rows = list(rows)
-            print('(PV) wrap 3')
-            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
-                print('(PV) wrap 4')
-                soft_assert_type_text(rows[0])
-                # `rows` is actually just a single row, so wrap it
-                rows = [rows]
-            print('(PV) wrap 5')
-            ret.append(
-                (name, [cls(row) for row in rows])
-            )
-        print('(PV) wrap 6')
+            if isinstance(rows, chain):
+                generator_to_check, rows = tee(rows)
+                # generator_to_check = rows
+                # TODO what if empty generator
+                first_entry = generator_to_check.next()
+                if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
+                    soft_assert_type_text(first_entry)
+                    # `rows` is actually just a single row, so wrap it
+                    rows = [rows]
+                ret = chain(ret, [(name, [(cls(row) for row in rows)])])
+            else:
+
+                rows = list(rows)
+                if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
+                    soft_assert_type_text(rows[0])
+                    # `rows` is actually just a single row, so wrap it
+                    rows = [rows]
+                ret.append(
+                    (name, [cls(row) for row in rows])
+                )
         return ret
-
-
-
-        # ret = []
-        #
-        # import types
-        # from itertools import chain, tee
-        #
-        # for name, rows in tables:
-        #     if isinstance(rows, chain):
-        #         generator_to_check, rows = tee(rows)
-        #         # generator_to_check = rows
-        #         first_entry = generator_to_check.next()
-        #         if first_entry and (not hasattr(first_entry[0], '__iter__') or isinstance(first_entry[0], six.string_types)):
-        #             soft_assert_type_text(first_entry)
-        #             # `rows` is actually just a single row, so wrap it
-        #             rows = [rows]
-        #         ret = chain(ret, (name, [cls(row) for row in rows]))
-        #     else:
-        #
-        #         rows = list(rows)
-        #         if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
-        #             soft_assert_type_text(rows[0])
-        #             # `rows` is actually just a single row, so wrap it
-        #             rows = [rows]
-        #         ret.append(
-        #             (name, [cls(row) for row in rows])
-        #         )
-        # return ret
 
 
 def _format_tables(tables, id_label='id', separator='.', include_headers=True,
