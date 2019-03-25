@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
         confirm = input(
             """
-            Found {} in project space {} linked to project space {}. 
+            Found {} in project space {} linked to project space {}.
             Are you sure you want to un-link these apps? [y/n]
             """.format(linked_app.name, linked_domain, master_domain)
         )
