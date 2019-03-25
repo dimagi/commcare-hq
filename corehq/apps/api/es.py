@@ -19,7 +19,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new, report_shard_failures
+from corehq.elastic import ESError, get_es_new, report_and_fail_on_shard_failures
 from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
@@ -146,7 +146,7 @@ class ESView(View):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
-            report_shard_failures(es_results)
+            report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
@@ -332,7 +332,7 @@ class UserES(ESView):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
-            report_shard_failures(es_results)
+            report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
                 self.index, str(e), es_query)

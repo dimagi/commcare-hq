@@ -16,11 +16,11 @@
 			</instance>
 			<bind vellum:nodeset="#form/name" nodeset="/data/name" type="xsd:string" required="true()" />
 			<bind vellum:nodeset="#form/simprintsEnrol" nodeset="/data/simprintsEnrol" type="intent" required="true()" />
-			<bind vellum:nodeset="#form/simprintsId" nodeset="/data/simprintsId" required="true()" />
-			<bind vellum:nodeset="#form/rightIndex" nodeset="/data/rightIndex" required="true()" />
-			<bind vellum:nodeset="#form/rightThumb" nodeset="/data/rightThumb" required="true()" />
-			<bind vellum:nodeset="#form/leftIndex" nodeset="/data/leftIndex" required="true()" />
-			<bind vellum:nodeset="#form/leftThumb" nodeset="/data/leftThumb" required="true()" />
+			<bind vellum:nodeset="#form/simprintsId" nodeset="/data/simprintsId" />
+			<bind vellum:nodeset="#form/rightIndex" nodeset="/data/rightIndex" />
+			<bind vellum:nodeset="#form/rightThumb" nodeset="/data/rightThumb" />
+			<bind vellum:nodeset="#form/leftIndex" nodeset="/data/leftIndex" />
+			<bind vellum:nodeset="#form/leftThumb" nodeset="/data/leftThumb" />
 			<itext>
 				<translation lang="{{ lang }}" default="">
                     <text id="name-label">
