@@ -200,27 +200,7 @@ class UnifiedBeneficiaryReportAPI(View):
         if beneficiary_type == 'child':
             data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column)
         elif beneficiary_type == 'eligible_couple':
-            data = (
-                Woman.objects.annotate(
-                    age=ExtractYear(Func(F('dob'), function='age')),
-                ).filter(
-                    domain=request.domain,
-                    age__range=(15, 49),
-                    marital_status='married',
-                    **location_filters
-                ).exclude(migration_status='yes').extra(
-                    select={
-                        'currentFamilyPlanningMethod': '\'N/A\'',
-                        'adoptionDateOfFamilyPlaning': '\'N/A\'',
-                        'id': 'person_case_id',
-                    },
-                    where=["NOT daterange(%s, %s) && any(pregnant_ranges)"],
-                    params=[selected_date, selected_date + relativedelta(months=1)]
-                ).values(
-                    'id', 'name', 'age',
-                    'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning'
-                ).order_by(sort_column)
-            )
+            data = EligibleCoupleQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
         elif beneficiary_type == 'pregnant_women':
             data = (
                 Woman.objects.annotate(

@@ -23,7 +23,7 @@ class ChildQueryHelper(object):
         self.date_ = date_
 
     @classmethod
-    def list(self, domain, date_, location_filters, sort_column):
+    def list(cls, domain, date_, location_filters, sort_column):
         return Child.objects.annotate(
             age=ExtractYear(Func(F('dob'), function='age')),
         ).filter(
@@ -436,6 +436,30 @@ class EligibleCoupleQueryHelper(object):
         self.domain = domain
         self.person_case_id = person_case_id
         self.month_end = month_end
+
+    @classmethod
+    def list(cls, domain, date_, location_filters, sort_column):
+        return (
+            Woman.objects.annotate(
+                age=ExtractYear(Func(F('dob'), function='age')),
+            ).filter(
+                domain=domain,
+                dob__range=(date_ - relativedelta(years=49), date_ - relativedelta(years=15)),
+                marital_status='married',
+                **location_filters
+            ).exclude(migration_status='yes').extra(
+                select={
+                    'currentFamilyPlanningMethod': '\'N/A\'',
+                    'adoptionDateOfFamilyPlaning': '\'N/A\'',
+                    'id': 'person_case_id',
+                },
+                where=["pregnant_ranges IS NULL OR NOT daterange(%s, %s) && any(pregnant_ranges)"],
+                params=[date_, date_ + relativedelta(months=1)]
+            ).values(
+                'id', 'name', 'age',
+                'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning'
+            ).order_by(sort_column)
+        )
 
     def eligible_couple_details(self):
         woman = Woman.objects.get(domain=self.domain, person_case_id=self.person_case_id)

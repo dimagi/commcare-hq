@@ -256,7 +256,6 @@ class TestChildBeneficiarySections(TestCase):
         )
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
 class TestChildBeneficiaryList(TestCase):
     domain = 'reach-test'
 

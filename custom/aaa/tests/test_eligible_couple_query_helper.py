@@ -199,3 +199,50 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
                 'previousFamilyPlanningMethod': 'N/A',
                 'preferredFamilyPlaningMethod': 'N/A',
             })
+
+
+class TestEligibleCoupleBeneficiaryList(TestCase):
+    domain = 'reach-test'
+
+    def tearDown(self):
+        Woman.objects.all().delete()
+        super(TestEligibleCoupleBeneficiaryList, self).tearDown()
+
+    def _create_woman(self, dob, marital_status='married', migration_status=None, pregnant_ranges=None):
+        Woman.objects.create(
+            person_case_id='_id',
+            domain=self.domain,
+            dob=dob,
+            opened_on='2019-01-01',
+            migration_status=migration_status,
+            marital_status=marital_status,
+            pregnant_ranges=pregnant_ranges,
+        )
+
+    def test_fourteen_year_old(self):
+        self._create_woman('2005-01-01')
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_fifteen_year_old(self):
+        self._create_woman('2004-01-01')
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+
+    def test_49_year_old(self):
+        self._create_woman('1970-12-01')
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+
+    def test_50_year_old(self):
+        self._create_woman('1970-1-1')
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_migrated_49_year_old(self):
+        self._create_woman('1970-12-01', migration_status='yes')
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_unmarried_49_year_old(self):
+        self._create_woman('1970-12-01', marital_status=None)
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_previously_pregnant(self):
+        self._create_woman('1990-12-01', pregnant_ranges=[['2010-01-01', '2010-10-01']])
+        self.assertEqual(EligibleCoupleQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
