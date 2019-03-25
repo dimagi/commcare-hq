@@ -84,7 +84,11 @@ class TestChildBeneficiarySections(TestCase):
                 "child": {
                     "item": [
                         {'child_health_case_id': 'child_health_case_id', 'skin_to_skin': 'yes', 'wrapped': 'yes'},
-                        {'child_health_case_id': 'child_health_case_id', 'skin_to_skin': 'yes', 'breastfeeding_well': 'yes'},
+                        {
+                            'child_health_case_id': 'child_health_case_id',
+                            'skin_to_skin': 'yes',
+                            'breastfeeding_well': 'yes'
+                        },
                     ],
                 },
                 "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
