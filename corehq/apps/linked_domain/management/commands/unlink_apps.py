@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.models import Application
+from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 from six.moves import input
 
 
@@ -46,6 +47,7 @@ class Command(BaseCommand):
             return
 
         print('Unlinking apps')
+        domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
         raw_linked_app_doc = Application.get_db().get(linked_app.id)
         del raw_linked_app_doc['master']
         del raw_linked_app_doc['linked_app_translations']
@@ -53,4 +55,12 @@ class Command(BaseCommand):
         del raw_linked_app_doc['uses_master_app_form_ids']
         raw_linked_app_doc['doc_type'] = 'Application'
         Application.get_db().save_doc(raw_linked_app_doc)
+
+        for history in DomainLinkHistory.objects.filter(link=domain_link, hidden=False):
+            if history.model_detail['app_id'] == linked_app_id:
+                history.hidden = True
+                history.save()
+        if len(DomainLinkHistory.objects.filter(link=domain_link, hidden=False)) == 0:
+            domain_link.deleted = True
+            domain_link.save()
         print('Operation completed')
