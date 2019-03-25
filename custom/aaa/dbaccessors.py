@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from collections import OrderedDict
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
@@ -15,9 +16,10 @@ from custom.aaa.models import (
 
 
 class ChildQueryHelper(object):
-    def __init__(self, domain, person_case_id):
+    def __init__(self, domain, person_case_id, date_):
         self.domain = domain
         self.person_case_id = person_case_id
+        self.date_ = date_
 
     def infant_details(self):
         extra_select = {
@@ -116,7 +118,7 @@ class ChildQueryHelper(object):
             ]
 
     def growth_monitoring(self):
-        return {
+        ret = {
             'currentWeight': 'N/A',
             'nrcReferred': 'N/A',
             'growthMonitoringStatus': 'N/A',
@@ -129,55 +131,48 @@ class ChildQueryHelper(object):
             'wasting': 'N/A',
             'wastingStatus': 'N/A',
         }
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        history_values = ChildHistory.before_date(child.child_health_case_id, self.date_)
+
+        return ret
 
     def weight_for_age_chart(self):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        history_values = ChildHistory.before_date(child.child_health_case_id, self.date_)
         points = []
-        try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-        except ChildHistory.DoesNotExist:
-            pass
-        else:
-            for recorded_weight in child_history.weight_child_history:
-                month = relativedelta(recorded_weight[0], child.dob).months
-                points.append({'x': month, 'y': recorded_weight[1]})
+
+        for date_, weight in history_values['weight_child_history']:
+            delta = relativedelta(date_, child.dob)
+            months = delta.years * 12 + delta.months
+            points.append({'x': months, 'y': weight})
 
         return points
 
     def height_for_age_chart(self):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        history_values = ChildHistory.before_date(child.child_health_case_id, self.date_)
         points = []
-        try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-        except ChildHistory.DoesNotExist:
-            pass
-        else:
-            for recorded_height in child_history.height_child_history:
-                month = relativedelta(recorded_height[0], child.dob).months
-                points.append({'x': month, 'y': recorded_height[1]})
+
+        for date_, height in history_values['height_child_history']:
+            delta = relativedelta(date_, child.dob)
+            months = delta.years * 12 + delta.months
+            points.append({'x': months, 'y': height})
 
         return points
 
     def weight_for_height_chart(self):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
-        points = {}
-        try:
-            child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-        except ChildHistory.DoesNotExist:
-            pass
-        else:
-            for recorded_weight in child_history.weight_child_history:
-                month = relativedelta(recorded_weight[0], child.dob).months
-                points.update({month: dict(x=recorded_weight[1])})
-            for recorded_height in child_history.height_child_history:
-                month = relativedelta(recorded_height[0], child.dob).months
-                if month in points:
-                    points[month].update(dict(y=recorded_height[1]))
-                else:
-                    points.update({month: dict(y=recorded_height[1])})
+        history_values = ChildHistory.before_date(child.child_health_case_id, self.date_)
+        points_by_date = OrderedDict()
 
-        return [point for point in points.values() if 'x' in point and 'y' in point]
+        for date_, weight in history_values['weight_child_history']:
+            points_by_date[date_] = {'y': weight}
 
+        for date_, height in history_values['height_child_history']:
+            if date_ in points_by_date:
+                points_by_date[date_]['x'] = height
+
+        return points_by_date.values()
 
 class PregnantWomanQueryHelper(object):
     def __init__(self, domain, person_case_id, date_):

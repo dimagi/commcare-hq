@@ -431,7 +431,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
             )
 
         if section == 'child':
-            helper = ChildQueryHelper(request.domain, beneficiary_id)
+            helper = ChildQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'infant_details':
                 data = helper.infant_details()
             elif sub_section == 'child_postnatal_care_details':

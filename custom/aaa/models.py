@@ -943,6 +943,25 @@ class ChildHistory(models.Model):
             cls.agg_from_growth_monitoring_forms_ucr,
         ]
 
+    @classmethod
+    def before_date(cls, child_health_case_id, date_):
+        ret = {
+            'weight_child_history': [],
+            'height_child_history': [],
+            'zscore_grading_wfa_history': [],
+            'zscore_grading_hfa_history': [],
+            'zscore_grading_wfh_history': [],
+        }
+
+        child_history = ChildHistory.objects.get(child_health_case_id=child_health_case_id)
+        for key in ret:
+            for history_date, history_value in getattr(child_history, key):
+                day = force_to_date(history_date)
+                if day < date_:
+                    ret[key].append((day, history_value))
+
+        return ret
+
 
 class AggLocation(models.Model):
     """Abstract base model for aggregate location tables.
