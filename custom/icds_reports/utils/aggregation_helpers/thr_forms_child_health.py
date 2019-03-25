@@ -8,12 +8,16 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 
 class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-dashboard_thr_forms'
-    aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
-    aggregate_child_table_prefix = 'icds_db_child_thr_form_'
+    tablename = AGG_CHILD_HEALTH_THR_TABLE
+
+    def drop_table_query(self):
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
@@ -39,9 +43,9 @@ class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 child_health_case_id IS NOT NULL
-          WINDOW w AS (PARTITION BY child_health_case_id)
+          WINDOW w AS (PARTITION BY supervisor_id, child_health_case_id)
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=self.tablename
         ), query_params

@@ -10,7 +10,6 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
     tablename = AGG_CCS_RECORD_CF_TABLE
-    aggregate_child_table_prefix = 'icds_db_child_ccs_cf_form_'
 
     def drop_table_query(self):
         return (
