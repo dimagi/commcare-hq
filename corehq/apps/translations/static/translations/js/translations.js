@@ -17,7 +17,7 @@ hqDefine("translations/js/translations", function () {
                 var Translation = function (key, value) {
                     var that = this;
                     this.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
-                    var options = value ? [{label: value, value: value}] : []
+                    var options = value ? [{label: value, value: value}] : [];
                     this.value = hqImport('hqwebapp/js/ui-element').select(options);
                     if (value) {
                         this.value.val(value);
@@ -71,7 +71,7 @@ hqDefine("translations/js/translations", function () {
                         ajax: {
                             quietMillis: 100,
                             url: suggestionURL,
-                            data: function (params) {
+                            data: function () {
                                 return {
                                     lang: translation_ui.lang,
                                     key: that.key.val(),

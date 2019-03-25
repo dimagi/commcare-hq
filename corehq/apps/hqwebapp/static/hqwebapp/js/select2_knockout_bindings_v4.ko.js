@@ -110,7 +110,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v4.ko", [
 
             // Update the selected item
             $el.val(newValue);
-            _.delay(function() {
+            _.delay(function () {
                 $el.trigger("change.select2");  // get select2 to display value
             });
         };

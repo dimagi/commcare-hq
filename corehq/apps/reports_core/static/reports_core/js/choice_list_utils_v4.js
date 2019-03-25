@@ -12,7 +12,7 @@ hqDefine('reports_core/js/choice_list_utils_v4', ['underscore'], function (_) {
     module.formatValueForSelect2 = function (val) {
         return {'id': val.value, 'text': val.display || ''};
     };
-    module.formatPageForSelect2 = function (data, params) {
+    module.formatPageForSelect2 = function (data) {
         // parse the results into the format expected by Select2.
         var formattedData = _.map(data, module.formatValueForSelect2);
         return {

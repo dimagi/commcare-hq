@@ -69,7 +69,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
                     value = option.value === undefined ? option : option.value;
                 $('<option/>').text(label).val(value).appendTo(this.$edit_view);
             }
-        }
+        },
     };
 
     module.new = function (options) {
