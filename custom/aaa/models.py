@@ -736,6 +736,7 @@ class Child(LocationDenormalizedModel):
             household_case_id = person.household_case_id,
             dob = person.dob,
             sex = person.sex,
+            name = person.name,
             migration_status = person.migration_status,
             has_aadhar_number = person.has_aadhar_number,
             contact_phone_number = person.contact_phone_number
@@ -745,6 +746,7 @@ class Child(LocationDenormalizedModel):
                 doc_id,
                 dob,
                 sex,
+                name,
                 migration_status,
                 aadhar_number IS NOT NULL and aadhar_number != '' AS has_aadhar_number,
                 contact_phone_number
