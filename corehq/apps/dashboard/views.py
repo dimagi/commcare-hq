@@ -119,7 +119,6 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     'help_text': tile.help_text,
                 }
                 if tile.paginator_class:
-                    items_per_page = 5
                     tile_context.update({
                         'has_item_list': True,
                     })
