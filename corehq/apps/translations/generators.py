@@ -16,8 +16,8 @@ from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
-HQ_MODULE_SHEET_NAME = re.compile(r'^module(\d+)$')
-HQ_FORM_SHEET_NAME = re.compile(r'^module(\d+)_form(\d+)$')
+HQ_MODULE_SHEET_NAME = re.compile(r'^menu(\d+)$')
+HQ_FORM_SHEET_NAME = re.compile(r'^menu(\d+)_form(\d+)$')
 POFileInfo = namedtuple("POFileInfo", "name path")
 SKIP_TRANSFEX_STRING = "SKIP TRANSIFEX"
 
@@ -99,16 +99,16 @@ class AppTranslationsGenerator(object):
 
     def _translation_data(self, app):
         # get the translations data
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_rows
+        from corehq.apps.translations.app_translations.download import get_bulk_app_sheets_by_name
         # simply the rows of data per sheet name
-        rows = get_bulk_app_sheet_rows(
+        rows = get_bulk_app_sheets_by_name(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
             exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
         )
 
         # get the translation data headers
-        from corehq.apps.translations.app_translations import get_bulk_app_sheet_headers
+        from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
         headers = get_bulk_app_sheet_headers(
             app,
             exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
@@ -161,10 +161,10 @@ class AppTranslationsGenerator(object):
 
     def _update_sheet_name_with_unique_id(self, sheet_name):
         """
-        update sheet name with HQ format like module0 or module1_form1 to
+        update sheet name with HQ format like menu0 or menu1_form1 to
         a name with unique id of module or form instead
 
-        :param sheet_name: name like module0 or module1_form1
+        :param sheet_name: name like menu0 or menu1_form1
         :return: name like module_moduleUniqueID or form_formUniqueId
         """
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
@@ -185,7 +185,7 @@ class AppTranslationsGenerator(object):
         receive sheet name in HQ format and return the name that should be used
         to upload on transifex along with module/form unique ID and version postfix
 
-        :param sheet_name: name like module0 or module1_form1
+        :param sheet_name: name like menu0 or menu1_form1
         :return: name like module_moduleUniqueID or form_formUniqueId
         """
         sheet_name = self._update_sheet_name_with_unique_id(sheet_name)
@@ -257,7 +257,7 @@ class AppTranslationsGenerator(object):
                 return ':'.join([_row[type_index], _row[sheet_name_index], _row[unique_id_index]])
         else:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
-            if type_and_id.type == "Module":
+            if type_and_id.type == "Menu":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
                 rows = self._filter_invalid_rows_for_module(rows, type_and_id.id, case_property_index,
@@ -274,7 +274,7 @@ class AppTranslationsGenerator(object):
 
                 def occurrence(_row):
                     return _row[label_index]
-        is_module = type_and_id and type_and_id.type == "Module"
+        is_module = type_and_id and type_and_id.type == "Menu"
         for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
             translation = row[source_lang_index]
