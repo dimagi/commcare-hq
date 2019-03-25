@@ -22,7 +22,6 @@ hqDefine("hqwebapp/js/downgrade_modal", [
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
-        console.log(slug);
         if ($modal.length && ! $.cookie(cookieName(slug, domain))) {
             // Show modal on page load
             $modal.modal({
@@ -41,7 +40,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
 
     $(function () {
         $("#overdue-invoice-link").on('click', function () {
-            kissmetrics.track.event('[Overdue Banner] Clicked link');
+            kissmetrics.track.event('[Overdue Modal] Clicked link');
         });
     });
 });
