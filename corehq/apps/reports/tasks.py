@@ -287,13 +287,16 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
         if getattr(er, 'smtp_code', None) == LARGE_FILE_SIZE_ERROR_CODE or type(er) == ESError:
             # If the smtp server rejects the email because of its large size.
             # Then sends the report download link in the email.
+            print("(PV) tasks 1")
             report_state = {
                 'request': request_data,
                 'request_params': json_request(request_data['GET']),
                 'domain': domain,
                 'context': {},
             }
+            print("(PV) tasks 2")
             export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
+            print("(PV) tasks 3")
         else:
             self.retry(exc=er)
 
@@ -306,8 +309,9 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None):
 
     # need to set request
     setattr(report.request, 'REQUEST', {})
-
+    print("(PV) tasks 1")
     file = report.excel_response
+    print("(PV) tasks 2")
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
     hash_id = _store_excel_in_redis(report_class, file)
 

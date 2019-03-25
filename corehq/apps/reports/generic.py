@@ -649,8 +649,13 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
+        print("(PV) Generic 1")
         file = io.BytesIO()
-        export_from_tables(self.export_table, file, self.export_format)
+        print("(PV) Generic 2")
+        export_table = self.export_table
+        print("(PV) Generic 3")
+        export_from_tables(export_table, file, self.export_format)
+        print("(PV) Generic 4")
         return file
 
     @property
