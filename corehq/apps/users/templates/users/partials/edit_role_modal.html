@@ -158,7 +158,7 @@
                             <div class="form-check" data-bind="visible: permissions.edit_commcare_users() && permissions.edit_groups()">
                                 <input type="checkbox" checked="checked" disabled="disabled"/>
                                 <label>
-                                    {% trans "Allow adding mobile workers to group." %}
+                                    {% trans "Allow changing group membership." %}
                                 </label>
                             </div>{# end PLACEHOLDER #}
 
@@ -169,7 +169,7 @@
                                        data-bind="checked: permissions.edit_users_in_groups,
                                                   disable: !$root.allowEdit" />
                                 <label for="edit-users-groups-checkbox">
-                                    {% trans "Allow adding mobile workers to group." %}
+                                    {% trans "Allow changing group membership." %}
                                 </label>
                             </div>{# end REAL #}
 
@@ -177,7 +177,7 @@
                             <div class="form-check" data-bind="visible: !permissions.edit_groups()">
                                 <input type="checkbox" disabled="disabled"/>
                                 <label>
-                                    {% trans "Allow adding mobile workers to group." %}
+                                    {% trans "Allow changing group membership." %}
                                 </label>
                             </div>{# end PLACEHOLDER #}
 
@@ -223,7 +223,7 @@
                             <div class="form-check" data-bind="visible: permissions.edit_commcare_users() && permissions.edit_locations()">
                                 <input type="checkbox" checked="checked" disabled="disabled"/>
                                 <label>
-                                    {% trans "Allow adding mobile workers to location." %}
+                                    {% trans "Allow changing workers at a location." %}
                                 </label>
                             </div>{# end PLACEHOLDER #}
 
@@ -234,7 +234,7 @@
                                        data-bind="checked: permissions.edit_users_in_locations,
                                                   disable: !$root.allowEdit" />
                                 <label for="edit-users-locations-checkbox">
-                                    {% trans "Allow adding mobile workers to location." %}
+                                    {% trans "Allow changing workers at a location." %}
                                 </label>
                             </div>{# end REAL #}
 
@@ -242,7 +242,7 @@
                             <div class="form-check" data-bind="visible: !permissions.edit_locations()">
                                 <input type="checkbox" disabled="disabled"/>
                                 <label>
-                                    {% trans "Allow adding mobile workers to location." %}
+                                    {% trans "Allow changing workers at a location." %}
                                 </label>
                             </div>{# end PLACEHOLDER #}
 
