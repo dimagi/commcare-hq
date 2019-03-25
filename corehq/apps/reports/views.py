@@ -3,12 +3,9 @@ from collections import OrderedDict
 import copy
 from datetime import datetime, timedelta
 from functools import cmp_to_key, partial
-import itertools
 import json
 import csv342 as csv
 
-from corehq.util.download import get_download_response
-from dimagi.utils.couch import CriticalSection
 from corehq.apps.reports.tasks import send_email_report
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
@@ -56,7 +53,6 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import (
     require_GET,
     require_http_methods,
@@ -82,14 +78,12 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import UserRequestedRebuild
 
 from couchexport.export import Format, export_from_tables
-from couchexport.models import SavedBasicExport
 from couchexport.shortcuts import export_response
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
 from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
@@ -106,7 +100,6 @@ from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touch
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    api_auth,
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.export.models import CaseExportDataSchema
@@ -142,14 +135,12 @@ from .forms import SavedReportConfigForm
 from .models import (
     ReportConfig,
     ReportNotification,
-    HQGroupExportConfiguration
 )
 
 from .standard import inspect, ProjectReport
 from .standard.cases.basic import CaseListReport
 from .tasks import (
     build_form_multimedia_zip,
-    rebuild_export_async,
     send_delayed_report,
 )
 from corehq.form_processor.utils.xform import resave_form
@@ -356,55 +347,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 'section_name': self.section_name,
             }
         }
-
-
-@csrf_exempt
-@api_auth
-@require_form_export_permission
-@require_GET
-def hq_download_saved_export(req, domain, export_id):
-    with CriticalSection(['saved-export-{}'.format(export_id)]):
-        saved_export = SavedBasicExport.get(export_id)
-        return _download_saved_export(req, domain, saved_export)
-
-
-@csrf_exempt
-@api_auth
-@require_form_deid_export_permission
-@require_GET
-def hq_deid_download_saved_export(req, domain, export_id):
-    with CriticalSection(['saved-export-{}'.format(export_id)]):
-        saved_export = SavedBasicExport.get(export_id)
-        if not saved_export.is_safe:
-            raise Http404()
-        return _download_saved_export(req, domain, saved_export)
-
-
-def _download_saved_export(req, domain, saved_export):
-    if domain != saved_export.configuration.index[0]:
-        raise Http404()
-
-    if should_update_export(saved_export.last_accessed):
-        group_id = req.GET.get('group_export_id')
-        if group_id:
-            try:
-                group_config = HQGroupExportConfiguration.get(group_id)
-                assert domain == group_config.domain
-                all_config_indices = [schema.index for schema in group_config.all_configs]
-                list_index = all_config_indices.index(saved_export.configuration.index)
-                schema = next(itertools.islice(group_config.all_export_schemas,
-                                               list_index,
-                                               list_index+1))
-                rebuild_export_async.delay(saved_export.configuration, schema)
-            except Exception:
-                notify_exception(req, 'Failed to rebuild export during download')
-
-    saved_export.last_accessed = datetime.utcnow()
-    saved_export.save()
-
-    payload = saved_export.get_payload(stream=True)
-    format = Format.from_format(saved_export.configuration.format)
-    return get_download_response(payload, saved_export.size, format, saved_export.configuration.filename, req)
 
 
 def should_update_export(last_accessed):

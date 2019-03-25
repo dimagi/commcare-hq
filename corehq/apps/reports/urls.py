@@ -34,7 +34,6 @@ from .views import (
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
-    ReportNotificationUnsubscribeView,
     case_forms,
     case_property_changes,
     case_property_names,
@@ -55,8 +54,6 @@ from .views import (
     resave_form_view,
     unarchive_form,
     project_health_user_details,
-    hq_download_saved_export,
-    hq_deid_download_saved_export,
     export_report,
     email_report,
     delete_config,
@@ -123,14 +120,6 @@ urlpatterns = [
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
         name='project_health_user_details'),
-
-    # Download Exports
-    # todo should eventually be moved to corehq.apps.export
-    # saved
-    url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export,
-        name="hq_download_saved_export"),
-    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
-        name="hq_deid_download_saved_export"),
 
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),
