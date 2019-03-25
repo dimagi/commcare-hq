@@ -56,6 +56,7 @@ def get_sql_operations():
         'aggregatechildhealththrforms',
         'aggregatecomplementaryfeedingforms',
         'aggregategrowthmonitoringforms',
+        'aggregateawcinfrastructureforms',
         'dailyattendance',
     ]
 
