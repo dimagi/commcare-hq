@@ -26,7 +26,6 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
         %(current_month_start)s::date AS month,
-        %(state_id)s AS state_id,
         supervisor_id AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
@@ -98,9 +97,9 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
             AND ucr.month = prev_month.month + INTERVAL '1 month'
-            AND ucr.state_id = prev_month.state_id
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
             AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+            AND prev_month.state_id = %(state_id)s
         )
         """.format(
             tablename=self.tablename,
