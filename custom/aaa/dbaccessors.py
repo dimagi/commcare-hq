@@ -4,7 +4,8 @@ from collections import OrderedDict
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import Case, F, Func, IntegerField, Sum, When
+from django.db.models.functions import ExtractYear
 
 from custom.aaa.models import (
     CcsRecord,
@@ -20,6 +21,25 @@ class ChildQueryHelper(object):
         self.domain = domain
         self.person_case_id = person_case_id
         self.date_ = date_
+
+    @classmethod
+    def list(self, domain, date_, location_filters, sort_column):
+        return Child.objects.annotate(
+            age=ExtractYear(Func(F('dob'), function='age')),
+        ).filter(
+            domain=domain,
+            dob__range=(date_ - relativedelta(years=5), date_),
+            **location_filters
+        ).extra(
+            select={
+                'lastImmunizationType': 'last_immunization_type',
+                'lastImmunizationDate': 'last_immunization_date',
+                'gender': 'sex',
+                'id': 'person_case_id'
+            }
+        ).values(
+            'id', 'name', 'age', 'gender', 'lastImmunizationType', 'lastImmunizationDate'
+        ).order_by(sort_column)
 
     def infant_details(self):
         extra_select = {

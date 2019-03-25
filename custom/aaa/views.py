@@ -182,6 +182,7 @@ class UnifiedBeneficiaryReportAPI(View):
         selected_month = int(self.request.POST.get('selectedMonth'))
         selected_year = int(self.request.POST.get('selectedYear'))
         selected_date = date(selected_year, selected_month, 1)
+        next_month_start = selected_date + relativedelta(months=1)
         selected_location = self.request.POST.get('selectedLocation')
         selected_ministry = self.request.POST.get('selectedMinistry')
         beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
@@ -197,25 +198,7 @@ class UnifiedBeneficiaryReportAPI(View):
             sort_column = '-' + sort_column
         data = []
         if beneficiary_type == 'child':
-            data = (
-                Child.objects.annotate(
-                    age=ExtractYear(Func(F('dob'), function='age')),
-                ).filter(
-                    domain=request.domain,
-                    age__range=(0, 5),
-                    **location_filters
-                ).extra(
-                    select={
-                        'lastImmunizationType': '\'N/A\'',
-                        'lastImmunizationDate': '\'N/A\'',
-                        'gender': 'sex',
-                        'id': 'person_case_id'
-                    }
-                ).values(
-                    'id', 'name', 'age', 'gender',
-                    'lastImmunizationType', 'lastImmunizationDate'
-                ).order_by(sort_column)
-            )
+            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column)
         elif beneficiary_type == 'eligible_couple':
             data = (
                 Woman.objects.annotate(

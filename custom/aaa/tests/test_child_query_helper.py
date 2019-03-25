@@ -254,3 +254,31 @@ class TestChildBeneficiarySections(TestCase):
             self._helper.weight_for_height_chart(),
             [{'x': '72', 'y': '8'}, {'x': '87', 'y': '10'}]
         )
+
+
+@override_settings(SERVER_ENVIRONMENT='icds')
+class TestChildBeneficiaryList(TestCase):
+    domain = 'reach-test'
+
+    def tearDown(self):
+        Child.objects.all().delete()
+        super(TestChildBeneficiaryList, self).tearDown()
+
+    def _create_child(self, dob):
+        Child.objects.create(child_health_case_id='_id', domain=self.domain, dob=dob, opened_on='2019-01-01')
+
+    def test_six_year_old(self):
+        self._create_child('2013-01-01')
+        self.assertEqual(ChildQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_five_year_old(self):
+        self._create_child('2014-12-01')
+        self.assertEqual(ChildQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
+
+    def test_future_child(self):
+        self._create_child('2019-12-01')
+        self.assertEqual(ChildQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 0)
+
+    def test_newborn(self):
+        self._create_child(date(2019, 2, 28))
+        self.assertEqual(ChildQueryHelper.list(self.domain, date(2019, 3, 1), {}, 'id').count(), 1)
