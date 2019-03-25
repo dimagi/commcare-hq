@@ -13,7 +13,7 @@ class TaskStatus(jsonobject.StrictJsonObject):
     result = jsonobject.ObjectProperty(lambda: TaskStatusResult)
 
     def is_finished(self):
-        return self.state not in (STATES.missing, STATES.started)
+        return self.state in (STATES.success, STATES.failed)
 
 
 class TaskStatusProgress(jsonobject.StrictJsonObject):

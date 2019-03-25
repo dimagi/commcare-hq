@@ -93,7 +93,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
 
     function renderHeaderTooltip(header, tooltipContent) {
-        return '<i class="fa fa-info-circle headerTooplip" style="float: right;" ><div class="headerTooplipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
+        return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
     }
     function renderNumLaunchedAwcsTooltip() {
         return renderHeaderTooltip('Number of AWC', 'Total Number of Anganwadi Centers launched in the selected location.');
