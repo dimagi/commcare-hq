@@ -1812,6 +1812,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         )
         user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
         user_generator = (util._report_user_dict(user) for user in user_query_generator)
+        total_row = []
         for users in chunked(user_generator, 10000):
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
