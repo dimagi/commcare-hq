@@ -21,7 +21,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, AGG_GROWTH_MONITORING_TABLE
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -180,7 +180,8 @@ def setUpModule():
         # move to migrations
         distribute = [
             (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
-            (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id')
+            (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
+            (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
         ]
         for table, col in distribute:
             with engine.begin() as conn:

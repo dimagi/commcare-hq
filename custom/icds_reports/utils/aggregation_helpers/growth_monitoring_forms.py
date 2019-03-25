@@ -2,16 +2,20 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.util import get_table_name
+
 from custom.icds_reports.const import AGG_GROWTH_MONITORING_TABLE
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
 
 
 class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
-    aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
-    aggregate_child_table_prefix = 'icds_db_gm_form_'
+    tablename = AGG_GROWTH_MONITORING_TABLE
+
+    def drop_table_query(self):
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -24,7 +28,8 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         return """
             SELECT
                 DISTINCT child_health_case_id AS case_id,
-                LAST_VALUE(supervisor_id) OVER weight_child AS supervisor_id,
+                supervisor_id AS supervisor_id,
+                %(current_month_start)s AS month,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
                 CASE
                     WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
@@ -72,37 +77,37 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
                 AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
             WINDOW
                 weight_child AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN weight_child IS NULL THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
                 height_child AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN height_child IS NULL THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
                 zscore_grading_wfa AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_wfa = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
                 zscore_grading_hfa AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_hfa = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
                 zscore_grading_wfh AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_wfh = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
                 muac_grading AS (
-                    PARTITION BY child_health_case_id
+                    PARTITION BY supervisor_id, child_health_case_id
                     ORDER BY
                         CASE WHEN muac_grading = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -115,12 +120,11 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
-        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
+            "previous_month": month_formatter(month - relativedelta(months=1)),
             "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
@@ -165,11 +169,13 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.muac_grading, prev_month.muac_grading) AS muac_grading,
             GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded) AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{previous_month_tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id
+          FULL OUTER JOIN "{tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
         )
         """.format(
             ucr_table_query=ucr_query,
-            previous_month_tablename=previous_month_tablename,
-            tablename=tablename
+            tablename=self.tablename
         ), query_params
