@@ -120,6 +120,7 @@ class DomainLinkHistory(models.Model):
     model = models.CharField(max_length=128, choices=LINKED_MODELS, null=False)
     model_detail = JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
+    hidden = models.BooleanField(default=False)
 
     @property
     def wrapped_detail(self):
