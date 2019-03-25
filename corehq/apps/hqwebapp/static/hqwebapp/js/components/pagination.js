@@ -38,9 +38,18 @@ hqDefine('hqwebapp/js/components/pagination', [
             });
 
             self.slug = params.slug;
-            self.perPageCookieName = 'ko-pagination-' + self.slug;
+            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);
-            self.perPage($.cookie(self.perPageCookieName) || self.perPage());
+            if (!self.inlinePageListOnly) {
+                self.perPageCookieName = 'ko-pagination-' + self.slug;
+                self.perPage($.cookie(self.perPageCookieName) || self.perPage());
+                self.perPage.subscribe(function (newValue) {
+                    self.goToPage(1);
+                    if (self.slug) {
+                        $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
+                    }
+                });
+            }
 
             self.perPageOptionsText = function (num) {
                 return _.template(gettext('<%= num %> per page'))({ num: num });
@@ -50,14 +59,6 @@ hqDefine('hqwebapp/js/components/pagination', [
                 return Math.ceil(self.totalItems() / self.perPage());
             });
 
-            self.perPage.subscribe(function (newValue) {
-                self.goToPage(1);
-                if (self.slug) {
-                    $.cookie(self.perPageCookieName, newValue, { expires: 365, path: '/' });
-                }
-            });
-
-            self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.maxPagesShown = params.maxPagesShown || 9;
             self.showSpinner = params.showSpinner || ko.observable(false);
 

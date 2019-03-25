@@ -1,0 +1,147 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+
+<!-- ko if: errors.length -->
+<div class="alert alert-danger">
+    <i class="fa fa-exclamation-circle"></i>
+    {% blocktrans %}
+        Your app's forms contain errors. Case and form information below may be inaccurate until you fix the issues.
+    {% endblocktrans %}
+</div>
+<!-- /ko -->
+
+<!-- ko foreach: errors -->
+<div class="alert alert-danger">
+    <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
+    <span data-bind="html: $root.moduleFormReference(id)"></span>
+    <br/>
+    <span data-bind="text: error.details"></span>
+</div>
+<!-- /ko -->
+
+<ul class="fa-ul" data-bind="foreach: modules">
+    <li data-bind="visible: isVisible">
+        <h4>
+            <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
+                <i data-bind="attr: { 'class': icon }"></i>
+                <span data-bind="text: $root.translate(name)"></span>
+            </a>
+            <div data-bind="if: $root.readOnly">
+                <i data-bind="attr: { 'class': icon }"></i>
+                <span data-bind="text: $root.translate(name)"></span>
+            </div>
+            <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
+        </h4>
+        <!-- ko if: module_filter -->
+        <ul class="fa-ul" data-bind="visible: $root.showRelevance">
+            <li>
+                <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                <!-- ko text: module_filter --><!-- /ko -->
+            </li>
+        </ul>
+        <!-- /ko -->
+        <ul class="fa-ul" data-bind="foreach: forms">
+            <li data-bind="visible: isVisible">
+                <h5>
+                    <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
+                        <i data-bind="attr: { 'class': icon }"></i>
+                        <span data-bind="text: $root.translate(name)"></span>
+                    </a>
+                    <div data-bind="if: $root.readOnly">
+                        <i data-bind="attr: { 'class': icon }"></i>
+                        <span data-bind="text: $root.translate(name)"></span>
+                    </div>
+                    <span class="text-muted" data-bind="visible: $root.showComments"> &nbsp; <span data-bind="text: short_comment"></span></span>
+                </h5>
+                <!-- ko if: form_filter -->
+                <ul class="fa-ul" data-bind="visible: $root.showRelevance">
+                    <li>
+                        <i data-bind="attr: {'class': 'fa-li fa text-muted fa-code-fork'}"></i>
+                        <span data-bind="text: form_filter"></span>
+                    </li>
+                </ul>
+                <!-- /ko -->
+                <ol data-bind="foreach: questions">
+                    <li data-bind="visible: isVisible">
+                        <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
+                        <a data-bind="attr: { 'href': $parent.url + hashtagValue }, text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
+                        <!-- ko if: required -->
+                        <span title="{% trans "This question is required"|escapejs %}">*</span>
+                        <!-- /ko -->
+                        <!-- ko if: comment -->
+                        <span class="text-muted" data-bind="visible: $root.showComments">
+                            &nbsp; <!-- ko text: comment --><!-- /ko -->
+                        </span>
+                        <!-- /ko -->
+                        <!-- ko if:  calculate || relevant || constraint || setvalue || load_properties || save_properties  -->
+                        <ul class="fa-ul">
+                            <!-- ko if: calculate -->
+                            <li data-bind="visible: $root.showCalculations">
+                                <i class = "fa-li fa text-muted fa-calculator"></i>
+                                <!-- ko text: calculate --><!-- /ko -->
+                            </li>
+                            <!-- /ko -->
+                            <!-- ko if: relevant -->
+                            <li data-bind="visible: $root.showRelevance">
+                                <i class = "fa-li fa text-muted fa-code-fork"></i>
+                                <!-- ko text: relevant --><!-- /ko -->
+                            </li>
+                            <!-- /ko -->
+                            <!-- ko if: constraint -->
+                            <li data-bind="visible: $root.showConstraints">
+                                <i class = "fa-li fa text-muted fa-ban"></i>
+                                <!-- ko text: constraint --><!-- /ko -->
+                            </li>
+                            <!-- /ko -->
+                            <!-- ko if: setvalue -->
+                            <li data-bind="visible: $root.showDefaultValues">
+                                <i class = "fa-li fa text-muted fa-home"></i>
+                                <!-- ko text: setvalue --><!-- /ko -->
+                            </li>
+                            <!-- /ko -->
+                            <!-- ko foreach: load_properties -->
+                            <li data-bind="visible: $root.showCaseProperties">
+                                <i class = "fa fa-li text-muted fa-briefcase"></i>
+                                <span class="text-muted" data-bind="text:$data[0]"></span> -
+                                <!-- ko text: $data[1] --><!-- /ko -->
+                                <span title="{% trans 'Load property' %}">
+                                    <i class = "fa text-muted fa-arrow-right"></i>
+                                    <i class = "fa text-muted fa-file"></i>
+                                </span>
+                            </li>
+                            <!-- /ko -->
+                            <!-- ko foreach: save_properties -->
+                            <li data-bind="visible: $root.showCaseProperties">
+                                <i class = "fa fa-li text-muted fa-file"></i>
+                                <span title="{% trans 'Save property' %}">
+                                    <i class = "fa text-muted fa-arrow-right"></i>
+                                    <i class = "fa text-muted fa-briefcase"></i>
+                                </span>
+                                <span class="text-muted" data-bind="text:$data[0]"></span> -
+                                <!-- ko text: $data[1] --><!-- /ko -->
+                            </li>
+                            <!-- /ko -->
+                        </ul>
+                        <!-- /ko -->
+                        <!-- ko if: options.length -->
+                        <ol data-bind="foreach: options">
+                            <li data-bind="visible: $root.showIds, text: value"></li>
+                            <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
+                        </ol>
+                        <!-- /ko -->
+                    </li>
+                </ol>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+{# Button for question attribute #}
+<script type="text/html" id="attribute-toggle">
+    <button type="button" class="btn btn-default"
+            data-bind="click: clickFn, css: { active: activeObs }">
+        <i class="fa fa-calculator" data-bind="attr: {'class': icon}"></i>
+        &nbsp;<span data-bind="text: text"></span>
+    </button>
+</script>
