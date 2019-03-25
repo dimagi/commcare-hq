@@ -54,16 +54,11 @@ def safe_download(f):
 
 def get_latest_enabled_build(latest, domain, username, app_id, profile_id):
     latest_enabled_build = None
-    if latest and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
-        if not username:
-            content_response = dict(error="app.update.not.allowed.user.logged_out",
-                                    default_response=_("Please log in to the app to check for an update."))
-            return HttpResponse(status=406, content=json.dumps(content_response))
-        user = CommCareUser.get_by_username(normalize_username(username, domain))
-        user_location_id = user.location_id
-        if user_location_id:
-            parent_app_id = get_app(domain, app_id).copy_of
-            latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
+    user = CommCareUser.get_by_username(normalize_username(username, domain))
+    user_location_id = user.location_id
+    if user_location_id:
+        parent_app_id = get_app(domain, app_id).copy_of
+        latest_enabled_build = get_latest_enabled_app_release(domain, user_location_id, parent_app_id)
     if not latest_enabled_build:
         # Fall back to the old logic to support migration
         # ToDo: Remove this block once migration is complete
@@ -94,8 +89,14 @@ def safe_cached_download(f):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
-        latest_enabled_build = get_latest_enabled_build(latest, domain, username, app_id,
-                                                        request.GET.get('profile'))
+        latest_enabled_build = None
+        if latest and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+            if not username:
+                content_response = dict(error="app.update.not.allowed.user.logged_out",
+                                        default_response=_("Please log in to the app to check for an update."))
+                return HttpResponse(status=406, content=json.dumps(content_response))
+            latest_enabled_build = get_latest_enabled_build(latest, domain, username, app_id,
+                                                            request.GET.get('profile'))
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
