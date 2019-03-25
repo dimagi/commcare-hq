@@ -49,7 +49,7 @@ class ManageReleases(BaseProjectSettingsView):
         if self.request.GET.get('app_id'):
             q = q.filter(app_id=self.request.GET.get('app_id'))
         if self.request.GET.get('version'):
-            q = q.filter(location_id=self.request.GET.get('version'))
+            q = q.filter(version=self.request.GET.get('version'))
 
         enabled_app_releases = [release.to_json() for release in q]
         for r in enabled_app_releases:
