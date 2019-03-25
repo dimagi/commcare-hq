@@ -10,7 +10,6 @@ import json
 import logging
 from six.moves.urllib.parse import urlencode
 
-from corehq.elastic import ESError
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404

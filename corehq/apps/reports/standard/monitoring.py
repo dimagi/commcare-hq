@@ -1810,6 +1810,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         )
         user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
         user_generator = (util._report_user_dict(user) for user in user_query_generator)
+        total_row = []
         for users in chunked(user_generator, 10000):
             formatted_data = self._report_data(users_to_iterate=users, user_ids=[a.user_id for a in users])
             if self.view_by_groups:
@@ -1820,12 +1821,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             total_row = self.sum_rows_together(self.total_row, this_row)
             for row in rows:
                 yield row
-
         self.total_row = self.format_total_row(total_row)
-
         yield self.total_row
 
-    def format_total_row(self, unformatted_total_row):
+    @staticmethod
+    def format_total_row(unformatted_total_row):
         formatted_total_row = []
         for entry in unformatted_total_row:
             if isinstance(entry, dict):
@@ -1836,7 +1836,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 formatted_total_row.append(entry)
         return formatted_total_row
 
-    def sum_rows_together(self, original_row, row_to_add):
+    @staticmethod
+    def sum_rows_together(original_row, row_to_add):
         if not original_row:
             new_row = row_to_add
         else:
