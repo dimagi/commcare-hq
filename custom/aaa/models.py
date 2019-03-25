@@ -81,9 +81,11 @@ class LocationDenormalizedModel(models.Model):
         return """
         UPDATE "{child_tablename}" AS child SET
             supervisor_id = awc.supervisor_id,
-            block_id = awc.block_id
+            block_id = awc.block_id,
+            district_id = awc.district_id,
+            state_id = awc.state_id
         FROM (
-            SELECT doc_id, supervisor_id, block_id
+            SELECT doc_id, supervisor_id, block_id, district_id, state_id
             FROM "{awc_location_ucr_tablename}"
         ) awc
         WHERE child.awc_id = awc.doc_id
