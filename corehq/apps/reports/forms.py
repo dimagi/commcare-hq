@@ -12,11 +12,8 @@ from corehq.apps.hqwebapp.fields import MultiEmailField
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from .models import (
-    DEFAULT_REPORT_NOTIF_SUBJECT,
-    ReportConfig,
-    ReportNotification,
-)
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification, \
+    DEFAULT_REPORT_NOTIF_SUBJECT
 from six.moves import range
 
 
