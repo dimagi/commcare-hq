@@ -39,8 +39,8 @@ class TestICDSCASReach(TestCase):
                             'format': 'div',
                             'color': 'green',
                             'percent': 127.27272727272728,
-                            'value': 50, 'label':
-                            'Number of AWCs open for at least one day in month',
+                            'value': 50,
+                            'label': 'Number of AWCs open for at least one day in month',
                             'frequency': 'month',
                             'help_text': 'Total Number of AWCs open for at least one day in month'
                         }
@@ -283,15 +283,15 @@ class TestICDSCASReach(TestCase):
                             'label': 'AWCs Launched',
                             'frequency': 'month',
                             'help_text': awcs_launched_help_text()
-                        }, 
+                        },
                         {
                             'all': 21,
-                            'format': 'div', 
-                            'color': 'green', 
-                            'percent': 127.27272727272728, 
-                            'value': 50, 'label': 
-                            'Number of AWCs open for at least one day in month', 
-                            'frequency': 'month', 
+                            'format': 'div',
+                            'color': 'green',
+                            'percent': 127.27272727272728,
+                            'value': 50,
+                            'label': 'Number of AWCs open for at least one day in month',
+                            'frequency': 'month',
                             'help_text': 'Total Number of AWCs open for at least one day in month'
                         }
                     ],
@@ -304,7 +304,7 @@ class TestICDSCASReach(TestCase):
                             'label': 'Sectors covered',
                             'frequency': 'month',
                             'help_text': 'Total Sectors that have launched ICDS CAS'
-                        }, 
+                        },
                         {
                             'all': None,
                             'format': 'number',
