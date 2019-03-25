@@ -103,6 +103,8 @@ class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
             days_overdue = (date.today() - overdue_invoice.date_due).days
             main_context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
             main_context['days_until_downgrade'] = max(1, 61 - days_overdue)
+        # TODO - add context
+        main_context['show_prepaid_modal'] = True
         return main_context
 
     @property

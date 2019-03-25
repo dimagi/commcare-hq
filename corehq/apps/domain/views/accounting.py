@@ -328,6 +328,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 for feature in self.plan.get('features')
             ),
             'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
+            'show_prepaid_modal': False,
         }
 
 
