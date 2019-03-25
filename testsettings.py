@@ -102,6 +102,8 @@ _set_logging_levels({
     'kafka.conn': 'WARNING',
     'kafka.client': 'WARNING',
     'kafka.consumer.kafka': 'WARNING',
+    'kafka.protocol.parser': 'WARNING',
+    'alembic': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
