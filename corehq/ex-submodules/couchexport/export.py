@@ -130,10 +130,13 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-    tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
-    writer.open(tables, file, max_column_size=max_column_size)
-    writer.write(tables, skip_first=True)
+    worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
+    # Make copies of the generator, one to pass in to the open() function, one for the write() function
+    row_generator_1, row_generator_2 = itertools.tee(row_generator)
+    writer.open([(worksheet_title, [[a for a in row_generator_1.next()]])], file, max_column_size=max_column_size)
+    table = itertools.chain([], [[worksheet_title, row_generator_2]])
+    writer.write(table, skip_first=True)
     writer.close()
 
 
@@ -434,19 +437,28 @@ class FormattedRow(object):
     @classmethod
     def wrap_all_rows(cls, tables):
         """
-        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...))
+        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...)). The rows can be generators.
         """
-        ret = []
-        for name, rows in tables:
-            rows = list(rows)
-            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
-                soft_assert_type_text(rows[0])
+
+        def _wrap_row(first_entry, rows):
+            if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
+                soft_assert_type_text(first_entry)
                 # `rows` is actually just a single row, so wrap it
                 rows = [rows]
-            ret.append(
-                (name, [cls(row) for row in rows])
-            )
-        return ret
+            return rows
+
+        wrapped_rows = []
+        for name, rows in tables:
+            if isinstance(rows, itertools.chain):
+                first_entry_rows, rows_to_wrap = itertools.tee(rows)
+                first_entry = first_entry_rows.next()
+                wrapped_rows = name, (cls(row) for row in _wrap_row(first_entry, rows_to_wrap))
+            else:
+                rows = _wrap_row(rows[0], list(rows))
+                wrapped_rows.append(
+                    (name, [cls(row) for row in rows])
+                )
+        return wrapped_rows
 
 
 def _format_tables(tables, id_label='id', separator='.', include_headers=True,
