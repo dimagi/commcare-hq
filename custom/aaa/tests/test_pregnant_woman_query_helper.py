@@ -170,7 +170,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.pregnancy_details(),
             {
-                'lmp': date(2018, 12, 03),
+                'lmp': date(2018, 12, 3),
                 'weightOfPw': 54,
                 'dateOfRegistration': date(2018, 12, 31),
                 'edd': date(2019, 7, 27),

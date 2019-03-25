@@ -634,7 +634,10 @@ class CcsRecord(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-tasks_cases')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.execute('SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename), [self.ccs_record_case_id])
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
             result = _dictfetchone(cursor)
 
         return result
@@ -873,7 +876,10 @@ class Child(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-immunization_forms')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.execute('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename),
+                [self.tasks_case_id]
+            )
             result = _dictfetchall(cursor)
 
         return result

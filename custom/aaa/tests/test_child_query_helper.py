@@ -136,8 +136,7 @@ class TestChildBeneficiarySections(TestCase):
                 'skinToSkinContact': 'yes',
                 'wrappedUpAdequately': 'yes',
                 'awakeActive': 'N/A',
-            },
-            {
+            }, {
                 'pncDate': date(2019, 1, 1),
                 'breastfeeding': 'yes',
                 'skinToSkinContact': 'yes',

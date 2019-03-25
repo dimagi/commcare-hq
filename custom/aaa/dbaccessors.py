@@ -96,9 +96,9 @@ class ChildQueryHelper(object):
             return [
                 {'vitaminName': 'OPV - 1', 'date': _safe_date_get('1g_opv_1'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 1', 'date': _safe_date_get('1g_penta_1'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Fractional IPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'Fractional IPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},  # not tracked
                 {'vitaminName': 'Rotavirus - 1', 'date': _safe_date_get('1g_rv_1'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'PCV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'PCV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},  # not tracked
             ]
         elif period == 'tenWeek':
             return [
@@ -110,13 +110,13 @@ class ChildQueryHelper(object):
             return [
                 {'vitaminName': 'OPV - 3', 'date': _safe_date_get('3g_opv_3'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 3', 'date': _safe_date_get('3g_penta_3'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'Fractional IPV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},  # not tracked
                 {'vitaminName': 'Rotavirus - 3', 'date': _safe_date_get('3g_rv_3'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'PCV - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},  # not tracked
             ]
         elif period == 'nineTwelveMonths':
             return [
-                {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'}, # not tracked
+                {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},  # not tracked
                 {'vitaminName': 'Vit. A - 1', 'date': _safe_date_get('4g_vit_a_1'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Measles - 1', 'date': _safe_date_get('4g_measles'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'JE - 1', 'date': _safe_date_get('4g_je_1'), 'adverseEffects': 'N/A'},
@@ -124,7 +124,11 @@ class ChildQueryHelper(object):
         elif period == 'sixTeenTwentyFourMonth':
             return [
                 {'vitaminName': 'DPT Booster - 1', 'date': _safe_date_get('1g_dpt_1'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'Measles - 2', 'date': _safe_date_get('5g_measles_booster'), 'adverseEffects': 'N/A'},
+                {
+                    'vitaminName': 'Measles - 2',
+                    'date': _safe_date_get('5g_measles_booster'),
+                    'adverseEffects': 'N/A'
+                },
                 {'vitaminName': 'OPV Booster', 'date': _safe_date_get('5g_opv_booster'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'JE - 2', 'date': _safe_date_get('5g_je_2'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Vit. A - 2', 'date': _safe_date_get('5g_vit_a_2'), 'adverseEffects': 'N/A'},
@@ -138,7 +142,11 @@ class ChildQueryHelper(object):
                 {'vitaminName': 'Vit. A - 7', 'date': _safe_date_get('6g_vit_a_7'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Vit. A - 8', 'date': _safe_date_get('6g_vit_a_8'), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Vit. A - 9', 'date': _safe_date_get('6g_vit_a_9'), 'adverseEffects': 'N/A'},
-                {'vitaminName': 'DPT Booster - 2', 'date': _safe_date_get('7gdpt_booster_2'), 'adverseEffects': 'N/A'},
+                {
+                    'vitaminName': 'DPT Booster - 2',
+                    'date': _safe_date_get('7gdpt_booster_2'),
+                    'adverseEffects': 'N/A'
+                },
             ]
 
     def growth_monitoring(self):
@@ -203,7 +211,7 @@ class ChildQueryHelper(object):
             if date_ in points_by_date:
                 points_by_date[date_]['x'] = height
 
-        return points_by_date.values()
+        return list(points_by_date.values())
 
 
 class PregnantWomanQueryHelper(object):
