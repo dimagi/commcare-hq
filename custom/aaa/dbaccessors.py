@@ -42,14 +42,18 @@ class ChildQueryHelper(object):
         )
 
     def postnatal_care_details(self):
-        # TODO update when CcsRecord will have properties from PNC form
-        return [{
-            'pncDate': 'N/A',
-            'breastfeeding': 'N/A',
-            'skinToSkinContact': 'N/A',
-            'wrappedUpAdequately': 'N/A',
-            'awakeActive': 'N/A',
-        }]
+        ret = []
+        child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)
+        pnc_details = child.postnatal_care_form_details(self.date_)
+        for detail in pnc_details:
+            ret.append({
+                'pncDate': detail['timeend'].date(),
+                'breastfeeding': detail['breastfeeding_well'] or 'N/A',
+                'skinToSkinContact': detail['skin_to_skin'] or 'N/A',
+                'wrappedUpAdequately': detail['wrapped'] or 'N/A',
+                'awakeActive': detail['baby_active'] or 'N/A',
+            })
+        return ret
 
     def vaccination_details(self, period):
         child = Child.objects.get(domain=self.domain, person_case_id=self.person_case_id)

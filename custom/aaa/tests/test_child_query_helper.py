@@ -64,25 +64,49 @@ class TestChildBeneficiarySections(TestCase):
                 ['2019-04-01', 'red'],
             ],
         )
-        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, 'reach-tasks_cases')
-        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
-        cls.adapter = get_indicator_adapter(datasource)
-        cls.adapter.build_table()
+        cls.adapters = []
+        immun_adapter = cls._init_table('reach-tasks_cases')
         immun_dates = {'1g_bcg': 32, '2g_opv_2': 85, '3g_rv_3': 11}
         with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=immun_dates):
-            cls.adapter.save({
+            immun_adapter.save({
                 '_id': 'tasks_case',
                 'domain': cls.domain,
                 'doc_type': "CommCareCase",
                 'type': 'tasks',
             })
+        pnc_adapter = cls._init_table('reach-postnatal_care')
+        pnc_adapter.save({
+            '_id': 'pnc_form',
+            'domain': cls.domain,
+            'doc_type': "XFormInstance",
+            'xmlns': 'http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE',
+            'form': {
+                "child": {
+                    "item": [
+                        {'child_health_case_id': 'child_health_case_id', 'skin_to_skin': 'yes', 'wrapped': 'yes'},
+                        {'child_health_case_id': 'child_health_case_id', 'skin_to_skin': 'yes', 'breastfeeding_well': 'yes'},
+                    ],
+                },
+                "meta": {"timeEnd": "2019-01-01T10:37:00Z"},
+            },
+        })
 
     @classmethod
     def tearDownClass(cls):
-        cls.adapter.drop_table()
+        for adapter in cls.adapters:
+            adapter.drop_table()
         ChildHistory.objects.all().delete()
         Child.objects.all().delete()
         super(TestChildBeneficiarySections, cls).tearDownClass()
+
+    @classmethod
+    def _init_table(cls, data_source_id):
+        datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
+        datasource = StaticDataSourceConfiguration.by_id(datasource_id)
+        adapter = get_indicator_adapter(datasource)
+        adapter.build_table()
+        cls.adapters.append(adapter)
+        return adapter
 
     @property
     def _helper(self):
@@ -107,9 +131,16 @@ class TestChildBeneficiarySections(TestCase):
         self.assertEqual(
             self._helper.postnatal_care_details(),
             [{
-                'pncDate': 'N/A',
+                'pncDate': date(2019, 1, 1),
                 'breastfeeding': 'N/A',
-                'skinToSkinContact': 'N/A',
+                'skinToSkinContact': 'yes',
+                'wrappedUpAdequately': 'yes',
+                'awakeActive': 'N/A',
+            },
+            {
+                'pncDate': date(2019, 1, 1),
+                'breastfeeding': 'yes',
+                'skinToSkinContact': 'yes',
                 'wrappedUpAdequately': 'N/A',
                 'awakeActive': 'N/A',
             }])
