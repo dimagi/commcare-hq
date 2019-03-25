@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/select2_knockout_bindings_v3.ko", [
+hqDefine("hqwebapp/js/select2_knockout_bindings_v4.ko", [
     'jquery',
     'knockout',
     'DOMPurify/dist/purify.min',
