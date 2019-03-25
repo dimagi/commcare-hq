@@ -64,9 +64,15 @@ def get_sql_operations():
     for model_name in models_to_update:
         model = apps.get_model('icds_reports', model_name)
         sql, reverse_sql = _citus_composite_key_sql(model)
-        operations.append(migrator.get_migration(
+        operations.append(migrations.RunSQL(
             sql,
             reverse_sql,
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name=model_name,
+                    unique_together=model._meta.unique_together,
+                ),
+            ]
         ))
     return operations
 
