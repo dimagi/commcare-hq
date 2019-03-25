@@ -4,7 +4,7 @@ from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from dimagi.utils.chunked import chunked
 
 
-def reprodcess_missing_rows(check_only_nulls=False):
+def reprocess_missing_rows(check_only_nulls=False):
     configs = [
         "static-icds-cas-static-complementary_feeding_forms",
         "static-icds-cas-static-dashboard_delivery_forms",
