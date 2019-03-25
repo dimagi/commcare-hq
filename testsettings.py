@@ -89,21 +89,24 @@ def _set_logging_levels(levels):
         logging.getLogger(path).setLevel(level)
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
+    'alembic': 'WARNING',
     'auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
+    'couchdbkit.designer': 'WARNING',
     'datadog': 'WARNING',
     'elasticsearch': 'ERROR',
+    'kafka.conn': 'WARNING',
+    'kafka.client': 'WARNING',
+    'kafka.consumer.kafka': 'WARNING',
+    'kafka.metrics': 'WARNING',
+    'kafka.protocol.parser': 'WARNING',
+    'kafka.producer': 'WARNING',
     'quickcache': 'INFO',
     'requests.packages.urllib3': 'WARNING',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
-    'kafka.conn': 'WARNING',
-    'kafka.client': 'WARNING',
-    'kafka.consumer.kafka': 'WARNING',
-    'kafka.protocol.parser': 'WARNING',
-    'alembic': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
