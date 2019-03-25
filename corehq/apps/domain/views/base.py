@@ -1,11 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
+from datetime import date
+
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 
+from corehq.apps.hqwebapp.utils import get_overdue_invoice
 from corehq.apps.users.models import Invitation
 from corehq.apps.domain.decorators import login_required, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -94,6 +97,12 @@ class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
         main_context.update({
             'domain': self.domain,
         })
+        overdue_invoice = get_overdue_invoice(self.domain)
+        main_context['domain_has_overdue_invoice'] = overdue_invoice is not None
+        if overdue_invoice:
+            days_overdue = (date.today() - overdue_invoice.date_due).days
+            main_context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
+            main_context['days_until_downgrade'] = max(1, 61 - days_overdue)
         return main_context
 
     @property
