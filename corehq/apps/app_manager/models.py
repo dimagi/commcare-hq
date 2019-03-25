@@ -5969,10 +5969,11 @@ class LatestEnabledAppRelease(models.Model):
         expire_get_latest_enabled_app_release_cache(self)
 
     def clean(self):
-        enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)
-        if enabled_release and enabled_release.version > self.version:
-            raise ValidationError({'version': _("Higher version {} already enabled for this application and "
-                                                "location").format(enabled_release.version)})
+        if self.active:
+            enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)
+            if enabled_release and enabled_release.version > self.version:
+                raise ValidationError({'version': _("Higher version {} already enabled for this application and "
+                                                    "location").format(enabled_release.version)})
 
     @classmethod
     def update_status(cls, domain, app_id, build_id, location_id, version, active):
