@@ -86,12 +86,12 @@ hqDefine('app_manager/js/manage_releases', [
         }
         function manageReleaseSearchViewModel() {
             var self = {};
-            self.appIdSearchValue = ko.observable();
-            self.locationIdSearchValue = ko.observable();
-            self.versionSearchValue = ko.observable();
             self.search = function () {
-                window.location.search = ("location_id=" + self.locationIdSearchValue + "&app_id=" +
-                    self.appIdSearchValue + "&version=" + self.versionSearchValue);
+                var appId = $("#app-id-search-select").val();
+                var locationId = $("#location-search-select").val();
+                var version = $("#version-input").val() || '';
+                window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
+                    version);
             };
             self.clear = function () {
                 window.location.search = "";

@@ -2397,11 +2397,9 @@ class ManageAppReleasesForm(forms.Form):
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
-            crispy.Field('app_id', id='app-id-search-select', data_bind="click: appIdSearchValue",
-                         css_class="ko-select2"),
-            crispy.Field('location_id', id='location-search-select', css_class="ko-select2",
-                         data_bind="click: locationIdSearchValue"),
-            crispy.Field('version', id='version-input', data_bind="click: versionSearchValue"),
+            crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
+            crispy.Field('location_id', id='location-search-select', css_class="ko-select2"),
+            crispy.Field('version', id='version-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
