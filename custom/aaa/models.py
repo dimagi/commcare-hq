@@ -3,7 +3,9 @@
 Conventions followed in this file:
     * Fields ending in _ranges represent a field's history from forms that are useful for filtering.
       This is only used for fields that are required to filter for specific ranges (usually a date range).
-    * Fields ending in _history represent a field's entire history from forms.
+    * Note _history fields and models should no longer be added to.
+      Instead historical information should be gathered directly from the UCR data source.
+      Fields ending in _history represent a field's entire history from forms.
       They are saved with the format [[date, value], [date, value]].
       They are not guaranteed to be ordered by date.
       They are not intended to be queried on, their interpretation should happen in python.
