@@ -33,6 +33,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from django.db import models
+from django.core.exceptions import ValidationError
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -62,6 +63,7 @@ from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSui
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
@@ -147,6 +149,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
+    get_app_release_by_location,
+    expire_get_app_release_by_location_cache,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5968,7 +5972,77 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
+class AppReleaseByLocation(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
+    build_id = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=False)
+    active = models.BooleanField(default=True)
+    activated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (("domain", "build_id", "location", "version"),)
+
+    def save(self, *args, **kwargs):
+        super(AppReleaseByLocation, self).save(*args, **kwargs)
+        expire_get_app_release_by_location_cache(self)
+
+    def clean(self):
+        if self.active:
+            enabled_release = get_app_release_by_location(self.domain, self.location.location_id, self.app_id)
+            if enabled_release and enabled_release.version > self.version:
+                raise ValidationError({'version': _("Higher version {} already enabled for this application and "
+                                                    "location").format(enabled_release.version)})
+
+    @classmethod
+    def update_status(cls, domain, app_id, build_id, location_id, version, active):
+        """
+        create a new object or just set the status of an existing one with provided
+        domain, app_id, build_id, location_id and version to the status passed
+        :param build_id: id of the build corresponding to the version
+        """
+        try:
+            enabled_app_release = AppReleaseByLocation.objects.get(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        except cls.DoesNotExist:
+            enabled_app_release = AppReleaseByLocation(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        enabled_app_release.activate() if active else enabled_app_release.deactivate()
+
+    def deactivate(self):
+        self.active = False
+        self.deactivated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def activate(self):
+        self.active = True
+        self.activated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def to_json(self):
+        return {
+            'location': self.location.name,
+            'app': self.app_id,
+            'build_id': self.build_id,
+            'version': self.version,
+            'active': self.active,
+            'id': self._get_pk_val(),
+            'activated_on': (datetime.datetime.strftime(self.activated_on, '%Y-%m-%d  %H:%M:%S')
+                             if self.activated_on else None),
+            'deactivated_on': (datetime.datetime.strftime(self.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if self.deactivated_on else None),
+        }
+
+
 class LatestEnabledBuildProfiles(models.Model):
+    # ToDo: this would be deprecated after AppReleaseByLocation is released and
+    # this model's entries are migrated to the new location specific model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()
