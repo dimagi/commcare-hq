@@ -915,7 +915,7 @@ def evaluate_data_source(request, domain):
         rows = []
         for doc in document_store.iter_documents(docs_id):
             for row in data_source.get_all_values(doc):
-                rows.append({i.column.database_column_name: i.value for i in row})
+                rows.append({i.column.database_column_name.decode(): i.value for i in row})
 
         adapter = get_indicator_adapter(data_source)
         table = adapter.get_table()
@@ -929,7 +929,7 @@ def evaluate_data_source(request, domain):
             'rows': rows,
             'db_rows': db_rows,
             'columns': [
-                column.database_column_name for column in data_source.get_columns()
+                column.database_column_name.decode() for column in data_source.get_columns()
             ],
         })
     except DataSourceConfigurationNotFoundError:
