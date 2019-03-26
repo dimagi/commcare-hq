@@ -46,6 +46,10 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                     },
                     error: function (data) {
                         self.loading(false);
+                        self.rows(undefined);
+                        self.dbRows(undefined);
+                        self.columns(undefined);
+                        self.dbError(undefined);
                         self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);
                     },
                 });
