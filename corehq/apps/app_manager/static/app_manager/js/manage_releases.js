@@ -18,7 +18,7 @@ hqDefine('app_manager/js/manage_releases', [
         var enabledAppRelease = function (details) {
             var self = {};
             assertProperties.assert(details, [], ['id', 'build_id', 'active', 'app', 'version', 'location',
-                                                  'activated_on', 'deactivated_on']);
+                'activated_on', 'deactivated_on']);
             self.id = details.id;
             self.build_id = details.build_id;
             self.active = ko.observable(details.active);
