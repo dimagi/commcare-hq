@@ -35,11 +35,13 @@ def get_metadata(engine_id):
 
 class IndicatorSqlAdapter(IndicatorAdapter):
 
-    def __init__(self, config):
+    def __init__(self, config, override_table_name=None):
         super(IndicatorSqlAdapter, self).__init__(config)
         self.engine_id = get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
+        self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine
+        self.override_table_name = override_table_name
 
     @property
     def table_id(self):
@@ -51,7 +53,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     @memoized
     def get_table(self):
-        return get_indicator_table(self.config, get_metadata(self.engine_id))
+        return get_indicator_table(
+            self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
+        )
 
     @memoized
     def get_sqlalchemy_orm_table(self):
@@ -99,15 +103,19 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return True
 
     def _install_partition(self):
+        orm_table = self._get_orm_table_with_partitioning()
+        orm_table.architect.partition.get_partition().prepare()
+
+    def _get_orm_table_with_partitioning(self):
         config = self.config.sql_settings.partition_config[0]
         partition = install(
             'partition', type='range', subtype=config.subtype,
             constraint=config.constraint, column=config.column, db=self.engine.url,
             orm='sqlalchemy', return_null=True
         )
-        mapping = self.get_sqlalchemy_orm_table()
-        partition(mapping)
-        mapping.architect.partition.get_partition().prepare()
+        orm_table = self.get_sqlalchemy_orm_table()
+        partition(orm_table)
+        return orm_table
 
     def rebuild_table(self):
         self.session_helper.Session.remove()
@@ -138,7 +146,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         with self.engine.begin() as connection:
             table = self.get_table()
             if self.config.sql_settings.partition_config:
-                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=table.name))
+                connection.execute('DROP TABLE IF EXISTS "{tablename}" CASCADE'.format(tablename=table.name))
             else:
                 table.drop(connection, checkfirst=True)
             get_metadata(self.engine_id).remove(table)
@@ -220,7 +228,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         #   because bulk_insert_mappings is meant for multi-table insertion
         #   so it has overhead of format conversions and multiple statements
         insert = table.insert().values(formatted_rows)
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             session.execute(delete)
             session.execute(insert)
 
@@ -233,7 +241,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def bulk_delete(self, doc_ids):
         table = self.get_table()
         delete = table.delete(table.c.doc_id.in_(doc_ids))
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             session.execute(delete)
 
     def delete(self, doc):
@@ -243,7 +251,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             session.execute(delete)
 
     def doc_exists(self, doc):
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
 

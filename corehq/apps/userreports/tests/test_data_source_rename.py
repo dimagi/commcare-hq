@@ -10,9 +10,13 @@ from django.test import TestCase
 from mock import MagicMock, patch
 from sqlalchemy.engine import reflection
 
-from corehq.apps.userreports.management.commands.rename_ucr_tables import create_ucr_views
-from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql.adapter import build_table, get_indicator_table
+from corehq.apps.userreports.management.commands.rename_ucr_tables import (
+    create_ucr_views,
+    _rename_tables,
+    _get_old_new_tablenames
+)
+from corehq.apps.userreports.models import DataSourceConfiguration, SQLPartition
+from corehq.apps.userreports.sql.adapter import build_table, get_indicator_table, IndicatorSqlAdapter
 from corehq.apps.userreports.sql.util import table_exists, view_exists
 from corehq.apps.userreports.tests.utils import (
     doc_to_change,
@@ -103,3 +107,74 @@ class DataSourceRenameTest(TestCase):
         self.assertEqual(
             len([c for c in insp.get_columns(self.old_table.name) if c['name'] == 'new_date']), 1
         )
+
+
+class DataSourceRenamePartitionedTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DataSourceRenamePartitionedTest, cls).setUpClass()
+        cls.data_source = get_sample_data_source()
+        cls.data_source.sql_settings.partition_config = [
+            SQLPartition(column='date', subtype='date', constraint='day')
+        ]
+        cls.data_source.save()
+        cls.old_table_name = get_legacy_table_name(
+            cls.data_source.domain, cls.data_source.table_id,
+        )
+        cls.legacy_adapter = IndicatorSqlAdapter(cls.data_source, cls.old_table_name)
+        cls.adapter = IndicatorSqlAdapter(cls.data_source)
+        cls.legacy_adapter.build_table()
+
+        # this is expensive so avoid doing it twice
+        cls.tables_by_engine = _get_old_new_tablenames()
+        create_ucr_views(cls.tables_by_engine)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.adapter.drop_table()
+        cls.adapter.engine.dispose()
+        cls.legacy_adapter.engine.dispose()
+        cls.data_source.delete()
+        super(DataSourceRenamePartitionedTest, cls).tearDownClass()
+
+    def _process_docs(self, docs):
+        pillow = get_case_pillow(ucr_configs=[self.data_source])
+
+        for doc in docs:
+            pillow.process_change(doc_to_change(doc))
+
+    def test_rename_parititioned_table(self):
+        sample_doc1, _ = get_sample_doc_and_indicators()
+        sample_doc1['opened_on'] = datetime(2018, 1, 1)
+
+        self._process_docs([sample_doc1])
+
+        with self.legacy_adapter.session_context():
+            self.assertEqual(1, self.legacy_adapter.get_query_object().count())
+
+        # check that doc is in child table with legacy name
+        result = self.legacy_adapter.engine.execute(
+            'SELECT COUNT(*) FROM "{}y2018d001";'.format('tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'))
+        result = result.fetchone()[0]
+        self.assertEqual(1, result)
+
+        _rename_tables(self.tables_by_engine)
+
+        # inserting a doc in a new date range after renaming should result in a new
+        # child table being created and the doc being inserted there
+        sample_doc2, _ = get_sample_doc_and_indicators()
+        sample_doc2['opened_on'] = datetime(2018, 1, 2)
+        self._process_docs([sample_doc2])
+
+        with self.legacy_adapter.session_context():
+            self.assertEqual(2, self.adapter.get_query_object().count())
+
+        # check that docs exist in child tables with new names
+        result = self.legacy_adapter.engine.execute(
+            'SELECT COUNT(*) FROM "{}y2018d001";'.format('tbl_8e3a5ee0a4309ee52345c2cdcbb1215a_'))
+        result = result.fetchone()[0]
+        self.assertEqual(1, result)
+        result = self.legacy_adapter.engine.execute(
+            'SELECT COUNT(*) FROM "{}y2018d002";'.format('tbl_8e3a5ee0a4309ee52345c2cdcbb1215a_'))
+        result = result.fetchone()[0]
+        self.assertEqual(1, result)
