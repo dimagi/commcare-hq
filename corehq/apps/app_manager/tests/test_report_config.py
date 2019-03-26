@@ -113,6 +113,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
         cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
         cls.domain = 'report-filter-test-domain'
+        create_domain(cls.domain)
         cls.user = create_restore_user(
             domain=cls.domain,
             username='ralph',
