@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-12 19:45+0000\n"
+"POT-Creation-Date: 2019-03-25 16:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -99,7 +99,7 @@ msgid "Please enter a valid email."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:76
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
 #: corehq/apps/locations/static/locations/js/location_types.js:367
 msgid "You have unsaved changes."
 msgstr ""
@@ -341,7 +341,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:32
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:666
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:705
 msgid "Case Type required"
 msgstr ""
 
@@ -350,12 +350,12 @@ msgid "Case Tag required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:37
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:670
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:709
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:41
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:674
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:713
 msgid "Case Tag already in use"
 msgstr ""
 
@@ -392,21 +392,21 @@ msgid "Expected case type required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:379
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:574
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:613
 msgid "Subcase parent reference is missing"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:381
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:576
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:615
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:388
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:583
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:622
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:489
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:522
 msgid "Select parent"
 msgstr ""
 
@@ -683,19 +683,19 @@ msgstr ""
 msgid "Please enter a version to compare"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:52
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:46
 msgid "Filter properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:106
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:110
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:15
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:49
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:136
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:124
 msgid "View All Forms"
 msgstr ""
 
@@ -2841,15 +2841,15 @@ msgid ""
 "it gets fixed as soon as possible."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:63
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:65
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:46
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:55
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:83
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:84
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3090,7 +3090,7 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:347
+#: corehq/apps/reports/static/reports/js/data_corrections.js:346
 msgid "Select a value"
 msgstr ""
 

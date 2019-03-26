@@ -1,35 +1,36 @@
 """
 A collection of functions which test the most basic operations of various services.
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from io import BytesIO
-import attr
+from __future__ import absolute_import, unicode_literals
+
 import datetime
 import logging
-import gevent
+import time
+import uuid
+from io import BytesIO
 
-from django.core import cache
+import attr
+import gevent
+import requests
+from celery import Celery
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
-from celery import Celery
-import requests
+from six.moves import range
 
-from corehq.util.timer import TimingContext
-from dimagi.utils.make_uuid import random_hex
-from soil import heartbeat
-
-from corehq.apps.hqadmin.escheck import check_es_cluster_health
-from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.es import GroupES
+from corehq.apps.formplayer_api.utils import get_formplayer_url
+from corehq.apps.hqadmin.escheck import check_es_cluster_health
+from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 from corehq.blobs import CODES, get_blob_db
-from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
+from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level
-from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
+from corehq.util.timer import TimingContext
+from soil import heartbeat
 
 
 @attr.s
@@ -94,7 +95,7 @@ def check_elasticsearch():
     if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check-{}'.format(random_hex()[:7]),
+    doc = {'_id': 'elasticsearch-service-check-{}'.format(uuid.uuid4().hex[:7]),
            'date': datetime.datetime.now().isoformat()}
     try:
         send_to_elasticsearch('groups', doc)
@@ -161,18 +162,31 @@ def _check_celery_workers():
 
         celery = Celery()
         celery.config_from_object(settings)
-        worker_responses = celery.control.ping(timeout=10)
-        pings = parse_celery_pings(worker_responses)
 
-        for hostname in expected_running:
-            if hostname not in pings or not pings[hostname]:
-                bad_workers.append('* {} celery worker down'.format(hostname))
+        expected_running = set(expected_running)
+        expected_stopped = set(expected_stopped)
+        responses_any = set()
+        responses_all = set()
 
-        for hostname in expected_stopped:
-            if hostname in pings:
-                bad_workers.append(
-                    '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
-                )
+        # Retry because of https://github.com/celery/celery/issues/4758 (?)
+        for _ in range(20):
+            pings = {
+                hostname for hostname, value in parse_celery_pings(
+                    celery.control.ping(timeout=1)).items()
+                if value
+            }
+            responses_any |= pings
+            responses_all &= pings
+            if expected_running == responses_any:
+                break
+
+        for hostname in expected_running - responses_any:
+            bad_workers.append('* {} celery worker down'.format(hostname))
+
+        for hostname in expected_stopped & responses_all:
+            bad_workers.append(
+                '* {} celery worker is running when we expect it to be stopped.'.format(hostname)
+            )
 
         if bad_workers:
             return ServiceStatus(False, '\n'.join(bad_workers))

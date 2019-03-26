@@ -77,7 +77,7 @@ services:
     expose:
       - "9200"
     volumes:
-      - ${DATA_VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
 
   kafka:
     image: spotify/kafka
@@ -95,7 +95,7 @@ services:
     expose:
       - "9980"
     volumes:
-      - ${DATA_VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs:}/var/lib/riak-data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs:}/var/lib/riak-data
 
   citus_master:
     image: 'citusdata/citus:8.1.1'

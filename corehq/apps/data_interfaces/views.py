@@ -24,11 +24,7 @@ from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.reports.v2.reports.explore_case_data import (
     ExploreCaseDataReport,
 )
-from corehq.apps.users.permissions import (
-    can_view_form_exports,
-    can_view_case_exports,
-    can_download_data_files,
-)
+from corehq.apps.users.permissions import can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
@@ -84,7 +80,9 @@ def default_data_view_url(request, domain):
         FormExportListView,
         DeIdFormExportListView,
     )
-    from corehq.apps.export.views.utils import DataFileDownloadList, user_can_view_deid_exports
+    from corehq.apps.export.views.utils import (DataFileDownloadList, user_can_view_deid_exports,
+        can_view_form_exports, can_view_case_exports)
+    from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface
 
     if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
@@ -96,6 +94,9 @@ def default_data_view_url(request, domain):
 
     if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
+
+    if request.couch_user.can_edit_data:
+        return CaseReassignmentInterface.get_url(domain)
 
     raise Http404()
 
@@ -644,6 +645,7 @@ def xform_management_job_poll(request, domain, download_id,
 @login_and_domain_required
 @require_GET
 def find_by_id(request, domain):
+    from corehq.apps.export.views.utils import can_view_form_exports, can_view_case_exports
     can_view_cases = can_view_case_exports(request.couch_user, domain)
     can_view_forms = can_view_form_exports(request.couch_user, domain)
 

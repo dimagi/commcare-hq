@@ -16,6 +16,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0098_drop_legacy_tables'),
     ]
 
-    operations = [
-        migrator.get_migration('service_delivery_monthly.sql')
-    ]
+    operations = []

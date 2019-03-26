@@ -16,7 +16,7 @@ from django.urls import NoReverseMatch
 from corehq.apps.domain.utils import normalize_domain_name
 
 from corehq.apps.reports.tasks import export_all_rows_task
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import DatatablesParams

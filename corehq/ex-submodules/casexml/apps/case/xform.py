@@ -330,12 +330,10 @@ def extract_case_blocks(doc, include_path=False):
     for that get_case_updates is better.
 
     if `include_path` is True then instead of returning just the case block it will
-    return a dict with the following structure:
+    return a namedtuple with the following attributes:
 
-    {
-       "caseblock": caseblock
-       "path": ["form", "path", "to", "block"]
-    }
+       caseblock: case block
+       path: ["form", "path", "to", "block"]
 
     Repeat nodes will all share the same path.
     """

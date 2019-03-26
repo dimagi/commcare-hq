@@ -125,7 +125,10 @@ def paginate_releases(request, domain, app_id):
             app_es = app_es.is_released()
         if query:
             app_es = app_es.add_query(build_comment(query), queries.SHOULD)
-            app_es = app_es.add_query(version(query), queries.SHOULD)
+            try:
+                app_es = app_es.add_query(version(int(query)), queries.SHOULD)
+            except ValueError:
+                pass
 
         results = app_es.exclude_source().run()
         total_apps = results.total

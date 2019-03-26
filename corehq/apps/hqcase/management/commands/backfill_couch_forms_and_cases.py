@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import json
 import os
@@ -22,6 +23,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import ChangeMeta
+from io import open
 
 
 class Command(BaseCommand):

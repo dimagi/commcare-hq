@@ -462,7 +462,7 @@ CASE_LIST_LOOKUP = StaticToggle(
 
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
-    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    "Enables biometric integration (simprints) features.",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
@@ -1265,13 +1265,6 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds', 'icds-cas'},
-)
-
-PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
-    'profile_bulk_multimedia_upload',
-    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(

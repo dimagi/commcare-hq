@@ -299,6 +299,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
+    'corehq.apps.saved_reports',
     'corehq.apps.userreports',
     'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
@@ -505,6 +506,9 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
 
 CELERY_RESULT_BACKEND = 'django-db'
 
@@ -1319,6 +1323,7 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
+    'saved_reports',
     'sms',
     'smsforms',
     'telerivet',

@@ -187,7 +187,12 @@ def import_locations_async(domain, file_ref_id, user_id):
         )
 
     return {
-        'messages': results
+        'messages': {
+            'messages': results.messages,
+            'errors': results.errors,
+            'warnings': results.warnings,
+            'success': results.success,
+        }
     }
 
 

@@ -664,9 +664,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.sortableList = {
-        init: function (element, valueAccessor) {
-            var list = valueAccessor();
+        // Defines a knockout binding for the jquery UI sortable interaction which allows
+        // reordering elements with a drag and drop interface
+        // The element to be used to drag and drop must have a grip class defined
+        // Optionally sortableListSelector can be defined as a selector that describes what items are sortable
+        init: function (element, valueAccessor, allBindings) {
+            var list = valueAccessor(),
+                itemSelector = allBindings().sortableListSelector;
+
             $(element).sortable({
+                handle: '.grip',
+                cursor: 'move',
                 update: function (event, ui) {
                     //retrieve our actual data item
                     var item = ko.dataFor(ui.item.get(0));
@@ -680,6 +688,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     ui.item.remove();
                 },
             });
+            if (itemSelector) {
+                $(element).sortable("option", "items", itemSelector);
+            }
         },
     };
 
