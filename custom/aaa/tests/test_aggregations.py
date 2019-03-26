@@ -73,6 +73,8 @@ class AggregationScriptTestBase(CSVTestCase):
     @classmethod
     def tearDownClass(cls):
         _teardown_ucr_tables()
+        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman, WomanHistory):
+            model.objects.all().delete()
         super(AggregationScriptTestBase, cls).tearDownClass()
 
     def _convert_decimal_to_string(self, value):
