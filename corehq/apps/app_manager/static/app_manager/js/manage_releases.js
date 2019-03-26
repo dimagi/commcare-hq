@@ -33,6 +33,9 @@ hqDefine('app_manager/js/manage_releases', [
             self.actionText = ko.computed(function () {
                 return (self.active() ? gettext("Remove") : gettext("Add"));
             });
+            self.buttonClass = ko.computed(function () {
+                return (self.active() ? "btn-danger" : "btn-success");
+            });
             self.toggleStatus = function () {
                 self.active(!self.active());
             };

@@ -46,7 +46,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <button type="button" class="" data-bind="click: toggleRestriction">
+                                    <button type="button" class="btn default-btn"
+                                            data-bind="click: toggleRestriction, css: buttonClass,
+                                            disable: ajaxInProgress">
                                         <span data-bind="text: actionText"></span>
                                         <i class="spinner fa-spin fa fa-refresh"
                                            data-bind="visible: ajaxInProgress"></i>
