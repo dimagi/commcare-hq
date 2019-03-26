@@ -19,7 +19,8 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
+        LAST_VALUE(supervisor_id) OVER w as supervisor_id
         FROM "{ucr_tablename}"
         WHERE (
           timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -49,11 +50,12 @@ class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, valid_visits
+          state_id, month, supervisor_id, case_id, latest_time_end_processed, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) as supervisor_id,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
           COALESCE(ucr.valid_visits, 0) as valid_visits

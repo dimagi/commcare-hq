@@ -9,6 +9,12 @@ hqDefine("hqwebapp/js/widgets", [
     var init = function (additionalConfig) {
         additionalConfig = additionalConfig || {};
 
+        // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
+        _.each($(".hqwebapp-select2"), function (element) {
+            $(element).select2(additionalConfig);
+        });
+
+        // .hqwebapp-autocomplete also allows for free text entry
         _.each($(".hqwebapp-autocomplete"), function (input) {
             var $input = $(input);
             $input.select2(_.extend({
@@ -49,10 +55,6 @@ hqDefine("hqwebapp/js/widgets", [
                     return null;
                 },
             }, additionalConfig));
-        });
-
-        _.each($(".ko-select2"), function (element) {
-            $(element).select2(additionalConfig);
         });
     };
 

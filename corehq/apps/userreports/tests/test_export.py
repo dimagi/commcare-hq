@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+import sqlalchemy
+
 from django.test import SimpleTestCase
 
 from .test_data_source_config import get_sample_data_source
@@ -12,7 +14,7 @@ class ParameterTest(SimpleTestCase):
 
     def setUp(self):
         config = get_sample_data_source()
-        self.columns = get_indicator_table(config).columns
+        self.columns = get_indicator_table(config, sqlalchemy.MetaData()).columns
 
     def test_no_parameters(self):
         params = process_url_params({}, self.columns)
