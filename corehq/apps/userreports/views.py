@@ -952,7 +952,7 @@ def evaluate_data_source(request, domain):
         if err and isinstance(err, TableNotFoundWarning):
             data['db_error'] = _("Datasource table does not exist. Try rebuilding the datasource.")
         else:
-            data['db_error'] = _("Error quering database for data.")
+            data['db_error'] = _("Error querying database for data.")
 
     return JsonResponse(data=data)
 
