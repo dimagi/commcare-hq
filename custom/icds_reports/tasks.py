@@ -468,9 +468,6 @@ def _child_health_monthly_table(state_ids, day):
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
-        _run_custom_sql_script([
-            "SELECT create_new_table_for_month('child_health_monthly', %s)",
-        ], day)
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
     celery_task_logger.info("Dropping temporary table")
@@ -489,9 +486,6 @@ def _child_health_helper(query, params):
 @track_time
 def _ccs_record_monthly_table(day):
     with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
-        _run_custom_sql_script([
-            "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
-        ], day)
         CcsRecordMonthly.aggregate(force_to_date(day))
 
 
