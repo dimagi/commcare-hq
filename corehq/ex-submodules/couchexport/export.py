@@ -130,22 +130,14 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-    print('(PV) export 1')
+    writer = get_writer(format)
     worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
-    print('(PV) export 2')
     # Make copies of the generator, one to pass in to the open() function, one for the write() function
     row_generator_1, row_generator_2 = itertools.tee(row_generator)
-    table_1 = itertools.chain([], [[worksheet_title, row_generator_1]])
-    table_2 = itertools.chain([], [[worksheet_title, row_generator_2]])
-    print('(PV) export 3')
-    writer = get_writer(format)
-    print('(PV) export 4')
-    writer.open([table_1.next()], file, max_column_size=max_column_size)
-    print('(PV) export 5')
-    writer.write(table_2, skip_first=True)
-    print('(PV) export 6')
+    writer.open([(worksheet_title, [[a for a in row_generator_1.next()]])], file, max_column_size=max_column_size)
+    table = itertools.chain([], [[worksheet_title, row_generator_2]])
+    writer.write(table, skip_first=True)
     writer.close()
-    print('(PV) export 7')
 
 
 def export_raw(headers, data, file, format=Format.XLS_2007,
