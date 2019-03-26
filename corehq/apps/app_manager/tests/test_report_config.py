@@ -50,40 +50,41 @@ class ReportAppConfigTest(SimpleTestCase):
         )
 
 
-MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
-    _id=report_id,
-    title="Entry Report",
-    aggregation_columns=["color_94ec39e6"],
-    config_id="516c494736e95b023cc7845b557de0f5",
-    domain=domain,
-    report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
-    columns=[
-        FieldColumn(type='field', aggregation="simple", column_id="color_94ec39e6", display="color", field="color_94ec39e6").to_json(),
-    ],
-    configured_charts=[
-        MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
-                          y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
-    ],
-    filters=[
-        DynamicChoiceListFilterSpec(
-            type='dynamic_choice_list',
-            display="owner name",
-            field="computed_owner_name_40cc88a0",
-            slug="computed_owner_name_40cc88a0_1"
-        ).to_json(),
-        ChoiceListFilterSpec(
-            type='choice_list',
-            display="fav color",
-            field="fav_fruit_abc123",
-            slug="fav_fruit_abc123_1",
-            choices=[
-                FilterChoice(value='a', display='apple'),
-                FilterChoice(value='b', display='banana'),
-                FilterChoice(value='c', display='clementine'),
-            ]
-        ).to_json()
-    ],
-)
+def MAKE_REPORT_CONFIG(domain, report_id):
+    return ReportConfiguration(
+        _id=report_id,
+        title="Entry Report",
+        aggregation_columns=["color_94ec39e6"],
+        config_id="516c494736e95b023cc7845b557de0f5",
+        domain=domain,
+        report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
+        columns=[
+            FieldColumn(type='field', aggregation="simple", column_id="color_94ec39e6", display="color", field="color_94ec39e6").to_json(),
+        ],
+        configured_charts=[
+            MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
+                              y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
+        ],
+        filters=[
+            DynamicChoiceListFilterSpec(
+                type='dynamic_choice_list',
+                display="owner name",
+                field="computed_owner_name_40cc88a0",
+                slug="computed_owner_name_40cc88a0_1"
+            ).to_json(),
+            ChoiceListFilterSpec(
+                type='choice_list',
+                display="fav color",
+                field="fav_fruit_abc123",
+                slug="fav_fruit_abc123_1",
+                choices=[
+                    FilterChoice(value='a', display='apple'),
+                    FilterChoice(value='b', display='banana'),
+                    FilterChoice(value='c', display='clementine'),
+                ]
+            ).to_json()
+        ],
+    )
 
 
 class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
