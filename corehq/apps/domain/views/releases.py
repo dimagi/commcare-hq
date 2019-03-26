@@ -88,14 +88,12 @@ def update_release_restriction(request, domain, restriction_id, active):
         return HttpResponseForbidden()
     app_release_by_location = AppReleaseByLocation.objects.get(id=restriction_id, domain=domain)
     try:
-        if active:
-            app_release_by_location.full_clean()
+        app_release_by_location.activate() if active else app_release_by_location.deactivate()
     except ValidationError as e:
         response_content = {
             'message': ','.join(e.messages)
         }
     else:
-        app_release_by_location.activate() if active else app_release_by_location.deactivate()
         response_content = {
             'id': restriction_id,
             'success': True,
