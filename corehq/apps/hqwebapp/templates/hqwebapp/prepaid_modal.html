@@ -1,0 +1,39 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="modal" id="prepaid-modal" data-slug="prepaid_ending" data-domain="{{ domain }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header {% if prepaid_days_remaining > 30 %}modal-header-prepaid{% else %}modal-header-prepaid-30{% endif %}">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title">
+                    Prepaid Credits Running out in {{ prepaid_weeks_remaining }} Weeks for Project {{ domain }}!
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Your prepaid subscription ends in {{ prepaid_weeks_remaining }} weeks.  Starting
+                    {{ prepaid_remaining_date }}, you will be billed ${{ monthly_fee }} per month for your
+                    {{ plan_name }} plan.
+                </p>
+                <div class="row">
+                    <div class="col-sm-6 text-center flag-link">
+                        <a id="prepaid-link" href={% url 'domain_subscription_view' domain %}>
+                            <button class="btn btn-lg btn-primary btn-full-width">
+                                Add Credits or Modify Subscription
+                            </button>
+                        </a>
+                    </div>
+                    <div class="col-sm-6 text-center flag-snooze">
+                        <button class="btn btn-lg btn-default btn-full-width flag-snooze">
+                            Remind me later
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

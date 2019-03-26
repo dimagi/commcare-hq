@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-from datetime import date
+import itertools
+from datetime import date, timedelta
 
 from django.utils.decorators import method_decorator
 from django.urls import reverse
@@ -8,6 +9,8 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 
+from corehq.apps.accounting.models import CreditLine, Subscription
+from corehq.apps.accounting.utils import months_from_date
 from corehq.apps.hqwebapp.utils import get_overdue_invoice
 from corehq.apps.users.models import Invitation
 from corehq.apps.domain.decorators import login_required, login_and_domain_required
@@ -103,6 +106,32 @@ class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
             days_overdue = (date.today() - overdue_invoice.date_due).days
             main_context['invoice_month'] = overdue_invoice.date_start.strftime('%B %Y')
             main_context['days_until_downgrade'] = max(1, 61 - days_overdue)
+
+        context = main_context
+        current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        if current_subscription:
+            monthly_fee = current_subscription.plan_version.product_rate.monthly_fee
+            if monthly_fee:
+                prepaid_credits = sum([
+                    credit_line.balance for credit_line in itertools.chain(
+                        CreditLine.get_credits_by_subscription_and_features(current_subscription),
+                        CreditLine.get_credits_by_subscription_and_features(current_subscription, is_product=True)
+                        # TODO possibly add more sources of credit
+                    )
+                ])
+                num_months_remaining = prepaid_credits / monthly_fee
+                prepaid_remaining_date = months_from_date(date.today(), num_months_remaining)
+                partial_month_remaining = num_months_remaining % 1
+                num_days_in_month = 30  # TODO
+                prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))
+                prepaid_days_remaining = (prepaid_remaining_date - date.today()).days
+                if prepaid_days_remaining > 0:
+                    context['show_prepaid_modal'] = True
+                    context['prepaid_days_remaining'] = prepaid_days_remaining
+                    context['prepaid_weeks_remaining'] = max(prepaid_days_remaining // 7, 1)
+                    context['monthly_fee'] = monthly_fee
+                    context['plan_name'] = current_subscription.plan_version.plan.name
+                    context['prepaid_remaining_date'] = prepaid_remaining_date
         return main_context
 
     @property
