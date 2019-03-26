@@ -10,8 +10,13 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 
 class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
-    aggregate_parent_table = AGG_CCS_RECORD_PNC_TABLE
-    aggregate_child_table_prefix = 'icds_db_ccs_pnc_form_'
+    tablename = AGG_CCS_RECORD_PNC_TABLE
+
+    def drop_table_query(self):
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
 
     @property
     def _old_ucr_tablename(self):
@@ -25,15 +30,16 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
+        supervisor_id as supervisor_id,
+        %(current_month_start)s as month,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
-        LAST_VALUE(supervisor_id) OVER w as supervisor_id
+        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
-            PARTITION BY ccs_record_case_id
+            PARTITION BY supervisor_id, ccs_record_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(ucr_tablename=self.ucr_tablename), {
@@ -44,13 +50,13 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
-        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+        previous_month = month - relativedelta(months=1)
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
-            "state_id": self.state_id
+            "state_id": self.state_id,
+            "previous_month": previous_month
         }
         query_params.update(ucr_query_params)
 
@@ -69,13 +75,16 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             ucr.is_ebf as is_ebf,
             COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{previous_month_tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id
+          FULL OUTER JOIN "{tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month::DATE=prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+            AND prev_month.state_id = %(state_id)s
         )
         """.format(
             ucr_table_query=ucr_query,
-            previous_month_tablename=previous_month_tablename,
-            tablename=tablename
+            tablename=self.tablename
         ), query_params
 
     def compare_with_old_data_query(self):

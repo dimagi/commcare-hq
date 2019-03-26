@@ -295,23 +295,30 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
               AND child_health.state_id = child_tasks.state_id
               AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+              AND child_health.supervisor_id = child_tasks.supervisor_id
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
               AND lower(substring(person_cases.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+              AND child_health.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
+              AND child_health.supervisor_id = cf.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
               AND child_health.state_id = thr.state_id
+              AND child_health.supervisor_id = thr.supervisor_id
             LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
               AND child_health.state_id = gm.state_id
+              AND child_health.supervisor_id = gm.supervisor_id
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
               AND child_health.state_id = pnc.state_id
+              AND child_health.supervisor_id = pnc.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
+              AND child_health.supervisor_id = df.supervisor_id
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
-            ORDER BY child_health.awc_id
+            ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
             tablename=self.temporary_tablename,
@@ -349,8 +356,9 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.tablename, tmp_tablename=self.temporary_tablename)
 
     def indexes(self):
-        return [
-            'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (mother_case_id, dob)'.format(self.tablename),
-        ]
+        return []
+        # return [
+        #     'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
+        #     'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
+        #     'CREATE INDEX ON "{}" (mother_case_id, dob)'.format(self.tablename),
+        # ]
