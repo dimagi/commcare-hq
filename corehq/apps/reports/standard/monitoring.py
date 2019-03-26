@@ -1744,7 +1744,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
-    def _report_data(self, users_to_iterate, user_ids):
+    def _report_data(self, users_to_iterate):
+        user_ids = [a.user_id for a in users_to_iterate]
         export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
@@ -1812,7 +1813,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         user_generator = (util._report_user_dict(user) for user in user_query_generator)
         total_row = []
         for users in chunked(user_generator, 10000):
-            formatted_data = self._report_data(users_to_iterate=users, user_ids=[a.user_id for a in users])
+            formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)
             else:
@@ -1855,7 +1856,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def rows(self):
-        report_data = self._report_data(self.users_to_iterate, self.user_ids)
+        report_data = self._report_data(self.users_to_iterate)
 
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
