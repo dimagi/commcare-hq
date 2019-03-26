@@ -1491,7 +1491,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             es_instance_alias = 'export'
         else:
             es_instance_alias = ES_DEFAULT_INSTANCE
-        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan, es_instance_alias=es_instance_alias)
+        return get_last_submission_time_for_users(self.domain, self.user_ids,
+                                                  self.datespan, es_instance_alias=es_instance_alias)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):

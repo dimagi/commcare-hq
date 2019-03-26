@@ -160,7 +160,6 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
     except Exception as er:
-        from corehq.util.python_compatibility import soft_assert_type_text
         notify_exception(
             None,
             message="Encountered error while sending email",
