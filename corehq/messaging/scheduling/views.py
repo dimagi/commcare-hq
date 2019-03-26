@@ -782,6 +782,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'is_system_admin': self.is_system_admin,
             'criteria_form_active': False,
             'schedule_form_active': False,
+            'new_rule': not bool(self.rule),
         }
 
         if self.request.method == 'POST':
