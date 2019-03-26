@@ -70,10 +70,6 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
             status.add_unmatched_path(path, _("Error reading file: %s" % e))
             return
 
-        import random
-        if True or int(random.random()) % 2 == 0:
-            raise Exception("this is exceptional")
-
         media_class = CommCareMultimedia.get_class_by_data(data, filename=path)
         if not media_class:
             status.add_skipped_path(path, CommCareMultimedia.get_mime_type(data))
