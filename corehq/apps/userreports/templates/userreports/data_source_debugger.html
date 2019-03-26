@@ -49,6 +49,7 @@
         </div>
 
         <h3 data-bind="visible: columns">{% trans "Rows from the database" %}</h3>
+        <p data-bind="html: dbError"></p>
         <div class="table-responsive">
             <table class="table table-hovered">
                 <thead>

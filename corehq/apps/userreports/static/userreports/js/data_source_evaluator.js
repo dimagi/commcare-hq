@@ -9,6 +9,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
         self.columns = ko.observable();
         self.rows = ko.observableArray();
         self.dbRows = ko.observableArray();
+        self.dbError = ko.observable();
         self.loading = ko.observable(false);
 
         self.evaluateDataSource = function () {
@@ -40,6 +41,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                         self.rows(transform_rows(data.rows));
                         self.dbRows(transform_rows(data.db_rows));
                         self.columns(data.columns);
+                        self.dbError(data.db_error);
                         self.loading(false);
                     },
                     error: function (data) {

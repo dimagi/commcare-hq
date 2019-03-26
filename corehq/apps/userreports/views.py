@@ -77,7 +77,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     UserQueryError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -933,13 +933,31 @@ def evaluate_data_source(request, domain):
         for row in query
     ]
 
-    return JsonResponse(data={
+    data = {
         'rows': rows,
-        'db_rows': db_rows,
+        'db_rows': [],
         'columns': [
             column.database_column_name.decode() for column in data_source.get_columns()
         ],
-    })
+    }
+
+    try:
+        adapter = get_indicator_adapter(data_source)
+        table = adapter.get_table()
+        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+        db_rows = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in query
+        ]
+        data['db_rows'] = db_rows
+    except ProgrammingError as e:
+        err = translate_programming_error(e)
+        if err and isinstance(err, TableNotFoundWarning):
+            data['db_error'] = _("Datasource table does not exist. Try rebuilding the datasource.")
+        else:
+            data['db_error'] = _("Error quering database for data.")
+
+    return JsonResponse(data=data)
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
