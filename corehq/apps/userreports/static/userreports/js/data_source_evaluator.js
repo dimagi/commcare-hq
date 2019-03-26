@@ -8,6 +8,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
         self.uiFeedback = ko.observable();
         self.columns = ko.observable();
         self.rows = ko.observableArray();
+        self.dbRows = ko.observableArray();
         self.loading = ko.observable(false);
 
         self.evaluateDataSource = function () {
@@ -24,16 +25,21 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                         data_source: self.dataSourceId(),
                     },
                     success: function (data) {
-                        var rows = [];
-                        data.rows.forEach(function (row) {
-                            var tableRow = [];
-                            data.columns.forEach(function (column) {
-                                tableRow.push(row[column]);
+                        function transform_rows(rows) {
+                            var output = [];
+                            rows.forEach(function (row) {
+                                var tableRow = [];
+                                data.columns.forEach(function (column) {
+                                    tableRow.push(row[column]);
+                                });
+                                output.push(tableRow);
                             });
-                            rows.push(tableRow);
-                        });
+                            return output;
+                        }
+
+                        self.rows(transform_rows(data.rows));
+                        self.dbRows(transform_rows(data.db_rows));
                         self.columns(data.columns);
-                        self.rows(rows);
                         self.loading(false);
                     },
                     error: function (data) {

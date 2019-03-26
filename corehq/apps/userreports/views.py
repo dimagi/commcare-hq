@@ -916,8 +916,18 @@ def evaluate_data_source(request, domain):
         for doc in document_store.iter_documents(docs_id):
             for row in data_source.get_all_values(doc):
                 rows.append({i.column.database_column_name: i.value for i in row})
+
+        adapter = get_indicator_adapter(data_source)
+        table = adapter.get_table()
+        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+        db_rows = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in query
+        ]
+
         return JsonResponse(data={
             'rows': rows,
+            'db_rows': db_rows,
             'columns': [
                 column.database_column_name for column in data_source.get_columns()
             ],
