@@ -11,8 +11,8 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assert(options, [], ['url', 'width']);
-
+        assertProperties.assert(options, [], ['url', 'width', 'idValue']);
+        var idValue = options.idValue || 'id';
         $select.select2({
             ajax: {
                 url: options.url || initialPageData.reverse('paginate_releases'),
@@ -28,7 +28,7 @@ hqDefine("app_manager/js/widgets_v4", [
                     return {
                         results: _.map(data.apps, function (build) {
                             return {
-                                id: build.version,
+                                id: build[idValue],
                                 text: build.version + ": " + (build.build_comment || gettext("no comment")),
                             };
                         }),

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-25 16:08+0000\n"
+"POT-Creation-Date: 2019-03-26 19:32+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
@@ -3094,20 +3094,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:115
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:126
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:130
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:127
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:131
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:128
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:132
 msgid "Search Reports..."
 msgstr ""
 

@@ -303,7 +303,6 @@ class ProgramSummaryView(BaseReportView):
                 tuple(now.date().timetuple())[:3],
                 config,
                 include_test,
-                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_demographics_data(

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, datetime
 import json
-
+from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -15,7 +15,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-
+from custom.icds_reports.reports.incentive import IncentiveReport
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -2114,6 +2114,60 @@ class TestExportData(TestCase):
                     ]
                 ]
             ]
+        ]
+        self.assertListEqual(
+            data,
+            expected
+        )
+
+    def test_aww_performance_export(self):
+        data = IncentiveReport(
+            location='b2',
+            month=datetime(2017,5,1),
+            aggregation_level=3
+        ).get_excel_data()
+
+        expected = [
+            [u'AWW Performance Report',
+             [[u'State', u'District', u'Block', u'Supervisor', u'AWC', u'AWW Name', u'AWW Contact Number',
+               u'Home Visits Conducted', u'Number of Days AWC was Open', u'Weighing Efficiency',
+               u'Eligible for Incentive'],
+              [u'st1', u'd1', u'b2', u's4', u'a12', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's4', u'a28', u'Data Not Entered', u'Data Not Entered', u'0.00%', 5, u'0.00%',
+               u'No'],
+              [u'st1', u'd1', u'b2', u's4', u'a4', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's4', u'a36', u'Data Not Entered', u'Data Not Entered', u'0.00%', 17, u'7.50%',
+               u'No'],
+              [u'st1', u'd1', u'b2', u's4', u'a20', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's4', u'a44', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's3', u'a27', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's3', u'a11', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's3', u'a19', u'Data Not Entered', u'Data Not Entered', u'0.00%', 16, u'90.00%',
+               u'No'],
+              [u'st1', u'd1', u'b2', u's3', u'a3', u'AWC not launched', u'AWC not launched', u'AWC not launched',
+               u'AWC not launched', u'AWC not launched', u'AWC not launched'],
+              [u'st1', u'd1', u'b2', u's3', u'a35', u'Data Not Entered', u'Data Not Entered', u'0.00%', 12, u'100.00%',
+               u'No'],
+              [u'st1', u'd1', u'b2', u's3', u'a43', u'Data Not Entered', u'Data Not Entered', u'0.00%', 13, u'90.48%',
+               u'No']]],
+            [u'Export Info',
+                          [
+                              [u'Generated at', india_now()],
+                              [u'Grouped By', u'AWC'],
+                              [u'Month', 5],
+                              [u'Year', 2017],
+                              [u'Disclaimer',
+                               u'The information in the report is based on the self-reported '
+                               u'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                               u' and is subject to timely data syncs.']
+                          ]
+             ]
         ]
         self.assertListEqual(
             data,
