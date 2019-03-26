@@ -19,7 +19,7 @@
     "icds"
   ],
   "report_id": "static-mpr_10a_children_referred",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR 10a - Children Referred (Static)",
     "description": "",
@@ -90,7 +90,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -107,114 +107,142 @@
       {
         "display": "referred_premature",
         "column_id": "referred_premature",
-        "type": "field",
-        "field": "referred_premature",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ypremature\\y'": 1
+        }
       },
       {
         "display": "referred_sepsis",
         "column_id": "referred_sepsis",
-        "type": "field",
-        "field": "referred_sepsis",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ysepsis\\y'": 1
+        }
       },
       {
         "display": "referred_diarrhoea",
         "column_id": "referred_diarrhoea",
-        "type": "field",
-        "field": "referred_diarrhoea",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ydiarrhoea\\y'": 1
+        }
       },
       {
         "display": "referred_pneumonia",
         "column_id": "referred_pneumonia",
-        "type": "field",
-        "field": "referred_pneumonia",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\ypneumonia\\y'": 1
+        }
       },
       {
         "display": "referred_fever_child",
         "column_id": "referred_fever_child",
-        "type": "field",
-        "field": "referred_fever_child",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yfever_child\\y'": 1
+        }
       },
       {
         "display": "referred_severely_underweight",
         "column_id": "referred_severely_underweight",
-        "type": "field",
-        "field": "referred_severely_underweight",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yseverely_underweight\\y'": 1
+        }
       },
       {
         "display": "referred_other_child",
         "column_id": "referred_other_child",
-        "type": "field",
-        "field": "referred_other_child",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_health_problem ~ '\\yother_child\\y'": 1
+        }
       },
       {
         "display": "premature_reached_count",
         "column_id": "premature_reached_count",
-        "type": "field",
-        "field": "premature_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ypremature\\y'": 1
+        }
       },
       {
         "display": "sepsis_reached_count",
         "column_id": "sepsis_reached_count",
-        "type": "field",
-        "field": "sepsis_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ysepsis\\y'": 1
+        }
       },
       {
         "display": "diarrhoea_reached_count",
         "column_id": "diarrhoea_reached_count",
-        "type": "field",
-        "field": "diarrhoea_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ydiarrhoea\\y'": 1
+        }
       },
       {
         "display": "pneumonia_reached_count",
         "column_id": "pneumonia_reached_count",
-        "type": "field",
-        "field": "pneumonia_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\ypneumonia\\y'": 1
+        }
       },
       {
         "display": "fever_child_reached_count",
         "column_id": "fever_child_reached_count",
-        "type": "field",
-        "field": "fever_child_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yfever_child\\y'": 1
+        }
       },
       {
         "display": "sev_underweight_reached_count",
         "column_id": "sev_underweight_reached_count",
-        "type": "field",
-        "field": "sev_underweight_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yseverely_underweight\\y'": 1
+        }
       },
       {
         "display": "other_child_reached_count",
         "column_id": "other_child_reached_count",
-        "type": "field",
-        "field": "other_child_reached_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "referral_reached_facility = 'yes' AND referral_health_problem ~ '\\yother_child\\y'": 1
+        }
       }
     ],
     "sort_expression": [],

@@ -29,12 +29,14 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.translations.forms import (
+    AddTransifexBlacklistForm,
+    AppTranslationsForm,
     ConvertTranslationsForm,
     PullResourceForm,
-    AppTranslationsForm,
 )
 from corehq.apps.translations.generators import Translation, PoFileGenerator
 from corehq.apps.translations.integrations.transifex.exceptions import ResourceMissing
+from corehq.apps.translations.models import TransifexBlacklist
 from corehq.apps.translations.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
@@ -293,6 +295,36 @@ class PullResource(BaseTranslationsView):
                     return self._pull_resource(request)
                 except ResourceMissing:
                     messages.add_message(request, messages.ERROR, 'Resource not found')
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class BlacklistTranslations(BaseTranslationsView):
+    page_title = _('Blacklist Translations')
+    urlname = 'blacklist_translations'
+    template_name = 'blacklist_translations.html'
+    section_name = ugettext_noop("Translations")
+
+    def section_url(self):
+        return self.page_url
+
+    @property
+    def blacklist_form(self):
+        if self.request.POST:
+            return AddTransifexBlacklistForm(self.domain, self.request.POST)
+        return AddTransifexBlacklistForm(self.domain)
+
+    @property
+    def page_context(self):
+        context = super(BlacklistTranslations, self).page_context
+        context['blacklisted_translations'] = TransifexBlacklist.translations_with_app_name(self.domain)
+        context['blacklist_form'] = self.blacklist_form
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.transifex_integration_enabled(request):
+            if self.blacklist_form.is_valid():
+                self.blacklist_form.save()
         return self.get(request, *args, **kwargs)
 
 

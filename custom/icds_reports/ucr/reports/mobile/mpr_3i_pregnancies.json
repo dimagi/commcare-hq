@@ -19,7 +19,7 @@
     "icds"
   ],
   "report_id": "static-mpr_3i_pregnancies",
-  "data_source_table": "static-person_cases_v2",
+  "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR 3i - Pregnancies Registered (Static)",
     "description": "",
@@ -35,12 +35,6 @@
         "type": "date",
         "field": "opened_on",
         "datatype": "date"
-      },
-      {
-        "display": "Filter by Village",
-        "slug": "asha_id",
-        "type": "village_choice_list",
-        "field": "doc_id"
       },
       {
         "display": "Filter by AWW",
@@ -96,7 +90,7 @@
         },
         "column_id": "owner_id",
         "type": "field",
-        "field": "owner_id",
+        "field": "awc_id",
         "aggregation": "simple",
         "transform": {
           "type": "custom",
@@ -113,18 +107,22 @@
       {
         "display": "pregnant_resident_count",
         "column_id": "pregnant_resident_count",
-        "type": "field",
-        "field": "pregnant_resident_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident = 1": 1
+        }
       },
       {
         "display": "pregnant_migrant_count",
         "column_id": "pregnant_migrant_count",
-        "type": "field",
-        "field": "pregnant_migrant_count",
+        "type": "sum_when",
         "aggregation": "sum",
-        "calculate_total": true
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND is_pregnant = 1 and sex = 'F' AND resident != 1": 1
+        }
       }
     ],
     "sort_expression": [],

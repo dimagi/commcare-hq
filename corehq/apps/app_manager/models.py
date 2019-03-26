@@ -114,7 +114,6 @@ from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
-from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
@@ -1108,7 +1107,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     def get_app(self):
@@ -2353,7 +2352,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
@@ -3714,7 +3713,7 @@ class ReportAppConfig(DocumentSchema):
     def __init__(self, *args, **kwargs):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
-            self.uuid = random_hex()
+            self.uuid = uuid.uuid4().hex
 
     @classmethod
     def wrap(cls, doc):

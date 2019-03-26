@@ -20,5 +20,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        get_disha_migration(),
     ]

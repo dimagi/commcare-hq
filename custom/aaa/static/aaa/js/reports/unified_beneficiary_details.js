@@ -36,7 +36,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
         var detailsTypes = {
             child: childUtils.detailsView(self.postData),
             pregnant_women: pregnantWomenModel.detailsView(self.postData),
-            eligible_couples: eligibleCoupleModel.detailsView(self.postData),
+            eligible_couple: eligibleCoupleModel.detailsView(self.postData),
         };
 
         self.detailsModel = detailsTypes[self.selectedType];

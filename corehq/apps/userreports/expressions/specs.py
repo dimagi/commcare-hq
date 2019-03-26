@@ -319,9 +319,10 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, six.string_types):
+            if not isinstance(key, (six.text_type, bytes)):
                 raise BadSpecError("Properties in a dict expression must be strings!")
-            soft_assert_type_text(key)
+            if six.PY3:
+                soft_assert_type_text(key)
         self._compiled_properties = compiled_properties
 
     def __call__(self, item, context=None):

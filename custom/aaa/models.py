@@ -22,6 +22,7 @@ from django.utils.decorators import classproperty
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from custom.aaa.const import ALL
 
 
 class LocationDenormalizedModel(models.Model):
@@ -777,7 +778,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             woman_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -818,7 +819,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             woman_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -848,7 +849,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 

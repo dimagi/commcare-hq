@@ -2,6 +2,7 @@ hqDefine('toggle_ui/js/flags', [
     'jquery',
     'knockout',
     'reports/js/config.dataTables.bootstrap',
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function (
     $,
     ko,
@@ -13,7 +14,7 @@ hqDefine('toggle_ui/js/flags', [
     };
     $.fn.dataTableExt.afnFiltering.push(
         function (oSettings, aData, iDataIndex) {
-            if (viewModel.tagFilter() === null) {
+            if (viewModel.tagFilter() === 'all') {
                 return true;
             }
             var tag = aData[0].replace(/\n/g," ").replace(/<.*?>/g, "");

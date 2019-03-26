@@ -54,7 +54,6 @@ from corehq.apps.hqmedia.controller import (
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
-    profile_and_process_bulk_upload_zip,
     build_application_zip,
 )
 from corehq.apps.hqwebapp.decorators import use_select2_v4
@@ -482,20 +481,12 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
 
-        if toggles.PROFILE_BULK_MULTIMEDIA_UPLOAD.enabled(self.username):
-            profile_and_process_bulk_upload_zip(processing_id, self.domain, self.app_id,
-                                                username=self.username,
-                                                share_media=self.share_media,
-                                                license_name=self.license_used,
-                                                author=self.author,
-                                                attribution_notes=self.attribution_notes)
-        else:
-            process_bulk_upload_zip(processing_id, self.domain, self.app_id,
-                                    username=self.username,
-                                    share_media=self.share_media,
-                                    license_name=self.license_used,
-                                    author=self.author,
-                                    attribution_notes=self.attribution_notes)
+        process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
+                                      username=self.username,
+                                      share_media=self.share_media,
+                                      license_name=self.license_used,
+                                      author=self.author,
+                                      attribution_notes=self.attribution_notes)
 
         return status.get_response()
 

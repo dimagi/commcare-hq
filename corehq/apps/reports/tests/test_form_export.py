@@ -58,7 +58,7 @@ class FormMultimediaExportTest(SimpleTestCase):
             ]
         )
         with mock.patch('corehq.apps.export.models.new.FormExportInstance.get', return_value=export_instance):
-            props = _get_export_properties("fake id for my export instance", False)
+            props = _get_export_properties("fake id for my export instance")
             self.assertEqual(props, set(['q2-q4', 'q3']))
 
     def test_extract_form_attachment_info(self):

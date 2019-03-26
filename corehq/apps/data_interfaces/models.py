@@ -846,7 +846,9 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             return False
 
         for value in self.get_case_values(case):
-            if isinstance(value, six.string_types):
+            if six.PY2 and isinstance(value, bytes):
+                value = value.decode('utf-8')
+            if isinstance(value, (six.text_type, bytes)):
                 soft_assert_type_text(value)
                 try:
                     if regex.match(value):

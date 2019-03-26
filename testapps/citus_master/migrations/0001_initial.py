@@ -11,7 +11,10 @@ def _add_worker_node_ops():
     for db in settings.DATABASES.values():
         if db.get('ROLE', None) == 'citus_worker':
             host = db.get('CITUS_NODE_NAME', db['HOST'])
-            yield migrations.RunSQL("SELECT * from master_add_node('{}', {})".format(host, db['PORT']))
+            port = db['PORT']
+            if ':' in host:
+                host, port = host.split(':')
+            yield migrations.RunSQL("SELECT * from master_add_node('{}', {})".format(host, port))
 
 
 class Migration(migrations.Migration):

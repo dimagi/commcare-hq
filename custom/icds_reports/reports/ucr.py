@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
+import six
 import sqlagg
 import sqlalchemy
 from sqlalchemy import select
@@ -323,7 +324,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             return tuple(getattr(row, key_component) for key_component in self.report_data_source.group_by)
 
         def _row_proxy_to_dict(row):
-            return dict(row.items())
+            return dict(six.iteritems(row))
 
         return OrderedDict([
             (_extract_aggregate_key(row), _row_proxy_to_dict(row)) for row in results
@@ -337,6 +338,98 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
         with self.helper.session_helper().session_context() as session:
             count_query = select([func.count()]).select_from(select_query.alias())
             return session.connection().execute(count_query, **self.helper.sql_alchemy_filter_values).scalar()
+
+
+CcsRecordMonthlyViewAlchemy = sqlalchemy.Table(
+    'ccs_record_monthly_view', metadata, autoload=True
+)
+
+
+class CcsRecordMonthlyUCR(ConfigurableReportCustomQueryProvider):
+    def __init__(self, report_data_source):
+        self.report_data_source = report_data_source
+        self.helper = self.report_data_source.helper
+        self.helper.set_table(CcsRecordMonthlyViewAlchemy)
+
+    @property
+    def table(self):
+        return CcsRecordMonthlyViewAlchemy
+
+    def _get_query_object(self, total_row=False):
+
+        def format_column(title, logic):
+            return func.count(self.table.c.case_id).filter(logic).label(title)
+
+        pregnant = self.table.c.pregnant == 1
+        lactating = self.table.c.lactating == 1
+        st_caste = self.table.c.caste == 'st'
+        sc_caste = self.table.c.caste == 'sc'
+        rations_gte_21 = self.table.c.num_rations_distributed >= 21
+        rations_lt_21 = (0 < self.table.c.num_rations_distributed) & (self.table.c.num_rations_distributed < 21)
+        disabled = self.table.c.disabled == 'yes'
+        minority = self.table.c.minority == 'yes'
+        rations_none = (self.table.c.num_rations_distributed == 0) |\
+                       (self.table.c.num_rations_distributed.is_(None))
+        migrant = self.table.c.resident == 'no'
+        columns = (
+            format_column(title='thr_rations_pregnant_st', logic=(pregnant & st_caste & rations_gte_21)),
+            format_column(title='thr_rations_lactating_st', logic=(lactating & st_caste & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_sc', logic=(pregnant & sc_caste & rations_gte_21)),
+            format_column(title='thr_rations_lactating_sc', logic=(lactating & sc_caste & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_others', logic=(pregnant & (not sc_caste) &
+                                                                      (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_lactating_others', logic=(lactating & (not sc_caste) &
+                                                                       (not st_caste) & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_disabled', logic=(pregnant & disabled & rations_gte_21)),
+            format_column(title='thr_rations_lactating_disabled', logic=(lactating & disabled & rations_gte_21)),
+            format_column(title='thr_rations_pregnant_minority', logic=(pregnant & minority & rations_gte_21)),
+            format_column(title='thr_rations_lactating_minority', logic=(lactating & minority & rations_gte_21)),
+            format_column(title='thr_rations_absent_pregnant', logic=(pregnant & rations_none)),
+            format_column(title='thr_rations_absent_lactating', logic=(lactating & rations_none)),
+            format_column(title='thr_rations_partial_pregnant', logic=(pregnant & rations_lt_21)),
+            format_column(title='thr_rations_partial_lactating', logic=(lactating & rations_lt_21)),
+            format_column(title='thr_rations_migrant_pregnant', logic=(pregnant & rations_gte_21 & migrant)),
+            format_column(title='thr_rations_migrant_lactating', logic=(lactating & rations_gte_21 & migrant)),
+            format_column(title='pregnant', logic=pregnant),
+            format_column(title='lactating', logic=lactating),
+            format_column(title='thr_total_rations_pregnant', logic=(pregnant & rations_gte_21)),
+            format_column(title='thr_total_rations_lactating', logic=(lactating & rations_gte_21)),
+        )
+
+        if not total_row:
+            columns = (self.table.c.awc_id.label("owner_id"),) + columns
+
+        filters = self.helper.sql_alchemy_filters
+        filter_values = self.helper.sql_alchemy_filter_values
+
+        query = (
+            self.helper.adapter.session_helper.Session.query(
+                *columns
+            )
+            .filter(*filters)
+            .params(filter_values)
+        )
+        if not total_row:
+            query = query.group_by(self.table.c.awc_id)
+        return query
+
+    def get_data(self, start=None, limit=None):
+        query_obj = self._get_query_object()
+        if start:
+            query_obj = query_obj.start(start)
+        if limit:
+            query_obj = query_obj.limit(limit)
+        return OrderedDict([
+            (r.owner_id, r._asdict())
+            for r in query_obj.all()
+        ])
+
+    def get_total_row(self):
+        query_obj = self._get_query_object(total_row=True)
+        return ["Total"] + [r or 0 for r in query_obj.first()]
+
+    def get_total_records(self):
+        return self._get_query_object().count()
 
 
 class MPR2BIPregDeliveryDeathList(TwoStageAggregateCustomQueryProvider):

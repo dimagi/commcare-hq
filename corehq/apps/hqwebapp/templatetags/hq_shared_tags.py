@@ -19,7 +19,6 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from corehq.motech.utils import pformat_json
-from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
