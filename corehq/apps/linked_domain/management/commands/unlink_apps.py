@@ -60,7 +60,7 @@ class Command(BaseCommand):
             if history.model_detail['app_id'] == linked_app_id:
                 history.hidden = True
                 history.save()
-        if len(DomainLinkHistory.objects.filter(link=domain_link, hidden=False)) == 0:
+        if not DomainLinkHistory.objects.filter(link=domain_link, hidden=False).exists():
             domain_link.deleted = True
             domain_link.save()
         print('Operation completed')
