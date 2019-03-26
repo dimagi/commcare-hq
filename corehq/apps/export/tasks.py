@@ -112,16 +112,10 @@ def rebuild_saved_export(export_instance_id, manual=False):
     """
     download_data = _get_saved_export_download_data(export_instance_id)
     status = get_task_status(download_data.task)
-    if manual:
-        if status.missing():
-            # cancel pending task before kicking off a new one
-            if download_data.task:
-                download_data.task.revoke()
-        if status.not_started() or status.started():
-            return  # noop - make the user wait before starting a new one
-    else:
-        if status.not_started() or status.started():
-            return  # noop - one's already on the way
+    if manual and status.missing() and download_data.task:
+        download_data.task.revoke()
+    if status.not_started() or status.started():
+        return
 
     # associate task with the export instance
     download_data.set_task(
