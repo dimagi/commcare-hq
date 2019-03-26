@@ -130,24 +130,22 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-
-    tables = FormattedRow.wrap_all_rows(tables)
-
-
-    # tab = [a for a in tables]
-    # tab_2 = [a for a in tab[0][1]]
-    # tables_iterated = [[tab[0][0], tab_2]]
-
-    print("(PV) export 1!")
-
-    print("(PV) export 2")
+    print('(PV) export 1')
+    worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
+    print('(PV) export 2')
+    # Make copies of the generator, one to pass in to the open() function, one for the write() function
+    row_generator_1, row_generator_2 = itertools.tee(row_generator)
+    table_1 = itertools.chain([], [[worksheet_title, row_generator_1]])
+    table_2 = itertools.chain([], [[worksheet_title, row_generator_2]])
+    print('(PV) export 3')
     writer = get_writer(format)
-    print("(PV) export 3")
-    writer.open(tables, file, max_column_size=max_column_size)
-    print("(PV) export 4")
-    writer.write(tables, skip_first=True)
-    print("(PV) export 5")
+    print('(PV) export 4')
+    writer.open([table_1.next()], file, max_column_size=max_column_size)
+    print('(PV) export 5')
+    writer.write(table_2, skip_first=True)
+    print('(PV) export 6')
     writer.close()
+    print('(PV) export 7')
 
 
 def export_raw(headers, data, file, format=Format.XLS_2007,
@@ -464,7 +462,7 @@ class FormattedRow(object):
                     soft_assert_type_text(first_entry)
                     # `rows` is actually just a single row, so wrap it
                     rows = [rows]
-                ret = chain(ret, [(name, [(cls(row) for row in rows)])])
+                ret = name, (cls(row) for row in rows)
             else:
 
                 rows = list(rows)
