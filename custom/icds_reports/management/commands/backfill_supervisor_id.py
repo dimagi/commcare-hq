@@ -75,7 +75,6 @@ def get_sql_scripts(state_id):
     child_health_ucrs = [
         # child_health_cases_a46c129f loc table has some empty supervisor_id
         'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
-        'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
         'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
         'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
         'config_report_icds-cas_static-complementary_feeding_fo_4676987e'
@@ -84,6 +83,7 @@ def get_sql_scripts(state_id):
     # some supervisor_id on loc table are null
     ccs_record_ucrs = [
         'config_report_icds-cas_static-dashboard_birth_prepared_fd07c11f',
+        'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     ]
 
     # has column 'case_load_ccs_record0'
