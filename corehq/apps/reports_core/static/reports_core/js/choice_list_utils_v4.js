@@ -1,6 +1,5 @@
 hqDefine('reports_core/js/choice_list_utils_v4', ['underscore'], function (_) {
     var module = {};
-    // todo: we may need to support configuring this in the future
     var pageSize = 20;
 
     module.getApiQueryParams = function (params) {
