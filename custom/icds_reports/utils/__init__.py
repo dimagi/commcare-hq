@@ -996,14 +996,10 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
 
 
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
-    state = ''
-    district = ''
-    block = ''
-    if len(excel_data[0][1]) > 1:
-        state = excel_data[0][1][1][0]
-        district = excel_data[0][1][1][1]
-        block = excel_data[0][1][1][2]
     export_info = excel_data[1][1]
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
     thin_border = Border(
         left=Side(style='thin'),
