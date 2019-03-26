@@ -14,8 +14,8 @@ def _citus_composite_key_sql(model_cls):
     index = '{}_{}_uniq'.format(model_cls._meta.db_table, '_'.join(columns))
     sql = """
         CREATE UNIQUE INDEX {index} on "{table}" ({cols});
-        ALTER TABLE "{table}" DROP CONSTRAINT {pkey_name},
-        ADD CONSTRAINT {pkey_name} PRIMARY KEY USING INDEX {index};
+        ALTER TABLE "{table}" DROP CONSTRAINT {pkey_name};
+        ALTER TABLE "{table}" ADD CONSTRAINT {pkey_name} PRIMARY KEY USING INDEX {index};
     """.format(
         table=model_cls._meta.db_table,
         pkey_name=pkey_name,
@@ -24,8 +24,8 @@ def _citus_composite_key_sql(model_cls):
     )
     reverse_sql = """
         ALTER TABLE "{table}" DROP CONSTRAINT IF EXISTS {index},
-        DROP CONSTRAINT IF EXISTS {pkey_name},
-        ADD CONSTRAINT {pkey_name} PRIMARY KEY ({pkey});
+        DROP CONSTRAINT IF EXISTS {pkey_name};
+        ALTER TABLE "{table}" ADD CONSTRAINT {pkey_name} PRIMARY KEY ({pkey});
         DROP INDEX IF EXISTS {index};
     """.format(
         table=model_cls._meta.db_table,
