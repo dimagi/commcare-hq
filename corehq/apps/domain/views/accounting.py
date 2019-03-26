@@ -155,6 +155,12 @@ class DomainAccountingSettings(BaseProjectSettingsView):
     def current_subscription(self):
         return Subscription.get_active_subscription_by_domain(self.domain)
 
+    @property
+    def main_context(self):
+        context = super(DomainAccountingSettings, self).main_context
+        context['show_prepaid_modal'] = False
+        return context
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -327,7 +333,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 feature['account_credit'].get('is_visible')
                 for feature in self.plan.get('features')
             ),
-            'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user),
+            'can_change_subscription': subs and subs.user_can_change_subscription(self.request.user)
         }
 
 
@@ -847,6 +853,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': list(self.slug_to_form.values()),
             'today': datetime.date.today(),
+            'show_prepaid_modal': False,
         }
 
     @property
