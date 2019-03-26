@@ -144,7 +144,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
     function simpleYesNoRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + full[indicator] && full[indicator] !== vm.dataNotEntered ? 'Yes' : 'No' + '</div>' || vm.dataNotEntered;
+            return '<div>' + (full[indicator] && full[indicator] !== vm.dataNotEntered ? 'Yes' : 'No') + '</div>';
         };
     }
     function renderHomeVisits(data, type, full) {
