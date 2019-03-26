@@ -5407,16 +5407,18 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     def rearrange_modules(self, from_index, to_index):
         modules = self.modules
         try:
-            # remove module
-            moving_module = modules.pop(from_index)
+            if toggles.LEGACY_CHILD_MODULES.enabled(self.domain):
+                modules.insert(to_index, modules.pop(from_index))
+            else:
+                # remove module
+                moving_module = modules.pop(from_index)
 
-            # remove its children
-            children = [m for m in modules if m.root_module_id == moving_module.unique_id]
-            modules = [m for m in modules if m.root_module_id != moving_module.unique_id]
+                # remove its children
+                children = [m for m in modules if m.root_module_id == moving_module.unique_id]
+                modules = [m for m in modules if m.root_module_id != moving_module.unique_id]
 
-            # add back in module and children
-            modules = modules[:to_index] + [moving_module] + children + modules[to_index:]
-
+                # add back in module and children
+                modules = modules[:to_index] + [moving_module] + children + modules[to_index:]
         except IndexError:
             raise RearrangeError()
         self.modules = modules
