@@ -921,17 +921,14 @@ def evaluate_data_source(request, domain):
     docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
     document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
     rows = []
+    docs = 0
     for doc in document_store.iter_documents(docs_id):
+        docs += 1
         for row in data_source.get_all_values(doc):
             rows.append({i.column.database_column_name.decode(): i.value for i in row})
 
-    adapter = get_indicator_adapter(data_source)
-    table = adapter.get_table()
-    query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
-    db_rows = [
-        {column.name: getattr(row, column.name) for column in table.columns}
-        for row in query
-    ]
+    if not docs:
+        return JsonResponse(data={'error': _('No documents found. Check the IDs and try again.')}, status=404)
 
     data = {
         'rows': rows,
