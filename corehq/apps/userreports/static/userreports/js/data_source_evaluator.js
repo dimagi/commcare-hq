@@ -26,7 +26,7 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                         data_source: self.dataSourceId(),
                     },
                     success: function (data) {
-                        function transform_rows(rows) {
+                        function transformRows(rows) {
                             var output = [];
                             rows.forEach(function (row) {
                                 var tableRow = [];
@@ -38,8 +38,8 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                             return output;
                         }
 
-                        self.rows(transform_rows(data.rows));
-                        self.dbRows(transform_rows(data.db_rows));
+                        self.rows(transformRows(data.rows));
+                        self.dbRows(transformRows(data.db_rows));
                         self.columns(data.columns);
                         self.dbError(data.db_error);
                         self.loading(false);
