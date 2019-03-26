@@ -149,8 +149,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
-    get_latest_enabled_app_release,
-    expire_get_latest_enabled_app_release_cache,
+    get_app_release_by_location,
+    expire_get_app_release_by_location_cache,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5950,7 +5950,7 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
-class LatestEnabledAppRelease(models.Model):
+class AppReleaseByLocation(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
     location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
@@ -5964,12 +5964,12 @@ class LatestEnabledAppRelease(models.Model):
         unique_together = (("domain", "build_id", "location", "version"),)
 
     def save(self, *args, **kwargs):
-        super(LatestEnabledAppRelease, self).save(*args, **kwargs)
-        expire_get_latest_enabled_app_release_cache(self)
+        super(AppReleaseByLocation, self).save(*args, **kwargs)
+        expire_get_app_release_by_location_cache(self)
 
     def clean(self):
         if self.active:
-            enabled_release = get_latest_enabled_app_release(self.domain, self.location.location_id, self.app_id)
+            enabled_release = get_app_release_by_location(self.domain, self.location.location_id, self.app_id)
             if enabled_release and enabled_release.version > self.version:
                 raise ValidationError({'version': _("Higher version {} already enabled for this application and "
                                                     "location").format(enabled_release.version)})
@@ -5982,11 +5982,11 @@ class LatestEnabledAppRelease(models.Model):
         :param build_id: id of the build corresponding to the version
         """
         try:
-            enabled_app_release = LatestEnabledAppRelease.objects.get(
+            enabled_app_release = AppReleaseByLocation.objects.get(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
         except cls.DoesNotExist:
-            enabled_app_release = LatestEnabledAppRelease(
+            enabled_app_release = AppReleaseByLocation(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
         enabled_app_release.activate() if active else enabled_app_release.deactivate()
@@ -6019,7 +6019,7 @@ class LatestEnabledAppRelease(models.Model):
 
 
 class LatestEnabledBuildProfiles(models.Model):
-    # ToDo: this would be deprecated after LatestEnabledAppRelease is released and
+    # ToDo: this would be deprecated after AppReleaseByLocation is released and
     # this model's entries are migrated to the new location specific model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)

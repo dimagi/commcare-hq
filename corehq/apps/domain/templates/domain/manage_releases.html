@@ -6,7 +6,7 @@
 {% requirejs_main 'app_manager/js/manage_releases' %}
 
 {% block page_content %}
-    {% initial_page_data 'enabled_app_releases' enabled_app_releases %}
+    {% initial_page_data 'app_releases_by_location' app_releases_by_location %}
     {% registerurl 'deactivate_release_restriction' domain '---'%}
     {% registerurl 'activate_release_restriction' domain '---'%}
     {% registerurl "paginate_releases" domain '---' %}
@@ -19,7 +19,7 @@
                           method='post'>
                         {% crispy manage_releases_form %}
                     </form>
-                {% if enabled_app_releases %}
+                {% if app_releases_by_location %}
                     <table id="managed-releases" class="table">
                         <thead>
                             <tr>
@@ -30,7 +30,7 @@
                                 <th class="col-sm-2">{% trans 'Action' %}</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: enabledAppReleases, visible: enabledAppReleases">
+                        <tbody data-bind="foreach: appReleasesByLocation, visible: appReleasesByLocation">
                             <tr data-bind="attr: {id: domId}, css: {'bg-success': active() }">
                                 <td data-bind="text: app"></td>
                                 <td data-bind="text: location"></td>

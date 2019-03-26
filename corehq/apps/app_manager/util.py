@@ -639,12 +639,12 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
 
 
 @quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
-def get_latest_enabled_app_release(domain, location_id, app_id):
+def get_app_release_by_location(domain, location_id, app_id):
     """
     for a location search for enabled app releases for all parent locations.
     Child location's setting takes precedence over parent
     """
-    from corehq.apps.app_manager.models import LatestEnabledAppRelease
+    from corehq.apps.app_manager.models import AppReleaseByLocation
     location = SQLLocation.active_objects.get(location_id=location_id)
     location_and_ancestor_ids = location.get_ancestors(include_self=True).values_list(
         'location_id', flat=True).reverse()
@@ -654,7 +654,7 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
     latest_enabled_releases = {
         enabled_release.location_id: enabled_release.build_id
         for enabled_release in
-        LatestEnabledAppRelease.objects.filter(
+        AppReleaseByLocation.objects.filter(
             location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
             'version')
     }
@@ -664,18 +664,18 @@ def get_latest_enabled_app_release(domain, location_id, app_id):
             return get_app(domain, build_id)
 
 
-def expire_get_latest_enabled_app_release_cache(latest_enabled_app_release):
+def expire_get_app_release_by_location_cache(app_release_by_location):
     """
     expire cache for the location and its descendants for the app corresponding to this enabled app release
     why? : Latest enabled release for a location is dependent on restrictions added for
     itself and its ancestors. Hence we expire the cache for location and its descendants for which the
     latest enabled release would depend on this location
     """
-    location = SQLLocation.active_objects.get(location_id=latest_enabled_app_release.location_id)
+    location = SQLLocation.active_objects.get(location_id=app_release_by_location.location_id)
     location_and_descendants = location.get_descendants(include_self=True)
     for loc in location_and_descendants:
-        get_latest_enabled_app_release.clear(latest_enabled_app_release.domain, loc.location_id,
-                                             latest_enabled_app_release.app_id)
+        get_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
+                                          app_release_by_location.app_id)
 
 
 @quickcache(['app_id'], timeout=24 * 60 * 60)

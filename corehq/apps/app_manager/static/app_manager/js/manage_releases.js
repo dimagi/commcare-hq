@@ -74,14 +74,14 @@ hqDefine('app_manager/js/manage_releases', [
             return self;
         };
 
-        function manageReleasesViewModel(enabledAppReleases) {
+        function manageReleasesViewModel(appReleasesByLocation) {
             var self = {};
-            self.enabledAppReleases = ko.observableArray(enabledAppReleases);
+            self.appReleasesByLocation = ko.observableArray(appReleasesByLocation);
             return self;
         }
-        var enabledAppReleases = _.map(initialPageData.get('enabled_app_releases'), enabledAppRelease);
-        var viewModel = manageReleasesViewModel(enabledAppReleases);
-        if (enabledAppReleases.length) {
+        var appReleasesByLocation = _.map(initialPageData.get('app_releases_by_location'), enabledAppRelease);
+        var viewModel = manageReleasesViewModel(appReleasesByLocation);
+        if (appReleasesByLocation.length) {
             $('#managed-releases').koApplyBindings(viewModel);
         }
         function manageReleaseSearchViewModel() {
