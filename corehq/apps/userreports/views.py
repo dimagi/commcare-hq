@@ -910,28 +910,6 @@ def evaluate_data_source(request, domain):
     docs_id = request.POST['docs_id']
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
-        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
-        rows = []
-        for doc in document_store.iter_documents(docs_id):
-            for row in data_source.get_all_values(doc):
-                rows.append({i.column.database_column_name.decode(): i.value for i in row})
-
-        adapter = get_indicator_adapter(data_source)
-        table = adapter.get_table()
-        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
-        db_rows = [
-            {column.name: getattr(row, column.name) for column in table.columns}
-            for row in query
-        ]
-
-        return JsonResponse(data={
-            'rows': rows,
-            'db_rows': db_rows,
-            'columns': [
-                column.database_column_name.decode() for column in data_source.get_columns()
-            ],
-        })
     except DataSourceConfigurationNotFoundError:
         return JsonResponse(
             {"error": _("Data source with id {} not found in domain {}.").format(
@@ -939,6 +917,29 @@ def evaluate_data_source(request, domain):
             )},
             status=404,
         )
+
+    docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+    document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
+    rows = []
+    for doc in document_store.iter_documents(docs_id):
+        for row in data_source.get_all_values(doc):
+            rows.append({i.column.database_column_name.decode(): i.value for i in row})
+
+    adapter = get_indicator_adapter(data_source)
+    table = adapter.get_table()
+    query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+    db_rows = [
+        {column.name: getattr(row, column.name) for column in table.columns}
+        for row in query
+    ]
+
+    return JsonResponse(data={
+        'rows': rows,
+        'db_rows': db_rows,
+        'columns': [
+            column.database_column_name.decode() for column in data_source.get_columns()
+        ],
+    })
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
