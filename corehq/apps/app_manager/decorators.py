@@ -51,17 +51,22 @@ def safe_download(f):
     return _safe_download
 
 
-def get_latest_enabled_build(latest, domain, username, app_id, profile_id):
+def _get_latest_enabled_build(domain, username, app_id, profile_id, location_flag_enabled):
+    """
+    :return: enabled build for the app for a location or profile on basis of feature flag enabled with
+    location flag taking precedence
+    """
     latest_enabled_build = None
-    user = CommCareUser.get_by_username(normalize_username(username, domain))
-    user_location_id = user.location_id
-    if user_location_id:
-        parent_app_id = get_app(domain, app_id).copy_of
-        latest_enabled_build = get_app_release_by_location(domain, user_location_id, parent_app_id)
+    if location_flag_enabled:
+        user = CommCareUser.get_by_username(normalize_username(username, domain))
+        user_location_id = user.location_id
+        if user_location_id:
+            parent_app_id = get_app(domain, app_id).copy_of
+            latest_enabled_build = get_app_release_by_location(domain, user_location_id, parent_app_id)
     if not latest_enabled_build:
         # Fall back to the old logic to support migration
         # ToDo: Remove this block once migration is complete
-        if latest and profile_id and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+        if profile_id and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
             latest_enabled_build = get_latest_enabled_build_for_profile(domain, profile_id)
     return latest_enabled_build
 
@@ -88,14 +93,16 @@ def safe_cached_download(f):
             request.GET = request.GET.copy()
             request.GET.pop('username')
 
+        location_flag_enabled = toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain)
         latest_enabled_build = None
-        if latest and toggles.MANAGE_RELEASES_PER_LOCATION.enabled(domain):
+        if latest and location_flag_enabled:
             if not username:
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
                                         default_response=_("Please log in to the app to check for an update."))
                 return HttpResponse(status=406, content=json.dumps(content_response))
-            latest_enabled_build = get_latest_enabled_build(latest, domain, username, app_id,
-                                                            request.GET.get('profile'))
+        if latest:
+            latest_enabled_build = _get_latest_enabled_build(domain, username, app_id, request.GET.get('profile'),
+                                                             location_flag_enabled)
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
