@@ -350,13 +350,16 @@ def revert_to_copy(request, domain, app_id):
         request,
         "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
     )
+    copy_build_comment_template = "Reverted to version {old_version}"
+    copy_build_comment_params = {
+        "old_version": copy.version,
+        "original_comment": copy.build_comment,
+    }
     if copy.build_comment:
-        new_build_comment = "Reverted to version {old_version}\n\n{original_comment}".format(
-            old_version=copy.version, original_comment=copy.build_comment)
-    else:
-        new_build_comment = "Reverted to version {old_version}".format(old_version=copy.version)
+        copy_build_comment_template += "\n\nPrevious build comments:\n{original_comment}"
+
     copy = app.make_build(
-        comment=new_build_comment,
+        comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
     )
     copy.save(increment_version=False)
