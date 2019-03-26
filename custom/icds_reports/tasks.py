@@ -1020,7 +1020,7 @@ def push_missing_docs_to_es():
         )
 
 
-@periodic_task(run_every=crontab(hour=18, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
+@periodic_task(run_every=crontab(hour=17, minute=0, day_of_month='12'), acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
