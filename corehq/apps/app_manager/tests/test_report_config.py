@@ -50,7 +50,16 @@ class ReportAppConfigTest(SimpleTestCase):
         )
 
 
-def MAKE_REPORT_CONFIG(domain, report_id):
+def MAKE_REPORT_CONFIG(domain, report_id, columns=None):
+    columns = columns or [
+        FieldColumn(
+            type='field',
+            aggregation="simple",
+            column_id="color_94ec39e6",
+            display="color",
+            field="color_94ec39e6"
+        ).to_json(),
+    ]
     return ReportConfiguration(
         _id=report_id,
         title="Entry Report",
@@ -58,9 +67,7 @@ def MAKE_REPORT_CONFIG(domain, report_id):
         config_id="516c494736e95b023cc7845b557de0f5",
         domain=domain,
         report_meta=ReportMeta(builder_report_type="chart", created_by_builder=True),
-        columns=[
-            FieldColumn(type='field', aggregation="simple", column_id="color_94ec39e6", display="color", field="color_94ec39e6").to_json(),
-        ],
+        columns=columns,
         configured_charts=[
             MultibarChartSpec(type='multibar', chart_id="7451243209119342931", x_axis_column="color_94ec39e6",
                               y_axis_columns=[GraphDisplayColumn(column_id="count", display="count")]).to_json()
