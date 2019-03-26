@@ -8,7 +8,7 @@ import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
@@ -173,6 +173,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
             payload_id=payload.get_id
         )
         repeat_record.save()
+        if next_check is None:
+            repeat_record.attempt_forward_now()
         return repeat_record
 
     def allowed_to_forward(self, payload):
@@ -659,16 +661,16 @@ class RepeatRecord(Document):
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
+        now = datetime.utcnow()
         window = timedelta(minutes=0)
         if self.last_checked:
-            window = self.next_check - self.last_checked
+            window = now - self.last_checked
             window += (window // 2)  # window *= 1.5
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
 
-        now = datetime.utcnow()
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
@@ -772,6 +774,33 @@ class RepeatRecord(Document):
     def cancel(self):
         self.next_check = None
         self.cancelled = True
+
+    def attempt_forward_now(self):
+        from corehq.motech.repeaters.tasks import process_repeat_record
+
+        def is_ready():
+            return self.next_check < datetime.utcnow()
+
+        def already_processed():
+            return self.succeeded or self.cancelled or self.next_check is None
+
+        if already_processed() or not is_ready():
+            return
+
+        # Set the next check to happen an arbitrarily long time from now so
+        # if something goes horribly wrong with the delayed task it will not
+        # be lost forever. A check at this time is expected to occur rarely,
+        # if ever, because `process_repeat_record` will usually succeed or
+        # reset the next check to sometime sooner.
+        self.next_check = datetime.utcnow() + timedelta(hours=48)
+        try:
+            self.save()
+        except ResourceConflict:
+            # Another process beat us to the punch. This takes advantage
+            # of Couch DB's optimistic locking, which prevents a process
+            # with stale data from overwriting the work of another.
+            return
+        process_repeat_record.delay(self)
 
     def requeue(self):
         self.cancelled = False
