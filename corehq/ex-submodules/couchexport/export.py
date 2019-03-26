@@ -130,8 +130,16 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
-    print("(PV) export 1!")
+
     tables = FormattedRow.wrap_all_rows(tables)
+
+
+    # tab = [a for a in tables]
+    # tab_2 = [a for a in tab[0][1]]
+    # tables_iterated = [[tab[0][0], tab_2]]
+
+    print("(PV) export 1!")
+
     print("(PV) export 2")
     writer = get_writer(format)
     print("(PV) export 3")
