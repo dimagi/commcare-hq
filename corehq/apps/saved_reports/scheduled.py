@@ -86,6 +86,12 @@ def create_records_for_scheduled_reports(fake_now_for_tests=None):
     return [record.scheduled_report_id for record in records]
 
 
+def get_queued_report_ids():
+    return (ScheduledReportRecord.objects.filter(state=ScheduledReportRecord.States.queued)
+            .distinct('scheduled_report_id')
+            .values_list('scheduled_report_id', flat=True))
+
+
 def _get_default_start_datetime(end_datetime):
     target_minute = guess_reporting_minute(end_datetime)
     return end_datetime.replace(minute=target_minute, second=0, microsecond=0)

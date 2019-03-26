@@ -2,11 +2,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 import datetime
 
+import mock
 from django.test import TestCase
 
 from corehq.apps.saved_reports.models import ScheduledReportsCheckpoint, ReportNotification, \
     ScheduledReportRecord
 from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports
+from corehq.apps.saved_reports.tasks import queue_scheduled_reports, send_report
 from corehq.apps.saved_reports.tests.test_scheduled_reports import \
     delete_all_report_notifications
 
@@ -119,3 +121,36 @@ class ScheduledReportsCheckpointTest(TestCase):
                 self.assertNotIn(
                     report._id, report_ids,
                     "{}: shouldn't have fired but did".format(description))
+
+    def test_queue_scheduled_reports(self):
+        report = ReportNotification(hour=23, minute=0, interval='daily')
+        report.save()
+        unfired_report = ReportNotification(hour=24, minute=0, interval='daily')
+        unfired_report.save()
+        checkpoint = ScheduledReportsCheckpoint.objects.create(
+            start_datetime=datetime.datetime(2019, 3, 22, 22, 46, 0, 439979),
+            end_datetime=datetime.datetime(2019, 3, 22, 23, 11, 0, 123011),
+        )
+        ScheduledReportRecord.objects.create(
+            scheduled_report_id=report._id,
+            state=ScheduledReportRecord.States.queued,
+            from_checkpoint=checkpoint,
+            scheduled_for=datetime.datetime(2019, 3, 22, 23, 0, 0, 0)
+        )
+
+        sent = []
+
+        def fake_send(self):
+            sent.append(self._id)
+
+        with mock.patch('corehq.apps.saved_reports.models.ReportNotification.send', fake_send):
+            queue_scheduled_reports(send_report_override_for_tests=send_report)
+
+        succeeded_records = (
+            ScheduledReportRecord.objects.filter(state=ScheduledReportRecord.States.succeeded)
+            .values_list('scheduled_report_id', flat=True)
+        )
+        self.assertIn(report._id, sent)
+        self.assertNotIn(unfired_report._id, sent)
+        self.assertIn(report._id, succeeded_records)
+        self.assertNotIn(unfired_report._id, succeeded_records)
