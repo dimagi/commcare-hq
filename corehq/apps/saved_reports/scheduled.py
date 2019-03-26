@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from calendar import monthrange
 from datetime import datetime
-from corehq.apps.reports.models import ReportNotification
+from corehq.apps.saved_reports.models import ReportNotification
 from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
