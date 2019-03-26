@@ -40,7 +40,7 @@
                 <div class="col-sm-4">
                     <div class="form-inline" style="margin: 1.6em 0;">
                         <label for="pagination-limit">{% trans 'Show' %}</label>
-                        <select id="pagination-limit" data-bind="event: {change: update_limit}">
+                        <select id="pagination-limit" data-bind="event: {change: update_limit}" class="form-control">
                             {% for limit in pagination_limit_options %}
                                 <option value="{{ limit }}">{% blocktrans %}{{ limit }} products per page{% endblocktrans %}</option>
                             {% endfor %}
