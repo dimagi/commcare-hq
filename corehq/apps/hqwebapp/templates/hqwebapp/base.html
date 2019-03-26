@@ -318,6 +318,9 @@
             {% if domain and domain_has_overdue_invoice and not hide_overdue_invoice_modal %}
                 {% include 'hqwebapp/downgrade_modal.html' %}
             {% endif %}
+            {% if domain and show_prepaid_modal %}
+                {% include 'hqwebapp/prepaid_modal.html' %}
+            {% endif %}
         {% endblock modals %}
 
         {% if show_mobile_ux_warning %}
@@ -529,6 +532,7 @@
         {% include 'hqwebapp/partials/ko_select_toggle.html' %}
 
         <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
 
         {% block js %}{% endblock js %}
 
