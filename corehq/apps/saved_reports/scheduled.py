@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 
 from django.db import transaction
 
-from corehq.apps.saved_reports.models import ReportNotification, ScheduledReportsCheckpoint
+from corehq.apps.saved_reports.models import ReportNotification, ScheduledReportsCheckpoint, \
+    ScheduledReportRecord
 from corehq.util.soft_assert import soft_assert
 from six.moves import range
 
@@ -67,12 +68,22 @@ def create_records_for_scheduled_reports(fake_now_for_tests=None):
     else:
         start_datetime = _get_default_start_datetime(end_datetime)
     new_checkpoint = ScheduledReportsCheckpoint(start_datetime=start_datetime, end_datetime=end_datetime)
-    report_ids = []
-    for period in ('daily', 'weekly', 'monthly'):
-        for report_id in get_scheduled_report_ids(period, start_datetime, end_datetime):
-            report_ids.append(report_id)
     new_checkpoint.save()
-    return report_ids
+    records = []
+    last_record_for_report_id = {}
+    for period in ('daily', 'weekly', 'monthly'):
+        for record in get_scheduled_report_records(period, start_datetime, end_datetime):
+            record.from_checkpoint = new_checkpoint
+            records.append(record)
+            # this logic for skipping all but the lastest of repeated reports
+            # depends on reports being sorted by scheduled_for, which they will be
+            # coming from get_scheduled_report_records
+            if record.scheduled_report_id in last_record_for_report_id:
+                previous_of_same_report = last_record_for_report_id[record.scheduled_report_id]
+                previous_of_same_report.state = ScheduledReportRecord.States.skipped
+            last_record_for_report_id[record.scheduled_report_id] = record
+    ScheduledReportRecord.objects.bulk_create(records)
+    return [record.scheduled_report_id for record in records]
 
 
 def _get_default_start_datetime(end_datetime):
@@ -81,6 +92,14 @@ def _get_default_start_datetime(end_datetime):
 
 
 def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
+    """
+    Deprecated, but still used in tests to test get_scheduled_report_records
+    """
+    for record in get_scheduled_report_records(period, start_datetime, end_datetime):
+        yield record.scheduled_report_id
+
+
+def get_scheduled_report_records(period, start_datetime=None, end_datetime=None):
     end_datetime = end_datetime or datetime.utcnow()
     assert period in ('daily', 'weekly', 'monthly'), period
     if not start_datetime:
@@ -95,7 +114,12 @@ def get_scheduled_report_ids(period, start_datetime=None, end_datetime=None):
                 include_docs=False,
                 **key
             ).all():
-                yield result['id']
+                yield ScheduledReportRecord(
+                    from_checkpoint=None,  # will be set before saving
+                    scheduled_for=target_point_in_time,
+                    scheduled_report_id=result['id'],
+                    state=ScheduledReportRecord.States.queued
+                )
 
 
 def guess_reporting_minute(now=None):

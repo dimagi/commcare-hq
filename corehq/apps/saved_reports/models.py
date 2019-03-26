@@ -716,3 +716,22 @@ class ScheduledReportsCheckpoint(models.Model):
             return cls.objects.order_by('-end_datetime')[0]
         except IndexError:
             return None
+
+
+class ScheduledReportRecord(models.Model):
+    class States(object):
+        queued = 0
+        succeeded = 1
+        failed = 2
+        skipped = 3
+        choices = [
+            (queued, 'Queued'),
+            (succeeded, 'Succeeded'),
+            (failed, 'Failed'),
+            (skipped, 'Skipped'),
+        ]
+
+    from_checkpoint = models.ForeignKey(ScheduledReportsCheckpoint)
+    scheduled_for = models.DateTimeField()
+    scheduled_report_id = models.CharField(max_length=64)
+    state = models.IntegerField(choices=States.choices, db_index=True)
