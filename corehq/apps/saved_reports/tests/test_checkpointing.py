@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import datetime
 
 from django.test import TestCase
@@ -15,7 +17,7 @@ class ScheduledReportsCheckpointTest(TestCase):
 
     def test_checkpoint_created(self):
         point_1 = datetime.datetime(2019, 3, 22, 22, 46, 0, 439979)
-        point_2 = datetime.datetime(2019, 3, 22, 23, 01, 38, 363898)
+        point_2 = datetime.datetime(2019, 3, 22, 23, 1, 38, 363898)
         self.assertEqual(len(ScheduledReportsCheckpoint.objects.all()), 0)
 
         create_records_for_scheduled_reports(fake_now_for_tests=point_1)
