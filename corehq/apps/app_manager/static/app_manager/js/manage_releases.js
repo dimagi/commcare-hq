@@ -11,7 +11,7 @@ hqDefine('app_manager/js/manage_releases', [
     ko,
     _,
     initialPageData,
-    assertProperties,
+    assertProperties
 ) {
     'use strict';
     $(function () {

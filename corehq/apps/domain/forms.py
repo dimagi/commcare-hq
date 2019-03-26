@@ -2392,8 +2392,6 @@ class ManageAppReleasesForm(forms.Form):
         if request.GET.get('version'):
             self.fields['version'].initial = request.GET.get('version')
         self.helper = HQFormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_tag = False
 
         self.helper.layout = crispy.Layout(
