@@ -66,7 +66,7 @@ def noop(*args, **kwargs):
 
 
 class Migration(migrations.Migration):
-    dependencies = [('app_manager', '0002_latestenabledbuildprofiles')]
+    dependencies = [('app_manager', '0003_auto_20190326_0853')]
     operations = [
         migrations.RunPython(flag_legacy_child_module_domains, reverse_code=noop),
     ]
