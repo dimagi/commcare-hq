@@ -298,10 +298,7 @@ Then run the following separately:
     $ ./manage.py run_ptop --all
 
     # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
-    # For Mac / Linux
-    $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
-    # Windows
-    > manage.py celeryd --settings=settings
+    $ celery -A corehq worker -l info
 
 Create a superuser for your local environment
 

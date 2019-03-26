@@ -207,6 +207,8 @@ class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
             response = self.client.post(url, post_data, content_type=content_type)
         elif method == "PUT":
             response = self.client.put(url, post_data, content_type=content_type)
+        elif method == "DELETE":
+            response = self.client.delete(url, post_data, content_type=content_type)
         self.assertEqual(response.status_code, failure_code)
 
         # api_key auth should succeed, caller should check expected response status and content
@@ -215,6 +217,8 @@ class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
             response = self.client.post(api_url, post_data, content_type=content_type)
         elif method == "PUT":
             response = self.client.put(api_url, post_data, content_type=content_type)
+        elif method == "DELETE":
+            response = self.client.delete(api_url, post_data, content_type=content_type)
         return response
 
 
@@ -1501,6 +1505,17 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(modified.reporting)
         self.assertTrue(modified.case_sharing)
         self.assertEqual(modified.metadata["localization"], "Ghana")
+
+    def test_delete_group(self):
+
+        group = Group({"name": "test", "domain": self.domain.name})
+        group.save()
+        self.addCleanup(group.delete)
+
+        backend_id = group._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id), '', method='DELETE')
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
 
 
 class FakeUserES(object):

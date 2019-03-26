@@ -24,6 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
+from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
 from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
 from custom.aaa.tasks import (
     update_agg_awc_table,
@@ -360,6 +361,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
     def post(self, request, *args, **kwargs):
         selected_month = int(self.request.POST.get('selectedMonth', 0))
         selected_year = int(self.request.POST.get('selectedYear', 0))
+        month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
         section = self.request.POST.get('section', '')
         sub_section = self.request.POST.get('subsection', '')
         beneficiary_id = self.request.POST.get('beneficiaryId', '')
@@ -368,47 +370,32 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         if sub_section == 'person_details':
             person_model = Woman if section != 'child' else Child
 
-            extra_select = {
-                'gender': 'sex',
-                'aadhaarNo': 'has_aadhar_number',
-                'address': 'hh_address',
-                'phone': 'contact_phone_number',
-                'religion': 'hh_religion',
-                'caste': 'hh_caste',
-                'bplOrApl': 'hh_bpl_apl',
-                'subcentre': 'sc_id',
-                'village': 'village_id',
-                'anganwadiCentre': 'awc_id'
-            }
+            values = [
+                'dob', 'name', 'sex', 'has_aadhar_number', 'hh_address', 'contact_phone_number',
+                'hh_religion', 'hh_caste', 'hh_bpl_apl', 'sc_id', 'village_id', 'awc_id'
+            ]
 
             if section != 'child':
-                extra_select.update({
-                    'status': 'migration_status',
-                    'marriedAt': 'age_marriage',
-                    'husband_name': 'husband_name'
-                })
+                values.extend([
+                    'migration_status',
+                    'age_marriage',
+                    'husband_name'
+                ])
             else:
-                extra_select.update({
-                    'mother_case_id': 'mother_case_id'
-                })
+                values.append('mother_case_id')
 
-            extra_select_values = list(extra_select.keys())
-            extra_select_values.extend(
-                ['dob', 'name']
-            )
-            person = person_model.objects.extra(
-                select=extra_select
-            ).values(*extra_select_values).get(
+            person = person_model.objects.values(*values).get(
                 domain=request.domain,
                 person_case_id=beneficiary_id
             )
 
-            subsentre = SQLLocation.objects.get(domain=request.domain, location_id=person['subcentre']).name
-            village = SQLLocation.objects.get(domain=request.domain, location_id=person['village']).name
-            anganwadiCentre = SQLLocation.objects.get(domain=request.domain, location_id=person['anganwadiCentre']).name
-            person['subcentre'] = subsentre
-            person['village'] = village
-            person['anganwadiCentre'] = anganwadiCentre
+            location_details = SQLLocation.objects.filter(
+                domain=request.domain,
+                location_id__in=[person['sc_id'], person['village_id'], person['awc_id']]
+            )
+
+            for location in location_details:
+                person[location.location_type.code] = location.name
 
             data = dict(
                 person=person,
@@ -425,10 +412,10 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 # TODO update when the model will be created
                 husband = dict(
                     name=person['husband_name'],
-                    gender='Female',
+                    sex='Female',
                     dob=date(1991, 5, 11),
-                    marriedAt=26,
-                    aadhaarNo='Yes'
+                    age_marriage=26,
+                    has_aadhar_number='Yes'
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':
@@ -442,419 +429,48 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                     }
                 ).values('id', 'name', 'dob'))
             )
-        if section == 'child':
-            if sub_section == 'infant_details':
-                extra_select = {
-                    'breastfeedingInitiated': 'breastfed_within_first',
-                    'dietDiversity': 'diet_diversity',
-                    'birthWeight': 'birth_weight',
-                    'dietQuantity': 'diet_quantity',
-                    'breastFeeding': 'comp_feeding',
-                    'handwash': 'hand_wash',
-                    'exclusivelyBreastfed': 'is_exclusive_breastfeeding',
-                    'babyCried': '\'N/A\'',
-                    'pregnancyLength': '\'N/A\'',
-                }
 
-                data = Child.objects.extra(
-                    select=extra_select
-                ).values(*list(extra_select.keys())).get(
-                    domain=request.domain,
-                    person_case_id=beneficiary_id,
-                )
+        if section == 'child':
+            helper = ChildQueryHelper(request.domain, beneficiary_id)
+            if sub_section == 'infant_details':
+                data = helper.infant_details()
             elif sub_section == 'child_postnatal_care_details':
-                # TODO update when CcsRecord will have properties from PNC form
-                data = dict(
-                    visits=[
-                        dict(
-                            pncDate='N/A',
-                            breastfeeding='N/A',
-                            skinToSkinContact='N/A',
-                            wrappedUpAdequately='N/A',
-                            awakeActive='N/A',
-                        )
-                    ]
-                )
+                data = {'visits': helper.postnatal_care_details()}
             elif sub_section == 'vaccination_details':
                 period = self.request.POST.get('period', 'atBirth')
-                if period == 'atBirth':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='BCG',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Hepatitis B - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='OPV - 0',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'sixWeek':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='OPV - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Pentavalent - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Fractional IPV - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Rotavirus - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='PCV - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'tenWeek':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='OPV - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Pentavalent - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Rotavirus - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'fourteenWeek':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='OPV - 3',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Pentavalent - 3',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Fractional IPV - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Rotavirus - 3',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='PCV - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'nineTwelveMonths':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='PCV Booster',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Measles - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='JE - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'sixTeenTwentyFourMonth':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='DPT Booster - 1',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Measles - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='OPV Booster',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='JE - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 3',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                        ]
-                    )
-                elif period == 'twentyTwoSeventyTwoMonth':
-                    data = dict(
-                        vitamins=[
-                            dict(
-                                vitaminName='Vit. A - 4',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 5',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 6',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 7',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 8',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='Vit. A - 9',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            ),
-                            dict(
-                                vitaminName='DPT Booster - 2',
-                                date='N/A',
-                                adverseEffects='N/A',
-                            )
-                        ]
-                    )
+                data = {'vitamins': helper.vaccination_details(period)}
             elif sub_section == 'growth_monitoring':
-                data = dict(
-                    currentWeight='N/A',
-                    nrcReferred='N/A',
-                    growthMonitoringStatus='N/A',
-                    referralDate='N/A',
-                    previousGrowthMonitoringStatus='N/A',
-                    underweight='N/A',
-                    underweightStatus='N/A',
-                    stunted='N/A',
-                    stuntedStatus='N/A',
-                    wasting='N/A',
-                    wastingStatus='N/A',
-                )
+                data = helper.growth_monitoring()
             elif sub_section == 'weight_for_age_chart':
-                child = Child.objects.get(person_case_id=beneficiary_id)
-                try:
-                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                    points = []
-                    for recorded_weight in child_history.weight_child_history:
-                        month = relativedelta(recorded_weight[0], child.dob).months
-                        points.append(dict(x=month, y=recorded_weight[1]))
-                except ChildHistory.DoesNotExist:
-                    points = []
-                data = dict(
-                    points=points
-                )
+                data = {'points': helper.weight_for_age_chart()}
             elif sub_section == 'height_for_age_chart':
-                child = Child.objects.get(person_case_id=beneficiary_id)
-                try:
-                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                    points = []
-                    for recorded_height in child_history.height_child_history:
-                        month = relativedelta(recorded_height[0], child.dob).months
-                        points.append(dict(x=month, y=recorded_height[1]))
-                except ChildHistory.DoesNotExist:
-                    points = []
-                data = dict(
-                    points=points
-                )
+                data = {'points': helper.height_for_age_chart()}
             elif sub_section == 'weight_for_height_chart':
-                child = Child.objects.get(person_case_id=beneficiary_id)
-                try:
-                    child_history = ChildHistory.objects.get(child_health_case_id=child.child_health_case_id)
-                    points = {}
-                    for recorded_weight in child_history.weight_child_history:
-                        month = relativedelta(recorded_weight[0], child.dob).months
-                        points.update({month: dict(x=recorded_weight[1])})
-                    for recorded_height in child_history.height_child_history:
-                        month = relativedelta(recorded_height[0], child.dob).months
-                        if month in points:
-                            points[month].update(dict(y=recorded_height[1]))
-                        else:
-                            points.update({month: dict(y=recorded_height[1])})
-                except ChildHistory.DoesNotExist:
-                    points = {}
-                data = dict(
-                    points=[point for point in points.values() if 'x' in point and 'y']
-                )
+                data = {'points': helper.weight_for_height_chart()}
         elif section == 'pregnant_women':
+            helper = PregnantWomanQueryHelper(request.domain, beneficiary_id)
             if sub_section == 'pregnancy_details':
-                data = CcsRecord.objects.extra(
-                    select={
-                        'dateOfLmp': 'lmp',
-                        'weightOfPw': 'woman_weight_at_preg_reg',
-                        'dateOfRegistration': 'preg_reg_date',
-                    }
-                ).values(
-                    'lmp', 'weightOfPw', 'dateOfRegistration', 'edd', 'add'
-                ).get(person_case_id=beneficiary_id)
-                # I think we should consider to add blood_group to the CcsRecord to don't have two queries
-                data.update(
-                    Woman.objects.extra(
-                        select={
-                            'bloodGroup': 'blood_group'
-                        }
-                    ).values('bloodGroup').get(
-                        person_case_id=beneficiary_id
-                    )
-                )
+                data = helper.pregnancy_details()
             elif sub_section == 'pregnancy_risk':
-                data = dict(
-                    riskPregnancy='N/A',
-                    referralDate='N/A',
-                    hrpSymptoms='N/A',
-                    illnessHistory='N/A',
-                    referredOutFacilityType='N/A',
-                    pastIllnessDetails='N/A',
-                )
+                data = helper.pregnancy_risk()
             elif sub_section == 'consumables_disbursed':
-                data = dict(
-                    ifaTablets='N/A',
-                    thrDisbursed='N/A',
-                )
+                data = helper.consumables_disbursed()
             elif sub_section == 'immunization_counseling_details':
-                data = dict(
-                    ttDoseOne='N/A',
-                    ttDoseTwo='N/A',
-                    ttBooster='N/A',
-                    birthPreparednessVisitsByAsha='N/A',
-                    birthPreparednessVisitsByAww='N/A',
-                    counsellingOnMaternal='N/A',
-                    counsellingOnEbf='N/A',
-                )
+                data = helper.immunization_counseling_details()
             elif sub_section == 'abortion_details':
-                data = dict(
-                    abortionDate='N/A',
-                    abortionType='N/A',
-                    abortionDays='N/A',
-                )
+                data = helper.abortion_details()
             elif sub_section == 'maternal_death_details':
-                data = dict(
-                    maternalDeathOccurred='N/A',
-                    maternalDeathPlace='N/A',
-                    maternalDeathDate='N/A',
-                    authoritiesInformed='N/A',
-                )
+                data = helper.maternal_death_details()
             elif sub_section == 'delivery_details':
-                data = dict(
-                    dod='N/A',
-                    assistanceOfDelivery='N/A',
-                    timeOfDelivery='N/A',
-                    dateOfDischarge='N/A',
-                    typeOfDelivery='N/A',
-                    timeOfDischarge='N/A',
-                    placeOfBirth='N/A',
-                    deliveryComplications='N/A',
-                    placeOfDelivery='N/A',
-                    complicationDetails='N/A',
-                    hospitalType='N/A',
-                )
+                data = helper.delivery_details()
             elif sub_section == 'postnatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            pncDate='2019-08-20',
-                            postpartumHeamorrhage=0,
-                            fever=1,
-                            convulsions=0,
-                            abdominalPain=0,
-                            painfulUrination=0,
-                            congestedBreasts=1,
-                            painfulNipples=0,
-                            otherBreastsIssues=0,
-                            managingBreastProblems=0,
-                            increasingFoodIntake=1,
-                            possibleMaternalComplications=1,
-                            beneficiaryStartedEating=0,
-                        )
-                    ]
-                )
+                data = {'visits': helper.postnatal_care_details()}
             elif sub_section == 'antenatal_care_details':
-                data = dict(
-                    visits=[
-                        dict(
-                            ancDate='N/A',
-                            ancLocation='N/A',
-                            pwWeight='N/A',
-                            bloodPressure='N/A',
-                            hb='N/A',
-                            abdominalExamination='N/A',
-                            abnormalitiesDetected='N/A',
-                        ),
-                    ]
-                )
+                data = {'visits': helper.antenatal_care_details()}
         elif section == 'eligible_couple':
+            helper = EligibleCoupleQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'eligible_couple_details':
-                data = dict(
-                    maleChildrenBorn='N/A',
-                    femaleChildrenBorn='N/A',
-                    maleChildrenAlive='N/A',
-                    femaleChildrenAlive='N/A',
-                    familyPlaningMethod='N/A',
-                    familyPlanningMethodDate='N/A',
-                    ashaVisit='N/A',
-                    previousFamilyPlanningMethod='N/A',
-                    preferredFamilyPlaningMethod='N/A'
-                )
+                data = helper.eligible_couples_details()
 
         if not data:
             raise Http404()

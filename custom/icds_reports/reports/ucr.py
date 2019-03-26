@@ -324,7 +324,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             return tuple(getattr(row, key_component) for key_component in self.report_data_source.group_by)
 
         def _row_proxy_to_dict(row):
-            return dict(six.iteritems(row))
+            return dict(row.items())  # noqa: RowProxy doesn't support iteritems
 
         return OrderedDict([
             (_extract_aggregate_key(row), _row_proxy_to_dict(row)) for row in results
