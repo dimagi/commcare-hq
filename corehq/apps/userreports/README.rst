@@ -304,35 +304,12 @@ are self-explanatory.
 Constant Expression
 '''''''''''''''''''
 
-There are two formats for constant expressions. The simplified format is
-simply the constant itself. For example ``"hello"``, or ``5``.
-
-The complete format is as follows. This expression returns the constant
-``"hello"``:
-
-::
-
-   {
-       "type": "constant",
-       "constant": "hello"
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.ConstantGetterSpec
 
 Property Name Expression
 ''''''''''''''''''''''''
 
-This expression returns ``doc["age"]``:
-
-::
-
-   {
-       "type": "property_name",
-       "property_name": "age"
-   }
-
-An optional ``"datatype"`` attribute may be specified, which will
-attempt to cast the property to the given data type. The options are
-“date”, “datetime”, “string”, “integer”, and “decimal”. If no datatype
-is specified, “string” will be used.
+.. autoclass:: corehq.apps.userreports.expressions.specs.PropertyNameGetterSpec
 
 Property Path Expression
 ''''''''''''''''''''''''

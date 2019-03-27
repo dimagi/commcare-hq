@@ -49,6 +49,20 @@ class IterationNumberExpressionSpec(JsonObject):
 
 
 class ConstantGetterSpec(JsonObject):
+    """
+    There are two formats for constant expressions. The simplified format is
+    simply the constant itself. For example ``"hello"``, or ``5``.
+
+    The complete format is as follows. This expression returns the constant
+    ``"hello"``:
+
+    .. code:: json
+
+       {
+           "type": "constant",
+           "constant": "hello"
+       }
+    """
     type = TypeProperty('constant')
     constant = DefaultProperty()
 
@@ -66,6 +80,21 @@ class ConstantGetterSpec(JsonObject):
 
 
 class PropertyNameGetterSpec(JsonObject):
+    """
+    This expression returns ``doc["age"]``:
+
+    ::
+
+       {
+           "type": "property_name",
+           "property_name": "age"
+       }
+
+    An optional ``"datatype"`` attribute may be specified, which will
+    attempt to cast the property to the given data type. The options are
+    “date”, “datetime”, “string”, “integer”, and “decimal”. If no datatype
+    is specified, “string” will be used.
+    """
     type = TypeProperty('property_name')
     property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
