@@ -114,6 +114,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         columns = (
             ('awc_id', 'case_list.awc_id'),
             ('case_id', 'case_list.case_id'),
+            ("supervisor_id", "case_list.supervisor_id"),
             ('month', self.month.strftime("'%Y-%m-%d'")),
             ('age_in_months', 'trunc({})'.format(age_in_months_end)),
             ('ccs_status', "CASE WHEN {} THEN 'pregnant' ELSE CASE WHEN {} THEN "
