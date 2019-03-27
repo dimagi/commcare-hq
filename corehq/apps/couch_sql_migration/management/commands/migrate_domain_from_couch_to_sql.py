@@ -57,7 +57,13 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
-        parser.add_argument('--dry-run', action='store_true', default=False)
+        parser.add_argument('--dry-run', action='store_true', default=False,
+            help='''
+                Do migration in a way that will not be seen by
+                `any_migrations_in_progress(...)` so it does not block
+                operations like syncs, form submissions, sms activity,
+                etc. Dry-run migrations cannot be committed.
+            ''')
         parser.add_argument(
             '--run-timestamp',
             type=int,
