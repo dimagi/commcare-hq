@@ -133,6 +133,12 @@ class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
 
+class Validation(DocumentSchema):
+    name = StringProperty(required=True)
+    expression = DictProperty(required=True)
+    error_message = StringProperty(required=True)
+
+
 class AbstractUCRDataSource(object):
     """
     Base wrapper class for datasource-like things to be used in reports.
@@ -190,6 +196,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
+    validations = SchemaListProperty(Validation)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -213,6 +220,12 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def deleted_filter(self, document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
+
+    def validate_document(self, document):
+        for validation in self.validations:
+            validate_fn = FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+            if validate_fn(document, EvaluationContext(document, 0)) is False:
+                raise Exception(validation.error_message)
 
     @memoized
     def _get_main_filter(self):
