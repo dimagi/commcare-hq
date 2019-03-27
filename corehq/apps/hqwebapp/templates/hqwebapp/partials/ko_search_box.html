@@ -1,6 +1,6 @@
 <script type="text/html" id="ko-search-box-template">
     <div class="ko-search-box">
-        <form class="input-group">
+        <form class="input-group" data-bind="submit: clickAction">
             <input type="text" class="form-control"
                    data-bind="value: value, valueUpdate: 'afterkeydown', attr: {placeholder: placeholder}, event: {keypress: keypressAction}"  />
             <span class="input-group-btn">

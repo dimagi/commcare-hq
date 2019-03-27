@@ -302,7 +302,7 @@ class ProgramSummaryView(BaseReportView):
                 domain,
                 tuple(now.date().timetuple())[:3],
                 config,
-                include_test
+                include_test,
             )
         elif step == 'demographics':
             data = get_demographics_data(
