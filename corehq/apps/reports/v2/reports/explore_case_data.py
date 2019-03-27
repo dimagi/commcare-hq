@@ -16,7 +16,7 @@ class ExploreCaseDataReport(BaseReport):
     slug = 'explore_case_data'
 
     data_endpoints = (
-        DataTablesDataEndpoint,
+        DatagridEndpoint,
     )
 
     options_endpoints = (
