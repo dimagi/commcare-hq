@@ -20,6 +20,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
 )
 from corehq.apps.couch_sql_migration.progress import (
     couch_sql_migration_in_progress,
+    get_couch_sql_migration_status,
     set_couch_sql_migration_complete,
     set_couch_sql_migration_not_started,
     set_couch_sql_migration_started,
@@ -146,6 +147,8 @@ class Command(BaseCommand):
                 print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
 
     def print_stats(self, domain, short=True, diffs_only=False):
+        status = get_couch_sql_migration_status(domain)
+        print("Couch to SQL migration status for {}: {}".format(domain, status))
         db = get_diff_db(domain)
         try:
             diff_stats = db.get_diff_stats()
