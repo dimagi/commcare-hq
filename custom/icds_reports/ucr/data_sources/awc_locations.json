@@ -663,13 +663,6 @@
     },
     "referenced_doc_type": "Location",
     "table_id": "static-awc_location",
-    "disable_destructive_rebuild": true,
-    "sql_settings": {
-      "citus_config": {
-        "distribution_type": "hash",
-        "distribution_column": "supervisor_id"
-      },
-      "primary_key": ["supervisor_id","doc_id"]
-    }
+    "disable_destructive_rebuild": true
   }
 }
