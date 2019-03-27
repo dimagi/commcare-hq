@@ -38,7 +38,6 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 },
             })
             .done(function (data) {
-                console.log(data);
                 self.rows(_.union(self.rows(), data.rows));
             })
             .fail(function () {
