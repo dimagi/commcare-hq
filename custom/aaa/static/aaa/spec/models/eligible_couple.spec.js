@@ -47,9 +47,9 @@ describe('Eligible Couple models', function () {
                     name: 'test Name',
                     age: 14,
                     currentFamilyPlanningMethod: 1,
-                    adoptionDateOfFamilyPlaning: '2019-03-01'
+                    adoptionDateOfFamilyPlaning: '2019-03-01',
                 },
-                postData,
+                postData
             );
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/eligible_couple/1/?month=3&year=2019">test Name</a>', listView.name());

@@ -49,9 +49,9 @@ describe('Pregnant women models', function () {
                     age: 14,
                     pregMonth: 6,
                     highRiskPregnancy: 1,
-                    noOfAncCheckUps: 5
+                    noOfAncCheckUps: 5,
                 },
-                postData,
+                postData
             );
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/pregnant_women/1/?month=3&year=2019">test Name</a>', listView.name());
@@ -183,7 +183,7 @@ describe('Pregnant women models', function () {
             pregnantModel.updateModel({
                 add: '2019-03-01',
                 lmp: '2019-03-15',
-                edd: '2019-03-28'
+                edd: '2019-03-28',
             });
             assert.equal(3, pregnantModel.pregnancyStatus())
         });
@@ -193,7 +193,7 @@ describe('Pregnant women models', function () {
             pregnantModel.updateModel({
                 add: '2018-08-01',
                 lmp: '2019-02-15',
-                edd: '2019-03-28'
+                edd: '2019-03-28',
             });
             assert.equal(2, pregnantModel.pregnancyStatus())
         });
@@ -203,7 +203,7 @@ describe('Pregnant women models', function () {
             pregnantModel.updateModel({
                 add: '2018-08-01',
                 lmp: '2019-02-15',
-                edd: '2019-06-28'
+                edd: '2019-06-28',
             });
             assert.equal(1, pregnantModel.pregnancyStatus())
         });

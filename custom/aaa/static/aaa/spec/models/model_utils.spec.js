@@ -1,13 +1,10 @@
 /* global sinon */
 
-var pageData = hqImport('hqwebapp/js/initial_page_data');
-
 describe('Model Utils', function () {
-    var utilsModels, reachUtils;
+    var utilsModels;
 
     beforeEach(function () {
         utilsModels = hqImport('aaa/js/models/model_utils');
-        reachUtils = hqImport('aaa/js/utils/reach_utils');
     });
 
     describe('pnc model', function () {
@@ -30,7 +27,7 @@ describe('Model Utils', function () {
             assert.isTrue(pncModel.hasOwnProperty('skinToSkinContact'));
             assert.isTrue(pncModel.hasOwnProperty('wrappedUpAdequately'));
             assert.isTrue(pncModel.hasOwnProperty('awakeActive'));
-        })
+        });
     });
 
     describe('anc model', function () {

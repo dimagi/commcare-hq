@@ -1,4 +1,4 @@
-/* global sinon */
+/* global sinon, moment */
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
@@ -46,7 +46,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
-            dob: '2018-09-01'
+            dob: '2018-09-01',
         };
         var personModel = personModels.personModel(initialData, postData);
         assert.equal('1 Yr 4 Mon', personModel.age());
@@ -58,7 +58,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
-            sex: 'M'
+            sex: 'M',
         };
         var personModel = personModels.personModel(initialData, postData);
         assert.equal('Male', personModel.gender());
@@ -70,7 +70,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
-            has_aadhar_number: 1
+            has_aadhar_number: 1,
         };
         var personModel = personModels.personModel(initialData, postData);
         assert.equal('Yes', personModel.aadhaarNo());
@@ -82,7 +82,7 @@ describe('Person models', function () {
             selectedYear: 2019,
         });
         var initialData = {
-            name: 'test Person'
+            name: 'test Person',
         };
         var personModel = personModels.personModel(initialData, postData);
         assert.equal('<a href="unified_beneficiary_details/eligible_couple/1/?month=3&year=2019">test Person</a>', personModel.nameLink());

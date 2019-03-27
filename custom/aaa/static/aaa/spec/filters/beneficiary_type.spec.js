@@ -14,10 +14,10 @@ describe('Beneficiary Type Filter', function () {
     it('test viewModel', function () {
         var model = beneficiaryFilter.viewModel({
             filters: {
-                'beneficiary-type-filter': {}
+                'beneficiary-type-filter': {},
             },
             postData: {},
-            disableSubmit: ko.observable()
+            disableSubmit: ko.observable(),
         });
         assert.equal(model.slug, 'beneficiary-type-filter');
         var expectedTypes = [
@@ -29,5 +29,5 @@ describe('Beneficiary Type Filter', function () {
             assert.equal(model.beneficiaryTypes()[idx].id, element.id);
             assert.equal(model.beneficiaryTypes()[idx].name, element.name);
         });
-    })
+    });
 });

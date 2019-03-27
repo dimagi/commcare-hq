@@ -28,5 +28,5 @@ describe('Unified Beneficiary', function () {
         assert.isTrue(unifiedBeneficiaryModel.views.hasOwnProperty('eligible_couple'));
         assert.isTrue(unifiedBeneficiaryModel.views.hasOwnProperty('pregnant_women'));
         assert.isTrue(unifiedBeneficiaryModel.views.hasOwnProperty('child'));
-    })
+    });
 });
