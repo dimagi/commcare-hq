@@ -1023,6 +1023,17 @@ class AsyncIndicator(models.Model):
         ])
 
 
+class InvalidUCRData(models.Model):
+    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_type = models.CharField(max_length=126, null=False, db_index=True)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_ids = models.CharField(max_length=126)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    validation_name = models.TextField()
+    validation_text = models.TextField()
+    notes = models.TextField(null=True)
+
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
