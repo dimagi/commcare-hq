@@ -13,9 +13,9 @@ from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
-    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
+    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning, ValidationError
 )
-from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.models import AsyncIndicator, InvalidUCRData
 from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import get_metadata
@@ -239,6 +239,19 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
+                        if adapter.config.has_validations:
+                            try:
+                                adapter.config.validate_document(doc)
+                            except ValidationError as e:
+                                InvalidUCRData.objects.create(
+                                    doc_id=doc['_id'],
+                                    doc_type=doc['doc_type'],
+                                    domain=doc['domain'],
+                                    indicator_config_ids=adapter.config._id,
+                                    validation_name=e.name,
+                                    validation_text=e.message
+                                )
+                                continue
                         try:
                             rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         except Exception as e:

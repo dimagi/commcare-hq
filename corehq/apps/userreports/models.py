@@ -44,7 +44,8 @@ from corehq.apps.userreports.exceptions import (
     DuplicateColumnIdError,
     InvalidDataSourceType,
     ReportConfigurationNotFoundError,
-    StaticDataSourceConfigurationNotFoundError
+    StaticDataSourceConfigurationNotFoundError,
+    ValidationError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -233,11 +234,15 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
 
+    @property
+    def has_validations(self):
+        return len(self.validations) > 0
+
     def validate_document(self, document):
         for validation in self.validations:
             validate_fn = FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
             if validate_fn(document, EvaluationContext(document, 0)) is False:
-                raise Exception(validation.error_message)
+                raise ValidationError(validation.name, validation.error_message)
 
     @memoized
     def _get_main_filter(self):

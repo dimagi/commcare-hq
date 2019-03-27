@@ -81,6 +81,12 @@ class InvalidDataSourceType(UserQueryError):
     pass
 
 
+class ValidationError(UserReportsError):
+    def __init__(self, name, message):
+        self.name = name
+        self.message = message
+
+
 def translate_programming_error(exception):
     if isinstance(exception, ProgrammingError):
         orig = getattr(exception, 'orig')
