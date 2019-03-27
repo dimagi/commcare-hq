@@ -50,7 +50,7 @@ class CasePropertiesEndpoint(BaseOptionsEndpoint):
             # todo future filters based on case_types, etc.
             return prop['name'] not in self.excluded_slugs
 
-        return filter(_filter_property, self.case_properties)
+        return [prop for prop in self.case_properties if _filter_property(prop)]
 
     def get_response(self):
         return {

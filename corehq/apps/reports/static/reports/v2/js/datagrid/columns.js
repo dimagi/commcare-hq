@@ -25,7 +25,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         return self;
     };
 
-    var editColumnController = function(options) {
+    var editColumnController = function (options) {
         var self = {};
 
         self.slugEndpoint = options.slugEndpoint;
@@ -73,9 +73,9 @@ hqDefine('reports/v2/js/datagrid/columns', [
                     reportContext: JSON.stringify(self.reportContext()),
                 },
             })
-            .done(function (data) {
-                self.slugOptions(data.options);
-            });
+                .done(function (data) {
+                    self.slugOptions(data.options);
+                });
         };
 
         self.isColumnValid = ko.computed(function () {

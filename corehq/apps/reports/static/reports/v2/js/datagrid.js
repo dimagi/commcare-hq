@@ -65,7 +65,7 @@ hqDefine('reports/v2/js/datagrid', [
             self.editColumnController.unset();
         };
 
-        self.deleteColumn = function (column) {
+        self.deleteColumn = function () {
             var replacementCols = [];
             _.each(self.columns(), function (col) {
                 if (col.slug() !== self.editColumnController.oldColumn().slug()) {

@@ -1,4 +1,3 @@
-/* globals django */
 hqDefine('reports/v2/js/views/explore_case_data', [
     'jquery',
     'knockout',

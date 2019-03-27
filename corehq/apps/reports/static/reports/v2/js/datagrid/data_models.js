@@ -37,15 +37,15 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                     start: self.rows().length,
                 },
             })
-            .done(function (data) {
-                self.rows(_.union(self.rows(), data.rows));
-            })
-            .fail(function () {
-                self.isLoadingError(true);
-            })
-            .always(function () {
-                self.isDataLoading(false);
-            });
+                .done(function (data) {
+                    self.rows(_.union(self.rows(), data.rows));
+                })
+                .fail(function () {
+                    self.isLoadingError(true);
+                })
+                .always(function () {
+                    self.isDataLoading(false);
+                });
         };
 
         self.init = function () {
