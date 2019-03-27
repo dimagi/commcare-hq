@@ -4,7 +4,7 @@
 hqDefine("hqwebapp/js/downgrade_modal", [
     'analytix/js/kissmetrix',
     'jquery',
-    'jquery.cookie/jquery.cookie'
+    'jquery.cookie/jquery.cookie',
 ], function (
     kissmetrics,
     $
