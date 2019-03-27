@@ -385,6 +385,7 @@ def _login(req, domain_name):
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
             'hide_overdue_invoice_modal': True,
+            'show_prepaid_modal': False,
         })
     else:
         commcare_hq_name = commcare_hq_names(req)['commcare_hq_names']["COMMCARE_HQ_NAME"]

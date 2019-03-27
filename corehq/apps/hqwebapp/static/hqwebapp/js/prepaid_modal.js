@@ -1,7 +1,7 @@
 /*
     To use, include this file on a page that also includes hqwebapp/downgrade_modal.html
 */
-hqDefine("hqwebapp/js/downgrade_modal", [
+hqDefine("hqwebapp/js/prepaid_modal", [
     'analytix/js/kissmetrix',
     'jquery',
     'jquery.cookie/jquery.cookie'
@@ -10,7 +10,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
     $
 ) {
     function snooze(slug, domain) {
-        $.cookie(cookieName(slug, domain), true, { expires: 1, path: '/' });
+        $.cookie(cookieName(slug, domain), true, { expires: 30, path: '/' });
     }
 
     function cookieName(slug, domain) {
@@ -18,7 +18,7 @@ hqDefine("hqwebapp/js/downgrade_modal", [
     }
 
     $(function () {
-        var $modal = $("#downgrade-modal"),
+        var $modal = $("#prepaid-modal"),
             slug = $modal.data("slug"),
             domain = $modal.data("domain");
 
@@ -35,12 +35,11 @@ hqDefine("hqwebapp/js/downgrade_modal", [
         $modal.on('click', '.flag-snooze', function () {
             $modal.modal('hide');
             snooze(slug, domain);
+            kissmetrics.track.event('[Prepaid Credits Notification] Clicked Remind me later');
         });
-    });
 
-    $(function () {
-        $("#overdue-invoice-link").on('click', function () {
-            kissmetrics.track.event('[Overdue Modal] Clicked link');
+        $modal.on('click', '.flag-link', function () {
+            kissmetrics.track.event('[Prepaid Credits Notification] Clicked link');
         });
     });
 });
