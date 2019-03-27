@@ -3,14 +3,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django.apps import apps
-from django.db import connections, migrations
 from django.conf import settings
+from django.db import migrations
 
-from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.operations import RawSQLMigration, SQL
+from corehq.sql_db.operations import SQL
 
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
 def _citus_composite_key_sql(model_cls):
     pkey_name = '{}_pkey'.format(model_cls._meta.db_table)
@@ -53,7 +50,7 @@ def get_sql_operations():
     for model_name in models_to_update:
         model = apps.get_model('icds_reports', model_name)
         sql, reverse_sql = _citus_composite_key_sql(model)
-        operations.append(migrator.get_migration(
+        operations.append(migrations.RunSQL(
             sql,
             reverse_sql,
         ))
@@ -67,6 +64,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('update_tables44.sql')
+        migrations.RunSQL("""
+        ALTER TABLE ccs_record_monthly ADD COLUMN supervisor_id text;
+        ALTER TABLE child_health_monthly ADD COLUMN supervisor_id text;
+        """)
     ]
     operations.extend(get_sql_operations())
