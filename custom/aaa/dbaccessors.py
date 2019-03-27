@@ -391,14 +391,14 @@ class PregnantWomanQueryHelper(object):
         ccs_details = ccs_record.ccs_record_details()
         return {
             'dod': ccs_record.add or 'N/A',
-            'timeOfDelivery': details['time_birth'] or 'N/A',
-            'placeOfDelivery': details['which_village'] or 'N/A',
-            'typeOfDelivery': details['delivery_nature'] or 'N/A',
-            'placeOfBirth': details['where_born'] or 'N/A',
-            'hospitalType': details['which_hospital'] or 'N/A',
-            'dateOfDischarge': details['discharge_date'] or 'N/A',
-            'timeOfDischarge': details['discharge_time'] or 'N/A',
-            'assistanceOfDelivery': details['who_assisted'] or 'N/A',
+            'timeOfDelivery': details.get('time_birth') or 'N/A',
+            'placeOfDelivery': details.get('which_village') or 'N/A',
+            'typeOfDelivery': details.get('delivery_nature') or 'N/A',
+            'placeOfBirth': details.get('where_born') or 'N/A',
+            'hospitalType': details.get('which_hospital') or 'N/A',
+            'dateOfDischarge': details.get('discharge_date') or 'N/A',
+            'timeOfDischarge': details.get('discharge_time') or 'N/A',
+            'assistanceOfDelivery': details.get('who_assisted') or 'N/A',
             'deliveryComplications': ccs_details['complication_type'] or 'N/A',
             'complicationDetails': 'N/A',
         }
