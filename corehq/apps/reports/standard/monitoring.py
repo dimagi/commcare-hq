@@ -1675,13 +1675,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
-    def _rows_by_user(self, report_data, user_generator):
+    def _rows_by_user(self, report_data, users):
         rows = []
-        import itertools
-        user_generator, user_id_generator = itertools.tee(user_generator)
-        user_ids = [a.user_id for a in user_id_generator]
-        last_form_by_user = self.es_last_submissions(user_ids)
-        for user in user_generator:
+        last_form_by_user = self.es_last_submissions([a.user_id for a in users])
+        for user in users:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
@@ -1814,20 +1811,23 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         user_es_query = EMWF.user_es_query(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
-        user_query_generator = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).scroll()
-        user_generator = (util._report_user_dict(user) for user in user_query_generator)
-        total_row = []
-        for users in chunked(user_generator, 500):
+        chunk_size = 10000
+        first_id_in_chunk = 0
+        user_chunk_total = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).size(chunk_size).run().total
+        while first_id_in_chunk < user_chunk_total:
+            user_chunk = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).start(first_id_in_chunk).size(chunk_size).run().hits
+            users = [util._report_user_dict(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)
             else:
                 rows = self._rows_by_user(formatted_data, users)
             this_row = self._total_row(rows, formatted_data)
-            total_row = self.sum_rows_together(self.total_row, this_row)
+            self.total_row = self.sum_rows_together(self.total_row, this_row)
             for row in rows:
                 yield row
-        self.total_row = self.format_total_row(total_row)
+            first_id_in_chunk = first_id_in_chunk + chunk_size
+        self.total_row = self.format_total_row(self.total_row)
         yield self.total_row
 
     @staticmethod
@@ -1850,7 +1850,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             new_row = []
             for index, entry in enumerate(row_to_add):
                 if isinstance(entry, int):
-                    new_row.append(row_to_add[index] + entry)
+                    new_row.append(original_row[index] + entry)
                 elif isinstance(entry, dict):
                     new_row.append({'numerator': original_row[index]['numerator'] + entry['numerator'],
                                     'denominator': original_row[index]['denominator'] + entry['denominator']})
