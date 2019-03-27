@@ -143,7 +143,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             query_cols.append((name, c[1]))
         return """
         CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
-            {cols}
+            {query_cols}
             FROM "{child_health_monthly_table}" chm
             LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
             WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
@@ -151,12 +151,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident
             ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id;
-        INSERT INTO "{tablename}" ({columns}) SELECT * from "{tmp_tablename}";
+        INSERT INTO "{tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
         DROP TABLE "{tmp_tablename}";
         """.format(
             tablename=self.tablename,
-            columns=", ".join([col[0] for col in columns]),
-            cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
+            final_columns=", ".join([col[0] for col in columns]),
+            query_cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
             child_health_monthly_table='child_health_monthly',
             tmp_tablename='tmp_{}'.format(self.tablename)
         ), {
