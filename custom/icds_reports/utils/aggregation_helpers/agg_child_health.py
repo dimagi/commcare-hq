@@ -156,7 +156,6 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
         """.format(
             tablename=self.tablename,
             columns=", ".join([col[0] for col in columns]),
-            calculations=", ".join([col[1] for col in columns]),
             cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
             child_health_monthly_table='child_health_monthly',
             tmp_tablename='tmp_{}'.format(self.tablename)
