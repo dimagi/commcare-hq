@@ -77,7 +77,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             husband: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
         self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
@@ -142,5 +141,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         config: eligibleCoupleListConfig,
         listView: eligibleCoupleList,
         detailsView: eligibleCoupleDetailsView,
+        eligibleCoupleModel: eligibleCoupleModel,
     }
 });

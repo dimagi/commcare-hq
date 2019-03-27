@@ -64,7 +64,6 @@ hqDefine("aaa/js/models/child", [
         return self;
     };
 
-
     var childModel = function (data, postData) {
         var self = {};
         self.id = data.id || null;
@@ -151,7 +150,6 @@ hqDefine("aaa/js/models/child", [
 
         return self;
     };
-
 
     var childDetailsView = function (postData) {
         var self = {};

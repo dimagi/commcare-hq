@@ -37,7 +37,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
 
         self.dt = null;
 
-        var views = {
+        self.views = {
             'eligible_couple': eligibleCoupleModel,
             'pregnant_women': pregnantWomenModel,
             'child': childModel,
@@ -61,7 +61,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                 $('#datatable').empty();
             }
             selectedType = self.postData.selectedBeneficiaryType();
-            reportListView = views[selectedType];
+            reportListView = self.views[selectedType];
 
             self.dt = $('#datatable').DataTable({
                 dom: tableDom,

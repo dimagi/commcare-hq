@@ -24,7 +24,6 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.highRiskPregnancy = ko.observable(options.highRiskPregnancy);
         self.noOfAncCheckUps = ko.observable(options.noOfAncCheckUps);
 
-
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'pregnant_women');
@@ -34,7 +33,7 @@ hqDefine("aaa/js/models/pregnant_women", [
         });
 
         self.highRiskPregnancy = ko.computed(function () {
-            return self.highRiskPregnancy === 1 ? 'Yes': 'No';
+            return self.highRiskPregnancy() === 1 ? 'Yes': 'No';
         });
         return self;
     };
@@ -251,6 +250,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     return {
         config: pregnantWomenListConfig,
         listView: pregnantWomenList,
-        detailsView: pregnantWomenDetailsView
+        detailsView: pregnantWomenDetailsView,
+        pregnantModel: pregnantWomenDetails,
     }
 });

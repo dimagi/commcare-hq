@@ -1,13 +1,9 @@
 hqDefine('aaa/js/filters/beneficiary_type_filter', [
     'jquery',
     'knockout',
-    'underscore',
-    'moment/moment',
 ], function (
     $,
     ko,
-    _,
-    moment
 ) {
     return {
         viewModel: function (params) {
