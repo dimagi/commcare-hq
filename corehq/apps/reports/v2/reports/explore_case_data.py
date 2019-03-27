@@ -3,6 +3,9 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.reports.v2.endpoints.case_properties import (
+    CasePropertiesEndpoint
+)
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
@@ -20,6 +23,7 @@ class ExploreCaseDataReport(BaseReport):
     )
 
     options_endpoints = (
+        CasePropertiesEndpoint,
     )
 
     columns = [
