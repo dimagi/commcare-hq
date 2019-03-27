@@ -818,6 +818,7 @@ class Child(LocationDenormalizedModel):
                 FROM "{tasks_cases_ucr_tablename}"
                 WHERE tasks_type = 'child'
             ) AS _tasks
+            WHERE product_date != '1970-01-01'
             WINDOW w AS (PARTITION BY doc_id, parent_case_id ORDER BY product_date DESC)
         ) tasks
         WHERE child.child_health_case_id = tasks.parent_case_id
