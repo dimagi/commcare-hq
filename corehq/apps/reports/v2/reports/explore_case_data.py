@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from corehq.apps.reports.v2.endpoints.datatables import DataTablesDataEndpoint
+from django.utils.translation import ugettext_noop
+
+from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
+    ColumnContext,
 )
 from corehq.apps.es import CaseSearchES
 
@@ -18,6 +21,19 @@ class ExploreCaseDataReport(BaseReport):
 
     options_endpoints = (
     )
+
+    columns = [
+        ColumnContext(
+            title=ugettext_noop("Case Name"),
+            slug='case_name',
+            width=200,
+        ),
+        ColumnContext(
+            title=ugettext_noop("Case Type"),
+            slug='@case_type',
+            width=200,
+        ),
+    ]
 
     def _get_base_query(self):
         return CaseSearchES().domain(self.domain)
