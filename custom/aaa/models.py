@@ -968,7 +968,10 @@ class ChildHistory(models.Model):
             'zscore_grading_wfh_history': [],
         }
 
-        child_history = ChildHistory.objects.get(child_health_case_id=child_health_case_id)
+        try:
+            child_history = ChildHistory.objects.get(child_health_case_id=child_health_case_id)
+        except ChildHistory.DoesNotExist:
+            return ret
         for key in ret:
             for history_date, history_value in getattr(child_history, key):
                 day = force_to_date(history_date)
