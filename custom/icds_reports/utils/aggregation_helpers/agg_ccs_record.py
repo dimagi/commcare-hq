@@ -17,12 +17,6 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
-    @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
 
