@@ -356,9 +356,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             tablename=self.tablename, tmp_tablename=self.temporary_tablename)
 
     def indexes(self):
-        return []
-        # return [
-        #     'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
-        #     'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
-        #     'CREATE INDEX ON "{}" (mother_case_id, dob)'.format(self.tablename),
-        # ]
+        return [
+            'CREATE INDEX IF NOT EXISTS chm_case_idx ON "{}" (case_id)'.format(self.tablename),
+            'CREATE INDEX IF NOT EXISTS chm_awc_idx ON "{}" (awc_id)'.format(self.tablename),
+            'CREATE INDEX IF NOT EXISTS chm_mother_dob ON "{}" (mother_case_id, dob)'.format(self.tablename),
+        ]
