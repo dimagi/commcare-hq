@@ -1,6 +1,4 @@
-/* global sinon */
-
-var pageData = hqImport('hqwebapp/js/initial_page_data');
+/* global sinon, moment */
 
 describe('Child models', function () {
     var childModels, reachUtils, clock;
@@ -59,7 +57,7 @@ describe('Child models', function () {
             assert.equal('Male', childListModel.gender());
             assert.equal('Yes', childListModel.lastImmunizationType());
             assert.equal('2019-03-01', childListModel.lastImmunizationDate());
-        })
+        });
     });
 
     describe('child details view model', function () {
@@ -83,16 +81,16 @@ describe('Child models', function () {
             });
             var childDetailsModel = childModels.detailsView(postData);
             assert.equal(5, childDetailsModel.sections.length);
-            var expected_sections = [
+            var expectedSections = [
                 'person_details',
                 'infant_details',
                 'child_postnatal_care_details',
                 'vaccination_details',
                 'growth_monitoring_details',
             ];
-            _.each(expected_sections, function (element, idx) {
+            _.each(expectedSections, function (element, idx) {
                 assert.equal(element, childDetailsModel.sections[idx]);
-            })
+            });
         });
     });
 
@@ -146,7 +144,7 @@ describe('Child models', function () {
                 dob: '2017-03-12',
             };
             var childModel = childModels.childModel(initialData, postData);
-            assert.equal('2 Yr 9 Mon', childModel.age())
+            assert.equal('2 Yr 9 Mon', childModel.age());
         });
 
         it('test linkName function in child model', function () {
@@ -160,7 +158,7 @@ describe('Child models', function () {
                 dob: '2017-03-12',
             };
             var childModel = childModels.childModel(initialData, postData);
-            assert.equal('<a href="unified_beneficiary_details/child/1/?month=3&year=2019">test Child (2 Yr 9 Mon)</a>', childModel.linkName())
+            assert.equal('<a href="unified_beneficiary_details/child/1/?month=3&year=2019">test Child (2 Yr 9 Mon)</a>', childModel.linkName());
         });
 
         it('test updateModel', function () {

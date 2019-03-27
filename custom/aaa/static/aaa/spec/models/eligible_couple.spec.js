@@ -1,6 +1,4 @@
-/* global sinon */
-
-var pageData = hqImport('hqwebapp/js/initial_page_data');
+/* global sinon, moment */
 
 describe('Eligible Couple models', function () {
     var eligibleCoupleModels, reachUtils, clock;
@@ -56,7 +54,7 @@ describe('Eligible Couple models', function () {
             assert.equal(14, listView.age());
             assert.equal('Yes', listView.currentFamilyPlanningMethod());
             assert.equal('2019-03-01', listView.adoptionDateOfFamilyPlaning());
-        })
+        });
     });
 
     describe('eligible couple details view model', function () {
@@ -81,15 +79,15 @@ describe('Eligible Couple models', function () {
             });
             var detailsModel = eligibleCoupleModels.detailsView(postData);
             assert.equal(3, detailsModel.sections.length);
-            var expected_sections = [
+            var expectedSections = [
                 'person_details',
                 'children_list',
-                'eligible_couple_details'
+                'eligible_couple_details',
             ];
 
-            _.each(expected_sections, function (element, idx) {
+            _.each(expectedSections, function (element, idx) {
                 assert.equal(element, detailsModel.sections[idx]);
-            })
+            });
         });
     });
 

@@ -1,7 +1,5 @@
 /* global sinon */
 
-var pageData = hqImport('hqwebapp/js/initial_page_data');
-
 describe('Pregnant women models', function () {
     var pregnantWomenModels, reachUtils, clock;
 
@@ -59,7 +57,7 @@ describe('Pregnant women models', function () {
             assert.equal(6, listView.pregMonth());
             assert.equal('Yes', listView.highRiskPregnancy());
             assert.equal(5, listView.noOfAncCheckUps());
-        })
+        });
     });
 
     describe('Pregnant women details view model', function () {
@@ -85,7 +83,7 @@ describe('Pregnant women models', function () {
             });
             var detailsView = pregnantWomenModels.detailsView(postData);
             assert.equal(11, detailsView.sections.length);
-            var expected_sections = [
+            var expectedSections = [
                 'person_details',
                 'children_list',
                 'pregnancy_details',
@@ -98,9 +96,9 @@ describe('Pregnant women models', function () {
                 'delivery_details',
                 'postnatal_care_details',
             ];
-            _.each(expected_sections, function (element, idx) {
+            _.each(expectedSections, function (element, idx) {
                 assert.equal(element, detailsView.sections[idx]);
-            })
+            });
         });
     });
 
@@ -166,7 +164,7 @@ describe('Pregnant women models', function () {
                 add: '2019-03-01',
                 lmp: '2019-02-01',
             });
-            assert.equal('Yes', pregnantModel.twelveWeeksPregnancyRegistration())
+            assert.equal('Yes', pregnantModel.twelveWeeksPregnancyRegistration());
         });
 
         it('test twelveWeeksPregnancyRegistration greater then 12', function () {
@@ -175,7 +173,7 @@ describe('Pregnant women models', function () {
                 add: '2020-03-01',
                 lmp: '2019-02-01',
             });
-            assert.equal('No', pregnantModel.twelveWeeksPregnancyRegistration())
+            assert.equal('No', pregnantModel.twelveWeeksPregnancyRegistration());
         });
 
         it('test pregnancyStatus - PNC', function () {
@@ -185,7 +183,7 @@ describe('Pregnant women models', function () {
                 lmp: '2019-03-15',
                 edd: '2019-03-28',
             });
-            assert.equal(3, pregnantModel.pregnancyStatus())
+            assert.equal(3, pregnantModel.pregnancyStatus());
         });
 
         it('test pregnancyStatus - Due for delivery', function () {
@@ -195,7 +193,7 @@ describe('Pregnant women models', function () {
                 lmp: '2019-02-15',
                 edd: '2019-03-28',
             });
-            assert.equal(2, pregnantModel.pregnancyStatus())
+            assert.equal(2, pregnantModel.pregnancyStatus());
         });
 
         it('test pregnancyStatus - Pregnancy', function () {
@@ -205,7 +203,7 @@ describe('Pregnant women models', function () {
                 lmp: '2019-02-15',
                 edd: '2019-06-28',
             });
-            assert.equal(1, pregnantModel.pregnancyStatus())
+            assert.equal(1, pregnantModel.pregnancyStatus());
         });
     });
 
