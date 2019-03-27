@@ -56,6 +56,6 @@ hqDefine('reports/v2/js/datagrid/data_models', [
     };
 
     return {
-      scrollingDataModel: scrollingDataModel,
+        scrollingDataModel: scrollingDataModel,
     };
 });
