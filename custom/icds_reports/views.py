@@ -247,6 +247,7 @@ class DashboardView(TemplateView):
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
+@location_safe
 class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
