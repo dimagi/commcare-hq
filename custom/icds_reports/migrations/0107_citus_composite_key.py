@@ -75,7 +75,7 @@ def get_sql_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0104_agg_ls_monthly_ls_name'),
+        ('icds_reports', '0106_left_join_service_delivery'),
     ]
 
     operations = get_sql_operations()
