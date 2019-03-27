@@ -127,7 +127,7 @@ class DataSourceRenamePartitionedTest(TestCase):
 
         # this is expensive so avoid doing it twice
         cls.tables_by_engine = _get_old_new_tablenames()
-        create_ucr_views(cls.tables_by_engine)
+        create_ucr_views(tables_by_engine=cls.tables_by_engine)
 
     @classmethod
     def tearDownClass(cls):
@@ -158,7 +158,7 @@ class DataSourceRenamePartitionedTest(TestCase):
         result = result.fetchone()[0]
         self.assertEqual(1, result)
 
-        _rename_tables(self.tables_by_engine)
+        _rename_tables(tables_by_engine=self.tables_by_engine)
 
         # inserting a doc in a new date range after renaming should result in a new
         # child table being created and the doc being inserted there

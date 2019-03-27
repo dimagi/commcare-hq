@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
 from collections import defaultdict
 
 import attr
@@ -15,6 +16,8 @@ from corehq.apps.userreports.sql.util import table_exists, view_exists
 from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.couch.database import iter_docs
+
+logger = logging.getLogger('ucr_rename')
 
 
 @attr.s
@@ -30,6 +33,12 @@ class DSConf(object):
     @cached_property
     def old_adapter(self):
         return IndicatorSqlAdapter(self.config, self.old_table)
+
+
+def _run_sql_with_logging(connection, sql, dry_run):
+    logger.debug('\t[SQL%s]: %s', ' (dry run)' if dry_run else '', sql)
+    if not dry_run:
+        connection.execute(sql)
 
 
 def _table_names(domain, table_id):
@@ -62,7 +71,7 @@ def _should_add_view(conn, table_name, view_name):
     return table_exists(conn, table_name) and not view_exists(conn, view_name)
 
 
-def create_ucr_views(tables_by_engine=None):
+def create_ucr_views(dry_run=False, tables_by_engine=None):
     tables_by_engine = tables_by_engine or _get_old_new_tablenames()
     for engine_id, dsconfs in tables_by_engine.items():
         print('\tChecking {} tables in engine "{}"'.format(len(dsconfs), engine_id))
@@ -78,12 +87,12 @@ def create_ucr_views(tables_by_engine=None):
         if view_creates:
             print('\tCreating {} views in engine "{}"'.format(len(view_creates), engine_id))
             with engine.begin() as conn:
-                conn.execute('\n'.join(view_creates))
+                _run_sql_with_logging(conn, '\n'.join(view_creates), dry_run)
         else:
             print('\tNo views to create in engine "{}"'.format(engine_id))
 
 
-def _drop_partitioning_features(connection, dsconf):
+def _drop_partitioning_features(connection, dsconf, dry_run):
     orm_table = dsconf.old_adapter._get_orm_table_with_partitioning()
     safe_tablename = orm_table.architect.partition.get_partition().safe_tablename
     drop_triggers = """
@@ -93,7 +102,7 @@ def _drop_partitioning_features(connection, dsconf):
     DROP FUNCTION IF EXISTS {safe_tablename}_insert_child();
     """.format(safe_tablename=safe_tablename, parent_table=dsconf.old_table)
     print("Dropping partition features for table '{}'".format(dsconf.old_table))
-    connection.execute(drop_triggers)
+    _run_sql_with_logging(connection, drop_triggers, dry_run)
 
 
 def _get_child_table_names(connection, parent_table, prefix_match):
@@ -107,7 +116,7 @@ def _get_child_table_names(connection, parent_table, prefix_match):
     return [row.child for row in res]
 
 
-def _rename_child_tables(connection, dsconf):
+def _rename_child_tables(connection, dsconf, dry_run):
     old_orm_table = dsconf.old_adapter._get_orm_table_with_partitioning()
     old_prefix = old_orm_table.architect.partition.get_partition().safe_tablename
     new_orm_table = dsconf.adapter._get_orm_table_with_partitioning()
@@ -123,10 +132,10 @@ def _rename_child_tables(connection, dsconf):
         new_child_table = '{}{}'.format(new_prefix, suffix)
         alter_tables.append('ALTER TABLE "{}" RENAME TO "{}";'.format(table, new_child_table))
     print("Renaming {} child tables of '{}'".format(len(child_tables), dsconf.old_table))
-    connection.execute('\n'.join(alter_tables))
+    _run_sql_with_logging(connection, '\n'.join(alter_tables), dry_run)
 
 
-def _rename_tables(tables_by_engine=None):
+def _rename_tables(dry_run=False, tables_by_engine=None):
     tables_by_engine = tables_by_engine or _get_old_new_tablenames()
     for engine_id, dsconfs in tables_by_engine.items():
         engine = connection_manager.get_engine(engine_id)
@@ -136,8 +145,8 @@ def _rename_tables(tables_by_engine=None):
                 old_table_exists = table_exists(conn, dsconf.old_table)
                 if old_table_exists:
                     if dsconf.config.sql_settings.partition_config:
-                        _drop_partitioning_features(conn, dsconf)
-                        _rename_child_tables(conn, dsconf)
+                        _drop_partitioning_features(conn, dsconf, dry_run)
+                        _rename_child_tables(conn, dsconf, dry_run)
 
                     drop_view_rename_table = """
                     DROP VIEW IF EXISTS "{new_table}";
@@ -145,11 +154,13 @@ def _rename_tables(tables_by_engine=None):
                     """.format(old_table=dsconf.old_table, new_table=dsconf.new_table)
 
                     print('\t\tRenaming table "{}" to "{}"'.format(dsconf.old_table, dsconf.new_table))
-                    conn.execute(drop_view_rename_table)
+                    _run_sql_with_logging(conn, drop_view_rename_table, dry_run)
 
             # do this outside the previous transaction to avoid deadlock
             if old_table_exists and dsconf.config.sql_settings.partition_config:
-                dsconf.adapter._install_partition()
+                print('\t\tReinstalling partitioning on "{}"'.format(dsconf.new_table))
+                if not dry_run:
+                    dsconf.adapter._install_partition()
 
 
 class Command(BaseCommand):
@@ -157,14 +168,24 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('action', choices=('create-views', 'rename-tables'))
+        parser.add_argument('--execute', action='store_true', help='Actually run the SQL commands')
+        parser.add_argument('--verbose', action='store_true')
 
     def handle(self, action, **options):
+        dry_run = not options['execute']
+        if dry_run or options['verbose']:
+            logger.setLevel(logging.DEBUG)
+            logger.addHandler(logging.StreamHandler())
+
         def confirm(action):
-            return input("Are you sure you want to {}? y/n\n".format(action)) == 'y'
+            return dry_run or input("Are you sure you want to {}? y/n\n".format(action)) == 'y'
+
+        if dry_run:
+            print('\nPerforming DRY RUN\n')
 
         if action == 'create-views':
             # no confirmation needed here since it idempotent and additive
-            create_ucr_views()
+            create_ucr_views(dry_run)
 
         if action == 'rename-tables' and confirm("rename all UCR tables"):
-            _rename_tables()
+            _rename_tables(dry_run)
