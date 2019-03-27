@@ -1275,6 +1275,7 @@ Location choice providers also support three additional configuration options:
 
 * "include_descendants" - Include descendants of the selected locations in the results. Defaults to `false`.
 * "show_full_path" - Display the full path to the location in the filter. Defaults to `false`.
+* "location_type" - Includes locations of this type. Default is to not filter on location type.
   The default behavior shows all locations as a flat alphabetical list.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
@@ -1289,6 +1290,7 @@ Example assuming "village" is a location ID, which is converted to names using t
       "type": "location",
       "include_descendants": true,
       "show_full_path": true
+      "location_type": "district"
   }
 }
 ```
