@@ -253,6 +253,7 @@ class IcdsDynamicTemplateView(TemplateView):
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
+
 @location_safe
 class BaseReportView(View):
     def get_settings(self, request, *args, **kwargs):
@@ -276,6 +277,7 @@ class BaseReportView(View):
         selected_month = current_month
 
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -317,6 +319,7 @@ class ProgramSummaryView(BaseReportView):
             data = get_awc_infrastructure_data(domain, config, include_test)
         return JsonResponse(data=data)
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LadySupervisorView(BaseReportView):
@@ -336,6 +339,7 @@ class LadySupervisorView(BaseReportView):
             domain, config, include_test
         )
         return JsonResponse(data=data)
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -364,6 +368,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             age_sdd,
         )
         return JsonResponse(data=data)
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -715,6 +720,7 @@ class AwcReportsView(BaseReportView):
                 )
         return JsonResponse(data=data)
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
@@ -807,6 +813,7 @@ class ExportIndicatorView(View):
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FactSheetsView(BaseReportView):
@@ -836,6 +843,7 @@ class FactSheetsView(BaseReportView):
             config=config, loc_level=loc_level, show_test=include_test, beta=beta
         ).get_data()
         return JsonResponse(data=data)
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -882,6 +890,7 @@ class PrevalenceOfSevereView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -932,6 +941,7 @@ class PrevalenceOfStuntingView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class NewbornsWithLowBirthWeightView(BaseReportView):
@@ -969,6 +979,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1008,6 +1019,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExclusiveBreastfeedingView(BaseReportView):
@@ -1044,6 +1056,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1082,6 +1095,7 @@ class ChildrenInitiatedView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InstitutionalDeliveriesView(BaseReportView):
@@ -1119,6 +1133,7 @@ class InstitutionalDeliveriesView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ImmunizationCoverageView(BaseReportView):
@@ -1154,6 +1169,7 @@ class ImmunizationCoverageView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1193,6 +1209,7 @@ class AWCDailyStatusView(View):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCsCoveredView(BaseReportView):
@@ -1225,6 +1242,7 @@ class AWCsCoveredView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
@@ -1256,6 +1274,7 @@ class RegisteredHouseholdView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1299,6 +1318,7 @@ class EnrolledChildrenView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledWomenView(BaseReportView):
@@ -1332,6 +1352,7 @@ class EnrolledWomenView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LactatingEnrolledWomenView(BaseReportView):
@@ -1363,6 +1384,7 @@ class LactatingEnrolledWomenView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1396,6 +1418,7 @@ class AdolescentGirlsView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdhaarBeneficiariesView(BaseReportView):
@@ -1426,6 +1449,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1459,6 +1483,7 @@ class CleanWaterView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FunctionalToiletView(BaseReportView):
@@ -1490,6 +1515,7 @@ class FunctionalToiletView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1523,6 +1549,7 @@ class MedicineKitView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
@@ -1555,6 +1582,7 @@ class InfantsWeightScaleView(BaseReportView):
             'report_data': data,
         })
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdultWeightScaleView(BaseReportView):
@@ -1586,6 +1614,7 @@ class AdultWeightScaleView(BaseReportView):
         return JsonResponse(data={
             'report_data': data,
         })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1630,6 +1659,7 @@ class ICDSBugReportView(BugReportView):
     def recipients(self):
         return [ICDS_SUPPORT_EMAIL]
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadExportReport(View):
@@ -1646,6 +1676,7 @@ class DownloadExportReport(View):
         response['Content-Disposition'] = safe_filename_header(data_type, content_type.extension)
         return response
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
@@ -1661,6 +1692,7 @@ class DownloadPDFReport(View):
             response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1700,6 +1732,7 @@ class ICDSImagesAccessorAPI(View):
             content_type=content.content_type
         )
 
+
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InactiveAWW(View):
@@ -1714,6 +1747,7 @@ class InactiveAWW(View):
             return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
         except NotFound:
             raise Http404
+
 
 @location_safe
 class DishaAPIView(View):
@@ -1754,6 +1788,7 @@ class DishaAPIView(View):
     @quickcache([])
     def valid_state_names(self):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1799,6 +1834,7 @@ class CasDataExport(View):
             return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
         except NotFound:
             raise Http404
+
 
 @location_safe
 class CasDataExportAPIView(View):
