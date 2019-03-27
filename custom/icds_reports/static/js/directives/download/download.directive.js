@@ -125,7 +125,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 9, name: 'Lady Supervisor'});
+        vm.indicators.push({id: 9, name: 'LS Performance Report'});
     }
 
 

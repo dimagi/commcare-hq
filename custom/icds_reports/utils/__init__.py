@@ -1018,7 +1018,7 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
 
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = "Lady Supervisor Performance"
+    worksheet.title = "LS Performance Report"
     worksheet.sheet_view.showGridLines = False
     # sheet title
     amount_of_columns = 9 - aggregation_level
