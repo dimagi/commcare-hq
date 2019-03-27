@@ -60,7 +60,7 @@ def get_sql_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0104_citus_composite_key'),
+        ('icds_reports', '0107_citus_composite_key'),
     ]
 
     operations = [
