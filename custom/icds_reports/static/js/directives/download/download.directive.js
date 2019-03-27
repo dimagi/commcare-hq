@@ -444,7 +444,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.hasErrors = function() {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        return beneficiaryListErrors || incentiveReportErrors;
+        var ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
     };
 
     vm.isCombinedPDFSelected = function() {
