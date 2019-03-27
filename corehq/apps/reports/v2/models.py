@@ -7,6 +7,7 @@ from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
+ColumnContext = namedtuple('ColumnContext', 'title slug width')
 
 
 class BaseReport(object):
@@ -17,6 +18,7 @@ class BaseReport(object):
     data_endpoints = ()
     options_endpoints = ()
     formatters = ()
+    columns = []
 
     def __init__(self, request, domain):
         """
@@ -56,6 +58,7 @@ class BaseReport(object):
         return {
             'slug': self.slug,
             'endpoints': [e._asdict() for e in endpoints],
+            'columns': [c._asdict() for c in self.columns],
         }
 
 

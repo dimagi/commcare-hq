@@ -48,5 +48,8 @@ hqDefine('reports/v2/js/context', [
         getReportConfig: function () {
             return reportConfig();
         },
+        getColumns: function () {
+            return initialPageData.get('report.columns');
+        },
     };
 });
