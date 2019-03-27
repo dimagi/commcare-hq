@@ -1,5 +1,7 @@
 /* global sinon, moment */
 
+var pageData = hqImport('hqwebapp/js/initial_page_data');
+
 describe('Child models', function () {
     var childModels, reachUtils, clock;
 

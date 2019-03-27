@@ -1,5 +1,7 @@
 /* global sinon */
 
+var pageData = hqImport('hqwebapp/js/initial_page_data');
+
 describe('Pregnant women models', function () {
     var pregnantWomenModels, reachUtils, clock;
 
