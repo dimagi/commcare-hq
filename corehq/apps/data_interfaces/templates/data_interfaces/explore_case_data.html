@@ -22,7 +22,7 @@ breadcrumbs todo
 
 
 {% block page_content %}
-  {% registerurl "endpoint_filter" domain report.slug '---' %}
+  {% registerurl "endpoint_options" domain report.slug '---' %}
   {% registerurl "endpoint_data" domain report.slug '---' %}
 
   {% initial_page_data "report.endpoints" report.endpoints %}

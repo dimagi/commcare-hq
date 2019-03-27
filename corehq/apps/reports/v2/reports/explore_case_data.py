@@ -16,7 +16,7 @@ class ExploreCaseDataReport(BaseReport):
         DataTablesDataEndpoint,
     )
 
-    filter_endpoints = (
+    options_endpoints = (
     )
 
     def _get_base_query(self):
@@ -25,7 +25,8 @@ class ExploreCaseDataReport(BaseReport):
     def get_data_response(self, endpoint):
         query = self._get_base_query()
 
-        for f in self.get_filters():
-            query = f.get_filtered_query(query)
+        # todo think about filtering
+        # for f in self.get_filters():
+        #     query = f.get_filtered_query(query)
 
         return endpoint.get_response(query, CaseDataFormatter)
