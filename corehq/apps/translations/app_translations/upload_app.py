@@ -53,7 +53,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
 
 
-def process_bulk_app_translation_upload(app, workbook, expected_headers):
+def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=None):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -95,8 +95,9 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers):
                     rows = [row]
                 else:
                     rows.append(row)
-            msgs.extend(_process_single_sheet_rows(app, module_or_form, rows))
-            msgs.extend(_process_single_sheet_rows(app, MODULES_AND_FORMS_SHEET_NAME, modules_and_forms_rows))
+            msgs.extend(_process_single_sheet_rows(app, module_or_form, rows, lang=lang))
+            msgs.extend(_process_single_sheet_rows(app, MODULES_AND_FORMS_SHEET_NAME,
+                                                   modules_and_forms_rows, lang=lang))
         else:
             msgs.extend(_process_multi_sheet_rows(app, sheet.worksheet.title, sheet,
                                                   sheet_name=sheet.worksheet.title))
@@ -123,18 +124,18 @@ def _process_multi_sheet_rows(app, identifier, rows, sheet_name=None):
     return []
 
 
-def _process_single_sheet_rows(app, identifier, rows, sheet_name=None):
+def _process_single_sheet_rows(app, identifier, rows, sheet_name=None, lang=None):
     if not identifier or not rows:
         return []
 
     if is_modules_and_forms_sheet(identifier):
-        return update_app_from_modules_and_forms_sheet(app, rows, identifying_header='menu_or_form')
+        return update_app_from_modules_and_forms_sheet(app, rows, identifying_header='menu_or_form', lang=lang)
 
     if is_module_sheet(identifier):
-        return update_app_from_module_sheet(app, rows, identifier)
+        return update_app_from_module_sheet(app, rows, identifier, lang=lang)
 
     if is_form_sheet(identifier):
-        return update_app_from_form_sheet(app, rows, identifier)
+        return update_app_from_form_sheet(app, rows, identifier, lang=lang)
 
     return []
 
@@ -229,7 +230,7 @@ def _get_missing_cols(app, sheet, headers):
     return set(expected_columns) - set(sheet.headers)
 
 
-def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='sheet_name'):
+def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='sheet_name', lang=None):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
@@ -237,11 +238,14 @@ def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='shee
     :param app:
     :param sheet: Iterable of rows
     :param identifying_header: Column header that contains the "menuX_formY"-type value for each row.
+    :param lang: If present, translation is limited to this language. This should correspond to the sheet
+        only containing headers of this language, but having the language available is handy.
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
     msgs = []
 
+    langs = [lang] if lang else app.langs
     for row in get_unicode_dicts(sheet):
         identifying_text = row.get(identifying_header, '').split('_')
 
@@ -272,11 +276,11 @@ def update_app_from_modules_and_forms_sheet(app, sheet, identifying_header='shee
                 ))
                 continue
 
-        update_translation_dict('default_', document.name, row, app.langs)
+        update_translation_dict('default_', document.name, row, langs)
 
         # Update menu media
         # For backwards compatibility with previous code, accept old "filepath" header names
-        for lang in app.langs:
+        for lang in langs:
             image_header = 'image_%s' % lang
             if image_header not in row:
                 image_header = 'icon_filepath_%s' % lang

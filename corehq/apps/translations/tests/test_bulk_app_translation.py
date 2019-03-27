@@ -159,8 +159,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             "case_property", "list_or_detail", "default_en", "default-fra"
         )),
         ("menu1_form1", (
-            "label", "default_en", "default-fra", "audio_en", "audio_fra",
-            "image_en", "image_fra", "video_en", "video_fra",
+            "label", "default_en", "default-fra", "image_en", "image_fra",
+            "audio_en", "audio_fra", "video_en", "video_fra",
         ))
     )
 
@@ -202,7 +202,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question2-item1-label", "item1", "item1", "", "", "", "", "", ""),
           ("question2-item2-label", "item2", "item2", "", "", "", "", "", ""),
           ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
-          ("blank_value_node-label", "", "", "en-audio.mp3", "fra-audio.mp3", "", "", "", ""),
+          ("blank_value_node-label", "", "", "", "", "en-audio.mp3", "fra-audio.mp3", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
@@ -452,8 +452,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                 'Sheet "menu1_form1" has unrecognized columns. Sheet will '
                 'be processed but ignoring the following columns: default-fra',
 
-                "You must provide at least one translation for the label 'question1-label' "
-                "in form 1",
+                "Error in menu1_form1: You must provide at least one translation for the label 'question1-label'.",
 
                 'App Translations Updated!'
             ]

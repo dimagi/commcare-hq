@@ -23,7 +23,7 @@ from corehq.apps.translations.exceptions import BulkAppTranslationsException
 MarkdownStats = namedtuple('MarkdownStats', ['markdowns', 'vetoes'])
 
 
-def update_app_from_form_sheet(app, rows, identifier):
+def update_app_from_form_sheet(app, rows, identifier, lang=None):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
@@ -64,7 +64,8 @@ def update_app_from_form_sheet(app, rows, identifier):
         msgs.append((messages.error, error))
 
     # Update the translations
-    for lang in app.langs:
+    langs = [lang] if lang else app.langs
+    for lang in langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
         assert(translation_node.exists())
 

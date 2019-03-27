@@ -19,7 +19,7 @@ CondensedRowsValue = namedtuple('CondensedRowsValue', ['rows', 'tab_headers', 'c
 DetailValidationValue = namedtuple('DetailValidationValue', ['partial_upload', 'errors'])
 
 
-def update_app_from_module_sheet(app, rows, identifier):
+def update_app_from_module_sheet(app, rows, identifier, lang=None):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -28,6 +28,8 @@ def update_app_from_module_sheet(app, rows, identifier):
 
     :param app:
     :param rows: Iterable of rows from a WorksheetJSONReader
+    :param lang: If present, translation is limited to this language. This should correspond to the sheet
+        only containing headers of this language, but having the language available is handy.
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
@@ -48,97 +50,23 @@ def update_app_from_module_sheet(app, rows, identifier):
     if validation_value.errors:
         return [(messages.error, e) for e in validation_value.errors]
 
-    # Update the translations
-    def _update_translation(row, language_dict, require_translation=True):
-        if not require_translation or _has_at_least_one_translation(row, 'default', app.langs):
-            update_translation_dict('default_', language_dict, row, app.langs)
-        else:
-            msgs.append((
-                messages.error,
-                _("You must provide at least one translation" +
-                  " of the case property '%s'") % row['case_property']
-            ))
-
-    def _update_id_mappings(rows, detail):
-        if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(app.domain):
-            for row, mapping in zip(rows, detail.enum):
-                _update_translation(row, mapping.value)
-        else:
-            # Not all of the id mappings are described.
-            # If we can identify by key, we can proceed.
-            mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
-            if len(detail.enum) != len(mappings_by_prop):
-                msgs.append((messages.error,
-                             _("You must provide all ID mappings for property '{}'")
-                             .format(detail.field)))
-            else:
-                for row in rows:
-                    if row['id'] in mappings_by_prop:
-                        _update_translation(row, mappings_by_prop[row['id']].value)
-
-    def _update_detail(row, detail):
-        # Update the translations for the row and all its child rows
-        _update_translation(row, detail.header)
-        _update_id_mappings(row.get('mappings', []), detail)
-        for i, graph_annotation_row in enumerate(row.get('annotations', [])):
-            _update_translation(
-                graph_annotation_row,
-                detail['graph_configuration']['annotations'][i].display_text,
-                False
-            )
-        for graph_config_row in row.get('configs', []):
-            config_key = graph_config_row['id']
-            _update_translation(
-                graph_config_row,
-                detail['graph_configuration']['locale_specific_config'][config_key],
-                False
-            )
-        for graph_config_row in row.get('series_configs', []):
-            config_key = graph_config_row['id']
-            series_index = int(graph_config_row['series_index'])
-            _update_translation(
-                graph_config_row,
-                detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
-                False
-            )
-
-    def _update_details_based_on_position(list_rows, short_details, detail_rows, long_details):
-        for row, detail in \
-                itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
-
-            # Check that names match (user is not allowed to change property in the
-            # upload). Mismatched names indicate the user probably botched the sheet.
-            if row.get('id', None) != detail.field:
-                message = _('A row for menu {index} has an unexpected case property "{field}"'
-                            'Case properties must appear in the same order as they do in the bulk '
-                            'app translation download. No translations updated for this row.').format(
-                                index=module.id + 1,
-                                field=row.get('case_property', ""))
-                msgs.append((messages.error, message))
-                continue
-            _update_detail(row, detail)
-
-    def _partial_upload(rows, details):
-        rows_by_property = {row['id']: row for row in rows}
-        for detail in details:
-            if rows_by_property.get(detail.field):
-                _update_detail(rows_by_property.get(detail.field), detail)
-
     short_details = list(module.case_details.short.get_columns())
     long_details = list(module.case_details.long.get_columns())
     list_rows = [row for row in condensed_rows.rows if row['list_or_detail'] == 'list']
     detail_rows = [row for row in condensed_rows.rows if row['list_or_detail'] == 'detail']
     if validation_value.partial_upload:
-        _partial_upload(list_rows, short_details)
-        _partial_upload(detail_rows, long_details)
+        msgs += _partial_upload(app, list_rows, short_details, lang=lang)
+        msgs += _partial_upload(app, detail_rows, long_details, lang=lang)
     else:
-        _update_details_based_on_position(list_rows, short_details, detail_rows, long_details)
+        msgs += _update_details_based_on_position(app, list_rows, short_details, detail_rows,
+                                                  long_details, lang=lang)
 
+    langs = [lang] if lang else app.langs
     for index, tab in enumerate(condensed_rows.tab_headers):
         if tab:
-            _update_translation(tab, module.case_details.long.tabs[index].header)
+            msgs += _update_translation(tab, module.case_details.long.tabs[index].header, langs=langs)
     if condensed_rows.case_list_form_label:
-        _update_translation(condensed_rows.case_list_form_label, module.case_list_form.label)
+        msgs += _update_translation(condensed_rows.case_list_form_label, module.case_list_form.label, langs=langs)
 
     return msgs
 
@@ -270,10 +198,97 @@ def _has_at_least_one_translation(row, prefix, langs):
     True
     >>> _has_at_least_one_translation({'case_property': 'name'}, 'default', ['en', 'fra'])
     False
-
-    :param row:
-    :param prefix:
-    :param langs:
-    :return:
     """
     return any(row.get(prefix + '_' + l) for l in langs)
+
+
+# Returns list that is either empty or containing a tuple of (error level, error message).
+def _update_translation(row, language_dict, require_translation=True, langs=None):
+    if not require_translation or _has_at_least_one_translation(row, 'default', langs):
+        update_translation_dict('default_', language_dict, row, langs)
+        return []
+    return [(
+        messages.error,
+        _("You must provide at least one translation" +
+          " of the case property '%s'") % row['case_property']
+    )]
+
+
+def _update_id_mappings(app, rows, detail, langs=None):
+    msgs = []
+    if len(rows) == len(detail.enum) or not toggles.ICDS.enabled(app.domain):
+        for row, mapping in zip(rows, detail.enum):
+            msgs += _update_translation(row, mapping.value, langs=langs)
+    else:
+        # Not all of the id mappings are described.
+        # If we can identify by key, we can proceed.
+        mappings_by_prop = {mapping.key: mapping for mapping in detail.enum}
+        if len(detail.enum) != len(mappings_by_prop):
+            msgs.append((messages.error,
+                         _("You must provide all ID mappings for property '{}'").format(detail.field)))
+        else:
+            for row in rows:
+                if row['id'] in mappings_by_prop:
+                    msgs += _update_translation(row, mappings_by_prop[row['id']].value, langs=langs)
+
+    return msgs
+
+
+def _update_detail(app, row, detail, lang=None):
+    msgs = []
+    langs = [lang] if lang else app.langs
+    msgs += _update_translation(row, detail.header, langs=langs)
+    msgs += _update_id_mappings(app, row.get('mappings', []), detail, langs=langs)
+    for i, graph_annotation_row in enumerate(row.get('annotations', [])):
+        msgs += _update_translation(
+            graph_annotation_row,
+            detail['graph_configuration']['annotations'][i].display_text,
+            langs=langs,
+            require_translation=False
+        )
+    for graph_config_row in row.get('configs', []):
+        config_key = graph_config_row['id']
+        msgs += _update_translation(
+            graph_config_row,
+            detail['graph_configuration']['locale_specific_config'][config_key],
+            langs=langs,
+            require_translation=False
+        )
+    for graph_config_row in row.get('series_configs', []):
+        config_key = graph_config_row['id']
+        series_index = int(graph_config_row['series_index'])
+        msgs += _update_translation(
+            graph_config_row,
+            detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
+            langs=langs,
+            require_translation=False
+        )
+    return msgs
+
+
+def _update_details_based_on_position(app, list_rows, short_details, detail_rows, long_details, lang=None):
+    msgs = []
+    for row, detail in \
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
+
+        # Check that names match (user is not allowed to change property in the
+        # upload). Mismatched names indicate the user probably botched the sheet.
+        if row.get('id', None) != detail.field:
+            message = _('A row for menu {index} has an unexpected case property "{field}"'
+                        'Case properties must appear in the same order as they do in the bulk '
+                        'app translation download. No translations updated for this row.').format(
+                            index=module.id + 1,
+                            field=row.get('case_property', ""))
+            msgs.append((messages.error, message))
+            continue
+        msgs += _update_detail(app, row, detail, lang=lang)
+    return msgs
+
+
+def _partial_upload(app, rows, details, lang=None):
+    msgs = []
+    rows_by_property = {row['id']: row for row in rows}
+    for detail in details:
+        if rows_by_property.get(detail.field):
+            msgs += _update_detail(app, rows_by_property.get(detail.field), detail, lang=lang)
+    return msgs
