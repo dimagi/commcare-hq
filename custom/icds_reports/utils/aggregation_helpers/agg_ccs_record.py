@@ -106,20 +106,18 @@ class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             query_cols.append((name, c[1]))
         return """
         CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
-            {cols}
+            {query_cols}
             FROM  "{ccs_record_monthly_table}" as crm
             LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = crm.awc_id
             WHERE crm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
             GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, crm.awc_id, crm.month,
                      crm.ccs_status, coalesce_trimester, crm.caste, coalesce_disabled, coalesce_minority, coalesce_resident;
-        INSERT INTO "{tablename}" ({columns}) SELECT * from "{tmp_tablename}";
+        INSERT INTO "{tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
         DROP TABLE "{tmp_tablename}";
         """.format(
             tablename=self.tablename,
-            columns=", ".join([col[0] for col in columns]),
-            calculations=", ".join([col[1] for col in columns]),
-            cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
-            ucr_ccs_record_table=self.ccs_record_monthly_ucr_tablename,
+            final_columns=", ".join([col[0] for col in columns]),
+            query_cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
             ccs_record_monthly_table='ccs_record_monthly',
             tmp_tablename='tmp_{}'.format(self.tablename)
         ), {
