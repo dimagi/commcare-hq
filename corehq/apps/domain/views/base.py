@@ -6,6 +6,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.translation import ugettext as _
 
+from corehq.apps.accounting.mixins import DowngradeModalMixin
 from corehq.apps.users.models import Invitation
 from corehq.apps.domain.decorators import login_required, login_and_domain_required
 from corehq.apps.domain.models import Domain
@@ -86,7 +87,7 @@ class LoginAndDomainMixin(object):
         return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
-class BaseDomainView(LoginAndDomainMixin, BaseSectionPageView, DomainViewMixin):
+class BaseDomainView(LoginAndDomainMixin, DowngradeModalMixin, BaseSectionPageView, DomainViewMixin):
 
     @property
     def main_context(self):
