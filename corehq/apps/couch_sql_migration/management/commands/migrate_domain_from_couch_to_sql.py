@@ -1,29 +1,40 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
+
+import logging
 from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, delete_diff_db, get_diff_db)
+    delete_diff_db,
+    do_couch_to_sql_migration,
+    get_diff_db,
+)
 from corehq.apps.couch_sql_migration.progress import (
-    set_couch_sql_migration_started, couch_sql_migration_in_progress,
-    set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+    couch_sql_migration_in_progress,
+    set_couch_sql_migration_complete,
+    set_couch_sql_migration_not_started,
+    set_couch_sql_migration_started,
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import doc_types, XFormInstance
-from six.moves import input, zip_longest
+from couchforms.models import XFormInstance, doc_types
 
-import logging
 _logger = logging.getLogger('main_couch_sql_datamigration')
 
 
