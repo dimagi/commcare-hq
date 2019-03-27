@@ -75,6 +75,7 @@
                                 </div>
 
                                 <pagination data-apply-bindings="false"
+                                            data-bind="visible: totalItems() > itemsPerPage"
                                             params="goToPage: goToPage,
                                                     perPage: itemsPerPage,
                                                     maxPagesShown: 6,

@@ -11,7 +11,7 @@ class PactPatientDispatcher(CustomProjectReportDispatcher):
     prefix = 'pactpatient'
 
     def dispatch(self, request, *args, **kwargs):
-        ret =  super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
+        ret = super(PactPatientDispatcher, self).dispatch(request, *args, **kwargs)
         return ret
 
     def get_reports(self, domain):

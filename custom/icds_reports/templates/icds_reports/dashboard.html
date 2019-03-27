@@ -89,6 +89,7 @@
         <script src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
         <script src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
         <script src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
+        <script src="{% static 'js/directives/service-delivery-dashboard/service-delivery-dashboard.directive.js' %}"></script>
         <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
         <script src="{% static 'js/directives/lady-supervisor/lady-supervisor.directive.js' %}"></script>
         <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
@@ -263,6 +264,7 @@
                     {% registerurl 'have_access_to_location' domain %}
                     {% registerurl 'lady_supervisor' domain %}
                     {% registerurl 'cas_export' domain %}
+                    {% registerurl 'service_delivery_dashboard' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
@@ -326,6 +328,10 @@
         {id: '48', name: '36-48 months (1096-1460 days)'},
         {id: '60', name: '48-60 months (1461-1825 days)'},
         {id: '72', name: '60-72 months (1826-2190 days)'},
+    ]);
+    angular.module('icdsApp').constant('agesServiceDeliveryDashboard', [
+        {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
+        {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
     ]);
     angular.module('icdsApp').value('cgBusyDefaults', {
       message:'Loading data',

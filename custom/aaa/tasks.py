@@ -6,7 +6,16 @@ from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
 
-from custom.aaa.models import AggAwc, AggregationInformation, AggVillage, CcsRecord, Child, Woman
+from custom.aaa.models import (
+    AggAwc,
+    AggregationInformation,
+    AggVillage,
+    CcsRecord,
+    Child,
+    ChildHistory,
+    Woman,
+    WomanHistory,
+)
 
 
 def update_table(domain, slug, method):
@@ -42,8 +51,20 @@ def update_child_table(domain):
 
 
 @task
+def update_child_history_table(domain):
+    for agg_query in ChildHistory.aggregation_queries:
+        update_table(domain, ChildHistory.__name__ + agg_query.__name__, agg_query)
+
+
+@task
 def update_woman_table(domain):
     for agg_query in Woman.aggregation_queries:
+        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
+
+
+@task
+def update_woman_history_table(domain):
+    for agg_query in WomanHistory.aggregation_queries:
         update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
 
 

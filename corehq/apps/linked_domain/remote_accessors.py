@@ -60,14 +60,17 @@ def pull_missing_multimedia_for_app(app):
     remote_details = app.domain_link.remote_details
     _fetch_remote_media(app.domain, missing_media, remote_details)
     if toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
+        def _format_missing_media(media):
+            return {m[0]: m[1].to_json() for m in media}
+
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(
                 False, "[ICDS-291] Multimedia still missing", json.dumps({
                     'domain': app.domain,
                     'app_id': app.get_id,
-                    'fetched-attempted': missing_media,
-                    'still-missing': still_missing_media,
+                    'fetched-attempted': _format_missing_media(missing_media),
+                    'still-missing': _format_missing_media(still_missing_media),
                 }, indent=4)
             )
             return False
@@ -80,7 +83,7 @@ def pull_missing_multimedia_for_app(app):
                     'length of multimedia_map': len(app.multimedia_map),
                     'number of missing files pulled': len(missing_media),
                 }, {
-                    'missing': missing_media,
+                    'missing': _format_missing_media(missing_media),
                 }], indent=4)
             )
     return True

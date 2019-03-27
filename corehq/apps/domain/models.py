@@ -1270,4 +1270,6 @@ class DomainAuditRecordEntry(models.Model):
     def update_calculations(cls, domain, property_to_update):
         obj, is_new = cls.objects.get_or_create(domain=domain)
         setattr(obj, property_to_update, F(property_to_update) + 1)
-        obj.save()
+        # update_fields prevents the possibility of a race condition
+        # https://stackoverflow.com/a/1599090
+        obj.save(update_fields=[property_to_update])

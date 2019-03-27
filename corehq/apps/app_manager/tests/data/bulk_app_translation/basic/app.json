@@ -394,6 +394,72 @@
               "relevant": "",
               "time_ago_interval": 365.25,
               "useXpathExpression": false
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+
+              ],
+              "field": "line_graph",
+              "filter_xpath": "",
+              "format": "graph",
+              "graph_configuration": {
+                "annotations": [],
+                "config": {},
+                "doc_type": "GraphConfiguration",
+                "graph_name": "Velocity",
+                "graph_type": "xy",
+                "locale_specific_config": {
+                    "secondary-y-title": {},
+                    "x-title": {
+                      "en": "Time"
+                    },
+                    "y-title": {
+                      "en": "Speed"
+                    }
+                },
+                "series": [
+                  {
+                    "data_path": "instance('casedb')/casedb/case[@case_type='bird'][@status='open'][index/parent=current()/@case_id]",
+                    "doc_type": "GraphSeries",
+                    "locale_specific_config": {
+                      "name": {
+                        "en": "Bird"
+                      }
+                    },
+                    "radius_function": null,
+                    "x_function": "x",
+                    "y_function": "y"
+                  },
+                  {
+                    "data_path": "instance('casedb')/casedb/case[@case_type='cheetah'][@status='open'][index/parent=current()/@case_id]",
+                    "doc_type": "GraphSeries",
+                    "locale_specific_config": {
+                      "name": {
+                        "en": "Cheetah"
+                      }
+                    },
+                    "radius_function": null,
+                    "x_function": "x",
+                    "y_function": "y"
+                  }
+                ]
+              },
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Velocity"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
             }
           ]
         }

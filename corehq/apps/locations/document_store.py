@@ -19,7 +19,7 @@ class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
 
     def __init__(self, domain):
         self.domain = domain
-        self.queryset = SQLLocation.active_objects.filter(domain=domain)
+        self.queryset = SQLLocation.active_objects.filter(domain=domain).select_related('parent', 'location_type')
 
     def get_document(self, doc_id):
         try:

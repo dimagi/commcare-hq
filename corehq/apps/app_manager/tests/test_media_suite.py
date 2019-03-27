@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import uuid
+from collections import OrderedDict
 from copy import deepcopy
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
@@ -114,15 +115,16 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # Test that media for languages not in the profile are removed from the media suite
 
         app = Application.wrap(self.get_json('app'))
-        app.build_profiles['profid'] = BuildProfile(
-            langs=['en'], name='en-profile'
-        )
+        app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'hin': BuildProfile(langs=['hin'], name='hin-profile'),
+            'all': BuildProfile(langs=['en', 'hin'], name='all-profile'),
+        })
         app.langs = ['en', 'hin']
 
         image_path = 'jr://file/commcare/module0_en.png'
         audio_path = 'jr://file/commcare/module0_{}.mp3'
         app.get_module(0).set_icon('en', image_path)
-        # app.get_module(0).case_list_form.set_icon('en', image_path)
         app.get_module(0).set_audio('en', audio_path.format('en'))
         app.get_module(0).set_audio('hin', audio_path.format('hin'))
 
@@ -144,8 +146,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # includes all media
         self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite'), app.create_media_suite())
 
-        # includes all app media and only form media for 'en'
-        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_en'), app.create_media_suite('profid'))
+        # generate all suites at once to mimic create_build_files_for_all_app_profiles
+        suites = {id: app.create_media_suite(build_profile_id=id) for id in app.build_profiles.keys()}
+
+        # include all app media and only language-specific form media
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_en'), suites['en'])
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_hin'), suites['hin'])
+        self._assertMediaSuiteResourcesEqual(self.get_xml('form_media_suite_all'), suites['all'])
 
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_previous_version')
     def test_update_image_id(self, get_previous_version):
@@ -434,9 +441,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.module.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
         self.module.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
 
-        with flag_enabled('LANGUAGE_LINKED_MULTIMEDIA'):
-            en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
-            hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
 

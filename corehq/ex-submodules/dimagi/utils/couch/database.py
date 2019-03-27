@@ -11,6 +11,8 @@ from time import sleep
 import six
 from six.moves import range
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class DocTypeMismatchException(Exception):
     pass
@@ -123,6 +125,7 @@ def is_bigcouch():
     # this is a bit of a hack but we'll use it for now
     return 'cloudant' in settings.COUCH_DATABASE or getattr(settings, 'BIGCOUCH', False)
 
+
 def bigcouch_quorum_count():
     """
     The number of nodes to force an update/read in bigcouch to make sure
@@ -132,8 +135,10 @@ def bigcouch_quorum_count():
     return (3 if not hasattr(settings, 'BIGCOUCH_QUORUM_COUNT')
             else settings.BIGCOUCH_QUORUM_COUNT)
 
+
 def get_safe_write_kwargs():
     return {'w': bigcouch_quorum_count()} if is_bigcouch() else {}
+
 
 def get_safe_read_kwargs():
     return {'r': bigcouch_quorum_count()} if is_bigcouch() else {}
@@ -153,6 +158,7 @@ class SafeSaveDocument(Document):
 def safe_delete(db, doc_or_id):
     if not isinstance(doc_or_id, six.string_types):
         doc_or_id = doc_or_id._id
+    soft_assert_type_text(doc_or_id)
     db.delete_doc(doc_or_id, **get_safe_write_kwargs())
 
 

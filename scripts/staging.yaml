@@ -49,10 +49,22 @@
 trunk: master
 name: autostaging
 branches:
-  - ns/update_uwsgi  # Nitigya Feb 12
   - bmb/users-perms-ui  # Biyeun Feb 20
-  - vellum-staging      # Farid 20 Feb
-  - fr/question-links   # Farid 20 Feb
-  - jls/download-mm-translations  # Jenny Feb 23
-  - mk-21944-2 # MK Feb 25
-submodules: {}
+  - es/module-display  # Ethan March 4th
+  #- jls/log-media-map-app-id # Jenny March 7
+  - mk-434 # MK March 12
+  - jls/upload-mm-translations  # Jenny March 14
+  - rn_avoid_chrome_autofill # Rohit March 18
+  - nh/cdc/one_domain  # Norman March 26
+  - dmr/pull-saved-reports-into-separate-app+dmr/remove-old-export-urls  # Danny March 22
+  - dmr/pull-saved-reports-into-separate-app  # Danny March 22
+  - good-downgrade-modal  # Nick P March 22
+  - prepaid-modal  # Nick P March 25
+  - jls/select2-sms-app-manager  # Jenny March 22
+  - jls/gevent-bulk-media-upload  # Jenny March 25
+  - mk/release-location # MK March 26
+  - async-restore-fix  # Nick March 27
+submodules:
+  submodules/langcodes:
+    branches:
+      - jls/select2-v4  # Jenny March 22

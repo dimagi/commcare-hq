@@ -116,10 +116,10 @@
                                                  id: 'put_in_root',
                                                  options: [{
                                                     id: 'false',
-                                                    text: gettext('Display menu and then forms'),
+                                                    text: '{% trans_html_attr 'Display menu and then forms' %}',
                                                  }, {
                                                     id: 'true',
-                                                    text: gettext('Display only forms'),
+                                                    text: '{% trans_html_attr 'Display only forms' %}',
                                                  }],
                                                  value: '{% if module.put_in_root %}true{% else %}false{% endif %}'"></select-toggle>
                       </div>

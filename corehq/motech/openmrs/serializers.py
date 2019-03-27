@@ -15,6 +15,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_DATETIME,
 )
 from corehq.motech.serializers import serializers
+from corehq.util.python_compatibility import soft_assert_type_text
 
 
 def to_omrs_date(value):
@@ -26,6 +27,7 @@ def to_omrs_date(value):
 
     """
     if isinstance(value, six.string_types):
+        soft_assert_type_text(value)
         if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)
@@ -42,6 +44,7 @@ def to_omrs_datetime(value):
 
     """
     if isinstance(value, six.string_types):
+        soft_assert_type_text(value)
         if not re.match(r'\d{4}-\d{2}-\d{2}', value):
             raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
         value = dateutil_parser.parse(value)

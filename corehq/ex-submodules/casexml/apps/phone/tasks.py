@@ -50,7 +50,7 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.async_restore_task_id_cache.invalidate()
 
-    return response
+    return response.name
 
 
 @after_task_publish.connect

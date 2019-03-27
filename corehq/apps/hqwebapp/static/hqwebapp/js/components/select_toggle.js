@@ -3,7 +3,10 @@
  * Creates an invisible <select> element to store the value and a set of buttons for the user to interact with.
  *
  * Required parameters
- *  - options: Data to build select options. May be list of strings or list of objects with `id` and `text` properties.
+ *  - options: Data to build select options. May be one of:
+ *      - list of strings
+ *      - list of objects with `id` and `text` properties.
+ *      - observableArray, whose elements will be copied, so changes to the original array will not be reflected
  *
  * Optional parameters
  *  - name: Name of select
@@ -29,8 +32,9 @@ hqDefine('hqwebapp/js/components/select_toggle', [
             self.id = params.id || '';
 
             // Data
-            self.value = ko.observable(params.value || '');
-            self.options = ko.observableArray(_.map(params.options, function (o) {
+            self.value = ko.isObservable(params.value) ? params.value : ko.observable(params.value);
+            var optionsData = ko.isObservable(params.options) ? params.options() : params.options;
+            self.options = ko.observableArray(_.map(optionsData, function (o) {
                 var id = _.isString(o) ? o : o.id,
                     text = _.isString(o) ? o : o.text;
 

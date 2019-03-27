@@ -13,7 +13,7 @@ from dimagi.ext.jsonobject import JsonObject, DictProperty
 @ucr_context_cache(vary_on=('location_id',))
 def _get_location(location_id, context):
     try:
-        return SQLLocation.objects.prefetch_related('location_type').get(
+        return SQLLocation.objects.select_related('location_type').get(
             domain=context.root_doc['domain'],
             location_id=location_id
         )

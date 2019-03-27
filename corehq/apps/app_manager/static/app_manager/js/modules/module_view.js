@@ -144,8 +144,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
                 self.caseListForm = ko.observable(originalFormId);
                 self.postFormWorkflow = ko.observable(postFormWorkflow);
                 self.endOfRegistrationOptions = [
-                    {value: 'case_list', label: gettext('Go back to case list')},
-                    {value: 'default', label: gettext('Proceed with registered case')},
+                    {id: 'case_list', text: gettext('Go back to case list')},
+                    {id: 'default', text: gettext('Proceed with registered case')},
                 ];
 
                 self.formMissing = ko.computed(function () {

@@ -158,6 +158,8 @@ def get_restore_params(request):
         openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
     except KeyError:
         openrosa_version = request.GET.get('openrosa_version', None)
+    if isinstance(openrosa_version, bytes):
+        openrosa_version = openrosa_version.decode('utf-8')
 
     return {
         'since': request.GET.get('since'),

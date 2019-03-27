@@ -139,21 +139,11 @@ APPCUES_V3_APP = SessionAbTestConfig(
 )
 
 
-DEMO_WORKFLOW_HUBSPOT = 'hubspot'
-DEMO_WORKFLOW_DRIFT = 'drift'
+DEMO_WORKFLOW_V2_CONTROL = 'control'
+DEMO_WORKFLOW_V2_VARIANT = 'variant'
 
-DEMO_WORKFLOW = SessionAbTestConfig(
-    'Demo Workflow A/B',
-    'demo_workflow_dec2018',
-    (DEMO_WORKFLOW_HUBSPOT, DEMO_WORKFLOW_DRIFT)
-)
-
-
-SIGNUP_ALT_UX_OFF = 'off'
-SIGNUP_ALT_UX_ON = 'on'
-
-SIGNUP_ALT_UX = SessionAbTestConfig(
-    'Signup alt ux dec2018 A/B',
-    'signup_ux_dec2018',
-    (SIGNUP_ALT_UX_OFF, SIGNUP_ALT_UX_ON)
+DEMO_WORKFLOW_V2 = SessionAbTestConfig(
+    'Demo Workflow A/B V2',
+    'demo_workflow_mar2019',
+    (DEMO_WORKFLOW_V2_CONTROL, DEMO_WORKFLOW_V2_VARIANT)
 )

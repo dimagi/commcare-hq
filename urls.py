@@ -155,20 +155,12 @@ if settings.ENABLE_PRELOGIN_SITE:
 
 if settings.DEBUG:
     try:
-        from debug_toolbar import urls as debug_toolbar_urls
+        import debug_toolbar
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass
-
-    if 'package_monitor' in settings.INSTALLED_APPS:
-        try:
-            urlpatterns += [
-                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
-            ]
-        except ImportError:
-            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

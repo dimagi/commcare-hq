@@ -1047,7 +1047,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             containsParentConfiguration: columnType === "short",
                             containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType === "short",
-                            containsCaseListLookupConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
                             containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType === "short",
@@ -1227,30 +1227,5 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
 ko.bindingHandlers.addSaveButtonListener = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         bindingContext.$parent.initSaveButtonListeners($(element).parent());
-    },
-};
-
-// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-// connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-    init: function (element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            handle: '.grip',
-            cursor: 'move',
-            update: function (event, ui) {
-                //retrieve our actual data item
-                var item = ko.dataFor(ui.item.get(0));
-                //figure out its new position
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                //remove the item and add it back in the right spot
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);
-                }
-                ui.item.remove();
-                item.notifyButton();
-            },
-        });
     },
 };

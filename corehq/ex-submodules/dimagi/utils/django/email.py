@@ -9,18 +9,24 @@ from django.utils.translation import ugettext as _
 
 import six
 
-
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
 is only supported in HTML. Please set your email client to display this message
 in HTML, or use an email client that supports HTML emails.
 """
 
+LARGE_FILE_SIZE_ERROR_CODE = 552
+# ICDS TCL gateway uses non-standard code
+LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
+LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
+
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None, smtp_exception_skip_list=None):
-
+    from corehq.util.python_compatibility import soft_assert_type_text
+    if isinstance(recipient, six.string_types):
+        soft_assert_type_text(recipient)
     recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
     if not isinstance(html_content, six.text_type):
@@ -54,7 +60,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 'subject': subject,
             }
 
-            if e.smtp_code == 552:
+            if e.smtp_code in LARGE_FILE_SIZE_ERROR_CODES:
                 error_text = _('Could not send email: file size is too large.')
             else:
                 error_text = e.smtp_error

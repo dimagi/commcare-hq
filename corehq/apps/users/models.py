@@ -20,6 +20,7 @@ from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -44,7 +45,6 @@ from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception, log_signal_errors
 
 from memoized import memoized
-from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
 from casexml.apps.case.mock import CaseBlock
@@ -1199,7 +1199,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
         if not isinstance(phone_number, six.string_types):
-            phone_number = str(phone_number)
+            phone_number = six.text_type(phone_number)
+        soft_assert_type_text(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
     def set_default_phone_number(self, phone_number):
@@ -1810,7 +1811,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     def retire(self):
         suffix = DELETED_SUFFIX
-        deletion_id = random_hex()
+        deletion_id = uuid4().hex
         deletion_date = datetime.utcnow()
         # doc_type remains the same, since the views use base_doc instead
         if not self.base_doc.endswith(suffix):
@@ -2422,6 +2423,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, six.string_types):
+            soft_assert_type_text(location_object_or_id)
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id
@@ -2488,7 +2490,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
     def get_location_ids(self, domain):
-        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', [])
 
     @memoized
     def get_sql_locations(self, domain=None):

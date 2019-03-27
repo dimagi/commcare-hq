@@ -6,7 +6,7 @@ from __future__ import print_function
 from django.core.management import call_command
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def _migrate_roles_permissions(apps, schema_editor):
@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_migrate_roles_permissions)
+        migrations.RunPython(_migrate_roles_permissions)
     ]

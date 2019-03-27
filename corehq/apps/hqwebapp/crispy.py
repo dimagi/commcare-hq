@@ -23,6 +23,13 @@ class HQFormHelper(FormHelper):
     label_class = CSS_LABEL_CLASS
     field_class = CSS_FIELD_CLASS
 
+    def __init__(self, *args, **kwargs):
+        super(HQFormHelper, self).__init__(*args, **kwargs)
+        if 'autocomplete' not in self.attrs:
+            self.attrs.update({
+                'autocomplete': 'off',
+            })
+
 
 class HQModalFormHelper(FormHelper):
     form_class = 'form form-horizontal'

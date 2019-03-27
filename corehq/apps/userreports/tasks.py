@@ -526,7 +526,7 @@ def _indicator_metrics(date_created=None):
 @task(serializer='pickle')
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    ascii_title = report_export.title.encode('ascii', 'replace')
+    ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
     filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 

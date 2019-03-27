@@ -20,6 +20,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGGREGATIONS,
 )
 from corehq.apps.userreports.sql import get_column_name
+from corehq.util.python_compatibility import soft_assert_type_text
 from memoized import memoized
 import six
 
@@ -166,6 +167,7 @@ class FormMetaColumnOption(ColumnOption):
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
         if isinstance(identifier, six.string_types):
+            soft_assert_type_text(identifier)
             identifier = [identifier]
         identifier = "/".join(identifier)
         column_id = get_column_name(identifier.strip("/"))

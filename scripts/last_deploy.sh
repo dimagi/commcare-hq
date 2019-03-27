@@ -7,7 +7,7 @@
 if [ $# != 0 ]; then
     ENVS=$@
 else
-    ENVS=(staging production softlayer swiss icds pna)
+    ENVS=(staging production india swiss icds pna)
 fi
 
 for i in ${ENVS[@]}; do

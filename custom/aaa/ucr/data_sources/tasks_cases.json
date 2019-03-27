@@ -5,7 +5,7 @@
     "reach-test"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "config": {
@@ -48,6 +48,7 @@
         },
         "ledger_section": "immuns",
         "product_codes": [
+          "1g_bcg",
           "1g_dpt_1",
           "2g_dpt_2",
           "3g_dpt_3",

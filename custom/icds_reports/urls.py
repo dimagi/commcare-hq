@@ -11,7 +11,8 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI, \
-    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView, CasDataExport, CasDataExportAPIView
+    HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, LadySupervisorView, CasDataExport, \
+    CasDataExportAPIView, ServiceDeliveryDashboardView
 
 dashboardurls = [
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
@@ -126,6 +127,11 @@ urlpatterns = [
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^lady_supervisor/', LadySupervisorView.as_view(), name='lady_supervisor'),
+    url(
+        r'^service_delivery_dashboard/',
+        ServiceDeliveryDashboardView.as_view(),
+        name='service_delivery_dashboard'
+    ),
     url(r'^maternal_and_child/', include(maternal_and_child_urls)),
     url(r'^icds_cas_reach/', include(cas_reach_urls)),
     url(r'^demographics/', include(demographics_urls)),

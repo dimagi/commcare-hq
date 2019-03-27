@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from corehq.apps.formplayer_api.smsforms.api import answer_question, next
 from corehq.apps.formplayer_api.smsforms.signals import sms_form_complete
 
+
 class SessionStartInfo(object):
     session_id = None
     _first_response = None
@@ -21,6 +22,7 @@ class SessionStartInfo(object):
                                                          self.domain))
         return self._first_responses
 
+
 def start_session(config):
     """
     Starts a session in touchforms based on the config. Returns a
@@ -29,6 +31,7 @@ def start_session(config):
     xformsresponse = config.start_session()
     return SessionStartInfo(xformsresponse, config.domain)
 
+
 def next_responses(session_id, answer, domain, auth=None):
     if answer:
         xformsresponse = answer_question(session_id, _tf_format(answer), domain, auth)
@@ -36,6 +39,7 @@ def next_responses(session_id, answer, domain, auth=None):
         xformsresponse = next(session_id, domain, auth)
     for resp in _next_responses(xformsresponse, session_id, domain, auth):
         yield resp
+
 
 def _next_responses(xformsresponse, session_id, domain, auth=None):
     if xformsresponse.is_error:
@@ -57,6 +61,7 @@ def _next_responses(xformsresponse, session_id, domain, auth=None):
         sms_form_complete.send(sender="touchforms", session_id=session_id,
                                form=xformsresponse.event.output)
         yield xformsresponse
+
 
 def _tf_format(text):
     # any additional formatting needs can go here if they come up

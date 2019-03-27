@@ -148,6 +148,7 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
         ),
     )
 
+
 def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/

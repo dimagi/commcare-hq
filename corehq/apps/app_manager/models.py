@@ -1,7 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -19,6 +19,9 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
+from io import BytesIO
+
+import qrcode
 from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
@@ -38,6 +41,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
     get_usercase_properties,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
+from corehq.apps.integration.models import ApplicationIntegrationMixin
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
@@ -59,7 +63,9 @@ from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import (
@@ -106,7 +112,6 @@ from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
-from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
@@ -141,7 +146,7 @@ from corehq.apps.app_manager.util import (
     update_report_module_ids,
     module_offers_search,
     get_latest_enabled_build_for_profile,
-    get_enabled_build_profiles_for_version,
+    get_latest_enabled_versions_per_profile,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -1098,7 +1103,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     def get_app(self):
@@ -1143,7 +1148,8 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException("Error in form {}".format(self.full_path_name), e)
+            raise XFormException(_('Error in form "{}": {}')
+                                 .format(trans(self.name), six.text_type(e)))
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1157,7 +1163,7 @@ class FormBase(DocumentSchema):
             try:
                 valid_paths = {question['value']: question['tag']
                                for question in self.get_questions(langs=[])}
-            except XFormException as e:
+            except XFormException:
                 # punt on invalid xml (sorry, no rich attachments)
                 valid_paths = {}
 
@@ -1422,6 +1428,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 # Convert this to a dict, using a dummy key because we
                 # don't know the app's supported or default lang yet.
                 if isinstance(old_media, six.string_types):
+                    soft_assert_type_text(old_media)
                     new_media = {'default': old_media}
                     data[media_attr] = new_media
                 elif isinstance(old_media, dict):
@@ -1447,12 +1454,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
-        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
         app = self.get_app()
 
-        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
-            lang = app.default_language
-        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+        if ((self.use_default_image_for_all and media_attr == 'media_image')
+                or (self.use_default_audio_for_all and media_attr == 'media_audio')):
             lang = app.default_language
 
         media_dict = getattr(self, media_attr)
@@ -2208,6 +2213,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def get_app(self):
         return self._module.get_app()
 
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
@@ -2342,7 +2348,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
@@ -3703,7 +3709,7 @@ class ReportAppConfig(DocumentSchema):
     def __init__(self, *args, **kwargs):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
-            self.uuid = random_hex()
+            self.uuid = uuid.uuid4().hex
 
     @classmethod
     def wrap(cls, doc):
@@ -3711,6 +3717,7 @@ class ReportAppConfig(DocumentSchema):
         old_description = doc.get('description')
         if old_description:
             if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
+                soft_assert_type_text(old_description)
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -4372,6 +4379,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
         if "built_with" in data and isinstance(data['built_with'], six.string_types):
+            soft_assert_type_text(data['built_with'])
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -4641,9 +4649,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
-            from pygooglechart import QRChart
-            HEIGHT = WIDTH = 250
-            code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4652,18 +4657,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            code.add_data(url)
-
-            # "Level L" error correction with a 0 pixel margin
-            code.set_ec('L', 0)
-            f, fname = tempfile.mkstemp()
-            code.download(fname)
-            os.close(f)
-            with open(fname, "rb") as f:
-                png_data = f.read()
-                self.lazy_put_attachment(png_data, filename,
-                                         content_type="image/png")
-            return png_data
+            image = qrcode.make(url)
+            output = BytesIO()
+            image.save(output, "PNG")
+            qr_content = output.getvalue()
+            self.lazy_put_attachment(qr_content, filename,
+                                     content_type="image/png")
+            return qr_content
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
@@ -4795,6 +4795,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return self.langs
 
+
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
         raise ValueError("Invalid Language")
@@ -4832,7 +4833,8 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
+class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
+                  ApplicationIntegrationMixin):
     """
     An Application that can be created entirely through the online interface
 
@@ -5073,6 +5075,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
         if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
             for logo_name in logo_refs:
                 app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'force': True,
                     'value': self.logo_refs[logo_name]['path'],
                 }
 
@@ -5300,6 +5303,11 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
         error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
             app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
+
+    def get_report_modules(self):
+        for module in self.modules:
+            if isinstance(module, ReportModule):
+                yield module
 
     def get_forms(self, bare=True):
         for module in self.get_modules():
@@ -5568,26 +5576,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin):
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
-        seen_types = []
-
-        def get_children(case_type):
-            seen_types.append(case_type)
-            return [
-                type_.name for type_ in meta.case_types
-                if case_type in type_.child_types
-            ]
-
-        def get_hierarchy(case_type):
-            return {child: get_hierarchy(child) for child in get_children(case_type)}
-
-        roots = [type_ for type_ in meta.case_types if not type_.relationships]
-        for type_ in roots:
-            meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
-
         for type_ in meta.case_types:
-            if type_.name not in seen_types:
-                meta.type_hierarchy[type_.name] = {}
-                type_.error = _("Error in case type hierarchy")
             for prop in type_.properties:
                 prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
@@ -5803,19 +5792,20 @@ class LinkedApplication(Application):
         self.save()
 
 
-def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
+def import_app(app_id_or_source, domain, source_properties=None):
     if isinstance(app_id_or_source, six.string_types):
+        soft_assert_type_text(app_id_or_source)
         app_id = app_id_or_source
         source = get_app(None, app_id)
-        src_dom = source['domain']
-        if validate_source_domain:
-            validate_source_domain(src_dom)
+        source_domain = source['domain']
         source = source.export_json(dump_json=False)
+        report_map = get_static_report_mapping(source_domain, domain)
     else:
         cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
+        report_map = {}
     try:
         attachments = source['_attachments']
     except KeyError:
@@ -5832,6 +5822,16 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app = cls.from_source(source, domain)
     app.date_created = datetime.datetime.utcnow()
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
+
+    if report_map:
+        for module in app.get_report_modules():
+            for config in module.report_configs:
+                try:
+                    config.report_id = report_map[config.report_id]
+                except KeyError:
+                    raise AppEditingError(
+                        "Report {} not found in {}".format(config.report_id, domain)
+                    )
 
     app.save_attachments(attachments)
 
@@ -5954,7 +5954,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def expire_cache(self, domain):
         get_latest_enabled_build_for_profile.clear(domain, self.build_profile_id)
-        get_enabled_build_profiles_for_version.clear(self.build_id, self.version)
+        get_latest_enabled_versions_per_profile.clear(self.app_id)
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

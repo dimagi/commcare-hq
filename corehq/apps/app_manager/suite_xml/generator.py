@@ -15,7 +15,7 @@ from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtur
 from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
-from corehq.apps.app_manager.suite_xml.sections.resources import(
+from corehq.apps.app_manager.suite_xml.sections.resources import (
     FormResourceContributor,
     LocaleResourceContributor,
     PracticeUserRestoreContributor,

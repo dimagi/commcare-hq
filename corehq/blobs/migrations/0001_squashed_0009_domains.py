@@ -7,7 +7,7 @@ import os
 from django.conf import settings
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunPython
+
 
 fresh_install_assertion_error = """
 This migration replaces old migrations that ensure that attachments have been moved into blob storage.
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_assert_fresh_install),
+        migrations.RunPython(_assert_fresh_install),
         migrations.CreateModel(
             name='BlobMigrationState',
             fields=[

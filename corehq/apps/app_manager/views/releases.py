@@ -52,7 +52,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_version,
 )
 from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
-from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -126,7 +125,10 @@ def paginate_releases(request, domain, app_id):
             app_es = app_es.is_released()
         if query:
             app_es = app_es.add_query(build_comment(query), queries.SHOULD)
-            app_es = app_es.add_query(version(query), queries.SHOULD)
+            try:
+                app_es = app_es.add_query(version(int(query)), queries.SHOULD)
+            except ValueError:
+                pass
 
         results = app_es.exclude_source().run()
         total_apps = results.total
@@ -186,7 +188,6 @@ def get_releases_context(request, domain, app_id):
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
-        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
@@ -347,15 +348,23 @@ def revert_to_copy(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
+        _("Successfully reverted to version %(old_version)s, now at version %(new_version)s") % {
+            'old_version': copy.version,
+            'new_version': app.version,
+        }
     )
+    copy_build_comment_params = {
+        "old_version": copy.version,
+        "original_comment": copy.build_comment,
+    }
     if copy.build_comment:
-        new_build_comment = "Reverted to version {old_version}\n\n{original_comment}".format(
-            old_version=copy.version, original_comment=copy.build_comment)
+        copy_build_comment_template = _(
+            "Reverted to version {old_version}\n\nPrevious build comments:\n{original_comment}")
     else:
-        new_build_comment = "Reverted to version {old_version}".format(old_version=copy.version)
+        copy_build_comment_template = _("Reverted to version {old_version}")
+
     copy = app.make_build(
-        comment=new_build_comment,
+        comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
     )
     copy.save(increment_version=False)

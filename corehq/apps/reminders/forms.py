@@ -20,8 +20,10 @@ from django.forms import Field, Widget
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.models import Keyword
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
+
 from .models import (
     RECIPIENT_CASE,
     RECIPIENT_SURVEY_SAMPLE,
@@ -62,6 +64,8 @@ def validate_time(value):
     time_regex = re.compile(r"^\d{1,2}:\d\d(:\d\d){0,1}$")
     if not isinstance(value, six.string_types) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
+    if isinstance(value, six.string_types):
+        soft_assert_type_text(value)
     try:
         return parse(value).time()
     except Exception:

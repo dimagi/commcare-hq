@@ -4,11 +4,11 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 def _rename_index(old_name, new_name):
-    return HqRunSQL(
+    return migrations.RunSQL(
         sql='ALTER INDEX {} RENAME TO {}'.format(old_name, new_name),
         reverse_sql='ALTER INDEX {} RENAME TO {}'.format(new_name, old_name),
     )

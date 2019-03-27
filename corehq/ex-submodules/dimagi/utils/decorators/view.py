@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import io
 from functools import wraps
 
+
 def get_file(filename):
     """
     This decorator is meant mainly for views that accept a file post.

@@ -19,6 +19,7 @@ from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
@@ -99,10 +100,7 @@ def commit_plan(domain, planning_db):
 
 
 def _get_submission_xml(xform, db):
-    xml = BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml')
-    if isinstance(xml, six.text_type):
-        xml = xml.encode('utf-8')
-    return xml
+    return BlobHelper(xform, db, CODES.form_xml).fetch_attachment('form.xml', return_bytes=True)
 
 
 def _get_new_form_json(xml, xform_id):
@@ -204,6 +202,7 @@ def prepare_case_json(planning_db):
 def is_datetime_string(string):
     if not isinstance(string, six.string_types):
         return False
+    soft_assert_type_text(string)
     try:
         iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):

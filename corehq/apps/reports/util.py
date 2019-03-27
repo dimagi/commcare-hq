@@ -17,6 +17,7 @@ from django.utils import html, safestring
 
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.util.log import send_HTML_email
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
@@ -166,6 +167,7 @@ def namedtupledict(name, fields):
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
+            soft_assert_type_text(item)
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,

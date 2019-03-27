@@ -26,6 +26,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.util.python_compatibility import soft_assert_type_text
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
@@ -275,6 +276,7 @@ class RegisterWebUserForm(forms.Form):
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], six.string_types):
+                soft_assert_type_text(self.cleaned_data[field])
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -311,6 +313,7 @@ class DomainRegistrationForm(forms.Form):
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], six.string_types):
+                soft_assert_type_text(self.cleaned_data[field])
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -386,6 +389,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], six.string_types):
+                soft_assert_type_text(self.cleaned_data[field])
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -407,6 +411,7 @@ class _BaseForm(object):
     def clean(self):
         for field in self.cleaned_data:
             if isinstance(self.cleaned_data[field], six.string_types):
+                soft_assert_type_text(self.cleaned_data[field])
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 

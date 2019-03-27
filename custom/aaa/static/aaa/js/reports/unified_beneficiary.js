@@ -4,126 +4,20 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'aaa/js/utils/reach_utils',
+    'aaa/js/models/eligible_couple',
+    'aaa/js/models/child',
+    'aaa/js/models/pregnant_women',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    reachUtils
+    reachUtils,
+    eligibleCoupleModel,
+    childModel,
+    pregnantWomenModel
 ) {
     var tableDom = '<i<t><"row"<"col-md-2"><"col-md-8 center"<"table_pagination"p>><"col-md-2"<"table_info"l>>>>';
-
-    var childModel = function () {
-        var childList = function (options) {
-            var self = {};
-            self.name = ko.observable(options.name);
-            self.age = ko.observable(options.age);
-            self.gender = ko.observable(options.gender);
-            self.lastImmunizationType = ko.observable(options.lastImmunizationType);
-            self.lastImmunizationDate = ko.observable(options.lastImmunizationDate);
-            
-            self.age = ko.computed(function () {
-                var age = parseInt(self.age());
-                if (age < 12) {
-                    return age + " Mon"
-                } else if (age === 12) {
-                    return "1 Yr"
-                } else {
-                    return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
-                }
-            });
-
-            self.lastImmunizationType = ko.computed(function () {
-                return self.lastImmunizationType() === 1 ? 'Yes' : 'No';
-            });
-            
-            return self;
-        };
-
-        var childListConfig = function () {
-            var self = {};
-            self.columns = [
-                {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
-                {data: 'gender()', name: 'gender', title: 'Gender'},
-                {data: 'lastImmunizationType()', name: 'lastImmunizationType', title: 'Last Immunization Type'},
-                {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'},
-            ];
-            return self;
-        };
-
-        return {
-            config: childListConfig,
-            listView: childList
-        }
-    };
-
-    var eligibleCoupleModel = function () {
-
-        var eligibleCoupleList = function (options) {
-            var self = {};
-            self.name = ko.observable(options.name);
-            self.age = ko.observable(options.age);
-            self.currentFamilyPlanningMethod = ko.observable(options.currentFamilyPlanningMethod);
-            self.adoptionDateOfFamilyPlaning = ko.observable(options.adoptionDateOfFamilyPlaning);
-
-            self.currentFamilyPlanningMethod = ko.computed(function () {
-                return self.currentFamilyPlanningMethod() === 1 ? 'Yes' : 'No';
-            });
-
-            return self;
-        };
-
-        var eligibleCoupleListConfig = function () {
-            var self = {};
-            self.columns = [
-                {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
-                {data: 'currentFamilyPlanningMethod()', name: 'currentFamilyPlanningMethod', title: 'Current Family Planning Method'},
-                {data: 'adoptionDateOfFamilyPlaning()', name: 'adoptionDateOfFamilyPlaning', title: 'Adoption Date Of Family Planing'},
-            ];
-            return self;
-        };
-
-        return {
-            config: eligibleCoupleListConfig,
-            listView: eligibleCoupleList
-        }
-    };
-
-    var pregnantWomenModel = function () {
-
-        var pregnantWomenList = function (options) {
-            var self = {};
-            self.name = ko.observable(options.name);
-            self.age = ko.observable(options.age);
-            self.pregMonth = ko.observable(options.pregMonth);
-            self.highRiskPregnancy = ko.observable(options.highRiskPregnancy);
-            self.noOfAncCheckUps = ko.observable(options.noOfAncCheckUps);
-
-            self.highRiskPregnancy = ko.computed(function () {
-                return self.highRiskPregnancy === 1 ? 'Yes': 'No';
-            });
-            return self;
-        };
-
-        var pregnantWomenListConfig = function () {
-            var self = {};
-            self.columns = [
-                {data: 'name()', name: 'name', title: 'Name'},
-                {data: 'age()', name: 'age', title: 'Age'},
-                {data: 'pregMonth()', name: 'pregMonth', title: 'Preg. Month'},
-                {data: 'highRiskPregnancy()', name: 'highRiskPregnancy', title: 'High Risk Pregnancy'},
-                {data: 'noOfAncCheckUps()', name: 'noOfAncCheckUps', title: 'No. Of ANC Check-Ups'},
-            ];
-            return self;
-        };
-
-        return {
-            config: pregnantWomenListConfig,
-            listView: pregnantWomenList
-        }
-    };
 
     var unifiedBeneficiary = function (options) {
         var self = {};
@@ -144,9 +38,9 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
         self.dt = null;
 
         var views = {
-            'eligible_couple': eligibleCoupleModel(),
-            'pregnant_women': pregnantWomenModel(),
-            'child': childModel(),
+            'eligible_couple': eligibleCoupleModel,
+            'pregnant_women': pregnantWomenModel,
+            'child': childModel,
         };
 
         var selectedType = null;
@@ -156,7 +50,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
             var data = [];
             self.dt.clear();
             _.forEach(rows, function (row) {
-                data.push(reportListView.listView(row))
+                data.push(reportListView.listView(row, self.postData))
             });
             return data;
         };

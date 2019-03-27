@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
 
+
 def next_available_name(prefix, existing_names):
     '''
     Given a set of names like ['foo-1', 'foo-2'],

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import models, migrations
 import corehq.form_processor.models
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -45,15 +45,15 @@ class Migration(migrations.Migration):
             index_together=set([('case_id', 'entry_id', 'section_id')]),
         ),
         # drop unused indexes
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP INDEX IF EXISTS form_processor_ledgervalue_case_id_6787b84005e3c4e0_like",
             "SELECT 1"
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP INDEX IF EXISTS form_processor_ledgervalue_entry_id_7ba5b60783fc16d1_like",
             "SELECT 1"
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP INDEX IF EXISTS form_processor_ledgervalue_section_id_7e237eaaa0c800ea_like",
             "SELECT 1"
         )

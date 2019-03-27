@@ -24,6 +24,7 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         return """
             SELECT
                 DISTINCT child_health_case_id AS case_id,
+                LAST_VALUE(supervisor_id) OVER weight_child AS supervisor_id,
                 LAST_VALUE(weight_child) OVER weight_child AS weight_child,
                 CASE
                     WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
@@ -128,7 +129,7 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         # but an unexpected NULL should not block other data
         return """
         INSERT INTO "{tablename}" (
-            state_id, month, case_id, latest_time_end_processed,
+            state_id, supervisor_id, month, case_id, latest_time_end_processed,
             weight_child, weight_child_last_recorded,
             height_child, height_child_last_recorded,
             zscore_grading_wfa, zscore_grading_wfa_last_recorded,
@@ -138,6 +139,7 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         ) (
           SELECT
             %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(

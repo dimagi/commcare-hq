@@ -59,11 +59,10 @@
               {% trans "End of Registration action" %}
           </label>
           <div class="{% css_field_class %}">
-              <select class="form-control" name="case_list_post_form_workflow" data-bind="
-                             options: endOfRegistrationOptions,
-                             optionsValue: 'value',
-                             optionsText: 'label',
-                             value:postFormWorkflow"></select>
+              <select-toggle data-apply-bindings="false"
+                             params="name: 'case_list_post_form_workflow',
+                                     options: endOfRegistrationOptions,
+                                     value: postFormWorkflow"></select-toggle>
           </div>
 
       </div>

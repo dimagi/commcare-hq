@@ -4,15 +4,6 @@
 
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
-        .media-totals-list {
-            margin: 0;
-            padding: 0;
-        }
-
-        .media-totals {
-            list-style-type: none;
-        }
-
         .media-type-icon,
         .media-status-icon {
             font-size: 22px;
@@ -35,20 +26,24 @@
 {% endblock %}
 
 {% block page_content %}
-{% initial_page_data 'object_map' object_map %}
-{% initial_page_data 'references' references %}
 {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
 {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-{% initial_page_data 'totals' totals %}
 {% initial_page_data 'uploaders' uploaders_js %}
+{% registerurl 'hqmedia_references' app.domain app.id %}
 
 <p class="lead">{{ current_page.page_name }}</p>
 
-<div id="multimedia-reference-checker">
+<div class="hq-loading alert alert-info">
+    {% blocktrans %}
+        <i class="fa fa-spin fa-spinner"></i>
+        Loading...
+    {% endblocktrans %}
+</div>
 
+<div id="multimedia-reference-checker" class="ko-template">
     <div class="row">
         <div class="col-sm-7">
-            {% if totals|length %}
+            <div data-bind="visible: totals().length">
                 <p>
                     {% blocktrans %}
                         You can manage multimedia by uploading files individually below.
@@ -59,17 +54,17 @@
                         <a href="#" class="btn btn-default" data-bind="click: toggleMissingRefs, text: toggleRefsText"></a>
                     </p>
                 {% endif %}
-            {% else %}
+            </div>
+            <div data-bind="visible: !totals().length">
                 <div class="alert alert-info">
                     {% blocktrans %}This application references no multimedia.{% endblocktrans %}
                 </div>
-            {% endif %}
+            </div>
         </div>
-        <div class="col-sm-5">
-            {% if totals|length %}
+        <div class="col-sm-5" data-bind="visible: totals().length">
             <div class="well">
                 {% include "hqmedia/partials/multimedia_zip_notice.html" with include_modal=True is_multimedia_reference_checker=True %}
-                <ul class="media-totals-list" data-bind="foreach: totals">
+                <ul class="list-unstyled" data-bind="foreach: totals">
                     <li class="media-totals" data-bind="event: {refMediaAdded: $parent.incrementTotals}">
                         <i data-bind="attr: {class: icon_class}"></i>
                         <span data-bind="text: matched"></span>/<span data-bind="text: totals"></span>
@@ -77,12 +72,10 @@
                     </li>
                 </ul>
             </div>
-            {% endif %}
         </div>
     </div>
-    {% if totals|length %}
 
-    <article class="panel panel-default" id="mm-reference-list">
+    <article class="panel panel-default" id="mm-reference-list" data-bind="visible: totals().length">
     <!-- ko foreach: modules -->
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -143,7 +136,6 @@
         {% include 'hqmedia/partials/multimedia_uploader.html' %}
     {% endfor %}
 
-    {% endif %}
 </div>
 
 {% endblock %}

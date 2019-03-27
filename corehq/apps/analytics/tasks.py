@@ -333,8 +333,7 @@ def send_hubspot_form(form_id, request, user=None, extra_fields=None):
 @analytics_task()
 def send_hubspot_form_task_v2(form_id, web_user_id, hubspot_cookie, meta,
                               extra_fields=None):
-    # TODO - else avoids transient celery errors.  Can remove after deploying to all environments.
-    web_user = WebUser.get_by_user_id(web_user_id) if isinstance(web_user_id, six.string_types) else web_user_id
+    web_user = WebUser.get_by_user_id(web_user_id)
     _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
                           extra_fields=extra_fields)
 

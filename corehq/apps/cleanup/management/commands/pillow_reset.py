@@ -13,6 +13,8 @@ import six
 from six.moves import input
 from io import open
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class Command(BaseCommand):
     help = "Reset a list of pillow checkpoints based on a specified config file."
@@ -37,6 +39,7 @@ class Command(BaseCommand):
 
                 def _fmt(seq_id):
                     if isinstance(seq_id, six.string_types) and len(seq_id) > 20:
+                        soft_assert_type_text(seq_id)
                         return '{}...'.format(seq_id[:20])
                     else:
                         return seq_id

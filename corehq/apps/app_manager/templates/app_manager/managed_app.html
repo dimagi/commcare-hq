@@ -110,6 +110,14 @@
             <p>{% blocktrans %}Track items over time.{% endblocktrans %}</p>
           </button>
         </div>
+        {% if show_biometric %}
+          <div class="pull-left">
+            <button type="button" class="popover-additem-option new-module" data-type="biometrics">
+              <i class="fcc fcc-app-biometrics"></i> {% trans "Biometrics" %}
+              <p>{% blocktrans %}Identify clients by fingerprint.{% endblocktrans %}</p>
+            </button>
+          </div>
+        {% endif %}
         {% if show_advanced %}
           <div class="pull-left">
             <button type="button" class="popover-additem-option new-module" data-type="advanced">

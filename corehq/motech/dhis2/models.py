@@ -32,6 +32,7 @@ class Dhis2Connection(Document):
         data.pop('log_level', None)
         return super(Dhis2Connection, cls).wrap(data)
 
+
 class DataValueMap(DocumentSchema):
     column = StringProperty(required=True)
     data_element_id = StringProperty(required=True)

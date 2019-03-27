@@ -209,11 +209,11 @@ class CareSqlData(SqlData):
         if 'startdate' in request_params:
             request_params.pop('startdate')
         if 'enddate' in request_params:
-             request_params.pop('enddate')
+            request_params.pop('enddate')
         if 'filterSet' in request_params:
-             request_params.pop('filterSet')
+            request_params.pop('filterSet')
         if 'hq_filters' in request_params:
-             request_params.pop('hq_filters')
+            request_params.pop('hq_filters')
 
         return request_params
 
