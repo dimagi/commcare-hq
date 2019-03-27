@@ -52,7 +52,7 @@ def get_raw_sql(ucr_table, join_table, ucr_column, join_table_column, state_id):
     SET supervisor_id = loc.supervisor_id
     FROM "{join_table}" loc
     WHERE ucr.{ucr_column} = loc.{join_table_column} and ucr.{ucr_column} is NOT NULL
-        and loc.state_id = '{state_id}'
+        and loc.state_id = '{state_id}' and ucr.supervisor_id is NULL
     """
     sql = template.format(
         ucr_table=ucr_table, join_table=join_table,
