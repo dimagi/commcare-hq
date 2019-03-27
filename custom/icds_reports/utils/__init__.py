@@ -990,3 +990,7 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
     icds_file.save()
     return file_hash
+
+
+def phone_number_function(x):
+    return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x

@@ -8,16 +8,14 @@ from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
-from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent
+from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
+    phone_number_function
 
 
 class DemographicsChildHealth(ExportableMixin, SqlData):
     engine_id = 'icds-test-ucr'
 
     table_name = 'agg_child_health_monthly'
-
-    def phone_number_fucntion(self, x):
-        return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
 
     @property
     def get_columns_by_loc_level(self):
@@ -35,7 +33,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
-                format_fn=self.phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns

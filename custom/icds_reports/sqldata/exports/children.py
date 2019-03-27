@@ -9,7 +9,7 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import wasting_severe_column, wasting_moderate_column, \
     wasting_normal_column, stunting_severe_column, stunting_moderate_column, stunting_normal_column, percent, \
-    hfa_recorded_in_month_column, wfh_recorded_in_month_column, get_age_condition
+    hfa_recorded_in_month_column, wfh_recorded_in_month_column, get_age_condition, phone_number_function
 
 
 class ChildrenExport(ExportableMixin, SqlData):
@@ -29,9 +29,6 @@ class ChildrenExport(ExportableMixin, SqlData):
             'age_72': '72',
         })
 
-    def phone_number_fucntion(self, x):
-        return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
-
     @property
     def get_columns_by_loc_level(self):
         columns = [
@@ -48,7 +45,7 @@ class ChildrenExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
-                format_fn=self.phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns
