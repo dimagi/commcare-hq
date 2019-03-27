@@ -1,25 +1,71 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from copy import copy, deepcopy
-from datetime import datetime
 import glob
 import json
 import os
 import re
-import six
+from copy import copy, deepcopy
+from datetime import datetime
+from io import open
 from uuid import UUID
 
-from django_bulk_update.helper import bulk_update as bulk_update_helper
+import six
+import yaml
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
-import yaml
+from django_bulk_update.helper import bulk_update as bulk_update_helper
+from memoized import memoized
 
-from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin
+)
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
+)
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_AGGREGATE,
+    DATA_SOURCE_TYPE_STANDARD,
+    FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_SQL_BACKEND,
+    VALID_REFERENCED_DOC_TYPES
+)
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_number_of_report_configs_by_data_source,
+    get_report_configs_for_domain
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    DuplicateColumnIdError,
+    InvalidDataSourceType,
+    ReportConfigurationNotFoundError,
+    StaticDataSourceConfigurationNotFoundError
+)
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.indicators import CompoundIndicator
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.reports.factory import (
+    ChartFactory,
+    ReportColumnFactory,
+    ReportOrderByFactory
+)
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.filters.specs import FilterSpec
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.userreports.sql.util import decode_column_name
+from corehq.apps.userreports.util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter
+)
+from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -30,50 +76,16 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
-    SchemaProperty,
     SchemaListProperty,
-    StringProperty,
+    SchemaProperty,
     StringListProperty,
+    StringProperty
 )
 from dimagi.ext.jsonobject import JsonObject
-from corehq.apps.cachehq.mixins import (
-    CachedCouchDocumentMixin,
-    QuickCachedDocumentMixin,
-)
-from corehq.apps.userreports.const import (
-    FILTER_INTERPOLATION_DOC_TYPES,
-    UCR_SQL_BACKEND,
-    VALID_REFERENCED_DOC_TYPES,
-    DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE)
-from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_datasources_for_domain
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    DataSourceConfigurationNotFoundError,
-    ReportConfigurationNotFoundError,
-    StaticDataSourceConfigurationNotFoundError,
-    InvalidDataSourceType, DuplicateColumnIdError)
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.factory import ChartFactory, \
-    ReportColumnFactory, ReportOrderByFactory
-from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
-from corehq.apps.userreports.sql.util import decode_column_name
-from corehq.pillows.utils import get_deleted_doc_types
-from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-
 from dimagi.utils.modules import to_function
-from io import open
-
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
