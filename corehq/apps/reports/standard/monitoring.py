@@ -1483,7 +1483,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def user_ids(self):
         return [u["user_id"] for u in self.users_to_iterate]
 
-    def es_last_submissions(self):
+    def es_last_submissions(self, user_ids):
         """
         Creates a dict of userid => date of last submission
         """
@@ -1491,7 +1491,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             es_instance_alias = 'export'
         else:
             es_instance_alias = ES_DEFAULT_INSTANCE
-        return get_last_submission_time_for_users(self.domain, self.user_ids,
+        return get_last_submission_time_for_users(self.domain, user_ids,
                                                   self.datespan, es_instance_alias=es_instance_alias)
 
     @staticmethod
@@ -1675,10 +1675,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
-    def _rows_by_user(self, report_data, users):
+    def _rows_by_user(self, report_data, user_generator):
         rows = []
-        last_form_by_user = self.es_last_submissions()
-        for user in users:
+        import itertools
+        user_generator, user_id_generator = itertools.tee(user_generator)
+        user_ids = [a.user_id for a in user_id_generator]
+        last_form_by_user = self.es_last_submissions(user_ids)
+        for user in user_generator:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
