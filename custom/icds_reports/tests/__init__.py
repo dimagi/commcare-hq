@@ -21,7 +21,9 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, AGG_GROWTH_MONITORING_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, \
+    AGG_GROWTH_MONITORING_TABLE, AGG_CCS_RECORD_BP_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, AGG_CCS_RECORD_PNC_TABLE, \
+    AGG_CCS_RECORD_THR_TABLE, AGG_DAILY_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_THR_TABLE
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -180,10 +182,24 @@ def setUpModule():
 
         # move to migrations
         distribute = [
-            (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
             (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
+            (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
+            (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
+            (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
             (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
+            (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
+            (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
+            (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
+            (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
+            (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
+            ('child_health_monthly', 'supervisor_id'),
+            ('ccs_record_monthly', 'supervisor_id'),
         ]
+
+        reference = [
+            'awc_location'
+        ]
+
         for table, col in distribute:
             with engine.begin() as conn:
                 res = conn.execute(
@@ -199,9 +215,21 @@ def setUpModule():
                 for child in [row.child for row in res]:
                     # only need this because of reusedb if testing on master and this branch
                     conn.execute('drop table if exists "{}"'.format(child))
-                res = conn.execute("select 1 from pg_dist_partition where logicalrelid = %s::regclass", table)
+                res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'h' and logicalrelid = %s::regclass
+                """, table)
                 if not list(res):
                     conn.execute("select create_distributed_table(%s, %s)", [table, col])
+
+        for table in reference:
+            with engine.begin() as conn:
+                res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'n' and logicalrelid = %s::regclass
+                """, table)
+                if not list(res):
+                    conn.execute("select create_reference_table(%s)", [table])
 
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
