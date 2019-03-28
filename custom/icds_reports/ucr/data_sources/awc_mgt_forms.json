@@ -75,7 +75,7 @@
         "column_id": "awc_id"
       },
       {
-        "display_name": "",
+        "display_name": "[DEPRECATED] TO BE REMOVED",
         "datatype": "string",
         "type": "expression",
         "expression": {
