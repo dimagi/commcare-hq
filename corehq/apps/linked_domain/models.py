@@ -114,6 +114,11 @@ class DomainLink(models.Model):
         return link
 
 
+class VisibleDomainLinkHistoryManager(models.Manager):
+    def get_queryset(self):
+        return super(VisibleDomainLinkHistoryManager, self).get_queryset().filter(hidden=False)
+
+
 class DomainLinkHistory(models.Model):
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
@@ -121,6 +126,9 @@ class DomainLinkHistory(models.Model):
     model_detail = JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
     hidden = models.BooleanField(default=False)
+
+    objects = VisibleDomainLinkHistoryManager()
+    all_objects = models.Manager()
 
     @property
     def wrapped_detail(self):
