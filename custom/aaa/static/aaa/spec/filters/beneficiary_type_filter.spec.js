@@ -1,5 +1,3 @@
-/* global sinon */
-
 describe('Beneficiary Type Filter', function () {
     var beneficiaryFilter;
 

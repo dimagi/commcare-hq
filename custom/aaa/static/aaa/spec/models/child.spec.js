@@ -1,11 +1,11 @@
 /* global sinon, moment */
 
-var pageData = hqImport('hqwebapp/js/initial_page_data');
-
 describe('Child models', function () {
-    var childModels, reachUtils, clock;
+    var childModels, reachUtils, clock, pageData;
 
     beforeEach(function () {
+        pageData = hqImport('hqwebapp/js/initial_page_data');
+        pageData.registerUrl('unified_beneficiary_details', 'unified_beneficiary_details/details_type/beneficiary_id/');
         childModels = hqImport('aaa/js/models/child');
         reachUtils = hqImport('aaa/js/utils/reach_utils');
         pageData.registerUrl('unified_beneficiary_details', 'unified_beneficiary_details/details_type/beneficiary_id/');
@@ -73,7 +73,6 @@ describe('Child models', function () {
             assert.isTrue(childDetailsModel.personDetails.hasOwnProperty('person'));
             assert.isTrue(childDetailsModel.personDetails.hasOwnProperty('mother'));
             assert.isTrue(childDetailsModel.hasOwnProperty('sections'));
-
         });
 
         it('test sections', function () {

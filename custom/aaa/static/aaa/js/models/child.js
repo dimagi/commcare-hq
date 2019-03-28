@@ -221,7 +221,7 @@ hqDefine("aaa/js/models/child", [
                         strokeWidth: 2,
                         yAxis: 1,
                     }
-                )
+                );
             }
             d3.select('#weight_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -271,15 +271,15 @@ hqDefine("aaa/js/models/child", [
             ];
             if (data.points.length > 0) {
                 datum.push(
-                   {
-                       key: 'line',
-                       type: 'line',
-                       values: data.points,
-                       color: 'black',
-                       strokeWidth: 2,
-                       yAxis: 1,
-                   }
-                )
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                );
             }
             d3.select('#height_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -336,7 +336,7 @@ hqDefine("aaa/js/models/child", [
                         strokeWidth: 2,
                         yAxis: 1,
                     }
-                )
+                );
             }
             d3.select('#weight_for_height_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -425,5 +425,5 @@ hqDefine("aaa/js/models/child", [
         listView: childList,
         detailsView: childDetailsView,
         childModel: childModel,
-    }
+    };
 });

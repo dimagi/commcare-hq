@@ -1,11 +1,10 @@
 /* global sinon */
 
-var pageData = hqImport('hqwebapp/js/initial_page_data');
-
 describe('Reach Location Filter', function () {
-    var locationFilter, locationModel, reachUtils, localStorage;
+    var locationFilter, locationModel, reachUtils, localStorage, pageData;
 
     beforeEach(function () {
+        pageData = hqImport('hqwebapp/js/initial_page_data');
         locationFilter = hqImport('aaa/js/filters/location_filter');
         locationModel = hqImport('aaa/js/filters/location_model');
         reachUtils = hqImport('aaa/js/utils/reach_utils');
@@ -20,14 +19,14 @@ describe('Reach Location Filter', function () {
     describe('when user is not assigned to location', function () {
         var mock;
 
-        beforeEach(function() {
+        beforeEach(function () {
             mock = sinon.stub(pageData, 'get');
             mock.withArgs('user_role_type').returns(reachUtils.USERROLETYPES.MWCD);
             mock.withArgs('user_location_ids').returns([]);
         });
 
         afterEach(function () {
-            mock.restore()
+            mock.restore();
         });
 
         it('test filter initialization', function () {
@@ -65,21 +64,21 @@ describe('Reach Location Filter', function () {
                     assert.equal(model.hierarchyConfig()[idx].child.slug, element.child.slug);
                     assert.equal(model.hierarchyConfig()[idx].child.name, element.child.name);
                 }
-            })
-        })
+            });
+        });
     });
 
     describe('when user is assigned to location', function () {
         var mock;
 
-        beforeEach(function() {
+        beforeEach(function () {
             mock = sinon.stub(pageData, 'get');
             mock.withArgs('user_role_type').returns(reachUtils.USERROLETYPES.MOHFW);
             mock.withArgs('user_location_ids').returns(['s1', 'd1', 't1']);
         });
 
         afterEach(function () {
-            mock.restore()
+            mock.restore();
         });
 
         it('test filter initialization', function () {
@@ -120,8 +119,8 @@ describe('Reach Location Filter', function () {
                     assert.equal(model.hierarchyConfig()[idx].child.slug, element.child.slug);
                     assert.equal(model.hierarchyConfig()[idx].child.name, element.child.name);
                 }
-            })
-        })
+            });
+        });
     });
 
     describe('location model', function () {
@@ -173,7 +172,7 @@ describe('Reach Location Filter', function () {
                     {id: 'all', name: 'All'},
                     {id: 's1', name: 'S1'},
                     {id: 's2', name: 'S2'},
-                ]
+                ],
             };
             model.setData(testLocations);
             assert.equal(model.slug, 'state');
@@ -190,14 +189,14 @@ describe('Reach Location Filter', function () {
                 data: [
                     {id: 's1', name: 'S1'},
                     {id: 's2', name: 'S2'},
-                ]
+                ],
             };
             var testChildLocations = {
                 data: [
                     {id: 'all', name: 'All'},
                     {id: 'b1', name: 'B1'},
                     {id: 'b2', name: 'b2'},
-                ]
+                ],
             };
             model.setData(testParentLocations);
             child.setData(testChildLocations);
@@ -213,5 +212,5 @@ describe('Reach Location Filter', function () {
             assert.equal(child.userLocationId, 'b1');
             assert.equal(child.selectedLocation(), 'all');
         });
-    })
+    });
 });

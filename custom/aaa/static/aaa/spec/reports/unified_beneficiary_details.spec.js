@@ -1,8 +1,10 @@
 describe('Unified Beneficiary Details', function () {
 
-    var unifiedBeneficiaryDetails;
+    var unifiedBeneficiaryDetails, pageData;
 
     beforeEach(function () {
+        pageData = hqImport('hqwebapp/js/initial_page_data');
+        pageData.registerUrl('unified_beneficiary_details', 'unified_beneficiary_details/details_type/beneficiary_id/');
         unifiedBeneficiaryDetails = hqImport('aaa/js/reports/unified_beneficiary_details').unifiedBeneficiaryDetails();
     });
 

@@ -1,5 +1,3 @@
-/* global sinon */
-
 describe('Model Utils', function () {
     var utilsModels;
 

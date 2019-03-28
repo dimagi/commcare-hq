@@ -1,11 +1,10 @@
-/* global sinon */
-
-var pageData = hqImport('hqwebapp/js/initial_page_data');
+/* global sinon, moment */
 
 describe('Pregnant women models', function () {
-    var pregnantWomenModels, reachUtils, clock;
+    var pregnantWomenModels, reachUtils, clock, pageData;
 
     beforeEach(function () {
+        pageData = hqImport('hqwebapp/js/initial_page_data');
         pregnantWomenModels = hqImport('aaa/js/models/pregnant_women');
         reachUtils = hqImport('aaa/js/utils/reach_utils');
         pageData.registerUrl('unified_beneficiary_details', 'unified_beneficiary_details/details_type/beneficiary_id/');
@@ -48,7 +47,7 @@ describe('Pregnant women models', function () {
                     name: 'test Name',
                     age: 14,
                     pregMonth: 6,
-                    highRiskPregnancy: 1,
+                    highRiskPregnancy: 'yes',
                     noOfAncCheckUps: 5,
                 },
                 postData

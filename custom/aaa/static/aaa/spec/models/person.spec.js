@@ -1,11 +1,10 @@
 /* global sinon, moment */
 
-var pageData = hqImport('hqwebapp/js/initial_page_data');
-
 describe('Person models', function () {
-    var personModels, reachUtils, clock;
+    var personModels, reachUtils, clock, pageData;
 
     beforeEach(function () {
+        pageData = hqImport('hqwebapp/js/initial_page_data');
         personModels = hqImport('aaa/js/models/person');
         reachUtils = hqImport('aaa/js/utils/reach_utils');
         pageData.registerUrl('unified_beneficiary_details', 'unified_beneficiary_details/details_type/beneficiary_id/');

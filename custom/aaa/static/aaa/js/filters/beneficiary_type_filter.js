@@ -3,7 +3,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
     'knockout',
 ], function (
     $,
-    ko,
+    ko
 ) {
     return {
         viewModel: function (params) {
@@ -34,7 +34,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 };
             }
 
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'beneficiary-type-template\' }"></div>',
     };
