@@ -15,6 +15,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.app_translations.utils import (
+    BulkAppTranslationUpdater,
     get_unicode_dicts,
     is_form_sheet,
     is_module_sheet,
@@ -113,7 +114,8 @@ def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
         return []
 
     if is_modules_and_forms_sheet(identifier):
-        return update_app_from_modules_and_forms_sheet(app, rows, lang=lang)
+        updater = BulkAppTranslationModulesAndFormsUpdater(app, lang=lang)
+        return updater.update(rows)
 
     if is_module_sheet(identifier):
         updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
@@ -216,66 +218,61 @@ def _get_missing_cols(app, sheet, headers):
     return set(expected_columns) - set(sheet.headers)
 
 
-def update_app_from_modules_and_forms_sheet(app, sheet, lang=None):
-    """
-    Modify the translations and media references for the modules and forms in
-    the given app as per the data provided in rows.
-    This does not save the changes to the database.
-    :param app:
-    :param sheet: Iterable of rows
-    :param lang: If present, translation is limited to this language. This should correspond to the sheet
-        only containing headers of this language, but having the language available is handy.
-    :return:  Returns a list of message tuples. The first item in each tuple is
-    a function like django.contrib.messages.error, and the second is a string.
-    """
-    msgs = []
+class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
+    def __init__(self, app, lang=None):
+        super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
 
-    langs = [lang] if lang else app.langs
-    for row in get_unicode_dicts(sheet):
-        identifying_text = row.get('menu_or_form', row.get('sheet_name', '')).split('_')
+    def update(self, rows):
+        """
+        This handles updating module/form names and menu media
+        (the contents of the "Menus and forms" sheet in the multi-tab upload).
+        """
+        self.msgs = []
+        for row in get_unicode_dicts(rows):
+            identifying_text = row.get('menu_or_form', row.get('sheet_name', '')).split('_')
 
-        if len(identifying_text) not in (1, 2):
-            msgs.append((
-                messages.error,
-                _('Did not recognize "%s", skipping row.') % row.get(identifying_text, '')
-            ))
-            continue
-
-        module_index = int(identifying_text[0].replace("menu", "").replace("module", "")) - 1
-        try:
-            document = app.get_module(module_index)
-        except ModuleNotFoundException:
-            msgs.append((
-                messages.error,
-                _('Invalid menu in row "%s", skipping row.') % row.get(identifying_text, '')
-            ))
-            continue
-        if len(identifying_text) == 2:
-            form_index = int(identifying_text[1].replace("form", "")) - 1
-            try:
-                document = document.get_form(form_index)
-            except FormNotFoundException:
-                msgs.append((
+            if len(identifying_text) not in (1, 2):
+                self.msgs.append((
                     messages.error,
-                    _('Invalid form in row "%s", skipping row.') % row.get(identifying_text, '')
+                    _('Did not recognize "%s", skipping row.') % row.get(identifying_text, '')
                 ))
                 continue
 
-        update_translation_dict('default_', document.name, row, langs)
+            module_index = int(identifying_text[0].replace("menu", "").replace("module", "")) - 1
+            try:
+                document = self.app.get_module(module_index)
+            except ModuleNotFoundException:
+                self.msgs.append((
+                    messages.error,
+                    _('Invalid menu in row "%s", skipping row.') % row.get(identifying_text, '')
+                ))
+                continue
+            if len(identifying_text) == 2:
+                form_index = int(identifying_text[1].replace("form", "")) - 1
+                try:
+                    document = document.get_form(form_index)
+                except FormNotFoundException:
+                    self.msgs.append((
+                        messages.error,
+                        _('Invalid form in row "%s", skipping row.') % row.get(identifying_text, '')
+                    ))
+                    continue
 
-        # Update menu media
-        # For backwards compatibility with previous code, accept old "filepath" header names
-        for lang in langs:
-            image_header = 'image_%s' % lang
-            if image_header not in row:
-                image_header = 'icon_filepath_%s' % lang
-            if image_header in row:
-                document.set_icon(lang, row[image_header])
+            update_translation_dict('default_', document.name, row, self.langs)
 
-            audio_header = 'audio_%s' % lang
-            if audio_header not in row:
-                audio_header = 'audio_filepath_%s' % lang
-            if audio_header in row:
-                document.set_audio(lang, row[audio_header])
+            # Update menu media
+            # For backwards compatibility with previous code, accept old "filepath" header names
+            for lang in self.langs:
+                image_header = 'image_%s' % lang
+                if image_header not in row:
+                    image_header = 'icon_filepath_%s' % lang
+                if image_header in row:
+                    document.set_icon(lang, row[image_header])
 
-    return msgs
+                audio_header = 'audio_%s' % lang
+                if audio_header not in row:
+                    audio_header = 'audio_filepath_%s' % lang
+                if audio_header in row:
+                    document.set_audio(lang, row[audio_header])
+
+        return self.msgs
