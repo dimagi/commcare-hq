@@ -14,38 +14,33 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
                                        AGG_LS_BENEFICIARY_TABLE)
 from django.db import connections, models, transaction
 
-from custom.icds_reports.utils.aggregation_helpers.monolith import AggCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.agg_child_health import AggChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.awc_infrastructure import AwcInfrastructureAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.aww_incentive import AwwIncentiveAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.ls_awc_visit_form import LSAwcMgtFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.ls_beneficiary_form import LSBeneficiaryFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import LSVhndFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.agg_ls_data import AggLsHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.birth_preparedness_forms import \
-    BirthPreparednessFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import CcsRecordMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import ChildHealthMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import ComplementaryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.complementary_forms_ccs_record import \
-    ComplementaryFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.daily_feeding_forms_child_health import \
-    DailyFeedingFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import DeliveryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.growth_monitoring_forms import \
-    GrowthMonitoringFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.inactive_awws import InactiveAwwsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.postnatal_care_forms_ccs_record import \
-    PostnatalCareFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.postnatal_care_forms_child_health import \
-    PostnatalCareFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.thr_forms_child_health import \
-    THRFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import AggAwcHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import AggAwcDailyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.awc_location import LocationAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith import DailyAttendanceAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    AggCcsRecordAggregationHelper,
+    AggChildHealthAggregationHelper,
+    AwcInfrastructureAggregationHelper,
+    AwwIncentiveAggregationHelper,
+    LSAwcMgtFormAggHelper,
+    LSBeneficiaryFormAggHelper,
+    LSVhndFormAggHelper,
+    AggLsHelper,
+    BirthPreparednessFormsAggregationHelper,
+    CcsRecordMonthlyAggregationHelper,
+    ChildHealthMonthlyAggregationHelper,
+    ComplementaryFormsAggregationHelper,
+    ComplementaryFormsCcsRecordAggregationHelper,
+    DailyFeedingFormsChildHealthAggregationHelper,
+    DeliveryFormsAggregationHelper,
+    GrowthMonitoringFormsAggregationHelper,
+    InactiveAwwsAggregationHelper,
+    PostnatalCareFormsCcsRecordAggregationHelper,
+    PostnatalCareFormsChildHealthAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
+    THRFormsCcsRecordAggregationHelper,
+    AggAwcHelper,
+    AggAwcDailyAggregationHelper,
+    LocationAggregationHelper,
+    DailyAttendanceAggregationHelper
+)
 
 
 def get_cursor(model):

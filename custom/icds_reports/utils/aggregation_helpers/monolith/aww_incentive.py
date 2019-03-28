@@ -8,7 +8,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_CF_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.monolith import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
