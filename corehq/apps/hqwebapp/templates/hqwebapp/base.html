@@ -315,8 +315,12 @@
         {% endif %}
         {# modals #}
         {% block modals %}
-            {% if domain and show_overdue_invoice_modal %}
-                {% include 'hqwebapp/downgrade_modal.html' %}
+            {% if domain %}
+                {% if show_overdue_invoice_modal %}
+                    {% include 'hqwebapp/downgrade_modal.html' %}
+                {% elif show_prepaid_modal %}
+                    {% include 'hqwebapp/prepaid_modal.html' %}
+                {% endif %}
             {% endif %}
         {% endblock modals %}
 
@@ -531,6 +535,7 @@
         {% if show_overdue_invoice_modal %}
             <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
         {% endif %}
+        <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
 
         {% block js %}{% endblock js %}
 
