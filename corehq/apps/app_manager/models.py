@@ -5283,7 +5283,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         try:
             return self.modules[i].with_id(i % len(self.modules), self)
         except IndexError:
-            raise ModuleNotFoundException()
+            raise ModuleNotFoundException(_("Could not find module with index {}".format(i)))
 
     def get_module_by_unique_id(self, unique_id, error=''):
         def matches(module):
