@@ -16,38 +16,38 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
 from six.moves import range
 
-from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.aww_incentive import AwwIncentiveAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_awc_visit_form import LSAwcMgtFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_beneficiary_form import LSBeneficiaryFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_vhnd_form import LSVhndFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_ls_data import AggLsHelper
-from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
+from custom.icds_reports.utils.monolith.agg_ccs_record import AggCcsRecordAggregationHelper
+from custom.icds_reports.utils.monolith.agg_child_health import AggChildHealthAggregationHelper
+from custom.icds_reports.utils.monolith.awc_infrastructure import AwcInfrastructureAggregationHelper
+from custom.icds_reports.utils.monolith.aww_incentive import AwwIncentiveAggregationHelper
+from custom.icds_reports.utils.monolith.ls_awc_visit_form import LSAwcMgtFormAggHelper
+from custom.icds_reports.utils.monolith.ls_beneficiary_form import LSBeneficiaryFormAggHelper
+from custom.icds_reports.utils.monolith.ls_vhnd_form import LSVhndFormAggHelper
+from custom.icds_reports.utils.monolith.agg_ls_data import AggLsHelper
+from custom.icds_reports.utils.monolith.birth_preparedness_forms import \
     BirthPreparednessFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.complementary_forms import ComplementaryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.complementary_forms_ccs_record import \
+from custom.icds_reports.utils.monolith.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
+from custom.icds_reports.utils.monolith.child_health_monthly import ChildHealthMonthlyAggregationHelper
+from custom.icds_reports.utils.monolith.complementary_forms import ComplementaryFormsAggregationHelper
+from custom.icds_reports.utils.monolith.complementary_forms_ccs_record import \
     ComplementaryFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.daily_feeding_forms_child_health import \
+from custom.icds_reports.utils.monolith.daily_feeding_forms_child_health import \
     DailyFeedingFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.delivery_forms import DeliveryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.growth_monitoring_forms import \
+from custom.icds_reports.utils.monolith.delivery_forms import DeliveryFormsAggregationHelper
+from custom.icds_reports.utils.monolith.growth_monitoring_forms import \
     GrowthMonitoringFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_ccs_record import \
+from custom.icds_reports.utils.monolith.inactive_awws import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.monolith.postnatal_care_forms_ccs_record import \
     PostnatalCareFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_health import \
+from custom.icds_reports.utils.monolith.postnatal_care_forms_child_health import \
     PostnatalCareFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
+from custom.icds_reports.utils.monolith.thr_forms_child_health import \
     THRFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
+from custom.icds_reports.utils.monolith.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
+from custom.icds_reports.utils.monolith.agg_awc import AggAwcHelper
+from custom.icds_reports.utils.monolith.agg_awc_daily import AggAwcDailyAggregationHelper
+from custom.icds_reports.utils.monolith.awc_location import LocationAggregationHelper
+from custom.icds_reports.utils.monolith.daily_attendance import DailyAttendanceAggregationHelper
 
 
 def get_cursor(model):
