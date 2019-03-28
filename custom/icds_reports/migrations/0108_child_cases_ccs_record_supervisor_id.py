@@ -9,7 +9,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0106_left_join_service_delivery'),
+        ('icds_reports', '0107_citus_composite_key'),
     ]
 
     operations = [
