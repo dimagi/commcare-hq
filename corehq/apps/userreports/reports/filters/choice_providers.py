@@ -245,11 +245,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
             )
 
         if self.location_type:
-            try:
-                locations = locations.filter(location_type__code=self.location_type)
-            except SQLLocation.DoesNotExist:
-                # perhaps UCR is misconfigured, so skip this filter
-                pass
+            locations = locations.filter(location_type__code=self.location_type)
 
         return locations.accessible_to_user(self.domain, user).filter(domain=self.domain)
 
