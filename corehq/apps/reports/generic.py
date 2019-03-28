@@ -997,7 +997,6 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
-
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):

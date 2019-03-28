@@ -1774,7 +1774,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ),
         )
 
-    def _total_row(self, rows, report_data):
+    def _total_row(self, rows, report_data, users):
         total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5]
 
@@ -1786,7 +1786,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             else:
                 total_row.append(None)
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
-        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
+        case_owners = _get_owner_ids_from_users(users)
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
              for id in case_owners])
@@ -1811,7 +1811,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         user_es_query = EMWF.user_es_query(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
-        chunk_size = 10000
+        chunk_size = 50000
         first_id_in_chunk = 0
         user_chunk_total = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).size(chunk_size).run().total
         while first_id_in_chunk < user_chunk_total:
@@ -1822,7 +1822,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 rows = self._rows_by_group(formatted_data)
             else:
                 rows = self._rows_by_user(formatted_data, users)
-            this_row = self._total_row(rows, formatted_data)
+            this_row = self._total_row(rows, formatted_data, users)
             self.total_row = self.sum_rows_together(self.total_row, this_row)
             for row in rows:
                 yield row
@@ -1868,7 +1868,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
-        self.total_row = self.format_total_row(self._total_row(rows, report_data))
+        self.total_row = self.format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows
 
 
