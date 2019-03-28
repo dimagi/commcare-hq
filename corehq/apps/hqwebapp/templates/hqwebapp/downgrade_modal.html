@@ -10,25 +10,29 @@
                     <span class="sr-only">Close</span>
                 </button>
                 <h4 class="modal-title">
+                    {% blocktrans %}
                     Your invoice for {{ invoice_month }} is past due!
+                    {% endblocktrans %}
                 </h4>
             </div>
             <div class="modal-body">
                 <p>
+                    {% blocktrans %}
                     You're at risk of losing access to paid features and priority support if your invoice isn't paid in
                     {{ days_until_downgrade }} days.
+                    {% endblocktrans %}
                 </p>
                 <div class="row">
                     <div class="col-sm-6 text-center">
                         <a id="overdue-invoice-link" href={% url 'domain_billing_statements' domain %}>
                             <button class="btn btn-primary">
-                                Pay invoice now
+                                {% trans "Pay invoice now" %}
                             </button>
                         </a>
                     </div>
                     <div class="col-sm-6 text-center">
                         <button id="overdue-invoice-snooze" class="btn btn-default">
-                            Remind me later
+                            {% trans "Remind me later" %}
                         </button>
                     </div>
                 </div>
