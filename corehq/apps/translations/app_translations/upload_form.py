@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import copy
 import six
 import re
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -41,7 +41,6 @@ class BulkAppTranslationFormUpdater(object):
         self.markdowns = None
         self.markdown_vetoes = None
 
-
     def _get_form_from_sheet_name(self, sheet_name):
         mod_text, form_text = sheet_name.split("_")
         module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
@@ -52,7 +51,6 @@ class BulkAppTranslationFormUpdater(object):
         if not isinstance(self.form, ShadowForm) and self.form.source:
             return self.form.wrapped_xform()
 
-
     def _get_itext(self):
         if self.xform:
             try:
@@ -60,7 +58,6 @@ class BulkAppTranslationFormUpdater(object):
             except XFormException:
                 # Can't do anything with this form
                 pass
-
 
     def update(self, rows):
         """
@@ -107,7 +104,6 @@ class BulkAppTranslationFormUpdater(object):
 
         return [(t, _('Error in {identifier}: ').format(identifier=self.identifier) + m) for (t, m) in self.msgs]
 
-
     def _get_template_translation_el(self):
         # Make language nodes for each language if they don't yet exist
         #
@@ -123,7 +119,6 @@ class BulkAppTranslationFormUpdater(object):
         assert(template_translation_el is not None)
         return template_translation_el
 
-
     def _add_missing_translation_elements_to_itext(self, template_translation_el):
         for lang in self.langs:
             trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
@@ -136,7 +131,6 @@ class BulkAppTranslationFormUpdater(object):
                 else:
                     new_trans_el.set('default', '')
                 self.itext.xml.append(new_trans_el)
-
 
     def _populate_markdown_stats(self, rows):
         # Aggregate Markdown vetoes, and translations that currently have Markdown
@@ -153,7 +147,6 @@ class BulkAppTranslationFormUpdater(object):
                     self.markdown_vetoes[label_id] = True
                 self.markdowns[label_id] = self.markdowns[label_id] or self._had_markdown(text_node)
 
-
     def _get_label_ids_to_skip(self, rows):
         label_ids_to_skip = set()
         if self.form.is_registration_form():
@@ -166,14 +159,12 @@ class BulkAppTranslationFormUpdater(object):
                     _("You must provide at least one translation for the label '%s'.") % (label)))
         return label_ids_to_skip
 
-
     def _get_text_node(self, translation_node, label_id):
         text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
         if text_node.exists():
             return text_node
         raise BulkAppTranslationsException(_("Unrecognized translation label {0}. "
                                              "That row has been skipped").format(label_id))
-
 
     def _add_or_remove_translations(self, lang, row):
         label_id = row['label']
@@ -225,7 +216,6 @@ class BulkAppTranslationFormUpdater(object):
                                               text_node.find("./{f}value[@form='%s']" % trans_type),
                                               {'form': trans_type})
 
-
     def _get_translations_for_row(self, row, lang):
         translations = dict()
         for trans_type in ['default', 'image', 'audio', 'video']:
@@ -236,7 +226,6 @@ class BulkAppTranslationFormUpdater(object):
                 # has already been logged as unrecognized column
                 pass
         return translations
-
 
     def _update_translation_node(self, new_translation, text_node, value_node, attributes=None, delete_node=True):
         if delete_node and not new_translation:
@@ -262,14 +251,11 @@ class BulkAppTranslationFormUpdater(object):
         for n in escaped_trans.getchildren():
             value_node.xml.append(n)
 
-
     def _looks_like_markdown(self, str):
         return re.search(r'^\d+[\.\)] |^\*|~~.+~~|# |\*{1,3}\S+\*{1,3}|\[.+\]\(\S+\)', str, re.M)
 
-
     def _get_markdown_node(self, text_node_):
         return text_node_.find("./{f}value[@form='markdown']")
-
 
     def _get_value_node(self, text_node_):
         try:
@@ -280,14 +266,12 @@ class BulkAppTranslationFormUpdater(object):
         except StopIteration:
             return WrappedNode(None)
 
-
     def _had_markdown(self, text_node_):
         """
         Returns True if a Markdown node currently exists for a translation.
         """
         markdown_node_ = self._get_markdown_node(text_node_)
         return markdown_node_.exists()
-
 
     def _is_markdown_vetoed(self, text_node_):
         """
@@ -301,20 +285,17 @@ class BulkAppTranslationFormUpdater(object):
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return self._looks_like_markdown(old_trans) and not self._had_markdown(text_node_)
 
-
     def _has_translation(self, row):
         for lang_ in self.langs:
             for trans_type_ in ['default', 'image', 'audio', 'video']:
                 if row.get(self._get_col_key(trans_type_, lang_)):
                     return True
 
-
     def _check_for_shadow_form_error(self):
         if isinstance(self.form, ShadowForm):
             raise BulkAppTranslationsException(_('Form {index}, "{name}", is a shadow form. '
                      'Cannot translate shadow forms, skipping.').format(index=self.form.id + 1,
                                                                         name=self.form.default_name()))
-
 
     @classmethod
     def escape_output_value(cls, value):
@@ -327,7 +308,6 @@ class BulkAppTranslationFormUpdater(object):
             element = Element('value')
             element.text = value
             return element
-
 
     def _get_col_key(self, translation_type, lang):
         """
