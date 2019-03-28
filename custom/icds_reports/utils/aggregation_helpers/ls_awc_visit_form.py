@@ -12,13 +12,12 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
     aggregate_child_table_prefix = 'icds_db_ls_awc_mgt_form_'
 
     def aggregate_query(self):
-        month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
+        tablename = self.generate_child_tablename(self.month)
         next_month_start = self.month + relativedelta(months=1)
 
         query_params = {
             "state_id": self.state_id,
-            "start_date": month_formatter(month),
+            "start_date": month_formatter(self.month),
             "end_date": month_formatter(next_month_start)
         }
 
