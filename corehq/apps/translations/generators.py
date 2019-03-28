@@ -121,7 +121,7 @@ class AppTranslationsGenerator(object):
 
     def _set_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
         # iterate the first sheet to get unique ids for forms/modules
-        sheet_name_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+        sheet_name_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
         unique_id_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
         type_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
         for row in all_module_and_form_details:
@@ -250,7 +250,7 @@ class AppTranslationsGenerator(object):
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
-            sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+            sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
             unique_id_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
 
             def occurrence(_row):

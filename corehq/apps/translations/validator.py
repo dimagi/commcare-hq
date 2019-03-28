@@ -16,7 +16,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
 COLUMNS_TO_COMPARE = {
-    'module_and_form': ['Type', 'sheet_name'],
+    'module_and_form': ['Type', 'menu_or_form'],
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }

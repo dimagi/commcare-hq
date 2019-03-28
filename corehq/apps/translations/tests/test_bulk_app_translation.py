@@ -138,7 +138,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-            "Type", "sheet_name", "default_en", "default_fra", 'image_en', 'image_fra',
+            "Type", "menu_or_form", "default_en", "default_fra", 'image_en', 'image_fra',
             'audio_en', 'audio_fra', "unique_id",
         )),
         ("menu1", (
@@ -152,7 +152,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers_bad_column = (  # bad column is default-fra
         (MODULES_AND_FORMS_SHEET_NAME, (
-            "Type", "sheet_name", "default_en", "default-fra",
+            "Type", "menu_or_form", "default_en", "default-fra",
             "image_en", "image_fra", "audio_en", "audio_fra", "unique_id"
         )),
         ("menu1", (
@@ -213,7 +213,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_no_change_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'default_fra',
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
                                         'image_en', 'image_fra', 'audio_en',
                                         'audio_fra', 'unique_id')),
         ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
@@ -586,7 +586,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     maxDiff = None
 
     excel_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'image_en',
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'image_en',
                                         'audio_en', 'unique_id')),
         ('menu1', ('case_property', 'list_or_detail', 'default_en')),
         ('menu1_form1', ('label', 'default_en', 'image_en', 'audio_en', 'video_en'))
@@ -631,7 +631,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_sheet_headers(self):
         self.assertListEqual(get_bulk_app_sheet_headers(self.app), [
-            [MODULES_AND_FORMS_SHEET_NAME, ['Type', 'sheet_name', 'default_en',
+            [MODULES_AND_FORMS_SHEET_NAME, ['Type', 'menu_or_form', 'default_en',
              'image_en', 'audio_en', 'unique_id']],
             ['menu1', ['case_property', 'list_or_detail', 'default_en']],
             ['menu1_form1', ['label', 'default_en', 'image_en', 'audio_en', 'video_en']]
@@ -730,7 +730,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
 
     headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-            'Type', 'sheet_name',
+            'Type', 'menu_or_form',
             'default_en', 'default_afr', 'default_fra',
             'image_en', 'image_afr', 'image_fra',
             'audio_en', 'audio_afr', 'audio_fra',

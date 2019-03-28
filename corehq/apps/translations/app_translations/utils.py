@@ -76,7 +76,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         MODULES_AND_FORMS_SHEET_NAME,
         get_modules_and_forms_row(
             row_type='Type',
-            sheet_name='sheet_name',
+            sheet_name='menu_or_form',
             languages=default_lang_list,
             media_image=['image_%s' % l for l in langs],
             media_audio=['audio_%s' % l for l in langs],

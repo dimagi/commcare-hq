@@ -53,7 +53,7 @@ class TranslationsParser(object):
     def _add_module_and_form_sheet(self, ws, po_entries):
         context_regex = CONTEXT_REGEXS['module_and_forms_sheet']
         # add header
-        ws.append(["Type", "sheet_name", self.key_lang_str, self.source_lang_str, 'unique_id'])
+        ws.append(["Type", "menu_or_form", self.key_lang_str, self.source_lang_str, 'unique_id'])
         # add rows
         for po_entry in po_entries:
             context = po_entry.msgctxt
