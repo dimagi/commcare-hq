@@ -23,9 +23,7 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
         }
 
         return """
-        INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, awc_visits
-        ) (
+        CREATE TEMPORARY TABLE "{temp_table}" AS (
             SELECT
             state_id,
             location_id as supervisor_id,
@@ -36,8 +34,14 @@ class LSAwcMgtFormAggHelper(BaseICDSAggregationHelper):
                 AND location_entered is not null and location_entered <> ''
                 AND state_id=%(state_id)s
                 GROUP BY state_id,location_id
+        );
+        INSERT INTO "{tablename}" (
+        state_id, supervisor_id, month, awc_visits
+        ) (
+            SELECT * FROM "{temp_table}"
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=tablename,
+            temp_table="temp_{}".format(tablename)
         ), query_params
