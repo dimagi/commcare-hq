@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('doc_id', models.CharField(db_index=True, max_length=255)),
                 ('doc_type', models.CharField(db_index=True, max_length=126)),
                 ('domain', models.CharField(db_index=True, max_length=126)),
-                ('indicator_config_ids', models.CharField(max_length=126)),
+                ('indicator_config_id', models.CharField(db_index=True, max_length=126)),
                 ('date_created', models.DateTimeField(auto_now_add=True, db_index=True)),
                 ('validation_name', models.TextField()),
                 ('validation_text', models.TextField()),

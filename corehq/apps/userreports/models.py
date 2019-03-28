@@ -1032,7 +1032,7 @@ class InvalidUCRData(models.Model):
     doc_id = models.CharField(max_length=255, null=False, db_index=True)
     doc_type = models.CharField(max_length=126, null=False, db_index=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
-    indicator_config_ids = models.CharField(max_length=126)
+    indicator_config_id = models.CharField(max_length=126, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     validation_name = models.TextField()
     validation_text = models.TextField()

@@ -247,7 +247,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                     doc_id=doc['_id'],
                                     doc_type=doc['doc_type'],
                                     domain=doc['domain'],
-                                    indicator_config_ids=adapter.config._id,
+                                    indicator_config_id=adapter.config._id,
                                     validation_name=e.name,
                                     validation_text=e.message
                                 )
