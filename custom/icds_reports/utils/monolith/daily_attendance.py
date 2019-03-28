@@ -16,6 +16,16 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregate_query()
+        indexes_query = self.indexes()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
+        cursor.execute(indexes_query)
+
     @property
     def tablename(self):
         return "{}_{}".format(self.base_tablename, date_to_string(self.month))

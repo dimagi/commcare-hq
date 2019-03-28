@@ -22,6 +22,14 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
         'infantometer_usable', 'medicine_kits_usable', 'stadiometer_usable',
     )
 
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
+
     def _window_helper(self, column_name):
         return (
             "LAST_VALUE({column}) OVER {column} AS {column}".format(column=column_name),

@@ -14,6 +14,13 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, last_sync):
         self.last_sync = last_sync
 
+    def aggregate(self, cursor):
+        missing_location_query = self.missing_location_query()
+        aggregation_query, agg_params = self.aggregate_query()
+
+        cursor.execute(missing_location_query)
+        cursor.execute(aggregation_query, agg_params)
+
     @cached_property
     def aggregate_parent_table(self):
         from custom.icds_reports.models import AggregateInactiveAWW

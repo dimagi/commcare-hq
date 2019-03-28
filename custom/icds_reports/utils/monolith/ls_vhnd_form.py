@@ -13,6 +13,14 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_LS_VHND_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_vhnd_form_'
 
+    def aggregate(self, cursor):
+        drop_query = self.drop_table_query()
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_param = self.aggregate_query()
+        cursor.execute(drop_query)
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_param)
+
     def aggregate_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)

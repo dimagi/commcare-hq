@@ -53,6 +53,9 @@ class BaseICDSAggregationHelper(object):
         self.state_id = state_id
         self.month = transform_day_to_month(month)
 
+    def aggregate(self, cursor):
+        raise NotImplementedError
+
     @property
     def domain(self):
         # Currently its only possible for one domain to have access to the ICDS dashboard per env

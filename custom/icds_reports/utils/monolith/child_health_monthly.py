@@ -35,6 +35,12 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.state_ids = state_ids
         self.month = transform_day_to_month(month)
 
+    def aggregate(self, cursor):
+        cursor.execute(self.drop_table_query())
+        cursor.execute(self.aggregation_query())
+        for query in self.indexes():
+            cursor.execute(query)
+
     @property
     def child_health_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')

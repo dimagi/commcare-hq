@@ -4,13 +4,24 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
 
 
 class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
     aggregate_parent_table = AGG_CCS_RECORD_CF_TABLE
     aggregate_child_table_prefix = 'icds_db_child_ccs_cf_form_'
+
+    def aggregate(self, cursor):
+        prev_month_query, prev_month_params = self.create_table_query(self.month - relativedelta(months=1))
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(prev_month_query, prev_month_params)
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)

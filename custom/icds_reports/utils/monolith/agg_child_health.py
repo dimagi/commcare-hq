@@ -15,6 +15,22 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
+    def aggregate(self, cursor):
+        agg_query, agg_params = self.aggregation_query()
+        update_queries = self.update_queries()
+        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [self.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(agg_query, agg_params)
+        for query, params in update_queries:
+            cursor.execute(query, params)
+        for query in rollup_queries:
+            cursor.execute(query)
+        for query in index_queries:
+            cursor.execute(query)
+
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
 

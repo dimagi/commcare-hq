@@ -28,6 +28,26 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
 
+    def aggregate(self, cursor):
+        agg_query, agg_params = self.aggregation_query()
+        update_queries = self.updates()
+        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [self.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        cursor.execute(agg_query, agg_params)
+        for query, params in update_queries:
+            cursor.execute(query, params)
+        for query in rollup_queries:
+            cursor.execute(query)
+        for query in index_queries:
+            cursor.execute(query)
+
+    def weekly_aggregate(self, cursor):
+        update_queries = self.weekly_updates()
+        for query, params in update_queries:
+            cursor.execute(query, params)
+
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
 

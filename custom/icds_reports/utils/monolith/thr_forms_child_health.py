@@ -13,6 +13,14 @@ class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
     aggregate_child_table_prefix = 'icds_db_child_thr_form_'
 
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
+
     def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
