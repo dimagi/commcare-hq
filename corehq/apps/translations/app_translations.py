@@ -5,12 +5,13 @@ from __future__ import unicode_literals
 import copy
 import itertools
 import re
-import ghdiff
-from collections import defaultdict, OrderedDict
-
 import six
 import io
+from collections import defaultdict, OrderedDict
+
+import ghdiff
 from django.contrib import messages
+from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -29,9 +30,12 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
+from corehq.util.files import read_workbook_content_as_file
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
+from CommcareTranslationChecker import validate_workbook
+from CommcareTranslationChecker.exceptions import FatalError
 
 
 def get_unicode_dicts(iterable):
@@ -196,29 +200,64 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def validate_bulk_app_translation_upload(app, workbook, email):
+def run_translation_checker(file_obj):
+    translation_checker_messages = []
+    result_wb = None
+    try:
+        result_wb = validate_workbook(file_obj, translation_checker_messages)
+    except FatalError as e:
+        translation_checker_messages.append(
+            _("Workbook check failed to finish due to the following error : %s" % e))
+    return translation_checker_messages, result_wb
+
+
+def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
+    checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs:
-        _email_app_translations_discrepancies(msgs, email, app.name)
+        _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, _("No issues found."))]
 
 
-def _email_app_translations_discrepancies(msgs, email, app_name):
-    html_content = ghdiff.default_css
-    for sheet_name, msg in msgs.items():
-        html_content += "<strong>{}</strong>".format(sheet_name) + msg
+def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb):
+    """
+    :param msgs: messages for app translation discrepancies
+    :param checker_messages: messages for issues found by translation checker
+    :param email: email to
+    :param app_name: name of the application
+    :param result_wb: result wb of translation checker to attach with the email
+    """
+    def _form_email_content(msgs, checker_messages):
+        if msgs:
+            html_content = ghdiff.default_css
+            for sheet_name, msg in msgs.items():
+                html_content += "<strong>{}</strong>".format(sheet_name) + msg
+            text_content = _("Hi, PFA file for discrepancies found for app translations.\n")
+        else:
+            html_content = None
+            text_content = _("Hi, No discrepancies found for app translations.\n")
+        if checker_messages:
+            text_content += _("Issues found with the workbook are as follows :\n %s." % '\n'.join(
+                checker_messages))
+        else:
+            text_content += _("No issues found with the workbook.")
+        return html_content, text_content
+
+    def _attachment(title, content, mimetype='text/html'):
+        return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    text_content = _("Hi, PFA file for discrepancies found for app translations.")
-    html_attachment = {
-        'title': "{} Discrepancies.html".format(app_name),
-        'file_obj': io.StringIO(html_content),
-        'mimetype': 'text/html',
-    }
-    send_html_email_async.delay(subject, email, text_content, file_attachments=[html_attachment])
+    html_content, text_content = _form_email_content(msgs, checker_messages)
+    attachments = []
+    if html_content:
+        attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_content)))
+    if result_wb:
+        attachments.append(_attachment("{} TranslationChecker.xlsx".format(app_name),
+                                       io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
+    send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)
 
 
 def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, media_audio, unique_id):
@@ -283,20 +322,22 @@ def get_bulk_multimedia_sheet_rows(lang, app):
                                                      [module.audio_by_language(lang)]))
 
         # Detail case properties, etc.
-        for row in get_module_rows([lang], module):
-            rows.append(prefix + list(row))
+        if not isinstance(module, ReportModule):
+            for row in get_module_rows([lang], module):
+                rows.append(prefix + list(row))
 
-        for form_index, form in enumerate(module.forms):
-            prefix = [get_form_sheet_name(form), '']
+            for form_index, form in enumerate(module.forms):
+                prefix = [get_form_sheet_name(form), '']
 
-            # Name / menu media row
-            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
-                                                     [form.icon_by_language(lang)],
-                                                     [form.audio_by_language(lang)]))
+                # Name / menu media row
+                rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
+                                                        [form.icon_by_language(lang)],
+                                                        [form.audio_by_language(lang)]))
 
-            # Questions
-            for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row)
+                # Questions
+                if form.form_type != 'shadow_form':
+                    for row in get_form_question_rows([lang], form):
+                        rows.append(prefix + row)
 
     return rows
 
@@ -353,7 +394,7 @@ def get_bulk_app_sheet_headers(app, exclude_module=None, exclude_form=None):
             sheet_name = get_form_sheet_name(form)
             headers.append([
                 sheet_name,
-                ["label"] + languages_list + audio_lang_list + image_lang_list + video_lang_list
+                ["label"] + languages_list + image_lang_list + audio_lang_list + video_lang_list
             ])
     return headers
 
@@ -402,7 +443,8 @@ def get_bulk_app_sheet_rows(app, exclude_module=None, exclude_form=None):
                     unique_id=form.unique_id
                 ))
 
-                rows[form_sheet_name] = get_form_question_rows(app.langs, form)
+                if form.form_type != 'shadow_form':
+                    rows[form_sheet_name] = get_form_question_rows(app.langs, form)
 
     return rows
 
@@ -514,11 +556,8 @@ def get_module_detail_graph_rows(langs, detail, list_or_detail):
 
 
 def get_form_question_rows(langs, form):
-    if form.form_type == 'shadow_form':
-        return None
 
     rows = []
-
     xform = form.wrapped_xform()
     itext_items = OrderedDict()
     nodes = []

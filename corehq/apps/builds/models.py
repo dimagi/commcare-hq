@@ -63,7 +63,11 @@ class CommCareBuild(BlobMixin, Document):
     def fetch_file(self, path, filename=None):
         if filename:
             path = '/'.join([path, filename])
-        return self.fetch_attachment(path)
+        attachment = self.fetch_attachment(path, return_bytes=True)
+        try:
+            return attachment.decode('utf-8')
+        except UnicodeDecodeError:
+            return attachment
 
     def get_jadjar(self, path, use_j2me_endpoint):
         """

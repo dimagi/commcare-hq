@@ -1,37 +1,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import io
 from collections import namedtuple
 
-from django.urls import reverse
+import six
 from django.http import Http404
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-from dimagi.utils.web import json_response
+from six.moves import range
 
-from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse, get_app_summary_formdata
+from corehq.apps.reports.formdetails.readable import (
+    FormQuestionResponse,
+    get_app_summary_formdata,
+)
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-import six
-from six.moves import range
+from dimagi.utils.web import json_response
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
@@ -61,26 +59,12 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         }
 
     @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = ugettext_noop("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
@@ -102,7 +86,6 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = ugettext_noop("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property

@@ -462,7 +462,7 @@ CASE_LIST_LOOKUP = StaticToggle(
 
 BIOMETRIC_INTEGRATION = StaticToggle(
     'biometric_integration',
-    "Enables biometric integration (simprints) features. [IN DEVELOPMENT]",
+    "Enables biometric integration (simprints) features.",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
@@ -1034,6 +1034,19 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LEGACY_CHILD_MODULES = StaticToggle(
+    'legacy_child_modules',
+    'Legacy, non-nested child modules',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Child Menus are now displayed nested under their parent menu. Some "
+        "apps built before this change will require that their modules be "
+        "reordered to fit this paradigm. This feature flag exists to support "
+        "those applications until they're transitioned."
+    )
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1265,13 +1278,6 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds', 'icds-cas'},
-)
-
-PROFILE_BULK_MULTIMEDIA_UPLOAD = StaticToggle(
-    'profile_bulk_multimedia_upload',
-    'Profile bulk multimedia upload task. Do not turn this on; it ruins performance of the bulk upload.',
-    TAG_INTERNAL,
-    [NAMESPACE_USER],
 )
 
 BULK_UPDATE_MULTIMEDIA_PATHS = StaticToggle(

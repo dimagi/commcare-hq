@@ -78,8 +78,9 @@ class IteratorJSONReader(object):
 
     @classmethod
     def set_field_value(cls, obj, field, value):
-        if isinstance(value, six.string_types):
-            soft_assert_type_text(value)
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, six.text_type):
             value = value.strip()
         # try dict
         try:

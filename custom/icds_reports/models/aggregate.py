@@ -56,6 +56,7 @@ def get_cursor(model):
 
 
 class CcsRecordMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     month = models.DateField()
@@ -193,6 +194,7 @@ class AwcLocation(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
+    ls_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
@@ -211,17 +213,20 @@ class AwcLocation(models.Model):
         drop_table_query = helper.drop_table_query()
         agg_query = helper.aggregate_query()
         aww_query = helper.aww_query()
+        ls_query = helper.ls_query()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
 
         with get_cursor(cls) as cursor:
             cursor.execute(drop_table_query)
             cursor.execute(agg_query)
             cursor.execute(aww_query)
+            cursor.execute(ls_query)
             for rollup_query in rollup_queries:
                 cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     month = models.DateField()
@@ -843,6 +848,7 @@ class AggAwcDaily(models.Model):
 
 
 class DailyAttendance(models.Model):
+    # not the real pkey - see unique_together
     doc_id = models.TextField(primary_key=True)
     awc_id = models.TextField(null=True)
     supervisor_id = models.TextField(null=True)
@@ -862,6 +868,7 @@ class DailyAttendance(models.Model):
     class Meta:
         managed = False
         db_table = 'daily_attendance'
+        unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, month):
@@ -892,7 +899,7 @@ class AggregateComplementaryFeedingForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -934,9 +941,9 @@ class AggregateComplementaryFeedingForms(models.Model):
         help_text="Hand washing occurred for this case in the latest form"
     )
 
-
     class Meta(object):
         db_table = AGG_COMP_FEEDING_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -976,7 +983,7 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -988,9 +995,9 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
         default=0
     )
 
-
     class Meta(object):
         db_table = AGG_CCS_RECORD_CF_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1023,7 +1030,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
 
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1081,6 +1088,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1122,7 +1130,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1143,6 +1151,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1177,7 +1186,7 @@ class AggregateChildHealthTHRForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1190,6 +1199,7 @@ class AggregateChildHealthTHRForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1218,7 +1228,7 @@ class AggregateCcsRecordTHRForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1231,6 +1241,7 @@ class AggregateCcsRecordTHRForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_THR_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1259,7 +1270,7 @@ class AggregateGrowthMonitoringForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1311,6 +1322,7 @@ class AggregateGrowthMonitoringForms(models.Model):
 
     class Meta(object):
         db_table = AGG_GROWTH_MONITORING_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1342,7 +1354,7 @@ class AggregateBirthPreparednesForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1447,6 +1459,7 @@ class AggregateBirthPreparednesForms(models.Model):
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1488,7 +1501,7 @@ class AggregateCcsRecordDeliveryForms(models.Model):
 
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1507,9 +1520,9 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         help_text="Where the child is born"
     )
 
-
     class Meta(object):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1581,7 +1594,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     case_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1598,6 +1611,7 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
 
     class Meta(object):
         db_table = AGG_DAILY_FEEDING_TABLE
+        unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -1625,7 +1639,7 @@ class AggregateAwcInfrastructureForms(models.Model):
     supervisor_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
 
-    # primary key as it's unique for every partition
+    # not the real pkey - see unique_together
     awc_id = models.CharField(max_length=40, primary_key=True)
 
     latest_time_end_processed = models.DateTimeField(
@@ -1651,6 +1665,7 @@ class AggregateAwcInfrastructureForms(models.Model):
 
     class Meta(object):
         db_table = AGG_INFRASTRUCTURE_TABLE
+        unique_together = ('supervisor_id', 'awc_id', 'month')  # pkey
 
     @classmethod
     def aggregate(cls, state_id, month):
