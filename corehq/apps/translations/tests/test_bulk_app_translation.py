@@ -33,7 +33,7 @@ from corehq.apps.translations.app_translations.download import (
 from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 from corehq.apps.translations.app_translations import upload_module
-from corehq.apps.translations.app_translations.upload_module import _remove_description_from_case_property
+from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONReader
@@ -305,10 +305,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ))
     )
 
-    def test_doctests(self):
-        results = doctest.testmod(upload_module)
-        assert results.failed == 0
-
     def test_set_up(self):
         self._shared_test_initial_set_up()
 
@@ -414,12 +410,12 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     def test_remove_description_from_case_property(self):
         row = {'case_property': 'words to keep (remove this)'}
-        description = _remove_description_from_case_property(row)
+        description = BulkAppTranslationModuleUpdater._remove_description_from_case_property(row)
         self.assertEqual(description, 'words to keep')
 
     def test_remove_description_from_case_property_multiple_parens(self):
         row = {'case_property': '(words (to) keep) (remove this)'}
-        description = _remove_description_from_case_property(row)
+        description = BulkAppTranslationModuleUpdater._remove_description_from_case_property(row)
         self.assertEqual(description, '(words (to) keep)')
 
     def test_empty_translations(self):

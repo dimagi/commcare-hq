@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations.upload_module import update_app_from_module_sheet
+from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
@@ -116,7 +116,8 @@ def _process_multi_sheet_rows(app, identifier, rows, sheet_name=None):
         return update_app_from_modules_and_forms_sheet(app, rows)
 
     if is_module_sheet(identifier):
-        return update_app_from_module_sheet(app, rows, identifier)
+        updater = BulkAppTranslationModuleUpdater(app, identifier)
+        return updater.update(rows)
 
     if is_form_sheet(identifier):
         updater = BulkAppTranslationFormUpdater(app, identifier)
@@ -133,7 +134,8 @@ def _process_single_sheet_rows(app, identifier, rows, sheet_name=None, lang=None
         return update_app_from_modules_and_forms_sheet(app, rows, identifying_header='menu_or_form', lang=lang)
 
     if is_module_sheet(identifier):
-        return update_app_from_module_sheet(app, rows, identifier, lang=lang)
+        updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
+        return updater.update(rows)
 
     if is_form_sheet(identifier):
         updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)

@@ -196,3 +196,32 @@ def update_translation_dict(prefix, language_dict, row, langs):
     for lang in language_dict.keys():
         if lang not in langs:
             language_dict.pop(lang, None)
+
+
+class BulkAppTranslationUpdater(object):
+    '''
+        Class to help translatea particular model (app, module, or form).
+    '''
+
+    def __init__(self, app, lang=None):
+        '''
+        :param lang: If present, translation is limited to this language. This should correspond to the sheet
+            only containing headers of this language, but having the language available is handy.
+        '''
+        super(BulkAppTranslationUpdater, self).__init__()
+        self.app = app
+        self.langs = [lang] if lang else app.langs
+
+        # These attributes get populated by update
+        self.msgs = None
+
+    def update(self, rows):
+        '''
+        Modify the translations of this updater's model given a sheet of translation data.
+        This does not save the changes to the DB.
+
+        :param rows: Iterable of rows from a WorksheetJSONReader
+        :return:  Returns a list of message tuples. The first item in each tuple is
+        a function like django.contrib.messages.error, and the second is a string.
+        '''
+        raise NotImplementedError()

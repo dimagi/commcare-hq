@@ -16,19 +16,16 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import BulkAppTranslationUpdater, get_unicode_dicts
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
-class BulkAppTranslationFormUpdater(object):
+class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
     def __init__(self, app, identifier, lang=None):
         '''
         :param identifier: String like "menu1_form2"
-        :param lang: If provided, translate only this language.
         '''
-        super(BulkAppTranslationFormUpdater, self).__init__()
-        self.app = app
-        self.langs = [lang] if lang else app.langs
+        super(BulkAppTranslationFormUpdater, self).__init__(app, lang)
         self.identifier = identifier
 
         # These attributes depend on each other and therefore need to be created in this order
@@ -37,7 +34,6 @@ class BulkAppTranslationFormUpdater(object):
         self.itext = self._get_itext()
 
         # These attributes get populated by update
-        self.msgs = None
         self.markdowns = None
         self.markdown_vetoes = None
 
@@ -60,14 +56,6 @@ class BulkAppTranslationFormUpdater(object):
                 pass
 
     def update(self, rows):
-        """
-        Modify the translations of a form given a sheet of translation data.
-        This does not save the changes to the DB.
-
-        :param rows: Iterable of rows from a WorksheetJSONReader
-        :return:  Returns a list of message tuples. The first item in each tuple is
-        a function like django.contrib.messages.error, and the second is a string.
-        """
         try:
             self._check_for_shadow_form_error()
         except BulkAppTranslationsException as e:
