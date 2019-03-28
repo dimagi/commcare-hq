@@ -289,13 +289,17 @@ class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
         context['selected_type'] = kwargs.get('details_type')
         context['selected_month'] = int(request.GET.get('month'))
         context['selected_year'] = int(request.GET.get('year'))
+
+        person_model = Woman if context['selected_type'] != 'child' else Child
+
+        village_id = person_model.objects.get(person_case_id=context['beneficiary_id']).village_id
+
+        locations = SQLLocation.objects.get(
+            domain=request.domain, location_id=village_id
+        ).get_ancestors(include_self=True)
+
         context['beneficiary_location_names'] = [
-            'Haryana',
-            'Ambala',
-            'Shahzadpur',
-            'PHC Shahzadpur',
-            'SC shahzadpur',
-            'Rasidpur'
+            loc.name for loc in locations
         ]
         return self.render_to_response(context)
 
