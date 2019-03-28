@@ -4,6 +4,7 @@ import glob
 import json
 import os
 import re
+from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
 from io import open
@@ -239,10 +240,20 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return len(self.validations) > 0
 
     def validate_document(self, document):
-        for validation in self.validations:
-            validate_fn = FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
-            if validate_fn(document, EvaluationContext(document, 0)) is False:
+        for validation in self._validations():
+            if validation.validation_function(document, EvaluationContext(document, 0)) is False:
                 raise ValidationError(validation.name, validation.error_message)
+
+    @memoized
+    def _validations(self):
+        return [
+            _Validation(
+                validation.name,
+                validation.error_message,
+                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+            )
+            for validation in self.validations
+        ]
 
     @memoized
     def _get_main_filter(self):
@@ -1181,3 +1192,6 @@ def _filter_by_server_env(configs):
         if wrapped.server_environment and settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
             continue
         yield wrapped
+
+
+_Validation = namedtuple('_Validation', 'name error_message validation_function')
