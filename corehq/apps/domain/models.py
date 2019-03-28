@@ -272,7 +272,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         see data, reports, charts, etc.
 
         Exceptions: accounting has some models that combine multiple domains,
-        which make "enterprise" multi-features like the enterprise dashboard possible.
+        which make "enterprise" multi-domain features like the enterprise dashboard possible.
 
         Naming conventions:
         Most often, variables representing domain names are named `domain`, and
