@@ -56,6 +56,7 @@ def get_cursor(model):
 
 
 class CcsRecordMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     month = models.DateField()
@@ -223,6 +224,7 @@ class AwcLocation(models.Model):
 
 
 class ChildHealthMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     month = models.DateField()
