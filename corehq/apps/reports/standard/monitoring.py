@@ -1815,20 +1815,29 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         first_id_in_chunk = 0
         user_chunk_total = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).size(chunk_size).run().total
         while first_id_in_chunk < user_chunk_total:
+            print('(PV) monitoring 0')
             user_chunk = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).start(first_id_in_chunk).size(chunk_size).run().hits
+            print('(PV) monitoring 1')
             users = [util._report_user_dict(user) for user in user_chunk]
+            print('(PV) monitoring 2')
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)
             else:
                 rows = self._rows_by_user(formatted_data, users)
+            print('(PV) monitoring 3')
             this_row = self._total_row(rows, formatted_data, users)
+            print('(PV) monitoring 4')
             self.total_row = self.sum_rows_together(self.total_row, this_row)
+            print('(PV) monitoring 5')
             for row in rows:
                 yield row
             first_id_in_chunk = first_id_in_chunk + chunk_size
+        print('(PV) monitoring 6')
         self.total_row = self.format_total_row(self.total_row)
+        print('(PV) monitoring 7')
         yield self.total_row
+        print('==========')
 
     @staticmethod
     def format_total_row(unformatted_total_row):

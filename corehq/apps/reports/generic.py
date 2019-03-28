@@ -1007,13 +1007,18 @@ class GenericTabularReport(GenericReportView):
 
         table = headers.as_export_table
         self.exporting_as_excel = True
+        print('(PV) generic0')
         rows = (_unformat_row(row) for row in self.export_rows)
+        print('(PV) generic1')
         table = chain(table, rows)
+        print('(PV) generic2')
         if self.total_row:
+            print('(PV) generic3')
             table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
+            print('(PV) generic4')
             table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
-
+        print('(PV) generic5')
         return [[self.export_sheet_name, table]]
 
     @property
