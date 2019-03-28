@@ -56,6 +56,24 @@
         }
       },
       {
+        "display_name": "Supervisor ID",
+        "datatype": "string",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "supervisor_id"
+      },
+      {
         "display_name": "State ID",
         "datatype": "string",
         "expression": {

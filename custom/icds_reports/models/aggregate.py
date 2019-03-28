@@ -56,6 +56,7 @@ def get_cursor(model):
 
 
 class CcsRecordMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     supervisor_id = models.TextField()
@@ -215,17 +216,20 @@ class AwcLocation(models.Model):
         drop_table_query = helper.drop_table_query()
         agg_query = helper.aggregate_query()
         aww_query = helper.aww_query()
+        ls_query = helper.ls_query()
         rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
 
         with get_cursor(cls) as cursor:
             cursor.execute(drop_table_query)
             cursor.execute(agg_query)
             cursor.execute(aww_query)
+            cursor.execute(ls_query)
             for rollup_query in rollup_queries:
                 cursor.execute(rollup_query)
 
 
 class ChildHealthMonthly(models.Model):
+    supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
     supervisor_id = models.TextField()
