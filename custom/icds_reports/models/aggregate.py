@@ -871,19 +871,19 @@ class DailyAttendance(models.Model):
         managed = False
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
+        indexes = [
+            models.Index(fields=['awc_id'], name='idx_daily_attendance_awc_id')
+        ]
 
     @classmethod
     def aggregate(cls, month):
         helper = DailyAttendanceAggregationHelper(month=month)
-        curr_month_query, curr_month_params = helper.create_table_query()
+        drop_query, drop_params = helper.drop_table_query()
         agg_query, agg_params = helper.aggregate_query()
-        indexes_query = helper.indexes()
 
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(drop_query, drop_params)
             cursor.execute(agg_query, agg_params)
-            cursor.execute(indexes_query)
 
 
 class AggregateComplementaryFeedingForms(models.Model):

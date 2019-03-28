@@ -95,18 +95,20 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
 
     def update_query(self):
         return """
-        UPDATE "{tablename}" agg_awc SET
-            daily_attendance_open = ut.daily_attendance_open
-        FROM (
+        CREATE TEMPORARY TABLE "{temp_table}" AS
             SELECT
                 awc_id,
                 pse_date,
                 sum(awc_open_count) AS daily_attendance_open
             FROM daily_attendance WHERE pse_date = %(date)s
-            GROUP BY awc_id, pse_date
+            GROUP BY awc_id, pse_date;
+        UPDATE "{tablename}" agg_awc SET
+            daily_attendance_open = ut.daily_attendance_open
+        FROM (
+            SELECT * FROM "{temp_table}"
         ) ut
         WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id
-        """.format(tablename=self.tablename), {
+        """.format(tablename=self.tablename, temp_table="temp_{}".format(self.tablename)), {
             'date': self.date
         }
 

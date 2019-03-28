@@ -9,29 +9,16 @@ from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHel
 
 
 class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
-    base_tablename = 'daily_attendance'
+    tablename = 'daily_attendance'
     ucr_daily_attendance_table = DAILY_FEEDING_TABLE_ID
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
-    @property
-    def tablename(self):
-        return "{}_{}".format(self.base_tablename, date_to_string(self.month))
-
-    def create_table_query(self):
-        return """
-            CREATE TABLE IF NOT EXISTS "{tablename}" (
-            CHECK (month = %(table_date)s)) INHERITS ("{parent_tablename}")
-        """.format(
-            tablename=self.tablename,
-            parent_tablename=self.base_tablename,
-        ), {
-            "table_date": date_to_string(self.month)
-        }
-
     def drop_table_query(self):
-        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
+        return 'DELETE FROM "{}" WHERE month = %(month)s'.format(self.tablename), {
+            'month': self.month
+        }
 
     @property
     def ucr_daily_attendance_tablename(self):
@@ -68,10 +55,3 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
         ), {
             "start_month": date_to_string(self.month),
         }
-
-    def indexes(self):
-        return """
-            CREATE INDEX "{tablename}_indx1" ON "{tablename}" (awc_id)
-        """.format(
-            tablename=self.tablename
-        )

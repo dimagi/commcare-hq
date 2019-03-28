@@ -50,7 +50,7 @@ class AggregationScriptTestBase(CSVTestCase):
         else:
             return value_str
 
-    def _load_data_from_db(self, table_name, sort_key):
+    def _load_data_from_db(self, table_name, sort_key, filter_by=None):
         engine = connection_manager.get_session_helper('icds-ucr').engine
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
@@ -60,7 +60,10 @@ class AggregationScriptTestBase(CSVTestCase):
             for column in table.columns
         ]
         with engine.begin() as connection:
-            rows = connection.execute(table.select().order_by(*sort_key)).fetchall()
+            query = table.select().order_by(*sort_key)
+            if filter_by:
+                query.filter_by(**filter_by)
+            rows = connection.execute(query).fetchall()
             for row in rows:
                 row = list(row)
                 for idx, value in enumerate(row):
@@ -76,19 +79,19 @@ class AggregationScriptTestBase(CSVTestCase):
                         row[idx] = ''
                 yield dict(zip(columns, row))
 
-    def _load_and_compare_data(self, table_name, path, sort_key=None):
+    def _load_and_compare_data(self, table_name, path, sort_key=None, filter_by=None):
         # To speed up tests, we use a sort_key wherever possible
         #   to presort before comparing data
         if sort_key:
             self._fasterAssertListEqual(
-                list(self._load_data_from_db(table_name, sort_key)),
+                list(self._load_data_from_db(table_name, sort_key, filter_by)),
                 self._load_csv(path)
             )
         else:
             sort_key = lambda x: x
             self._fasterAssertListEqual(
                 sorted(
-                    list(self._load_data_from_db(table_name, [])),
+                    list(self._load_data_from_db(table_name, [], filter_by)),
                     key=sort_key
                 ),
                 sorted(
@@ -414,16 +417,18 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
 class DailyAttendanceAggregationTest(AggregationScriptTestBase):
     def test_daily_attendance_2017_04_01(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-04-01',
+            'daily_attendance',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'pse_date']
+            sort_key=['awc_id', 'pse_date'],
+            filter_by={'month': date(2017, 4, 1)}
         )
 
     def test_daily_attendance_2017_05_01(self):
         self._load_and_compare_data(
-            'daily_attendance_2017-05-01',
+            'daily_attendance',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'pse_date']
+            sort_key=['awc_id', 'pse_date'],
+            filter_by={'month': date(2017, 5, 1)}
         )
 
 

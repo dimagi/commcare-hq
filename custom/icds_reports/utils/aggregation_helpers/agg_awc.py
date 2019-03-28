@@ -100,11 +100,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
     def updates(self):
         yield """
-        UPDATE "{tablename}" agg_awc SET
-            awc_days_open = ut.awc_days_open,
-            awc_num_open = ut.awc_num_open,
-            awc_days_pse_conducted = ut.awc_days_pse_conducted
-        FROM (
+        CREATE TEMPORARY TABLE "{temp_table}" AS
             SELECT
                 awc_id,
                 supervisor_id,
@@ -113,12 +109,19 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open,
                 sum(pse_conducted) as awc_days_pse_conducted
             FROM "{daily_attendance}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id
+            WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id;
+        UPDATE "{tablename}" agg_awc SET
+            awc_days_open = ut.awc_days_open,
+            awc_num_open = ut.awc_num_open,
+            awc_days_pse_conducted = ut.awc_days_pse_conducted
+        FROM (
+            SELECT * FROM "{temp_table}"
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id
         """.format(
             tablename=self.tablename,
-            daily_attendance='daily_attendance_{}'.format(month_formatter(self.month_start)),
+            daily_attendance='daily_attendance',
+            temp_table="temp_{}".format(self.tablename)
         ), {
             'start_date': self.month_start
         }

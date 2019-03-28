@@ -194,6 +194,7 @@ def setUpModule():
             (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
             ('child_health_monthly', 'supervisor_id'),
             ('ccs_record_monthly', 'supervisor_id'),
+            ('daily_attendance', 'supervisor_id'),
         ]
 
         reference = [
