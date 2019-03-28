@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 from corehq.apps.reports.v2.endpoints.case_properties import (
     CasePropertiesEndpoint
@@ -28,12 +28,12 @@ class ExploreCaseDataReport(BaseReport):
 
     columns = [
         ColumnContext(
-            title=ugettext_noop("Case Name"),
+            title=ugettext_lazy("Case Name"),
             slug='case_name',
             width=200,
         ),
         ColumnContext(
-            title=ugettext_noop("Case Type"),
+            title=ugettext_lazy("Case Type"),
             slug='@case_type',
             width=200,
         ),
