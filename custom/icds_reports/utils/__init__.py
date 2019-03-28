@@ -183,7 +183,7 @@ class ICDSMixin(object):
                 column_name = column['column_name']
                 column_data = 0
                 if column_agg_func == 'sum':
-                    column_data = sum([x.get(column_name, 0) for x in report_data])
+                    column_data = sum([x.get(column_name, 0) or 0 for x in report_data])
                 elif column_agg_func == 'count':
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
