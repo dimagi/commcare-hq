@@ -221,15 +221,16 @@ class UnifiedBeneficiaryReportAPI(View):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class LocationFilterAPI(View):
     def post(self, request, *args, **kwargs):
-        selected_location = self.request.POST.get('selectedParentId', None)
+        selected_location = self.request.POST.get('parentSelectedId', None)
         location_type = self.request.POST.get('locationType', None)
         domain = self.kwargs['domain']
         locations = SQLLocation.objects.filter(
             domain=domain,
             location_type__code=location_type
-        )
+        ).order_by('name')
+
         if selected_location:
-            locations.filter(parent__location_id=selected_location)
+            locations = locations.filter(parent__location_id=selected_location).order_by('name')
 
         return JsonResponse(data={'data': [
             dict(
