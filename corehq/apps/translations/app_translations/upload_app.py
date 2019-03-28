@@ -21,7 +21,6 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
-    update_translation_dict,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -258,7 +257,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
                     ))
                     continue
 
-            update_translation_dict('default_', document.name, row, self.langs)
+            self.update_translation_dict('default_', document.name, row)
 
             # Update menu media
             # For backwards compatibility with previous code, accept old "filepath" header names

@@ -180,24 +180,6 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def update_translation_dict(prefix, language_dict, row, langs):
-    # update translations as requested
-    for lang in langs:
-        key = '%s%s' % (prefix, lang)
-        if key not in row:
-            continue
-        translation = row[key]
-        if translation:
-            language_dict[lang] = translation
-        else:
-            language_dict.pop(lang, None)
-
-    # delete anything in language_dict that isn't in langs (anymore)
-    for lang in language_dict.keys():
-        if lang not in langs:
-            language_dict.pop(lang, None)
-
-
 class BulkAppTranslationUpdater(object):
     '''
         Class to help translatea particular model (app, module, or form).
@@ -214,6 +196,23 @@ class BulkAppTranslationUpdater(object):
 
         # These attributes get populated by update
         self.msgs = None
+
+    def update_translation_dict(self, prefix, language_dict, row):
+        # update translations as requested
+        for lang in self.langs:
+            key = '%s%s' % (prefix, lang)
+            if key not in row:
+                continue
+            translation = row[key]
+            if translation:
+                language_dict[lang] = translation
+            else:
+                language_dict.pop(lang, None)
+
+        # delete anything in language_dict that isn't in langs (anymore)
+        for lang in language_dict.keys():
+            if lang not in self.langs:
+                language_dict.pop(lang, None)
 
     def update(self, rows):
         '''

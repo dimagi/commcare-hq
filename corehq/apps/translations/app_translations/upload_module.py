@@ -14,7 +14,6 @@ from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_unicode_dicts,
-    update_translation_dict,
 )
 
 
@@ -191,7 +190,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
     def _update_translation(self, row, language_dict, require_translation=True):
         if not require_translation or self._has_at_least_one_translation(row, 'default'):
-            update_translation_dict('default_', language_dict, row, self.langs)
+            self.update_translation_dict('default_', language_dict, row)
         else:
             self.msgs.append((
                 messages.error,
