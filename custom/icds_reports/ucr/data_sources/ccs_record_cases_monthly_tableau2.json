@@ -308,7 +308,7 @@
           "type": "ancestor_location"
         },
         "is_nullable": true,
-        "is_primary_key": false,
+        "is_primary_key": true,
         "transform": {},
         "type": "expression"
       },
@@ -3136,13 +3136,11 @@
       }
     ],
     "sql_settings": {
-      "partition_config": [
-        {
-          "column": "month",
-          "subtype": "date",
-          "constraint": "month"
-        }
-      ]
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "disable_destructive_rebuild": true
   }
