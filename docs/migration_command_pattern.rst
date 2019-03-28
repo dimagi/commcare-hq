@@ -16,7 +16,7 @@ However, it would be tedious and error prone to require everyone running smaller
 CommCareHQ environments, including developers who are working on other parts of
 the project, to learn about and follow the painstaking manual process used to
 migrate large environments. This document outlines a pattern that can be used to
-ensure a smooth rollout to everyone running any size environemnt with minimal
+ensure a smooth rollout to everyone running any size environment with minimal
 overhead for those running small environments.
 
 
