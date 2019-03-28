@@ -54,7 +54,7 @@ def get_async_restore_payload(restore_config, domain=None, username=None):
 
 
 @after_task_publish.connect
-def update_celery_state(sender=None, body=None, **kwargs):
+def update_celery_state(sender=None, headers=None, **kwargs):
     """Updates the celery task progress to "SENT"
 
     When fetching an task from celery using the form AsyncResponse(task_id), if
@@ -72,7 +72,7 @@ def update_celery_state(sender=None, body=None, **kwargs):
     task = current_app.tasks.get(sender)
     backend = task.backend if task else current_app.backend
 
-    backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
+    backend.store_result(headers['id'], None, ASYNC_RESTORE_SENT)
 
 
 @periodic_task(
