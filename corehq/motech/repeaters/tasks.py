@@ -63,7 +63,7 @@ def check_repeaters():
     try:
         with datadog_bucket_timer(
             "commcare.repeaters.check.processing",
-            buckets=_check_repeaters_buckets,
+            timing_buckets=_check_repeaters_buckets,
         ):
             for record in iterate_repeat_records(start):
                 if datetime.utcnow() > six_hours_later:
