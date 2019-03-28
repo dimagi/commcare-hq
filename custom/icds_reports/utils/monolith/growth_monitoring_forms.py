@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.util import get_table_name
+
 from custom.icds_reports.const import AGG_GROWTH_MONITORING_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
 
 
 class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):

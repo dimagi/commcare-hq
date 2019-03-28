@@ -1,11 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-import tempfile
-
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
 

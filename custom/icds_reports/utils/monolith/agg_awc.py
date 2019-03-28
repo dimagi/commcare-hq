@@ -3,15 +3,15 @@ from __future__ import unicode_literals
 
 import six
 from dateutil.relativedelta import relativedelta
+from six.moves import map
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from six.moves import map
-
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
-    month_formatter
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
+    month_formatter
+from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):

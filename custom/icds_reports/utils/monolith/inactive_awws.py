@@ -2,9 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+
 from django.utils.functional import cached_property
 
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper
+from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
 
 
 class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
