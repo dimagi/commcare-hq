@@ -182,13 +182,8 @@ def get_domains_to_update_es_filter():
     more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
     less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
     not_updated = filters.missing('cp_last_updated')
-    domains_submitted_today = [
-        agg.domain
-        for agg in NestedTermAggregationsHelper(
-            base_query=FormES().submitted(gte=datetime.utcnow() - timedelta(days=1)),
-            terms=[AggregationTerm('domain', 'domain')]
-        ).get_data()
-    ]
+    domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
+        .terms_aggregation('domain', 'domain').size(0).run().aggregations.domain.keys)
     return filters.OR(
         not_updated,
         more_than_a_week_ago,
