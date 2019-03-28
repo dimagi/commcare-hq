@@ -528,7 +528,9 @@
         {% include 'hqwebapp/partials/ko_search_box.html' %}
         {% include 'hqwebapp/partials/ko_select_toggle.html' %}
 
-        <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+        {% if show_overdue_invoice_modal %}
+            <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+        {% endif %}
 
         {% block js %}{% endblock js %}
 
