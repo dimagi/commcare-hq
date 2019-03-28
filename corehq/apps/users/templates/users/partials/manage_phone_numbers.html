@@ -31,6 +31,7 @@
 
                     {% endif %}
                 </label>
+                {% if not request.is_view_only %}
                 <div class="col-sm-9 col-md-8 col-lg-6">
                     {% if user_type == "mobile" and can_use_inbound_sms %}
                     {% ifequal phone.status "unverified" %}
@@ -83,12 +84,15 @@
                         </form>
                     {% endif %}
                 </div>
+                {% endif %}
             </div>
         {% endfor %}
         </fieldset>
     </div>
     {% endblock %}
 {% endif %}
+
+{% if not request.is_view_only %}
 <hr />
 <form id="add_phone_number" class="form form-horizontal" name="add_phone_number" method="post">
     {% csrf_token %}
@@ -119,3 +123,4 @@
         </div>
     </div>
 </form>
+{% endif %}
