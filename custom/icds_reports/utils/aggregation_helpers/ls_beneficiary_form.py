@@ -23,21 +23,25 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
         }
 
         return """
+        CREATE TEMPORARY TABLE "{temp_table}" AS (
+            SELECT
+            state_id,
+            location_id as supervisor_id,
+            %(start_date)s::DATE AS month,
+            count(*) as beneficiary_vists
+            FROM "{ucr_tablename}"
+            WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
+            AND visit_type_entered is not null AND visit_type_entered <> ''
+            AND  state_id=%(state_id)s
+            GROUP BY state_id,location_id
+        );
         INSERT INTO "{tablename}" (
         state_id, supervisor_id, month, beneficiary_vists
         ) (
-             SELECT
-                state_id,
-                location_id as supervisor_id,
-                %(start_date)s::DATE AS month,
-                count(*) as beneficiary_vists
-                FROM "{ucr_tablename}"
-                WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
-                AND visit_type_entered is not null AND visit_type_entered <> ''
-                AND  state_id=%(state_id)s
-                GROUP BY state_id,location_id
+             SELECT * FROM "{temp_table}"
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=tablename,
+            temp_table="temp_{}".format(tablename)
         ), query_params

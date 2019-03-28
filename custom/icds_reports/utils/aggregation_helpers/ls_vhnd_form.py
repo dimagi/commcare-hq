@@ -23,10 +23,8 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
         }
 
         return """
-        INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, vhnd_observed
-        ) (
-             SELECT
+        CREATE TEMPORARY TABLE "{temp_table}" AS (
+            SELECT
                 state_id,
                 location_id as supervisor_id,
                 %(start_date)s::DATE AS month,
@@ -35,8 +33,14 @@ class LSVhndFormAggHelper(BaseICDSAggregationHelper):
                 WHERE vhnd_date >= %(start_date)s AND vhnd_date < %(end_date)s
                 AND state_id=%(state_id)s
                 GROUP BY state_id,location_id
+        );
+        INSERT INTO "{tablename}" (
+        state_id, supervisor_id, month, vhnd_observed
+        ) (
+             SELECT * FROM "{temp_table}"
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename
+            tablename=tablename,
+            temp_table="temp_{}".format(tablename)
         ), query_params
