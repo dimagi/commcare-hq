@@ -197,7 +197,8 @@ def setUpModule():
         ]
 
         reference = [
-            'awc_location'
+            'awc_location',
+            'icds_months'
         ]
 
         for table, col in distribute:
