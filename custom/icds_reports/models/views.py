@@ -777,7 +777,6 @@ class AggChildHealthMonthly(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    month_display = models.TextField(blank=True, null=True)
     gender = models.TextField(blank=True, null=True, help_text="person.sex")
     age_tranche = models.TextField(
         blank=True, null=True,
@@ -948,8 +947,6 @@ class AwcLocationMonths(models.Model):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
-    month = models.DateField(blank=True, null=True)
-    month_display = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
     ls_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)

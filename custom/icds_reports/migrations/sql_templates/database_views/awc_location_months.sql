@@ -22,8 +22,5 @@ CREATE VIEW awc_location_months AS
   awc_location.state_map_location_name,
   awc_location.aww_name,
   awc_location.ls_name,
-  awc_location.contact_phone_number,
-  months.start_date AS month,
-  months.month_name AS month_display
-  FROM awc_location awc_location
-  CROSS JOIN "icds_months" months;
+  awc_location.contact_phone_number
+  FROM awc_location awc_location;

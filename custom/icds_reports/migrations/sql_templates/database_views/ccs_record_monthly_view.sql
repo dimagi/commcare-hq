@@ -19,7 +19,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "awc_location_months"."block_map_location_name" AS "block_map_location_name",
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-        "awc_location_months"."month" AS "month",
+        "ccs_record_monthly"."month" AS "month",
         "ccs_record_monthly"."add" AS "add",
         "ccs_record_monthly"."age_in_months" AS "age_in_months",
         "ccs_record_monthly"."anc_hemoglobin" AS "anc_hemoglobin",
@@ -79,7 +79,4 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."minority" AS "minority",
         "ccs_record_monthly"."resident" AS "resident"
     FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
-        ("awc_location_months"."month" = "ccs_record_monthly"."month") AND
-        ("awc_location_months"."awc_id" = "ccs_record_monthly"."awc_id")
-    );
+    LEFT JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON ("awc_location_months"."awc_id" = "ccs_record_monthly"."awc_id");

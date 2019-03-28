@@ -20,8 +20,7 @@ CREATE VIEW agg_child_health_monthly AS
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
-        "awc_location_months"."month" AS "month",
-        "awc_location_months"."month_display" AS "month_display",
+        "agg_child_health"."month" AS "month",
         "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "agg_child_health"."gender" AS "gender",
         "agg_child_health"."age_tranche" AS "age_tranche",
@@ -86,7 +85,6 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."zscore_grading_wfh_recorded_in_month", 0) AS "zscore_grading_wfh_recorded_in_month"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
-        ("awc_location_months"."month" = "agg_child_health"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_child_health"."state_id") AND
         ("awc_location_months"."district_id" = "agg_child_health"."district_id") AND

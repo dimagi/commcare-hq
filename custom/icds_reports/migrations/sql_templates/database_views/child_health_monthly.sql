@@ -20,7 +20,7 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.disabled,
       child_health_monthly.minority,
       child_health_monthly.resident,
-      awc_location_months.month,
+      child_health_monthly.month,
       child_health_monthly.age_in_months,
       child_health_monthly.open_in_month,
       child_health_monthly.valid_in_month,
@@ -67,7 +67,4 @@ CREATE VIEW child_health_monthly_view AS
         ELSE 4 END AS current_month_wasting_v2_sort,
       child_health_monthly.mother_phone_number
   FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."child_health_monthly" "child_health_monthly" ON (
-      ("awc_location_months"."month" = "child_health_monthly"."month") AND
-      ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id")
-  );
+    LEFT JOIN "public"."child_health_monthly" "child_health_monthly" ON ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id");

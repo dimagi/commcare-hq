@@ -20,7 +20,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         "awc_location_months"."block_map_location_name" AS "block_map_location_name",
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-        "awc_location_months"."month" AS "month",
+        "agg_ccs_record"."month" AS "month",
         "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "awc_location_months"."aww_name" AS "aww_name",
         "agg_ccs_record"."ccs_status" AS "ccs_status",
@@ -70,7 +70,6 @@ CREATE VIEW agg_ccs_record_monthly AS
         COALESCE("agg_ccs_record"."expected_visits", 0) AS "expected_visits"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_ccs_record" "agg_ccs_record" ON (
-        ("awc_location_months"."month" = "agg_ccs_record"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_ccs_record"."aggregation_level") AND
         ("awc_location_months"."state_id" = "agg_ccs_record"."state_id") AND
         ("awc_location_months"."district_id" = "agg_ccs_record"."district_id") AND

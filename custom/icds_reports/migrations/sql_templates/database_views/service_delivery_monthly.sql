@@ -38,7 +38,6 @@ SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_ch
 
 FROM "public"."awc_location_months" "awc_location_months"
 LEFT join agg_awc on (
-        ("agg_awc"."month" = "awc_location_months"."month") AND
         ("agg_awc"."state_id" = "awc_location_months"."state_id") AND
         ("agg_awc"."district_id" = "awc_location_months"."district_id") AND
         ("agg_awc"."block_id" = "awc_location_months"."block_id") AND
@@ -47,7 +46,7 @@ LEFT join agg_awc on (
         ("agg_awc"."awc_id" = "awc_location_months"."awc_id")
 )
 LEFT JOIN agg_child_health on (
-        ("agg_child_health"."month" = "awc_location_months"."month") AND
+        ("agg_child_health"."month" = "agg_awc"."month") AND
         ("agg_child_health"."state_id" = "awc_location_months"."state_id") AND
         ("agg_child_health"."district_id" = "awc_location_months"."district_id") AND
         ("agg_child_health"."block_id" = "awc_location_months"."block_id") AND
@@ -70,7 +69,7 @@ LEFT JOIN (
         group by state_id,district_id,block_id,supervisor_id,awc_id,aggregation_level, month
 
         ) ccr on (
-          ("ccr"."month" = "awc_location_months"."month") AND
+          ("ccr"."month" = "agg_awc"."month") AND
           ("ccr"."state_id" = "awc_location_months"."state_id") AND
           ("ccr"."district_id" = "awc_location_months"."district_id") AND
           ("ccr"."block_id" = "awc_location_months"."block_id") AND
