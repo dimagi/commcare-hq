@@ -247,6 +247,24 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 'hospitalType': 'N/A',
             })
 
+    @patch.object(CcsRecord, 'delivery_form_details', lambda _: {})
+    def test_delivery_details_no_form(self):
+        self.assertEqual(
+            self._helper.delivery_details(),
+            {
+                'dod': date(2019, 7, 31),
+                'assistanceOfDelivery': 'N/A',
+                'timeOfDelivery': 'N/A',
+                'dateOfDischarge': 'N/A',
+                'typeOfDelivery': 'N/A',
+                'timeOfDischarge': 'N/A',
+                'placeOfBirth': 'N/A',
+                'deliveryComplications': 'N/A',
+                'placeOfDelivery': 'N/A',
+                'complicationDetails': 'N/A',
+                'hospitalType': 'N/A',
+            })
+
     def test_postnatal_care_details(self):
         self.assertEqual(
             self._helper.postnatal_care_details(),
