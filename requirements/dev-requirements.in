@@ -16,3 +16,4 @@ modernize
 Fabric==1.14.0
 gnureadline==6.3.8
 pip-tools~=3.0
+recommonmark==0.5.0
