@@ -12,7 +12,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE)
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
-from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import BaseICDSAggregationHelper
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):

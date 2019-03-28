@@ -3,15 +3,15 @@ from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
 
-from custom.icds_reports.const import AGG_DAILY_FEEDING_TABLE
+from custom.icds_reports.const import AGG_CHILD_HEALTH_THR_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import BaseICDSAggregationHelper
 
 
-class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
-    ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
-    aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
-    aggregate_child_table_prefix = 'icds_db_child_daily_feed_form_'
+class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_thr_forms'
+    aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_thr_form_'
 
     def aggregate(self, cursor):
         curr_month_query, curr_month_params = self.create_table_query()
@@ -22,12 +22,13 @@ class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         cursor.execute(agg_query, agg_params)
 
     def aggregation_query(self):
-        tablename = self.generate_child_tablename(self.month)
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         query_params = {
-            "month": month_formatter(self.month),
+            "month": month_formatter(month),
             "state_id": self.state_id,
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
@@ -35,17 +36,15 @@ class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, case_id, latest_time_end_processed,
-          sum_attended_child_ids, lunch_count
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, days_ration_given_child
         ) (
           SELECT DISTINCT ON (child_health_case_id)
             %(state_id)s AS state_id,
-            LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
+            LAST_VALUE(supervisor_id) over w AS supervisor_id,
             %(month)s AS month,
             child_health_case_id AS case_id,
-            MAX(timeend) OVER w AS latest_time_end_processed,
-            SUM(attended_child_ids) OVER w AS sum_attended_child_ids,
-            SUM(lunch) OVER w AS lunch_count
+            MAX(timeend) over w AS latest_time_end_processed,
+            SUM(days_ration_given_child) over w AS days_ration_given_child
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

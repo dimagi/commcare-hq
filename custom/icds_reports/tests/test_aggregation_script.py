@@ -16,7 +16,7 @@ from six.moves import zip
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
 from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
-from custom.icds_reports.utils.monolith.inactive_awws import InactiveAwwsAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith.inactive_awws import InactiveAwwsAggregationHelper
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')

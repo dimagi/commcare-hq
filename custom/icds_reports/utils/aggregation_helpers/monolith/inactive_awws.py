@@ -5,7 +5,7 @@ import datetime
 
 from django.utils.functional import cached_property
 
-from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import BaseICDSAggregationHelper
 
 
 class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):

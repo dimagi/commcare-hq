@@ -6,7 +6,7 @@ from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DAILY_FEEDING_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers import date_to_string, \
     transform_day_to_month
-from custom.icds_reports.utils.monolith import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import BaseICDSAggregationHelper
 
 
 class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
