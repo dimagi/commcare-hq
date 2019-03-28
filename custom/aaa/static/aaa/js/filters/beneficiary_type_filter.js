@@ -1,13 +1,9 @@
 hqDefine('aaa/js/filters/beneficiary_type_filter', [
     'jquery',
     'knockout',
-    'underscore',
-    'moment/moment',
 ], function (
     $,
-    ko,
-    _,
-    moment
+    ko
 ) {
     return {
         viewModel: function (params) {
@@ -38,7 +34,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 };
             }
 
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'beneficiary-type-template\' }"></div>',
     };

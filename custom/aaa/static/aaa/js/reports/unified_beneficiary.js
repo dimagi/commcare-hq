@@ -19,7 +19,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
 ) {
     var tableDom = '<i<t><"row"<"col-md-2"><"col-md-8 center"<"table_pagination"p>><"col-md-2"<"table_info"l>>>>';
 
-    var unifiedBeneficiary = function (options) {
+    var unifiedBeneficiary = function () {
         var self = {};
         self.sections = ko.observableArray();
         self.title = 'Unified Beneficiary';
@@ -37,7 +37,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
 
         self.dt = null;
 
-        var views = {
+        self.views = {
             'eligible_couple': eligibleCoupleModel,
             'pregnant_women': pregnantWomenModel,
             'child': childModel,
@@ -50,7 +50,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
             var data = [];
             self.dt.clear();
             _.forEach(rows, function (row) {
-                data.push(reportListView.listView(row, self.postData))
+                data.push(reportListView.listView(row, self.postData));
             });
             return data;
         };
@@ -61,13 +61,13 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                 $('#datatable').empty();
             }
             selectedType = self.postData.selectedBeneficiaryType();
-            reportListView = views[selectedType];
+            reportListView = self.views[selectedType];
 
             self.dt = $('#datatable').DataTable({
                 dom: tableDom,
                 columns: reportListView.config().columns,
                 serverSide: true,
-                ajax: function (data, callback, settings) {
+                ajax: function (data, callback) {
                     /* TODO: check why the ajax function is calling when the table is removed.
 
                        For now, we compare selected BeneficiaryType with this in
@@ -92,7 +92,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                                 recordsTotal: response.recordsTotal,
                                 recordsFiltered: response.recordsFiltered,
                                 data: rows
-                            })
+                            });
                         });
                     }
                 }
