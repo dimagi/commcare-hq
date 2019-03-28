@@ -47,7 +47,12 @@ class Command(BaseCommand):
             return
 
         print('Unlinking apps')
-        domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
+        self.unlink_app(linked_app)
+        self.hide_domain_link_history(linked_domain, linked_app_id, master_domain)
+        print('Operation completed')
+
+    @staticmethod
+    def unlink_app(linked_app):
         raw_linked_app_doc = Application.get_db().get(linked_app.id)
         del raw_linked_app_doc['master']
         del raw_linked_app_doc['linked_app_translations']
@@ -56,6 +61,9 @@ class Command(BaseCommand):
         raw_linked_app_doc['doc_type'] = 'Application'
         Application.get_db().save_doc(raw_linked_app_doc)
 
+    @staticmethod
+    def hide_domain_link_history(linked_domain, linked_app_id, master_domain):
+        domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
         for history in DomainLinkHistory.objects.filter(link=domain_link):
             if history.model_detail['app_id'] == linked_app_id:
                 history.hidden = True
@@ -63,4 +71,3 @@ class Command(BaseCommand):
         if not DomainLinkHistory.objects.filter(link=domain_link).exists():
             domain_link.deleted = True
             domain_link.save()
-        print('Operation completed')
