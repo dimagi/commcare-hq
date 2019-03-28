@@ -707,6 +707,13 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
 
 class ScheduledReportsCheckpoint(models.Model):
+    """
+    Each time a date range is checked for scheduled reports to send
+    a ScheduledReportsCheckpoint is created to mark that.
+    This allows us to achieve full non-overlapping coverage of time as it unfolds,
+    even in the face of varying promptness and uptime in celery and celery beat.
+    Secondarily, it also leaves a positive record of when a time batch was processed.
+    """
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(db_index=True)
 
