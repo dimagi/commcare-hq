@@ -63,6 +63,7 @@ def check_repeaters():
     try:
         with datadog_bucket_timer(
             "commcare.repeaters.check.processing",
+            tags=[],
             timing_buckets=_check_repeaters_buckets,
         ):
             for record in iterate_repeat_records(start):
