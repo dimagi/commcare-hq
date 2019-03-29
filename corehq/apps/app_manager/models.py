@@ -60,6 +60,7 @@ from corehq.apps.app_manager.helpers.validators import (
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -4824,6 +4825,12 @@ class SavedAppBuild(ApplicationBase):
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
+            'include_media': self.doc_type != 'RemoteApp',
+            'j2me_enabled': 'menu_item_label' in CommCareBuildConfig.j2me_enabled_config_labels(),
+            'target_commcare_flavor': (
+                self.target_commcare_flavor
+                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else 'none'
+            ),
         })
         comment_from = data['comment_from']
         if comment_from:
