@@ -100,8 +100,26 @@
                     <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
                         <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
                         <td>
+
+                            {% if toggle.description %}
+                            <a class="collapsed" data-toggle="collapse" aria-expanded="false"
+                               href="#toggleDescription-{{ toggle.slug }}">
+                                <i class="fa fa-angle-double-down"></i>
+                            </a>
+                            {% endif %}
+
                             {{ toggle.label }}
+
                             {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+
+                            {% if toggle.description %}
+                            <div class="collapse" id="toggleDescription-{{ toggle.slug }}">
+                                <div class="well">
+                                    {{ toggle.description }}
+                                </div>
+                            </div>
+                            {% endif %}
+
                         </td>
                         <td class="checkmark-column">{% if enabled_for_domain %}<i class="fa fa-check"></i>{% endif %}</td>
                         <td class="checkmark-column">{% if enabled_for_user %}<i class="fa fa-check"></i>{% endif %}</td>
