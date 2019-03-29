@@ -11,6 +11,7 @@ from django_bulk_update.helper import bulk_update as bulk_update_helper
 import jsonfield
 from django.db import models, transaction
 from django.db.models import Q
+from django.db.models.functions import Length
 from django_cte import CTEQuerySet
 from memoized import memoized
 import six
@@ -333,7 +334,8 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         It matches by name or site-code
         """
         direct_matches = self._user_input_filter(domain, user_input)
-        return self.get_queryset_descendants(direct_matches, include_self=True)
+        return (self.get_queryset_descendants(direct_matches, include_self=True)
+                .order_by(Length('name')).order_by(Length('site_code')))
 
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)
