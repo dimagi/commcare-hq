@@ -314,7 +314,11 @@
         {% endblock %}
         {% endif %}
         {# modals #}
-        {% block modals %}{% endblock modals %}
+        {% block modals %}
+            {% if domain and show_overdue_invoice_modal %}
+                {% include 'hqwebapp/downgrade_modal.html' %}
+            {% endif %}
+        {% endblock modals %}
 
         {% if show_mobile_ux_warning %}
           {% include "hqwebapp/partials/mobile_ux_warning.html" %}
@@ -523,6 +527,10 @@
         {% include 'hqwebapp/partials/ko_inline_edit.html' %}
         {% include 'hqwebapp/partials/ko_search_box.html' %}
         {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+
+        {% if show_overdue_invoice_modal and not requirejs_main %}
+            <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+        {% endif %}
 
         {% block js %}{% endblock js %}
 
