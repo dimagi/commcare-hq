@@ -31,11 +31,9 @@ from soil.util import expose_download
 from corehq.apps.domain.calculations import (
     all_domain_stats,
     calced_props,
-    CALC_FNS,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
-from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.elastic import (
