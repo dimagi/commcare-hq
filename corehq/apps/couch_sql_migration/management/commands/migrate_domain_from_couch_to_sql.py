@@ -238,11 +238,8 @@ class Command(BaseCommand):
 
 
 def _confirm(message):
-    if input(
-            '{} [y/n]'.format(message)
-    ).lower() == 'y':
-        return
-    else:
+    response = input('{} [y/N]'.format(message)).lower()
+    if response != 'y':
         raise CommandError('abort')
 
 
