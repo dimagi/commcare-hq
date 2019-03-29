@@ -83,7 +83,7 @@ class PropertyNameGetterSpec(JsonObject):
     """
     This expression returns ``doc["age"]``:
 
-    ::
+    .. code:: json
 
        {
            "type": "property_name",
@@ -92,8 +92,8 @@ class PropertyNameGetterSpec(JsonObject):
 
     An optional ``"datatype"`` attribute may be specified, which will
     attempt to cast the property to the given data type. The options are
-    “date”, “datetime”, “string”, “integer”, and “decimal”. If no datatype
-    is specified, “string” will be used.
+    "date", "datetime", "string", "integer", and "decimal". If no datatype
+    is specified, "string" will be used.
     """
     type = TypeProperty('property_name')
     property_name = DefaultProperty(required=True)
