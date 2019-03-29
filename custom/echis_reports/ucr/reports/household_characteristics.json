@@ -85,7 +85,7 @@
          "description":null,
          "format":"default",
          "css_class":null,
-         "visible":true,
+         "visible":false,
          "aggregation":"simple",
          "column_id":"health_post_id",
          "width":null,
@@ -93,7 +93,7 @@
 
          },
          "calculate_total":false,
-         "type":"field",
+         "type":"field", 
          "display":"Health Post Id"
       },
       {
