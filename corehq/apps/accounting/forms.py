@@ -637,6 +637,7 @@ class SubscriptionForm(forms.Form):
                     'active_accounts',
                     css_class='input-xxlarge accounting-async-select2',
                     placeholder="Select Active Account",
+                    style="width: 100%;",
                 ),
             ])
         self.helper.layout = crispy.Layout(
@@ -848,7 +849,8 @@ class ChangeSubscriptionForm(forms.Form):
                 'new_plan_edition',
                 crispy.Field(
                     'new_plan_version', css_class="input-xxlarge",
-                    placeholder="Search for Software Plan"
+                    placeholder="Search for Software Plan",
+                    style="width: 100%;"
                 ),
                 'service_type',
                 'pro_bono_status',
