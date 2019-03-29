@@ -136,7 +136,7 @@ class Command(BaseCommand):
                 raise CommandError("cannot commit a migration that is not in state in_progress")
             if not self.no_input:
                 _confirm(
-                    "This will allow convert the domain to use the SQL backend and"
+                    "This will convert the domain to use the SQL backend and"
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
