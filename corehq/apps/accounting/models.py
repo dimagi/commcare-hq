@@ -3170,6 +3170,19 @@ class CreditLine(models.Model):
                     'balance': self.balance,
                 })
 
+    def save(self, *args, **kwargs):
+        from corehq.apps.accounting.mixins import (
+            get_credits_available_for_product_in_account,
+            get_credits_available_for_product_in_subscription,
+        )
+
+        super(CreditLine, self).save(*args, **kwargs)
+        if self.account:
+            get_credits_available_for_product_in_account.clear(self.account)
+        if self.subscription:
+            get_credits_available_for_product_in_subscription.clear(self.subscription)
+
+
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None, customer_invoice=None,
                               payment_record=None, related_credit=None,
