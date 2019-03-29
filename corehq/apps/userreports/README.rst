@@ -94,11 +94,11 @@ used together to produce arbitrarily complicated expressions.
 +====================+==================================================+
 | boolean_expression | A expression / logic statement (more below)      |
 +--------------------+--------------------------------------------------+
-| and                | An “and” of other filters - true if all are true |
+| and                | An "and" of other filters - true if all are true |
 +--------------------+--------------------------------------------------+
-| or                 | An “or” of other filters - true if any are true  |
+| or                 | An "or" of other filters - true if any are true  |
 +--------------------+--------------------------------------------------+
-| not                | A “not” or inverse expression on a filter        |
+| not                | A "not" or inverse expression on a filter        |
 +--------------------+--------------------------------------------------+
 
 To understand the ``boolean_expression`` type, we must first explain
@@ -314,119 +314,22 @@ Property Name Expression
 Property Path Expression
 ''''''''''''''''''''''''
 
-This expression returns ``doc["child"]["age"]``:
-
-::
-
-   {
-       "type": "property_path",
-       "property_path": ["child", "age"]
-   }
-
-An optional ``"datatype"`` attribute may be specified, which will
-attempt to cast the property to the given data type. The options are
-“date”, “datetime”, “string”, “integer”, and “decimal”. If no datatype
-is specified, “string” will be used.
+.. autoclass:: corehq.apps.userreports.expressions.specs.PropertyPathGetterSpec
 
 Conditional Expression
 ''''''''''''''''''''''
 
-This expression returns ``"legal" if doc["age"] > 21 else "underage"``:
-
-::
-
-   {
-       "type": "conditional",
-       "test": {
-           "operator": "gt",
-           "expression": {
-               "type": "property_name",
-               "property_name": "age",
-               "datatype": "integer"
-           },
-           "type": "boolean_expression",
-           "property_value": 21
-       },
-       "expression_if_true": {
-           "type": "constant",
-           "constant": "legal"
-       },
-       "expression_if_false": {
-           "type": "constant",
-           "constant": "underage"
-       }
-   }
-
-Note that this expression contains other expressions inside it! This is
-why expressions are powerful. (It also contains a filter, but we haven’t
-covered those yet - if you find the ``"test"`` section confusing, keep
-reading…)
-
-Note also that it’s important to make sure that you are comparing values
-of the same type. In this example, the expression that retrieves the age
-property from the document also casts the value to an integer. If this
-datatype is not specified, the expression will compare a string to the
-``21`` value, which will not produce the expected results!
+.. autoclass:: corehq.apps.userreports.expressions.specs.ConditionalExpressionSpec
 
 Switch Expression
 '''''''''''''''''
 
-This expression returns the value of the expression for the case that
-matches the switch on expression. Note that case values may only be
-strings at this time.
-
-.. code:: json
-
-   {
-       "type": "switch",
-       "switch_on": {
-           "type": "property_name",
-           "property_name": "district"
-       },
-       "cases": {
-           "north": {
-               "type": "constant",
-               "constant": 4000
-           },
-           "south": {
-               "type": "constant",
-               "constant": 2500
-           },
-           "east": {
-               "type": "constant",
-               "constant": 3300
-           },
-           "west": {
-               "type": "constant",
-               "constant": 65
-           },
-       },
-       "default": {
-           "type": "constant",
-           "constant": 0
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.SwitchExpressionSpec
 
 Coalesce Expression
 '''''''''''''''''''
 
-This expression returns the value of the expression provided, or the
-value of the default_expression if the expression provided evalutes to a
-null or blank string.
-
-.. code:: json
-
-   {
-       "type": "coalesce",
-       "expression": {
-           "type": "property_name",
-           "property_name": "district"
-       },
-       "default_expression": {
-           "type": "constant",
-           "constant": "default_district"
-       }
-   }
+.. autoclass:: corehq.apps.userreports.expressions.specs.CoalesceExpressionSpec
 
 Array Index Expression
 ''''''''''''''''''''''
@@ -448,7 +351,7 @@ This expression returns ``doc["siblings"][0]``:
    }
 
 It will return nothing if the siblings property is not a list, the index
-isn’t a number, or the indexed item doesn’t exist.
+isn't a number, or the indexed item doesn't exist.
 
 Split String Expression
 '''''''''''''''''''''''
@@ -471,8 +374,8 @@ This expression returns ``(doc["foo bar"]).split(' ')[0]``:
    }
 
 The delimiter is optional and is defaulted to a space. It will return
-nothing if the string_expression is not a string, or if the index isn’t
-a number or the indexed item doesn’t exist. The index_expression is also
+nothing if the string_expression is not a string, or if the index isn't
+a number or the indexed item doesn't exist. The index_expression is also
 optional. Without it, the expression will return the list of elements.
 
 Iterator Expression
@@ -500,7 +403,7 @@ Iterator Expression
    }
 
 This will emit ``[doc.p1, doc.p2, doc.p3]``. You can add a ``test``
-attribute to filter rows from what is emitted - if you don’t specify
+attribute to filter rows from what is emitted - if you don't specify
 this then the iterator will include one row per expression it contains
 regardless of what is passed in. This can be used/combined with the
 ``base_item_expression`` to emit multiple rows per document.
@@ -521,7 +424,7 @@ of the repeat item starting from 0 when used with a
 Related document expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This can be used to lookup a property in another document. Here’s an
+This can be used to lookup a property in another document. Here's an
 example that lets you look up ``form.case.owner_id`` from a form.
 
 .. code:: json
@@ -619,11 +522,11 @@ Here is a simple example that demonstrates the structure. The keys of
        }
    }
 
-“Add Days” expressions
+"Add Days" expressions
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Below is a simple example that demonstrates the structure. The
-expression below will add 28 days to a property called “dob”. The
+expression below will add 28 days to a property called "dob". The
 date_expression and count_expression can be any valid expressions, or
 simply constants.
 
@@ -638,7 +541,7 @@ simply constants.
        "count_expression": 28
    }
 
-“Add Months” expressions
+"Add Months" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``add_months`` offsets given date by given number of calendar months. If
@@ -660,7 +563,7 @@ or simply constants, including negative numbers.
        "months_expression": 28
    }
 
-“Diff Days” expressions
+"Diff Days" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 ``diff_days`` returns number of days between dates specified by
@@ -679,7 +582,7 @@ expressions, or simply constants.
        "to_date_expression": "2016-02-01"
    }
 
-“Evaluator” expression
+"Evaluator" expression
 ^^^^^^^^^^^^^^^^^^^^^^
 
 ``evaluator`` expression can be used to evaluate statements that contain
@@ -738,7 +641,7 @@ Only the following functions are permitted:
    Note that for performance reasons this is limited to 100 items or
    less.
 
-“Month Start Date” and “Month End Date” expressions
+"Month Start Date" and "Month End Date" expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``month_start_date`` returns date of first day in the month of given
@@ -757,10 +660,10 @@ The ``date_expression`` can be any valid expression, or simply constant
        },
    }
 
-‘Get Case Sharing Groups’ expression
+‘Get Case Sharing Groups' expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-‘get_case_sharing_groups’ will return an array of the case sharing
+‘get_case_sharing_groups' will return an array of the case sharing
 groups that are assigned to a provided user ID. The array will contain
 one document per case sharing group.
 
@@ -774,10 +677,10 @@ one document per case sharing group.
        }
    }
 
-‘Get Reporting Groups’ expression
+‘Get Reporting Groups' expression
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-‘get_reporting_groups’ will return an array of the reporting groups that
+‘get_reporting_groups' will return an array of the reporting groups that
 are assigned to a provided user ID. The array will contain one document
 per reporting group.
 
@@ -797,7 +700,7 @@ Filter, Sort, Map and Reduce Expressions
 We have following expressions that act on a list of objects or list of
 lists. The list to operate on is specified by ``items_expression``. This
 can be any valid expression that returns a list. If the
-``items_expression`` doesn’t return a valid list, these might either
+``items_expression`` doesn't return a valid list, these might either
 fail or return one of empty list or ``None`` value.
 
 map_items Expression
@@ -812,7 +715,7 @@ document from which the list is specified. For e.g. if
 document, ``map_expression`` is a path relative to the repeat item.
 
 ``items_expression`` can be any valid expression that returns a list. If
-this doesn’t evaluate to a list an empty list is returned. It may be
+this doesn't evaluate to a list an empty list is returned. It may be
 necessary to specify a ``datatype`` of ``array`` if the expression could
 return a single element.
 
@@ -847,7 +750,7 @@ evaluates to a ``True`` value, the item is included in the new list and
 if not, is not included in the new list.
 
 ``items_expression`` can be any valid expression that returns a list. If
-this doesn’t evaluate to a list an empty list is returned. It may be
+this doesn't evaluate to a list an empty list is returned. It may be
 necessary to specify a ``datatype`` of ``array`` if the expression could
 return a single element.
 
@@ -883,10 +786,10 @@ By default, list will be in ascending order. Order can be changed by
 adding optional ``order`` expression with one of ``DESC`` (for
 descending) or ``ASC`` (for ascending) If a sort-value of an item is
 ``None``, the item will appear in the start of list. If sort-values of
-any two items can’t be compared, an empty list is returned.
+any two items can't be compared, an empty list is returned.
 
 ``items_expression`` can be any valid expression that returns a list. If
-this doesn’t evaluate to a list an empty list is returned. It may be
+this doesn't evaluate to a list an empty list is returned. It may be
 necessary to specify a ``datatype`` of ``array`` if the expression could
 return a single element.
 
@@ -915,7 +818,7 @@ reduce_items Expression
 ``aggregation_fn``.
 
 ``items_expression`` can be any valid expression that returns a list. If
-this doesn’t evaluate to a list, ``aggregation_fn`` will be applied on
+this doesn't evaluate to a list, ``aggregation_fn`` will be applied on
 an empty list. It may be necessary to specify a ``datatype`` of
 ``array`` if the expression could return a single element.
 
@@ -932,9 +835,9 @@ an empty list. It may be necessary to specify a ``datatype`` of
 +----------------+-----------------------+
 | ``max``        | ``[2, 5, 1]`` -> 5    |
 +----------------+-----------------------+
-| ``first_item`` | ``['a', 'b']`` -> ‘a’ |
+| ``first_item`` | ``['a', 'b']`` -> ‘a' |
 +----------------+-----------------------+
-| ``last_item``  | ``['a', 'b']`` -> ‘b’ |
+| ``last_item``  | ``['a', 'b']`` -> ‘b' |
 +----------------+-----------------------+
 
 .. code:: json
@@ -958,7 +861,7 @@ flatten expression
 ``items_expression`` and returns one list of all objects.
 
 ``items_expression`` is any valid expression that returns a list of
-lists. It this doesn’t evaluate to a list of lists an empty list is
+lists. It this doesn't evaluate to a list of lists an empty list is
 returned. It may be necessary to specify a ``datatype`` of ``array`` if
 the expression could return a single element.
 
@@ -1002,7 +905,7 @@ includes a snippet like the following:
    }
 
 This is just a simple example - the value that ``"my_expression"`` takes
-on can be as complicated as you want *as long as it doesn’t reference
+on can be as complicated as you want *as long as it doesn't reference
 any other named expressions*.
 
 Boolean Expression Filters
@@ -1083,7 +986,7 @@ complicated boolean logic on data. There are three types of filters,
 *and*, *or*, and *not* filters. The JSON representation of these is
 below. Hopefully these are self explanatory.
 
-“And” Filters
+"And" Filters
 ^^^^^^^^^^^^^
 
 The following filter represents the statement:
@@ -1116,7 +1019,7 @@ The following filter represents the statement:
        ]
    }
 
-“Or” Filters
+"Or" Filters
 ^^^^^^^^^^^^
 
 The following filter represents the statement:
@@ -1149,7 +1052,7 @@ The following filter represents the statement:
        ]
    }
 
-“Not” Filters
+"Not" Filters
 ^^^^^^^^^^^^^
 
 The following filter represents the statement:
@@ -1173,7 +1076,7 @@ The following filter represents the statement:
    }
 
 *Note that this could be represented more simply using a single filter
-with the ``not_eq`` operator, but “not” filters can represent more
+with the ``not_eq`` operator, but "not" filters can represent more
 complex logic than operators generally, since the filter itself can be
 another compound filter.*
 
@@ -1286,7 +1189,7 @@ Expression indicators
 Similar to the boolean indicators - expression indicators leverage the
 expression structure defined above to create arbitrarily complex
 indicators. Expressions can store arbitrary values from documents (as
-opposed to boolean indicators which just store ``0``\ ’s and ``1``\ ’s).
+opposed to boolean indicators which just store ``0``\ 's and ``1``\ 's).
 Because of this they require a few additional properties in the
 definition:
 
@@ -1295,10 +1198,10 @@ definition:
 +========================================+=============================+
 | datatype                               | The datatype of the         |
 |                                        | indicator. Current valid    |
-|                                        | choices are: “date”,        |
-|                                        | “datetime”, “string”,       |
-|                                        | “decimal”, “integer”, and   |
-|                                        | “small_integer”.            |
+|                                        | choices are: "date",        |
+|                                        | "datetime", "string",       |
+|                                        | "decimal", "integer", and   |
+|                                        | "small_integer".            |
 +----------------------------------------+-----------------------------+
 | is_nullable                            | Whether the database column |
 |                                        | should allow null values.   |
@@ -1317,11 +1220,11 @@ definition:
 | transform                              | (optional) transform to be  |
 |                                        | applied to the result of    |
 |                                        | the expression. (see        |
-|                                        | “Report Columns >           |
-|                                        | Transforms” section below)  |
+|                                        | "Report Columns >           |
+|                                        | Transforms" section below)  |
 +----------------------------------------+-----------------------------+
 
-Here is a sample expression indicator that just saves the “age” property
+Here is a sample expression indicator that just saves the "age" property
 to an integer column in the database:
 
 ::
@@ -1375,7 +1278,7 @@ found in the corresponding ledger.
 +============================================+==========================+
 | ledger_section                             | The ledger section to    |
 |                                            | use for this indicator,  |
-|                                            | for example, “stock”     |
+|                                            | for example, "stock"     |
 +--------------------------------------------+--------------------------+
 | product_codes                              | A list of the products   |
 |                                            | to include in the        |
@@ -1389,7 +1292,7 @@ found in the corresponding ledger.
 |                                            | get the case where each  |
 |                                            | ledger is found. If not  |
 |                                            | specified, it will use   |
-|                                            | the row’s doc id.        |
+|                                            | the row's doc id.        |
 +--------------------------------------------+--------------------------+
 
 ::
@@ -1416,9 +1319,9 @@ This spec would produce the following columns in the data source:
 | 67          | 32           | 9         |
 +-------------+--------------+-----------+
 
-If the ledger you’re using is a due list and you wish to save the dates
-instead of integers, you can change the “type” from “ledger_balances” to
-“due_list_dates”.
+If the ledger you're using is a due list and you wish to save the dates
+instead of integers, you can change the "type" from "ledger_balances" to
+"due_list_dates".
 
 Practical notes for creating indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1444,7 +1347,7 @@ reference parent properties and the ``base_iteration_number`` expression
 type to reference the current index of the item. This can be combined
 with the ``iterator`` expression type to do complex data source
 transforms. This is not described in detail, but the following sample
-(which creates a table off of a repeat element called “time_logs” can be
+(which creates a table off of a repeat element called "time_logs" can be
 used as a guide). There are also additional examples in the `practical examples`_:
 
 ::
@@ -1589,7 +1492,7 @@ the UI.
 
 Date filters have an optional ``compare_as_string`` option that allows
 the date filter to be compared against an indicator of data type
-``string``. You shouldn’t ever need to use this option (make your column
+``string``. You shouldn't ever need to use this option (make your column
 a ``date`` or ``datetime`` type instead), but it exists because the
 report builder needs it.
 
@@ -1621,7 +1524,7 @@ not need to be configured by app builders in report modules; fields with
 pre-filters will not be listed in the report module among the other
 fields that can be filtered.
 
-A pre-filter’s ``type`` is set to “pre”:
+A pre-filter's ``type`` is set to "pre":
 
 ::
 
@@ -1633,10 +1536,10 @@ A pre-filter’s ``type`` is set to “pre”:
      "pre_value": "yes"
    }
 
-If ``pre_value`` is scalar (i.e. ``datatype`` is “string”, “integer”,
-etc.), the filter will use the “equals” operator. If ``pre_value`` is
-null, the filter will use “is null”. If ``pre_value`` is an array, the
-filter will use the “in” operator. e.g.
+If ``pre_value`` is scalar (i.e. ``datatype`` is "string", "integer",
+etc.), the filter will use the "equals" operator. If ``pre_value`` is
+null, the filter will use "is null". If ``pre_value`` is an array, the
+filter will use the "in" operator. e.g.
 
 ::
 
@@ -1648,7 +1551,7 @@ filter will use the “in” operator. e.g.
      "pre_value": ["yes", "maybe"]
    }
 
-(If ``pre_value`` is an array and ``datatype`` is not “array”, it is
+(If ``pre_value`` is an array and ``datatype`` is not "array", it is
 assumed that ``datatype`` refers to the data type of the items in the
 array.)
 
@@ -1679,7 +1582,7 @@ The default behavior is simply to show all possible values for a column,
 however you can also specify a ``choice_provider`` to customize this
 behavior (see below).
 
-Simple example assuming “village” is a name:
+Simple example assuming "village" is a name:
 
 .. code:: json
 
@@ -1709,13 +1612,13 @@ Currently the supported ``choice_provider``\ s are supported:
 Location choice providers also support three additional configuration
 options:
 
--  “include_descendants” - Include descendants of the selected locations
+-  "include_descendants" - Include descendants of the selected locations
    in the results. Defaults to ``false``.
--  “show_full_path” - Display the full path to the location in the
+-  "show_full_path" - Display the full path to the location in the
    filter. Defaults to ``false``. The default behavior shows all
    locations as a flat alphabetical list.
 
-Example assuming “village” is a location ID, which is converted to names
+Example assuming "village" is a location ID, which is converted to names
 using the location ``choice_provider``:
 
 .. code:: json
@@ -1767,9 +1670,9 @@ down from top level.
      "max_drilldown_levels": 3
    }
 
--  “include_descendants” - Include descendant locations in the results.
+-  "include_descendants" - Include descendant locations in the results.
    Defaults to ``false``.
--  “max_drilldown_levels” - Maximum allowed drilldown levels. Defaults
+-  "max_drilldown_levels" - Maximum allowed drilldown levels. Defaults
    to 99
 
 Internationalization
@@ -1807,7 +1710,7 @@ ares:
 Field columns
 ~~~~~~~~~~~~~
 
-Field columns have a type of ``"field"``. Here’s an example field column
+Field columns have a type of ``"field"``. Here's an example field column
 that shows the owner name from an associated ``owner_id``:
 
 .. code:: json
@@ -1829,7 +1732,7 @@ Percent columns
 ~~~~~~~~~~~~~~~
 
 Percent columns have a type of ``"percent"``. They must specify a
-``numerator`` and ``denominator`` as separate field columns. Here’s an
+``numerator`` and ``denominator`` as separate field columns. Here's an
 example percent column that shows the percentage of pregnant women who
 had danger signs.
 
@@ -1881,7 +1784,7 @@ date field. They have a type of ``"aggregate_date"``. Unlike regular
 fields, you do not specify how aggregation happens, it is automatically
 grouped by month.
 
-Here’s an example of an aggregate date column that aggregates the
+Here's an example of an aggregate date column that aggregates the
 ``received_on`` property for each month (allowing you to count/sum
 things that happened in that month).
 
@@ -1894,12 +1797,12 @@ things that happened in that month).
        "display": "Month"
      }
 
-AggregateDate supports an optional “format” parameter, which accepts the
+AggregateDate supports an optional "format" parameter, which accepts the
 same `format
 string <https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior>`__
-as `Date formatting <#date-formatting>`__. If you don’t specify a
-format, the default will be “%Y-%m”, which will show as, for example,
-“2008-09”.
+as `Date formatting <#date-formatting>`__. If you don't specify a
+format, the default will be "%Y-%m", which will show as, for example,
+"2008-09".
 
 Keep in mind that the only variables available for formatting are
 ``year`` and ``month``, but that still gives you a fair range, e.g.
@@ -1907,11 +1810,11 @@ Keep in mind that the only variables available for formatting are
 +-----------+-------------------+
 | format    | Example result    |
 +===========+===================+
-| “%Y-%m”   | “2008-09”         |
+| "%Y-%m"   | "2008-09"         |
 +-----------+-------------------+
-| “%B, %Y”  | “September, 2008” |
+| "%B, %Y"  | "September, 2008" |
 +-----------+-------------------+
-| “%b (%y)” | “Sep (08)”        |
+| "%b (%y)" | "Sep (08)"        |
 +-----------+-------------------+
 
 ConditionalAggregationColumn
@@ -1925,7 +1828,7 @@ conditional expressions with corresponding names, then group together
 rows which which meet the same conditions. They have a type of
 ``"conditional_aggregation"``.
 
-Here’s an example that groups children based on their age at the time of
+Here's an example that groups children based on their age at the time of
 registration:
 
 .. code:: json
@@ -1946,7 +1849,7 @@ The ``"whens"`` attribute maps conditional expressions to labels. If
 none of the conditions are met, the row will receive the ``"else_"``
 value, if provided.
 
-Here’s a more complex example which uses SQL functions to dynamically
+Here's a more complex example which uses SQL functions to dynamically
 calculate ranges based on a date property:
 
 .. code:: json
@@ -1968,7 +1871,7 @@ Expanded Columns
 ~~~~~~~~~~~~~~~~
 
 Expanded columns have a type of ``"expanded"``. Expanded columns will be
-“expanded” into a new column for each distinct value in this column of
+"expanded" into a new column for each distinct value in this column of
 the data source. For example:
 
 If you have a data source like this:
@@ -2033,7 +1936,7 @@ the data in the report row. These can be referenced according to the
 advanced use cases like doing math on two different report columns, or
 doing conditional logic based on the contents of another column.
 
-A simple example is below, which assumes another called “number” in the
+A simple example is below, which assumes another called "number" in the
 report and shows how you could make a column that is 10 times that
 column.
 
@@ -2056,7 +1959,7 @@ column.
        }
    }
 
-The “aggregation” column property
+The "aggregation" column property
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The aggregation column property defines how the column should be
@@ -2161,7 +2064,7 @@ include all primary key columns here.
 
    ["doc_id"]
 
-Aggregate by ‘username’ column
+Aggregate by ‘username' column
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: json
@@ -2181,7 +2084,7 @@ Transforms
 Transforms can be used in two places - either to manipulate the value of
 a column just before it gets saved to a data source, or to transform the
 value returned by a column just before it reaches the user in a report.
-Here’s an example of a transform used in a report config ‘field’ column:
+Here's an example of a transform used in a report config ‘field' column:
 
 .. code:: json
 
@@ -2302,7 +2205,7 @@ Rounds decimal and floating point numbers to two decimal places.
 Generic number formatting
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Rounds numbers using Python’s `built in
+Rounds numbers using Python's `built in
 formatting <https://docs.python.org/2.7/library/string.html#string-formatting>`__.
 
 See below for a few simple examples. Read the docs for complex ones. The
@@ -2394,7 +2297,7 @@ A pie chart takes two inputs and makes a pie chart. Here are the inputs:
 | value_column     | The column you want to sum - often just a count   |
 +------------------+---------------------------------------------------+
 
-Here’s a sample spec:
+Here's a sample spec:
 
 ::
 
@@ -2419,13 +2322,13 @@ An aggregate multibar chart is used to aggregate across two columns
 +---------------------+------------------------------------------------+
 | secondary_aggregati | The secondary aggregation. These will be the   |
 | on                  | slices of the bar (or individual bars in       |
-|                     | “grouped” format)                              |
+|                     | "grouped" format)                              |
 +---------------------+------------------------------------------------+
 | value_column        | The column you want to sum - often just a      |
 |                     | count                                          |
 +---------------------+------------------------------------------------+
 
-Here’s a sample spec:
+Here's a sample spec:
 
 ::
 
@@ -2451,10 +2354,10 @@ indicators or counts) and makes a bar chart from them.
 +----------------+-----------------------------------------------------+
 | y_axis_columns | These are the columns to use for the secondary      |
 |                | axis. These will be the slices of the bar (or       |
-|                | individual bars in “grouped” format).               |
+|                | individual bars in "grouped" format).               |
 +----------------+-----------------------------------------------------+
 
-Here’s a sample spec:
+Here's a sample spec:
 
 ::
 
@@ -2519,12 +2422,12 @@ Custom Calendar Month
 ~~~~~~~~~~~~~~~~~~~~~
 
 When configuring a report within a module, you can filter a date field
-by the ‘CustomMonthFilter’. The choice includes the following options: -
+by the ‘CustomMonthFilter'. The choice includes the following options: -
 Start of Month (a number between 1 and 28) - Period (a number between 0
 and n with 0 representing the current month).
 
-Each custom calendar month will be “Start of the Month” to (“Start of
-the Month” - 1). For example, if the start of the month is set to 21,
+Each custom calendar month will be "Start of the Month" to ("Start of
+the Month" - 1). For example, if the start of the month is set to 21,
 then the period will be the 21th of the month -> 20th of the next month.
 
 Examples: Assume it was May 15: Period 0, day 21, you would sync April
@@ -2545,7 +2448,7 @@ Export
 A UCR data source can be exported, to back an excel dashboard, for
 instance. The URL for exporting data takes the form
 https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data
-source id]/ The export supports a “$format” parameter which can be any
+source id]/ The export supports a "$format" parameter which can be any
 of the following options: html, csv, xlsx, xls. The default format is
 csv.
 
@@ -2569,7 +2472,7 @@ additional filter types.
 Export example
 ~~~~~~~~~~~~~~
 
-Let’s say you want to restrict the results to only cases owned by a
+Let's say you want to restrict the results to only cases owned by a
 particular user, opened in the last 90 days, and with a child between 12
 and 24 months old as an xlsx file. The querystring might look like this:
 
@@ -2608,7 +2511,7 @@ Then load the report:
 
 Fire up a browser and you should see the new report in your domain. You
 should also be able to navigate to the edit UI, or look at and edit the
-example JSON files. There is a second example based off the “gsid”
+example JSON files. There is a second example based off the "gsid"
 domain as well using forms.
 
 The tests are also a good source of documentation for the various filter
@@ -2663,12 +2566,12 @@ Static configurable reports have the following style:
 Custom configurable reports
 ---------------------------
 
-Sometimes a client’s needs for a rendered report are outside of the
+Sometimes a client's needs for a rendered report are outside of the
 scope of the framework. To render the report using a custom Django
 template or with custom Excel formatting, define a subclass of
 ``ConfigurableReportView`` and override the necessary functions. Then
 include the python path to the class in the field
-``custom_configurable_report`` of the static report and don’t forget to
+``custom_configurable_report`` of the static report and don't forget to
 include the static report in ``STATIC_DATA_SOURCES`` in ``settings.py``.
 
 Extending User Configurable Reports
@@ -2695,7 +2598,7 @@ Following are some custom expressions that are currently available.
 
 -  ``location_type_name``: A way to get location type from a location
    document id.
--  ``location_parent_id``: A shortcut to get a location’s parent ID a
+-  ``location_parent_id``: A shortcut to get a location's parent ID a
    location id.
 -  ``get_case_forms``: A way to get a list of forms submitted for a
    case.
@@ -2736,7 +2639,7 @@ from kafka/pillows to celery.
 
 The main benefit of this is that documents will be processed only once
 even if many changes come in at a time. This makes this approach ideal
-datasources that don’t require ‘live’ data or where the source documents
+datasources that don't require ‘live' data or where the source documents
 change very frequently.
 
 It is also possible achieve greater parallelization than is currently

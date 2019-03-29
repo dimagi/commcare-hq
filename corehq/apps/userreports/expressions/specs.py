@@ -114,6 +114,21 @@ class PropertyNameGetterSpec(JsonObject):
 
 
 class PropertyPathGetterSpec(JsonObject):
+    """
+    This expression returns ``doc["child"]["age"]``:
+
+    .. code:: json
+
+       {
+           "type": "property_path",
+           "property_path": ["child", "age"]
+       }
+
+    An optional ``"datatype"`` attribute may be specified, which will
+    attempt to cast the property to the given data type. The options are
+    "date", "datetime", "string", "integer", and "decimal". If no datatype
+    is specified, "string" will be used.
+    """
     type = TypeProperty('property_path')
     property_path = ListProperty(six.text_type, required=True)
     datatype = DataTypeProperty(required=False)
@@ -160,6 +175,44 @@ class NamedExpressionSpec(JsonObject):
 
 
 class ConditionalExpressionSpec(JsonObject):
+    """
+    This expression returns ``"legal" if doc["age"] > 21 else "underage"``:
+
+    .. code::json
+
+       {
+           "type": "conditional",
+           "test": {
+               "operator": "gt",
+               "expression": {
+                   "type": "property_name",
+                   "property_name": "age",
+                   "datatype": "integer"
+               },
+               "type": "boolean_expression",
+               "property_value": 21
+           },
+           "expression_if_true": {
+               "type": "constant",
+               "constant": "legal"
+           },
+           "expression_if_false": {
+               "type": "constant",
+               "constant": "underage"
+           }
+       }
+
+    Note that this expression contains other expressions inside it! This is
+    why expressions are powerful. (It also contains a filter, but we haven't
+    covered those yet - if you find the ``"test"`` section confusing, keep
+    reading...)
+
+    Note also that it's important to make sure that you are comparing values
+    of the same type. In this example, the expression that retrieves the age
+    property from the document also casts the value to an integer. If this
+    datatype is not specified, the expression will compare a string to the
+    ``21`` value, which will not produce the expected results!
+    """
     type = TypeProperty('conditional')
     test = DictProperty(required=True)
     expression_if_true = DefaultProperty(required=True)
@@ -211,6 +264,43 @@ class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 
 
 class SwitchExpressionSpec(JsonObject):
+    """
+    This expression returns the value of the expression for the case that
+    matches the switch on expression. Note that case values may only be
+    strings at this time.
+
+    .. code:: json
+
+       {
+           "type": "switch",
+           "switch_on": {
+               "type": "property_name",
+               "property_name": "district"
+           },
+           "cases": {
+               "north": {
+                   "type": "constant",
+                   "constant": 4000
+               },
+               "south": {
+                   "type": "constant",
+                   "constant": 2500
+               },
+               "east": {
+                   "type": "constant",
+                   "constant": 3300
+               },
+               "west": {
+                   "type": "constant",
+                   "constant": 65
+               },
+           },
+           "default": {
+               "type": "constant",
+               "constant": 0
+           }
+       }
+    """
     type = TypeProperty('switch')
     switch_on = DefaultProperty(required=True)
     cases = DefaultProperty(required=True)
@@ -564,6 +654,25 @@ class SplitStringExpressionSpec(JsonObject):
 
 
 class CoalesceExpressionSpec(JsonObject):
+    """
+    This expression returns the value of the expression provided, or the
+    value of the default_expression if the expression provided evalutes to a
+    null or blank string.
+
+    .. code:: json
+
+       {
+           "type": "coalesce",
+           "expression": {
+               "type": "property_name",
+               "property_name": "district"
+           },
+           "default_expression": {
+               "type": "constant",
+               "constant": "default_district"
+           }
+       }
+    """
     type = TypeProperty('coalesce')
     expression = DictProperty(required=True)
     default_expression = DictProperty(required=True)
