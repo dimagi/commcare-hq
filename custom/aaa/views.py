@@ -208,6 +208,9 @@ class UnifiedBeneficiaryReportAPI(View):
             data = data[start:start + length]
         else:
             number_of_data = 0
+        if beneficiary_type == 'eligible_couple':
+            month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
+            data = EligibleCoupleQueryHelper.update_list(data, month_end)
         data = list(data)
         return JsonResponse(data={
             'rows': data,

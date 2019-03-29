@@ -31,10 +31,6 @@ hqDefine("aaa/js/models/eligible_couple", [
             return '<a href="' + url + '">' + self.name() + '</a>';
         });
 
-        self.currentFamilyPlanningMethod = ko.computed(function () {
-            return self.currentFamilyPlanningMethod() === 1 ? 'Yes' : 'No';
-        });
-
         return self;
     };
 
