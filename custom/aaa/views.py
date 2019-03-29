@@ -364,10 +364,10 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 # TODO update when the model will be created
                 husband = dict(
                     name=person['husband_name'],
-                    sex='Female',
-                    dob=date(1991, 5, 11),
-                    age_marriage=26,
-                    has_aadhar_number='Yes'
+                    sex='N/A',
+                    dob='N/A',
+                    age_marriage='N/A',
+                    has_aadhar_number='N/A'
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':
