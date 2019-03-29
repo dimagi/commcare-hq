@@ -99,7 +99,10 @@
                     {% for toggle, enabled_for_domain, enabled_for_user in flags %}
                     <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
                         <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
-                        <td>{{ toggle.label }}</td>
+                        <td>
+                            {{ toggle.label }}
+                            {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+                        </td>
                         <td class="checkmark-column">{% if enabled_for_domain %}<i class="fa fa-check"></i>{% endif %}</td>
                         <td class="checkmark-column">{% if enabled_for_user %}<i class="fa fa-check"></i>{% endif %}</td>
                         <td><a href="{% url 'edit_toggle' toggle.slug %}">{% trans "change" %}</a></td>
