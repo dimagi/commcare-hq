@@ -11,7 +11,7 @@ from corehq.sql_db.connections import get_icds_ucr_db_alias
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        start_date = date(2017, 3, 1)
+        start_date = date(2016, 10, 1)
         dates = [dt for dt in rrule(MONTHLY, dtstart=start_date, until=date(2019, 2, 1))]
         sql = """
         UPDATE {tablename} monthly SET
