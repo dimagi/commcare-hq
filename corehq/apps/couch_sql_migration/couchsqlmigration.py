@@ -101,6 +101,10 @@ class CouchSqlDomainMigrator(object):
         _logger.error(message)
         print('[ERROR] {}'.format(message))
 
+    def log_warning(self, message):
+        _logger.warning(message)
+        print('[WARNING] {}'.format(message))
+
     def log_info(self, message):
         _logger.info(message)
         print('[INFO] {}'.format(message))
@@ -369,13 +373,14 @@ class CouchSqlDomainMigrator(object):
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
             )
             if diffs and not sql_case.is_deleted:
-                couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
-
+                try:
+                    couch_case, diffs = self._rebuild_couch_case_and_re_diff(
+                        couch_case, sql_case_json)
+                except Exception as err:
+                    self.log_warning('Case {} rebuild -> {}: {}'.format(
+                        sql_case.case_id, type(err).__name__, err))
             if diffs:
-                self.diff_db.add_diffs(
-                    couch_case['doc_type'], sql_case.case_id,
-                    diffs
-                )
+                self.diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
 
         self._diff_ledgers(case_ids)
 
