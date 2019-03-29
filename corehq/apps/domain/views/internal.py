@@ -391,7 +391,8 @@ def toggle_diff(request, domain):
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
                 for t in feature_previews.all_previews() + toggles.all_toggles()
-                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN) and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
+                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
+                and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
         diff.sort(key=lambda x: x['label'])
     return json_response(diff)
 
