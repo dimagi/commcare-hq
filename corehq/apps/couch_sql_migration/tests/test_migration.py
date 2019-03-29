@@ -665,6 +665,11 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         return LedgerAccessors(self.domain_name).get_case_ledger_state(case_id)
 
 
+@attrs
+class DummyObject(object):
+    id = attrib()
+
+
 class TestLockingQueues(SimpleTestCase):
     def setUp(self):
         self.queues = PartiallyLockingQueue()
@@ -813,33 +818,23 @@ class UpdateXmlTests(SimpleTestCase):
         with assert_raises(ValueError, msg=pattern):
             update_xml(orig_xml, ['foo', 'bar'], 'admin&#64;example.com', '')
 
+    def test_bad_path(self):
+        orig_xml = '<foo><bar>BAZ</bar></foo>'
+        pattern = re.compile(r'^Unable to find "BAZ"')
+        with assert_raises(ValueError, msg=pattern):
+            update_xml(orig_xml, ['foo', 'qux'], 'BAZ', 'BAR')
+
+    def test_text_with_subelems(self):
+        # NOTE: updated_xml places text after sub-elements
+        orig_xml = '<foo><bar>HAM<baz>eggs</baz></bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + '<foo><bar><baz>eggs</baz>SPAM</bar></foo>')
+
     def test_unparsing_xml_entities(self):
         # NOTE: update_xml unparses XML entities
-        orig_xml = '<foo><bar>admin&#64;example.com</bar></foo>'
-        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'admin@example.com', 'hall & oates')
+        orig_xml = '<foo><bar>prince</bar></foo>'
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'prince', 'hall & oates')
         eq(updated_xml, DECL + '<foo><bar>hall &amp; oates</bar></foo>')
-
-#     def test_list_item(self):
-#         orig_xml = '<foo><bar>1</bar><bar>2</bar><bar>3</bar></foo>'
-#         updated_xml = update_xml(orig_xml, ['foo', 'bar', '@baz'], '3', '4')
-#         eq(updated_xml, DECL + '<foo><bar>1</bar><bar>2</bar><bar>4</bar></foo>')
-
-#     def test_node_list(self):
-#         orig_xml = (
-#             '<foo>'
-#             '<bar><baz>13</baz></bar>'
-#             '<bar><qux>13</qux></bar>'
-#             '<bar><coj>13</coj></bar>'
-#             '</foo>'
-#         )
-#         updated_xml = update_xml(orig_xml, ['foo', 'bar', 'baz'], '13', '42')
-#         eq(updated_xml, DECL + (
-#             '<foo>'
-#             '<bar><baz>42</baz></bar>'
-#             '<bar><qux>13</qux></bar>'
-#             '<bar><coj>13</coj></bar>'
-#             '</foo>'
-#         ))
 
     def test_xform(self):
         form_xml = """<?xml version='1.0' ?>
@@ -902,11 +897,58 @@ class UpdateXmlTests(SimpleTestCase):
             '</data>'
         ))
 
+    def test_node_list(self):
+        orig_xml = (
+            '<foo>'
+            '<bar><baz>13</baz></bar>'
+            '<bar><qux>13</qux></bar>'
+            '<bar><coj>13</coj></bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar', 'baz'], '13', '42')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar><baz>42</baz></bar>'
+            '<bar><qux>13</qux></bar>'
+            '<bar><coj>13</coj></bar>'
+            '</foo>'
+        ))
+
+    def test_list_item(self):
+        orig_xml = (
+            '<foo>'
+            '<bar>eggs</bar>'
+            '<bar>HAM</bar>'
+            '<bar>HAM</bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar>eggs</bar>'
+            '<bar>SPAM</bar>'
+            '<bar>SPAM</bar>'
+            '</foo>'
+        ))
+
+    def test_list_item_text(self):
+        orig_xml = (
+            '<foo>'
+            '<bar><q/>eggs</bar>'
+            '<bar><q/>HAM</bar>'
+            '<bar><q/>HAM</bar>'
+            '</foo>'
+        )
+        updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'HAM', 'SPAM')
+        eq(updated_xml, DECL + (
+            '<foo>'
+            '<bar><q></q>eggs</bar>'
+            '<bar><q></q>SPAM</bar>'
+            '<bar><q></q>SPAM</bar>'
+            '</foo>'
+        ))
+
 
 def test_doctests():
     results = doctest.testmod(couchsqlmigration)
     assert results.failed == 0
-
-@attrs
-class DummyObject(object):
-    id = attrib()

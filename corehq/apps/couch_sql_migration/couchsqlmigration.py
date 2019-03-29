@@ -101,20 +101,74 @@ def update_xml(xml, path, old_value, new_value):
     True
 
     """
+    found = []
+
+    def update_elem(elem, key):
+        """
+        Update the value of element identified by key from old_value
+        to new_value. key could be a sub-element or an attribute.
+
+        nonlocal old_value
+        nonlocal new_value
+        nonlocal found: Append True if elem[key] is changed
+        """
+        # TODO: When we have dropped Python 2, make `found` boolean and use nonlocal
+        # nonlocal found
+
+        if key in elem:
+            if isinstance(elem[key], list):
+                # e.g. <foo><bar>one</bar><bar>two</bar><bar>three</bar></foo>
+                #      key == 'bar'
+                #      elem == {'bar': ['one', 'two', 'three']}
+                for i, value in enumerate(elem[key]):
+                    if value == old_value:
+                        elem[key][i] = new_value
+                        found.append(True)
+                    elif (
+                            isinstance(value, dict) and
+                            '#text' in value and
+                            value['#text'] == old_value
+                    ):
+                        # elem[key] has both text nodes and sub-nodes
+                        value['#text'] = new_value
+                        found.append(True)
+            else:
+                # e.g. <foo><bar>one</bar></foo>
+                #      key == 'bar'
+                #      elem == {'bar': 'one'}
+                if elem[key] == old_value:
+                    elem[key] = new_value
+                    found.append(True)
+                elif (
+                        isinstance(elem[key], dict) and
+                        '#text' in elem[key] and
+                        elem[key]['#text'] == old_value
+                ):
+                    elem[key]['#text'] = new_value
+                    found.append(True)
+
+    def recurse_elements(elem, next_steps):
+        if not next_steps:
+            raise ValueError('path is empty')
+        step = next_steps[0]
+        if len(next_steps) > 1:
+            if isinstance(elem, list):
+                return [recurse_elements(e[step], next_steps[1:]) for e in elem]
+            elif isinstance(elem, dict):
+                return recurse_elements(elem[step], next_steps[1:])
+            else:
+                raise ValueError('unable to traverse element')
+        # elem[step] is a leaf node
+        # Pass by reference so that update_elem updates nonlocal dict_
+        if isinstance(elem, list):
+            for e in elem:
+                update_elem(e, step)
+        else:
+            update_elem(elem, step)
+
     dict_ = xmltodict.parse(xml)
-    node = dict_
-    for step in path[:-1]:
-        node = node[step]  # TODO: recurse for lists of nodes
-    leaf = path[-1]
-    if node[leaf] == old_value:
-        node[leaf] = new_value
-    elif (
-            isinstance(node[leaf], dict) and
-            '#text' in node[leaf] and
-            node[leaf]['#text'] == old_value
-    ):
-        node[leaf]['#text'] = new_value
-    else:
+    recurse_elements(dict_, path)
+    if not any(found):
         raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
     xml = xmltodict.unparse(dict_)
     return xml
