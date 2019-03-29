@@ -570,8 +570,7 @@ specific property out of an item in a list of objects.
 
 The following nested expression is the equivalent of a ``property_path``
 expression to ``["outer", "inner"]`` and demonstrates the functionality.
-More examples can be found in the `practical
-examples <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md>`__.
+More examples can be found in the `practical examples`_.
 
 .. code:: json
 
@@ -595,8 +594,7 @@ only useful as an intermediate structure in another expression since the
 result of the expression is a dictionary that cannot be saved to the
 database.
 
-See the `practical
-examples <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md>`__
+See the `practical examples`_
 for a way this can be used in a ``base_item_expression`` to emit
 multiple rows for a single form/case based on different properties.
 
@@ -1182,7 +1180,7 @@ another compound filter.*
 Practical Examples
 ~~~~~~~~~~~~~~~~~~
 
-See `examples.md <examples/examples.md>`__ for some practical examples
+See `practical examples`_ for some practical examples
 showing various filter types.
 
 Indicators
@@ -1447,8 +1445,7 @@ type to reference the current index of the item. This can be combined
 with the ``iterator`` expression type to do complex data source
 transforms. This is not described in detail, but the following sample
 (which creates a table off of a repeat element called “time_logs” can be
-used as a guide). There are also additional examples in the
-`examples <examples/examples.md>`__:
+used as a guide). There are also additional examples in the `practical examples`_:
 
 ::
 
@@ -2706,8 +2703,7 @@ Following are some custom expressions that are currently available.
    case.
 -  ``indexed_case``: A way to get an indexed case from another case.
 
-You can find examples of these in `practical
-examples <examples/examples.md>`__.
+You can find examples of these in `practical examples`_.
 
 Scaling UCR
 -----------
@@ -2748,7 +2744,7 @@ available via pillows since multiple Celery workers can process the
 changes.
 
 A diagram of this workflow can be found
-`here <examples/async_indicator.png>`__
+`here <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/async_indicator.png>`__
 
 Inspecting database tables
 --------------------------
@@ -2763,3 +2759,5 @@ The naming convention for tables is:
 
 In postgres, you can see all tables by typing ``\dt`` and use sql
 commands to inspect the appropriate tables.
+
+.. _practical examples: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md
