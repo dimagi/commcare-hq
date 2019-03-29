@@ -5,7 +5,7 @@ hqDefine('aaa/js/filters/location_filter', [
     'moment/moment',
     'hqwebapp/js/initial_page_data',
     'aaa/js/utils/reach_utils',
-    'aaa/js/filters/location_model'
+    'aaa/js/filters/location_model',
 ], function (
     $,
     ko,

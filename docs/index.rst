@@ -46,6 +46,7 @@ Welcome to CommCareHQ's documentation!
    couchdb
    celery
    ucr
+   js-guide/README
 
 Tips for documenting
 --------------------

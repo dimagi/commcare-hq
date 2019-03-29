@@ -678,7 +678,7 @@ class TestExportData(TestCase):
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
                     [
-                        'st1', 'd1', 'b1', 's1', 'a1', '91555555',
+                        'st1', 'd1', 'b1', 's1', 'a1', '+91555555',
                         18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
@@ -2052,7 +2052,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b1',
                         's1',
-                        'Data Not Entered',
+                        '2345.test_ls_name',
                         1,
                         2,
                         'Data Not Entered'

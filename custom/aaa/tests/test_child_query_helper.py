@@ -112,13 +112,12 @@ class TestChildBeneficiarySections(TestCase):
         cls.adapters.append(adapter)
         return adapter
 
-    @property
-    def _helper(self):
-        return ChildQueryHelper(self.domain, 'person_case_id', date(2019, 3, 1))
+    def _helper(self, person_case_id='person_case_id'):
+        return ChildQueryHelper(self.domain, person_case_id, date(2019, 3, 1))
 
     def test_child_infant_details(self):
         self.assertEqual(
-            self._helper.infant_details(),
+            self._helper().infant_details(),
             {
                 'breastfeedingInitiated': 'yes',
                 'dietDiversity': 'yes',
@@ -133,7 +132,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_postnatal_care_details(self):
         self.assertEqual(
-            self._helper.postnatal_care_details(),
+            self._helper().postnatal_care_details(),
             [{
                 'pncDate': date(2019, 1, 1),
                 'breastfeeding': 'N/A',
@@ -150,7 +149,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_at_birth(self):
         self.assertEqual(
-            self._helper.vaccination_details('atBirth'),
+            self._helper().vaccination_details('atBirth'),
             [
                 {'vitaminName': 'BCG', 'date': date(1970, 2, 2), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Hepatitis B - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -159,7 +158,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_six_week(self):
         self.assertEqual(
-            self._helper.vaccination_details('sixWeek'),
+            self._helper().vaccination_details('sixWeek'),
             [
                 {'vitaminName': 'OPV - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -170,7 +169,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_ten_week(self):
         self.assertEqual(
-            self._helper.vaccination_details('tenWeek'),
+            self._helper().vaccination_details('tenWeek'),
             [
                 {'vitaminName': 'OPV - 2', 'date': date(1970, 3, 27), 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -179,7 +178,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_fourteen_week(self):
         self.assertEqual(
-            self._helper.vaccination_details('fourteenWeek'),
+            self._helper().vaccination_details('fourteenWeek'),
             [
                 {'vitaminName': 'OPV - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Pentavalent - 3', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -190,7 +189,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_nine_twelve_months(self):
         self.assertEqual(
-            self._helper.vaccination_details('nineTwelveMonths'),
+            self._helper().vaccination_details('nineTwelveMonths'),
             [
                 {'vitaminName': 'PCV Booster', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Vit. A - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -200,7 +199,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_sixteen_twenty_four_month(self):
         self.assertEqual(
-            self._helper.vaccination_details('sixTeenTwentyFourMonth'),
+            self._helper().vaccination_details('sixTeenTwentyFourMonth'),
             [
                 {'vitaminName': 'DPT Booster - 1', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Measles - 2', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -212,7 +211,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_vaccination_details_twenty_two_seventy_two_month(self):
         self.assertEqual(
-            self._helper.vaccination_details('twentyTwoSeventyTwoMonth'),
+            self._helper().vaccination_details('twentyTwoSeventyTwoMonth'),
             [
                 {'vitaminName': 'Vit. A - 4', 'date': 'N/A', 'adverseEffects': 'N/A'},
                 {'vitaminName': 'Vit. A - 5', 'date': 'N/A', 'adverseEffects': 'N/A'},
@@ -225,7 +224,7 @@ class TestChildBeneficiarySections(TestCase):
 
     def test_growth_monitoring(self):
         self.assertEqual(
-            self._helper.growth_monitoring(),
+            self._helper().growth_monitoring(),
             {
                 'currentWeight': '10',
                 'growthMonitoringStatus': 'yellow',
@@ -240,23 +239,77 @@ class TestChildBeneficiarySections(TestCase):
                 'referralDate': 'N/A',
             })
 
+    def test_growth_monitoring_no_history(self):
+        child = Child.objects.create(
+            domain=self.domain,
+            child_health_case_id='no_history',
+            person_case_id='no_history',
+            opened_on='2019-01-01',
+        )
+        self.addCleanup(child.delete)
+        self.assertEqual(
+            self._helper(person_case_id='no_history').growth_monitoring(),
+            {
+                'currentWeight': 'N/A',
+                'growthMonitoringStatus': 'N/A',
+                'previousGrowthMonitoringStatus': 'N/A',
+                'underweight': True,
+                'underweightStatus': 'N/A',
+                'stunted': True,
+                'stuntedStatus': 'N/A',
+                'wasting': True,
+                'wastingStatus': 'N/A',
+                'nrcReferred': 'N/A',
+                'referralDate': 'N/A',
+            })
+
     def test_weight_for_age_chart(self):
         self.assertEqual(
-            self._helper.weight_for_age_chart(),
+            self._helper().weight_for_age_chart(),
             [{'x': 24, 'y': '8'}, {'x': 25, 'y': '10'}]
         )
 
+    def test_weight_for_age_no_history(self):
+        child = Child.objects.create(
+            domain=self.domain,
+            child_health_case_id='no_history',
+            person_case_id='no_history',
+            opened_on='2019-01-01',
+        )
+        self.addCleanup(child.delete)
+        self.assertEqual(self._helper(person_case_id='no_history').weight_for_age_chart(), [])
+
     def test_height_for_age_chart(self):
         self.assertEqual(
-            self._helper.height_for_age_chart(),
+            self._helper().height_for_age_chart(),
             [{'x': 24, 'y': '72'}, {'x': 25, 'y': '87'}]
         )
 
+    def test_height_for_age_no_history(self):
+        child = Child.objects.create(
+            domain=self.domain,
+            child_health_case_id='no_history',
+            person_case_id='no_history',
+            opened_on='2019-01-01',
+        )
+        self.addCleanup(child.delete)
+        self.assertEqual(self._helper(person_case_id='no_history').height_for_age_chart(), [])
+
     def test_weight_for_height_chart(self):
         self.assertEqual(
-            self._helper.weight_for_height_chart(),
+            self._helper().weight_for_height_chart(),
             [{'x': '72', 'y': '8'}, {'x': '87', 'y': '10'}]
         )
+
+    def test_weight_for_height_no_history(self):
+        child = Child.objects.create(
+            domain=self.domain,
+            child_health_case_id='no_history',
+            person_case_id='no_history',
+            opened_on='2019-01-01',
+        )
+        self.addCleanup(child.delete)
+        self.assertEqual(self._helper(person_case_id='no_history').weight_for_height_chart(), [])
 
 
 class TestChildBeneficiaryList(TestCase):

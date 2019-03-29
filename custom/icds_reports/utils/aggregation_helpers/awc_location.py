@@ -100,6 +100,22 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ucr_aww_tablename=self.ucr_aww_tablename
         )
 
+    def ls_query(self):
+        return """
+            UPDATE "{tablename}" awc_loc SET
+              ls_name = ut.username
+            FROM (
+              SELECT
+                commcare_location_id,
+                username
+              FROM "{ucr_aww_tablename}"
+            ) ut
+            WHERE ut.commcare_location_id = awc_loc.supervisor_id
+        """.format(
+            tablename=self.base_tablename,
+            ucr_aww_tablename=self.ucr_aww_tablename
+        )
+
     def rollup_query(self, aggregation_level):
         columns = (
             ('doc_id', lambda col: col if aggregation_level > 4 else "'All'"),
@@ -122,7 +138,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('district_map_location_name', lambda col: col if aggregation_level > 1 else "'All'"),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
-            ('ls_name', 'NULL'),
+            ('ls_name', lambda col: col if aggregation_level > 3 else "NULL"),
             ('contact_phone_number', 'NULL'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
@@ -164,6 +180,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             group_by.extend(
                 ["supervisor_{}".format(name) for name in end_text_column if name is not "map_location_name"]
             )
+            group_by.append('ls_name')
 
         return """
             INSERT INTO "{tablename}" (

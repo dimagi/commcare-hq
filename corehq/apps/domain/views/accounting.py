@@ -155,6 +155,12 @@ class DomainAccountingSettings(BaseProjectSettingsView):
     def current_subscription(self):
         return Subscription.get_active_subscription_by_domain(self.domain)
 
+    @property
+    def main_context(self):
+        context = super(DomainAccountingSettings, self).main_context
+        context['show_prepaid_modal'] = False
+        return context
+
 
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
@@ -491,7 +497,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 ),
             },
             'total_balance': self.total_balance,
-            'show_plan': True
+            'show_plan': True,
+            'show_overdue_invoice_modal': False,
         })
         return pagination_context
 
@@ -837,6 +844,12 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
                     }
                 ))
         return self.get(request, *args, **kwargs)
+
+    @property
+    def main_context(self):
+        context = super(InternalSubscriptionManagementView, self).main_context
+        context['show_prepaid_modal'] = False
+        return context
 
     @property
     def page_context(self):
