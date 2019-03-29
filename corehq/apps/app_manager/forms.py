@@ -21,8 +21,8 @@ from .util import get_commcare_builds
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=ugettext_lazy("Copy this app to project"),
-        widget=forms.TextInput(attrs={
-            "data-bind": "autocompleteSelect2: domain_names",
+        widget=forms.Select(choices=[], attrs={
+            "data-bind": "autocompleteSelect2: domain_names, options: domain_names",
         }))
     name = forms.CharField(required=True, label=ugettext_lazy('Name'))
     linked = forms.BooleanField(
