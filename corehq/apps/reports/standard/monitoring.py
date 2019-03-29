@@ -30,7 +30,6 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from dimagi.utils.chunked import chunked
 
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
