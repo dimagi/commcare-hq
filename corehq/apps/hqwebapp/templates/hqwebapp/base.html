@@ -315,7 +315,7 @@
         {% endif %}
         {# modals #}
         {% block modals %}
-            {% if domain %}
+            {% if domain and not enterprise_mode %}
                 {% if show_overdue_invoice_modal %}
                     {% include 'hqwebapp/downgrade_modal.html' %}
                 {% elif show_prepaid_modal %}
