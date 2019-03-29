@@ -11,6 +11,7 @@ from copy import deepcopy
 from datetime import datetime
 from time import time
 
+import xmltodict
 from django.db.utils import IntegrityError
 
 from django.conf import settings
@@ -86,6 +87,37 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, d
         debug=debug,
         run_timestamp=run_timestamp
     ).migrate()
+
+
+def update_xml(xml, path, old_value, new_value):
+    """
+    Change a value in an XML document at path, where path is a list of
+    node names
+
+    >>> decl = '<?xml version="1.0" encoding="utf-8"?>\\n'
+    >>> xml = '<foo><bar>BAZ</bar></foo>'
+    >>> xml = update_xml(xml, ['foo', 'bar'], 'BAZ', 'QUUX')
+    >>> xml == decl + '<foo><bar>QUUX</bar></foo>'
+    True
+
+    """
+    dict_ = xmltodict.parse(xml)
+    node = dict_
+    for step in path[:-1]:
+        node = node[step]  # TODO: recurse for lists of nodes
+    leaf = path[-1]
+    if node[leaf] == old_value:
+        node[leaf] = new_value
+    elif (
+            isinstance(node[leaf], dict) and
+            '#text' in node[leaf] and
+            node[leaf]['#text'] == old_value
+    ):
+        node[leaf]['#text'] = new_value
+    else:
+        raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
+    xml = xmltodict.unparse(dict_)
+    return xml
 
 
 class CouchSqlDomainMigrator(object):
