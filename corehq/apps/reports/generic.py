@@ -1022,7 +1022,7 @@ class GenericTabularReport(GenericReportView):
         The rows that will be used in an export. Useful if you want to apply any additional
         custom formatting to mirror something that would be done in a template.
         """
-        if not self.view_by_groups:
+        if self.exportable_all:
             return self.get_all_rows
         else:
             return self.rows

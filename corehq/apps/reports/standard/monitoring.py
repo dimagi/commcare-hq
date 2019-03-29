@@ -1808,6 +1808,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def get_all_rows(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return self.user_rows()
+        else:
+            return self.rows
+
+    def user_rows(self):
         user_es_query = EMWF.user_es_query(
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
