@@ -89,6 +89,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         columns = (
             ("awc_id", "child_health.awc_id"),
             ("case_id", "child_health.doc_id"),
+            ("supervisor_id", "child_health.supervisor_id"),
             ("month", self.month.strftime("'%Y-%m-%d'")),
             ("sex", "child_health.sex"),
             ("age_tranche",
