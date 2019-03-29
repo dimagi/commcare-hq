@@ -170,8 +170,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
             }
         )
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
-            # If the smtp server rejects the email because of its large size.
-            # Then sends the report download link in the email.
+            # If the email doesn't work because it is too large to fit in the HTML body,
+            # send it as an excel attachment.
             report_state = {
                 'request': request_data,
                 'request_params': json_request(request_data['GET']),
