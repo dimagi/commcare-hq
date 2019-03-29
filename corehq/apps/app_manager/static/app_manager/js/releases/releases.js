@@ -309,6 +309,8 @@ hqDefine('app_manager/js/releases/releases', function () {
                 return false;
             }
             self.fetchState('pending');
+            self.savedApps.removeAll();
+            self.showLoadingSpinner(true);
             $.ajax({
                 url: self.reverse("paginate_releases"),
                 dataType: 'json',
@@ -329,6 +331,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                 },
                 error: function () {
                     self.fetchState('error');
+                },
+                always: function () {
+                    self.showLoadingSpinner(false);
                 },
             });
         };
