@@ -4,6 +4,7 @@ import os
 import uuid
 from datetime import datetime
 
+from attr import attrs, attrib
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
@@ -774,9 +775,6 @@ class TestLockingQueues(TestCase):
         self.assertTrue(self.queues.full)  # full when over full
 
 
+@attrs
 class DummyObject(object):
-    def __init__(self, id=None):
-        self.id = id or uuid.uuid4().hex
-
-    def __repr__(self):
-        return "DummyObject<id={}>".format(self.id)
+    id = attrib()
