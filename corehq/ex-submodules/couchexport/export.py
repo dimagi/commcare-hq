@@ -32,12 +32,17 @@ def get_writer(format):
 
 def export_from_tables(tables, file, format, max_column_size=2000):
     writer = get_writer(format)
-    worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
-    # Make copies of the generator, one to pass in to the open() function, one for the write() function
-    row_generator_1, row_generator_2 = itertools.tee(row_generator)
-    writer.open([(worksheet_title, [[a for a in row_generator_1.next()]])], file, max_column_size=max_column_size)
-    table = itertools.chain([], [[worksheet_title, row_generator_2]])
-    writer.write(table, skip_first=True)
+    if isinstance(tables[0][1], itertools.chain):
+        # Make copies of the generator, one to pass in to the open() function, one for the write() function
+        worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
+        row_generator_1, row_generator_2 = itertools.tee(row_generator)
+        header_table = [(worksheet_title, [[a for a in next(row_generator_1)]])]
+        row_table = itertools.chain([], [[worksheet_title, row_generator_2]])
+    else:
+        header_table = tables
+        row_table = tables
+    writer.open(header_table, file, max_column_size=max_column_size)
+    writer.write(row_table, skip_first=True)
     writer.close()
 
 
