@@ -59,7 +59,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             self._partial_upload(detail_rows, long_details)
         else:
             self._update_details_based_on_position(list_rows, short_details,
-                                                                detail_rows, long_details)
+                                                   detail_rows, long_details)
 
         for index, tab in enumerate(self.tab_headers):
             if tab:
@@ -250,7 +250,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 message = _('A row for menu {index} has an unexpected case property "{field}"'
                             'Case properties must appear in the same order as they do in the bulk '
                             'app translation download. No translations updated for this row.').format(
-                                index=module.id + 1,
+                                index=self.module.id + 1,
                                 field=row.get('case_property', ""))
                 self.msgs.append((messages.error, message))
                 continue

@@ -2,7 +2,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import doctest
 import io
 import tempfile
 from io import BytesIO
@@ -32,7 +31,6 @@ from corehq.apps.translations.app_translations.download import (
 )
 from corehq.apps.translations.app_translations.upload_app import process_bulk_app_translation_upload
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
-from corehq.apps.translations.app_translations import upload_module
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
