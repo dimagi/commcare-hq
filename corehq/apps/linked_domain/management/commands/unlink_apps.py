@@ -47,19 +47,9 @@ class Command(BaseCommand):
             return
 
         print('Unlinking apps')
-        self.unlink_app(linked_app)
+        Application.convert_to_application(linked_app.id)
         self.hide_domain_link_history(linked_domain, linked_app_id, master_domain)
         print('Operation completed')
-
-    @staticmethod
-    def unlink_app(linked_app):
-        raw_linked_app_doc = Application.get_db().get(linked_app.id)
-        del raw_linked_app_doc['master']
-        del raw_linked_app_doc['linked_app_translations']
-        del raw_linked_app_doc['linked_app_logo_refs']
-        del raw_linked_app_doc['uses_master_app_form_ids']
-        raw_linked_app_doc['doc_type'] = 'Application'
-        Application.get_db().save_doc(raw_linked_app_doc)
 
     @staticmethod
     def hide_domain_link_history(linked_domain, linked_app_id, master_domain):
