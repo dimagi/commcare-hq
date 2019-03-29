@@ -1,67 +1,82 @@
-from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import logging
 import os
-import uuid
+from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime
 from time import time
 
-from django.db.utils import IntegrityError
-
-import settings
+import gevent
+import six
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
-    get_all_extensions_to_close,
     CaseProcessingResult,
+    get_all_extensions_to_close,
+    get_case_ids_from_form,
     get_case_updates,
-    get_case_ids_from_form
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
-from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
+from django.conf import settings
+from django.db.utils import IntegrityError
+from django_redis import get_redis_connection
+from gevent.pool import Pool
+
+from corehq.apps.couch_sql_migration.diff import (
+    filter_case_diffs,
+    filter_form_diffs,
+    filter_ledger_diffs,
+)
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
+from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    LedgerAccessorSQL,
+    doc_type_to_state,
+)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormOperationSQL, CommCareCaseSQL,
-    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    RebuildWithReason,
+    XFormInstanceSQL,
+    XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
 from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
-    clear_local_domain_sql_backend_override)
+)
 from corehq.toggles import (
     COUCH_SQL_MIGRATION_BLACKLIST,
+    NAMESPACE_DOMAIN,
     REMINDERS_MIGRATION_IN_PROGRESS,
-    NAMESPACE_DOMAIN)
-from corehq.util.log import with_progress_bar
-from corehq.util.timer import TimingContext
+)
+from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
-from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
+from corehq.util.timer import TimingContext
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from couchforms.models import doc_types as form_doc_types
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.chunked import chunked
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
-from gevent.pool import Pool
-import gevent
-import six
-import logging
-from collections import defaultdict, deque
-from corehq.util import cache_utils
-from django_redis import get_redis_connection
-_logger = logging.getLogger('main_couch_sql_datamigration')
 
+_logger = logging.getLogger('main_couch_sql_datamigration')
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
