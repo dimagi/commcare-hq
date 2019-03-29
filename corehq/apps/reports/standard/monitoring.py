@@ -716,12 +716,12 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 )
                 totals = [totals[i] + col.get('sort_key')
                           for i, col in enumerate(row[1:])]
-                rows.append(row)
+                yield row
             else:
-                rows.append([self.get_user_link(simplified_user), '--'])
+                yield [self.get_user_link(simplified_user), '--']
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
-        return rows
+        yield self.total_row
 
     @property
     @memoized
