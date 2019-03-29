@@ -40,31 +40,35 @@ hqDefine('analytix/js/google', [
             };
             _gtag('js', new Date());
 
-            var user = {
+            var config = {
                 user_id: _get('userId', 'none'),
                 isDimagi: _get('userIsDimagi', 'no', 'yes'),
                 isCommCare: _get('userIsCommCare', 'no', 'yes'),
                 domain: _get('domain', 'none'),
                 hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+                linker: {
+                    accept_incoming: true,  // this is necessary for cross-domain tracking with dimagi.com
+                    domains: ['dimagi.com'],
+                },
             };
 
             // Update User Data & Legacy "Dimensions"
             var dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-            if (user.user_id !== 'none') {
-                user.daysOld = _get('userDaysSinceCreated');
-                user.isFirstDay = user.daysOld < 1 ? 'yes' : 'no';
+            if (config.user_id !== 'none') {
+                config.daysOld = _get('userDaysSinceCreated');
+                config.isFirstDay = config.daysOld < 1 ? 'yes' : 'no';
                 dimLabels.push('isFirstDay');
-                user.isFirstWeek = user.daysOld >= 1 && user.daysOld < 7 ? 'yes' : 'no';
+                config.isFirstWeek = config.daysOld >= 1 && config.daysOld < 7 ? 'yes' : 'no';
                 dimLabels.push('isFirstWeek');
             }
             // Legacy Dimensions
-            user.custom_map = {};
+            config.custom_map = {};
             _.each(dimLabels, function (val, ind) {
-                user.custom_map['dimension' + ind] = user[val];
+                config.custom_map['dimension' + ind] = config[val];
             });
 
-            // Configure Gtag with User Info
-            _gtag('config', apiId, user);
+            // Configure Gtag
+            _gtag('config', apiId, config);
         });
     });
 

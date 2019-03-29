@@ -108,6 +108,7 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
+            'DEPENDENCIES': ['citus-ucr-worker1', 'citus-ucr-worker2'],
         },
         'ROLE': 'citus_master'
     },
@@ -121,7 +122,6 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker'
     },
@@ -135,7 +135,6 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker'
     },

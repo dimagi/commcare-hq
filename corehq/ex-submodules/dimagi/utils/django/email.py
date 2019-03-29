@@ -60,7 +60,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 'subject': subject,
             }
 
-            if e.smtp_code == 552:
+            if e.smtp_code in LARGE_FILE_SIZE_ERROR_CODES:
                 error_text = _('Could not send email: file size is too large.')
             else:
                 error_text = e.smtp_error

@@ -80,15 +80,14 @@ class UploadedTranslationsValidator(object):
         columns_to_compare = COLUMNS_TO_COMPARE[for_type] + [self.default_language_column]
         expected_rows = self._filter_rows(for_type, self.expected_rows[sheet_name], sheet_name)
 
-        iterate_on = [expected_rows, uploaded_rows]
         parsed_expected_rows = []
         parsed_uploaded_rows = []
-        for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on), 2):
-            parsed_uploaded_row = [uploaded_row.get(column_name) for column_name in columns_to_compare]
-            parsed_expected_row = [expected_row[self._get_header_index(sheet_name, column_name)]
-                                   for column_name in columns_to_compare]
-            parsed_expected_rows.append(parsed_expected_row)
-            parsed_uploaded_rows.append(parsed_uploaded_row)
+        for expected_row in expected_rows:
+            parsed_expected_rows.append([expected_row[self._get_header_index(sheet_name, column_name)]
+                                        for column_name in columns_to_compare])
+        for uploaded_row in uploaded_rows:
+            parsed_uploaded_rows.append([uploaded_row.get(column_name) for column_name in columns_to_compare])
+
         expected_rows_as_string = '\n'.join([', '.join(row) for row in parsed_expected_rows])
         uploaded_rows_as_string = '\n'.join([', '.join(row) for row in parsed_uploaded_rows])
         diff = ghdiff.diff(expected_rows_as_string, uploaded_rows_as_string, css=False)
