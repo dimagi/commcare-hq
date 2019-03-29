@@ -492,14 +492,5 @@
    "description":"",
    "referenced_doc_type":"CommCareCase",
    "display_name":"Household Profile Data Source",
-   "table_id":"static-household_profile_data_source",
-
-   "named_expressions":{
-
-   },
- 
- 
-   "sql_column_indexes":[
-
-   ]
+   "table_id":"static-household_profile_data_source" 
 }}

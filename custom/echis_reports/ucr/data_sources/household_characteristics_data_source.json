@@ -466,13 +466,8 @@
    "referenced_doc_type":"CommCareCase",
    "engine_id":"ucr",
    "display_name":"Household Characteristics Data Source",
-   "named_expressions":{
-
-   },
-   "table_id":"static-household_characterstics_data_source",
-  
-   "sql_column_indexes":[
-
-   ]
+ 
+   "table_id":"static-household_characterstics_data_source"
+   
 }
 }

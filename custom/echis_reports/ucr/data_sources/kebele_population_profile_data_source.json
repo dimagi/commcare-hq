@@ -1225,13 +1225,7 @@
    "description":"",
    "referenced_doc_type":"CommCareCase",
    "table_id":"static-kebele_population_profile_data_source",
-   "display_name":"Kebele Population Profile Data Source",
-   "named_expressions":{
-   },
- 
-   "sql_column_indexes":[
-
-   ]
+   "display_name":"Kebele Population Profile Data Source" 
 }
 
 }
