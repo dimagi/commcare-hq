@@ -217,12 +217,11 @@ class Command(BaseCommand):
         def _highlight(text):
             return shell_red(text) if has_diff else text
 
-        row = "{:^40} {} {:^40}"
+        row = "{:^38} {} {:^38}"
         sep = "|" if ids_in_couch == ids_in_sql else "≠"
         doc_count_row = row.format(n_couch, sep, n_sql)
-        header = ((82 - len(name)) // 2) * '_'
 
-        print('\n{} {} {}'.format(header, name, header))
+        print('\n{:_^79}'.format(" %s " % name))
         print(row.format('Couch', '|', 'SQL'))
         print(_highlight(doc_count_row))
         if diff_count:
