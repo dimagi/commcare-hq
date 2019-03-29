@@ -1801,7 +1801,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     if report_data.submissions_by_user.get(user['user_id'], False):
                         active_users.add(user['user_id'])
                     all_users.add(user['user_id'])
-            total_row[3] = {'numerator': len(active_users), 'demoninator': len(all_users)}
+            total_row[3] = {'numerator': len(active_users), 'denominator': len(all_users)}
         else:
             total_row[3] = {'numerator': num, 'denominator': len(rows)}
         return total_row
