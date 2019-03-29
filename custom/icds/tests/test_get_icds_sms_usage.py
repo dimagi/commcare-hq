@@ -32,8 +32,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
         cls.loc_types = setup_location_types(cls.domain, ['state', 'district', 'block', 'supervisor', 'awc'])
         cls.states = (
-             make_loc('state', type='state', domain=cls.domain),
-             make_loc('state2', type='state', domain=cls.domain),
+            make_loc('state', type='state', domain=cls.domain),
+            make_loc('state2', type='state', domain=cls.domain),
         )
         cls.districts = (
             make_loc('district', type='district', domain=cls.domain, parent=cls.states[0]),
@@ -58,7 +58,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
-            date=date(2017, 04, 10),
+            date=date(2017, 4, 10),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -67,7 +67,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         ))
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
-            date=date(2017, 04, 10),
+            date=date(2017, 4, 10),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -76,7 +76,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         ))
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
-            date=date(2017, 04, 10),
+            date=date(2017, 4, 10),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -85,7 +85,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         ))
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
-            date=date(2017, 04, 10),
+            date=date(2017, 4, 10),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
