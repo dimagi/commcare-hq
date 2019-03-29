@@ -51,6 +51,10 @@
         "choice_provider": {
           "type": "location"
         },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        },
         "display": "Filter by AWW"
       },
       {

@@ -50,6 +50,10 @@
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
         }
       },
       {
