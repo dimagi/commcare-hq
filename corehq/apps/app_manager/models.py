@@ -4817,16 +4817,17 @@ class SavedAppBuild(ApplicationBase):
                     'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
+        menu_item_label = self.built_with.get_menu_item_label()
         data.update({
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'menu_item_label': self.built_with.get_menu_item_label(),
+            'menu_item_label': menu_item_label,
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
             'include_media': self.doc_type != 'RemoteApp',
-            'j2me_enabled': 'menu_item_label' in CommCareBuildConfig.j2me_enabled_config_labels(),
+            'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
             'target_commcare_flavor': (
                 self.target_commcare_flavor
                 if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else 'none'
