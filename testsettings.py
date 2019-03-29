@@ -117,36 +117,36 @@ LOGGING = {
     'loggers': {},
 }
 
-# Required in Python 3 to prevent transient but frequent travis errors.
-# Probably is caused by some race condition.
-if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'icds_commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        }
-    }
-# Define an aaa-data database if its not already defined
-# This is necessary because REPORTING_DATABASES references aaa-data.
-# We must have aaa-data in a separate database
-# https://github.com/dimagi/commcare-hq/pull/23351#issuecomment-467500691
-if 'aaa-data' not in DATABASES:
-    DATABASES['aaa-data'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'aaa_commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        }
-    }
+# # Required in Python 3 to prevent transient but frequent travis errors.
+# # Probably is caused by some race condition.
+# if 'icds-ucr' not in DATABASES:
+#     DATABASES['icds-ucr'] = {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'icds_commcarehq',
+#         'USER': 'commcarehq',
+#         'PASSWORD': 'commcarehq',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'TEST': {
+#             'SERIALIZE': False,
+#         }
+#     }
+# # Define an aaa-data database if its not already defined
+# # This is necessary because REPORTING_DATABASES references aaa-data.
+# # We must have aaa-data in a separate database
+# # https://github.com/dimagi/commcare-hq/pull/23351#issuecomment-467500691
+# if 'aaa-data' not in DATABASES:
+#     DATABASES['aaa-data'] = {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'aaa_commcarehq',
+#         'USER': 'commcarehq',
+#         'PASSWORD': 'commcarehq',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#         'TEST': {
+#             'SERIALIZE': False,
+#         }
+#     }
 helper.assign_test_db_names(DATABASES)
 
 REPORTING_DATABASES = {
