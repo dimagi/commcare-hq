@@ -61,6 +61,7 @@ branches:
   - jls/gevent-bulk-media-upload  # Jenny March 25
   - mk/release-location # MK March 26
   - dmr/add-scheduled-reports-checkpoint  # March 28
+  - jls/users-select2-v4  # Jenny March 29
 submodules:
   submodules/langcodes:
     branches:
