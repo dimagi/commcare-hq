@@ -63,7 +63,7 @@ def send_report_throttled(notification_id):
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
 def initiate_queue_scheduled_reports():
-    queue_scheduled_reports.delay()
+    queue_scheduled_reports()
 
 
 @serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
