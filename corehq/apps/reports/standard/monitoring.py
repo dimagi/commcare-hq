@@ -30,6 +30,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
@@ -1811,26 +1812,23 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         chunk_size = 50000
-        first_id_in_chunk = 0
-        user_chunk_total = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).size(chunk_size).run().total
-        while first_id_in_chunk < user_chunk_total:
-            user_chunk = user_es_query.fields(util.SimplifiedUserInfo.ES_FIELDS).start(first_id_in_chunk).size(chunk_size).run().hits
+        user_iterator = user_es_query.size(chunk_size).scroll()
+        for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user_dict(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)
             else:
                 rows = self._rows_by_user(formatted_data, users)
-            this_row = self._total_row(rows, formatted_data, users)
-            self.total_row = self.sum_rows_together(self.total_row, this_row)
+            partial_total_row = self._total_row(rows, formatted_data, users)
+            self.total_row = self._sum_rows_together(self.total_row, partial_total_row)
             for row in rows:
                 yield row
-            first_id_in_chunk = first_id_in_chunk + chunk_size
-        self.total_row = self.format_total_row(self.total_row)
+        self.total_row = self._format_total_row(self.total_row)
         yield self.total_row
 
     @staticmethod
-    def format_total_row(unformatted_total_row):
+    def _format_total_row(unformatted_total_row):
         formatted_total_row = []
         for entry in unformatted_total_row:
             if isinstance(entry, dict):
@@ -1842,7 +1840,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return formatted_total_row
 
     @staticmethod
-    def sum_rows_together(original_row, row_to_add):
+    def _sum_rows_together(original_row, row_to_add):
         if not original_row:
             new_row = row_to_add
         else:
@@ -1867,7 +1865,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         else:
             rows = self._rows_by_user(report_data, self.users_to_iterate)
 
-        self.total_row = self.format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
+        self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
         return rows
 
 
