@@ -162,7 +162,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     except Exception as er:
         notify_exception(
             None,
-            message="Encountered error while sending email",
+            message="Encountered error while generating report or sending email",
             details={
                 'subject': subject,
                 'recipients': str(recipient_emails),
