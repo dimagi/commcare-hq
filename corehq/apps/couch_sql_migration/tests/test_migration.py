@@ -7,6 +7,7 @@ import re
 import uuid
 from datetime import datetime
 
+import xmltodict
 from attr import attrs, attrib
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
@@ -836,7 +837,7 @@ class UpdateXmlTests(SimpleTestCase):
         updated_xml = update_xml(orig_xml, ['foo', 'bar'], 'prince', 'hall & oates')
         eq(updated_xml, DECL + '<foo><bar>hall &amp; oates</bar></foo>')
 
-    def test_xform(self):
+    def test_namespaces(self):
         form_xml = """<?xml version='1.0' ?>
 <data uiVersion="1"
       version="7"
@@ -866,7 +867,8 @@ class UpdateXmlTests(SimpleTestCase):
     </n1:meta>
 </data>"""
         form_xml = update_xml(form_xml, ['data', 'name'], 'Prince', 'Christopher')
-        form_xml = update_xml(form_xml, ['data', 'n0:case', 'n0:create', 'n0:case_name'], 'Prince', 'Christopher')
+        # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
+        form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
         eq(form_xml, DECL + (
             '<data uiVersion="1" '
             'version="7" '
@@ -896,6 +898,12 @@ class UpdateXmlTests(SimpleTestCase):
             '</n1:meta>'
             '</data>'
         ))
+
+    def test_as_dict(self):
+        xml = '<foo><bar>BAZ</bar></foo>'
+        dict_ = xmltodict.parse(xml)
+        update_xml(dict_, ['foo', 'bar'], 'BAZ', 'QUUX')
+        eq(dict_, {'foo': {'bar': 'QUUX'}})
 
     def test_node_list(self):
         orig_xml = (

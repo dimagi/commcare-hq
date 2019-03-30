@@ -102,7 +102,10 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, d
 def update_xml(xml, path, old_value, new_value):
     """
     Change a value in an XML document at path, where path is a list of
-    node names
+    node names.
+
+    xml can be given as a string or a dictionary. A dictionary will be
+    updated in-place. A string will be returned.
 
     >>> decl = '<?xml version="1.0" encoding="utf-8"?>\\n'
     >>> xml = '<foo><bar>BAZ</bar></foo>'
@@ -113,9 +116,19 @@ def update_xml(xml, path, old_value, new_value):
     """
     found = []
 
-    def update_elem(elem, key):
+    def find_tag_with_ns(elem, step):
         """
-        Update the value of element identified by key from old_value
+        Return the first tag with namespace that matches step, or None
+        """
+        for ns_tag in six.iterkeys(elem):
+            ns, tag = ns_tag.split(':') if ':' in ns_tag else (None, ns_tag)
+            if tag == step:
+                return ns_tag
+        return None
+
+    def update_elem(elem, step):
+        """
+        Update the value of element identified by step from old_value
         to new_value. key could be a sub-element or an attribute.
 
         nonlocal old_value
@@ -125,7 +138,8 @@ def update_xml(xml, path, old_value, new_value):
         # TODO: When we have dropped Python 2, make `found` boolean and use nonlocal
         # nonlocal found
 
-        if key in elem:
+        key = find_tag_with_ns(elem, step)
+        if key is not None:
             if isinstance(elem[key], list):
                 # e.g. <foo><bar>one</bar><bar>two</bar><bar>three</bar></foo>
                 #      key == 'bar'
@@ -139,7 +153,6 @@ def update_xml(xml, path, old_value, new_value):
                             '#text' in value and
                             value['#text'] == old_value
                     ):
-                        # elem[key] has both text nodes and sub-nodes
                         value['#text'] = new_value
                         found.append(True)
             else:
@@ -154,6 +167,9 @@ def update_xml(xml, path, old_value, new_value):
                         '#text' in elem[key] and
                         elem[key]['#text'] == old_value
                 ):
+                    # elem[key] has both text nodes and sub-nodes,
+                    # e.g. <foo><bar>one<qux>two</qux></bar></foo>
+                    #      elem = {'bar': {'#text': 'one', 'qux': 'two')}}
                     elem[key]['#text'] = new_value
                     found.append(True)
 
@@ -163,9 +179,12 @@ def update_xml(xml, path, old_value, new_value):
         step = next_steps[0]
         if len(next_steps) > 1:
             if isinstance(elem, list):
-                return [recurse_elements(e[step], next_steps[1:]) for e in elem]
+                return [recurse_elements(e[find_tag_with_ns(e, step)], next_steps[1:]) for e in elem]
             elif isinstance(elem, dict):
-                return recurse_elements(elem[step], next_steps[1:])
+                # namespaces cause KeyError: 'case' vs 'n0:case', 'meta' vs 'n1:meta'
+                # search keys of elem for the first one that ends with step
+                key = find_tag_with_ns(elem, step)
+                return recurse_elements(elem[key], next_steps[1:])
             else:
                 raise ValueError('unable to traverse element')
         # elem[step] is a leaf node
@@ -176,12 +195,18 @@ def update_xml(xml, path, old_value, new_value):
         else:
             update_elem(elem, step)
 
-    dict_ = xmltodict.parse(xml)
+    if isinstance(xml, dict):
+        dict_ = xml
+        return_as_string = False
+    else:
+        dict_ = xmltodict.parse(xml)
+        return_as_string = True
     recurse_elements(dict_, path)
     if not any(found):
         raise ValueError('Unable to find "{}" in "{}" at path "{}"'.format(old_value, xml, path))
-    xml = xmltodict.unparse(dict_)
-    return xml
+    if return_as_string:
+        xml = xmltodict.unparse(dict_)
+        return xml
 
 
 class CouchSqlDomainMigrator(object):
@@ -385,25 +410,21 @@ class CouchSqlDomainMigrator(object):
             'user_location_id',
         )
 
-        def check_property(property, dict_, base_path):
-            if property in dict_ and dict_[property] in self._id_map:
-                prop_path = base_path + [property]
-                old_id = dict_[property]
+        def update_key(dict_, key, base_path):
+            if key in dict_ and dict_[key] in self._id_map:
+                item_path = base_path + [key]
+                form_path = item_path[1:]  # skip initial "form" in path
+                old_id = dict_[key]
                 new_id = self._id_map[old_id]
-                dict_[property] = new_id
-                update_form_xml(prop_path, new_id)
-                self._ignore_paths[couch_form.get_id].append(prop_path)
+                dict_[key] = new_id
+                update_xml(form_xml_dict, form_path, old_id, new_id)
+                self._ignore_paths[couch_form.get_id].append(item_path)
 
         form_xml = couch_form.get_xml()
-        new_id = str(uuid.uuid4())
-        couch_form.form_id = new_id
-
-        couch_form.domain = self.dst_domain
+        form_xml_dict = xmltodict.parse(form_xml)
 
         caseblocks_with_path = extract_case_blocks(couch_form.form, include_path=True)
         for caseblock, path in caseblocks_with_path:
-            case_path = ['form'] + path + ['case']
-
             # Example caseblock:
             #     {u'@case_id': u'9fab567d-8c28-4cf0-acf2-dd3df04f95ca',
             #      u'@date_modified': datetime.datetime(2019, 2, 7, 9, 15, 48, 575000),
@@ -412,22 +433,21 @@ class CouchSqlDomainMigrator(object):
             #      u'create': {u'case_name': u'Abigail',
             #                  u'case_type': u'case',
             #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
-            if '@userid' in caseblock and caseblock['@userid'] in self._id_map:
-                caseblock['@userid'] = self._id_map[caseblock['@userid']]
-                self._ignore_paths[couch_form.get_id].append(tuple(case_path + ['@userid']))
+            case_path = ['form'] + path + ['case']
+            update_key(caseblock, '@userid', case_path + ['@userid'])
 
             if 'create' in caseblock:
                 create_path = case_path + ['create']
                 for prop in id_properties:
-                    check_property(prop, caseblock['create'], create_path)
+                    update_key(caseblock['create'], prop, create_path)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
-                    check_property(prop, caseblock['update'], update_path)
+                    update_key(caseblock['update'], prop, update_path)
 
-        check_property('userID', couch_form.form['meta'], ['form', 'meta'])
-        couch_form.put_attachment(form_xml, ATTACHMENT_NAME)  # TODO: Will the attachment refer to the SQL form instance
+        update_key(couch_form.form['meta'], 'userID', ['form', 'meta'])
+        form_xml = xmltodict.unparse(form_xml_dict)
 
         # TODO: Test:
         #     - [ ] Basic forms:
