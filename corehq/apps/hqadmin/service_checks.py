@@ -12,6 +12,7 @@ from io import BytesIO
 import attr
 import gevent
 import requests
+import six
 from celery import Celery
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -27,6 +28,7 @@ from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 from corehq.blobs import CODES, get_blob_db
+from corehq.celery_monitoring.heartbeat import Heartbeat, HeartbeatNeverRecorded
 from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level
 from corehq.util.timer import TimingContext
@@ -194,8 +196,26 @@ def _check_celery_workers():
 
 
 def check_heartbeat():
-    is_alive = heartbeat.is_alive()
-    return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
+    blocked_queues = []
+
+    for queue, threshold in settings.CELERY_HEARTBEAT_THRESHOLDS.items():
+        if threshold:
+            threshold = datetime.timedelta(seconds=threshold)
+            try:
+                blockage_duration = Heartbeat(queue).get_blockage_duration()
+            except HeartbeatNeverRecorded:
+                blocked_queues.append((queue, 'as long as we can see', threshold))
+            else:
+                if blockage_duration > threshold:
+                    blocked_queues.append((queue, blockage_duration, threshold))
+
+    if blocked_queues:
+        return ServiceStatus(False, '\n'.join(
+            "{} has been blocked for {} (max allowed is {})".format(
+                queue, blockage_duration, threshold
+            ) for queue, blockage_duration, threshold in blocked_queues))
+    else:
+        return ServiceStatus(True, "OK")
 
 
 def check_postgres():
