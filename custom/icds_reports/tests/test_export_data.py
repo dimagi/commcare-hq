@@ -2052,7 +2052,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b1',
                         's1',
-                        '2345.test_ls_name',
+                        'Data Not Entered',
                         1,
                         2,
                         'Data Not Entered'
