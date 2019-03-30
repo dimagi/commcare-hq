@@ -12,7 +12,6 @@ from io import BytesIO
 import attr
 import gevent
 import requests
-import six
 from celery import Celery
 from django.conf import settings
 from django.contrib.auth.models import User
