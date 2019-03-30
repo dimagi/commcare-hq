@@ -33,7 +33,8 @@ except AppRegistryNotReady:
 def celery_add_time_sent(headers=None, body=None, **kwargs):
     info = headers if 'task' in headers else body
     task_id = info['id']
-    cache.set('task.{}.time_sent'.format(task_id), datetime.datetime.utcnow())
+    cache.set('task.{}.time_sent'.format(task_id), datetime.datetime.utcnow(),
+              timeout=3 * 24 * 60 * 60)
 
 
 @task_prerun.connect
