@@ -51,7 +51,9 @@ class AggregationScriptTestBase(CSVTestCase):
             return value_str
 
     def _load_data_from_db(self, table_name, sort_key, filter_by=None):
-        engine = connection_manager.get_session_helper('icds-ucr').engine
+        session_helper = connection_manager.get_session_helper('icds-ucr')
+        engine = session_helper.engine
+        session = session_helper.Session
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
         table = metadata.tables[table_name]
@@ -60,10 +62,10 @@ class AggregationScriptTestBase(CSVTestCase):
             for column in table.columns
         ]
         with engine.begin() as connection:
-            query = table.select().order_by(*sort_key)
+            query = session.query(table).order_by(*sort_key)
             if filter_by:
-                query.filter_by(**filter_by)
-            rows = connection.execute(query).fetchall()
+                query = query.filter_by(**filter_by)
+            rows = query.all()
             for row in rows:
                 row = list(row)
                 for idx, value in enumerate(row):
@@ -82,6 +84,7 @@ class AggregationScriptTestBase(CSVTestCase):
     def _load_and_compare_data(self, table_name, path, sort_key=None, filter_by=None):
         # To speed up tests, we use a sort_key wherever possible
         #   to presort before comparing data
+        print(path)
         if sort_key:
             self._fasterAssertListEqual(
                 list(self._load_data_from_db(table_name, sort_key, filter_by)),
@@ -115,16 +118,18 @@ class CcsRecordMonthlyAggregationTest(AggregationScriptTestBase):
 
     def test_ccs_record_monthly_2017_04_01(self):
         self._load_and_compare_data(
-            'ccs_record_monthly_2017-04-01',
+            'ccs_record_monthly',
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-04-01'}
         )
 
     def test_ccs_record_monthly_2017_05_01(self):
         self._load_and_compare_data(
-            'ccs_record_monthly_2017-05-01',
+            'ccs_record_monthly',
             os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-05-01'}
         )
 
 
@@ -137,72 +142,82 @@ class CcsRecordAggregationTest(AggregationScriptTestBase):
 
     def test_agg_ccs_record_2017_04_01_1(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_1',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 1}
         )
 
     def test_agg_ccs_record_2017_04_01_2(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_2',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 2}
         )
 
     def test_agg_ccs_record_2017_04_01_3(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_3',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 3}
         )
 
     def test_agg_ccs_record_2017_04_01_4(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_4',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 4}
         )
 
     def test_agg_ccs_record_2017_04_01_5(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-04-01_5',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 5}
         )
 
     def test_agg_ccs_record_2017_05_01_1(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_1',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 1}
         )
 
     def test_agg_ccs_record_2017_05_01_2(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_2',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 2}
         )
 
     def test_agg_ccs_record_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_3',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 3}
         )
 
     def test_agg_ccs_record_2017_05_01_4(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_4',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 4}
         )
 
     def test_agg_ccs_record_2017_05_01_5(self):
         self._load_and_compare_data(
-            'agg_ccs_record_2017-05-01_5',
+            'agg_ccs_record',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 5}
         )
 
 
@@ -217,69 +232,79 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_1',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 1}
         )
 
     def test_agg_child_health_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_2',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 2}
         )
 
     def test_agg_child_health_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_3',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 3}
         )
 
     def test_agg_child_health_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_4',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 4}
         )
 
     def test_agg_child_health_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-04-01', 'aggregation_level': 5}
         )
 
     def test_agg_child_health_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_1',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 1}
         )
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 2}
         )
 
     def test_agg_child_health_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_3',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 3}
         )
 
     def test_agg_child_health_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_4',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 4}
         )
 
     def test_agg_child_health_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_5',
             os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
-            sort_key=self.sort_key
+            sort_key=self.sort_key,
+            filter_by={'month': '2017-05-01', 'aggregation_level': 5}
         )
 
 
