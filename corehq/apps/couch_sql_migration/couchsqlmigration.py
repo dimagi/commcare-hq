@@ -349,7 +349,7 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_form_and_associated_models(self, src_couch_form):
 
-        dst_couch_form = self._map_form_ids(src_couch_form)
+        dst_couch_form, form_xml = self._map_form_ids(src_couch_form)
         sql_form = _migrate_form(dst_couch_form, self.dst_domain)
         _migrate_form_attachments(self.src_domain, sql_form, dst_couch_form)
         _migrate_form_operations(sql_form, dst_couch_form)
@@ -410,15 +410,15 @@ class CouchSqlDomainMigrator(object):
             'user_location_id',
         )
 
-        def update_key(dict_, key, base_path):
+        def update_id(dict_, key, base_path):
             if key in dict_ and dict_[key] in self._id_map:
                 item_path = base_path + [key]
-                form_path = item_path[1:]  # skip initial "form" in path
+                form_xml_path = ['data'] + item_path[1:]  # Form XML root node is "data" instead of "form"
                 old_id = dict_[key]
                 new_id = self._id_map[old_id]
                 dict_[key] = new_id
-                update_xml(form_xml_dict, form_path, old_id, new_id)
-                self._ignore_paths[couch_form.get_id].append(item_path)
+                update_xml(form_xml_dict, form_xml_path, old_id, new_id)
+                self._ignore_paths[couch_form.get_id].append(tuple(item_path))
 
         form_xml = couch_form.get_xml()
         form_xml_dict = xmltodict.parse(form_xml)
@@ -434,37 +434,21 @@ class CouchSqlDomainMigrator(object):
             #                  u'case_type': u'case',
             #                  u'owner_id': u'7ea59f550f35758447400937f800f78c'}}
             case_path = ['form'] + path + ['case']
-            update_key(caseblock, '@userid', case_path + ['@userid'])
+            update_id(caseblock, '@userid', case_path + ['@userid'])
 
             if 'create' in caseblock:
                 create_path = case_path + ['create']
                 for prop in id_properties:
-                    update_key(caseblock['create'], prop, create_path)
+                    update_id(caseblock['create'], prop, create_path)
 
             if 'update' in caseblock:
                 update_path = case_path + ['update']
                 for prop in id_properties:
-                    update_key(caseblock['update'], prop, update_path)
+                    update_id(caseblock['update'], prop, update_path)
 
-        update_key(couch_form.form['meta'], 'userID', ['form', 'meta'])
+        update_id(couch_form.form['meta'], 'userID', ['form', 'meta'])
         form_xml = xmltodict.unparse(form_xml_dict)
-
-        # TODO: Test:
-        #     - [ ] Basic forms:
-        #       - [✓] Change IDs in case create
-        #       - [✓] Change IDs in case update
-        #       - [ ] Change IDs in child cases
-        #       - [ ] Change IDs in survey module forms
-        #     - [ ] Advanced forms:
-        #       - [ ] Change IDs in multiple case creates
-        #       - [ ] Change IDs in multiple case updates
-        #       - [✓] Change IDs in child cases
-        #     - [ ] System forms (imported cases)
-        #     - [ ] Change IDs in save-to-case
-        #     - [✓] Questions that store location IDs or user IDs
-        #     - [ ] Form XML
-
-        return couch_form
+        return couch_form, form_xml
 
     def _map_case_ids(self, couch_case):
         if self.src_domain == self.dst_domain:
@@ -485,7 +469,7 @@ class CouchSqlDomainMigrator(object):
         if self.src_domain == self.dst_domain:
             ignore_paths = None
         else:
-            ignore_paths = self._ignore_paths[sql_form.form_id] + [('domain',)]
+            ignore_paths = self._ignore_paths[couch_form.get_id] + [('domain',), ('_id',)]
         diffs = json_diff(
             couch_form_json, sql_form_json,
             track_list_indices=False,
@@ -518,9 +502,10 @@ class CouchSqlDomainMigrator(object):
     def _migrate_unprocessed_form(self, couch_form_json):
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         src_couch_form = _wrap_form(couch_form_json)
-        dst_couch_form = self._map_form_ids(src_couch_form)
+        dst_couch_form, form_xml = self._map_form_ids(src_couch_form)
+        form_id = dst_couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
         sql_form = XFormInstanceSQL(
-            form_id=dst_couch_form.form_id,
+            form_id=form_id,
             xmlns=dst_couch_form.xmlns,
             user_id=dst_couch_form.user_id,
         )
@@ -628,7 +613,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(
                 couch_case, sql_case_json,
                 track_list_indices=False,
-                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+                ignore_paths=None if self.src_domain == self.dst_domain else [('domain',), ('xform_ids', '[*]')],
             )
             diffs = filter_case_diffs(
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
@@ -776,7 +761,11 @@ def _migrate_form(couch_form, dst_domain):
     with force_phone_timezones_should_be_processed():
         adjust_datetimes(form_data)
     sql_form = interface.new_xform(form_data)
-    sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    if couch_form.domain == dst_domain:
+        sql_form.form_id = couch_form.form_id   # some legacy forms don't have ID's so are assigned random ones
+    else:
+        # always assign a new ID if moving domains, so that new form.xml attachment keys don't clash
+        sql_form.form_id = six.text_type(uuid.uuid4())
     if sql_form.xmlns is None:
         sql_form.xmlns = ''
     return _copy_form_properties(dst_domain, sql_form, couch_form)
@@ -859,12 +848,12 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form):
 
     for name, blob in six.iteritems(couch_form.blobs):
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
-        meta = try_to_get_blob_meta(sql_form.form_id, type_code, name)
+        meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
-        if meta and meta.domain != couch_form.domain:
+        if meta and meta.domain != sql_form.domain:
             # meta domain is src_domain; form is being migrated to dst_domain
             append_undo(meta, UNDO_SET_DOMAIN)
-            meta.domain = couch_form.domain
+            meta.domain = sql_form.domain
             meta.save()
 
         # there was a bug in a migration causing the type code for many form attachments to be set as form_xml
