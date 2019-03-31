@@ -401,7 +401,7 @@ class AwcMbtHelper(MBTHelper):
         CREATE TEMPORARY TABLE "tmp_awc_mbt" AS SELECT
             {awc_columns}
         FROM awc_location;
-        COPY (SELECT {columns} FROM {table} t LEFT JOIN "tmp_awc_mbt" awc on t.awc_id=awc.doc_id AND awc.supervisor_id=t.supervisor_id WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
+        COPY (SELECT {columns} FROM {table} t LEFT JOIN "tmp_awc_mbt" awc on t.awc_id=awc.doc_id  WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
         DROP TABLE "tmp_awc_mbt";
         """.format(
             loc_columns=','.join(self.location_columns),
