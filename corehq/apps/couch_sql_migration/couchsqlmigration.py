@@ -38,8 +38,14 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormOperationSQL, CommCareCaseSQL,
-    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
+    Attachment,
+    CaseAttachmentSQL,
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    RebuildWithReason,
+    XFormInstanceSQL,
+    XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
@@ -347,26 +353,28 @@ class CouchSqlDomainMigrator(object):
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
-    def _migrate_form_and_associated_models(self, src_couch_form):
+    def _migrate_form_and_associated_models(self, couch_form):
+        couch_form, form_xml = self._map_form_ids(couch_form)
+        sql_form = _migrate_form(couch_form, self.dst_domain)
+        _migrate_form_attachments(self.src_domain, sql_form, couch_form, incl_form_xml=form_xml is None)
+        if form_xml is not None:
+            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+            sql_form.attachments_list.append(attachment)
+        _migrate_form_operations(sql_form, couch_form)
 
-        dst_couch_form, form_xml = self._map_form_ids(src_couch_form)
-        sql_form = _migrate_form(dst_couch_form, self.dst_domain)
-        _migrate_form_attachments(self.src_domain, sql_form, dst_couch_form)
-        _migrate_form_operations(sql_form, dst_couch_form)
-
-        self._save_diffs(dst_couch_form, sql_form)
+        self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.dst_domain, sql_form)
             if len(case_stock_result.case_models):
                 touch_updates = [
-                    update for update in get_case_updates(dst_couch_form)
+                    update for update in get_case_updates(couch_form)
                     if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
                 ]
                 if len(touch_updates):
                     # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
-                    self.forms_that_touch_cases_without_actions.add(dst_couch_form.form_id)
+                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
 
         _save_migrated_models(sql_form, case_stock_result)
 
@@ -399,7 +407,7 @@ class CouchSqlDomainMigrator(object):
         Leaves app IDs and build IDs unchanged.
         """
         if self.src_domain == self.dst_domain:
-            return couch_form
+            return couch_form, None
 
         id_properties = (
             'activista_responsavel',
@@ -501,20 +509,23 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_unprocessed_form(self, couch_form_json):
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
-        src_couch_form = _wrap_form(couch_form_json)
-        dst_couch_form, form_xml = self._map_form_ids(src_couch_form)
-        form_id = dst_couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
+        couch_form = _wrap_form(couch_form_json)
+        couch_form, form_xml = self._map_form_ids(couch_form)
+        form_id = couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
         sql_form = XFormInstanceSQL(
             form_id=form_id,
-            xmlns=dst_couch_form.xmlns,
-            user_id=dst_couch_form.user_id,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
         )
-        _copy_form_properties(self.dst_domain, sql_form, dst_couch_form)
-        _migrate_form_attachments(self.src_domain, sql_form, dst_couch_form)
-        _migrate_form_operations(sql_form, dst_couch_form)
+        _copy_form_properties(self.dst_domain, sql_form, couch_form)
+        _migrate_form_attachments(self.src_domain, sql_form, couch_form, incl_form_xml=form_xml is None)
+        if form_xml is not None:
+            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+            sql_form.attachments_list.append(attachment)
+        _migrate_form_operations(sql_form, couch_form)
 
-        if dst_couch_form.doc_type != 'SubmissionErrorLog':
-            self._save_diffs(dst_couch_form, sql_form)
+        if couch_form.doc_type != 'SubmissionErrorLog':
+            self._save_diffs(couch_form, sql_form)
 
         _save_migrated_models(sql_form)
 
@@ -640,10 +651,14 @@ class CouchSqlDomainMigrator(object):
             self.src_domain, couch_case['_id'], None, save=False, lock=False
         )
         rebuilt_case_json = rebuilt_case.to_json()
+        if self.src_domain == self.dst_domain:
+            ignore_paths = None
+        else:
+            ignore_paths = [('domain',), ('owner_id',), ('xform_ids', '[*]')]
         diffs = json_diff(
             rebuilt_case_json, sql_case_json,
             track_list_indices=False,
-            ignore_paths=None if self.src_domain == self.dst_domain else [('domain',)],
+            ignore_paths=ignore_paths,
         )
         diffs = filter_case_diffs(
             rebuilt_case_json, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
@@ -829,8 +844,8 @@ def append_undo(meta, operation):
         writer.writerow(row)
 
 
-def _migrate_form_attachments(src_domain, sql_form, couch_form):
-    """Copy over attachment meta - includes form.xml"""
+def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=True):
+    """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
 
@@ -847,6 +862,8 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form):
             return None
 
     for name, blob in six.iteritems(couch_form.blobs):
+        if name == "form.xml" and not incl_form_xml:
+            continue
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
@@ -882,7 +899,7 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form):
             append_undo(meta, UNDO_CREATE)
 
         attachments.append(meta)
-    sql_form.attachments_list = attachments
+    sql_form.attachments_list.extend(attachments)
 
 
 def revert_form_attachment_meta_domain(src_domain):
