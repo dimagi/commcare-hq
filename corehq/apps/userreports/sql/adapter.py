@@ -4,12 +4,11 @@ from __future__ import unicode_literals
 import hashlib
 import logging
 
-import six
 import sqlalchemy
 from architect import install
 from django.utils.translation import ugettext as _
 from memoized import memoized
-from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
@@ -18,7 +17,8 @@ from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.util import get_table_name
+from corehq.apps.userreports.sql.util import view_exists
+from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
@@ -35,11 +35,13 @@ def get_metadata(engine_id):
 
 class IndicatorSqlAdapter(IndicatorAdapter):
 
-    def __init__(self, config):
+    def __init__(self, config, override_table_name=None):
         super(IndicatorSqlAdapter, self).__init__(config)
         self.engine_id = get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
+        self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine
+        self.override_table_name = override_table_name
 
     @property
     def table_id(self):
@@ -51,7 +53,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     @memoized
     def get_table(self):
-        return get_indicator_table(self.config, get_metadata(self.engine_id))
+        return get_indicator_table(
+            self.config, get_metadata(self.engine_id), override_table_name=self.override_table_name
+        )
 
     @memoized
     def get_sqlalchemy_orm_table(self):
@@ -99,19 +103,24 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return True
 
     def _install_partition(self):
+        orm_table = self._get_orm_table_with_partitioning()
+        orm_table.architect.partition.get_partition().prepare()
+
+    def _get_orm_table_with_partitioning(self):
         config = self.config.sql_settings.partition_config[0]
         partition = install(
             'partition', type='range', subtype=config.subtype,
             constraint=config.constraint, column=config.column, db=self.engine.url,
             orm='sqlalchemy', return_null=True
         )
-        mapping = self.get_sqlalchemy_orm_table()
-        partition(mapping)
-        mapping.architect.partition.get_partition().prepare()
+        orm_table = self.get_sqlalchemy_orm_table()
+        partition(orm_table)
+        return orm_table
 
     def rebuild_table(self):
         self.session_helper.Session.remove()
         try:
+            self._drop_legacy_table_and_view()
             rebuild_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -122,6 +131,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def build_table(self):
         self.session_helper.Session.remove()
         try:
+            self._drop_legacy_table_and_view()
             build_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -129,19 +139,29 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def after_table_build(self):
-        pass
-
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
+        self._drop_legacy_table_and_view()
         with self.engine.begin() as connection:
             table = self.get_table()
             if self.config.sql_settings.partition_config:
-                connection.execute('DROP TABLE "{tablename}" CASCADE'.format(tablename=table.name))
+                connection.execute('DROP TABLE IF EXISTS "{tablename}" CASCADE'.format(tablename=table.name))
             else:
                 table.drop(connection, checkfirst=True)
             get_metadata(self.engine_id).remove(table)
+
+    def _drop_legacy_table_and_view(self):
+        legacy_table_name = get_legacy_table_name(self.config.domain, self.config.table_id)
+        view_name = get_table_name(self.config.domain, self.config.table_id)
+        with self.engine.begin() as connection:
+            if view_exists(connection, view_name):
+                # Can't use `DROP VIEW IF EXISTS` since PG raises an error if there
+                # is a table with the same name
+                connection.execute("""
+                    DROP VIEW "{view}";
+                    DROP TABLE "{table}" CASCADE
+                """.format(view=view_name, table=legacy_table_name))
 
     @unit_testing_only
     def clear_table(self):
@@ -208,7 +228,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         #   because bulk_insert_mappings is meant for multi-table insertion
         #   so it has overhead of format conversions and multiple statements
         insert = table.insert().values(formatted_rows)
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             session.execute(delete)
             session.execute(insert)
 
@@ -221,7 +241,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def bulk_delete(self, doc_ids):
         table = self.get_table()
         delete = table.delete(table.c.doc_id.in_(doc_ids))
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             session.execute(delete)
 
     def delete(self, doc):
@@ -231,7 +251,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             session.execute(delete)
 
     def doc_exists(self, doc):
-        with self.session_helper.session_context() as session:
+        with self.session_context() as session:
             query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
             return session.query(query.exists()).scalar()
 
@@ -245,9 +265,9 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
-def get_indicator_table(indicator_config, metadata):
+def get_indicator_table(indicator_config, metadata, override_table_name=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
-    table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
+    table_name = override_table_name or get_table_name(indicator_config.domain, indicator_config.table_id)
     columns_by_col_id = {col.database_column_name.decode('utf-8') for col in indicator_config.get_columns()}
     extra_indices = []
     for index in indicator_config.sql_column_indexes:
