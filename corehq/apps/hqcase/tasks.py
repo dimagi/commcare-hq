@@ -25,6 +25,11 @@ from six.moves import range
 
 @task(serializer='pickle')
 def explode_case_task(domain, user_id, factor):
+    explode_case_task_json_args(domain, user_id, factor)
+
+
+@task
+def explode_case_task_json_args(domain, user_id, factor):
     return explode_cases(domain, user_id, factor, explode_case_task)
 
 
@@ -140,6 +145,11 @@ def topological_sort_cases(cases):
 
 @task(serializer='pickle')
 def delete_exploded_case_task(domain, explosion_id):
+    delete_exploded_case_task_json_args(domain, explosion_id)
+
+
+@task
+def delete_exploded_case_task_json_args(domain, explosion_id):
     return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 
 

@@ -9,7 +9,7 @@ from django.views.generic import TemplateView
 
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
+from corehq.apps.hqcase.tasks import delete_exploded_case_task_json_args, explode_case_task_json_args
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.form_processor.utils import should_use_sql_backend
 from soil import DownloadBase
@@ -52,7 +52,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
             messages.error(request, 'factor must be an int; was: %s' % factor)
         else:
             download = DownloadBase()
-            res = explode_case_task.delay(self.domain, user_id, factor)
+            res = explode_case_task_json_args.delay(self.domain, user_id, factor)
             download.set_task(res)
 
             return redirect('hq_soil_download', self.domain, download.download_id)
@@ -60,6 +60,6 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     def delete_cases(self, request, domain):
         explosion_id = request.POST.get('explosion_id')
         download = DownloadBase()
-        res = delete_exploded_case_task.delay(self.domain, explosion_id)
+        res = delete_exploded_case_task_json_args.delay(self.domain, explosion_id)
         download.set_task(res)
         return redirect('hq_soil_download', self.domain, download.download_id)
