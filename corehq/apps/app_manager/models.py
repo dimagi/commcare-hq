@@ -4796,15 +4796,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return self.langs
 
-    @classmethod
-    def convert_to_application(cls, app_id):
-        raw_linked_app_doc = Application.get_db().get(app_id)
-        raw_linked_app_doc['doc_type'] = 'Application'
-        del raw_linked_app_doc['master']
-        del raw_linked_app_doc['linked_app_translations']
-        del raw_linked_app_doc['linked_app_logo_refs']
-        del raw_linked_app_doc['uses_master_app_form_ids']
-        Application.get_db().save_doc(raw_linked_app_doc)
+    def convert_to_application(self):
+        self.doc_type = 'Application'
+        del self.master
+        del self.linked_app_translations
+        del self.linked_app_logo_refs
+        del self.uses_master_app_form_ids
 
 
 def validate_lang(lang):
