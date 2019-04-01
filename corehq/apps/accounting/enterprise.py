@@ -245,5 +245,13 @@ class EnterpriseSMSUsageReport(EnterpriseReport):
         self.window = 30
         self.subtitle = _("past {} days").format(self.window)
 
+    @property
+    def headers(self):
+        headers = super(EnterpriseSMSUsageReport, self).headers
+        return [_('# of SMS')] + headers
+
+    def rows_for_domain(self, domain_obj):
+        return [[self.total_for_domain(domain_obj)] + self.domain_properties(domain_obj)]
+
     def total_for_domain(self, domain_obj):
         return sms_in_in_last(domain_obj.name, 30)
