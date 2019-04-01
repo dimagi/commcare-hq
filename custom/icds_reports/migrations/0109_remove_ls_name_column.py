@@ -8,6 +8,7 @@ from django.db import migrations
 from corehq.sql_db.operations import RawSQLMigration
 from custom.icds_reports.utils.migrations import get_view_migrations
 
+
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
 
@@ -22,4 +23,3 @@ class Migration(migrations.Migration):
 
     ]
     operations.extend(get_view_migrations())
-
