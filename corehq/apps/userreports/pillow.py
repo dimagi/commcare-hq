@@ -14,9 +14,9 @@ from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
 from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
-    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning, ValidationError
+    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
-from corehq.apps.userreports.models import AsyncIndicator, InvalidUCRData
+from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import get_indicator_table, get_metadata

@@ -28,13 +28,12 @@ from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
-from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError, ValidationError
+from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
-    InvalidUCRData,
     StaticDataSourceConfiguration,
     id_is_static,
     get_report_config,
