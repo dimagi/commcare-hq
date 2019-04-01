@@ -7,7 +7,7 @@ from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
-ColumnContext = namedtuple('ColumnContext', 'title name width')
+ColumnMeta = namedtuple('ColumnMeta', 'title name width')
 FilterChoiceMeta = namedtuple('FilterOptionsMeta', 'name title')
 
 
