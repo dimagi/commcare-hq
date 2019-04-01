@@ -5,9 +5,13 @@
 hqDefine('reports/v2/js/datagrid/columns', [
     'jquery',
     'knockout',
+    'underscore',
+    'reports/v2/js/datagrid/filters',
 ], function (
     $,
-    ko
+    ko,
+    _,
+    filters
 ) {
     'use strict';
 
@@ -30,6 +34,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
 
         self.slugEndpoint = options.slugEndpoint;
         self.reportContext = options.reportContext;
+
+        self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
+            return filters.columnFilterModel(data);
+        }));
 
         self.slugOptions = ko.observableArray();
 
