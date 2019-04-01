@@ -52,6 +52,11 @@ def create_build_files_for_all_app_profiles(domain, build_id):
 
 @task(serializer='pickle', queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
+    prune_auto_generated_builds_json_args(domain, app_id)
+
+
+@task(queue='background_queue')
+def prune_auto_generated_builds_json_args(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
     saved_builds = get_auto_generated_built_apps(domain, app_id)
 

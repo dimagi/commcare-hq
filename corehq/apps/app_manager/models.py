@@ -94,7 +94,7 @@ from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin, CODES
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
-from corehq.apps.app_manager.tasks import prune_auto_generated_builds
+from corehq.apps.app_manager.tasks import prune_auto_generated_builds_json_args
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -4740,7 +4740,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         copy.comment_from = user_id
         copy.is_released = False
 
-        prune_auto_generated_builds.delay(self.domain, self._id)
+        prune_auto_generated_builds_json_args.delay(self.domain, self._id)
 
         return copy
 
