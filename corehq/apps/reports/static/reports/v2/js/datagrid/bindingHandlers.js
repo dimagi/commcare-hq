@@ -15,7 +15,7 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
 ) {
     'use strict';
 
-    ko.bindingHandlers.slugAutocomplete = {
+    ko.bindingHandlers.datagridAutocomplete = {
         init: function (element) {
             var $element = $(element);
             if (!$element.atwho) {

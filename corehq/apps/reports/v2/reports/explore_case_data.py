@@ -30,12 +30,12 @@ class ExploreCaseDataReport(BaseReport):
     columns = [
         ColumnContext(
             title=ugettext_lazy("Case Name"),
-            slug='case_name',
+            name='case_name',
             width=200,
         ),
         ColumnContext(
             title=ugettext_lazy("Case Type"),
-            slug='@case_type',
+            name='@case_type',
             width=200,
         ),
     ]
