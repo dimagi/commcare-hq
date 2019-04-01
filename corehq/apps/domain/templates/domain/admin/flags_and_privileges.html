@@ -1,6 +1,10 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% load tzmigration %}
+
+{% requirejs_main 'domain/js/toggles' %}
+
 {% block head %}{{ block.super }}
 <style type="text/css">
     th.checkmark-column, td.checkmark-column {
@@ -10,6 +14,10 @@
 </style>
 {% endblock %}
 {% block page_content %}
+
+    {% initial_page_data 'toggles' toggles %}
+    {% registerurl 'edit_toggle' '---' %}
+
     <div class="row">
         <div class="col-sm-10">
             <p>
@@ -87,7 +95,7 @@
             </p>
         </div>
         <div class="col-sm-10">
-            <table class="table table-striped">
+            <table class="table table-striped" id="toggles-table">
                 <thead>
                     <th>{% trans "Tag" %}</th>
                     <th>{% trans "Feature" %}</th>
@@ -95,37 +103,40 @@
                     <th class="checkmark-column">{% trans "Enabled for me?" %}</th>
                     <th>{% trans "Edit" %}</th>
                 </thead>
-                <tbody>
-                    {% for toggle, enabled_for_domain, enabled_for_user in flags %}
-                    <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
-                        <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
-                        <td>
+                <tbody data-bind="foreach: toggles">
+                    <tr data-bind="css: cssClass">
+                        <td><span class="label"
+                                  data-bind="css: ('label-' + tagCssClass),
+                                             text: tag"></span></td>
 
-                            {% if toggle.description %}
+                        <td>
                             <a class="collapsed" data-toggle="collapse" aria-expanded="false"
-                               href="#toggleDescription-{{ toggle.slug }}">
+                               data-bind="visible: description,
+                                          attr: {href: '#toggleDescription-' + slug}">
                                 <i class="fa fa-angle-double-down"></i>
                             </a>
-                            {% endif %}
 
-                            {{ toggle.label }}
+                            <span data-bind="text: label"></span>
 
-                            {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+                            <span data-bind="visible: helpLink">
+                                (<a data-bind="attr: {href: helpLink}" target="_blank">docs</a>)
+                            </span>
 
-                            {% if toggle.description %}
-                            <div class="collapse" id="toggleDescription-{{ toggle.slug }}">
-                                <div class="well">
-                                    {{ toggle.description }}
-                                </div>
+                            <div class="collapse"
+                                 data-bind="visible: description,
+                                            attr: {id: 'toggleDescription-' + slug}">
+                                <div class="well" data-bind="text: description"></div>
                             </div>
-                            {% endif %}
-
                         </td>
-                        <td class="checkmark-column">{% if enabled_for_domain %}<i class="fa fa-check"></i>{% endif %}</td>
-                        <td class="checkmark-column">{% if enabled_for_user %}<i class="fa fa-check"></i>{% endif %}</td>
-                        <td><a href="{% url 'edit_toggle' toggle.slug %}">{% trans "change" %}</a></td>
+
+                        <td class="checkmark-column">
+                            <i class="fa fa-check" data-bind="visible: domainEnabled"></i>
+                        </td>
+                        <td class="checkmark-column">
+                            <i class="fa fa-check" data-bind="visible: userEnabled"></i>
+                        </td>
+                        <td><a data-bind="attr: {href: url}">{% trans "change" %}</a></td>
                     </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
