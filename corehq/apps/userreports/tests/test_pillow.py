@@ -18,7 +18,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
+from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator, Validation, InvalidUCRData
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, \
     ConfigurableReportPillowProcessor
@@ -179,6 +179,67 @@ class ChunkedUCRProcessorTest(TestCase):
             set([doc['_id'] for doc in result_docs])
         )
         self._delete_cases(cases)
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
+    def test_invalid_data_bulk_processor(self, process_change):
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+        self.config.save()
+        cases = self._create_and_process_changes()
+        num_rows = self.adapter.get_query_object().count()
+        self.assertEqual(num_rows, 0)
+        invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
+        self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
+        # processor.process_change should not get called but processor.process_changes_chunk
+        self.assertFalse(process_change.called)
+        self._delete_cases(cases)
+        InvalidUCRData.objects.all().delete()
+        self.config.validations = []
+        self.config.save()
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
+    def test_invalid_data_serial_processor(self, process_changes_chunk):
+        process_changes_chunk.side_effect = Exception
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+        self.config.save()
+        cases = self._create_and_process_changes()
+        num_rows = self.adapter.get_query_object().count()
+        self.assertEqual(num_rows, 0)
+        invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
+        self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
+        process_changes_chunk.assert_called_once()
+        # since chunked processing failed, normal processing should get called
+        self._delete_cases(cases)
+        InvalidUCRData.objects.all().delete()
+        self.config.validations = []
+        self.config.save()
 
 
 class IndicatorPillowTest(TestCase):
