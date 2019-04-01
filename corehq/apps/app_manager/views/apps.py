@@ -51,7 +51,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.tasks import (
     make_async_build,
-    update_linked_app_and_notify_task
+    update_linked_app_and_notify_task_json_args
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
@@ -953,7 +953,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
     if async_update:
-        update_linked_app_and_notify_task.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
+        update_linked_app_and_notify_task_json_args.delay(domain, app_id, request.couch_user.get_id, request.couch_user.email)
         messages.success(request,
                          _('Your request has been submitted. We will notify you via email once completed.'))
     else:

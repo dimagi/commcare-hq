@@ -68,6 +68,11 @@ def prune_auto_generated_builds(domain, app_id):
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def update_linked_app_and_notify_task(domain, app_id, user_id, email):
+    update_linked_app_and_notify_task_json_args(domain, app_id, user_id, email)
+
+
+@task(queue='background_queue', ignore_result=True)
+def update_linked_app_and_notify_task_json_args(domain, app_id, user_id, email):
     from corehq.apps.app_manager.views.utils import update_linked_app_and_notify
     update_linked_app_and_notify(domain, app_id, user_id, email)
 
