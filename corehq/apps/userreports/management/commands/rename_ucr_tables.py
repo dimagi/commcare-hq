@@ -77,7 +77,11 @@ def _get_old_new_tablenames():
 
 
 def _should_add_view(conn, table_name, view_name):
-    return table_exists(conn, table_name) and not view_exists(conn, view_name)
+    return (
+        table_exists(conn, table_name)
+        and not view_exists(conn, view_name)
+        and not table_exists(conn, view_name)
+    )
 
 
 def create_ucr_views(dry_run=False, tables_by_engine=None):
