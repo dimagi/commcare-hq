@@ -7,6 +7,11 @@ from corehq.pillows.case_search import delete_case_search_cases, \
 
 @task(serializer='pickle')
 def reindex_case_search_for_domain(domain):
+    reindex_case_search_for_domain_json_args(domain)
+
+
+@task
+def reindex_case_search_for_domain_json_args(domain):
     CaseSearchReindexerFactory(domain=domain).build().reindex()
 
 
