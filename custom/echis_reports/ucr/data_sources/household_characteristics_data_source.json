@@ -9,8 +9,7 @@
     "echis"
   ],
   "config": { 
- 
-   "configured_indicators":[
+    "configured_indicators":[
       {
          "comment":null,
          "create_index":true,
