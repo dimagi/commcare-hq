@@ -5,7 +5,7 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Case, F, Func, IntegerField, Sum, When
-from django.db.models.functions import ExtractYear
+from django.db.models.functions import ExtractYear, ExtractMonth
 
 from custom.aaa.models import (
     CcsRecord,
@@ -244,6 +244,24 @@ class PregnantWomanQueryHelper(object):
                 'highRiskPregnancy', 'noOfAncCheckUps'
             ).order_by(sort_column)
         )
+
+    @classmethod
+    def update_list(cls, data):
+        for beneficiary in data:
+            ccs_record = CcsRecord.objects.annotate(
+                pregMonth=ExtractMonth(Func(F('preg_reg_date'), function='age')),
+            ).filter(
+                person_case_id=beneficiary['id']
+            ).extra(
+                select={
+                    'highRiskPregnancy': 'hrp',
+                    'noOfAncCheckUps': 'num_anc_checkups',
+                }
+            ).values(
+                'highRiskPregnancy', 'noOfAncCheckUps', 'pregMonth'
+            ).first()
+            beneficiary.update(ccs_record)
+        return data
 
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
