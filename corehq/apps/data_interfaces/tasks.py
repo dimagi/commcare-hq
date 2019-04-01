@@ -68,7 +68,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     return response
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(hour=0, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
