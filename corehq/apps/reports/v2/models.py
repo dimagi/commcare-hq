@@ -8,6 +8,7 @@ from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
 ColumnContext = namedtuple('ColumnContext', 'title slug width')
+FilterChoiceMeta = namedtuple('FilterOptionsMeta', 'name title')
 
 
 class BaseReport(object):
@@ -19,6 +20,7 @@ class BaseReport(object):
     options_endpoints = ()
     formatters = ()
     columns = []
+    column_filters = ()
 
     def __init__(self, request, domain):
         """
@@ -59,6 +61,10 @@ class BaseReport(object):
             'slug': self.slug,
             'endpoints': [e._asdict() for e in endpoints],
             'columns': [c._asdict() for c in self.columns],
+            'column_filters': [
+                dict(filterType=f.filter_type, name=c.name, title=c.title)
+                for f in self.column_filters for c in f.choices
+            ],
         }
 
 
@@ -130,3 +136,17 @@ class BaseDataFormatter(object):
         :return: {}
         """
         raise NotImplementedError("please implement get_context")
+
+
+class BaseColumnFilter(object):
+    filter_type = None
+    choices = []
+
+    @classmethod
+    def get_filtered_query(cls, query, config):
+        """
+        Override this to return the filtered query
+        :param query:
+        :return: query
+        """
+        raise NotImplementedError("please implement get_filtered_query")
