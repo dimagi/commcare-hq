@@ -1804,8 +1804,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
@@ -1900,8 +1898,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
-    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
-    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2019.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'late_pmt.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
@@ -2006,8 +2002,6 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
     ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
