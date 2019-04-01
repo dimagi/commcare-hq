@@ -39,6 +39,11 @@ def make_async_build(app, username, allow_prune=True, comment=None):
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
 def create_build_files_for_all_app_profiles(domain, build_id):
+    create_build_files_for_all_app_profiles_json_args(domain, build_id)
+
+
+@task(queue='background_queue', ignore_result=True)
+def create_build_files_for_all_app_profiles_json_args(domain, build_id):
     app = get_app(domain, build_id)
     build_profiles = app.build_profiles
     save_app = False
