@@ -9,6 +9,7 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
+        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -36,7 +37,7 @@ class TestServiceDelivery(TestCase):
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
                     'valid_visits': 0,
-                    'expected_visits': 322,
+                    'expected_visits': 185,
                     'thr': '29.20 %',
                     'num_launched_awcs': 9,
                     'block_name': 'Data Not Entered',
@@ -55,7 +56,7 @@ class TestServiceDelivery(TestCase):
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 181,
                     'valid_visits': 0,
-                    'expected_visits': 340,
+                    'expected_visits': 193,
                     'thr': '58.20 %',
                     'num_launched_awcs': 11,
                     'block_name': 'Data Not Entered',
@@ -89,6 +90,7 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_state_0_3(self):
+        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -117,7 +119,7 @@ class TestServiceDelivery(TestCase):
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
                     'valid_visits': 0,
-                    'expected_visits': 322,
+                    'expected_visits': 185,
                     'thr': '29.20 %',
                     'num_launched_awcs': 9,
                     'block_name': 'Data Not Entered',
@@ -132,6 +134,7 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_3_6(self):
+        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -200,6 +203,7 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_state_3_6(self):
+        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
