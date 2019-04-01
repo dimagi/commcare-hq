@@ -83,8 +83,8 @@ from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, \
     create_lady_supervisor_excel_file
-from custom.icds_reports.utils.aggregation_helpers.monolith import (
-    ChildHealthMonthlyAggregationHelper,
+from custom.icds_reports.utils.aggregation_helpers.monolith import ChildHealthMonthlyAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     CcsMbtHelper,
     ChildHealthMbtHelper,
     AwcMbtHelper
