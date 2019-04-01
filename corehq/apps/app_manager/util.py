@@ -29,7 +29,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
 from corehq.apps.app_manager.xpath import UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.app_manager.tasks import create_user_cases
+from corehq.apps.app_manager.tasks import create_user_cases_json_args
 from corehq.util.soft_assert import soft_assert
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.const import (
@@ -353,7 +353,7 @@ def enable_usercase(domain_name):
         if not domain_obj.usercase_enabled:
             domain_obj.usercase_enabled = True
             domain_obj.save()
-            create_user_cases.delay(domain_name)
+            create_user_cases_json_args.delay(domain_name)
 
 
 

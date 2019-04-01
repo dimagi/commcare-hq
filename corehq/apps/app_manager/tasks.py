@@ -16,9 +16,14 @@ logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True)
-def create_user_cases(domain_name):
+def create_user_cases(domain):
+    create_user_cases_json_args(domain)
+
+
+@task(queue='background_queue', ignore_result=True)
+def create_user_cases_json_args(domain):
     from corehq.apps.callcenter.sync_user_case import sync_usercase
-    for user in CommCareUser.by_domain(domain_name):
+    for user in CommCareUser.by_domain(domain):
         sync_usercase(user)
 
 
