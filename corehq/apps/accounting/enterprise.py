@@ -15,6 +15,7 @@ from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Su
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.calculations import sms_in_in_last
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import (
@@ -243,3 +244,6 @@ class EnterpriseSMSUsageReport(EnterpriseReport):
         super(EnterpriseSMSUsageReport, self).__init__(account_id, couch_user)
         self.window = 30
         self.subtitle = _("past {} days").format(self.window)
+
+    def total_for_domain(self, domain_obj):
+        return sms_in_in_last(domain_obj.name, 30)
