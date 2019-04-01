@@ -154,6 +154,8 @@ class Command(BaseCommand):
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
             set_couch_sql_migration_complete(domain)
+            # TODO: If domain != src_domain, prevent form submissions on src_domain
+            set_couch_sql_migration_complete(dst_domain)
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
@@ -269,13 +271,16 @@ def _blow_away_migration(src_domain, dst_domain=None):
 
     if src_domain != dst_domain:
         revert_form_attachment_meta_domain(src_domain)
+        delete_attachments = True
+    else:
+        delete_attachments = False
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(dst_domain, doc_type)
-        FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=False)
+        FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=delete_attachments)
 
     sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(dst_domain)
-    FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=False)
+    FormAccessorSQL.hard_delete_forms(dst_domain, sql_form_ids, delete_attachments=delete_attachments)
 
     sql_case_ids = CaseAccessorSQL.get_case_ids_in_domain(dst_domain)
     CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
