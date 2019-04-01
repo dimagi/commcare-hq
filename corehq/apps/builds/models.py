@@ -286,7 +286,6 @@ class CommCareBuildConfig(Document):
 
     @classmethod
     @quickcache([], timeout=5 * 60)
-    #This seems to be not working.
     def j2me_enabled_configs(cls):
         return [build for build in cls.fetch().menu if build.j2me_enabled]
 

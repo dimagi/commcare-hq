@@ -20,30 +20,31 @@ class TestICDSCASReach(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
+                },
+                show_test=False,
             ),
             {
                 "records": [
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'color': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
                             'help_text': awcs_launched_help_text()
-                        }, 
+                        },
                         {
-                            'all': 51, 
-                            'format': 'div', 
-                            'color': 'green', 
-                            'percent': 127.27272727272728, 
-                            'value': 50, 'label': 
-                            'Number of AWCs open for at least one day in month', 
-                            'frequency': 'month', 
+                            'all': 21,
+                            'format': 'div',
+                            'color': 'green',
+                            'percent': 127.27272727272728,
+                            'value': 50,
+                            'label': 'Number of AWCs open for at least one day in month',
+                            'frequency': 'month',
                             'help_text': 'Total Number of AWCs open for at least one day in month'
                         }
                     ],
@@ -56,7 +57,7 @@ class TestICDSCASReach(TestCase):
                             'label': 'Sectors covered',
                             'frequency': 'month',
                             'help_text': 'Total Sectors that have launched ICDS CAS'
-                        }, 
+                        },
                         {
                             'all': None,
                             'format': 'number',
@@ -100,17 +101,18 @@ class TestICDSCASReach(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
+                },
+                show_test=False,
             ),
             {
                 "records": [
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'color': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
@@ -118,7 +120,7 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
-                            'all': 51,
+                            'all': 21,
                             'format': 'div',
                             'color': 'green',
                             'percent': 'Data in the previous reporting period was 0',
@@ -182,17 +184,18 @@ class TestICDSCASReach(TestCase):
                     'month': (2017, 5, 1),
                     'prev_month': (2017, 4, 1),
                     'aggregation_level': 1
-                }
+                },
+                show_test=False,
             ),
             {
                 "records": [
                     [
                         {
                             'redirect': 'icds_cas_reach/awcs_covered',
-                            'all': 51,
-                            'format': 'div',
-                            'color': 'red',
-                            'percent': 0,
+                            'all': None,
+                            'color': None,
+                            'format': 'number',
+                            'percent': None,
                             'value': 21,
                             'label': 'AWCs Launched',
                             'frequency': 'month',
@@ -200,7 +203,7 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             'redirect': 'icds_cas_reach/awc_daily_status',
-                            'all': 51,
+                            'all': 21,
                             'format': 'div',
                             'color': 'green',
                             'percent': 'Data in the previous reporting period was 0',
