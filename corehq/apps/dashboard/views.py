@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 import math
 
 from corehq import privileges
+from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     AppsPaginator,
@@ -79,7 +80,7 @@ def dashboard_tile_total(request, domain, slug):
 
 
 @location_safe
-class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/base.html'
@@ -109,7 +110,6 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     'help_text': tile.help_text,
                 }
                 if tile.paginator_class:
-                    items_per_page = 5
                     tile_context.update({
                         'has_item_list': True,
                     })

@@ -26,21 +26,21 @@ describe('Reach Program Overview', function () {
         programOverviewModel = hqImport('aaa/js/reports/program_overview').programOverviewModel();
     });
 
-    it('check title', function () {
+    it('test check title', function () {
         assert.equal(programOverviewModel.title, 'Program Overview');
     });
 
-    it('check slug', function () {
+    it('test check slug', function () {
         assert.equal(programOverviewModel.slug, 'program_overview');
     });
 
-    it('update sections', function () {
+    it('test update sections', function () {
         assert.equal(programOverviewModel.sections().length, 0);
         programOverviewModel.updateSections(data.indicators);
         assert.equal(programOverviewModel.sections().length, 2);
     });
 
-    it('number of indicators', function () {
+    it('test number of indicators', function () {
         assert.equal(programOverviewModel.sections().length, 0);
         programOverviewModel.updateSections(data.indicators);
         var indicators = [];
@@ -52,7 +52,7 @@ describe('Reach Program Overview', function () {
         assert.equal(indicators.length, 6);
     });
 
-    it('verify numbers in indicators', function () {
+    it('test verify numbers in indicators', function () {
         var indicators = [];
         programOverviewModel.updateSections(data.indicators);
         _.each(programOverviewModel.sections(), function (section) {
