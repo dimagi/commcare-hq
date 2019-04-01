@@ -28,6 +28,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
 from dimagi.utils.dates import force_to_date
+from six.moves import zip
 
 logger = logging.getLogger(__name__)
 
@@ -1184,7 +1185,7 @@ def _dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
     return [
-        dict(zip(columns, row))
+        dict(list(zip(columns, row)))
         for row in cursor.fetchall()
     ]
 
