@@ -9,6 +9,7 @@ import json
 import logging
 from distutils.version import LooseVersion
 
+from django.utils.safestring import mark_safe
 from lxml import etree
 
 from django.template.loader import render_to_string
@@ -1123,7 +1124,27 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     case_list.lookup_field_header[lang] = _("Confidence")
     case_list.lookup_field_template = 'simprintsId'
 
-    identify = app.new_form(module.id, _("Followup with Person"), lang)
+    form_name = _("Followup with Person")
+
+    context = {
+        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'form_name': form_name,
+        'lang': lang,
+        'placeholder_label': mark_safe(_(
+            "This is your follow up form for {}. Delete this label and add "
+            "questions for any follow up visits."
+        ).format(
+            "<output value=\"instance('casedb')/casedb/case[@case_id = "
+            "instance('commcaresession')/session/data/case_id]/case_name\" "
+            "vellum:value=\"#case/case_name\" />"
+        ))
+    }
+    attachment = render_to_string(
+        "app_manager/simprints_followup_form.xml",
+        context=context
+    )
+
+    identify = app.new_form(module.id, form_name, lang, attachment=attachment)
     identify.requires = 'case'
     identify.actions.update_case = UpdateCaseAction(
         condition=FormActionCondition(type='always'))
