@@ -174,7 +174,7 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
 
 
 
-class BulkAppTranslationTestBaseWithApp(SimpleTestCase, TestXmlMixin):
+class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
 
     def setUp(self):
         """
@@ -183,7 +183,7 @@ class BulkAppTranslationTestBaseWithApp(SimpleTestCase, TestXmlMixin):
         super(BulkAppTranslationTestBaseWithApp, self).setUp()
         self.app = Application.wrap(self.get_json("app"))
 
-    def upload_raw_excel_translations(excel_headers, excel_data, lang=None, expected_messages=None):
+    def upload_raw_excel_translations(self, excel_headers, excel_data, lang=None, expected_messages=None):
         super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app,
             excel_headers, excel_data, expected_messages, lang)
 
