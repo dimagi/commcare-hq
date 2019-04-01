@@ -13,6 +13,7 @@ from django.core.management.base import BaseCommand, CommandError
 from six.moves import input, zip_longest
 from sqlalchemy.exc import OperationalError
 
+from corehq import toggles
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration,
     delete_diff_db,
