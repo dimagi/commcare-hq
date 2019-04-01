@@ -110,15 +110,17 @@ class Command(BaseCommand):
                     raise CommandError("Migration must be in progress if run_timestamp is passed in")
             else:
                 set_couch_sql_migration_started(domain, self.dry_run)
-                set_couch_sql_migration_started(dst_domain, self.dry_run)  # Required at corehq/form_processor/interfaces/processor.py:253
-                                                                           # TODO: Although this is probably a terrible idea
+                if domain != dst_domain:
+                    set_couch_sql_migration_started(dst_domain, self.dry_run)
 
             do_couch_to_sql_migration(
                 domain,
                 dst_domain=dst_domain,
                 with_progress=not self.no_input,
                 debug=self.debug,
-                run_timestamp=options.get('run_timestamp'))
+                run_timestamp=options.get('run_timestamp'),
+                dry_run=self.dry_run,
+            )
 
             has_diffs = self.print_stats(domain, dst_domain, short=True, diffs_only=True)
             if has_diffs:
@@ -132,7 +134,8 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(dst_domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            set_couch_sql_migration_not_started(dst_domain)
+            if domain != dst_domain:
+                set_couch_sql_migration_not_started(dst_domain)
             _blow_away_migration(domain, dst_domain)
 
         if options['stats_short'] or options['stats_long']:
@@ -153,8 +156,9 @@ class Command(BaseCommand):
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
-            set_couch_sql_migration_complete(domain)
-            # TODO: If domain != src_domain, prevent form submissions on src_domain
+            if domain != dst_domain:
+                toggles.DATA_MIGRATION.enable(domain)  # Prevent any more changes on domain
+                set_couch_sql_migration_not_started(domain)
             set_couch_sql_migration_complete(dst_domain)
 
     def show_diffs(self, domain):

@@ -62,7 +62,6 @@ from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.pagination import PaginationEventHandler
-from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -87,7 +86,8 @@ UNDO_SET_DOMAIN = 'set_domain'
 UNDO_CREATE = 'create'
 
 
-def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, debug=False, run_timestamp=None):
+def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
+                              debug=False, run_timestamp=None, dry_run=False):
     if dst_domain is None:
         dst_domain = src_domain
 
@@ -101,7 +101,8 @@ def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True, d
         dst_domain,
         with_progress=with_progress,
         debug=debug,
-        run_timestamp=run_timestamp
+        run_timestamp=run_timestamp,
+        dry_run=False,
     ).migrate()
 
 
@@ -216,7 +217,7 @@ def update_xml(xml, path, old_value, new_value):
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None):
+    def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None, dry_run=False):
         from corehq.apps.tzmigration.planning import DiffDB
         self._assert_no_migration_restrictions(src_domain, dst_domain)
         self.with_progress = with_progress
@@ -224,6 +225,7 @@ class CouchSqlDomainMigrator(object):
         self.src_domain = src_domain
         self.dst_domain = dst_domain
         self.run_timestamp = run_timestamp or int(time())
+        self.dry_run = dry_run
         db_filepath = get_diff_db_filepath(src_domain)
         self.diff_db = DiffDB.init(db_filepath)
 
@@ -356,7 +358,8 @@ class CouchSqlDomainMigrator(object):
     def _migrate_form_and_associated_models(self, couch_form):
         couch_form, form_xml = self._map_form_ids(couch_form)
         sql_form = _migrate_form(couch_form, self.dst_domain)
-        _migrate_form_attachments(self.src_domain, sql_form, couch_form, incl_form_xml=form_xml is None)
+        _migrate_form_attachments(self.src_domain, sql_form, couch_form,
+                                  incl_form_xml=form_xml is None, dry_run=self.dry_run)
         if form_xml is not None:
             attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
             sql_form.attachments_list.append(attachment)
@@ -518,7 +521,8 @@ class CouchSqlDomainMigrator(object):
             user_id=couch_form.user_id,
         )
         _copy_form_properties(self.dst_domain, sql_form, couch_form)
-        _migrate_form_attachments(self.src_domain, sql_form, couch_form, incl_form_xml=form_xml is None)
+        _migrate_form_attachments(self.src_domain, sql_form, couch_form,
+                                  incl_form_xml=form_xml is None, dry_run=self.dry_run)
         if form_xml is not None:
             attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
             sql_form.attachments_list.append(attachment)
@@ -844,7 +848,7 @@ def append_undo(meta, operation):
         writer.writerow(row)
 
 
-def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=True):
+def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=True, dry_run=False):
     """Copy over attachment meta"""
     attachments = []
     metadb = get_blob_db().metadb
@@ -867,7 +871,7 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=Tr
         type_code = CODES.form_xml if name == "form.xml" else CODES.form_attachment
         meta = try_to_get_blob_meta(couch_form.form_id, type_code, name)
 
-        if meta and meta.domain != sql_form.domain:
+        if meta and meta.domain != sql_form.domain and not dry_run:
             # meta domain is src_domain; form is being migrated to dst_domain
             append_undo(meta, UNDO_SET_DOMAIN)
             meta.domain = sql_form.domain
@@ -879,7 +883,7 @@ def _migrate_form_attachments(src_domain, sql_form, couch_form, incl_form_xml=Tr
         if not meta and name != "form.xml":
             meta = try_to_get_blob_meta(sql_form.form_id, CODES.form_xml, name)
             if meta:
-                if meta.domain != couch_form.domain:
+                if meta.domain != couch_form.domain and not dry_run:
                     append_undo(meta, UNDO_SET_DOMAIN)
                     meta.domain = couch_form.domain
                 meta.type_code = CODES.form_attachment
