@@ -29,7 +29,7 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 
 from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
-from .tasks import recalculate_domain_consumption_task
+from .tasks import recalculate_domain_consumption_task_json_args
 from .util import all_sms_codes
 import six
 
@@ -147,7 +147,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
             ):
                 # kick off delayed consumption rebuild
-                recalculate_domain_consumption_task.delay(self.domain)
+                recalculate_domain_consumption_task_json_args.delay(self.domain)
                 messages.success(request, _("Settings updated! Your updated consumption settings may take a "
                                             "few minutes to show up in reports and on phones."))
             else:

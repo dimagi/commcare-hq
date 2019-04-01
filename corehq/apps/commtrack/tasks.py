@@ -6,4 +6,9 @@ from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 
 @task(serializer='pickle', ignore_result=True)
 def recalculate_domain_consumption_task(domain):
+    recalculate_domain_consumption_task(domain)
+
+
+@task(ignore_result=True)
+def recalculate_domain_consumption_task_json_args(domain):
     recalculate_domain_consumption(domain)
