@@ -112,16 +112,13 @@ def download_bulk_app_translations(request, domain, app_id):
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
-
-    # Validation is not supported for the single-tab, single-language download
-    validate = request.POST.get('validate') and not lang
+    validate = request.POST.get('validate')
 
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)
     if workbook:
         if validate:
-            msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, request.file,
-                                                        request.POST.get('language'))
+            msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
         else:
             headers = get_bulk_app_sheet_headers(app, lang=lang)
             msgs = process_bulk_app_translation_upload(app, workbook, headers, lang=lang)

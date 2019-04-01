@@ -271,7 +271,6 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-            app=app,
         ),
     })
     context.update({
