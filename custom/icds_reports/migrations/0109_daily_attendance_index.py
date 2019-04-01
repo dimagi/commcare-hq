@@ -12,14 +12,14 @@ def get_operations():
 
     # only do this in unit tests - we'll manage the rollout manually
     return [
-        migrations.RunSQL("CREATE INDEX CONCURRENTLY idx_daily_attendance_awc_id ON daily_attendance (awc_id)")
+        migrations.RunSQL("CREATE INDEX idx_daily_attendance_awc_id ON daily_attendance (awc_id)")
     ]
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0108_ccs_supervisor'),
+        ('icds_reports', '0108_child_cases_ccs_record_supervisor_id'),
     ]
 
     operations = get_operations()
