@@ -42,7 +42,7 @@ hqDefine("aaa/js/utils/reach_utils", [
             if (string !== null && string !== void(0) && string.length > 0) {
                 return _.map(string.split('_'), function (word) {
                     return word[0].toUpperCase() + word.substr(1).toLowerCase();
-                }).join(' ')
+                }).join(' ');
             }
             return string;
         };

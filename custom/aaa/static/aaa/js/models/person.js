@@ -2,31 +2,33 @@ hqDefine("aaa/js/models/person", [
     'jquery',
     'knockout',
     'underscore',
+    'moment/moment',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    initialPageData,
+    moment,
+    initialPageData
 ) {
     var personModel = function (data, postData) {
         var self = {};
         self.id = data.id;
         self.name = data.name;
-        self.gender = data.gender;
-        self.status = data.status;
+        self.gender = data.sex;
+        self.status = data.migration_status;
         self.dob = data.dob;
-        self.marriedAt = data.marriedAt;
-        self.aadhaarNo = data.aadhaarNo;
+        self.marriedAt = data.age_marriage;
+        self.aadhaarNo = data.has_aadhar_number;
 
-        self.address = data.address;
-        self.subcentre = data.subcentre;
+        self.address = data.hh_address;
+        self.subcentre = data.sc;
         self.village = data.village;
-        self.anganwadiCentre = data.anganwadiCentre;
-        self.phone = data.phone;
-        self.religion = data.religion;
-        self.caste = data.caste;
-        self.bplOrApl = data.bplOrApl;
+        self.anganwadiCentre = data.awc;
+        self.phone = data.contact_phone_number;
+        self.religion = data.hh_religion;
+        self.caste = data.hh_caste;
+        self.bplOrApl = data.hh_bpl_apl;
 
         self.age = ko.computed(function () {
             var age = Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
@@ -60,5 +62,5 @@ hqDefine("aaa/js/models/person", [
 
     return {
         personModel: personModel,
-    }
+    };
 });

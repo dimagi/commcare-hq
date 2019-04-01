@@ -5,33 +5,14 @@ from unidecode import unidecode
 from celery.task import task
 import zipfile
 from couchexport.files import Temp
-from couchexport.models import Format, ExportSchema
+from couchexport.models import Format
 import tempfile
 import os
 
 from soil import DownloadBase
 from soil.util import expose_cached_download
-from couchexport.export import ExportConfiguration
 
 logging = get_task_logger(__name__)
-
-
-@task(serializer='pickle')
-def rebuild_schemas(index):
-    """
-    Resets the schema for all checkpoints to the latest version based off the
-    current document structure. Returns the number of checkpoints updated.
-    """
-    db = ExportSchema.get_db()
-    all_checkpoints = ExportSchema.get_all_checkpoints(index)
-    config = ExportConfiguration(db, index, disable_checkpoints=True)
-    latest = config.create_new_checkpoint()
-    counter = 0
-    for cp in all_checkpoints:
-        cp.schema = latest.schema
-        cp.save()
-        counter += 1
-    return counter
 
 
 @task(serializer='pickle')

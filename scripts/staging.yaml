@@ -55,8 +55,13 @@ branches:
   - mk-434 # MK March 12
   - jls/upload-mm-translations  # Jenny March 14
   - rn_avoid_chrome_autofill # Rohit March 18
-  - dmr/pull-saved-reports-into-separate-app+dmr/remove-old-export-urls  # Danny March 22
-  - dmr/remove-old-export-urls  # Danny March 20
-  - dmr/pull-saved-reports-into-separate-app  # Danny March 22
-  - good-downgrade-modal  # Nick P March 22
-submodules: {}
+  - nh/cdc/one_domain  # Norman March 26
+  - jls/select2-sms-app-manager  # Jenny March 22
+  - jls/gevent-bulk-media-upload  # Jenny March 25
+  - mk/release-location # MK March 26
+  - dmr/add-scheduled-reports-checkpoint  # March 28
+  - jls/users-select2-v4  # Jenny March 29
+submodules:
+  submodules/langcodes:
+    branches:
+      - jls/select2-v4  # Jenny March 22

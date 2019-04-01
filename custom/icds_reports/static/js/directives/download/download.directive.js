@@ -125,7 +125,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 9, name: 'Lady Supervisor'});
+        vm.indicators.push({id: 9, name: 'LS Performance Report'});
     }
 
 
@@ -444,7 +444,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.hasErrors = function() {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        return beneficiaryListErrors || incentiveReportErrors;
+        var ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
     };
 
     vm.isCombinedPDFSelected = function() {
