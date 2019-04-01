@@ -291,7 +291,7 @@ def enable_case_search(domain):
 
 
 def disable_case_search(domain):
-    from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain
+    from corehq.apps.case_search.tasks import delete_case_search_cases_for_domain_json_args
     from corehq.pillows.case_search import domains_needing_search_index
 
     try:
@@ -304,7 +304,7 @@ def disable_case_search(domain):
         config.save()
         case_search_enabled_for_domain.clear(domain)
         domains_needing_search_index.clear()
-        delete_case_search_cases_for_domain.delay(domain)
+        delete_case_search_cases_for_domain_json_args.delay(domain)
     return config
 
 

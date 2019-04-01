@@ -12,4 +12,9 @@ def reindex_case_search_for_domain(domain):
 
 @task(serializer='pickle')
 def delete_case_search_cases_for_domain(domain):
+    delete_case_search_cases_for_domain_json_args(domain)
+
+
+@task
+def delete_case_search_cases_for_domain_json_args(domain):
     delete_case_search_cases(domain)
