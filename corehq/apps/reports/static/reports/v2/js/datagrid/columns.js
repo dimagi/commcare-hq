@@ -15,7 +15,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         var self = {};
 
         self.title = ko.observable(data.title);
-        self.slug = ko.observable(data.slug);
+        self.name = ko.observable(data.name);
         self.width = ko.observable(data.width || 200);
 
         self.unwrap = function () {
@@ -28,10 +28,9 @@ hqDefine('reports/v2/js/datagrid/columns', [
     var editColumnController = function (options) {
         var self = {};
 
-        self.slugEndpoint = options.slugEndpoint;
+        self.endpoint = options.endpoint;
         self.reportContext = options.reportContext;
-
-        self.slugOptions = ko.observableArray();
+        self.columnNameOptions = ko.observableArray();
 
         self.oldColumn = ko.observable();
         self.column = ko.observable();
@@ -64,9 +63,8 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.reloadOptions = function () {
-            // reload slug options
             $.ajax({
-                url: self.slugEndpoint.getUrl(),
+                url: self.endpoint.getUrl(),
                 method: 'post',
                 dataType: 'json',
                 data: {
@@ -74,13 +72,13 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 },
             })
                 .done(function (data) {
-                    self.slugOptions(data.options);
+                    self.columnNameOptions(data.options);
                 });
         };
 
         self.isColumnValid = ko.computed(function () {
             if (self.column()) {
-                return !!self.column().title() && !!self.column().slug();
+                return !!self.column().title() && !!self.column().name();
             }
             return false;
         });

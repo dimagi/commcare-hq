@@ -31,14 +31,14 @@ hqDefine('reports/v2/js/datagrid', [
 
         self.reportContext = ko.computed(function () {
             return {
-                existingSlugs: _.map(self.columns(), function (column) {
-                    return column.slug();
+                existingColumnNames: _.map(self.columns(), function (column) {
+                    return column.name();
                 }),
             };
         });
 
         self.editColumnController = columns.editColumnController({
-            slugEndpoint: options.columnEndpoint,
+            endpoint: options.columnEndpoint,
             reportContext: self.reportContext,
         });
 
@@ -54,7 +54,7 @@ hqDefine('reports/v2/js/datagrid', [
             if (self.editColumnController.oldColumn()) {
                 var replacementCols = self.columns();
                 _.each(replacementCols, function (col, index) {
-                    if (col.slug() === self.editColumnController.oldColumn().slug()) {
+                    if (col.name() === self.editColumnController.oldColumn().name()) {
                         replacementCols[index] = columns.columnModel(column.unwrap());
                     }
                 });
@@ -68,7 +68,7 @@ hqDefine('reports/v2/js/datagrid', [
         self.deleteColumn = function () {
             var replacementCols = [];
             _.each(self.columns(), function (col) {
-                if (col.slug() !== self.editColumnController.oldColumn().slug()) {
+                if (col.name() !== self.editColumnController.oldColumn().name()) {
                     replacementCols.push(col);
                 }
             });
