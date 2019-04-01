@@ -15,12 +15,22 @@ hqDefine('reports/v2/js/datagrid/columns', [
 ) {
     'use strict';
 
-    var columnModel = function (data) {
+    var columnModel = function (data, availableFilters) {
         var self = {};
 
         self.title = ko.observable(data.title);
         self.slug = ko.observable(data.slug);
         self.width = ko.observable(data.width || 200);
+
+        self.appliedFilters = ko.observableArray(_.map(data.appliedFilters, function (filterData) {
+            var filterModel = filters.appliedColumnFilterModel(filterData);
+            if (availableFilters) {
+                filterModel.filter(ko.utils.arrayFirst(availableFilters(), function (item) {
+                    return item.name() === filterModel.filter().name() && item.filterType() === filterModel.filter().filterType();
+                }));
+            }
+            return filterModel;
+        }));
 
         self.unwrap = function () {
             return ko.mapping.toJS(self);
@@ -51,7 +61,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
 
             if (self.isNew() && self.column()) {
                 // keep state of existing add column progress
-                self.column(columnModel(self.column().unwrap()));
+                self.column(columnModel(self.column().unwrap(), self.availableFilters));
             } else {
                 self.column(columnModel({}));
                 self.isNew(true);
@@ -61,7 +71,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.set = function (existingColumn) {
             self.reloadOptions();
             self.oldColumn(columnModel(existingColumn).unwrap());
-            self.column(columnModel(existingColumn.unwrap()));
+            self.column(columnModel(existingColumn.unwrap(), self.availableFilters));
             self.isNew(false);
         };
 
