@@ -44,8 +44,7 @@ class Heartbeat(object):
     def periodic_task_name(self):
         return 'heartbeat__{}'.format(self.queue)
 
-    @property
-    def periodic_task(self):
+    def make_periodic_task(self):
         queue = self.queue
 
         def heartbeat():
