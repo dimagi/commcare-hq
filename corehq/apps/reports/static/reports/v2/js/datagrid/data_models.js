@@ -34,11 +34,11 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 dataType: 'json',
                 data: {
                     length: self.length,
-                    start: self.rows().length,
+                    start: 0, // fix with pagination
                 },
             })
                 .done(function (data) {
-                    self.rows(_.union(self.rows(), data.rows));
+                    self.rows(data.rows);
                 })
                 .fail(function () {
                     self.isLoadingError(true);
