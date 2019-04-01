@@ -54,6 +54,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.oldColumn = ko.observable();
         self.column = ko.observable();
         self.isNew = ko.observable();
+        self.hasFilterUpdate = ko.observable(false);
 
         self.setNew = function () {
             self.reloadOptions();
@@ -65,6 +66,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
             } else {
                 self.column(columnModel({}));
                 self.isNew(true);
+                self.hasFilterUpdate(false);
             }
         };
 
@@ -73,12 +75,30 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.oldColumn(columnModel(existingColumn).unwrap());
             self.column(columnModel(existingColumn.unwrap(), self.availableFilters));
             self.isNew(false);
+            self.hasFilterUpdate(false);
         };
 
         self.unset = function () {
             self.oldColumn(undefined);
             self.column(undefined);
             self.isNew(false);
+            self.hasFilterUpdate(false);
+        };
+
+        self.addFilter = function () {
+            self.column().appliedFilters.push(filters.appliedColumnFilterModel({}));
+            self.hasFilterUpdate(true);
+        };
+
+        self.removeFilter = function (filter) {
+            self.column().appliedFilters.remove(function (listedFilter) {
+                return listedFilter === filter;
+            });
+            self.hasFilterUpdate(true);
+        };
+
+        self.updateFilters = function () {
+            self.hasFilterUpdate(true);
         };
 
         self.reloadOptions = function () {

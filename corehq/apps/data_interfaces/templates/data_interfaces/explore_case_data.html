@@ -116,6 +116,39 @@ breadcrumbs todo
                        data-bind="textInput: slug,
                                   slugAutocomplete: $root.editColumnController.slugOptions" />
               </div>
+              <!-- ko foreach: appliedFilters -->
+              <div class="row">
+                <div class="col-xs-4">
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.availableFilters,
+                                     optionsText: 'title',
+                                     value: filter,
+                                     event: { change: $root.editColumnController.updateFilters },
+                                     optionsCaption: 'Choose filter...'"></select>
+                </div>
+                <div class="col-xs-6">
+                  <input type="text"
+                         class="form-control"
+                         data-bind="textInput: value,
+                                    event: { change: $root.editColumnController.updateFilters }" />
+                </div>
+                <div class="col-xs-2">
+                  <button type="button"
+                          class="btn btn-danger"
+                          data-bind="click: $root.editColumnController.removeFilter">
+                    <i class="fa fa-remove"></i>
+                  </button>
+
+                </div>
+              </div>
+              <!-- /ko -->
+
+              <button type="button"
+                      class="btn btn-default"
+                      data-bind="click: $root.editColumnController.addFilter" >
+                {% trans "Add Filter" %}
+              </button>
+
             </div>
           </div>
           <div class="modal-footer">
