@@ -10,7 +10,7 @@ from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
-    ColumnContext,
+    ColumnMeta,
 )
 from corehq.apps.es import CaseSearchES
 
@@ -27,12 +27,12 @@ class ExploreCaseDataReport(BaseReport):
     )
 
     columns = [
-        ColumnContext(
+        ColumnMeta(
             title=ugettext_lazy("Case Name"),
             name='case_name',
             width=200,
         ),
-        ColumnContext(
+        ColumnMeta(
             title=ugettext_lazy("Case Type"),
             name='@case_type',
             width=200,
