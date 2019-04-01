@@ -957,6 +957,15 @@ class UpdateXmlTests(SimpleTestCase):
         ))
 
 
+class AttachmentTests(TestCase):
+
+    def test_old_form_xml_is_not_migrated(self):
+        pass
+
+    def test_new_form_xml_deleted_on_blowaway(self):
+        pass
+
+
 def test_doctests():
     results = doctest.testmod(couchsqlmigration)
     assert results.failed == 0
