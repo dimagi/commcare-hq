@@ -31,6 +31,7 @@ class EnterpriseReport(object):
     WEB_USERS = 'web_users'
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
+    SMS_USERS = 'sms_users'
 
     title = _('Enterprise Report')
     subtitle = ''
@@ -59,6 +60,8 @@ class EnterpriseReport(object):
             report = EnterpriseMobileWorkerReport(account_id, couch_user)
         if slug == cls.FORM_SUBMISSIONS:
             report = EnterpriseFormReport(account_id, couch_user)
+        if slug == cls.SMS_USERS:
+            report = EnterpriseSMSUsageReport(account_id, couch_user)
         if report:
             report.slug = slug
             return report
@@ -231,3 +234,12 @@ class EnterpriseFormReport(EnterpriseReport):
 
     def total_for_domain(self, domain_obj):
         return len(self.hits(domain_obj.name))
+
+
+class EnterpriseSMSUsageReport(EnterpriseReport):
+    title = _('SMS Users')
+
+    def __init__(self, account_id, couch_user):
+        super(EnterpriseSMSUsageReport, self).__init__(account_id, couch_user)
+        self.window = 30
+        self.subtitle = _("past {} days").format(self.window)

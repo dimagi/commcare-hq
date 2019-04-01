@@ -1214,6 +1214,7 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.WEB_USERS,
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
+            EnterpriseReport.SMS_USERS
         )],
         'current_page': {
             'page_name': _('Enterprise Dashboard'),
