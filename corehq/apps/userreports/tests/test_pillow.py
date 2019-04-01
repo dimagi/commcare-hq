@@ -600,12 +600,15 @@ class AsyncIndicatorTest(TestCase):
     def tearDownClass(cls):
         cls.config.delete()
         cls.adapter.drop_table()
-        delete_all_cases()
-        delete_all_xforms()
         super(AsyncIndicatorTest, cls).tearDownClass()
 
     def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
         AsyncIndicator.objects.all().delete()
+        InvalidUCRData.objects.all().delete()
+        self.config.validations = []
+        self.config.save()
 
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
@@ -691,6 +694,52 @@ class AsyncIndicatorTest(TestCase):
         errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
+
+    def test_async_invalid_data(self):
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+
+        self.config.save()
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        for i in range(3):
+            form, cases = post_case_blocks(
+                [
+                    CaseBlock(
+                        create=i == 0,
+                        case_id=parent_id,
+                        case_name='parent-name',
+                        case_type='bug',
+                        update={'update-prop-parent': i},
+                    ).as_xml(),
+                    CaseBlock(
+                        create=i == 0,
+                        case_id=child_id,
+                        case_name='child-name',
+                        case_type='bug-child',
+                        index={'parent': ('bug', parent_id)},
+                        update={'update-prop-child': i}
+                    ).as_xml()
+                ], domain=self.domain
+            )
+        self.pillow.process_changes(since=since, forever=False)
+
+        # run async queue
+        queue_async_indicators()
+        self.assertEqual(InvalidUCRData.objects.count(), 1)
 
 
 class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):

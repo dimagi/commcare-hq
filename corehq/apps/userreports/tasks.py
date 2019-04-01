@@ -28,12 +28,13 @@ from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
-from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
+from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError, ValidationError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
+    InvalidUCRData,
     StaticDataSourceConfiguration,
     id_is_static,
     get_report_config,
@@ -411,6 +412,19 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter = None
                     try:
                         adapter = get_indicator_adapter(config)
+                        if adapter.config.has_validations:
+                            try:
+                                adapter.config.validate_document(doc, eval_context)
+                            except ValidationError as e:
+                                InvalidUCRData.objects.create(
+                                    doc_id=doc['_id'],
+                                    doc_type=doc['doc_type'],
+                                    domain=doc['domain'],
+                                    indicator_config_id=adapter.config._id,
+                                    validation_name=e.name,
+                                    validation_text=e.message
+                                )
+                                continue
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:
