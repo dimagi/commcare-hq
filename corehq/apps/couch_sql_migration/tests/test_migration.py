@@ -869,34 +869,34 @@ class UpdateXmlTests(SimpleTestCase):
         form_xml = update_xml(form_xml, ['data', 'name'], 'Prince', 'Christopher')
         # NOTE: Path is not given as ['data', 'n0:case', 'n0:create', 'n0:case_name']
         form_xml = update_xml(form_xml, ['data', 'case', 'create', 'case_name'], 'Prince', 'Christopher')
-        eq(form_xml, DECL + (
-            '<data uiVersion="1" '
-            'version="7" '
-            'name="Registration Form" '
-            'xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '
-            'xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A">'
-            '<name>Christopher</name>'
-            '<n0:case case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" '
-            'date_modified="2019-02-07T11:15:48.575+02" '
-            'user_id="7ea59f550f35758447400937f800f78c" '
-            'xmlns:n0="http://commcarehq.org/case/transaction/v2">'
-            '<n0:create>'
+        eq(form_xml, DECL + (  # noqa: E1
+'<data uiVersion="1" '
+      'version="7" '
+      'name="Registration Form" '
+      'xmlns:jrm="http://dev.commcarehq.org/jr/xforms" '
+      'xmlns="http://openrosa.org/formdesigner/C5AEC5A2-FF7D-4C00-9C7E-6B5AE23D735A">'
+    '<name>Christopher</name>'
+    '<n0:case case_id="9fab567d-8c28-4cf0-acf2-dd3df04f95ca" '
+             'date_modified="2019-02-07T11:15:48.575+02" '
+             'user_id="7ea59f550f35758447400937f800f78c" '
+             'xmlns:n0="http://commcarehq.org/case/transaction/v2">'
+        '<n0:create>'
             '<n0:case_name>Christopher</n0:case_name>'
             '<n0:owner_id>7ea59f550f35758447400937f800f78c</n0:owner_id>'
             '<n0:case_type>case</n0:case_type>'
-            '</n0:create>'
-            '</n0:case>'
-            '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">'
-            '<n1:deviceID>Formplayer</n1:deviceID>'
-            '<n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>'
-            '<n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>'
-            '<n1:username>admin@example.com</n1:username>'  # NOTE: "&#64;" has been replaced with "@"
-            '<n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>'
-            '<n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>'
-            '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>'
-            '<n1:drift></n1:drift>'  # NOTE: Empty element has been expanded
-            '</n1:meta>'
-            '</data>'
+        '</n0:create>'
+    '</n0:case>'
+    '<n1:meta xmlns:n1="http://openrosa.org/jr/xforms">'
+        '<n1:deviceID>Formplayer</n1:deviceID>'
+        '<n1:timeStart>2019-02-07T11:15:35.853+02</n1:timeStart>'
+        '<n1:timeEnd>2019-02-07T11:15:48.575+02</n1:timeEnd>'
+        '<n1:username>admin@example.com</n1:username>'  # NOTE: "&#64;" has been replaced with "@"
+        '<n1:userID>7ea59f550f35758447400937f800f78c</n1:userID>'
+        '<n1:instanceID>4378faa0-58b1-4c51-9310-fef1cda29707</n1:instanceID>'
+        '<n2:appVersion xmlns:n2="http://commcarehq.org/xforms">Formplayer Version: 2.43</n2:appVersion>'
+        '<n1:drift></n1:drift>'  # NOTE: Empty element has been expanded
+    '</n1:meta>'
+'</data>'
         ))
 
     def test_as_dict(self):
