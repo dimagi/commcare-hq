@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _
 
-from corehq.apps.domain.utils import send_repeater_payloads
+from corehq.apps.domain.utils import send_repeater_payloads_json_args
 from corehq.apps.users.decorators import require_can_edit_web_users
 
 
@@ -21,6 +21,6 @@ def generate_repeater_payloads(request, domain):
     except Exception as e:
         messages.error(request, _("Could not process the file. %s") % str(e))
     else:
-        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        send_repeater_payloads_json_args.delay(repeater_id, payload_ids, email_id)
         messages.success(request, _("Successfully queued request. You should receive an email shortly."))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
