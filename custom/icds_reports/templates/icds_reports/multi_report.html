@@ -3,9 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'icds_reports/js/subreport_loader.js' %}"></script>
-{% endblock %}
 
 {% block page_content %}
 {% block reportcontent %}
@@ -16,7 +13,7 @@
     {% include 'reports/partials/description.html' %}
 {% else %}
     {% for provider in data_providers %}
-        <div id="{{ provider.provider_slug }}" data-bind="afterRender: init">
+        <div id="{{ provider.provider_slug }}">
         <br/>
         <br/>
         <br/>
@@ -33,3 +30,50 @@
 {% endblock %}
 {% endblock%}
 
+
+{% block js-inline %} {{ block.super }}
+<script>
+    $(function () {
+        var subReportModal = function(options){
+            var self = {};
+
+            self.providerSlug = options.providerSlug;
+            self.loading = ko.observable(true);
+            self.queryUrl = options.queryUrl;
+
+            self.init = function(){
+                $.ajax({
+                    url: self.queryUrl + "&provier_slug=" + self.providerSlug;
+                    success: function(data) {
+                        $("#"+self.providerSlug).html(data);
+                    }
+                });
+                // setTimeout(function(){
+                //     $("#"+self.providerSlug).html("<h1>Got it!"+self.providerSlug+"<h1>");
+                // }, 2000);
+                // self.loading(false);
+            };
+            return self;
+        };
+
+        var queryUrl = hqImport("hqwebapp/js/initial_page_data").get("query_url");
+        var dataProviders = hqImport("hqwebapp/js/initial_page_data").get("data_providers_json");
+        for (var i = 0; i < dataProviders.length; i++) {
+            var provider = dataProviders[i];
+            var modal = subReportModal({
+                    providerSlug: provider.provider_slug,
+                    queryUrl: queryUrl
+                });
+            var element = document.getElementById(provider.provider_slug);
+            if (element !== null) {
+                // skip doing this on initial report load
+                ko.applyBindings(
+                    modal,
+                    document.getElementById(provider.provider_slug)
+                );
+                modal.init();
+            }
+        }
+    });
+</script>
+{% endblock %}
