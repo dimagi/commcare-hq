@@ -34,6 +34,9 @@ hqDefine('reports/v2/js/datagrid', [
                 existingSlugs: _.map(self.columns(), function (column) {
                     return column.slug();
                 }),
+                columnsWithFilters: _.filter(self.columns(), function (column) {
+                    return column.appliedFilters().length > 0;
+                }),
             };
         });
 
@@ -44,11 +47,10 @@ hqDefine('reports/v2/js/datagrid', [
         });
 
         self.init = function () {
-            self.data.init();
-
             _.each(options.initialColumns, function (data) {
                 self.columns.push(columns.columnModel(data));
             });
+            self.data.init(self.reportContext);
         };
 
         self.updateColumn = function (column) {
@@ -63,6 +65,9 @@ hqDefine('reports/v2/js/datagrid', [
             } else {
                 self.columns.push(columns.columnModel(column.unwrap()));
             }
+            if (self.editColumnController.hasFilterUpdate()) {
+                self.data.refresh();
+            }
             self.editColumnController.unset();
         };
 
@@ -74,6 +79,10 @@ hqDefine('reports/v2/js/datagrid', [
                 }
             });
             self.columns(replacementCols);
+            if (self.editColumnController.oldColumn().availableFilters().length > 0) {
+                // refresh data if the deleted column had filters applied.
+                self.data.refresh();
+            }
             self.editColumnController.unset();
         };
 
