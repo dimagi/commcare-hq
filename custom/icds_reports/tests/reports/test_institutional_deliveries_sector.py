@@ -42,6 +42,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertIn('extended_info', data)
 
     def test_map_data(self):
+        self.maxDiff=None
         data = get_institutional_deliveries_data_map(
             'icds-cas',
             config={
@@ -57,7 +58,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                 'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
                 'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
                 'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
-                'st1': {'all': 13, 'original_name': ['st1'], 'children': 9, 'fillKey': '60%-100%'},
+                'st1': {'all': 11, 'original_name': ['st1'], 'children': 9, 'fillKey': '60%-100%'},
                 'st2': {'all': 13, 'original_name': ['st2'], 'children': 11, 'fillKey': '60%-100%'},
                 'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
             }
@@ -89,7 +90,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 76.92307692307692)
+        self.assertEquals(data['rightLegend']['average'], 83.33333333333333)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_institutional_deliveries_data_map(
@@ -105,7 +106,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             [
                 {
                     'indicator': 'Total number of pregnant women who delivered in the last month:',
-                    'value': "26"
+                    'value': "24"
                 },
                 {
                     'indicator': (
@@ -119,7 +120,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                         '% pregnant women who delivered in a '
                         'public or private medical facility in the last month:'
                     ),
-                    'value': '76.92%'
+                    'value': '83.33%'
                 }
             ]
         )
@@ -180,7 +181,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'all': 13,
+                    'all': 11,
                     'original_name': ['b1', 'b2'],
                     'children': 9,
                     'fillKey': '60%-100%'
@@ -199,9 +200,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 69.23076923076923)
+        self.assertEquals(data['rightLegend']['average'], 81.81818181818181)
 
     def test_chart_data(self):
+        self.maxDiff=None
         self.assertDictEqual(
             get_institutional_deliveries_data_chart(
                 'icds-cas',
@@ -222,7 +224,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                 ],
                 "top_five": [
                     {'loc_name': 'st2', 'percent': 84.61538461538461},
-                    {'loc_name': 'st1', 'percent': 69.23076923076923},
+                    {'loc_name': 'st1', 'percent': 81.81818181818181},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0}
@@ -246,15 +248,15 @@ class TestInstitutionalDeliveriesSector(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.3,
+                                "y": 0.42857142857142855,
                                 "x": 1491004800000,
-                                "all": 20,
+                                "all": 14,
                                 "in_month": 6
                             },
                             {
-                                "y": 0.7692307692307693,
+                                "y": 0.8333333333333334,
                                 "x": 1493596800000,
-                                "all": 26,
+                                "all": 24,
                                 "in_month": 20
                             }
                         ],
@@ -263,7 +265,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                 ],
                 "all_locations": [
                     {'loc_name': 'st2', 'percent': 84.61538461538461},
-                    {'loc_name': 'st1', 'percent': 69.23076923076923},
+                    {'loc_name': 'st1', 'percent': 81.81818181818181},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
