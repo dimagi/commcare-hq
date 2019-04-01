@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data_task
+from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data_task_json_args
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.views import BaseUserConfigReportsView, swallow_programming_errors, \
@@ -90,6 +90,6 @@ def rebuild_aggregate_ucr(request, domain, table_id):
     )
     aggregate_table_adapter = IndicatorSqlAdapter(table_definition)
     aggregate_table_adapter.rebuild_table()
-    populate_aggregate_table_data_task.delay(table_definition.id)
+    populate_aggregate_table_data_task_json_args.delay(table_definition.id)
     messages.success(request, 'Table rebuild successfully started.')
     return HttpResponseRedirect(reverse(AggregateUCRView.urlname, args=[domain, table_id]))

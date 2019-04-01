@@ -10,5 +10,10 @@ from corehq.apps.userreports.sql import IndicatorSqlAdapter
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
 def populate_aggregate_table_data_task(aggregate_table_id):
+    populate_aggregate_table_data_task_json_args(aggregate_table_id)
+
+
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def populate_aggregate_table_data_task_json_args(aggregate_table_id):
     definition = AggregateTableDefinition.objects.get(id=aggregate_table_id)
     return populate_aggregate_table_data(IndicatorSqlAdapter(definition))
