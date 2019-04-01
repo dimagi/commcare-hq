@@ -12,7 +12,7 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
-    current_month_wasting_column, ICDSDatabaseColumn, format_decimal, DATA_NOT_ENTERED
+    current_month_wasting_column, ICDSDatabaseColumn, format_decimal, DATA_NOT_ENTERED, phone_number_function
 
 
 class BeneficiaryExport(ExportableMixin, SqlData):
@@ -83,9 +83,6 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         def test_fucntion(x):
             return format_decimal(x) if x else DATA_NOT_ENTERED
 
-        def phone_number_fucntion(x):
-            return "{}".format(x) if x else x
-
         columns = [
             DatabaseColumn(
                 'AWC Name',
@@ -110,13 +107,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('aww_phone_number'),
-                format_fn=phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='aww_phone_number'
             ),
             DatabaseColumn(
                 'Mother Phone Number',
                 SimpleColumn('mother_phone_number'),
-                format_fn=phone_number_fucntion,
+                format_fn=phone_number_function,
                 slug='mother_phone_number'
             ),
             DatabaseColumn(
