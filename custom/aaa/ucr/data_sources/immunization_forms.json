@@ -1,0 +1,79 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-immunization_forms",
+    "display_name": "Forms - Immunization Forms (REACH Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/58C65452-D21D-4935-A746-256E7C22224D"
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "tasks_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "case_load_tasks_0", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "adverse_effect_vaccine",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": ["form", "adverse_effects", "adverse_effect_vaccine"]
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "aaa-data"
+  }
+}

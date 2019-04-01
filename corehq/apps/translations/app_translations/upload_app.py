@@ -28,9 +28,9 @@ from corehq.apps.translations.app_translations.upload_module import BulkAppTrans
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
-def validate_bulk_app_translation_upload(app, workbook, email):
+def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
-    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
     if msgs:
         _email_app_translations_discrepancies(msgs, email, app.name)
         return [(messages.error, _("Issues found. You should receive an email shortly."))]

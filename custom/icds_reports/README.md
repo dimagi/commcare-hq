@@ -159,7 +159,10 @@ Known areas that can be changed to improve performance
 
    The highest ROI are moving reports based on ccs_record_monthly_v2, child_health_monthly_v2 and person_cases_v2 (in that order).
 
-   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2
+   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2.
+   
+   As of March, 2019 we have rolled out person_cases_v3 which achieves the reduction in columns in person_case_v2.
+
 4. Move to native postgres partitioning.
 
    Postgres 10 introduced a native partitioning feature that we could use.
