@@ -8,18 +8,16 @@ from django.db import migrations
 from corehq.sql_db.operations import RawSQLMigration
 from custom.icds_reports.utils.migrations import get_view_migrations
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0108_child_cases_ccs_record_supervisor_id'),
+        ('icds_reports', '0109_remove_ls_name_column'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables45.sql'),
-
+        migrator.get_migration('aww_incentive_report_monthly.sql'),
     ]
-    operations.extend(get_view_migrations())
-

@@ -2052,7 +2052,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b1',
                         's1',
-                        'Data Not Entered',
+                        's1',
                         1,
                         2,
                         'Data Not Entered'
@@ -2062,7 +2062,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b1',
                         's2',
-                        'Data Not Entered',
+                        's2',
                         1,
                         1,
                         2
@@ -2072,7 +2072,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b2',
                         's3',
-                        'Data Not Entered',
+                        's3',
                         'Data Not Entered',
                         2,
                         'Data Not Entered'
@@ -2082,7 +2082,7 @@ class TestExportData(TestCase):
                         'd1',
                         'b2',
                         's4',
-                        'Data Not Entered',
+                        's4',
                         'Data Not Entered',
                         'Data Not Entered',
                         1
