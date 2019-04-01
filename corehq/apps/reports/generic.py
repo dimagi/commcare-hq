@@ -210,6 +210,7 @@ class GenericReportView(object):
 
         request_data = state.get('request')
         request = FakeHttpRequest()
+        request.domain = self.domain
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
