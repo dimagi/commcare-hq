@@ -270,19 +270,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
-                        if adapter.config.has_validations:
-                            try:
-                                adapter.config.validate_document(doc, eval_context)
-                            except ValidationError as e:
-                                InvalidUCRData.objects.create(
-                                    doc_id=doc['_id'],
-                                    doc_type=doc['doc_type'],
-                                    domain=doc['domain'],
-                                    indicator_config_id=adapter.config._id,
-                                    validation_name=e.name,
-                                    validation_text=e.message
-                                )
-                                continue
                         try:
                             rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         except Exception as e:
@@ -379,19 +366,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     if table.run_asynchronous:
                         async_tables.append(table.config._id)
                     else:
-                        if table.config.has_validations:
-                            try:
-                                table.config.validate_document(doc, eval_context)
-                            except ValidationError as e:
-                                InvalidUCRData.objects.create(
-                                    doc_id=doc['_id'],
-                                    doc_type=doc['doc_type'],
-                                    domain=doc['domain'],
-                                    indicator_config_id=table.config._id,
-                                    validation_name=e.name,
-                                    validation_text=e.message
-                                )
-                                continue
                         self._save_doc_to_table(domain, table, doc, eval_context)
                         eval_context.reset_iteration()
                 elif table.config.deleted_filter(doc) or table.doc_exists(doc):

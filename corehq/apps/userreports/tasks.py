@@ -412,19 +412,6 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter = None
                     try:
                         adapter = get_indicator_adapter(config)
-                        if adapter.config.has_validations:
-                            try:
-                                adapter.config.validate_document(doc, eval_context)
-                            except ValidationError as e:
-                                InvalidUCRData.objects.create(
-                                    doc_id=doc['_id'],
-                                    doc_type=doc['doc_type'],
-                                    domain=doc['domain'],
-                                    indicator_config_id=adapter.config._id,
-                                    validation_name=e.name,
-                                    validation_text=e.message
-                                )
-                                continue
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:

@@ -429,6 +429,20 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not eval_context:
             eval_context = EvaluationContext(doc)
 
+        try:
+            if self.has_validations:
+                self.validate_document(doc, eval_context)
+        except ValidationError as e:
+            InvalidUCRData.objects.create(
+                doc_id=doc['_id'],
+                doc_type=doc['doc_type'],
+                domain=doc['domain'],
+                indicator_config_id=self._id,
+                validation_name=e.name,
+                validation_text=e.message
+            )
+            return []
+
         rows = []
         for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
