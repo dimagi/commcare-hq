@@ -661,8 +661,8 @@ class TestBlobHelper(BaseTestCase):
             },
         })
         self.assertTrue(obj._migrating_blobs_from_couch)
-        self.assertEqual(obj.fetch_attachment("couch.txt"), b"couch")
-        self.assertEqual(obj.fetch_attachment("blob.txt"), b"blob")
+        self.assertEqual(obj.fetch_attachment("couch.txt"), "couch")
+        self.assertEqual(obj.fetch_attachment("blob.txt"), "blob")
         self.assertFalse(self.couch.save_log)
 
     def test_atomic_blobs_with_couch_attachments(self):
@@ -836,7 +836,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertIn("name", self.obj.blobs)
             self.assertIn("att", deferred.external_blobs)
         self.assertFalse(any(d.saved for d in docs))
-        self.assertEqual(self.obj.fetch_attachment("name"), "data")
+        self.assertEqual(self.obj.fetch_attachment("name"), b"data")
         key = deferred.blobs["att"].key
         with self.get_blob(key).open() as fh:
             self.assertEqual(fh.read(), b"deferred")
