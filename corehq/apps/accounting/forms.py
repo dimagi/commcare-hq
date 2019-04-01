@@ -973,7 +973,7 @@ class RemoveAutopayForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    'REMOVE AUTOPAY USER',
+                    'Remove Autopay User',
                     css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
@@ -1008,7 +1008,7 @@ class CancelForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    'CANCEL SUBSCRIPTION',
+                    'Cancel Subscription',
                     css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
