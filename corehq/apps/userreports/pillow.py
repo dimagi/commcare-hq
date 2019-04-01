@@ -181,7 +181,7 @@ class ConfigurableReportTableManagerMixin(object):
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-        adapter.rebuild_table()
+            adapter.rebuild_table()
         if config.is_static:
             rebuild_indicators.delay(adapter.config.get_id)
 
