@@ -3,52 +3,33 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block reportcontent %}
-{% block pretable %}
-    {% if not report.needs_filters %}
-        {% if rendered_as == 'print' %}
-        <div class="row">
-            <div class="col-md-10">{% now "d M Y" %}</div>
-        </div>
-        <div class="row">
-            <div class="col-md-10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
-            </div>
-        </div>
-        {% else %}
-        <div class="media">
-          <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ title }}<br/></h3>
-          </div>
-        </div>
-        {% endif %}
-    {% endif %}{{ block.super }}
+{% block js %}{{ block.super }}
+    <script src="{% static 'icds_reports/js/subreport_loader.js' %}"></script>
 {% endblock %}
+
+{% block page_content %}
+{% block reportcontent %}
+
 
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
 {% else %}
-    {% for thisreport in reports %}
+    {% for provider in data_providers %}
+        <div id="{{ provider.provider_slug }}" data-bind="afterRender: init">
         <br/>
         <br/>
         <br/>
-        <h2 class="media-heading">{{ thisreport.report_table.title }}</h2><br/>
-            {% for subtitle in thisreport.report_table.subtitle %}
-                <h4>{{ subtitle }}</h4>
-            {% endfor %}
-        {% if thisreport.has_sections %}
-            {% include 'icds_reports/partials/sections_report_table.html' with report_table=thisreport.report_table%}
-        {%  else %}
-        {% include 'icds_reports/partials/report_table.html' with report_table=thisreport.report_table%}
-        {% endif %}
+            <h3 data-bind="visible: loading">Loading</h3>
+            <h3 data-bind="visible: !loading">Hidden</h3>
+            <h2 class="media-heading">{{ provider.title }}</h2><br/>
         <br/>
-        {% if thisreport.posttitlte %}
-            {{ thisreport.posttitle }}
         <br/>
-        {% endif %}
+        </div>
     {% endfor %}
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
+{% endblock%}
+

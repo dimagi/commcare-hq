@@ -417,14 +417,16 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 class MPRUsingSalt(ICDSMixin, MPRData):
 
     slug = 'using_salt'
+    title = "5. Number of AWCs using Iodized Salt"
 
     @property
-    def title(self):
+    def rows(self):
         if self.config['location_id']:
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
 
-            return "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
+            self.title = "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
+        return []
 
     @property
     def subtitle(self):

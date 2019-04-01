@@ -23,9 +23,28 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return self.title
 
     @property
+    def data_provider_classes(self):
+        raise NotImplementedError()
+
+    @property
     @memoized
     def data_providers(self):
-        raise NotImplementedError()
+        config = self.report_config
+        return [provider_cls(config) for provider_cls in self.data_provider_classes]
+
+    @property
+    def template_context(self):
+        import json
+        context = super(IcdsBaseReport, self).template_context
+        data_providers = [
+            {'title': provider.title,
+            'provider_slug': provider.slug}
+            for provider in self.data_provider_classes
+        ]
+        context['data_providers'] = data_providers
+        context['data_providers_json'] = json.dumps(data_providers)
+        context["query_url"] = self.request.get_full_path()
+        return context
 
     @property
     def report_config(self):
