@@ -356,6 +356,11 @@ def track_job_candidate_on_hubspot_v2(user_email):
 
 @analytics_task(serializer='pickle', )
 def track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta):
+    track_clicked_signup_on_hubspot_v2(email, hubspot_cookie, meta)
+
+
+@analytics_task
+def track_clicked_signup_on_hubspot_v2_json_args(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -415,6 +420,11 @@ def _track_workflow_task_v2_json_args(email, event, properties=None, timestamp=0
 
 @analytics_task(serializer='pickle', )
 def identify_v2(email, properties):
+    identify_v2_json_args(email, properties)
+
+
+@analytics_task
+def identify_v2_json_args(email, properties):
     """
     Set the given properties on a KISSmetrics user.
     :param email: The email address by which to identify the user.
