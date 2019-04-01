@@ -2700,4 +2700,4 @@ The naming convention for tables is:
 In postgres, you can see all tables by typing ``\dt`` and use sql
 commands to inspect the appropriate tables.
 
-.. _practical examples: https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/examples.md
+.. _practical examples: ./ucr/examples.html
