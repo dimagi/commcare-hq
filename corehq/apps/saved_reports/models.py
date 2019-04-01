@@ -379,8 +379,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                     },
                     None,
                 )
+            content = email_response.content
             return ReportContent(
-                json.loads(email_response.content)['report'],
+                json.loads(content)['report'],
                 dispatch_func(render_as='excel') if attach_excel else None,
             )
         except PermissionDenied:
