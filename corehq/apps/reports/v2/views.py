@@ -25,13 +25,12 @@ def endpoint_data(request, domain, report_slug, endpoint_slug):
 
 @login_and_domain_required
 @require_POST
-def endpoint_filter(request, domain, report_slug, endpoint_slug):
+def endpoint_options(request, domain, report_slug, endpoint_slug):
 
     report_config = get_report(request, domain, report_slug)
-
-    endpoint = report_config.get_endpoint(endpoint_slug)
+    endpoint = report_config.get_options_endpoint(endpoint_slug)
 
     return HttpResponse(
-        json.dumps(endpoint.get_response(request.POST)),
+        json.dumps(endpoint.get_response()),
         content_type="application/json"
     )

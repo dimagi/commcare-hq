@@ -783,8 +783,8 @@ class StaticDataSourceConfiguration(JsonObject):
             domain, wrapped = cls.by_id_mapping()[config_id]
         except KeyError:
             raise StaticDataSourceConfigurationNotFoundError(_(
-                'The data source referenced by this report could not be found.'
-            ))
+                'The data source %(config_id)s referenced by this report could not be found.'
+            ) % {'config_id': config_id})
 
         return cls._get_datasource_config(wrapped, domain)
 

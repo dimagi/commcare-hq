@@ -183,7 +183,7 @@ class ICDSMixin(object):
                 column_name = column['column_name']
                 column_data = 0
                 if column_agg_func == 'sum':
-                    column_data = sum([x.get(column_name, 0) for x in report_data])
+                    column_data = sum([x.get(column_name, 0) or 0 for x in report_data])
                 elif column_agg_func == 'count':
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
@@ -996,14 +996,10 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
 
 
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
-    state = ''
-    district = ''
-    block = ''
-    if len(excel_data[0][1]) > 1:
-        state = excel_data[0][1][1][0]
-        district = excel_data[0][1][1][1]
-        block = excel_data[0][1][1][2]
     export_info = excel_data[1][1]
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
     thin_border = Border(
         left=Side(style='thin'),
@@ -1142,3 +1138,7 @@ def get_datatables_ordering_info(request):
     order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
     order_dir = request.GET.get('order[0][dir]', 'asc')
     return start, length, order_by_number_column, order_by_name_column, order_dir
+
+
+def phone_number_function(x):
+    return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x

@@ -74,9 +74,9 @@ def process_repeat_record(repeat_record):
 
     try:
         if repeater.paused:
-            # postpone repeat record by 1 hour so that these don't get picked in each cycle and
+            # postpone repeat record by 1 day so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
-            repeat_record.postpone_by(timedelta(hours=1))
+            repeat_record.postpone_by(timedelta(days=1))
             return
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):

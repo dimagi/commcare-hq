@@ -47,7 +47,7 @@ hqDefine("aaa/js/reports/program_overview", [
         return self;
     };
 
-    var programOverviewModel = function (options) {
+    var programOverviewModel = function () {
         var self = {};
         self.sections = ko.observableArray();
         self.title = 'Program Overview';
@@ -68,13 +68,13 @@ hqDefine("aaa/js/reports/program_overview", [
                     section.push(indicatorModel(indicator));
                 });
                 self.sections.push(section);
-            })
+            });
         };
 
         self.callback = function () {
             $.post(initialPageData.reverse('program_overview_api'), self.postData, function (data) {
                 self.updateSections(data);
-            })
+            });
         };
 
         self.isActive = function (slug) {

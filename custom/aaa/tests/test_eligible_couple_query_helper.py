@@ -7,6 +7,7 @@ from django.test.testcases import TestCase
 
 from custom.aaa.dbaccessors import EligibleCoupleQueryHelper
 from custom.aaa.models import Child, Woman, WomanHistory
+from six.moves import range
 
 
 class TestEligibleCoupleBeneficiarySections(TestCase):
