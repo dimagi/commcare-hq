@@ -60,11 +60,16 @@ def bulk_import_async(config, domain, excel_id):
         update_task_state(bulk_import_async, states.FAILURE, {'errors': get_importer_error_message(e)})
         raise Ignore()
     finally:
-        store_task_result.delay(excel_id)
+        store_task_result_json_args.delay(excel_id)
 
 
 @task(serializer='pickle', queue='case_import_queue')
 def store_task_result(upload_id):
+    store_task_result_json_args(upload_id)
+
+
+@task(queue='case_import_queue')
+def store_task_result_json_args(upload_id):
     case_upload = CaseUpload.get(upload_id)
     case_upload.store_task_result()
 
