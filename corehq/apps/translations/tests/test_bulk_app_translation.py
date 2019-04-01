@@ -39,7 +39,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
-    def upload_raw_excel_translations(self, app, excel_headers, excel_data, expected_messages=None):
+    def upload_raw_excel_translations(self, app, excel_headers, excel_data, expected_messages=None, lang=None):
         """
         Prepares bulk app translation excel file and uploads it
 
@@ -67,16 +67,46 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
-            expected_headers = get_bulk_app_sheet_headers(app)
-            messages = process_bulk_app_translation_upload(app, workbook, expected_headers)
+            expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
+            messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
 
-        self.assertListEqual(
-            [m[1] for m in messages], expected_messages
+        self.assertSetEqual(
+            {m[1] for m in messages}, set(expected_messages)
         )
 
 
 class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
-    headers = (
+    def setUp(self):
+        """
+        Instantiate an app from file_path + app.json
+        """
+        super(BulkAppTranslationUploadErrorTest, self).setUp()
+        self.factory = AppFactory()
+        module, form = self.factory.new_basic_module('orange', 'patient')
+        self.lang = 'en'
+
+
+    single_sheet_headers = (
+        (SINGLE_SHEET_NAME, (
+            "menu_or_form", "case_property", "list_or_detail", "label",
+            "default_en", "image_en", "audio_en", "video_en"
+        )),
+    )
+
+    single_sheet_data = (
+        (SINGLE_SHEET_NAME, (
+            ("menu1", "", "", "", "orange module", "", "", ""),
+            ("menu1", "name", "list", "", "Name", "", "", ""),
+            ("menu1", "name", "detail", "", "Name", "", "", ""),
+            ("menu1_form1", "", "", "", "orange form 0", "", "", ""),
+            ("menu1_form1", "", "", "question1-label", "in english", "", "", ""),
+            ("menu1_form9", "", "", "", "not a form", "", "", ""),
+            ("menu9", "" "", "", "not a menu", "", "", ""),
+            ("not_a_form", "", "", "" "i am not a form", "", "", ""),
+        )),
+    )
+
+    multi_sheet_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "menu_or_form", "default_en", "image_en", "audio_en", "unique_id"
         )),
@@ -85,7 +115,7 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
         ("bad_sheet_name", ("label", "default_en", "image_en", "audio_en", "video_en")),
     )
 
-    data = (
+    multi_sheet_data = (
         (MODULES_AND_FORMS_SHEET_NAME, (
             ("Menu", "menu1", "orange module", "", "", "orange_module"),
             ("Menu", "menu9", "not a menu", "", "", "not_a_menu"),
@@ -105,18 +135,43 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
         )),
     )
 
+    def test_sheet_formats(self):
+        expected_messages = [
+            "File contains only one sheet. If you are uploading a single-language file, please select a language."
+        ]
+        self.upload_raw_excel_translations(self.factory.app, self.single_sheet_headers,
+                                           self.single_sheet_data,
+                                           expected_messages=expected_messages)
+        expected_messages = [
+            "Expected a single sheet. If you are uploading a multi-sheet file, please select 'All Languages'."
+        ]
+        self.upload_raw_excel_translations(self.factory.app, self.multi_sheet_headers,
+                                           self.multi_sheet_data,
+                                           expected_messages=expected_messages,
+                                           lang=self.lang)
+
     def test_sheet_errors(self):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('orange', 'patient')
         expected_messages = [
             'Invalid menu in row "menu9", skipping row.',
             'Invalid form in row "menu1_form9", skipping row.',
             'Did not recognize "not_a_form", skipping row.',
-            'Skipping sheet menu1_form1: expected first columns to be label',
-            'Skipping sheet "bad_sheet_name", could not recognize title',
             'App Translations Updated!',
         ]
-        self.upload_raw_excel_translations(factory.app, self.headers, self.data, expected_messages)
+
+        self.upload_raw_excel_translations(self.factory.app, self.single_sheet_headers,
+                                           self.single_sheet_data,
+                                           expected_messages=expected_messages,
+                                           lang=self.lang)
+
+        expected_messages += [
+            'Skipping sheet menu1_form1: expected first columns to be label',
+            'Skipping sheet "bad_sheet_name", could not recognize title',
+        ]
+
+        self.upload_raw_excel_translations(self.factory.app, self.multi_sheet_headers,
+                                           self.multi_sheet_data,
+                                           expected_messages=expected_messages)
+
 
 
 class BulkAppTranslationTestBaseWithApp(SimpleTestCase, TestXmlMixin):
@@ -128,9 +183,9 @@ class BulkAppTranslationTestBaseWithApp(SimpleTestCase, TestXmlMixin):
         super(BulkAppTranslationTestBaseWithApp, self).setUp()
         self.app = Application.wrap(self.get_json("app"))
 
-    def upload_raw_excel_translations(excel_headers, excel_data, expected_messages=None):
-        super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app, excel_headers,
-            excel_data, expected_messages)
+    def upload_raw_excel_translations(excel_headers, excel_data, lang=None, expected_messages=None):
+        super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app,
+            excel_headers, excel_data, expected_messages, lang)
 
     def do_upload(self, name, expected_messages=None):
         """

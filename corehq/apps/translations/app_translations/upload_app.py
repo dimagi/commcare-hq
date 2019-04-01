@@ -71,7 +71,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     processed_sheets = set()
     for sheet in workbook.worksheets:
         try:
-            error = _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
+            _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
         except BulkAppTranslationsException as e:
             msgs.append((messages.error, six.text_type(e)))
             continue
@@ -117,14 +117,29 @@ def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
         return updater.update(rows)
 
     if is_module_sheet(identifier):
-        updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
+        try:
+            updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
+        except ModuleNotFoundException:
+            return [(
+                messages.error,
+                _('Invalid menu in row "%s", skipping row.') % identifier
+            )]
         return updater.update(rows)
 
     if is_form_sheet(identifier):
-        updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)
+        try:
+            updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)
+        except FormNotFoundException:
+            return [(
+                messages.error,
+                _('Invalid form in row "%s", skipping row.') % identifier
+            )]
         return updater.update(rows)
 
-    return []
+    return [(
+        messages.error,
+        _('Did not recognize "%s", skipping row.') % identifier
+    )]
 
 
 def _check_for_workbook_error(app, workbook, headers):
