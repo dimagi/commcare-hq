@@ -85,7 +85,6 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
         module, form = self.factory.new_basic_module('orange', 'patient')
         self.lang = 'en'
 
-
     single_sheet_headers = (
         (SINGLE_SHEET_NAME, (
             "menu_or_form", "case_property", "list_or_detail", "label",
@@ -117,21 +116,21 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
 
     multi_sheet_data = (
         (MODULES_AND_FORMS_SHEET_NAME, (
-            ("Menu", "menu1", "orange module", "", "", "orange_module"),
-            ("Menu", "menu9", "not a menu", "", "", "not_a_menu"),
-            ("Form", "menu1_form1", "orange form 0", "", "", "orange_form_0"),
-            ("Form", "menu1_form9", "not a form", "", "", "not_a_form"),
-            ("Form", "not_a_form", "i am not a form", "", "", "also_not_a_form"),
+         ("Menu", "menu1", "orange module", "", "", "orange_module"),
+         ("Menu", "menu9", "not a menu", "", "", "not_a_menu"),
+         ("Form", "menu1_form1", "orange form 0", "", "", "orange_form_0"),
+         ("Form", "menu1_form9", "not a form", "", "", "not_a_form"),
+         ("Form", "not_a_form", "i am not a form", "", "", "also_not_a_form"),
         )),
         ("menu1", (
-          ("name", "list", "Name"),
-          ("name", "detail", "Name"),
+         ("name", "list", "Name"),
+         ("name", "detail", "Name"),
         )),
         ("menu1_form1", (
-          ("question1-label", "in english", "", "", ""),
+         ("question1-label", "in english", "", "", ""),
         )),
         ("bad_sheet_name", (
-          ("question1-label", "in english", "", "", ""),
+         ("question1-label", "in english", "", "", ""),
         )),
     )
 
@@ -171,7 +170,6 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
         self.upload_raw_excel_translations(self.factory.app, self.multi_sheet_headers,
                                            self.multi_sheet_data,
                                            expected_messages=expected_messages)
-
 
 
 class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
@@ -731,7 +729,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
          (('What_does_this_look_like-label', 'What does this look like?',
            'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''),
           ('no_media-label', 'No media', '', '', ''),
-          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '', ''))),
+          ('has_refs-label', 'Here is a ref <output value="/data/no_media"/> with some trailing text '
+           'and "bad" &lt; xml.', '', '', ''))),
         ('menu2', (('name', 'list', 'Name'), ('name', 'detail', 'Name'))),
         ('menu2_form1',
          ('name_of_series-label', 'Name of series', '', '', '')),
@@ -904,8 +903,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6', 'name', 'detail', '', 'Name'],
             ['menu6_form1', '', '', '', 'Advanced Form', None, None],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', ''],
-            ['menu6_form2', '', '', '', 'Shadow Form', '', ''],
-        ])
+            ['menu6_form2', '', '', '', 'Shadow Form', '', '']])
 
 
 class RenameLangTest(SimpleTestCase):
