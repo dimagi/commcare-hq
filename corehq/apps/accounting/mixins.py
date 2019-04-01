@@ -82,7 +82,7 @@ class BillingModalsMixin(object):
                 num_days_in_month = 30  # Approximate
                 prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))
                 prepaid_days_remaining = (prepaid_remaining_date - date.today()).days
-                if prepaid_days_remaining > 0:
+                if 0 < prepaid_days_remaining < 63:
                     context['show_prepaid_modal'] = True
                     context['prepaid_days_remaining'] = prepaid_days_remaining
                     context['prepaid_weeks_remaining'] = max(prepaid_days_remaining // 7, 1)
