@@ -48,20 +48,29 @@ def _table_names(domain, table_id):
 
 
 def _get_old_new_tablenames():
+    by_engine_id = defaultdict(list)
+    seen_tables = defaultdict(set)
+    for ds in StaticDataSourceConfiguration.all():
+        old, new = _table_names(ds.domain, ds.table_id)
+        if old in seen_tables[ds['engine_id']]:
+            logger.warning('Duplicate table: %s - %s', ds.get_id, old)
+            continue
+        seen_tables[ds['engine_id']].add(old)
+        by_engine_id[ds['engine_id']].append(DSConf(old, new, ds))
+
     data_source_ids = [
         row['id']
         for row in DataSourceConfiguration.view(
             'userreports/active_data_sources', reduce=False, include_docs=False
         )
     ]
-    by_engine_id = defaultdict(list)
     for ds in iter_docs(DataSourceConfiguration.get_db(), data_source_ids):
         ds = DataSourceConfiguration.wrap(ds)
         old, new = _table_names(ds.domain, ds.table_id)
-        by_engine_id[ds['engine_id']].append(DSConf(old, new, ds))
-
-    for ds in StaticDataSourceConfiguration.all():
-        old, new = _table_names(ds.domain, ds.table_id)
+        if old in seen_tables[ds['engine_id']]:
+            logger.warning('Duplicate table: %s - %s', ds.get_id, old)
+            continue
+        seen_tables[ds['engine_id']].add(old)
         by_engine_id[ds['engine_id']].append(DSConf(old, new, ds))
 
     return by_engine_id
