@@ -228,32 +228,33 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            identifying_text = row.get('menu_or_form', row.get('sheet_name', '')).split('_')
+            identifying_text = row.get('menu_or_form', row.get('sheet_name', ''))
+            identifying_parts = identifying_text.split('_')
 
-            if len(identifying_text) not in (1, 2):
+            if len(identifying_parts) not in (1, 2):
                 self.msgs.append((
                     messages.error,
-                    _('Did not recognize "%s", skipping row.') % row.get(identifying_text, '')
+                    _('Did not recognize "%s", skipping row.') % identifying_text
                 ))
                 continue
 
-            module_index = int(identifying_text[0].replace("menu", "").replace("module", "")) - 1
+            module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
             try:
                 document = self.app.get_module(module_index)
             except ModuleNotFoundException:
                 self.msgs.append((
                     messages.error,
-                    _('Invalid menu in row "%s", skipping row.') % row.get(identifying_text, '')
+                    _('Invalid menu in row "%s", skipping row.') % identifying_text
                 ))
                 continue
-            if len(identifying_text) == 2:
-                form_index = int(identifying_text[1].replace("form", "")) - 1
+            if len(identifying_parts) == 2:
+                form_index = int(identifying_parts[1].replace("form", "")) - 1
                 try:
                     document = document.get_form(form_index)
                 except FormNotFoundException:
                     self.msgs.append((
                         messages.error,
-                        _('Invalid form in row "%s", skipping row.') % row.get(identifying_text, '')
+                        _('Invalid form in row "%s", skipping row.') % identifying_text
                     ))
                     continue
 

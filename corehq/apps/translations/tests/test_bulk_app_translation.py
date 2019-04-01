@@ -39,14 +39,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
-    def setUp(self):
-        """
-        Instantiate an app from file_path + app.json
-        """
-        super(BulkAppTranslationTestBase, self).setUp()
-        self.app = Application.wrap(self.get_json("app"))
-
-    def upload_raw_excel_translations(self, excel_headers, excel_data, expected_messages=None):
+    def upload_raw_excel_translations(self, app, excel_headers, excel_data, expected_messages=None):
         """
         Prepares bulk app translation excel file and uploads it
 
@@ -74,12 +67,70 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             f.seek(0)
             workbook, messages = get_app_translation_workbook(f)
             assert workbook, messages
-            expected_headers = get_bulk_app_sheet_headers(self.app)
-            messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
+            expected_headers = get_bulk_app_sheet_headers(app)
+            messages = process_bulk_app_translation_upload(app, workbook, expected_headers)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
         )
+
+
+class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
+    headers = (
+        (MODULES_AND_FORMS_SHEET_NAME, (
+            "Type", "menu_or_form", "default_en", "image_en", "audio_en", "unique_id"
+        )),
+        ("menu1", ("case_property", "list_or_detail", "default_en")),
+        ("menu1_form1", ("label-bad", "default_en", "image_en", "audio_en", "video_en")),
+        ("bad_sheet_name", ("label", "default_en", "image_en", "audio_en", "video_en")),
+    )
+
+    data = (
+        (MODULES_AND_FORMS_SHEET_NAME, (
+            ("Menu", "menu1", "orange module", "", "", "orange_module"),
+            ("Menu", "menu9", "not a menu", "", "", "not_a_menu"),
+            ("Form", "menu1_form1", "orange form 0", "", "", "orange_form_0"),
+            ("Form", "menu1_form9", "not a form", "", "", "not_a_form"),
+            ("Form", "not_a_form", "i am not a form", "", "", "also_not_a_form"),
+        )),
+        ("menu1", (
+          ("name", "list", "Name"),
+          ("name", "detail", "Name"),
+        )),
+        ("menu1_form1", (
+          ("question1-label", "in english", "", "", ""),
+        )),
+        ("bad_sheet_name", (
+          ("question1-label", "in english", "", "", ""),
+        )),
+    )
+
+    def test_sheet_errors(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('orange', 'patient')
+        expected_messages = [
+            'Invalid menu in row "menu9", skipping row.',
+            'Invalid form in row "menu1_form9", skipping row.',
+            'Did not recognize "not_a_form", skipping row.',
+            'Skipping sheet menu1_form1: expected first columns to be label',
+            'Skipping sheet "bad_sheet_name", could not recognize title',
+            'App Translations Updated!',
+        ]
+        self.upload_raw_excel_translations(factory.app, self.headers, self.data, expected_messages)
+
+
+class BulkAppTranslationTestBaseWithApp(SimpleTestCase, TestXmlMixin):
+
+    def setUp(self):
+        """
+        Instantiate an app from file_path + app.json
+        """
+        super(BulkAppTranslationTestBaseWithApp, self).setUp()
+        self.app = Application.wrap(self.get_json("app"))
+
+    def upload_raw_excel_translations(excel_headers, excel_data, expected_messages=None):
+        super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app, excel_headers,
+            excel_data, expected_messages)
 
     def do_upload(self, name, expected_messages=None):
         """
@@ -130,7 +181,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         self.assertEqual(text, col.header.get(language, None))
 
 
-class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
+class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
     file_path = "data", "bulk_app_translation", "basic"
 
@@ -554,7 +605,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
 
-class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
+class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
     """
     Test the bulk app translation upload when the itext reference in a question
     in the xform body does not match the question's id/path.
@@ -568,7 +619,7 @@ class MismatchedItextReferenceTest(BulkAppTranslationTestBase):
         self.assert_question_label("question2", 0, 0, "en", "/data/foo/question2")
 
 
-class BulkAppTranslationFormTest(BulkAppTranslationTestBase):
+class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
 
     file_path = "data", "bulk_app_translation", "form_modifications"
 
