@@ -870,6 +870,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu2', 'name', 'list', '', 'Name'],
             ['menu2', 'name', 'detail', '', 'Name'],
             ['menu2_form1', '', '', '', 'Registration Form', None, None],
+            ['menu2_form1', '', '', 'name_of_series-label', 'Name of series', '', '', ''],
             ['menu3', '', '', '', 'Followup Series', '', ''],
             ['menu3', 'name', 'list', '', 'Name'],
             ['menu3', 'Tab 0', 'detail', '', 'Name'],
@@ -883,6 +884,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu3', 'name 0 (graph series config)', 'detail', '', 'yyy'],
             ['menu3', 'graph annotation 1', 'detail', '', 'This is (2, 2)'],
             ['menu3_form1', '', '', '', 'Add Point to Series', None, None],
+            ['menu3_form1', '', '', 'x-label', 'x', '', '', ''],
+            ['menu3_form1', '', '', 'y-label', 'y', '', '', ''],
             ['menu4', '', '', '', 'Remove Point', '', ''],
             ['menu4', 'x', 'list', '', 'X'],
             ['menu4', 'y', 'list', '', 'Y'],
@@ -891,11 +894,16 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu4', '2 (ID Mapping Value)', 'detail', '', 'two'],
             ['menu4', '3 (ID Mapping Value)', 'detail', '', 'three'],
             ['menu4_form1', '', '', '', 'Remove Point', None, None],
+            ['menu4_form1', '', '', 'confirm_remove-label', 'Swipe to remove the point at '
+             '(<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/'
+             'session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = '
+             'instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', ''],
             ['menu5', '', '', '', 'Empty Reports Module', '', ''],
             ['menu6', '', '', '', 'Advanced Module', None, None],
             ['menu6', 'name', 'list', '', 'Name'],
             ['menu6', 'name', 'detail', '', 'Name'],
             ['menu6_form1', '', '', '', 'Advanced Form', None, None],
+            ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', ''],
         ])
 
