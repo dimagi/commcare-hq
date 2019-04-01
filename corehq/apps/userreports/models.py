@@ -227,9 +227,12 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def data_source_id(self):
         return self._id
 
-    def filter(self, document):
+    def filter(self, document, eval_context=None):
+        if eval_context is None:
+            EvaluationContext(document)
+
         filter_fn = self._get_main_filter()
-        return filter_fn(document, EvaluationContext(document, 0))
+        return filter_fn(document, eval_context)
 
     def deleted_filter(self, document):
         filter_fn = self._get_deleted_filter()
@@ -239,9 +242,12 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def has_validations(self):
         return len(self.validations) > 0
 
-    def validate_document(self, document):
+    def validate_document(self, document, eval_context=None):
+        if eval_context is None:
+            eval_context = EvaluationContext(document)
+
         for validation in self._validations():
-            if validation.validation_function(document, EvaluationContext(document, 0)) is False:
+            if validation.validation_function(document, eval_context) is False:
                 raise ValidationError(validation.name, validation.error_message)
 
     @memoized

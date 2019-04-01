@@ -266,13 +266,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         for doc in docs:
             eval_context = EvaluationContext(doc)
             for adapter in adapters:
-                if adapter.config.filter(doc):
+                if adapter.config.filter(doc, eval_context):
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
                         if adapter.config.has_validations:
                             try:
-                                adapter.config.validate_document(doc)
+                                adapter.config.validate_document(doc, eval_context)
                             except ValidationError as e:
                                 InvalidUCRData.objects.create(
                                     doc_id=doc['_id'],
