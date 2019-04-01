@@ -7,6 +7,7 @@ from corehq.apps.reports.v2.endpoints.case_properties import (
     CasePropertiesEndpoint
 )
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
+from corehq.apps.reports.v2.filters.case_columns import TextCaseColumnFilter
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
@@ -38,6 +39,10 @@ class ExploreCaseDataReport(BaseReport):
             width=200,
         ),
     ]
+
+    column_filters = (
+        TextCaseColumnFilter,
+    )
 
     def _get_base_query(self):
         return CaseSearchES().domain(self.domain)
