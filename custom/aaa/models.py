@@ -1185,7 +1185,7 @@ def _dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
     return [
-        dict(list(zip(columns, row)))
+        dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
 
