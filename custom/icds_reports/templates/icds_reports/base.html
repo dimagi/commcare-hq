@@ -7,7 +7,6 @@
 
 
 {% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data 'query_url' query_url %}
     {% initial_page_data 'data_providers' data_providers|safe %}
     {% initial_page_data 'data_providers_json' data_providers_json %}
 {% endblock %}

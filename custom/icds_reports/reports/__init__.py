@@ -43,7 +43,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         ]
         context['data_providers'] = data_providers
         context['data_providers_json'] = json.dumps(data_providers)
-        context["query_url"] = self.request.get_full_path()
         return context
 
     @property
@@ -76,13 +75,27 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return config
 
     @property
-    def report_context(self):
-        context = {
-            'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title,
-        }
+    def should_render_subreport(self):
+        return bool(self.request.GET.get('provider_slug', None))
 
-        return context
+    @property
+    def template_report(self):
+        if self.should_render_subreport:
+            return "icds_reports/partials/subreport.html"
+        else:
+            return super(IcdsBaseReport, self).template_report
+
+    @property
+    def report_context(self):
+        if self.should_render_subreport:
+            subreport = self.request.GET.get('provider_slug', None)
+            dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
+            return {'report': self.get_report_context(dp)}
+        else:
+            return {
+                'reports': [self.get_report_context(dp) for dp in self.data_providers],
+                'title': self.title,
+            }
 
     def get_report_context(self, data_provider):
         context = dict(

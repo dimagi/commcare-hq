@@ -39,13 +39,14 @@
 
             self.providerSlug = options.providerSlug;
             self.loading = ko.observable(true);
-            self.queryUrl = options.queryUrl;
+            self.queryUrl = "{{ request.get_full_path }}";
 
             self.init = function(){
                 $.ajax({
-                    url: self.queryUrl + "&provier_slug=" + self.providerSlug;
+                    url: self.queryUrl + "&provider_slug=" + self.providerSlug,
                     success: function(data) {
-                        $("#"+self.providerSlug).html(data);
+                        var $element = $("#" + self.providerSlug);
+                        $element.html(data.report);
                     }
                 });
                 // setTimeout(function(){
@@ -56,13 +57,11 @@
             return self;
         };
 
-        var queryUrl = hqImport("hqwebapp/js/initial_page_data").get("query_url");
         var dataProviders = hqImport("hqwebapp/js/initial_page_data").get("data_providers_json");
         for (var i = 0; i < dataProviders.length; i++) {
             var provider = dataProviders[i];
             var modal = subReportModal({
                     providerSlug: provider.provider_slug,
-                    queryUrl: queryUrl
                 });
             var element = document.getElementById(provider.provider_slug);
             if (element !== null) {
