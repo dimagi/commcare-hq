@@ -213,6 +213,10 @@ def _check_for_sheet_warnings(app, sheet, headers):
                     extra_cols.remove(legacy + lang)
     missing_cols = missing_cols - not_missing_cols
 
+    # Backwards compatibility for old "sheet_name" header
+    extra_cols = extra_cols - {'sheet_name'}
+    missing_cols = missing_cols - {'menu_or_form'}
+
     if len(missing_cols) > 0:
         warnings.append((_('Sheet "%s" has fewer columns than expected. '
             'Sheet will be processed but the following translations will be unchanged: %s')
