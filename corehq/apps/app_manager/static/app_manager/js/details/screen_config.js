@@ -6,7 +6,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
-            var text = field;
+            var text = field || '';
             if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
                 text = text.substring(text.indexOf(":") + 1);
             }
@@ -48,28 +48,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
             }
             $elem.$edit_view.select2({
                 minimumInputLength: 0,
-                delay: 0,
-                data: {
-                    results: _.map(options, function (o) {
-                        return {
-                            id: o,
-                            text: o,
-                        };
-                    }),
-                },
-                // Allow manually entered text in drop down, which is not supported by legacy select2.
-                createSearchChoice: function (term, data) {
-                    if (!_.find(data, function (d) { return d.text === term; })) {
-                        return {
-                            id: term,
-                            text: term,
-                        };
-                    }
-                },
+                width: '100%',
+                tags: true,
                 escapeMarkup: function (m) {
                     return DOMPurify.sanitize(m);
                 },
-                formatResult: function (result) {
+                templateResult: function (result) {
                     var formatted = result.id;
                     if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
                         formatted = (
@@ -93,20 +77,20 @@ hqDefine('app_manager/js/details/screen_config', function () {
         var self = {};
         params = params || {};
 
-        self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
-        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.textField, params.properties);
+        self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
+        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return module.detailScreenConfig.field_val_re.test(self.textField.val());
+            return module.detailScreenConfig.field_val_re.test(self.selectField.val());
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
             self.notifyButton();
         });
         self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
-        self.textField.on('change', function () {
+        self.selectField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);
             } else {
@@ -292,6 +276,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         function getPropertyTitle(property) {
             // Strip "<prefix>:" before converting to title case.
             // This is aimed at prefixes like ledger: and attachment:
+            property = property || '';
             var i = property.indexOf(":");
             return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
         }
@@ -351,7 +336,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(self.original.field) ?
                     'fa fa-paperclip' : null);
-                self.field = uiElement.input(self.original.field).setIcon(icon);
+                self.field = undefined;
+                if (self.original.hasAutocomplete) {
+                    self.field = uiElement.select();
+                } else {
+                    self.field = uiElement.input(self.original.field);
+                }
+                self.field.setIcon(icon);
 
                 // Make it possible to observe changes to self.field
                 // note self observableVal is read only!
@@ -714,6 +705,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     });
                     if (column.original.hasAutocomplete) {
+                        column.field.setOptions(self.properties);
+                        column.field.val(column.original.field);
+                        column.field.fire("change");    // set field.observableVal
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
                     }
                     return column;
@@ -916,7 +910,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     if (self.containsSortConfiguration) {
                         data.sort_elements = JSON.stringify(_.map(self.config.sortRows.sortRows(), function (row) {
                             return {
-                                field: row.textField.val(),
+                                field: row.selectField.val(),
                                 type: row.type(),
                                 direction: row.direction(),
                                 blanks: row.blanks(),
