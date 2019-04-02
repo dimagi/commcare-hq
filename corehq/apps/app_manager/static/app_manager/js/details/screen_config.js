@@ -789,36 +789,33 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 });
 
                 self.save = function () {
-                    var i;
-                    //Only save if property names are valid
-                    var containsTab = false;
-                    var columns = self.columns();
-                    for (i = 0; i < columns.length; i++) {
-                        var column = columns[i];
+                    // Only save if property names are valid
+                    var errors = [],
+                        containsTab = false;
+                    _.each(self.columns(), function (column) {
                         column.saveAttempted(true);
-                        if (!column.isTab) {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your property names"));
-                                return;
-                            }
-                        } else {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your tabs"));
-                                return;
-                            }
+                        if (column.isTab) {
                             containsTab = true;
+                            if (column.showWarning()) {
+                                errors.push(gettext("There is an error in your tab: ") + column.field.value);
+                            }
+                        } else if (column.showWarning()) {
+                            errors.push(gettext("There is an error in your property name: ") + column.field.value);
+                        }
+                    });
+                    if (containsTab) {
+                        if (!self.columns()[0].isTab) {
+                            errors.push(gettext("All properties must be below a tab."));
                         }
                     }
-                    if (containsTab) {
-                        if (!columns[0].isTab) {
-                            alert(gettext("All properties must be below a tab"));
-                            return;
-                        }
+                    if (errors.length) {
+                        alert(gettext("There are errors in your configuration.\n") + errors.join("\n"));
+                        return;
                     }
 
                     if (self.containsSortConfiguration) {
                         var sortRows = self.config.sortRows.sortRows();
-                        for (i = 0; i < sortRows.length; i++) {
+                        for (var i = 0; i < sortRows.length; i++) {
                             var row = sortRows[i];
                             if (!row.hasValidPropertyName()) {
                                 row.showWarning(true);
