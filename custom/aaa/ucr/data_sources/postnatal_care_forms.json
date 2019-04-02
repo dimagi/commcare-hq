@@ -1,0 +1,281 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-postnatal_care",
+    "display_name": "Forms - Postnatal Care Forms (REACH Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {
+      "type": "property_path",
+      "property_path": ["form", "child", "item"]
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": [
+        "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
+
+          }
+        }
+      },
+      {
+        "column_id": "child_health_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "child_health_case_id"
+        }
+      },
+      {
+        "column_id": "current_visit_number",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "current_visit_number"]
+          }
+        }
+      },
+      {
+        "column_id": "bleeding",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "bleeding"]
+          }
+        }
+      },
+      {
+        "column_id": "fever",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "fever"]
+          }
+        }
+      },
+      {
+        "column_id": "convulsions",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "convulsions"]
+          }
+        }
+      },
+      {
+        "column_id": "abdominal_pain",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "abdominal_pain"]
+          }
+        }
+      },
+      {
+        "column_id": "pain_urination",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "pain_urination"]
+          }
+        }
+      },
+      {
+        "column_id": "congested",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "congested"]
+          }
+        }
+      },
+      {
+        "column_id": "painful_nipples",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "painful_nipples"]
+          }
+        }
+      },
+      {
+        "column_id": "other_issues",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "other_issues"]
+          }
+        }
+      },
+      {
+        "column_id": "counsel_breast",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "counsel_breast"]
+          }
+        }
+      },
+      {
+        "column_id": "counsel_increase_food_bf",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "counsel_increase_food_bf"]
+          }
+        }
+      },
+      {
+        "column_id": "eating_well",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "eating_well"]
+          }
+        }
+      },
+      {
+        "column_id": "counsel_maternal_comp",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "counsel_maternal_comp"]
+          }
+        }
+      },
+      {
+        "column_id": "breastfeeding_well",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "breastfeeding_well"
+        }
+      },
+      {
+        "column_id": "skin_to_skin",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "skin_to_skin"
+        }
+      },
+      {
+        "column_id": "wrapped",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "wrapped"
+        }
+      },
+      {
+        "column_id": "baby_active",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "baby_active"
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "aaa-data"
+  }
+}

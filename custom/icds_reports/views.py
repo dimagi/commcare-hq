@@ -247,12 +247,14 @@ class DashboardView(TemplateView):
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
+@location_safe
 class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
 
+@location_safe
 class BaseReportView(View):
     def get_settings(self, request, *args, **kwargs):
         step = kwargs.get('step')
@@ -277,6 +279,7 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -303,7 +306,6 @@ class ProgramSummaryView(BaseReportView):
                 tuple(now.date().timetuple())[:3],
                 config,
                 include_test,
-                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_demographics_data(
@@ -318,6 +320,7 @@ class ProgramSummaryView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LadySupervisorView(BaseReportView):
 
@@ -338,6 +341,7 @@ class LadySupervisorView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ServiceDeliveryDashboardView(BaseReportView):
 
@@ -366,6 +370,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfUndernutritionView(BaseReportView):
 
@@ -716,6 +721,7 @@ class AwcReportsView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
@@ -808,6 +814,7 @@ class ExportIndicatorView(View):
             return JsonResponse(data={'task_id': task_id})
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -838,6 +845,7 @@ class FactSheetsView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfSevereView(BaseReportView):
 
@@ -884,6 +892,7 @@ class PrevalenceOfSevereView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfStuntingView(BaseReportView):
 
@@ -933,6 +942,7 @@ class PrevalenceOfStuntingView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class NewbornsWithLowBirthWeightView(BaseReportView):
 
@@ -971,6 +981,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EarlyInitiationBreastfeeding(BaseReportView):
 
@@ -1009,6 +1020,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1046,6 +1058,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1083,6 +1096,7 @@ class ChildrenInitiatedView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1120,6 +1134,7 @@ class InstitutionalDeliveriesView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1156,6 +1171,7 @@ class ImmunizationCoverageView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
@@ -1194,6 +1210,7 @@ class AWCDailyStatusView(View):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1226,6 +1243,7 @@ class AWCsCoveredView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1258,6 +1276,7 @@ class RegisteredHouseholdView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1300,6 +1319,7 @@ class EnrolledChildrenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1333,6 +1353,7 @@ class EnrolledWomenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1365,6 +1386,7 @@ class LactatingEnrolledWomenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1397,6 +1419,7 @@ class AdolescentGirlsView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1428,6 +1451,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1460,6 +1484,7 @@ class CleanWaterView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1492,6 +1517,7 @@ class FunctionalToiletView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1524,6 +1550,7 @@ class MedicineKitView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1556,6 +1583,7 @@ class InfantsWeightScaleView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1588,6 +1616,7 @@ class AdultWeightScaleView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
@@ -1631,6 +1660,7 @@ class ICDSBugReportView(BugReportView):
         return [ICDS_SUPPORT_EMAIL]
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadExportReport(View):
     def get(self, request, *args, **kwargs):
@@ -1647,6 +1677,7 @@ class DownloadExportReport(View):
         return response
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
@@ -1663,6 +1694,7 @@ class DownloadPDFReport(View):
             return response
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
@@ -1701,6 +1733,7 @@ class ICDSImagesAccessorAPI(View):
         )
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InactiveAWW(View):
     def get(self, request, *args, **kwargs):
@@ -1716,6 +1749,7 @@ class InactiveAWW(View):
             raise Http404
 
 
+@location_safe
 class DishaAPIView(View):
 
     def message(self, message_name):
@@ -1756,6 +1790,7 @@ class DishaAPIView(View):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
@@ -1801,6 +1836,7 @@ class CasDataExport(View):
             raise Http404
 
 
+@location_safe
 class CasDataExportAPIView(View):
 
     def message(self, message_name):

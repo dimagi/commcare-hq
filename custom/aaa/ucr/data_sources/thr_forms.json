@@ -1,0 +1,143 @@
+{
+  "domains": [
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "config": {
+    "table_id": "reach-thr_forms",
+    "display_name": "Forms - THR Forms (REACH Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "case_load_ccs_record_0", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "thr_amount_1",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_1"]
+        }
+      },
+      {
+        "column_id": "thr_amount_2",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_2"]
+        }
+      },
+      {
+        "column_id": "thr_amount_3",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_3"]
+        }
+      },
+      {
+        "column_id": "thr_amount_4",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_4"]
+        }
+      },
+      {
+        "column_id": "thr_amount_5",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_5"]
+        }
+      },
+      {
+        "column_id": "thr_amount_6",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_6"]
+        }
+      },
+      {
+        "column_id": "thr_amount_7",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_7"]
+        }
+      },
+      {
+        "column_id": "thr_amount_8",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_8"]
+        }
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "aaa-data"
+  }
+}

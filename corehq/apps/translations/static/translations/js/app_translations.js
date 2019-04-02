@@ -19,6 +19,7 @@ hqDefine("translations/js/app_translations", [
                     return initialPageData.reverse("paginate_releases", appId);
                 },
                 width: '100%',
+                idValue: 'version',
             });
         });
 

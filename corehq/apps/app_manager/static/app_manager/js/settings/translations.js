@@ -26,6 +26,7 @@ hqDefine("app_manager/js/settings/translations", function () {
         if ($appForm.length) {
             $appForm.koApplyBindings({
                 file: ko.observable(),
+                validate: ko.observable(),
             });
         }
 
