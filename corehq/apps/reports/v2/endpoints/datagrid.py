@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from corehq.apps.reports.v2.models import BaseDataEndpoint
 
 
-class DataTablesDataEndpoint(BaseDataEndpoint):
-    slug = 'datatables'
+class DatagridEndpoint(BaseDataEndpoint):
+    slug = 'datagrid'
 
     @property
     def draw(self):
@@ -29,8 +29,7 @@ class DataTablesDataEndpoint(BaseDataEndpoint):
         results = [formatter(self.request, self.domain, r).get_context()
                    for r in query.run().raw['hits'].get('hits', [])]
         return {
-            "draw": self.draw,
-            "data": results,
+            "rows": results,
             "recordsTotal": total,
             "recordsFiltered": total,
         }
