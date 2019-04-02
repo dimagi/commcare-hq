@@ -131,6 +131,7 @@ class ReportConfigurationDbTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(ReportConfigurationDbTest, cls).setUpClass()
+        delete_all_report_configs()
         domain_foo = Domain(name='foo')
         domain_foo.save()
         domain_bar = Domain(name='bar')
