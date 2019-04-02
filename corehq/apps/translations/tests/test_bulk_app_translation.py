@@ -120,19 +120,14 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
          ("Menu", "menu9", "not a menu", "", "", "not_a_menu"),
          ("Form", "menu1_form1", "orange form 0", "", "", "orange_form_0"),
          ("Form", "menu1_form9", "not a form", "", "", "not_a_form"),
-         ("Form", "not_a_form", "i am not a form", "", "", "also_not_a_form"),
-        )),
+         ("Form", "not_a_form", "i am not a form", "", "", "also_not_a_form"))),
         ("menu1", (
          ("name", "list", "Name"),
-         ("name", "detail", "Name"),
-        )),
+         ("name", "detail", "Name"))),
         ("menu1_form1", (
-         ("question1-label", "in english", "", "", ""),
-        )),
+         ("question1-label", "in english", "", "", ""))),
         ("bad_sheet_name", (
-         ("question1-label", "in english", "", "", ""),
-        )),
-    )
+         ("question1-label", "in english", "", "", ""))))
 
     def test_sheet_formats(self):
         expected_messages = [
@@ -238,7 +233,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
     file_path = "data", "bulk_app_translation", "basic"
 
-    upload_headers = (
+    multi_sheet_upload_headers = (
         (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "menu_or_form", "default_en", "default_fra", 'image_en', 'image_fra',
             'audio_en', 'audio_fra', "unique_id",
@@ -250,6 +245,13 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             "label", "default_en", "default_fra", "image_en", "image_fra",
             "audio_en", "audio_fra", "video_en", "video_fra",
         ))
+    )
+
+    single_sheet_upload_headers = (
+        (SINGLE_SHEET_NAME, (
+            "menu_or_form", "case_property", "list_or_detail", "label",
+            "default_en", "image_en", "audio_en", "video_en",
+        )),
     )
 
     upload_headers_bad_column = (  # bad column is default-fra
@@ -266,7 +268,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         ))
     )
 
-    upload_data = (
+    multi_sheet_upload_data = (
         (MODULES_AND_FORMS_SHEET_NAME, (
             ("Menu", "menu1", "My & awesome module", "", "", "", "", "",
              "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
@@ -312,6 +314,51 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
         ))
+    )
+
+    single_sheet_upload_data = (
+        (SINGLE_SHEET_NAME, (
+          ("menu1", "", "", "", "My & awesome module", "", "", ""),
+          ("menu1", "case_list_form_label", "list", "", "Register Mother", "", "", ""),
+          ("menu1", "name", "list", "", "Name", "", "", ""),
+          ("menu1", "Tab 0", "detail", "", "Name", "", "", ""),
+          ("menu1", "Tab 1", "detail", "", "Other", "", "", ""),
+          ("menu1", "name", "detail", "", "Name", "", "", ""),
+          ("menu1", "other-prop (ID Mapping Text)", "detail", "", "Other Prop", "", "", ""),
+          ("menu1", "foo (ID Mapping Value)", "detail", "", "bar", "", "", ""),
+          ("menu1", "baz (ID Mapping Value)", "detail", "", "quz", "", "", ""),
+          ("menu1", "mood (ID Mapping Text)", "detail", "", "Mood", "", "", ""),
+          ("menu1", ". < 3 (ID Mapping Value)", "detail", "", ":(", "", "", ""),
+          ("menu1", ". >= 3 (ID Mapping Value)", "detail", "", ":)", "", "", ""),
+          ("menu1", "energy (ID Mapping Text)", "detail", "", "Energy", "", "", ""),
+          ("menu1", ". < 3 (ID Mapping Value)", "detail", "",
+              "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg", "", "", ""),
+          ("menu1", ". >= 3 (ID Mapping Value)", "detail", "",
+              "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg", "", "", ""),
+          ("menu1", 'line_graph (graph)', 'detail', "", 'Velocity', "", "", ""),
+          ("menu1", 'x-title (graph config)', 'detail', "", 'Time', "", "", ""),
+          ("menu1", 'y-title (graph config)', 'detail', "", 'Speed', "", "", ""),
+          ("menu1", 'name 0 (graph series config)', 'detail', "", 'Bird', "", "", ""),
+          ("menu1", 'name 1 (graph series config)', 'detail', "", 'Cheetah', "", "", ""),
+          ("menu1_form1", "", "", "", "My more & awesome form", "", "", ""),
+          ("menu1_form1", "", "", "question1-label", "in english", "", "", ""),
+          ("menu1_form1", "", "", "question2-label", "one &lt; two", "", "", ""),
+          ("menu1_form1", "", "", "question2-item1-label", "item1", "", "", ""),
+          ("menu1_form1", "", "", "question2-item2-label", "item2", "", "", ""),
+          ("menu1_form1", "", "", "question3-label", "question3", "", "", ""),
+          ("menu1_form1", "", "", "blank_value_node-label", "", "", "en-audio.mp3", ""),
+          ("menu1_form1", "", "", "question3/question4-label",
+              'question6: <output value="/data/question6"/>', "", "", ""),
+          ("menu1_form1", "", "", "question3/question5-label", "English Label", "", "", ""),
+          ("menu1_form1", "", "", "question7-label",
+              'question1: <output value="/data/question1"/> &lt; 5', "", "", ""),
+          ("menu1_form1", "", "", 'add_markdown-label',
+              'add_markdown: ~~new \\u0939\\u093f markdown~~', "", "", ""),
+          ("menu1_form1", "", "", 'update_markdown-label',
+              '## smaller_markdown', "", "", ""),
+          ("menu1_form1", "", "", 'vetoed_markdown-label',
+              '*i just happen to like stars a lot*', "", "", ""),
+        )),
     )
 
     upload_no_change_headers = (
@@ -372,7 +419,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('Form', 'menu1_form1', '', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('menu1',
          (('name', 'list', '', ''),
-          ('name', 'detail', 'Name', ''),
+          ('name', 'detail', '', ''),
           ('other-prop (ID Mapping Text)', 'detail', 'Other Prop', 'Autre Prop'),
           ('foo (ID Mapping Value)', 'detail', 'bar', ''),
           ('baz (ID Mapping Value)', 'detail', 'quz', ''),
@@ -418,57 +465,85 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.assert_question_label("question1", 0, 0, "en", "/data/question1")
         self.assert_case_property_label("Autre Prop", "other-prop", 0, "long", "fra")
 
-    def test_change_upload(self):
-        self.upload_raw_excel_translations(self.upload_headers, self.upload_data)
+    def _test_change_upload(self, langs):
+        en = 'en' in langs
+        fra = 'fra' in langs
 
-        self.assert_question_label("in english", 0, 0, "en", "/data/question1")
-        self.assert_question_label("it's in french", 0, 0, "fra", "/data/question1")
+        if en:
+            self.assert_question_label("in english", 0, 0, "en", "/data/question1")
+        if fra:
+            self.assert_question_label("it's in french", 0, 0, "fra", "/data/question1")
 
         # Test that translations can be deleted.
-        self.assert_question_label("English Label", 0, 0, "fra", "/data/question3/question5")
-        self.assert_case_property_label(None, "other-prop", 0, "long", "fra")
-        self.assert_case_property_label(None, "name", 0, "long", "en")
+        # Can only do this if translation multiple languages.
+        if en and fra:
+            self.assert_question_label("English Label", 0, 0, "fra", "/data/question3/question5")
+            self.assert_case_property_label(None, "other-prop", 0, "long", "fra")
+            self.assert_case_property_label(None, "name", 0, "long", "en")
 
         module = self.app.get_module(0)
-        self.assertEqual(
-            module.case_details.long.tabs[0].header['en'],
-            'Name'
-        )
-        self.assertEqual(
-            module.case_details.long.tabs[1].header['fra'],
-            'Autre'
-        )
-        self.assertEqual(
-            module.case_details.long.columns[1].enum[0].value['fra'],
-            'french bar'
-        )
-        self.assertEqual(
-            module.case_details.short.columns[0].header['fra'],
-            'Nom'
-        )
-        self.assertEqual(
-            module.case_details.long.columns[2].enum[0].value['fra'],
-            ':--('
-        )
-        self.assertEqual(
-            module.case_details.long.columns[3].enum[0].value['en'],
-            'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
-        )
+        if en:
+            self.assertEqual(
+                module.case_details.long.tabs[0].header['en'],
+                'Name'
+            )
+            self.assertEqual(
+                module.case_details.long.columns[3].enum[0].value['en'],
+                'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
+            )
+        if fra:
+            self.assertEqual(
+                module.case_details.long.tabs[1].header['fra'],
+                'Autre'
+            )
+            self.assertEqual(
+                module.case_details.long.columns[1].enum[0].value['fra'],
+                'french bar'
+            )
+            self.assertEqual(
+                module.case_details.short.columns[0].header['fra'],
+                'Nom'
+            )
+            self.assertEqual(
+                module.case_details.long.columns[2].enum[0].value['fra'],
+                ':--('
+            )
 
         # Test special characters and output refs
-        self.assert_question_label("one < two", 0, 0, "en", "/data/question2")
-        self.assert_question_label("un < deux", 0, 0, "fra", "/data/question2")
-        self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
-        self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
-        self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
-        self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
+        if en:
+            self.assert_question_label("one < two", 0, 0, "en", "/data/question2")
+            self.assert_question_label("question6: ____", 0, 0, "en", "/data/question3/question4")
+            self.assert_question_label("question1: ____ < 5", 0, 0, "en", "/data/question7")
+            self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
+        if fra:
+            self.assert_question_label("un < deux", 0, 0, "fra", "/data/question2")
+            self.assert_question_label("question3's label", 0, 0, "fra", "/data/question3")
 
         # Test markdown
-        self.assert_question_label("add_markdown: ~~new \\u0939\\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
-        self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
-        self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")
+        if en:
+            self.assert_question_label("add_markdown: ~~new \\u0939\\u093f markdown~~", 0, 0,
+                                       "en", "/data/add_markdown")
+            self.assert_question_label("## smaller_markdown", 0, 0,
+                                       "en", "/data/update_markdown")
+            self.assert_question_label("*i just happen to like stars a lot*", 0, 0,
+                                       "en", "/data/vetoed_markdown")
+
+        # Validate entire form
         form = self.app.get_module(0).get_form(0)
-        self.assertXmlEqual(self.get_xml("change_upload_form"), form.render_xform())
+        if en:
+            if fra:
+                self.assertXmlEqual(self.get_xml("change_upload_form"), form.render_xform())
+            else:
+                self.assertXmlEqual(self.get_xml("change_upload_form_en"), form.render_xform())
+
+    def test_change_upload_multi_sheet(self):
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
+        self._test_change_upload(['en', 'fra'])
+
+    def test_change_upload_single_sheet(self):
+        self.upload_raw_excel_translations(self.single_sheet_upload_headers,
+                                           self.single_sheet_upload_data, lang='en')
+        self._test_change_upload(['en'])
 
     def test_missing_itext(self):
         self.app = Application.wrap(self.get_json("app_no_itext"))
@@ -481,7 +556,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
     def test_bad_column_name(self):
         self.upload_raw_excel_translations(
             self.upload_headers_bad_column,
-            self.upload_data,
+            self.multi_sheet_upload_data,
             expected_messages=[
                 'Sheet "{}" has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
