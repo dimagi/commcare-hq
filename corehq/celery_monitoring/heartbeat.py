@@ -4,9 +4,9 @@ from __future__ import print_function
 import datetime
 
 from celery.task import periodic_task
+from django.core.cache import cache
 
 from corehq.util.datadog.gauges import datadog_gauge
-from corehq.util.quickcache import quickcache
 
 
 HEARTBEAT_FREQUENCY = datetime.timedelta(seconds=10)
@@ -17,17 +17,34 @@ class HeartbeatNeverRecorded(Exception):
     pass
 
 
-class Heartbeat(object):
+class HeartbeatCache(object):
     def __init__(self, queue):
         self.queue = queue
 
-    @quickcache(['self.queue'], timeout=HEARTBEAT_CACHE_TIMEOUT.total_seconds())
+    def _cache_key(self):
+        return 'heartbeat:{}'.format(self.queue)
+
+    def get(self):
+        return cache.get(self._cache_key())
+
+    def set(self, value):
+        cache.set(self._cache_key(), value, timeout=HEARTBEAT_CACHE_TIMEOUT.total_seconds())
+
+
+class Heartbeat(object):
+    def __init__(self, queue):
+        self.queue = queue
+        self._heartbeat_cache = HeartbeatCache(queue)
+
     def get_last_seen(self):
-        # This function relies on the cache getting set manually in mark_seen
-        raise HeartbeatNeverRecorded()
+        value = self._heartbeat_cache.get()
+        if value is None:
+            raise HeartbeatNeverRecorded()
+        else:
+            return value
 
     def mark_seen(self):
-        self.get_last_seen.set_cached_value(self).to(datetime.datetime.utcnow())
+        self._heartbeat_cache.set(datetime.datetime.utcnow())
 
     def get_blockage_duration(self):
         """
