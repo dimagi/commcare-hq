@@ -8,6 +8,7 @@ from django.conf import settings
 from couchexport.models import Format
 from couchexport import writers
 import six
+import types
 from six.moves import range
 from six.moves import map
 from corehq.util.python_compatibility import soft_assert_type_text
@@ -32,15 +33,22 @@ def get_writer(format):
 
 def export_from_tables(tables, file, format, max_column_size=2000):
     writer = get_writer(format)
-    if isinstance(tables[0][1], itertools.chain):
-        # Make copies of the generator, one to pass in to the open() function, one for the write() function
-        worksheet_title, row_generator = FormattedRow.wrap_all_rows(tables)
-        row_generator_1, row_generator_2 = itertools.tee(row_generator)
-        header_table = [(worksheet_title, [[a for a in next(row_generator_1)]])]
-        row_table = itertools.chain([], [[worksheet_title, row_generator_2]])
+    tables = FormattedRow.wrap_all_rows(tables)
+
+    if isinstance(tables[0][1], itertools.chain) or isinstance(tables[0][1], types.GeneratorType):
+        header_table = []
+        row_table = []
+        for table in tables:
+            worksheet_title, row_generator = FormattedRow.wrap_all_rows([table])[0]
+            # Make copies of the generator, so the headers can be passed in separately without using up
+            # the generator
+            row_generator_1, row_generator_2 = itertools.tee(row_generator)
+            header_table.append((worksheet_title, [next(row_generator_1)]))
+            row_table.append((worksheet_title, row_generator_2))
     else:
         header_table = tables
         row_table = tables
+
     writer.open(header_table, file, max_column_size=max_column_size)
     writer.write(row_table, skip_first=True)
     writer.close()
