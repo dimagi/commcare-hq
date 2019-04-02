@@ -22,22 +22,22 @@ from memoized import memoized
 
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
-    QuickCachedDocumentMixin
+    QuickCachedDocumentMixin,
 )
 from corehq.apps.userreports.app_manager.data_source_meta import (
-    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
+    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
 from corehq.apps.userreports.const import (
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_SQL_BACKEND,
-    VALID_REFERENCED_DOC_TYPES
+    VALID_REFERENCED_DOC_TYPES,
 )
 from corehq.apps.userreports.dbaccessors import (
     get_datasources_for_domain,
     get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain
+    get_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -55,7 +55,7 @@ from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.reports.factory import (
     ChartFactory,
     ReportColumnFactory,
-    ReportOrderByFactory
+    ReportOrderByFactory,
 )
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
@@ -63,7 +63,7 @@ from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter
+    get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID
@@ -81,7 +81,7 @@ from dimagi.ext.couchdbkit import (
     SchemaListProperty,
     SchemaProperty,
     StringListProperty,
-    StringProperty
+    StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.couch import CriticalSection
