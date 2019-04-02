@@ -706,6 +706,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     if (column.original.hasAutocomplete) {
                         column.field.setOptions(self.properties);
                         column.field.val(column.original.field);
+                        column.field.fire("change");    // set field.observableVal
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
                     }
                     return column;
