@@ -28,6 +28,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
 from dimagi.utils.dates import force_to_date
+from six.moves import zip
 
 logger = logging.getLogger(__name__)
 
