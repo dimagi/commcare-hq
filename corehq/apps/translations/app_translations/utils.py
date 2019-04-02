@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.apps.translations.const import (
-    LEGACY_MODULES_AND_FORMS_SHEET_NAME,
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
@@ -145,15 +144,15 @@ def get_form_sheet_name(form):
 
 
 def is_form_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+    return 'menu' in identifier and 'form' in identifier
 
 
 def is_module_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+    return 'menu' in identifier and 'form' not in identifier
 
 
 def is_modules_and_forms_sheet(identifier):
-    return identifier == MODULES_AND_FORMS_SHEET_NAME or identifier == LEGACY_MODULES_AND_FORMS_SHEET_NAME
+    return identifier == MODULES_AND_FORMS_SHEET_NAME
 
 
 def is_single_sheet(identifier):

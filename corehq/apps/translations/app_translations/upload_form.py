@@ -39,7 +39,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
     def _get_form_from_sheet_name(self, sheet_name):
         mod_text, form_text = sheet_name.split("_")
-        module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
+        module_index = int(mod_text.replace("menu", "")) - 1
         form_index = int(form_text.replace("form", "")) - 1
         return self.app.get_module(module_index).get_form(form_index)
 

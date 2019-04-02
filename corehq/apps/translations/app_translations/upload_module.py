@@ -32,7 +32,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.tab_headers = None
 
     def _get_module_from_sheet_name(self):
-        module_index = int(self.identifier.replace("module", "").replace("menu", "")) - 1
+        module_index = int(self.identifier.replace("menu", "")) - 1
         return self.app.get_module(module_index)
 
     def update(self, rows):
