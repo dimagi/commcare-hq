@@ -6,8 +6,7 @@ from django.urls import reverse
 from django.test.testcases import TestCase
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
+from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier, cleanup_repeaters_for_domain
 from corehq.motech.repeaters.models import FormRepeater, CreateCaseRepeater
 from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
@@ -93,7 +92,7 @@ class TestZapierIntegration(TestCase):
         cls.web_user.delete()
         cls.application.delete()
         cls.domain_object.delete()
-        delete_all_repeaters()
+        cleanup_repeaters_for_domain(cls.domain)
         super(TestZapierIntegration, cls).tearDownClass()
 
     def tearDown(self):
