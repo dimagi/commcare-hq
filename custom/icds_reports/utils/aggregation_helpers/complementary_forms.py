@@ -99,7 +99,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
             AND ucr.month = prev_month.month + INTERVAL '1 month'
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
             AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND prev_month.state_id = %(state_id)s
+            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
             tablename=self.tablename,
