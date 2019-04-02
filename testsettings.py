@@ -123,8 +123,6 @@ LOGGING = {
 # Default custom databases to use the same configuration as the default
 if 'icds-ucr' not in DATABASES:
     DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
-if 'aaa-data' not in DATABASES:
-    DATABASES['aaa-data'] = deepcopy(DATABASES['default'])
 
 helper.assign_test_db_names(DATABASES)
 
@@ -134,7 +132,7 @@ REPORTING_DATABASES = {
     'icds-ucr': 'icds-ucr',
     'icds-ucr-non-dashboard': 'icds-ucr',
     'icds-test-ucr': 'icds-ucr',
-    'aaa-data': 'aaa-data',
+    'aaa-data': 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED
