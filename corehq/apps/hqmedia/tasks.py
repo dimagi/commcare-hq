@@ -8,6 +8,7 @@ from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+import gevent
 import itertools
 import json
 import re
@@ -54,67 +55,74 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
 
     zipped_files = uploaded_zip.namelist()
     status.total_files = len(zipped_files)
-    checked_paths = []
+    jobs = []
+    progress = 0
+
+    def _increment_status():
+        progress = progress + 1
+        status.update_progress(progress)
+
+    def _process_path(path):
+        file_name = os.path.basename(path)
+        try:
+            data = uploaded_zip.read(path)
+        except Exception as e:
+            status.add_unmatched_path(path, _("Error reading file: %s" % e))
+            return
+
+        media_class = CommCareMultimedia.get_class_by_data(data, filename=path)
+        if not media_class:
+            status.add_skipped_path(path, CommCareMultimedia.get_mime_type(data))
+            return
+
+        app_paths = list(app.get_all_paths_of_type(media_class.__name__))
+        app_paths_lower = [p.lower() for p in app_paths]
+        form_path = media_class.get_form_path(path, lowercase=True)
+
+        if not form_path in app_paths_lower:
+            status.add_unmatched_path(path,
+                                      _("Did not match any %s paths in application." % media_class.get_nice_name()))
+            return
+
+        index_of_path = app_paths_lower.index(form_path)
+        form_path = app_paths[index_of_path]  # this is the correct capitalization as specified in the form
+
+        multimedia = media_class.get_by_data(data)
+        if not multimedia:
+            status.add_unmatched_path(path,
+                                      _("Matching path found, but could not save the data to couch."))
+            return
+
+        is_new = form_path not in app.multimedia_map
+        is_updated = multimedia.attach_data(data,
+                                            original_filename=file_name,
+                                            username=username)
+
+        if not is_updated and not getattr(multimedia, '_id'):
+            status.add_unmatched_path(form_path,
+                                      _("Matching path found, but didn't save new multimedia correctly."))
+            return
+
+        if is_updated or is_new:
+            multimedia.add_domain(domain, owner=True)
+            if share_media:
+                multimedia.update_or_add_license(domain, type=license_name, author=author,
+                                                 attribution_notes=attribution_notes)
+            save_app = True
+            app.create_mapping(multimedia, form_path, save=False)
+
+        media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
+        status.add_matched_path(media_class, media_info)
 
     try:
         save_app = False
         for index, path in enumerate(zipped_files):
-            status.update_progress(len(checked_paths))
-            checked_paths.append(path)
-            file_name = os.path.basename(path)
-            try:
-                data = uploaded_zip.read(path)
-            except Exception as e:
-                status.add_unmatched_path(path, _("Error reading file: %s" % e))
-                continue
+            jobs.append(gevent.spawn(_process_path, path))
 
-            media_class = CommCareMultimedia.get_class_by_data(data, filename=path)
-            if not media_class:
-                status.add_skipped_path(path, CommCareMultimedia.get_mime_type(data))
-                continue
-
-            app_paths = list(app.get_all_paths_of_type(media_class.__name__))
-            app_paths_lower = [p.lower() for p in app_paths]
-            form_path = media_class.get_form_path(path, lowercase=True)
-
-            if not form_path in app_paths_lower:
-                status.add_unmatched_path(path,
-                                          _("Did not match any %s paths in application." % media_class.get_nice_name()))
-                continue
-
-            index_of_path = app_paths_lower.index(form_path)
-            form_path = app_paths[index_of_path]  # this is the correct capitalization as specified in the form
-
-            multimedia = media_class.get_by_data(data)
-            if not multimedia:
-                status.add_unmatched_path(path,
-                                          _("Matching path found, but could not save the data to couch."))
-                continue
-
-            is_new = form_path not in app.multimedia_map
-            is_updated = multimedia.attach_data(data,
-                                                original_filename=file_name,
-                                                username=username)
-
-            if not is_updated and not getattr(multimedia, '_id'):
-                status.add_unmatched_path(form_path,
-                                          _("Matching path found, but didn't save new multimedia correctly."))
-                continue
-
-            if is_updated or is_new:
-                multimedia.add_domain(domain, owner=True)
-                if share_media:
-                    multimedia.update_or_add_license(domain, type=license_name, author=author,
-                                                     attribution_notes=attribution_notes)
-                save_app = True
-                app.create_mapping(multimedia, form_path, save=False)
-
-            media_info = multimedia.get_media_info(form_path, is_updated=is_updated, original_path=path)
-            status.add_matched_path(media_class, media_info)
-
+        gevent.joinall(jobs)
         if save_app:
             app.save()
-        status.update_progress(len(checked_paths))
+        status.update_progress(len(jobs))
     except Exception as e:
         status.mark_with_error(_("Error while processing zip: %s" % e))
     uploaded_zip.close()
