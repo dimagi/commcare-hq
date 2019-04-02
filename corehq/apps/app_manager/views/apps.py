@@ -278,6 +278,7 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
+            app=app,
         ),
         'bulk_multimedia_translation_form': get_bulk_upload_form(
             context,

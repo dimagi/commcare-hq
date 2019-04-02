@@ -211,9 +211,9 @@ def run_translation_checker(file_obj):
     return translation_checker_messages, result_wb
 
 
-def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
+def validate_bulk_app_translation_upload(app, workbook, email, file_obj, lang_to_compare):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
-    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
     checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs:
         _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
