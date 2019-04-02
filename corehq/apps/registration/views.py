@@ -46,7 +46,6 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.users.landing_pages import get_cloudcare_urlname
-from corehq import toggles
 from django.contrib.auth.models import User
 
 from corehq.util.soft_assert import soft_assert
@@ -145,9 +144,6 @@ class ProcessRegistrationView(JSONResponseMixin, View):
                         'project name unavailable': [],
                     }
                 }
-
-            username = reg_form.cleaned_data['email']
-
             return {
                 'success': True,
                 'appcues_ab_test': appcues_ab_test
@@ -204,10 +200,7 @@ class UserRegistrationView(BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         if settings.IS_SAAS_ENVIRONMENT:
-            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, request).update_response(
-                response)
-            ab_tests.SessionAbTest(ab_tests.SIGNUP_ALT_UX, request).update_response(
-                response)
+            ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, request).update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -238,10 +231,8 @@ class UserRegistrationView(BasePageView):
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
         if settings.IS_SAAS_ENVIRONMENT:
-            context['demo_workflow_ab'] = ab_tests.SessionAbTest(
-                ab_tests.DEMO_WORKFLOW, self.request).context
-            context['signup_ux_ab'] = ab_tests.SessionAbTest(
-                ab_tests.SIGNUP_ALT_UX, self.request).context
+            context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
+                ab_tests.DEMO_WORKFLOW_V2, self.request).context
         return context
 
     @property
@@ -275,7 +266,6 @@ class RegisterDomainView(TemplateView):
         user = self.request.user
         return not (Domain.active_for_user(user) or user.is_superuser)
 
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
         nextpage = request.POST.get('next')

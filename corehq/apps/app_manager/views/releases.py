@@ -44,6 +44,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
+    get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_current_app_version,
     get_latest_build_id,
@@ -51,7 +52,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_version,
 )
 from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
-from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -63,7 +63,8 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.es.apps import AppES
+from corehq.apps.es.apps import AppES, build_comment, version
+from corehq.apps.es import queries
 from corehq.apps.users.models import CouchUser
 import six
 
@@ -83,7 +84,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
-    build_comment = request.GET.get('build_comment')
+    query = request.GET.get('query')
     page = int(request.GET.get('page', 1))
     page = max(page, 1)
     try:
@@ -101,11 +102,13 @@ def paginate_releases(request, domain, app_id):
             descending=True,
             limit=limit,
             skip=skip,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
-                                                 scrap_old_conventions=False).releases_list_json(timezone),
+            wrapper=lambda x: (
+                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                .releases_list_json(timezone)
+            ),
         ).all()
 
-    if not bool(only_show_released or build_comment):
+    if not bool(only_show_released or query):
         # If user is limiting builds by released status or build comment, it's much
         # harder to be performant with couch. So if they're not doing so, take shortcuts.
         total_apps = len(get_built_app_ids_for_app_id(domain, app_id))
@@ -122,26 +125,22 @@ def paginate_releases(request, domain, app_id):
         )
         if only_show_released:
             app_es = app_es.is_released()
-        if build_comment:
-            app_es = app_es.build_comment(build_comment)
+        if query:
+            app_es = app_es.add_query(build_comment(query), queries.SHOULD)
+            try:
+                app_es = app_es.add_query(version(int(query)), queries.SHOULD)
+            except ValueError:
+                pass
+
         results = app_es.exclude_source().run()
+        total_apps = results.total
         app_ids = results.doc_ids
         apps = get_docs(Application.get_db(), app_ids)
+
         saved_apps = [
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
             for app in apps
         ]
-        total_apps = results.total
-
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-    for app in saved_apps:
-        app['include_media'] = app['doc_type'] != 'RemoteApp'
-        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
-        app['target_commcare_flavor'] = (
-            SavedAppBuild.get(app['_id']).target_commcare_flavor
-            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
-            else 'none'
-        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -157,6 +156,7 @@ def paginate_releases(request, domain, app_id):
             'total': total_apps,
             'num_pages': num_pages,
             'current_page': page,
+            'more': page * limit < total_apps,  # needed when select2 uses this endpoint
         }
     })
 
@@ -180,7 +180,6 @@ def get_releases_context(request, domain, app_id):
         'build_profile_access': build_profile_access,
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
-        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
@@ -300,10 +299,6 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
-    if copy:
-        # Set if build is supported for Java Phones
-        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     return json_response({
         "saved_app": copy,
@@ -341,15 +336,23 @@ def revert_to_copy(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
+        _("Successfully reverted to version %(old_version)s, now at version %(new_version)s") % {
+            'old_version': copy.version,
+            'new_version': app.version,
+        }
     )
+    copy_build_comment_params = {
+        "old_version": copy.version,
+        "original_comment": copy.build_comment,
+    }
     if copy.build_comment:
-        new_build_comment = "Reverted to version {old_version}\n\n{original_comment}".format(
-            old_version=copy.version, original_comment=copy.build_comment)
+        copy_build_comment_template = _(
+            "Reverted to version {old_version}\n\nPrevious build comments:\n{original_comment}")
     else:
-        new_build_comment = "Reverted to version {old_version}".format(old_version=copy.version)
+        copy_build_comment_template = _("Reverted to version {old_version}")
+
     copy = app.make_build(
-        comment=new_build_comment,
+        comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
     )
     copy.save(increment_version=False)

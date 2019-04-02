@@ -7,9 +7,8 @@ import uuid
 import re
 import logging
 import yaml
-import six
-from collections import namedtuple, OrderedDict
-from copy import deepcopy, copy
+from collections import OrderedDict, namedtuple
+from copy import deepcopy
 from io import open
 
 
@@ -39,11 +38,11 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX,
 )
-from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.make_uuid import random_hex
 
 
 logger = logging.getLogger(__name__)
@@ -77,7 +76,7 @@ def app_doc_types():
 def _prepare_xpath_for_validation(xpath):
     prepared_xpath = xpath.lower()
     prepared_xpath = prepared_xpath.replace('"', "'")
-    prepared_xpath = re.compile('\s').sub('', prepared_xpath)
+    prepared_xpath = re.compile(r'\s').sub('', prepared_xpath)
     return prepared_xpath
 
 
@@ -401,7 +400,7 @@ def update_form_unique_ids(app_source, id_map=None):
 
     def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = map.get(form['xmlns'], random_hex())
+        new_unique_id = map.get(form['xmlns'], uuid.uuid4().hex)
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -505,60 +504,6 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
         for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
-
-
-def get_form_data(domain, app, include_shadow_forms=True):
-    from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-    from corehq.apps.app_manager.models import ShadowForm
-
-    modules = []
-    errors = []
-    for module in app.get_modules():
-        forms = []
-        module_meta = {
-            'id': module.unique_id,
-            'name': module.name,
-            'short_comment': module.short_comment,
-            'module_type': module.module_type,
-            'is_surveys': module.is_surveys,
-            'module_filter': module.module_filter,
-        }
-
-        form_list = module.get_forms()
-        if not include_shadow_forms:
-            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
-        for form in form_list:
-            form_meta = {
-                'id': form.unique_id,
-                'name': form.name,
-                'short_comment': form.short_comment,
-                'action_type': form.get_action_type(),
-                'form_filter': form.form_filter,
-            }
-            try:
-                questions = form.get_questions(
-                    app.langs,
-                    include_triggers=True,
-                    include_groups=True,
-                    include_translations=True
-                )
-                form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
-            except XFormException as e:
-                form_meta['error'] = {
-                    'details': six.text_type(e),
-                    'edit_url': reverse(
-                        'form_source',
-                        args=[domain, app._id, form.unique_id]
-                    ),
-                }
-                form_meta['module'] = copy(module_meta)
-                errors.append(form_meta)
-            else:
-                forms.append(form_meta)
-
-        module_meta['forms'] = forms
-        modules.append(module_meta)
-    return modules, errors
 
 
 def get_and_assert_practice_user_in_domain(practice_user_id, domain):
@@ -692,13 +637,7 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
         return get_app(domain, latest_enabled_build.build_id)
 
 
-@quickcache(['build_id', 'version'], timeout=24 * 60 * 60)
-def get_enabled_build_profiles_for_version(build_id, version):
-    from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
-    return list(LatestEnabledBuildProfiles.objects.filter(
-        build_id=build_id, version=version).values_list('build_profile_id', flat=True))
-
-
+@quickcache(['app_id'], timeout=24 * 60 * 60)
 def get_latest_enabled_versions_per_profile(app_id):
     from corehq.apps.app_manager.models import LatestEnabledBuildProfiles
     # a dict with each profile id mapped to its latest enabled version number, if present

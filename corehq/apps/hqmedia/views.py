@@ -6,11 +6,12 @@ import zipfile
 import io
 import logging
 import os
-from django.contrib.auth.decorators import login_required
 import json
 import itertools
 from collections import defaultdict
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -19,7 +20,7 @@ from django.views.generic import View, TemplateView
 
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 
-from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 
 from django.shortcuts import render
 import shutil
@@ -51,7 +52,11 @@ from corehq.apps.hqmedia.controller import (
     MultimediaVideoUploadController
 )
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
-from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
+from corehq.apps.hqmedia.tasks import (
+    process_bulk_upload_zip,
+    build_application_zip,
+)
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -95,6 +100,8 @@ class BaseMultimediaTemplateView(BaseMultimediaView, TemplateView):
         views = [MultimediaReferencesView, BulkUploadMultimediaView]
         if toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(self.request):
             views.append(ManageMultimediaPathsView)
+            if len(self.app.langs) > 1:
+                views.append(MultimediaTranslationsCoverageView)
         context.update({
             "domain": self.domain,
             "app": self.app,
@@ -145,11 +152,8 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
         if self.app is None:
             raise Http404(self)
         context.update({
-            "references": self.app.get_references(),
-            "multimedia_state": self.app.check_media_state(),
-            "object_map": self.app.get_object_map(),
-            "totals": self.app.get_reference_totals(),
             "sessionid": self.request.COOKIES.get('sessionid'),
+            "multimedia_state": self.app.check_media_state(),
         })
         return context
 
@@ -163,6 +167,15 @@ class MultimediaReferencesView(BaseMultimediaUploaderView):
             MultimediaVideoUploadController("hqvideo", reverse(ProcessVideoFileUploadView.urlname,
                                                                args=[self.domain, self.app_id])),
         ]
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('json', None):
+            return JsonResponse({
+                "references": self.app.get_references(),
+                "object_map": self.app.get_object_map(),
+                "totals": self.app.get_reference_totals(),
+            })
+        return super(MultimediaReferencesView, self).get(request, *args, **kwargs)
 
 
 class BulkUploadMultimediaView(BaseMultimediaUploaderView):
@@ -289,6 +302,80 @@ def update_multimedia_paths(request, domain, app_id):
     })
 
 
+@method_decorator(toggles.BULK_UPDATE_MULTIMEDIA_PATHS.required_decorator(), name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class MultimediaTranslationsCoverageView(BaseMultimediaTemplateView):
+    urlname = "multimedia_translations_coverage"
+    template_name = "hqmedia/translations_coverage.html"
+    page_title = ugettext_noop("Translations Coverage")
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(MultimediaTranslationsCoverageView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': _("Multimedia Reference Checker"),
+            'url': reverse(MultimediaReferencesView.urlname, args=[self.domain, self.app.get_id]),
+        }]
+
+    @property
+    def page_context(self):
+        context = super(MultimediaTranslationsCoverageView, self).page_context
+        selected_build_id = self.request.POST.get('build_id')
+        selected_build_text = ''
+        if selected_build_id:
+            build = get_app(self.app.domain, selected_build_id)
+            selected_build_text = str(build.version)
+            if build.build_comment:
+                selected_build_text += ": " + build.build_comment
+        context.update({
+            "media_types": {t: CommCareMultimedia.get_doc_class(t).get_nice_name()
+                            for t in CommCareMultimedia.get_doc_types()},
+            "selected_langs": self.request.POST.getlist('langs', []),
+            "selected_media_types": self.request.POST.getlist('media_types', ['CommCareAudio', 'CommCareVideo']),
+            "selected_build_id": selected_build_id,
+            "selected_build_text": selected_build_text,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        error = False
+
+        langs = request.POST.getlist('langs')
+        if not langs:
+            error = True
+            messages.error(request, "Please select a language.")
+
+        media_types = request.POST.getlist('media_types')
+        if not media_types:
+            error = True
+            messages.error(request, "Please select a media type.")
+
+        if not error:
+            build_id = self.request.POST.get('build_id')
+            build = get_app(self.app.domain, build_id) if build_id else self.app
+            default_paths = build.all_media_paths(lang=build.default_language)
+            default_paths = {p for p in default_paths
+                             if p in build.multimedia_map
+                             and build.multimedia_map[p].media_type in media_types}
+            for lang in langs:
+                fallbacks = default_paths.intersection(build.all_media_paths(lang=lang))
+                if fallbacks:
+                    messages.warning(request,
+                                     "The following paths do not have references in <strong>{}</strong>:"
+                                     "<ul>{}</ul>".format(lang,
+                                                          "".join(["<li>{}</li>".format(f) for f in fallbacks])),
+                                     extra_tags='html')
+                else:
+                    messages.success(request,
+                                     "All paths checked have a <strong>{}</strong> reference.".format(lang),
+                                     extra_tags='html')
+
+        return self.get(request, *args, **kwargs)
+
+
 class BaseProcessUploadedView(BaseMultimediaView):
 
     @property
@@ -341,7 +428,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
             self.validate_file()
             response.update(self.process_upload())
         except BadMediaFileException as e:
-            self.errors.append(e.message)
+            self.errors.append(six.text_type(e))
         response.update({
             'errors': self.errors,
         })
@@ -400,6 +487,7 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
                                       license_name=self.license_used,
                                       author=self.author,
                                       attribution_notes=self.attribution_notes)
+
         return status.get_response()
 
     @classmethod
@@ -622,13 +710,6 @@ class RemoveLogoView(BaseMultimediaView):
         return HttpResponse()
 
 
-class CheckOnProcessingFile(BaseMultimediaView):
-    urlname = "hqmedia_check_processing"
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponse("workin on it")
-
-
 def iter_media_files(media_objects):
     """
     take as input the output of get_media_objects
@@ -640,6 +721,7 @@ def iter_media_files(media_objects):
     errors will not include all error messages until the iterator is exhausted
 
     """
+    from dimagi.utils.logging import notify_exception
     errors = []
 
     def _media_files():
@@ -650,10 +732,12 @@ def iter_media_files(media_objects):
                 if not isinstance(data, six.text_type):
                     yield os.path.join(folder), data
             except NameError as e:
-                errors.append("%(path)s produced an ERROR: %(error)s" % {
+                message = "%(path)s produced an ERROR: %(error)s" % {
                     'path': path,
                     'error': e,
-                })
+                }
+                errors.append(message)
+                notify_exception(None, "[ICDS-291] {}".format(message))
     return _media_files(), errors
 
 
@@ -663,11 +747,7 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
     index_file_count = 0
     multimedia_file_count = 0
     if include_multimedia_files:
-        app.remove_unused_mappings()
-        languages = None
-        if build_profile_id is not None:
-            languages = app.build_profiles[build_profile_id].langs
-        media_objects = list(app.get_media_objects(languages=languages))
+        media_objects = list(app.get_media_objects(build_profile_id=build_profile_id))
         multimedia_file_count = len(media_objects)
         file_iterator, errors = iter_media_files(media_objects)
     if include_index_files:
@@ -858,7 +938,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        notify_exception(None, e.message)
+        notify_exception(None, "[ICDS-291] {}".format(six.text_type(e)))
         errors = [six.text_type(e)]
 
     return _files(files), errors, len(files)

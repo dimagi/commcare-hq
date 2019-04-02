@@ -24,8 +24,6 @@ from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
-from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.views import (
@@ -37,14 +35,13 @@ from corehq.apps.reminders.views import (
 )
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
-from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
+from corehq.apps.reports.models import ReportsSidebarOrdering
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.translations.integrations.transifex.utils import transifex_details_available_for_domain
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
-    can_view_form_exports,
-    can_view_case_exports,
     can_view_sms_exports,
     can_download_data_files,
 )
@@ -198,44 +195,6 @@ class ProjectReportsTab(UITab):
             (header, list(map(show, pages)))
             for header, pages in self.sidebar_items
         ])
-
-
-class IndicatorAdminTab(UITab):
-    title = ugettext_noop("Administer Indicators")
-    view = "corehq.apps.indicators.views.default_admin"
-    dispatcher = IndicatorAdminInterfaceDispatcher
-
-    url_prefix_formats = ('/a/{domain}/indicators/',)
-
-    @property
-    def _is_viewable(self):
-        indicator_enabled_projects = get_indicator_domains()
-        return (self.couch_user.can_edit_data() and
-                self.domain in indicator_enabled_projects)
-
-    @property
-    def sidebar_items(self):
-        items = super(IndicatorAdminTab, self).sidebar_items
-        from corehq.apps.indicators.views import (
-            BulkExportIndicatorsView,
-            BulkImportIndicatorsView,
-        )
-        items.append([
-            _("Other Actions"), [
-                {
-                    'title': _(BulkImportIndicatorsView.page_title),
-                    'url': reverse(BulkImportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                    'urlname': BulkImportIndicatorsView.urlname,
-                },
-                {
-                    'title': _("Download Indicators Export"),
-                    'url': reverse(BulkExportIndicatorsView.urlname,
-                                   args=[self.domain]),
-                }
-            ]
-        ])
-        return items
 
 
 class DashboardTab(UITab):
@@ -446,11 +405,13 @@ class ProjectDataTab(UITab):
     @property
     @memoized
     def can_view_form_exports(self):
+        from corehq.apps.export.views.utils import can_view_form_exports
         return can_view_form_exports(self.couch_user, self.domain)
 
     @property
     @memoized
     def can_view_case_exports(self):
+        from corehq.apps.export.views.utils import can_view_case_exports
         return can_view_case_exports(self.couch_user, self.domain)
 
     @property
@@ -1389,12 +1350,18 @@ class TranslationsTab(UITab):
         if transifex_details_available_for_domain(self.domain):
             if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
                 items.append((_('Translations'), [
-                    {'url': reverse('app_translations', args=[self.domain]),
-                     'title': 'Manage App Translations'
-                     },
-                    {'url': reverse('pull_resource', args=[self.domain]),
-                     'title': 'Pull Resource'
-                     }
+                    {
+                        'url': reverse('app_translations', args=[self.domain]),
+                        'title': _('Manage App Translations')
+                    },
+                    {
+                        'url': reverse('pull_resource', args=[self.domain]),
+                        'title': _('Pull Resource')
+                    },
+                    {
+                        'url': reverse('blacklist_translations', args=[self.domain]),
+                        'title': _('Blacklist Translations')
+                    },
                 ]))
         return items
 
@@ -1614,6 +1581,13 @@ def _get_integration_section(domain):
             'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
         }
     ]
+
+    if toggles.BIOMETRIC_INTEGRATION.enabled(domain):
+        from corehq.apps.integration.views import BiometricIntegrationView
+        integration.append({
+            'title': _(BiometricIntegrationView.page_title),
+            'url': reverse(BiometricIntegrationView.urlname, args=[domain])
+        })
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.extend([{

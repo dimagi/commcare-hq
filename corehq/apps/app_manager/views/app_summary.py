@@ -1,38 +1,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import io
 from collections import namedtuple
 
-from django.urls import reverse
+import six
 from django.http import Http404
-from django.utils.translation import ugettext_noop, ugettext_lazy as _
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
-from dimagi.utils.web import json_response
+from six.moves import range
 
-from corehq.apps.app_manager.util import get_form_data
-from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
-from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
+from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+from corehq.apps.reports.formdetails.readable import (
+    FormQuestionResponse,
+    get_app_summary_formdata,
+)
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
-import six
-from six.moves import range
+from dimagi.utils.web import json_response
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
-    urlname = 'app_summary'
-    page_title = ugettext_noop("Summary")
-    template_name = 'app_manager/summary.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(AppSummaryView, self).dispatch(request, *args, **kwargs)
 
     @property
     def main_context(self):
@@ -62,26 +59,12 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         }
 
     @property
-    def parent_pages(self):
-        return [
-            {
-                'title': _("Applications"),
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            },
-            {
-                'title': self.app.name,
-                'url': reverse('view_app', args=[self.domain, self.app_id]),
-            }
-        ]
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.app_id])
 
 
 class AppCaseSummaryView(AppSummaryView):
     urlname = 'app_case_summary'
-    page_title = ugettext_noop("Case Summary")
     template_name = 'app_manager/case_summary.html'
 
     @property
@@ -103,13 +86,12 @@ class AppCaseSummaryView(AppSummaryView):
 
 class AppFormSummaryView(AppSummaryView):
     urlname = 'app_form_summary'
-    page_title = ugettext_noop("Form Summary")
     template_name = 'app_manager/form_summary.html'
 
     @property
     def page_context(self):
         context = super(AppFormSummaryView, self).page_context
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
             'is_form_summary': True,
             'modules': modules,
@@ -123,7 +105,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
     urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
-        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
+        modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         return json_response({
             'response': {
                 'form_data': {
@@ -316,6 +298,8 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "required",
     "comment",
     "default_value",
+    "load_properties",
+    "save_properties",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -328,6 +312,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     def get(self, request, domain, app_id):
         language = request.GET.get('lang', 'en')
         modules = list(self.app.get_modules())
+        case_meta = self.app.get_case_metadata()
         headers = [(_('All Forms'),
                     ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
@@ -339,7 +324,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
-            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
+            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language, case_meta))
             for module in modules for form in module.get_forms()
         )
         export_string = io.BytesIO()
@@ -354,7 +339,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             ),
         )
 
-    def _get_form_row(self, form, language):
+    def _get_form_row(self, form, language, case_meta):
         form_summary_rows = []
         for question in form.get_questions(
             self.app.langs,
@@ -381,6 +366,14 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                     default_value=question_response.setvalue,
+                    load_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_load_properties(form.unique_id, question['value'])]
+                    ),
+                    save_properties="\n".join(
+                        ["{} - {}".format(prop.case_type, prop.property)
+                         for prop in case_meta.get_save_properties(form.unique_id, question['value'])]
+                    ),
                 )
             )
         return tuple(form_summary_rows)

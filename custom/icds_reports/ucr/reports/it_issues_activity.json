@@ -1,12 +1,20 @@
 {
     "server_environment": [
-        "softlayer",
+        "india",
         "icds-new",
         "icds"
     ],
     "domains": [
         "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
         "reach-sandbox",
+    "reach-dashboard-qa",
         "reach-test",
         "icds-test",
         "icds-cas",

@@ -14,6 +14,7 @@ from crispy_forms import bootstrap as twbscrispy
 from django.utils.safestring import mark_safe
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.sms.models import FORWARD_ALL, FORWARD_BY_KEYWORD, SQLMobileBackend
@@ -26,6 +27,7 @@ from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
@@ -211,6 +213,7 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Delay Automated SMS"),
         choices=ENABLED_DISABLED_CHOICES,
+        widget=SelectToggle(choices=ENABLED_DISABLED_CHOICES, attrs={"ko_value": "use_sms_conversation_times"}),
     )
     sms_conversation_times_json = CharField(
         required=False,
@@ -455,7 +458,6 @@ class SettingsForm(Form):
             ),
             hqcrispy.FieldWithHelpBubble(
                 "use_sms_conversation_times",
-                data_bind="value: use_sms_conversation_times",
                 help_bubble_text=_("When this option is enabled, the system "
                     "will not send automated SMS to chat recipients when "
                     "those recipients are in the middle of a conversation."),
@@ -618,6 +620,7 @@ class SettingsForm(Form):
             if field_name in ["restricted_sms_times_json",
                 "sms_conversation_times_json"]:
                 if isinstance(value, six.string_types):
+                    soft_assert_type_text(value)
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value
@@ -948,7 +951,7 @@ class BackendForm(Form):
             value = value.strip().upper()
         if value is None or value == "":
             raise ValidationError(_("This field is required."))
-        if re.compile("\s").search(value) is not None:
+        if re.compile(r"\s").search(value) is not None:
             raise ValidationError(_("Name may not contain any spaces."))
 
         if self.is_global_backend:

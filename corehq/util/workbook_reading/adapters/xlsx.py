@@ -34,7 +34,7 @@ def open_xlsx_workbook(filename):
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
         except InvalidFileException as e:
-            raise SpreadsheetFileInvalidError(e.message)
+            raise SpreadsheetFileInvalidError(six.text_type(e))
         except BadZipfile as e:
             f.seek(0)
             if f.read(8) == XLSX_ENCRYPTED_MARKER:

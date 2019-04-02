@@ -14,7 +14,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain, get_current_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, AppLinkError
+    ModuleNotFoundException, FormNotFoundException, AppLinkError, MultimediaMissingError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -172,16 +172,15 @@ def overwrite_app(app, master_build, report_map=None):
             app_json[key] = value
     app_json['version'] = master_json['version']
     wrapped_app = wrap_app(app_json)
-    for module in wrapped_app.modules:
-        if isinstance(module, ReportModule):
-            if report_map is not None:
-                for config in module.report_configs:
-                    try:
-                        config.report_id = report_map[config.report_id]
-                    except KeyError:
-                        raise AppEditingError(config.report_id)
-            else:
-                raise AppEditingError('Report map not passed to overwrite_app')
+    for module in wrapped_app.get_report_modules():
+        if report_map is None:
+            raise AppEditingError('Report map not passed to overwrite_app')
+
+        for config in module.report_configs:
+            try:
+                config.report_id = report_map[config.report_id]
+            except KeyError:
+                raise AppEditingError(config.report_id)
 
     wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     enable_usercase_if_necessary(wrapped_app)
@@ -294,7 +293,7 @@ def update_linked_app_and_notify(domain, app_id, user_id, email):
     subject = _("Update Status for linked app %s") % app.name
     try:
         update_linked_app(app, user_id)
-    except AppLinkError as e:
+    except (AppLinkError, MultimediaMissingError) as e:
         message = six.text_type(e)
     except Exception:
         # Send an email but then crash the process
@@ -354,10 +353,15 @@ def update_linked_app(app, user_id):
 
     if app.master_is_remote:
         try:
-            pull_missing_multimedia_for_app(app)
+            missing_mm_populated = pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
+            ))
+        if not missing_mm_populated:
+            raise MultimediaMissingError(_(
+                'Application has missing multimedia even after an attempt to pull them. '
+                'An email has been sent with details. Please try again. If persists, report an issue.'
             ))
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))

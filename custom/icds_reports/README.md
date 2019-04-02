@@ -159,7 +159,10 @@ Known areas that can be changed to improve performance
 
    The highest ROI are moving reports based on ccs_record_monthly_v2, child_health_monthly_v2 and person_cases_v2 (in that order).
 
-   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2
+   The end goal being no longer needed either monthly UCR (queries only on the base case UCR & appropriate form UCR) and reducing the number of columns in person_cases_v2.
+   
+   As of March, 2019 we have rolled out person_cases_v3 which achieves the reduction in columns in person_case_v2.
+
 4. Move to native postgres partitioning.
 
    Postgres 10 introduced a native partitioning feature that we could use.
@@ -207,3 +210,17 @@ The difference is cancel is SIGTERM and terminate is SIGKILL described in more d
 Stopping all ucr_indicator_queue to reduce load: `cchq icds fab supervisorctl:"stop commcare-hq-icds-celery_ucr_indicator_queue_0"`
 
 Purging all aggregation tasks from the queue: `./manage.py celery amqp queue.purge icds_aggregation_queue`
+
+Restarting the aggregation *before doing this you should be certain that the aggregation is not running and will not start on its own*:
+
+```python
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from  dimagi.utils.couch.cache.cache_core import get_redis_client
+
+# clear out the redis key used for @serial_task
+client = get_redis_client()
+client.delete('move_ucr_data_into_aggregation_tables-move-ucr-data-into-aggregate-tables')
+
+# note that this defaults to current date from utcnow (usually what you want)
+move_ucr_data_into_aggregation_tables.delay(intervals=1)
+```

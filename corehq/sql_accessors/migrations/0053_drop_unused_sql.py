@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL("""DROP FUNCTION IF EXISTS save_ledger_values(
+        migrations.RunSQL("""DROP FUNCTION IF EXISTS save_ledger_values(
             TEXT, form_processor_ledgervalue, form_processor_ledgertransaction[], TEXT
         )"""),
-        HqRunSQL("DROP FUNCTION IF EXISTS hard_delete_forms(TEXT, TEXT[])")
+        migrations.RunSQL("DROP FUNCTION IF EXISTS hard_delete_forms(TEXT, TEXT[])")
     ]

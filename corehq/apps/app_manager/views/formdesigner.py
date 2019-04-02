@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+import six
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
@@ -115,6 +116,14 @@ def _get_form_designer_view(request, domain, app, module, form):
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
 
+    if app.doc_type == 'LinkedApplication':
+        messages.warning(request, _(
+            "You tried to edit this form in the Form Builder. "
+            "However, this is a linked application and you can only make changes to the "
+            "upstream version."
+        ))
+        return back_to_main(request, domain, app_id=app.id)
+
     send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
     def _form_too_large(_app, _form):
@@ -188,7 +197,7 @@ def get_form_data_schema(request, domain, form_unique_id):
             "Please fix the error to see case properties in this tree")
         )
     except Exception as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=six.text_type(e))
         return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(

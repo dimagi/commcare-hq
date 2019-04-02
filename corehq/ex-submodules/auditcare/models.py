@@ -35,6 +35,7 @@ except:
 
 from auditcare.signals import user_login_failed
 
+
 def make_uuid():
     return uuid.uuid4().hex
 
@@ -369,6 +370,7 @@ ACCESS_CHOICES = (
     (ACCESS_PASSWORD, "Password Change"),
     )
 
+
 class AccessAudit(AuditEvent):
     access_type = StringProperty(choices=ACCESS_CHOICES)
     ip_address = StringProperty()
@@ -500,11 +502,13 @@ def audit_login(sender, **kwargs):
 if user_logged_in:
     user_logged_in.connect(audit_login)
 
+
 def audit_logout(sender, **kwargs):
     AuditEvent.audit_logout(kwargs["request"], kwargs["user"])
 
 if user_logged_out:
     user_logged_out.connect(audit_logout)
+
 
 def audit_login_failed(sender, **kwargs):
     AuditEvent.audit_login_failed(kwargs["request"], kwargs["username"])

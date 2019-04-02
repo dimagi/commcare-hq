@@ -9,14 +9,12 @@ from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.fields import MultiEmailField
+from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from .models import (
-    DEFAULT_REPORT_NOTIF_SUBJECT,
-    ReportConfig,
-    ReportNotification,
-)
+from corehq.apps.saved_reports.models import ReportConfig, ReportNotification, \
+    DEFAULT_REPORT_NOTIF_SUBJECT
 from six.moves import range
 
 
@@ -100,6 +98,8 @@ class SavedReportConfigForm(forms.Form):
 
 
 class ScheduledReportForm(forms.Form):
+    INTERVAL_CHOICES = [("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")]
+
     config_ids = forms.MultipleChoiceField(
         label=_("Saved report(s)"),
         validators=[MinLengthValidator(1)],
@@ -108,7 +108,8 @@ class ScheduledReportForm(forms.Form):
 
     interval = forms.TypedChoiceField(
         label=_('Interval'),
-        choices=[("daily", "Daily"), ("weekly", "Weekly"), ("monthly", "Monthly")])
+        widget=SelectToggle(choices=INTERVAL_CHOICES, apply_bindings=True),
+        choices=INTERVAL_CHOICES)
 
     day = forms.TypedChoiceField(
         label=_("Day"),

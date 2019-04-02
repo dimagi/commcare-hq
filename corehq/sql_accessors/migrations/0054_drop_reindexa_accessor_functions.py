@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL("DROP FUNCTION IF EXISTS get_all_cases_modified_since(timestamp with time zone, INTEGER, INTEGER)"),
-        HqRunSQL("DROP FUNCTION IF EXISTS get_all_forms_received_since(timestamp with time zone, INTEGER, INTEGER)"),
-        HqRunSQL("DROP FUNCTION IF EXISTS get_all_ledger_values_modified_since(timestamp with time zone, INTEGER, INTEGER)"),
+        migrations.RunSQL("DROP FUNCTION IF EXISTS get_all_cases_modified_since(timestamp with time zone, INTEGER, INTEGER)"),
+        migrations.RunSQL("DROP FUNCTION IF EXISTS get_all_forms_received_since(timestamp with time zone, INTEGER, INTEGER)"),
+        migrations.RunSQL("DROP FUNCTION IF EXISTS get_all_ledger_values_modified_since(timestamp with time zone, INTEGER, INTEGER)"),
     ]

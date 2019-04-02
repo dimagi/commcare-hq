@@ -425,6 +425,8 @@ class SQLLocation(AdjListModel):
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
+            if six.PY2:
+                self.location_id = self.location_id.decode('utf-8')
 
         with transaction.atomic():
             set_site_code_if_needed(self)
@@ -887,7 +889,7 @@ class LocationRelation(models.Model):
         """
         relations = cls.objects.filter(
             Q(location_a__in=locations) | Q(location_b__in=locations)
-        ).prefetch_related('location_a', 'location_b')
+        )
         location_ids = {loc.location_id for loc in locations}
 
         distance_dictionary = defaultdict(dict)

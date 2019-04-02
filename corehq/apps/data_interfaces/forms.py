@@ -27,6 +27,7 @@ from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.util.python_compatibility import soft_assert_type_text
 from dimagi.utils.django.fields import TrimmedCharField
 import six
 
@@ -42,6 +43,7 @@ def true_or_false(value):
 
 def remove_quotes(value):
     if isinstance(value, six.string_types) and len(value) >= 2:
+        soft_assert_type_text(value)
         for q in ("'", '"'):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
@@ -51,6 +53,7 @@ def remove_quotes(value):
 def is_valid_case_property_name(value):
     if not isinstance(value, six.string_types):
         return False
+    soft_assert_type_text(value)
     try:
         validate_case_property_characters(value)
         return True
@@ -68,6 +71,7 @@ def validate_case_property_characters(value):
 def validate_case_property_name(value, allow_parent_case_references=True):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
+    soft_assert_type_text(value)
 
     value = value.strip()
 
@@ -108,6 +112,7 @@ def hidden_bound_field(field_name, data_value):
 def validate_case_property_value(value):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property value."))
+    soft_assert_type_text(value)
 
     value = remove_quotes(value.strip()).strip()
     if not value:

@@ -334,15 +334,15 @@ class ZippedExportWriter(OnDiskExportWriter):
             if isinstance(name, bytes):
                 name = name.decode('utf-8')
             path = self.tables[index].get_path()
-            archive.write(path, self._get_archive_filename(name).encode('utf-8'))
+            archive_filename = self._get_archive_filename(name)
+            if six.PY2:
+                archive_filename = archive_filename.encode('utf-8')
+            archive.write(path, archive_filename)
         archive.close()
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        path = self.archive_basepath
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
+        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):

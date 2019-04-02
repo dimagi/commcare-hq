@@ -157,7 +157,7 @@ class Command(BaseCommand):
         total_docs = 0
         for page_filename in os.listdir(unprocessed_path):
             page_path = os.path.join(unprocessed_path, page_filename)
-            page_search = re.search('page_(\d+).json.gz', page_filename)
+            page_search = re.search(r'page_(\d+).json.gz', page_filename)
             if page_search:
                 page_number = int(page_search.group(1))
             else:

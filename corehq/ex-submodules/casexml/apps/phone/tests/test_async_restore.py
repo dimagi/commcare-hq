@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
 from io import BytesIO
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
@@ -85,6 +85,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         self.assertTrue(task.delay.called)
 
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
     def test_restore_then_sync_on_same_synclog_returns_async_restore_response(self, task):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
@@ -170,15 +171,16 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
         self.assertFalse(invalidate.called)
@@ -254,14 +256,15 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         submit_form_locally(form, self.domain)
 
     @mock.patch.object(RestorePayloadPathCache, 'invalidate')
-    @mock.patch.object(RestorePayloadPathCache, 'get_value')
+    @mock.patch.object(RestorePayloadPathCache, 'exists')
     @mock.patch.object(RestoreResponse, 'as_file')
     @mock.patch('casexml.apps.phone.restore.get_async_restore_payload')
-    def test_clears_cache(self, task, response, get_value, invalidate):
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=False)
+    def test_clears_cache(self, task, response, exists_patch, invalidate):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        get_value.return_value = 'path-to-cached-restore'
+        exists_patch.return_value = True
         response.return_value = BytesIO(b'<restore_id>123</restore_id>')
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()

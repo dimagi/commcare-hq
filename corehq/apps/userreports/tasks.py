@@ -178,7 +178,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                     current_config.meta.build.finished = True
             current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.after_table_build()
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
@@ -239,7 +238,7 @@ def delete_data_source_task(domain, config_id):
     delete_data_source_shared(domain, config_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
     # Check for archive stubs
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -264,7 +263,7 @@ def reprocess_archive_stubs():
             xform.publish_archive_action_to_kafka(user_id=stub.user_id, archive=stub.archive)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
@@ -425,10 +424,7 @@ def _build_async_indicators(indicator_doc_ids):
                     adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
-                    message = e.message
-                    if isinstance(message, bytes):
-                        # TODO - figure out where these are coming from and use unicode message from the start
-                        message = repr(message)
+                    message = six.text_type(e)
                     notify_exception(None,
                         "Exception bulk saving async indicators:{}".format(message))
                 else:
@@ -460,7 +456,7 @@ def _build_async_indicators(indicator_doc_ids):
         )
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
 def async_indicators_metrics():
     now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
@@ -529,7 +525,7 @@ def _indicator_metrics(date_created=None):
 @task(serializer='pickle')
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    ascii_title = report_export.title.encode('ascii', 'replace')
+    ascii_title = report_export.title.encode('ascii', 'replace').decode('utf-8')
     filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 

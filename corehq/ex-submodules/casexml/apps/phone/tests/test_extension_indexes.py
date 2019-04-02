@@ -29,7 +29,7 @@ def get_test_file_json(filename):
 
 @nottest
 def get_test_name(test_name):
-    return str("test_%s" % re.sub("\s", "_", test_name))
+    return str("test_%s" % re.sub(r"\s", "_", test_name))
 
 
 @nottest

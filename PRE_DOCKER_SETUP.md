@@ -142,7 +142,6 @@ that you have a 32bit version of Python installed.
   files from $PYTHON_HOME/Lib/site-packages to $ENV_HOME/Lib/site-packages. Alternatively you could create your
   Virtualenv with the `--system-site-packages` option.
   + [gevent][gevent]
-  + [numpy][numpy]
   + [egenix-mx-base][mxbase]
   + [Pillow][pillow]
   + [psycopg2][psycopg2]
@@ -156,7 +155,6 @@ that you have a 32bit version of Python installed.
 
  [mingw]: http://www.mingw.org/wiki/Getting_Started
  [gevent]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#gevent
- [numpy]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
  [mxbase]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#mxbase
  [pillow]: https://github.com/python-imaging/Pillow
  [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg

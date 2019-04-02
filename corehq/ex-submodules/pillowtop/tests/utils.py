@@ -41,10 +41,7 @@ def get_doc_count(es, index, refresh_first=True):
 
 def get_index_mapping(es, index, doc_type):
     def _format_mapping_for_es_version(mapping):
-        if settings.ELASTICSEARCH_VERSION < 1.0:
-            return mapping[doc_type]
-        else:
-            return mapping[index]['mappings'][doc_type]
+        return mapping[index]['mappings'][doc_type]
     try:
         return _format_mapping_for_es_version(es.indices.get_mapping(index, doc_type))
     except TransportError:

@@ -60,6 +60,7 @@ def django_audit_save(sender, instance, created, raw=False, **kwargs):
     from auditcare.models import AuditEvent
     AuditEvent.audit_django_save(sender, instance, instance_json, usr)
 
+
 def couch_audit_save(instance, *args, **kwargs):
     instance.__orig_save(*args, **kwargs)
     instance_json = instance.to_json()

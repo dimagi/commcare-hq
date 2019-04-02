@@ -8,8 +8,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from six.moves import map
 
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
     month_formatter
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
@@ -151,24 +153,45 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
-            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
+            valid_visits = ut.valid_visits,
+            expected_visits = ut.expected_visits
         FROM (
             SELECT
-                awc_id,
-                month,
-                sum(pregnant) AS cases_ccs_pregnant,
-                sum(lactating) AS cases_ccs_lactating,
-                sum(pregnant_all) AS cases_ccs_pregnant_all,
-                sum(lactating_all) AS cases_ccs_lactating_all
+                agg_ccs_record.awc_id,
+                agg_ccs_record.month,
+                sum(agg_ccs_record.pregnant) AS cases_ccs_pregnant,
+                sum(agg_ccs_record.lactating) AS cases_ccs_lactating,
+                sum(agg_ccs_record.pregnant_all) AS cases_ccs_pregnant_all,
+                sum(agg_ccs_record.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
+                sum(agg_ccs_record.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record
-            WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month
+            LEFT OUTER JOIN (
+                    SELECT 
+                        ucr.awc_id,
+                        agg_cf.month,
+                        SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
+                        sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
+                        FROM  "{ccs_record_case_ucr}" ucr
+                        LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+                        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
+                            date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                            date_trunc('month', ucr.opened_on) <= %(start_date)s
+
+                        GROUP BY ucr.awc_id, agg_cf.month
+                    )  home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
+            WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5 
+            GROUP BY agg_ccs_record.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
+            ccs_record_case_ucr=self._ucr_tablename('static-ccs_record_cases'),
+            agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
-        }
+            }
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -466,6 +489,8 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('cases_ccs_pregnant',),
             ('cases_ccs_lactating',),
             ('cases_child_health',),
+            ('valid_visits',),
+            ('expected_visits',),
             ('usage_num_pse',),
             ('usage_num_gmp',),
             ('usage_num_thr',),
@@ -493,7 +518,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             ('usage_num_add_person',),
             ('usage_num_add_pregnancy',),
             ('is_launched', "'yes'"),
-            ('aggregation_level', str(aggregation_level)),
+            ('aggregation_level', six.text_type(aggregation_level)),
             ('num_launched_states', lambda col: _launched_col(col)),
             ('num_launched_districts', lambda col: _launched_col(col)),
             ('num_launched_blocks', lambda col: _launched_col(col)),
@@ -547,6 +572,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             if len(column_tuple) == 2:
                 agg_col = column_tuple[1]
                 if isinstance(agg_col, six.string_types):
+                    soft_assert_type_text(agg_col)
                     return column_tuple
                 elif callable(agg_col):
                     return (column, agg_col(column))
@@ -585,3 +611,67 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             group_by=", ".join(group_by),
             child_is_test=child_location
         )
+
+    def weekly_updates(self):
+        yield """
+        UPDATE  agg_awc SET
+            usage_num_hh_reg = ut.usage_num_hh_reg,
+            is_launched = ut.is_launched,
+            num_launched_states = ut.num_launched_awcs,
+            num_launched_districts = ut.num_launched_awcs,
+            num_launched_blocks = ut.num_launched_awcs,
+            num_launched_supervisors = ut.num_launched_awcs,
+            num_launched_awcs = ut.num_launched_awcs,
+            usage_awc_num_active = ut.usage_awc_num_active
+        FROM (
+        SELECT
+            awc_id,
+            month,
+            sum(add_household) AS usage_num_hh_reg,
+            CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched
+            CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs
+            CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
+            FROM "{usage_table}"
+            WHERE month >= %(start_date)s GROUP BY awc_id, month
+        ) ut
+        WHERE ut.month <= agg_awc.month AND ut.awc_id = agg_awc.awc_id AND agg_awc.aggregation_level=5
+        AND agg_awc.num_launched_awcs = 0 AND ut.num_launched_awcs != 0;
+        """.format(
+            usage_table=self._ucr_tablename('static-usage_forms')
+        ), {
+            'start_date': self.month_start_6m
+        }
+
+        yield """
+        UPDATE  agg_awc SET
+            usage_num_hh_reg = ut.sum_usage_num_hh_reg,
+            num_launched_states = ut.num_launched_supervisors,
+            num_launched_districts = ut.num_launched_supervisors,
+            num_launched_blocks = ut.num_launched_supervisors,
+            num_launched_supervisors = ut.num_launched_supervisors,
+            num_launched_awcs = ut.sum_num_launched_awcs,
+            usage_awc_num_active = ut.sum_usage_awc_num_active
+        FROM (
+            SELECT
+                state_id,
+                CASE WHEN GROUPING(district_id) = 1 THEN 'All' else district_id END,
+                CASE WHEN GROUPING(block_id) = 1 THEN 'All' else block_id END,
+                CASE WHEN GROUPING(supervisor_id) = 1 THEN 'All' else supervisor_id END,
+                month,
+                sum(usage_num_hh_reg) as sum_usage_num_hh_reg,
+                CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END as num_launched_supervisors,
+                sum(num_launched_awcs) as sum_num_launched_awcs,
+                sum(usage_awc_num_active) as sum_usage_awc_num_active
+            FROM agg_awc
+                WHERE aggregation_level=5 AND month>=%(start_date)
+            GROUP BY month, ROLLUP (state_id, district_id, block_id, supervisor_id)
+        ) ut
+        WHERE ut.month = agg_awc.month
+          AND ut.state_id = agg_awc.state_id
+          AND ut.district_id = agg_awc.district_id
+          AND ut.block_id = agg_awc.block_id
+          AND ut.supervisor_id = agg_awc.supervisor_id
+          AND agg_awc.aggregation_level<5
+        """, {
+            'start_date': self.month_start_6m
+        }

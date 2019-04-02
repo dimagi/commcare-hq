@@ -83,7 +83,7 @@ past_x_date = lambda tz, past_x_days: (datetime.datetime.now(tz) - datetime.time
 get_none_or_value = lambda _obj, _attr: getattr(_obj, _attr) if (hasattr(_obj, _attr)) else ''
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute=1, hour="*/6"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )

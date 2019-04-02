@@ -40,8 +40,8 @@ from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
-    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
-    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE
+    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, \
+    BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF, AWW_INCENTIVE_REPORT, INDIA_TIMEZONE, LS_REPORT_EXPORT
 from custom.icds_reports.const import AggregationLevels
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -99,11 +99,13 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
+from custom.icds_reports.reports.service_delivery_dashboard import get_service_delivery_data
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports, prepare_excel_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
-    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months
+    current_month_stunting_column, current_month_wasting_column, get_age_filter_in_months, \
+    get_datatables_ordering_info
 from dimagi.utils.dates import force_to_date, add_months
 from . import const
 from .exceptions import TableauTokenException
@@ -245,12 +247,14 @@ class DashboardView(TemplateView):
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
+@location_safe
 class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
 
+@location_safe
 class BaseReportView(View):
     def get_settings(self, request, *args, **kwargs):
         step = kwargs.get('step')
@@ -275,6 +279,7 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -300,7 +305,7 @@ class ProgramSummaryView(BaseReportView):
                 domain,
                 tuple(now.date().timetuple())[:3],
                 config,
-                include_test
+                include_test,
             )
         elif step == 'demographics':
             data = get_demographics_data(
@@ -315,6 +320,7 @@ class ProgramSummaryView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LadySupervisorView(BaseReportView):
 
@@ -335,6 +341,36 @@ class LadySupervisorView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class ServiceDeliveryDashboardView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+        age_sdd = request.GET.get('ageSDD', '0_3')
+
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
+        reversed_order = True if order_dir == 'desc' else False
+
+        data = get_service_delivery_data(
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            age_sdd,
+        )
+        return JsonResponse(data=data)
+
+
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfUndernutritionView(BaseReportView):
 
@@ -616,13 +652,11 @@ class AwcReportsView(BaseReportView):
             if age:
                 filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
                 elif order_by_name_column == 'current_month_nutrition_status':
@@ -651,12 +685,10 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'pregnant':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_pregnant(
@@ -673,12 +705,10 @@ class AwcReportsView(BaseReportView):
             )
         elif step == 'lactating':
             if 'awc_id' in config:
-                start = int(request.GET.get('start', 0))
-                length = int(request.GET.get('length', 10))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
-                order_by_number_column = request.GET.get('order[0][column]')
-                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
-                order_dir = request.GET.get('order[0][dir]', 'asc')
+                start, length, order_by_number_column, order_by_name_column, order_dir = \
+                    get_datatables_ordering_info(request)
+                order_by_name_column = order_by_name_column or 'person_name'
                 reversed_order = True if order_dir == 'desc' else False
 
                 data = get_awc_report_lactating(
@@ -691,6 +721,7 @@ class AwcReportsView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
@@ -757,7 +788,9 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             config = beneficiary_config
         if indicator == AWW_INCENTIVE_REPORT:
-            if not sql_location or sql_location.location_type_name != LocationTypes.BLOCK:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK
+            ]:
                 return HttpResponseBadRequest()
             today = datetime.now(INDIA_TIMEZONE)
             month_offset = 2 if today.day < 15 else 1
@@ -765,7 +798,8 @@ class ExportIndicatorView(View):
             if year > latest_year or month > latest_month and year == latest_year:
                 return HttpResponseBadRequest()
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
-                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT):
+                         AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, AWW_INCENTIVE_REPORT,
+                         LS_REPORT_EXPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -780,6 +814,7 @@ class ExportIndicatorView(View):
             return JsonResponse(data={'task_id': task_id})
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -810,6 +845,7 @@ class FactSheetsView(BaseReportView):
         return JsonResponse(data=data)
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfSevereView(BaseReportView):
 
@@ -856,6 +892,7 @@ class PrevalenceOfSevereView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfStuntingView(BaseReportView):
 
@@ -905,6 +942,7 @@ class PrevalenceOfStuntingView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class NewbornsWithLowBirthWeightView(BaseReportView):
 
@@ -943,6 +981,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EarlyInitiationBreastfeeding(BaseReportView):
 
@@ -981,6 +1020,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1018,6 +1058,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1055,6 +1096,7 @@ class ChildrenInitiatedView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1092,6 +1134,7 @@ class InstitutionalDeliveriesView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1128,6 +1171,7 @@ class ImmunizationCoverageView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
@@ -1166,6 +1210,7 @@ class AWCDailyStatusView(View):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1198,6 +1243,7 @@ class AWCsCoveredView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1230,6 +1276,7 @@ class RegisteredHouseholdView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1272,6 +1319,7 @@ class EnrolledChildrenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1305,6 +1353,7 @@ class EnrolledWomenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1337,6 +1386,7 @@ class LactatingEnrolledWomenView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1369,6 +1419,7 @@ class AdolescentGirlsView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1400,6 +1451,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1432,6 +1484,7 @@ class CleanWaterView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1464,6 +1517,7 @@ class FunctionalToiletView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1496,6 +1550,7 @@ class MedicineKitView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1528,6 +1583,7 @@ class InfantsWeightScaleView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
@@ -1560,6 +1616,7 @@ class AdultWeightScaleView(BaseReportView):
         })
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
@@ -1603,6 +1660,7 @@ class ICDSBugReportView(BugReportView):
         return [ICDS_SUPPORT_EMAIL]
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadExportReport(View):
     def get(self, request, *args, **kwargs):
@@ -1619,6 +1677,7 @@ class DownloadExportReport(View):
         return response
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
@@ -1635,18 +1694,20 @@ class DownloadPDFReport(View):
             return response
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CheckExportReportStatus(View):
     def get(self, request, *args, **kwargs):
         task_id = self.request.GET.get('task_id', None)
-        res = AsyncResult(task_id)
-        status = res.ready()
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
 
         if status:
             return JsonResponse(
                 {
                     'task_ready': status,
-                    'task_result': res.result
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
                 }
             )
         return JsonResponse({'task_ready': status})
@@ -1672,6 +1733,7 @@ class ICDSImagesAccessorAPI(View):
         )
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class InactiveAWW(View):
     def get(self, request, *args, **kwargs):
@@ -1687,6 +1749,7 @@ class InactiveAWW(View):
             raise Http404
 
 
+@location_safe
 class DishaAPIView(View):
 
     def message(self, message_name):
@@ -1727,6 +1790,7 @@ class DishaAPIView(View):
         return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
 
 
+@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
@@ -1770,3 +1834,77 @@ class CasDataExport(View):
             return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
         except NotFound:
             raise Http404
+
+
+@location_safe
+class CasDataExportAPIView(View):
+
+    def message(self, message_name):
+        state_names = ", ".join(self.valid_state_names)
+        types = ", ".join(self.valid_types)
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a month that's older than a month and 5 days",
+            "invalid_state": "Please specify one of {} as state_name".format(state_names),
+            "invalid_type": "Please specify one of {} as data_type".format(types),
+            "not_available": "The file you have requested is no longer available",
+            "no_access": "You do not have access to this state"
+        }
+        return {"message": error_messages[message_name]}
+
+    @method_decorator([api_auth])
+    def get(self, request, *args, **kwargs):
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 15 else today
+        if query_month > current_month:
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+
+        state_name = self.request.GET.get('state_name')
+        if state_name not in self.valid_state_names:
+            return JsonResponse(self.message('invalid_state'), status=400)
+
+        user_states = [loc.name
+                       for loc in self.request.couch_user.get_sql_locations(self.request.domain)
+                       if loc.location_type__name == 'state']
+        if state_name not in user_states and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
+            return JsonResponse(self.message('no_access'), status=403)
+
+        state_id = SQLLocation.objects.get(location_type__name='state', name=state_name, domain=self.request.domain).location_id
+
+        data_type = request.GET.get('type')
+        if data_type not in self.valid_types:
+            return JsonResponse(self.message('invalid_type'), status=400)
+        type_code = self.get_type_code(data_type)
+
+        sync, blob_id = get_cas_data_blob_file(type_code, state_id, selected_date)
+
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+        except NotFound:
+            return JsonResponse(self.message('not_available'), status=400)
+
+    @property
+    @quickcache([])
+    def valid_state_names(self):
+        return list(AwcLocation.objects.filter(aggregation_level=AggregationLevels.STATE, state_is_test=0).values_list('state_name', flat=True))
+
+    @property
+    def valid_types(self):
+        return ('woman', 'child', 'awc')
+
+    def get_type_code(self, data_type):
+        type_map = {
+            "child": 1,
+            "woman": 2,
+            "awc": 3
+        }
+        return type_map[data_type]

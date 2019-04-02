@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import deepcopy
+from collections import namedtuple, defaultdict
 import datetime
 from pydoc import html
 from django.http import Http404
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.form_processor.utils.xform import get_node
@@ -120,17 +122,18 @@ class CaseFormMeta(JsonObject):
 class CaseDetailMeta(JsonObject):
     module_id = StringProperty()
     header = DictProperty()
-    format = StringProperty()
     error = StringProperty()
 
 
 class CaseProperty(JsonObject):
+    case_type = StringProperty()
     name = StringProperty()
     forms = ListProperty(CaseFormMeta)
     short_details = ListProperty(CaseDetailMeta)
     long_details = ListProperty(CaseDetailMeta)
     has_errors = BooleanProperty()
     description = StringProperty()
+    is_detail_calculation = BooleanProperty()
 
     def get_form(self, form_id):
         try:
@@ -154,11 +157,12 @@ class CaseProperty(JsonObject):
             condition=(condition if condition and condition.type == 'if' else None)
         ))
 
-    def add_detail(self, type_, module_id, header, format, error=None):
+    def add_detail(self, type_, module_id, header, is_detail_calculation=False, error=None):
+        self.is_detail_calculation = is_detail_calculation
         {
             "short": self.short_details,
             "long": self.long_details,
-        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, format=format, error=error))
+        }[type_].append(CaseDetailMeta(module_id=module_id, header=header, error=error))
 
 
 class CaseTypeMeta(JsonObject):
@@ -169,6 +173,10 @@ class CaseTypeMeta(JsonObject):
     closed_by = DictProperty(ConditionList)  # form_ids -> [FormActionCondition, ...]
     error = StringProperty()
     has_errors = BooleanProperty()
+
+    # store where this case type gets loaded so that we can look it up more easily later
+    load_properties = DictProperty()  # {"form_id": {"question_path": [CaseProperty, ...]}}
+    save_properties = DictProperty()  # {"form_id": {"question_path": [CaseProperty, ...]}}
 
     @property
     def child_types(self):
@@ -182,7 +190,7 @@ class CaseTypeMeta(JsonObject):
         try:
             prop = next(prop for prop in self.properties if prop.name == name)
         except StopIteration:
-            prop = CaseProperty(name=name)
+            prop = CaseProperty(name=name, case_type=self.name)
             self.properties.append(prop)
         return prop
 
@@ -200,10 +208,58 @@ class CaseTypeMeta(JsonObject):
             closers.conditions.append(condition)
         self.closed_by[form_id] = closers
 
+    def add_save(self, form_id, question_path, property_):
+        if self.get_save_properties(form_id, question_path):
+            self.save_properties[form_id][question_path].append(property_)
+        else:
+            try:
+                self.save_properties[form_id].update({question_path: [property_]})
+            except KeyError:
+                self.save_properties[form_id] = {question_path: [property_]}
+
+    def add_load(self, form_id, question_path, property_):
+        if self.get_load_properties(form_id, question_path):
+            self.load_properties[form_id][question_path].append(property_)
+        else:
+            try:
+                self.load_properties[form_id].update({question_path: [property_]})
+            except KeyError:
+                self.load_properties[form_id] = {question_path: [property_]}
+
+    def get_load_properties(self, form_id, path):
+        """returns a list of properties which load into a particular form question
+        """
+        return self.load_properties.get(form_id, {}).get(path, [])
+
+    def get_save_properties(self, form_id, path):
+        """returns a list of properties which load into a particular form question
+        """
+        return self.save_properties.get(form_id, {}).get(path, [])
+
+
+LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
+
 
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
-    type_hierarchy = DictProperty()  # case_type -> {child_case -> {}}
+
+    def get_load_properties(self, form_id, path):
+        """gets all case types with a list of properties which load into a form question
+        """
+        return [
+            LoadSaveProperty(case_type.name, prop)
+            for case_type in self.case_types
+            for prop in case_type.get_load_properties(form_id, path)
+        ]
+
+    def get_save_properties(self, form_id, path):
+        """gets all case types with a list of properties which are saved from a form question
+        """
+        return [
+            LoadSaveProperty(case_type.name, prop)
+            for case_type in self.case_types
+            for prop in case_type.get_save_properties(form_id, path)
+        ]
 
     def get_property_list(self, root_case_type, name):
         type_ = self.get_type(root_case_type)
@@ -233,6 +289,7 @@ class AppCaseMetadata(JsonObject):
             props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
         for prop in props:
+            self.get_type(prop.case_type).add_load(form_id, question.value, prop.name)
             prop.add_load(form_id, question)
 
     def add_property_save(self, root_case_type, name, form_id, question, condition=None):
@@ -242,6 +299,7 @@ class AppCaseMetadata(JsonObject):
             props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
         for prop in props:
+            self.get_type(prop.case_type).add_save(form_id, question.value, prop.name)
             prop.add_save(form_id, question, condition)
 
     def add_property_error(self, case_type, case_property, form_id, message):
@@ -262,8 +320,6 @@ class AppCaseMetadata(JsonObject):
             root_case_type = USERCASE_TYPE
             field = field.split('user/')[1]
 
-        if column.useXpathExpression:
-            return column.field
         try:
             props = self.get_property_list(root_case_type, field)
         except CaseMetaException as e:
@@ -272,7 +328,7 @@ class AppCaseMetadata(JsonObject):
         else:
             error = None
         for prop in props:
-            prop.add_detail(detail_type, module_id, column.header, column.format, error)
+            prop.add_detail(detail_type, module_id, column.header, column.useXpathExpression, error)
 
     def get_error_property(self, case_type, name):
         type_ = self.get_type(case_type)
@@ -653,3 +709,116 @@ def get_data_cleaning_data(form_data, instance):
         })
 
     return (question_response_map, ordered_question_values)
+
+
+class _AppSummaryFormDataGenerator(object):
+    def __init__(self, domain, app, include_shadow_forms=True):
+        self.domain = domain
+        self.app = app
+        self.include_shadow_forms = include_shadow_forms
+
+        self.errors = []
+
+        self._seen_save_to_case = defaultdict(list)
+        try:
+            self._case_meta = self.app.get_case_metadata()
+        except XFormException:
+            self._case_meta = AppCaseMetadata()
+
+    def generate(self):
+        return [self._compile_module(module) for module in self.app.get_modules()], self.errors
+
+    def _compile_module(self, module):
+        return {
+            'id': module.unique_id,
+            'name': module.name,
+            'short_comment': module.short_comment,
+            'module_type': module.module_type,
+            'is_surveys': module.is_surveys,
+            'module_filter': module.module_filter,
+            'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
+        }
+
+    def _get_pertinent_forms(self, module):
+        from corehq.apps.app_manager.models import ShadowForm
+        if not self.include_shadow_forms:
+            return [form for form in module.get_forms() if not isinstance(form, ShadowForm)]
+        return module.get_forms()
+
+    def _compile_form(self, form):
+        form_meta = {
+            'id': form.unique_id,
+            'name': form.name,
+            'short_comment': form.short_comment,
+            'action_type': form.get_action_type(),
+            'form_filter': form.form_filter,
+        }
+        try:
+            form_meta['questions'] = [
+                question
+                for raw_question in form.get_questions(self.app.langs, include_triggers=True,
+                                                       include_groups=True, include_translations=True)
+                for question in self._get_question(form.unique_id, raw_question)
+            ]
+        except XFormException as exception:
+            form_meta['questions'] = []
+            form_meta['error'] = {
+                'details': six.text_type(exception),
+            }
+            self.errors.append(form_meta)
+        return form_meta
+
+    def _get_question(self, form_unique_id, question):
+        if self._needs_save_to_case_root_node(question, form_unique_id):
+            yield self._save_to_case_root_node(form_unique_id, question)
+        yield self._serialized_question(form_unique_id, question)
+
+    def _needs_save_to_case_root_node(self, question, form_unique_id):
+        return (
+            self._is_save_to_case(question)
+            and self._save_to_case_root_path(question) not in self._seen_save_to_case[form_unique_id]
+        )
+
+    @staticmethod
+    def _is_save_to_case(question):
+        return '/case/' in question['value']
+
+    @staticmethod
+    def _save_to_case_root_path(question):
+        return question['value'].split('/case/')[0]
+
+    def _save_to_case_root_node(self, form_unique_id, question):
+        """Add an extra node with the root path of the save to case to attach case properties to
+        """
+        question_path = self._save_to_case_root_path(question)
+        response = FormQuestionResponse({
+            "label": question_path,
+            "tag": question_path,
+            "value": question_path,
+            "repeat": question['repeat'],
+            "group": question['group'],
+            "type": 'SaveToCase',
+            "hashtagValue": question['hashtagValue'],
+            "relevant": None,
+            "required": False,
+            "comment": None,
+            "constraint": None,
+        }).to_json()
+        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question_path)
+        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question_path)
+        self._seen_save_to_case[form_unique_id].append(question_path)
+        return response
+
+    def _serialized_question(self, form_unique_id, question):
+        response = FormQuestionResponse(question).to_json()
+        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question['value'])
+        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question['value'])
+        if self._is_save_to_case(question):
+            response['type'] = 'SaveToCase'
+        return response
+
+
+def get_app_summary_formdata(domain, app, include_shadow_forms=True):
+    """Returns formdata formatted for the app summary
+    """
+    return _AppSummaryFormDataGenerator(domain, app, include_shadow_forms).generate()

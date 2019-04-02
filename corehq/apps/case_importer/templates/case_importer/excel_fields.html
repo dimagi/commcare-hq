@@ -28,23 +28,16 @@
                     <th class="span1"></th>
                     <th>{% trans "Excel Field" %}</th>
                     <th></th>
-                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
+                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-default btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
                     <th></th>
                 </thead>
                 <tbody id="excel-field-rows" class="ko-template">
                     {% include "case_importer/partials/excel_field_rows.html" %}
                 </tbody>
             </table>
-            <div class="form-group">
-                <label class="control-label col-sm-3">
-                    {% trans "Modify" %}
-                </label>
-                <div class="col-sm-6">
-                    <a id="js-add-mapping" class="btn btn-default" href="#">
-                        <i class="fa fa-plus"></i> {% trans "Add another matching" %}
-                    </a>
-                </div>
-            </div>
+            <a id="js-add-mapping" class="btn btn-default" href="#">
+                <i class="fa fa-plus"></i> {% trans "Add another matching" %}
+            </a>
         </fieldset>
 
         <div class="form-actions">

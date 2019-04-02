@@ -7,7 +7,7 @@ from datetime import date
 
 from django.db import migrations
 
-from corehq.sql_db.operations import HqRunPython, noop_migration_fn
+
 
 
 def assert_date_delay_invoicing_does_not_apply(apps, schema_editor):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(assert_date_delay_invoicing_does_not_apply, reverse_code=noop_migration_fn),
+        migrations.RunPython(assert_date_delay_invoicing_does_not_apply, reverse_code=migrations.RunPython.noop),
         migrations.RemoveField(
             model_name='subscription',
             name='date_delay_invoicing',

@@ -11,7 +11,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-    @periodic_task(serializer='pickle', run_every=crontab(minute=0, hour='22'))
+    @periodic_task(run_every=crontab(minute=0, hour='22'))
     def delete_old_images():
         start = datetime.utcnow()
         max_age = start - timedelta(days=90)

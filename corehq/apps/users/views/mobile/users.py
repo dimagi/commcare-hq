@@ -273,7 +273,7 @@ class EditCommCareUserView(BaseEditUserView):
     def post(self, request, *args, **kwargs):
         if self.request.POST['form_type'] == "add-phonenumber":
             phone_number = self.request.POST['phone_number']
-            phone_number = re.sub('\s', '', phone_number)
+            phone_number = re.sub(r'\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save(spawn_task=True)
@@ -932,11 +932,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
                 return HttpResponseBadRequest("Unrecognized format")
         except JSONReaderError as e:
             messages.error(request,
-                           'Your upload was unsuccessful. %s' % e.message)
+                           'Your upload was unsuccessful. %s' % six.text_type(e))
             return self.get(request, *args, **kwargs)
         except HeaderValueError as e:
             return HttpResponseBadRequest("Upload encountered a data type error: %s"
-                                          % e.message)
+                                          % six.text_type(e))
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')
@@ -954,7 +954,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         # convert to list here because iterator destroys the row once it has
@@ -975,13 +975,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         try:
             check_existing_usernames(self.user_specs, self.domain)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         try:
             check_duplicate_usernames(self.user_specs)
         except UserUploadError as e:
-            messages.error(request, _(e.message))
+            messages.error(request, _(six.text_type(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)

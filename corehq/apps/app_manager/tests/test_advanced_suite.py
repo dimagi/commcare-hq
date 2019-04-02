@@ -231,6 +231,26 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_session'), suite, './entry[2]/session')
         self.assertXmlPartialEqual(self.get_xml('load_from_fixture_instance'), suite, './entry[2]/instance')
 
+    def test_advanced_suite_load_from_fixture_auto_select(self):
+        nodeset = "instance('item-list:table_tag')/calendar/year/month/day[@date > 735992 and @date < 736000]"
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.get_module(1).get_form(0).actions.load_update_cases.append(LoadUpdateAction(
+            case_type="clinic",
+            load_case_from_fixture=LoadCaseFromFixture(
+                fixture_nodeset=nodeset,
+                fixture_tag="selected_date",
+                fixture_variable="./@date",
+                auto_select_fixture=True,
+                case_property="adherence_event_date",
+                auto_select=True,
+            )
+        ))
+        suite = app.create_suite()
+        self.assertXmlPartialEqual(
+            self.get_xml('load_from_fixture_autoselect_session'),
+            suite, './entry[2]/session')
+        self.assertXmlPartialEqual(self.get_xml('load_from_fixture_instance'), suite, './entry[2]/instance')
+
     def test_tiered_select_with_advanced_module_as_parent(self):
         app = Application.new_app('domain', "Untitled Application")
 

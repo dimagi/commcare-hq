@@ -17,8 +17,10 @@
       <script src="{% static "jsdiff/diff.js" %}"></script>
       <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
       <script src="{% static 'app_manager/js/releases/update_prompt.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script>
       <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+      <script src="{% static 'app_manager/js/settings/translations.js' %}"></script>
       <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
       <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
       <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -50,6 +52,7 @@
         rows: 1,
         saveValueName: 'name',
         nodeName: 'input',
+        disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
 
@@ -60,6 +63,7 @@
         placeholder: '{% trans "Enter app description here"|escapejs %}',
         saveValueName: 'comment',
         cols: 50,
+        disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
   </div>
 {% endblock %}

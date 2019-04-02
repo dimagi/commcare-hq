@@ -1,0 +1,6 @@
+domain,state_id,district_id,block_id,supervisor_id,awc_id,taluka_id,phc_id,sc_id,village_id,person_case_id,ccs_record_case_id,opened_on,closed_on,hrp,child_birth_location,edd,add,household_case_id
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,pregnant_woman,add_before_opened_on,2018-07-14,,,home,2019-02-01,2017-01-23,household_case_1
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,institutional_delivery,institutional_delivery_ccs_record,2018-10-14,,,hospital,2019-01-21,2019-02-04,household_case_1
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,non_institutional_delivery,non_institutional_delivery_ccs_record,2018-07-14,,,home,2019-02-01,2019-01-23,household_case_1
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_1,village_1,pregnant_woman,pregnant_woman_ccs_record_1,2018-08-01,,,,2019-05-01,,household_case_1
+reach-test,state_1,district_1,block_1,supervisor_1,awc_1,taluka_1,phc_1,sc_2,village_2,high_risk_pregnant_woman,high_risk_pregnant_woman_ccs_record,2018-09-14,,yes,,2019-05-01,,household_case_3

@@ -7,6 +7,7 @@ hqDefine('app_manager/js/summary/case_summary',[
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
+    'hqwebapp/js/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
     var caseTypeModel = function (caseType) {
@@ -39,31 +40,35 @@ hqDefine('app_manager/js/summary/case_summary',[
         return self;
     };
 
-    var caseSummaryModel = function (options) {
-        var self = models.contentModel(_.extend(options, {
+    var caseSummaryControlModel = function (viewModels) {
+        var self = {};
+        _.extend(self, models.controlModel({
             query_label: gettext("Filter properties"),
             onQuery: function (query) {
-                _.each(self.caseTypes, function (caseType) {
-                    var hasVisible = false;
-                    _.each(caseType.properties, function (property) {
-                        var isVisible = !query || property.name.indexOf(query) !== -1;
-                        property.matchesQuery(isVisible);
-                        hasVisible = hasVisible || isVisible;
+                query = query.trim().toLowerCase();
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.caseTypes, function (caseType) {
+                        var hasVisible = false;
+                        _.each(caseType.properties, function (property) {
+                            var isVisible = !query || property.name.indexOf(query) !== -1;
+                            property.matchesQuery(isVisible);
+                            if (!viewModel.showCalculations() && (query && isVisible && property.is_detail_calculation)) {
+                                viewModel.showCalculations(true);
+                            }
+                            hasVisible = hasVisible || isVisible;
+                        });
+                        caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
                     });
-                    caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
                 });
             },
             onSelectMenuItem: function (selectedId) {
-                _.each(self.caseTypes, function (caseType) {
-                    caseType.isSelected(!selectedId || selectedId === caseType.name);
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.caseTypes, function (caseType) {
+                        caseType.isSelected(!selectedId || selectedId === caseType.name);
+                    });
                 });
             },
         }));
-
-        assertProperties.assertRequired(options, ['case_types']);
-        self.caseTypes = _.map(options.case_types, function (caseType) {
-            return caseTypeModel(caseType);
-        });
 
         self.showConditions = ko.observable(false);
         self.toggleConditions = function () {
@@ -74,6 +79,17 @@ hqDefine('app_manager/js/summary/case_summary',[
         self.toggleCalculations = function () {
             self.showCalculations(!self.showCalculations());
         };
+
+        return self;
+    };
+
+    var caseSummaryModel = function (options) {
+        var self = models.contentModel(options);
+
+        assertProperties.assertRequired(options, ['case_types']);
+        self.caseTypes = _.map(options.case_types, function (caseType) {
+            return caseTypeModel(caseType);
+        });
 
         return self;
     };
@@ -102,6 +118,10 @@ hqDefine('app_manager/js/summary/case_summary',[
             read_only: initialPageData.get("read_only"),
         });
 
-        models.initSummary(caseSummaryMenu, caseSummaryContent);
+        var caseSummaryController = caseSummaryControlModel([caseSummaryContent]);
+
+        $("#case-summary-header").koApplyBindings(caseSummaryController);
+        models.initMenu([caseSummaryContent], caseSummaryMenu);
+        models.initSummary(caseSummaryContent, caseSummaryController, "#case-summary");
     });
 });

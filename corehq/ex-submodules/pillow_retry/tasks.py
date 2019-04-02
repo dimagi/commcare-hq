@@ -10,7 +10,7 @@ from corehq.util.datadog.gauges import datadog_gauge
 from pillow_retry.models import PillowError
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
     run_every=crontab(minute="*/15"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )

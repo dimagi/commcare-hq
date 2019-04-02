@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% requirejs_main 'reports/v2/js/views/case_search' %}
+{% requirejs_main 'reports/v2/js/views/explore_case_data' %}
 
 {% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
 
@@ -12,6 +12,10 @@
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
+  <link type="text/css"
+        rel="stylesheet"
+        media="screen"
+        href="{% static "At.js/dist/css/jquery.atwho.min.css" %}" />
 {% endblock %}
 
 {% block title %}{% trans "Case Search" %}{% endblock %}
@@ -22,11 +26,13 @@ breadcrumbs todo
 
 
 {% block page_content %}
-  {% registerurl "endpoint_filter" domain report.slug '---' %}
+  {% registerurl "endpoint_options" domain report.slug '---' %}
   {% registerurl "endpoint_data" domain report.slug '---' %}
 
   {% initial_page_data "report.endpoints" report.endpoints %}
   {% initial_page_data "report.slug" report.slug %}
+  {% initial_page_data "report.columns" report.columns %}
+
 <div id="case_search--model">
 
   <div id="case_search--filters">
@@ -40,10 +46,104 @@ breadcrumbs todo
     </div>
   </div>
 
-  <table id="report-datatable" class="table"></table>
+  <div id="report-datagrid">
+    <table class="datagrid-headers">
+      <thead>
+        <tr>
+          <!-- ko foreach: columns -->
+          <th data-bind="style: { width: width() + 'px' }">
+            <span data-bind="text: title"></span>
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: $root.editColumnController.set">
+              {% trans "Edit" %}
+            </button>
+          </th>
+          <!-- /ko -->
+          <th>
+            <button class="btn btn-default"
+                    type="button"
+                    data-bind="click: $root.editColumnController.setNew">
+              {% trans "Add Column" %}
+            </button>
+          </th>
+        </tr>
+      </thead>
+    </table>
+    <table class="datagrid-rows">
+      <tbody data-bind="foreach: { data: data.rows, as: 'row' }">
+        <tr>
+          <!-- ko foreach: { data: $root.columns, as: 'column' } -->
+            <td data-bind="style: { width: column.width() + 'px' }">
+              <span data-bind="text: row[column.slug()]"></span>
+            </td>
+          <!-- /ko -->
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="modal fade"
+         data-bind="modal: editColumnController.column"
+         role="dialog">
+      <div data-bind="with: editColumnController.column"
+           class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">{% trans "Close" %}</span>
+            </button>
+            <h4 class="modal-title" data-bind="visible: $root.editColumnController.isNew">
+              {% trans "Add Column" %}
+            </h4>
+            <h4 class="modal-title" data-bind="visible: !$root.editColumnController.isNew()">
+              {% trans "Edit Column" %}
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div class="form">
+              <div class="form-group">
+                <input type="text"
+                       class="form-control"
+                       placeholder="{% trans_html_attr "Title" %}"
+                       data-bind="textInput: title" />
+              </div>
+              <div class="form-group">
+                <input type="text"
+                       class="form-control"
+                       data-bind="textInput: slug,
+                                  slugAutocomplete: $root.editColumnController.slugOptions" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button"
+                    data-bind="visible: !$root.editColumnController.isNew(),
+                               click: $root.deleteColumn"
+                    class="btn btn-danger pull-left">
+              <i class="fa fa-trash"></i>
+              {% trans "Delete" %}
+            </button>
+            <button type="button"
+                    class="btn btn-default"
+                    data-dismiss="modal">{% trans "Cancel" %}</button>
+            <button class="btn btn-primary"
+                    data-bind="click: $root.updateColumn,
+                               disable: $root.editColumnController.isSaveDisabled">
+              <span data-bind="visible: $root.editColumnController.isNew">
+                {% trans "Add" %}
+              </span>
+              <span data-bind="visible:!$root.editColumnController.isNew()">
+                {% trans "Update" %}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 </div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
 {% endblock %}

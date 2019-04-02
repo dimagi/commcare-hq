@@ -53,8 +53,6 @@ domain_specific = [
     url(r'^phone/', include('corehq.apps.mobile_auth.urls')),
     url(r'^sms/', include('corehq.apps.sms.urls')),
     url(r'^reminders/', include('corehq.apps.reminders.urls')),
-    url(r'^indicators/mvp/', include('mvp.urls')),
-    url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
@@ -157,20 +155,12 @@ if settings.ENABLE_PRELOGIN_SITE:
 
 if settings.DEBUG:
     try:
-        from debug_toolbar import urls as debug_toolbar_urls
+        import debug_toolbar
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass
-
-    if 'package_monitor' in settings.INSTALLED_APPS:
-        try:
-            urlpatterns += [
-                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
-            ]
-        except ImportError:
-            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

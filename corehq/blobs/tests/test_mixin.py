@@ -800,7 +800,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
             self.assertTrue(key)
         self.assertFalse(obj.saved)
         with self.get_blob(key).open() as fh:
-            self.assertEqual(fh.read(), "data")
+            self.assertEqual(fh.read(), b"data")
 
     def test_bulk_atomic_blobs_with_deferred_deleted_blobs(self):
         obj = self.make_doc(DeferredPutBlobDocument)
@@ -839,7 +839,7 @@ class TestBulkAtomicBlobs(BaseTestCase):
         self.assertEqual(self.obj.fetch_attachment("name"), "data")
         key = deferred.blobs["att"].key
         with self.get_blob(key).open() as fh:
-            self.assertEqual(fh.read(), "deferred")
+            self.assertEqual(fh.read(), b"deferred")
 
 
 _abc_digest = mod.sha1("abc".encode('utf-8')).hexdigest()

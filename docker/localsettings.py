@@ -16,9 +16,9 @@ DATABASES = {
             'SERIALIZE': False,
         },
     },
-    'icds-ucr': {
+    'aaa-data': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcarehq',
+        'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
@@ -95,6 +95,51 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
+# CitusDB setup is done by Django migrations in the testapps.citus_* apps. These
+# migrations are only run during unit tests.
+DATABASES.update({
+    'icds-ucr': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+        'NAME': 'commcare_ucr_citus',
+        'USER': 'postgres',
+        'PASSWORD': '',
+        'HOST': 'citus_master',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+            'DEPENDENCIES': ['citus-ucr-worker1', 'citus-ucr-worker2'],
+        },
+        'ROLE': 'citus_master'
+    },
+    'citus-ucr-worker1': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+        'NAME': 'commcare_ucr_citus',
+        'USER': 'postgres',
+        'PASSWORD': '',
+        'HOST': 'citus_worker1',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+        'ROLE': 'citus_worker'
+    },
+    'citus-ucr-worker2': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+        'NAME': 'commcare_ucr_citus',
+        'USER': 'postgres',
+        'PASSWORD': '',
+        'HOST': 'citus_worker2',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+        'ROLE': 'citus_worker'
+    },
+})
+
 ####### Couch Config ######
 COUCH_DATABASES = {
     'default': {
@@ -112,7 +157,9 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
-    'OPTIONS': {},
+    'OPTIONS': {
+        'PICKLE_VERSION': 2,  # After PY3 migration: remove
+    },
 }
 
 CACHES = {
@@ -147,7 +194,7 @@ ALLOWED_HOSTS = ['*']
 
 # faster compressor that doesn't do source maps
 COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-CELERY_ALWAYS_EAGER = True
+CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 SHARED_DRIVE_ROOT = '/sharedfiles'
@@ -225,8 +272,6 @@ UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
 
-ELASTICSEARCH_VERSION = 1.7
-
 CACHE_REPORTS = True
 
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
@@ -246,6 +291,4 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = (
-    'kombu.transport.django',  # required for celery
-)
+LOCAL_APPS = ()

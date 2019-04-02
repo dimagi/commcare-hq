@@ -14,7 +14,7 @@ from corehq.apps.callcenter.utils import get_call_center_domains, is_midnight_fo
 logger = get_task_logger(__name__)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(minute='*/15'), queue='background_queue')
+@periodic_task(run_every=crontab(minute='*/15'), queue='background_queue')
 def calculate_indicators():
     """
     Although this task runs every 15 minutes it only re-calculates the

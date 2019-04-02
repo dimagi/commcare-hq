@@ -12,7 +12,7 @@ from django.conf import settings
 couch_reindex_schedule = deserialize_run_every_setting(settings.COUCH_REINDEX_SCHEDULE)
 
 
-@periodic_task(serializer='pickle', run_every=couch_reindex_schedule, queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=couch_reindex_schedule, queue=settings.CELERY_PERIODIC_QUEUE)
 def run_continuous_indexing_task():
     preindex_couch_views.delay()
 

@@ -5,11 +5,13 @@ from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
 
 from corehq.apps.es import AppES
+from corehq.apps.es.aggregations import TermsAggregation, NestedAggregation
 from dimagi.utils.couch.database import iter_docs
 import six
 from six.moves import map
@@ -266,6 +268,7 @@ def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
     if isinstance(app_ids, six.string_types):
+        soft_assert_type_text(app_ids)
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]
@@ -480,12 +483,14 @@ def get_case_types_from_apps(domain):
     Get the case types of modules in applications in the domain.
     :returns: A set of case_types
     """
+    case_types_agg = NestedAggregation('modules', 'modules').aggregation(
+        TermsAggregation('case_types', 'modules.case_type.exact'))
     q = (AppES()
          .domain(domain)
          .is_build(False)
          .size(0)
-         .terms_aggregation('modules.case_type.exact', 'case_types'))
-    return set(q.run().aggregations.case_types.keys) - {''}
+         .aggregation(case_types_agg))
+    return set(q.run().aggregations.modules.case_types.keys) - {''}
 
 
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division
 from __future__ import unicode_literals
 import logging
+import six
 from collections import namedtuple
 from django.conf import settings
 from django.db import IntegrityError
@@ -72,9 +73,13 @@ def get_task_progress(task):
 
 
 def set_task_progress(task, current, total):
+    update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+
+
+def update_task_state(task, state, meta):
     try:
         if task:
-            task.update_state(state='PROGRESS', meta={'current': current, 'total': total})
+            task.update_state(state=state, meta=meta)
     except (TypeError, NotImplementedError):
         pass
     except IntegrityError:
@@ -116,18 +121,20 @@ def get_task_status(task, is_multiple_download_task=False):
             # no result backend / improperly configured
             pass
         else:
+            result = task.result
             if task.successful():
                 is_ready = True
-                result = task.result
                 context_result = result and result.get('messages')
-                if result and result.get('errors'):
-                    failed = True
-                    context_error = result.get('errors')
+            elif result and isinstance(result, Exception):
+                context_error = six.text_type(result)
+            elif result and result.get('errors'):
+                failed = True
+                context_error = result.get('errors')
         progress = get_task_progress(task)
 
     def progress_complete():
         return (
-            getattr(settings, 'CELERY_ALWAYS_EAGER', False) or
+            getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False) or
             progress and progress.percent == 100 and
             not progress.error
         )

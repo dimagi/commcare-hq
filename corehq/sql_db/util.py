@@ -1,9 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
 import uuid
 from collections import defaultdict
-from numpy import random
+try:
+    from random import choices
+except ImportError:
+    from corehq.sql_db.backports import choices
 
 from django.conf import settings
 from django import db
@@ -290,7 +294,4 @@ def select_db_for_read(weighted_dbs):
             weights.append(weight)
 
     if dbs:
-        # normalize weights of remaining dbs
-        total_weight = sum(weights)
-        normalized_weights = [float(weight) / total_weight for weight in weights]
-        return random.choice(dbs, p=normalized_weights)
+        return choices(dbs, weights=weights)[0]

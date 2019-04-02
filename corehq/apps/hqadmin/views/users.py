@@ -187,11 +187,14 @@ class AdminRestoreView(TemplateView):
     @staticmethod
     def _parse_reports(xpath, xml_payload):
         reports = xml_payload.findall(xpath)
-        report_row_counts = {
-            report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
-            for report in reports
-            if 'report_id' in report.attrib
-        }
+        report_row_counts = {}
+        for report in reports:
+            if 'report_id' in report.attrib:
+                report_id = report.attrib['report_id']
+                if 'id' in report.attrib:
+                    report_id = '--'.join([report.attrib['id'], report_id])
+                report_row_count = len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                report_row_counts[report_id] = report_row_count
         return len(reports), report_row_counts
 
     @staticmethod

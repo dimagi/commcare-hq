@@ -1,32 +1,38 @@
-from __future__ import division
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import unicode_literals
-from contextlib import contextmanager
-from six.moves.urllib.parse import urlencode
-import six
 
-from django.apps import apps
-from django.conf import settings
+from contextlib import contextmanager
+
 import sqlalchemy
+from django.conf import settings
+from django.core import signals
+from django.utils.functional import cached_property
+from six.moves.urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
-from django.core import signals
 
 from corehq.util.test_utils import unit_testing_only
-
 from .util import select_db_for_read
-
 
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
+AAA_DB_ENGINE_ID = 'aaa-data'
 
 
 def get_icds_ucr_db_alias():
     try:
         return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+    except KeyError:
+        return None
+
+
+def get_aaa_db_alias():
+    try:
+        return connection_manager.get_django_db_alias(AAA_DB_ENGINE_ID)
     except KeyError:
         return None
 
@@ -65,6 +71,11 @@ class SessionHelper(object):
                 session.close()
 
         return session_scope
+
+    @cached_property
+    def is_citus_db(self):
+        with self.engine.begin() as connection:
+            return is_citus_db(connection)
 
 
 class ConnectionManager(object):
@@ -236,3 +247,7 @@ def override_engine(engine_id, connection_url):
         yield
     finally:
         connection_manager.db_connection_map[engine_id] = original_url
+
+
+def is_citus_db(connection):
+    return bool(list(connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'citus'")))

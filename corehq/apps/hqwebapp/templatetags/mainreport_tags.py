@@ -124,4 +124,3 @@ def aggregate_section_totals(section_name, results_arr, daily):
             sum += item
         ret = "<td>%d</td>" % sum
     return ret
-                           

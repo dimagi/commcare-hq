@@ -13,6 +13,7 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.decorators import handle_uncaught_exceptions
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 from django.dispatch import receiver
@@ -46,7 +47,11 @@ def user_save_callback(sender, **kwargs):
 @receiver(commcare_domain_post_save)
 @receiver(subscription_upgrade_or_downgrade)
 def domain_save_callback(sender, domain, **kwargs):
-    domain_name = domain if isinstance(domain, six.string_types) else domain.name
+    if isinstance(domain, six.string_types):
+        soft_assert_type_text(domain)
+        domain_name = domain
+    else:
+        domain_name = domain.name
     update_subscription_properties_by_domain(domain_name)
 
 

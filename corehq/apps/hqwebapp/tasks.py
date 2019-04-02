@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from celery.schedules import crontab
 from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
+
+from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
 import six
@@ -48,6 +52,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         )
         self.retry(exc=e)
 
+
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_html_email_async(self, subject, recipient, html_content,
@@ -64,6 +69,9 @@ def send_html_email_async(self, subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
                         file_attachments=file_attachments, bcc=bcc)
     except Exception as e:
+        from corehq.util.python_compatibility import soft_assert_type_text
+        if isinstance(recipient, six.string_types):
+            soft_assert_type_text(recipient)
         recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
         notify_exception(
             None,
@@ -93,3 +101,12 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
             }
         )
         self.retry(exc=e)
+
+
+def get_maintenance_alert_active():
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    return 1 if MaintenanceAlert.get_latest_alert() else 0
+
+
+datadog_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
+                   run_every=crontab(minute=1))

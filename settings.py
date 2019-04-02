@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -111,7 +106,7 @@ if os.path.exists(_formdesigner_path):
 del _formdesigner_path
 
 LOG_HOME = FILEPATH
-COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
+COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.couch.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
@@ -159,7 +154,6 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
-    'custom.icds_reports.middleware.ICDSAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -190,7 +184,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -240,6 +234,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.integration',
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
@@ -259,7 +254,6 @@ HQ_APPS = (
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
-    'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
     'corehq.apps.app_manager',
@@ -305,13 +299,13 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
+    'corehq.apps.saved_reports',
     'corehq.apps.userreports',
     'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
-    'corehq.apps.indicators',
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
@@ -346,9 +340,6 @@ HQ_APPS = (
 
     # custom reports
     'hsph',
-    'mvp',
-    'mvp_docs',
-    'mvp_indicators',
     'pact',
 
     'custom.reports.mc',
@@ -374,35 +365,6 @@ HQ_APPS = (
     'custom.hki',
     'custom.champ',
     'custom.aaa',
-)
-
-# also excludes any app starting with 'django.'
-APPS_TO_EXCLUDE_FROM_TESTS = (
-    'captcha',
-    'couchdbkit.ext.django',
-    'corehq.apps.ivr',
-    'corehq.messaging.smsbackends.mach',
-    'corehq.messaging.smsbackends.http',
-    'corehq.apps.settings',
-    'corehq.messaging.smsbackends.megamobile',
-    'corehq.messaging.smsbackends.yo',
-    'corehq.messaging.smsbackends.smsgh',
-    'corehq.messaging.smsbackends.push',
-    'corehq.messaging.smsbackends.apposit',
-    'crispy_forms',
-    'django_extensions',
-    'django_prbac',
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'djcelery',
-    'gunicorn',
-    'langcodes',
-    'raven.contrib.django.raven_compat',
-    'rosetta',
-    'two_factor',
-    'custom.apps.crs_reports',
-    'custom.m4change',
 )
 
 # any built-in management commands we want to override should go in hqscripts
@@ -543,9 +505,14 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_ANNOTATIONS = {
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
+
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -560,7 +527,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
@@ -705,10 +672,8 @@ GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
-LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-LOCAL_REPEATERS = ()
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -726,7 +691,6 @@ SUMOLOGIC_URL = None
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_VERSION = 1.7
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -1095,7 +1059,7 @@ LOGGING = {
         },
         'ucr_diff': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'concurrent_log_handler.ConcurrentRotatingFileHandler',
             'formatter': 'ucr_diff',
             'filename': UCR_DIFF_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
@@ -1282,13 +1246,12 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
-MVP_INDICATOR_DB = 'mvp-indicators'
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
-    "mvp-sauri": ['mvp_indicators'],
-    "mvp-potou": ['mvp_indicators'],
 }
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
@@ -1360,6 +1323,7 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
+    'saved_reports',
     'sms',
     'smsforms',
     'telerivet',
@@ -1376,8 +1340,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'hsph',
-    'mvp',
-    ('mvp_docs', MVP_INDICATOR_DB),
     'pact',
     'accounting',
     'succeed',
@@ -1408,8 +1370,6 @@ COUCHDB_APPS = [
     ('app_manager', APPS_DB),
 ]
 
-COUCHDB_APPS += LOCAL_COUCHDB_APPS
-
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
@@ -1430,6 +1390,8 @@ seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
 MIDDLEWARE += LOCAL_MIDDLEWARE
+if 'icds-ucr' in DATABASES:
+    MIDDLEWARE.append('custom.icds_reports.middleware.ICDSAuditMiddleware')
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1819,7 +1781,7 @@ PILLOWTOPS = {
     ]
 }
 
-BASE_REPEATERS = (
+REPEATERS = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
@@ -1831,8 +1793,6 @@ BASE_REPEATERS = (
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1965,7 +1925,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
@@ -1999,6 +1958,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
+    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2091,16 +2051,6 @@ DOMAIN_MODULE_MAP = {
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
-    'mvp-potou': 'mvp',
-    'mvp-sauri': 'mvp',
-    'mvp-bonsaaso': 'mvp',
-    'mvp-ruhiira': 'mvp',
-    'mvp-mwandama': 'mvp',
-    'mvp-sada': 'mvp',
-    'mvp-tiby': 'mvp',
-    'mvp-mbola': 'mvp',
-    'mvp-koraro': 'mvp',
-    'mvp-pampaida': 'mvp',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
@@ -2108,6 +2058,7 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
+    'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
 
@@ -2137,7 +2088,6 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-full-test': 'custom.ilsgateway',
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
-    'mvp-mayange': 'mvp',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
@@ -2178,7 +2128,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-RESTORE_TIMING_DOMAINS = {
+# Domains that we want to tag in datadog
+DATADOG_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),
@@ -2217,6 +2168,13 @@ except ImportError:
     pass
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
+
+if UNIT_TESTING or DEBUG:
+    try:
+        from ddtrace import tracer
+        tracer.enabled = False
+    except ImportError:
+        pass
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',

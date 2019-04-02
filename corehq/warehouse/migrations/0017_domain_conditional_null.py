@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations, models
 
-from corehq.sql_db.operations import HqRunSQL
+
 
 
 class Migration(migrations.Migration):
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             name='domain',
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
-        HqRunSQL(
+        migrations.RunSQL(
             """
             ALTER TABLE warehouse_userstagingtable
             ADD CONSTRAINT domain_conditional_null CHECK

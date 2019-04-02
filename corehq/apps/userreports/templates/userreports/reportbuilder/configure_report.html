@@ -269,11 +269,15 @@
                 <div class="btn btn-danger" data-bind="click: removeChart"><i class="fa fa-remove"></i></div>
               </div>
               <div data-bind="if: selectedChart() !== 'none'">
-                  Type:
-                  <select data-bind="value: selectedChart">
-                      <option value="bar">{% trans 'Bar' %}</option>
-                      <option value="pie">{% trans 'Pie' %}</option>
-                  </select>
+                  <select-toggle data-apply-bindings="false"
+                                 params="options: [{
+                                                      id: 'bar',
+                                                      text: '{% trans_html_attr "Bar" %}',
+                                                  }, {
+                                                      id: 'pie',
+                                                      text: '{% trans_html_attr "Pie" %}',
+                                                  }],
+                                                  value: selectedChart"></select-toggle>
               </div>
               <div data-bind="visible: tooManyChartCategoriesWarning" style="display: none;">
                 <div class="spacer"></div>

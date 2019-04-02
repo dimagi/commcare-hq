@@ -22,9 +22,10 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 from io import open
 
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import flag_enabled, softer_assert
 
 
+@flag_enabled('CAUTIOUS_MULTIMEDIA')
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 

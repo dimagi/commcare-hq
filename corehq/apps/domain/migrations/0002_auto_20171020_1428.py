@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from architect.commands import partition
 
 from django.db import migrations, models
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def add_partitions(apps, schema_editor):
@@ -32,5 +32,5 @@ class Migration(migrations.Migration):
             name='superuserprojectentryrecord',
             index_together=set([('domain', 'username')]),
         ),
-        HqRunPython(add_partitions),
+        migrations.RunPython(add_partitions),
     ]

@@ -1,13 +1,24 @@
 {
   "domains": [
+    "aparatest",
+    "cas-lab",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
     "reach-test",
     "reach-sandbox",
-    "cas-lab",
-    "icds-dashboard-qa",
-    "icds-cas"
+    "reach-dashboard-qa",
+    "shrena-dev"
   ],
   "server_environment": [
-    "softlayer",
+    "india",
     "icds"
   ],
   "config": {

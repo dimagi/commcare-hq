@@ -131,17 +131,18 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def add_sms_status_info(self, result):
         if len(self.domain_object.restricted_sms_times) > 0:
             result['uses_restricted_time_windows'] = True
-            result['within_allowed_sms_times'] = time_within_windows(
+            sms_allowed = result['within_allowed_sms_times'] = time_within_windows(
                 self.domain_now,
                 self.domain_object.restricted_sms_times
             )
-            if not result['within_allowed_sms_times']:
-                for i in range(1, 7 * 24 * 60):
-                    # This is a very fast check so it's ok to iterate this many times.
-                    resume_time = self.domain_now + timedelta(minutes=i)
-                    if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
-                        result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
-                        break
+            # find next restricted window transition
+            for i in range(1, 7 * 24 * 60):
+                # This is a very fast check so it's ok to iterate this many times.
+                future_time = self.domain_now + timedelta(minutes=i)
+                future_allowed = time_within_windows(future_time, self.domain_object.restricted_sms_times)
+                if sms_allowed != future_allowed:
+                    result['sms_resume_time'] = future_allowed.strftime('%Y-%m-%d %H:%M')
+                    break
         else:
             result['uses_restricted_time_windows'] = False
             result['within_allowed_sms_times'] = True
@@ -532,7 +533,7 @@ class EditScheduleView(CreateScheduleView):
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
-class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+class ConditionalAlertListView(BaseMessagingSectionView):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
@@ -570,13 +571,16 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         context['allow_copy'] = self.allow_copy
         return context
 
-    def get_conditional_alerts_queryset(self):
-        return (
+    def get_conditional_alerts_queryset(self, query_string=''):
+        query = (
             AutomaticUpdateRule
             .objects
             .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-            .order_by('case_type', 'name', 'id')
         )
+        if query_string:
+            query = query.filter(name__icontains=query_string)
+        query = query.order_by('case_type', 'name', 'id')
+        return query
 
     def schedule_is_editable(self, schedule):
         return (
@@ -585,30 +589,38 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             not schedule.memoized_uses_sms_callback
         )
 
-    def get_conditional_alerts_ajax_response(self):
-        query = self.get_conditional_alerts_queryset()
+    def _format_rule_for_json(self, rule):
+        schedule = rule.get_messaging_rule_schedule()
+        return {
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': schedule.active,
+            'editable': self.schedule_is_editable(schedule),
+            'locked_for_editing': rule.locked_for_editing,
+            'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
+            'id': rule.pk,
+        }
+
+    def get_conditional_alerts_ajax_response(self, request):
+        query = self.get_conditional_alerts_queryset(query_string=request.GET.get('query', ''))
         total_records = query.count()
 
-        rules = query[self.display_start:self.display_start + self.display_length]
-        data = []
-        for rule in rules:
-            schedule = rule.get_messaging_rule_schedule()
-            data.append({
-                'name': rule.name,
-                'case_type': rule.case_type,
-                'active': schedule.active,
-                'editable': self.schedule_is_editable(schedule),
-                'locked_for_editing': rule.locked_for_editing,
-                'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
-                'id': rule.pk,
-            })
+        limit = int(request.GET.get('limit'))
+        page = int(request.GET.get('page', 1))
+        skip = (page - 1) * limit
 
-        return self.datatables_ajax_response(data, total_records)
+        rules = query[skip:skip + limit]
+        data = [self._format_rule_for_json(rule) for rule in rules]
+
+        return JsonResponse({
+            'rules': data,
+            'total': total_records,
+        })
 
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
         if action == self.LIST_CONDITIONAL_ALERTS:
-            return self.get_conditional_alerts_ajax_response()
+            return self.get_conditional_alerts_ajax_response(request)
 
         return super(ConditionalAlertListView, self).get(*args, **kwargs)
 
@@ -655,11 +667,17 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
 
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_delete_ajax_response(self, rule):
         rule.soft_delete()
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_restart_ajax_response(self, rule):
         helper = MessagingRuleProgressHelper(rule.pk)
@@ -668,7 +686,10 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             return JsonResponse({'status': 'error', 'minutes_remaining': minutes_remaining})
 
         initiate_messaging_rule_run(rule.domain, rule.pk)
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def get_copy_ajax_response(self, rule, copy_to_project_name):
         if not self.allow_copy:
@@ -699,7 +720,10 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             })
 
         initiate_messaging_rule_run(copied_rule.domain, copied_rule.pk)
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({
+            'status': 'success',
+            'rule': self._format_rule_for_json(rule),
+        })
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')

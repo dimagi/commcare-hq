@@ -17,6 +17,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
             self.download_poll_id = null;
             self.$download_progress.addClass("hide");
             self.$downloading.removeClass("hide");
+            self.$el.removeClass("full-screen-modal");
         };
 
         self.pollDownloadStatus = function () {
@@ -83,6 +84,9 @@ hqDefine('app_manager/js/download_async_modal', function () {
         self.downloadError = function (text) {
             self.init();
             self.$download_progress.html(text);
+            self.$download_progress.removeClass("hide");
+            self.$downloading.addClass("hide");
+            self.$el.addClass("full-screen-modal");     // allow scrolling in case of many errors
         };
 
         self.$el.on("hidden hidden.bs.modal", function () {

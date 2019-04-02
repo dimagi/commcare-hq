@@ -36,7 +36,7 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
         try:
             return (
                 SQLLocation.objects
-                .prefetch_related('location_type')
+                .select_related('location_type')
                 .get(domain=self.domain, location_id=self.location_id)
             )
         except ObjectDoesNotExist:

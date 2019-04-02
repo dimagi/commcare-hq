@@ -21,8 +21,8 @@ from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import timedelta, date, datetime, time
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from memoized import memoized
+from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
@@ -271,7 +271,7 @@ class ScheduleInstance(PartitionedModel):
                 if self.passes_user_data_filter(contact):
                     yield contact
 
-    def get_content_send_lock(self, client, recipient):
+    def get_content_send_lock(self, recipient):
         if is_commcarecase(recipient):
             doc_type = 'CommCareCase'
             doc_id = recipient.case_id
@@ -286,10 +286,14 @@ class ScheduleInstance(PartitionedModel):
             doc_type,
             doc_id,
         )
-        return client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60)
+        return get_redis_lock(
+            key,
+            timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60,
+            name="send_content_for_%s" % type(self).__name__,
+            track_unreleased=False,
+        )
 
     def send_current_event_content_to_recipients(self):
-        client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
 
         if isinstance(content, (IVRSurveyContent, SMSCallbackContent)):
@@ -324,7 +328,7 @@ class ScheduleInstance(PartitionedModel):
             # that it won't retry later. If we fail in sending the content, we release
             # the lock so that it will retry later.
 
-            lock = self.get_content_send_lock(client, recipient)
+            lock = self.get_content_send_lock(recipient)
             if lock.acquire(blocking=False):
                 try:
                     content.send(recipient, logged_event)

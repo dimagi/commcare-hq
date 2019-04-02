@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import re
 from xml.etree import cElementTree as ElementTree
 
+from celery.task import task
+from dimagi.utils.chunked import chunked
 from corehq.blobs import get_blob_db
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"
@@ -62,3 +64,11 @@ def get_index_schema_node(fixture_id, attrs_to_index):
 def clear_fixture_cache(domain):
     from corehq.apps.fixtures.models import FIXTURE_BUCKET
     get_blob_db().delete(key=FIXTURE_BUCKET + '/' + domain)
+
+
+@task(queue='background_queue')
+def remove_deleted_ownerships(deleted_fixture_ids, domain):
+    from corehq.apps.fixtures.models import FixtureOwnership
+    for fixture_ids in chunked(deleted_fixture_ids, 100):
+        bad_ownerships = FixtureOwnership.for_all_item_ids(fixture_ids, domain)
+        FixtureOwnership.get_db().bulk_delete(bad_ownerships)

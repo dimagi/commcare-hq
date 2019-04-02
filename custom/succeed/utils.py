@@ -8,6 +8,8 @@ from datetime import timedelta
 from pytz import timezone
 import six
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
 SUCCEED_CM_APPNAME = 'SUCCEED CM app'
@@ -80,6 +82,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
         return ''
 
     if isinstance(date_string, six.string_types):
+        soft_assert_type_text(date_string)
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):

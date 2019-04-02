@@ -57,12 +57,13 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-def get_bulk_upload_form(context, context_key="bulk_upload", form_class=BulkUploadForm):
+def get_bulk_upload_form(context, context_key="bulk_upload", form_class=BulkUploadForm, app=None):
     return form_class(
         context[context_key]['plural_noun'],
         context[context_key].get('action'),
         context_key + "_form",
-        context.get(context_key)
+        context.get(context_key),
+        app,
     )
 
 
@@ -135,7 +136,7 @@ def get_environment_friendly_name():
     try:
         env = {
             "production": "",
-            "softlayer": "India",
+            "india": "India",
         }[settings.SERVER_ENVIRONMENT]
     except KeyError:
         env = settings.SERVER_ENVIRONMENT

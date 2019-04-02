@@ -38,7 +38,7 @@ def prepare_download(download_id, payload_func, content_disposition,
                            download_id=download_id)
 
 
-@periodic_task(serializer='pickle', run_every=crontab(hour="*", minute="*", day_of_week="*"),
+@periodic_task(run_every=crontab(hour="*", minute="*", day_of_week="*"),
                queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def heartbeat():
     """

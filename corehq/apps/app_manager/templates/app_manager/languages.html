@@ -75,24 +75,46 @@
     {% endif %}
 
     {% if app.doc_type != "LinkedApplication" %}
-    <div class="panel panel-appmanager">
-      <div class="panel-heading">
-        <h4 class="panel-title">
-          <a data-toggle="collapse"
-             data-parent="#language-settings-options"
-             href="#bulk-application-translations"
-             class="collapsed">
-            <i class="fa fa-angle-double-down"></i>
-            {% trans "Bulk Application Translations" %}
-          </a>
-        </h4>
-      </div>
-      <div class="panel-collapse collapse" id="bulk-application-translations">
-        <div class="panel-body">
-          {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True %}
+      <div class="panel panel-appmanager">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse"
+               data-parent="#language-settings-options"
+               href="#bulk-application-translations"
+               class="collapsed">
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "Bulk Application Translations" %}
+            </a>
+          </h4>
+        </div>
+        <div class="panel-collapse collapse" id="bulk-application-translations">
+          <div class="panel-body">
+            {% include "hqwebapp/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True %}
+          </div>
         </div>
       </div>
-    </div>
+
+      {% if request|toggle_enabled:'BULK_UPDATE_MULTIMEDIA_PATHS' %}
+        <div class="panel panel-appmanager">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse"
+                 data-parent="#language-settings-options"
+                 href="#bulk-multimedia-translations"
+                 class="collapsed">
+                <i class="fa fa-angle-double-down"></i>
+                {% trans "Bulk Multimedia Translations" %}
+              </a>
+            </h4>
+          </div>
+          <div class="panel-collapse collapse" id="bulk-multimedia-translations">
+            <div class="panel-body">
+              {% include "app_manager/partials/bulk_upload_multimedia.html" with bulk_upload=bulk_app_multimedia_upload bulk_upload_form=bulk_multimedia_translation_form no_header=True langs=app.langs %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
     {% endif %}
 
 </div>

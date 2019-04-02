@@ -26,19 +26,24 @@ class THRFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed, days_ration_given_mother
+          state_id, supervisor_id, month, case_id, latest_time_end_processed,
+          days_ration_given_mother
         ) (
-          SELECT
+          SELECT DISTINCT ON (ccs_record_case_id)
             %(state_id)s AS state_id,
+            LAST_VALUE(supervisor_id) over w as supervisor_id,
             %(month)s AS month,
-            ccs_record_case_id AS case_id,
-            MAX(timeend) AS latest_time_end_processed,
-            SUM(days_ration_given_mother) AS days_ration_given_mother
+            ccs_record_case_id as case_id,
+            MAX(timeend) over w AS latest_time_end_processed,
+            SUM(days_ration_given_mother) over w AS days_ration_given_mother
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 ccs_record_case_id IS NOT NULL
-          GROUP BY ccs_record_case_id
+          WINDOW w AS (
+            PARTITION BY ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+          )
         )
         """.format(
             ucr_tablename=self.ucr_tablename,

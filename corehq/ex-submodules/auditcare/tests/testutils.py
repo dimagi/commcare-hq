@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from auditcare.models import AccessAudit
 
+
 def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):
     """Helper function to help delete/clear documents from the database of a certain type.
     Will call the view function opon a given couchdbkit model you specify (couchmodel), on the given view.  It will do an include_docs on the view request

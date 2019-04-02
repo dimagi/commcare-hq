@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite version="1" descriptor="Media Suite File">
+  <media path="../../commcare">
+    <resource id="media-3827580cd02c0bc38ccfe9e28f0b3a0e-module0_hin.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/789/module0_hin.mp3</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-bffe1a3b38c51b3abc2a1721540116b8-q1_hin.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_1/q1_hin.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-18d788cb4e37fd89a981f7a5371bfdc2-q2_hin.jpg" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareImage/form_image_2/q2_hin.jpg</location>
+    </resource>
+  </media>
+  <media path="../../commcare">
+    <resource id="media-657f0ae54f3ffa90257f3052d051cb24-q2_hin.mp3" version="1">
+      <location authority="remote">http://192.cc.hq.1/hq/multimedia/file/CommCareAudio/form_audio_0/q2_hin.mp3</location>
+    </resource>
+  </media>
+</suite>
+

@@ -109,7 +109,7 @@ class LocalCommCareHqClient(object):
         def _inner(es_query_set, start, params):
             from commcare_export.cli import logger
             logger.info("Fetching batch: {}-{}".format(start, start + self.limit))
-            return es_query_set[start:start + self.limit]
+            return list(es_query_set[start:start + self.limit])
 
         return _inner(es_query_set, start, params)
 
@@ -149,7 +149,7 @@ class LocalCommCareHqClient(object):
                     else:
                         more_to_fetch = False
 
-                self.checkpoint(paginator, batch_list)
+                    self.checkpoint(paginator, batch_list)
 
         from commcare_export.repeatable_iterator import RepeatableIterator
         return RepeatableIterator(iterate_resource)
