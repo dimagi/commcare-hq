@@ -112,7 +112,7 @@ def download_bulk_app_translations(request, domain, app_id):
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
-    validate = request.POST.get('validate')
+    validate = request.POST.get('validate') if lang else False
 
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)
