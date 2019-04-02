@@ -662,7 +662,7 @@ class TestBlobHelper(BaseTestCase):
         })
         self.assertTrue(obj._migrating_blobs_from_couch)
         self.assertEqual(obj.fetch_attachment("couch.txt"), "couch")
-        self.assertEqual(obj.fetch_attachment("blob.txt"), "blob")
+        self.assertEqual(obj.fetch_attachment("blob.txt"), b"blob")
         self.assertFalse(self.couch.save_log)
 
     def test_atomic_blobs_with_couch_attachments(self):
