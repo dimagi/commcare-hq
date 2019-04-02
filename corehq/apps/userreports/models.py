@@ -437,17 +437,17 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             try:
                 self.validate_document(doc, eval_context)
             except ValidationError as e:
-                InvalidUCRData.objects.bulk_create([
-                    InvalidUCRData(
+                for error in e.errors:
+                    InvalidUCRData.objects.get_or_create(
                         doc_id=doc['_id'],
-                        doc_type=doc['doc_type'],
-                        domain=doc['domain'],
                         indicator_config_id=self._id,
                         validation_name=error[0],
-                        validation_text=error[1]
+                        defaults={
+                            'doc_type': doc['doc_type'],
+                            'domain': doc['domain'],
+                            'validation_text': error[1],
+                        }
                     )
-                    for error in e.errors
-                ])
                 return []
 
         rows = []
@@ -1075,6 +1075,9 @@ class InvalidUCRData(models.Model):
     validation_name = models.TextField()
     validation_text = models.TextField()
     notes = models.TextField(null=True)
+
+    class Meta(object):
+        unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
 
 
 def get_datasource_config_infer_type(config_id, domain):
