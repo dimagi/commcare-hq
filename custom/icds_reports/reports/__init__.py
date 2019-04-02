@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import json
 
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -34,7 +36,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def template_context(self):
-        import json
         context = super(IcdsBaseReport, self).template_context
         data_providers = [
             {'title': provider.title,
@@ -43,7 +44,12 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         ]
         context['data_providers'] = data_providers
         context['data_providers_json'] = json.dumps(data_providers)
+        context['parallel_render'] = self.parallel_render
         return context
+
+    @property
+    def parallel_render(self):
+        return not self.is_rendered_as_email and toggles.PARALLEL_MPR_ASR_REPORT.enabled(self.domain)
 
     @property
     def report_config(self):
@@ -88,6 +94,9 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @property
     def report_context(self):
         if self.should_render_subreport:
+            import random
+            import time
+            time.sleep(random.randint(2, 6))
             subreport = self.request.GET.get('provider_slug', None)
             dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
             return {'report': self.get_report_context(dp)}

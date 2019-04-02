@@ -11,16 +11,21 @@
 {% block reporttable %}
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
+{% elif not parallel_render %}
+    {% for thisreport in reports %}
+        {% include 'icds_reports/partials/subreport.html' with report=thisreport%}
+    {% endfor %}
 {% else %}
     {% for provider in data_providers %}
         <div id="{{ provider.provider_slug }}">
         <br/>
         <br/>
         <br/>
-            <h3 data-bind="visible: loading">Loading</h3>
-            <h3 data-bind="visible: !loading">Hidden</h3>
             <h2 class="media-heading">{{ provider.title }}</h2><br/>
-        <br/>
+            <div style="text-align: center;">
+                <h4>{% trans "Loading Report" %}</h4>
+                <i class="fa fa-spin fa-spinner fa-3x"></i>
+            </div>
         <br/>
         </div>
     {% endfor %}
@@ -32,13 +37,13 @@
 
 
 {% block js-inline %} {{ block.super }}
+{% if parallel_render %}
 <script>
     $(function () {
         var subReportModal = function(options){
             var self = {};
 
             self.providerSlug = options.providerSlug;
-            self.loading = ko.observable(true);
             self.queryUrl = "{{ request.get_full_path }}";
 
             self.init = function(){
@@ -49,10 +54,6 @@
                         $element.html(data.report);
                     }
                 });
-                // setTimeout(function(){
-                //     $("#"+self.providerSlug).html("<h1>Got it!"+self.providerSlug+"<h1>");
-                // }, 2000);
-                // self.loading(false);
             };
             return self;
         };
@@ -75,4 +76,5 @@
         }
     });
 </script>
+{% endif %}
 {% endblock %}

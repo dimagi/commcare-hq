@@ -1735,3 +1735,11 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
 )
+
+
+PARALLEL_MPR_ASR_REPORT = StaticToggle(
+    'parallel_mpr_asr_report',
+    'Release parallel loading of MPR and ASR report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
