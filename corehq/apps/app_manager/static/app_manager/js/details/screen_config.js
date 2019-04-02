@@ -809,7 +809,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     }
                     if (errors.length) {
-                        alert(gettext("There are errors in your configuration.\n") + errors.join("\n"));
+                        alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
                         return;
                     }
 
