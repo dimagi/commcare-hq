@@ -31,7 +31,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
 
     Select.prototype = {
         val: function (value) {
-            if (value === undefined) {
+            if (!_.isString(value)) {
                 return this.value;
             } else {
                 this.value = value;

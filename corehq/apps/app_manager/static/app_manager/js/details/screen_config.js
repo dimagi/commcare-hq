@@ -6,7 +6,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
-            var text = field;
+            var text = field || '';
             if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
                 text = text.substring(text.indexOf(":") + 1);
             }
@@ -276,6 +276,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         function getPropertyTitle(property) {
             // Strip "<prefix>:" before converting to title case.
             // This is aimed at prefixes like ledger: and attachment:
+            property = property || '';
             var i = property.indexOf(":");
             return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
         }
