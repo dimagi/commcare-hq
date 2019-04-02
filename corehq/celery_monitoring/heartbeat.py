@@ -45,22 +45,25 @@ class Heartbeat(object):
         return 'heartbeat__{}'.format(self.queue)
 
     def make_periodic_task(self):
-        queue = self.queue
+        """
+        Create a heartbeat @periodic_task specifically for self.queue
 
+        This is called on python startup so should avoid network calls
+        and anything else slow.
+        """
         def heartbeat():
-            hb = Heartbeat(queue)
             try:
                 datadog_gauge(
                     'commcare.celery.heartbeat.blockage_duration',
-                    hb.get_blockage_duration(),
-                    tags=['celery_queue:{}'.format(queue)]
+                    self.get_blockage_duration(),
+                    tags=['celery_queue:{}'.format(self.queue)]
                 )
             except HeartbeatNeverRecorded:
                 pass
-            hb.mark_seen()
+            self.mark_seen()
 
         heartbeat.func_name = self.periodic_task_name
         heartbeat.__name__ = self.periodic_task_name
 
-        heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=queue)(heartbeat)
+        heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue)(heartbeat)
         return heartbeat
