@@ -8,6 +8,9 @@
 {% if parallel_render %}
 <script>
     $(function () {
+        var progressCount = 0;
+        var dataProviders = hqImport("hqwebapp/js/initial_page_data").get("data_providers_json");
+
         var subReportModal = function(options){
             var self = {};
 
@@ -20,13 +23,16 @@
                     success: function(data) {
                         var $element = $("#" + self.providerSlug);
                         $element.html(data.report);
+                        progressCount++;
+                        var progressHtml = "<span>" + progressCount + " / "+ dataProviders.length + " reports loaded</span>";
+                        $("#progressCount").html(progressHtml);
                     }
+                    // Todo; handle error
                 });
             };
             return self;
         };
 
-        var dataProviders = hqImport("hqwebapp/js/initial_page_data").get("data_providers_json");
         for (var i = 0; i < dataProviders.length; i++) {
             var provider = dataProviders[i];
             var modal = subReportModal({
@@ -57,6 +63,9 @@
         {% include 'icds_reports/partials/subreport.html' with report=thisreport%}
     {% endfor %}
 {% else %}
+    <div id="progressCount" style="text-align: right;">
+        <span>0 / {{ data_providers|length }} reports loaded</span>
+    </div>
     {% for provider in data_providers %}
         <div id="{{ provider.provider_slug }}">
         <br/>
