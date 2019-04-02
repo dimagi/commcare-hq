@@ -248,16 +248,17 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             FROM "{ccs_record_case_ucr}" case_list
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON case_list.person_case_id = person_cases.doc_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
-            LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id 
+            LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id 
+            LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id
                 AND agg_bp.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id 
+            LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id
                 AND agg_pnc.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id 
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
-            LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id 
+            LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
+            WHERE case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
