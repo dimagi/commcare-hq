@@ -139,24 +139,19 @@ class Command(BaseCommand):
             state_code = self.get_state_code(location)
             district_code = self.get_district_code(location)
             if state_code not in district_level_data:
+                state_level_data[state_code] = {}
                 district_level_data[state_code] = {}
             if district_code not in district_level_data[state_code]:
                 district_level_data[state_code][district_code] = {}
 
             indicator_slug = self.get_indicator_slug(sms)
+            if indicator_slug not in state_level_data[state_code]:
+                state_level_data[state_code][indicator_slug] = 0
             if indicator_slug not in district_level_data[state_code][district_code]:
                 district_level_data[state_code][district_code][indicator_slug] = 0
 
             district_level_data[state_code][district_code][indicator_slug] += 1
-
-        for state_code, state_data in district_level_data.items():
-            if state_code not in state_level_data:
-                state_level_data[state_code] = {}
-            for district_data in state_data.values():
-                for indicator_slug, count in district_data.items():
-                    if indicator_slug not in state_level_data[state_code]:
-                        state_level_data[state_code][indicator_slug] = 0
-                    state_level_data[state_code][indicator_slug] += count
+            state_level_data[state_code][indicator_slug] += 1
 
         with open(filename, 'wb') as excel_file:
             state_headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
@@ -192,7 +187,13 @@ class Command(BaseCommand):
                         )
 
             export_raw(
-                (('icds-sms-usage', state_headers), ('icds-sms-usage-by-district', district_headers)),
-                (('icds-sms-usage', excel_state_data), ('icds-sms-usage-by-district', excel_district_data)),
+                (
+                    ('icds-sms-usage', state_headers),
+                    ('icds-sms-usage-by-district', district_headers)
+                ),
+                (
+                    ('icds-sms-usage', sorted(excel_state_data)),
+                    ('icds-sms-usage-by-district', sorted(excel_district_data))
+                ),
                 excel_file
             )

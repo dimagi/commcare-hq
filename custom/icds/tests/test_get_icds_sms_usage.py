@@ -9,6 +9,7 @@ from django.core.management import call_command
 from openpyxl.utils import get_column_letter
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.sms.models import SMS
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
@@ -100,9 +101,20 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
     @classmethod
     def tearDownClass(cls):
-        super(GetICDSSmsUsageTest, cls).tearDownClass()
+        cls.users[0].delete()
+        cls.users[1].delete()
+        SMS.objects.filter(
+            domain=cls.domain,
+        ).delete()
+        SQLLocation.objects.filter(
+            domain=cls.domain,
+        ).delete()
+        LocationType.objects.filter(
+            domain=cls.domain,
+        ).delete()
         cls.workbook.close()
         os.remove(cls.workbook_name)
+        super(GetICDSSmsUsageTest, cls).tearDownClass()
 
     def test_sheet_names(self):
         self.assertEquals(self.workbook.get_sheet_names(), ['icds-sms-usage', 'icds-sms-usage-by-district'])
@@ -118,21 +130,15 @@ class GetICDSSmsUsageTest(BaseICDSTest):
                 data[row_number - 1].append(
                     sheet['{0}{1}'.format(get_column_letter(column_number), row_number)].value
                 )
-        headers = data[0]
         self.assertEquals(
-            headers,
+            data,
             [
-                'State Code',
-                'State Name',
-                'Indicator',
-                'SMS Count'
-            ]
-        )
-        rest_of_data = data[1:]
-        rest_of_data = sorted(rest_of_data)
-        self.assertEquals(
-            rest_of_data,
-            [
+                [
+                    'State Code',
+                    'State Name',
+                    'Indicator',
+                    'SMS Count'
+                ],
                 [
                     'state',
                     'state',
@@ -165,23 +171,17 @@ class GetICDSSmsUsageTest(BaseICDSTest):
                 data[row_number - 1].append(
                     sheet['{0}{1}'.format(get_column_letter(column_number), row_number)].value
                 )
-        headers = data[0]
         self.assertEquals(
-            headers,
+            data,
             [
-                'State Code',
-                'State Name',
-                'District Code',
-                'District Name',
-                'Indicator',
-                'SMS Count'
-            ]
-        )
-        rest_of_data = data[1:]
-        rest_of_data = sorted(rest_of_data)
-        self.assertEquals(
-            rest_of_data,
-            [
+                [
+                    'State Code',
+                    'State Name',
+                    'District Code',
+                    'District Name',
+                    'Indicator',
+                    'SMS Count'
+                ],
                 [
                     'state',
                     'state',
