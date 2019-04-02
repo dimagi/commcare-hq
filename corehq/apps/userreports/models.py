@@ -411,7 +411,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return self.columns_by_id.get(column_id)
 
     def get_items(self, document, eval_context=None):
-        if self.filter(document):
+        if self.filter(document, eval_context):
             if not self.base_item_expression:
                 return [document]
             else:
