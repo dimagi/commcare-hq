@@ -161,8 +161,8 @@ class Command(BaseCommand):
             excel_state_data = []
             excel_district_data = []
 
-            for state_code, state_data in state_level_data.items():
-                for indicator_slug, count in state_data.items():
+            for state_code, state_data in sorted(state_level_data.items()):
+                for indicator_slug, count in sorted(state_data.items()):
                     excel_state_data.append(
                         (
                             state_code,
@@ -172,9 +172,9 @@ class Command(BaseCommand):
                         )
                     )
 
-            for state_code, state_data in district_level_data.items():
-                for district_code, district_data in state_data.items():
-                    for indicator_slug, count in district_data.items():
+            for state_code, state_data in sorted(district_level_data.items()):
+                for district_code, district_data in sorted(state_data.items()):
+                    for indicator_slug, count in sorted(district_data.items()):
                         excel_district_data.append(
                             (
                                 state_code,
@@ -192,8 +192,8 @@ class Command(BaseCommand):
                     ('icds-sms-usage-by-district', district_headers)
                 ),
                 (
-                    ('icds-sms-usage', sorted(excel_state_data)),
-                    ('icds-sms-usage-by-district', sorted(excel_district_data))
+                    ('icds-sms-usage', excel_state_data),
+                    ('icds-sms-usage-by-district', excel_district_data)
                 ),
                 excel_file
             )
