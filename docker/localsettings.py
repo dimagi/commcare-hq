@@ -2,11 +2,11 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-from collections import OrderedDict
 
-DATABASES = OrderedDict([
-    ('default', {
+import os
+
+DATABASES = {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
@@ -16,8 +16,8 @@ DATABASES = OrderedDict([
         'TEST': {
             'SERIALIZE': False,
         },
-    }),
-    ('aaa-data', {
+    },
+    'aaa-data': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
@@ -27,8 +27,8 @@ DATABASES = OrderedDict([
         'TEST': {
             'SERIALIZE': False,
         },
-    }),
-])
+    },
+}
 
 USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
 if USE_PARTITIONED_DATABASE:
