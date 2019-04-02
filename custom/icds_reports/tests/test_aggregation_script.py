@@ -425,16 +425,18 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
 
     def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-04-01',
+            'child_health_monthly',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-04-01'}
         )
 
     def test_child_health_monthly_2017_05_01(self):
         self._load_and_compare_data(
-            'child_health_monthly_2017-05-01',
+            'child_health_monthly',
             os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
+            sort_key=['awc_id', 'case_id'],
+            filter_by={'month': '2017-05-01'}
         )
 
 
