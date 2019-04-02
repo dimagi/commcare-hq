@@ -284,13 +284,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
-                    'html': 50.0,
-                    'sort_key': 50.0
+                    'html': 33.333333333333336,
+                    'sort_key': 33.333333333333336
                 },
                 'data': [
                     {'html': 'Percent of children born in month with low birth weight'},
                     {'html': 0.0, 'sort_key': 0.0},
-                    {'html': 50.0, 'sort_key': 50.0},
+                    {'html': 33.333333333333336, 'sort_key': 33.333333333333336},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -629,13 +629,13 @@ class TestFactSheetReportBehaviorChange(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 57.142857142857146,
-                    'sort_key': 57.142857142857146
+                    'html': 40.0,
+                    'sort_key': 40.0
                 },
                 'data': [
                     {'html': 'Percentage of children who were put to the breast within one hour of birth.'},
-                    {'html': 25.0, 'sort_key': 25.0},
-                    {'html': 57.142857142857146, 'sort_key': 57.142857142857146},
+                    {'html': 33.333333333333336, 'sort_key': 33.333333333333336},
+                    {'html': 40.0, 'sort_key': 40.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
