@@ -246,9 +246,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if eval_context is None:
             eval_context = EvaluationContext(document)
 
+        errors = []
         for validation in self._validations():
             if validation.validation_function(document, eval_context) is False:
-                raise ValidationError(validation.name, validation.error_message)
+                errors.append((validation.name, validation.error_message))
+
+        if errors:
+            raise ValidationError(errors)
 
     @memoized
     def _validations(self):
@@ -433,14 +437,17 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             try:
                 self.validate_document(doc, eval_context)
             except ValidationError as e:
-                InvalidUCRData.objects.create(
-                    doc_id=doc['_id'],
-                    doc_type=doc['doc_type'],
-                    domain=doc['domain'],
-                    indicator_config_id=self._id,
-                    validation_name=e.name,
-                    validation_text=e.message
-                )
+                InvalidUCRData.objects.bulk_create([
+                    InvalidUCRData(
+                        doc_id=doc['_id'],
+                        doc_type=doc['doc_type'],
+                        domain=doc['domain'],
+                        indicator_config_id=self._id,
+                        validation_name=error[0],
+                        validation_text=error[1]
+                    )
+                    for error in e.errors
+                ])
                 return []
 
         rows = []

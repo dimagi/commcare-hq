@@ -82,12 +82,11 @@ class InvalidDataSourceType(UserQueryError):
 
 
 class ValidationError(UserReportsError):
-    def __init__(self, name, message):
-        self.name = name
-        self.message = message
+    def __init__(self, errors):
+        self.errors = errors
 
     def __str__(self):
-        return self.message
+        return '\n'.join("{}: {}".format(e[0], e[1]) for e in self.errors)
 
 
 def translate_programming_error(exception):
