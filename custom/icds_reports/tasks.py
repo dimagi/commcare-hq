@@ -1042,12 +1042,3 @@ def create_mbt_for_month(state_id, month):
             icds_file, _ = IcdsFile.objects.get_or_create(blob_id='{}-{}-{}'.format(helper.base_tablename, state_id, month), data_type='mbt_{}'.format(helper.base_tablename))
             icds_file.store_file_in_blobdb(f, expired=THREE_MONTHS)
             icds_file.save()
-
-
-@task(queue='background_queue')
-def _bust_awc_cache():
-    create_datadog_event('redis: delete dashboard keys', 'start')
-    reach_keys = cache.keys('*cas_reach_data*')
-    for key in reach_keys:
-        cache.delete(key)
-    create_datadog_event('redis: delete dashboard keys', 'finish')
