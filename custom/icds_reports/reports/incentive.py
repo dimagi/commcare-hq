@@ -50,7 +50,7 @@ class IncentiveReport(object):
             ]
 
             # AWC not launched
-            if data['is_launched'] != 'yes':
+            if row['is_launched'] != 'yes':
                 AWC_NOT_LAUNCHED = 'AWC not launched'
                 row_data.extend([
                     AWC_NOT_LAUNCHED,

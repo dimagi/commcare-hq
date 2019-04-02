@@ -3,7 +3,9 @@
 Conventions followed in this file:
     * Fields ending in _ranges represent a field's history from forms that are useful for filtering.
       This is only used for fields that are required to filter for specific ranges (usually a date range).
-    * Fields ending in _history represent a field's entire history from forms.
+    * Note _history fields and models should no longer be added to.
+      Instead historical information should be gathered directly from the UCR data source.
+      Fields ending in _history represent a field's entire history from forms.
       They are saved with the format [[date, value], [date, value]].
       They are not guaranteed to be ordered by date.
       They are not intended to be queried on, their interpretation should happen in python.
@@ -16,6 +18,8 @@ Conventions followed in this file:
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
@@ -24,6 +28,9 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
 from dimagi.utils.dates import force_to_date
+from six.moves import zip
+
+logger = logging.getLogger(__name__)
 
 
 class LocationDenormalizedModel(models.Model):
@@ -526,39 +533,113 @@ class CcsRecord(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
-    def birth_preparedness_form_details(self):
+    def add_pregnancy_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-add_pregnancy')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def birth_preparedness_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
-                [self.ccs_record_case_id]
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend < %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
             )
             result = _dictfetchall(cursor)
 
         return result
 
-    def postnatal_care_form_details(self):
+    def delivery_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-delivery_forms')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def postnatal_care_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
-                [self.ccs_record_case_id]
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
             )
             result = _dictfetchall(cursor)
 
         return result
 
-    def thr_form_details(self):
+    def thr_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-thr_forms')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
-                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+            # We only ever need the last THR form, so order by timeend and return one result
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                LIMIT 1
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def person_details(self):
+        ucr_tablename = self._ucr_tablename('reach-person_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
+                [self.person_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def ccs_record_details(self):
+        ucr_tablename = self._ucr_tablename('reach-ccs_record_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
             )
-            result = _dictfetchall(cursor)
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def task_case_details(self):
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
+
+        with connections['aaa-data'].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
 
         return result
 
@@ -659,6 +740,7 @@ class Child(LocationDenormalizedModel):
             household_case_id = person.household_case_id,
             dob = person.dob,
             sex = person.sex,
+            name = person.name,
             migration_status = person.migration_status,
             has_aadhar_number = person.has_aadhar_number,
             contact_phone_number = person.contact_phone_number
@@ -668,6 +750,7 @@ class Child(LocationDenormalizedModel):
                 doc_id,
                 dob,
                 sex,
+                name,
                 migration_status,
                 aadhar_number IS NOT NULL and aadhar_number != '' AS has_aadhar_number,
                 contact_phone_number
@@ -736,6 +819,7 @@ class Child(LocationDenormalizedModel):
                 FROM "{tasks_cases_ucr_tablename}"
                 WHERE tasks_type = 'child'
             ) AS _tasks
+            WHERE product_date != '1970-01-01'
             WINDOW w AS (PARTITION BY doc_id, parent_case_id ORDER BY product_date DESC)
         ) tasks
         WHERE child.child_health_case_id = tasks.parent_case_id
@@ -782,11 +866,11 @@ class Child(LocationDenormalizedModel):
         ]
 
     def task_case_details(self):
-        ucr_tablename = self._ucr_tablename('reach-task_cases')
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
-            result = _dictfetchall(cursor)
+            cursor.execute('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            result = _dictfetchone(cursor)
 
         return result
 
@@ -794,18 +878,25 @@ class Child(LocationDenormalizedModel):
         ucr_tablename = self._ucr_tablename('reach-immunization_forms')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue('SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename),
+                [self.tasks_case_id]
+            )
             result = _dictfetchall(cursor)
 
         return result
 
-    def postnatal_care_form_details(self):
+    def postnatal_care_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
         with connections['aaa-data'].cursor() as cursor:
-            cursor.exectue(
-                'SELECT * FROM "{}" WHERE child_health_case_id = %s'.format(ucr_tablename),
-                [self.child_health_case_id]
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE child_health_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.child_health_case_id, date_]
             )
             result = _dictfetchall(cursor)
 
@@ -867,6 +958,28 @@ class ChildHistory(models.Model):
         return [
             cls.agg_from_growth_monitoring_forms_ucr,
         ]
+
+    @classmethod
+    def before_date(cls, child_health_case_id, date_):
+        ret = {
+            'weight_child_history': [],
+            'height_child_history': [],
+            'zscore_grading_wfa_history': [],
+            'zscore_grading_hfa_history': [],
+            'zscore_grading_wfh_history': [],
+        }
+
+        try:
+            child_history = ChildHistory.objects.get(child_health_case_id=child_health_case_id)
+        except ChildHistory.DoesNotExist:
+            return ret
+        for key in ret:
+            for history_date, history_value in getattr(child_history, key):
+                day = force_to_date(history_date)
+                if day < date_:
+                    ret[key].append((day, history_value))
+
+        return ret
 
 
 class AggLocation(models.Model):
@@ -1075,3 +1188,15 @@ def _dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+
+def _dictfetchone(cursor):
+    ret = _dictfetchall(cursor)
+
+    if len(ret) > 1:
+        logger.error("More than one result found")
+
+    if ret:
+        return ret[0]
+
+    return {}
