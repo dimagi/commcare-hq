@@ -334,17 +334,11 @@ class FormattedRow(object):
 
         wrapped_rows = []
         for name, rows in tables:
-            if isinstance(rows, itertools.chain):
-                first_entry_rows, rows_to_wrap = itertools.tee(rows)
-                first_entry = next(first_entry_rows)
-                wrapped_rows.append(
-                    (name, (cls(row) for row in _wrap_row(first_entry, rows_to_wrap))))
-            else:
-                rows = list(rows)
-                rows = _wrap_row(rows[0], rows)
-                wrapped_rows.append(
-                    (name, [cls(row) for row in rows])
-                )
+            rows = itertools.chain([], rows)
+            first_entry_rows, rows_to_wrap = itertools.tee(rows)
+            first_entry = next(first_entry_rows)
+            wrapped_rows.append(
+                (name, [cls(row) for row in _wrap_row(first_entry, rows_to_wrap)]))
         return wrapped_rows
 
 
