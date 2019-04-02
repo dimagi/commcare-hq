@@ -20,7 +20,7 @@ from memoized import memoized
 @location_safe
 class MPRReport(IcdsBaseReport):
 
-    title = '1. Identification and Basic Information'
+    title = 'MPR Report'
     slug = 'mpr_report'
     name = 'Block MPR'
 
@@ -50,7 +50,7 @@ class MPRReport(IcdsBaseReport):
 @location_safe
 class ASRReport(IcdsBaseReport):
 
-    title = '1. Identification and Basic Information'
+    title = 'ASR Report'
     slug = 'asr_report'
     name = 'Block ASR'
 
