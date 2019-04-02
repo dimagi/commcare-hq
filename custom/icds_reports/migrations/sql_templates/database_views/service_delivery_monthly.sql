@@ -37,7 +37,7 @@ SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_ch
 SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.valid_in_month ELSE 0 END ) + ccr.mother_thr_eligible as total_thr_candidates
 
 FROM "public"."awc_location_months" "awc_location_months"
-INNER join agg_awc on (
+LEFT join agg_awc on (
         ("agg_awc"."month" = "awc_location_months"."month") AND
         ("agg_awc"."state_id" = "awc_location_months"."state_id") AND
         ("agg_awc"."district_id" = "awc_location_months"."district_id") AND
@@ -46,7 +46,7 @@ INNER join agg_awc on (
         ("agg_awc"."aggregation_level" = "awc_location_months"."aggregation_level") AND
         ("agg_awc"."awc_id" = "awc_location_months"."awc_id")
 )
-INNER JOIN agg_child_health on (
+LEFT JOIN agg_child_health on (
         ("agg_child_health"."month" = "awc_location_months"."month") AND
         ("agg_child_health"."state_id" = "awc_location_months"."state_id") AND
         ("agg_child_health"."district_id" = "awc_location_months"."district_id") AND
@@ -55,7 +55,7 @@ INNER JOIN agg_child_health on (
         ("agg_child_health"."aggregation_level" = "awc_location_months"."aggregation_level") AND
         ("agg_child_health"."awc_id" = "awc_location_months"."awc_id")
 )
-INNER JOIN (
+LEFT JOIN (
       select
         state_id,
         district_id,

@@ -30,6 +30,7 @@ COLORS = {
 }
 
 PRODUCT_CODES = [
+    "1g_bcg",
     "1g_dpt_1",
     "2g_dpt_2",
     "3g_dpt_3",

@@ -2,12 +2,14 @@ hqDefine("aaa/js/models/person", [
     'jquery',
     'knockout',
     'underscore',
+    'moment/moment',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     ko,
     _,
-    initialPageData,
+    moment,
+    initialPageData
 ) {
     var personModel = function (data, postData) {
         var self = {};
@@ -60,5 +62,5 @@ hqDefine("aaa/js/models/person", [
 
     return {
         personModel: personModel,
-    }
+    };
 });

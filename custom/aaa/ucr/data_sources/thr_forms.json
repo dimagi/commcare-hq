@@ -68,8 +68,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_1"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_1"]
         }
       },
       {
@@ -77,8 +77,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_2"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_2"]
         }
       },
       {
@@ -86,8 +86,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_3"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_3"]
         }
       },
       {
@@ -95,8 +95,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_4"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_4"]
         }
       },
       {
@@ -104,8 +104,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_5"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_5"]
         }
       },
       {
@@ -113,8 +113,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_6"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_6"]
         }
       },
       {
@@ -122,8 +122,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_7"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_7"]
         }
       },
       {
@@ -131,8 +131,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_name",
-          "property_name": ["form", "thr_amount_8"]
+          "type": "property_path",
+          "property_path": ["form", "thr_amount_8"]
         }
       }
     ],

@@ -11,6 +11,8 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+
+from django.utils import html
 from six.moves.urllib.parse import urlparse
 
 from django.conf import settings
@@ -292,7 +294,7 @@ def server_up(req):
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
-            '{}: {}'.format(check, status.msg)
+            html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
         create_datadog_event(
@@ -300,7 +302,7 @@ def server_up(req):
             alert_type='error', aggregation_key='serverup',
         )
         status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
-        return HttpResponse('<br>'.join(status_messages), status=500)
+        return HttpResponse(''.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
