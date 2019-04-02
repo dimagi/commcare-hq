@@ -261,7 +261,7 @@ class SqlData(ReportDataSource):
                 to='{}@{}'.format('skelly', 'dimagi.com'),
                 exponential_backoff=True,
             )(False, "sql-agg called without group_by", {
-                'queries': self.get_sql_queries()
+                'table': self.table_name
             })
         return sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
