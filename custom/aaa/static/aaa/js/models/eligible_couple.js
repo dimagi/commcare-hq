@@ -13,7 +13,7 @@ hqDefine("aaa/js/models/eligible_couple", [
     moment,
     initialPageData,
     childUtils,
-    personUtils,
+    personUtils
 ) {
     var eligibleCoupleList = function (options, postData) {
         var self = {};
@@ -58,11 +58,11 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.preferredFamilyPlaningMethod = data.preferredFamilyPlaningMethod;
 
         self.childrenBorn = ko.computed(function () {
-            return self.maleChildrenBorn + ' (Male), ' + self.femaleChildrenBorn + ' (Female)'
+            return self.maleChildrenBorn + ' (Male), ' + self.femaleChildrenBorn + ' (Female)';
         });
 
         self.childrenAlive = ko.computed(function () {
-            return self.maleChildrenAlive + ' (Male), ' + self.femaleChildrenAlive + ' (Female)'
+            return self.maleChildrenAlive + ' (Male), ' + self.femaleChildrenAlive + ' (Female)';
         });
 
         return self;
@@ -73,7 +73,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.personDetails = {
             person: ko.observable(personUtils.personModel),
             husband: ko.observable(personUtils.personModel),
-            other: ko.observable(personUtils.personOtherInfoModel),
         };
         self.childDetails = ko.observableArray([]);
         self.eligibleCoupleDetails = ko.observable(eligibleCoupleModel);
@@ -82,7 +81,7 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.sections = [
             'person_details',
             'children_list',
-            'eligible_couple_details'
+            'eligible_couple_details',
         ];
 
 
@@ -95,7 +94,7 @@ hqDefine("aaa/js/models/eligible_couple", [
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
                 self.personDetails.person(personUtils.personModel(data.person, self.postData));
                 self.personDetails.husband(personUtils.personModel(data.husband, self.postData));
-            })
+            });
         };
 
         self.getChildDetails = function () {
@@ -105,13 +104,13 @@ hqDefine("aaa/js/models/eligible_couple", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                _.forEach(data.children, function(child) {
+                _.forEach(data.children, function (child) {
                     self.childDetails.push(childUtils.childModel(child, self.postData));
                 });
                 while (self.childDetails().length % 4 > 0) {
-                    self.childDetails.push({})
+                    self.childDetails.push({});
                 }
-            })
+            });
         };
 
         self.getEligibleCoupleDetails = function () {
@@ -121,8 +120,8 @@ hqDefine("aaa/js/models/eligible_couple", [
                 beneficiaryId: initialPageData.get('beneficiary_id'),
             }, self.postData);
             $.post(initialPageData.reverse('unified_beneficiary_details_api'), params, function (data) {
-                self.eligibleCoupleDetails(eligibleCoupleModel(data))
-            })
+                self.eligibleCoupleDetails(eligibleCoupleModel(data));
+            });
         };
 
         self.callback = function () {
@@ -138,5 +137,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         config: eligibleCoupleListConfig,
         listView: eligibleCoupleList,
         detailsView: eligibleCoupleDetailsView,
-    }
+        eligibleCoupleModel: eligibleCoupleModel,
+    };
 });

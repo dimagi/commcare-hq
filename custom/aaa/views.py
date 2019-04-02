@@ -424,7 +424,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         elif section == 'eligible_couple':
             helper = EligibleCoupleQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'eligible_couple_details':
-                data = helper.eligible_couples_details()
+                data = helper.eligible_couple_details()
 
         if not data:
             raise Http404()

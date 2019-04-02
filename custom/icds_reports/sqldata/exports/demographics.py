@@ -8,7 +8,8 @@ from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
-from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent
+from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
+    phone_number_function
 
 
 class DemographicsChildHealth(ExportableMixin, SqlData):
@@ -32,6 +33,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns

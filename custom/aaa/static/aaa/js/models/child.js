@@ -68,7 +68,6 @@ hqDefine("aaa/js/models/child", [
         return self;
     };
 
-
     var childModel = function (data, postData) {
         var self = {};
         self.id = data.id || null;
@@ -156,7 +155,6 @@ hqDefine("aaa/js/models/child", [
         return self;
     };
 
-
     var childDetailsView = function (postData) {
         var self = {};
         self.personDetails = {
@@ -227,7 +225,7 @@ hqDefine("aaa/js/models/child", [
                         strokeWidth: 2,
                         yAxis: 1,
                     }
-                )
+                );
             }
             d3.select('#weight_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -277,15 +275,15 @@ hqDefine("aaa/js/models/child", [
             ];
             if (data.points.length > 0) {
                 datum.push(
-                   {
-                       key: 'line',
-                       type: 'line',
-                       values: data.points,
-                       color: 'black',
-                       strokeWidth: 2,
-                       yAxis: 1,
-                   }
-                )
+                    {
+                        key: 'line',
+                        type: 'line',
+                        values: data.points,
+                        color: 'black',
+                        strokeWidth: 2,
+                        yAxis: 1,
+                    }
+                );
             }
             d3.select('#height_for_age_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -342,7 +340,7 @@ hqDefine("aaa/js/models/child", [
                         strokeWidth: 2,
                         yAxis: 1,
                     }
-                )
+                );
             }
             d3.select('#weight_for_height_chart svg').datum(datum).call(chart);
             nv.utils.windowResize(chart.update);
@@ -431,5 +429,5 @@ hqDefine("aaa/js/models/child", [
         listView: childList,
         detailsView: childDetailsView,
         childModel: childModel,
-    }
+    };
 });

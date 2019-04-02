@@ -16,7 +16,6 @@ from xml.etree import cElementTree as ElementTree
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from celery.states import PENDING, REVOKED
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 from django.utils.text import slugify
@@ -628,7 +627,7 @@ class RestoreConfig(object):
         task_id = self.async_restore_task_id_cache.get_value()
         if task_id:
             task = AsyncResult(task_id)
-            task_exists = task.status not in [PENDING, REVOKED]
+            task_exists = task.status == ASYNC_RESTORE_SENT
         else:
             task = None
             task_exists = False
