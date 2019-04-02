@@ -85,6 +85,10 @@ class TimingPlugin(Plugin):
             ])
         self.event_start = now
 
+        slow_seconds = _get_expected_slow_seconds(context) or self.threshold
+        if duration > slow_seconds:
+            context.fail("Test ran in {} seconds and is greater than threshold {}".format(duration, slow_seconds))
+
     def startContext(self, context):
         # called before context setup
         self.end_event("before", context)
@@ -114,3 +118,25 @@ def end_event(name, context):
     event. Requires the `TimingPlugin` must to be enabled.
     """
     PLUGIN_INSTANCE.end_event(name, context)
+
+
+def _get_expected_slow_seconds(test_context):
+    # class is tagged for class based test
+    # For function based test, the function is tagged
+    tags = getattr(test_context, 'tags', None)
+
+    if tags is None:
+        # Function is tagged in a class based test
+        fn = getattr(test_context, test_context._testMethodName)
+        tags = getattr(fn, 'tags', None)
+
+    if tags is None:
+        return None
+
+    slow_tags = [tag for tag in tags if tag.startswith('slow_')]
+
+    if len(slow_tags) != 1:
+        return None
+
+    slow_seconds = slow_tags[0]
+    return int(slow_seconds[5:])
