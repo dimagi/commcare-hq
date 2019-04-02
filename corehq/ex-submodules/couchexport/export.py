@@ -338,6 +338,7 @@ class FormattedRow(object):
                 first_entry = next(first_entry_rows)
                 wrapped_rows = name, (cls(row) for row in _wrap_row(first_entry, rows_to_wrap))
             else:
+                rows = list(rows)
                 rows = _wrap_row(rows[0], list(rows))
                 wrapped_rows.append(
                     (name, [cls(row) for row in rows])
