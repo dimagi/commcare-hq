@@ -3,7 +3,10 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
-from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
+from corehq.apps.reports.v2.exceptions import (
+    EndpointNotFoundError,
+    ColumnFilterNotFoundError,
+)
 
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
@@ -47,6 +50,15 @@ class BaseReport(object):
 
     def get_options_endpoint(self, endpoint_slug):
         return self._get_endpoint(endpoint_slug, self.options_endpoints)
+
+    def get_column_filter(self, filter_type):
+        name_to_class = dict([(f.filter_type, f) for f in self.column_filters])
+        try:
+            return name_to_class[filter_type]
+        except (KeyError, NameError):
+            raise ColumnFilterNotFoundError(
+                "ColumnFilter '{}' cannot be found.".format(filter_type)
+            )
 
     @property
     def context(self):
