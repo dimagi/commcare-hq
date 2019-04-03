@@ -699,7 +699,6 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
 
-        rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
         for simplified_user in self.selected_simplified_users:
             row = []
