@@ -188,6 +188,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
     def _make_row(self, record):
+        if not record.succeeded:
+            if record.cancelled:
+                requeue_or_cancel_button = self._make_requeue_payload_button(record.get_id)
+            else:
+                requeue_or_cancel_button = self._make_cancel_payload_button(record.get_id)
+        else:
+            requeue_or_cancel_button = None
+
         row = [
             self._make_state_label(record),
             record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
@@ -196,10 +204,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
-            self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-            else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-            and not record.succeeded
-            else None
+            requeue_or_cancel_button,
+            self._make_checkbox(record),
         ]
 
         if toggles.SUPPORT.enabled_for_request(self.request):
@@ -214,9 +220,10 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
-            DataTablesColumn(_('View payload')),
-            DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel or Requeue payload'))
+            DataTablesColumn(_('View payload'), sortable=False),
+            DataTablesColumn(_('Resend'), sortable=False),
+            DataTablesColumn(_('Cancel or Requeue payload'), sortable=False),
+            DataTablesColumn(_('Select'), sortable=False),
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(1, DataTablesColumn(_('Payload ID')))
@@ -230,6 +237,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
         )
         return context
+
+    def _make_checkbox(self, record):
+        return '<input type="checkbox" name="RepeatRecord_{0}" value="1">'.format(record.get_id)
 
 
 @method_decorator(domain_admin_required, name='dispatch')
