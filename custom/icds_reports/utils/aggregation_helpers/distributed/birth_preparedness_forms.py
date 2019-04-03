@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_CCS_RECORD_BP_TABLE
@@ -12,18 +11,20 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
-    aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
-    aggregate_child_table_prefix = 'icds_db_bp_form_'
+    tablename = AGG_CCS_RECORD_BP_TABLE
 
     def aggregate(self, cursor):
-        prev_month_query, prev_month_params = self.create_table_query(self.month - relativedelta(months=1))
-        curr_month_query, curr_month_params = self.create_table_query()
+        drop_query, drop_params = self.drop_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(prev_month_query, prev_month_params)
-        cursor.execute(self.drop_table_query())
-        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(drop_query, drop_params)
         cursor.execute(agg_query, agg_params)
+
+    def drop_table_query(self):
+        return (
+            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
+            {'month': month_formatter(self.month), 'state': self.state_id}
+        )
 
     @property
     def _old_ucr_tablename(self):
@@ -37,7 +38,8 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT ccs_record_case_id AS case_id,
-        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
+        supervisor_id,
+        %(current_month_start)s::date as month,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
         MAX(play_birth_preparedness_vid) OVER w as play_birth_preparedness_vid,
@@ -65,7 +67,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
-            PARTITION BY ccs_record_case_id
+            PARTITION BY supervisor_id, ccs_record_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(ucr_tablename=self.ucr_tablename), {
@@ -76,13 +78,13 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
-        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+        previous_month = month - relativedelta(months=1)
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
-            "state_id": self.state_id
+            "state_id": self.state_id,
+            "previous_month": previous_month
         }
         query_params.update(ucr_query_params)
 
@@ -125,13 +127,16 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.ifa_last_seven_days, prev_month.ifa_last_seven_days) as ifa_last_seven_days,
             COALESCE(ucr.using_ifa, prev_month.using_ifa) as using_ifa
           FROM ({ucr_table_query}) ucr
-          FULL JOIN "{previous_month_tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id
+          FULL OUTER JOIN "{tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            AND ucr.month = prev_month.month + INTERVAL '1 month'
+          WHERE coalesce(ucr.month, %(month)s) = %(month)s
+            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
             ucr_table_query=ucr_query,
-            previous_month_tablename=previous_month_tablename,
-            tablename=tablename
+            tablename=self.tablename
         ), query_params
 
     def compare_with_old_data_query(self):

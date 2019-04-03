@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from six.moves import map
-
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from six.moves import map
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
@@ -22,11 +21,13 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         drop_table_query = self.drop_table_query()
         agg_query = self.aggregate_query()
         aww_query = self.aww_query()
+        ls_query = self.ls_query()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
         cursor.execute(drop_table_query)
         cursor.execute(agg_query)
         cursor.execute(aww_query)
+        cursor.execute(ls_query)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
 
@@ -69,6 +70,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('district_map_location_name', 'district_map_location_name'),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
+            ('ls_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
             ('state_is_test', 'state_is_test'),
             ('district_is_test', 'district_is_test'),
@@ -96,15 +98,33 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         return """
             UPDATE "{tablename}" awc_loc SET
               aww_name = ut.aww_name,
+              ls_name = ut.ls_name,
               contact_phone_number = ut.contact_phone_number
             FROM (
               SELECT
                 commcare_location_id,
                 aww_name,
+                ls_name,
                 contact_phone_number
               FROM "{ucr_aww_tablename}"
             ) ut
             WHERE ut.commcare_location_id = awc_loc.doc_id
+        """.format(
+            tablename=self.base_tablename,
+            ucr_aww_tablename=self.ucr_aww_tablename
+        )
+
+    def ls_query(self):
+        return """
+            UPDATE "{tablename}" awc_loc SET
+              ls_name = ut.username
+            FROM (
+              SELECT
+                commcare_location_id,
+                username
+              FROM "{ucr_aww_tablename}"
+            ) ut
+            WHERE ut.commcare_location_id = awc_loc.supervisor_id
         """.format(
             tablename=self.base_tablename,
             ucr_aww_tablename=self.ucr_aww_tablename
@@ -132,6 +152,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             ('district_map_location_name', lambda col: col if aggregation_level > 1 else "'All'"),
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
+            ('ls_name', lambda col: col if aggregation_level > 3 else "NULL"),
             ('contact_phone_number', 'NULL'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
@@ -173,6 +194,7 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
             group_by.extend(
                 ["supervisor_{}".format(name) for name in end_text_column if name is not "map_location_name"]
             )
+            group_by.append('ls_name')
 
         return """
             INSERT INTO "{tablename}" (

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
