@@ -322,13 +322,16 @@ def _get_most_recently_used(last_used):
 @require_superuser_or_contractor
 @require_POST
 def set_toggle(request, toggle_slug):
-    toggle = find_static_toggle(toggle_slug)
-    if not toggle:
+    static_toggle = find_static_toggle(toggle_slug)
+    if not static_toggle:
         raise Http404()
 
-    toggle.set(
-        item=request.POST['item'],
-        enabled=request.POST['enabled'] == 'true',
-        namespace=request.POST['namespace'],
-    )
+    item = request.POST['item']
+    enabled = request.POST['enabled'] == 'true'
+    namespace = request.POST['namespace']
+    static_toggle.set(item=item, enabled=enabled, namespace=namespace)
+
+    if enabled:
+        _notify_on_change(static_toggle, [item], request.user.username)
+
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
