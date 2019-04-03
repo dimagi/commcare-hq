@@ -1,1 +1,1 @@
-AWC {{ awc }} has reported illness for the child {{ child }}. Please ensure that AWW follows up with mother immediately
+ಅಂಗನವಾಡಿ ಕೇಂದ್ರ {{ awc }} ಮಗುವಿನ {{ child }} ಅನಾರೋಗ್ಯವನ್ನು ವರದಿ ಮಾಡಿದೆ. ಅಂಗನವಾಡಿ ಕಾರ್ಯಕರ್ತ ತಕ್ಷಣವೇ ತಾಯಿಯನ್ನು ಅನುಸರಣೆ ಮಾಡುತ್ತದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ
