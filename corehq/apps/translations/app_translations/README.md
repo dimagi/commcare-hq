@@ -3,7 +3,9 @@ Bulk Application Translations
 
 HQ supports a file download and re-upload to update all application-specific translations.
 
-The download has two variants, a multi-sheet and a single-sheet format. Both are tolerant of partial uploads.
+The download has two variants, a multi-sheet and a single-sheet format. Both are tolerant of partial uploads:
+missing sheets, missing language columns (as opposed to the columns needed to identify a row), and missing rows
+(with some exceptions for module translations, which depend on case properties being present and correctly ordered).
 
 The default multi-sheet format contains a first "menus and forms" sheet for editing module and form names and menu media. It then contains a sheet for each module and each form.
 
