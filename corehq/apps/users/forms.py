@@ -576,11 +576,11 @@ class NewMobileWorkerForm(forms.Form):
             ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
+            self.fields['location_id'].widget = forms.Select(choices=[('', '')])    # blank option for placeholder
             location_field = crispy.Field(
                 'location_id',
                 ng_model='mobileWorker.location_id',
+                ng_required="true" if self.fields['location_id'].required else "false",
             )
         else:
             location_field = crispy.Hidden(
@@ -752,36 +752,12 @@ class MultipleSelectionForm(forms.Form):
         )
 
 
-class AngularLocationSelectWidget(forms.Widget):
-    """
-    Assumptions:
-        mobileWorker.location_id is model
-        scope has searchLocations function to search
-        scope uses availableLocations to search in
-    """
-
-    def __init__(self, require=False, attrs=None):
-        self.require = require
-        super(AngularLocationSelectWidget, self).__init__(attrs)
-
-    def render(self, name, value, attrs=None):
-        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
-        return """
-          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
-            <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
-              <div ng-bind-html="location.name | highlight: $select.search"></div>
-            </ui-select-choices>
-          </ui-select>
-        """.format(validator='validate-location=""' if self.require else '')
-
-
 class PrimaryLocationWidget(forms.Widget):
     """
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
-    def __init__(self, css_id, source_css_id, attrs=None, select2_version=None):
+    def __init__(self, css_id, source_css_id, attrs=None):
         """
         args:
             css_id: css_id of primary_location field
@@ -790,14 +766,7 @@ class PrimaryLocationWidget(forms.Widget):
         super(PrimaryLocationWidget, self).__init__(attrs)
         self.css_id = css_id
         self.source_css_id = source_css_id
-
-        versioned_templates = {
-            'v3': 'locations/manage/partials/drilldown_location_widget_v3.html',
-            'v4': 'locations/manage/partials/drilldown_location_widget_v4.html',
-        }
-        if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
-        self.template = versioned_templates[select2_version]
+        self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
     def render(self, name, value, attrs=None):
         return get_template(self.template).render({
@@ -813,6 +782,7 @@ class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
         label=ugettext_noop("Locations"),
         required=False,
+        widget=forms.SelectMultiple(choices=[]),
     )
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
@@ -830,12 +800,11 @@ class CommtrackUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations', select2_version='v3'
+            self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
-            select2_version='v3'
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
@@ -896,17 +865,10 @@ class CommtrackUserForm(forms.Form):
                 user.reset_locations(self.domain, location_ids)
 
     def clean_assigned_locations(self):
-        # select2 (< 4.0) doesn't format multiselect for remote data as an array
-        #   but formats it as comma-seperated list, so we need to clean the returned data
         from corehq.apps.locations.models import SQLLocation
         from corehq.apps.locations.util import get_locations_from_ids
 
-        value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, six.string_types) or value.strip() == '':
-            return []
-        soft_assert_type_text(value)
-
-        location_ids = [location_id.strip() for location_id in value.split(',')]
+        location_ids = self.data.getlist('assigned_locations')
         try:
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
