@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from custom.icds_reports.queries import get_cas_data_blob_file
 
+import io
 import os
 import csv342 as csv
 
@@ -22,7 +23,7 @@ class TestLocationView(CSVTestCase):
 
     def _get_data_from_blobdb(self, indicator, state_id, month):
         sync, _ = get_cas_data_blob_file(indicator, state_id, month)
-        csv_file = sync.get_file_from_blobdb()
+        csv_file = io.TextIOWrapper(sync.get_file_from_blobdb(), encoding='utf-8')
         csv_data = list(csv.reader(csv_file))
         headers = csv_data[0]
         rows = csv_data[1:]

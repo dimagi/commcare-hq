@@ -45,7 +45,7 @@ class MBTHelper(object):
             FROM {table} t
             LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
@@ -251,7 +251,7 @@ class ChildHealthMbtHelper(MBTHelper):
             LEFT JOIN "ccs_record_monthly_{month}" ccs on ccs.person_case_id=mother.doc_id
               AND ccs.add=t.dob AND (ccs.child_name is null OR ccs.child_name=t.person_name)
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
@@ -410,7 +410,7 @@ class AwcMbtHelper(MBTHelper):
             FROM {table} t
             LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
