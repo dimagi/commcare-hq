@@ -325,21 +325,21 @@ class FormattedRow(object):
         Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...)). The rows can be generators.
         """
 
-        def _wrap_row(first_entry, rows):
+        def coerce_to_list_of_rows(rows):
+            rows = iter(rows)
+            # peek at the first element, then add it back
+            first_entry = next(rows)
+            rows = itertools.chain([first_entry], rows)
             if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
                 soft_assert_type_text(first_entry)
                 # `rows` is actually just a single row, so wrap it
-                rows = [rows]
+                return [rows]
             return rows
 
-        wrapped_rows = []
-        for name, rows in tables:
-            rows = itertools.chain([], rows)
-            first_entry_rows, rows_to_wrap = itertools.tee(rows)
-            first_entry = next(first_entry_rows)
-            wrapped_rows.append(
-                (name, [cls(row) for row in _wrap_row(first_entry, rows_to_wrap)]))
-        return wrapped_rows
+        return [
+            (name, [cls(row) for row in coerce_to_list_of_rows(rows)])
+            for name, rows in tables
+        ]
 
 
 def _format_tables(tables, id_label='id', separator='.', include_headers=True,
