@@ -11,6 +11,13 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
     aggregate_child_table_prefix = 'icds_db_delivery_form_'
 
+    def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+
     def drop_table_query(self):
         tablename = self.aggregate_parent_table
         return 'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(tablename=self.aggregate_parent_table), {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}

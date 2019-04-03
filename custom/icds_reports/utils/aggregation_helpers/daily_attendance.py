@@ -15,6 +15,13 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
+    def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregate_query()
+
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month = %(month)s'.format(self.tablename), {
             'month': self.month

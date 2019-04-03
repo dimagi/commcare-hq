@@ -12,6 +12,13 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
     tablename = AGG_CHILD_HEALTH_PNC_TABLE
 
+    def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+
     def drop_table_query(self):
         return (
             'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),

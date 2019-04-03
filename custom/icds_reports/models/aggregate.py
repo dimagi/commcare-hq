@@ -164,16 +164,9 @@ class CcsRecordMonthly(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = CcsRecordMonthlyAggregationHelper(month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-        index_queries = helper.indexes()
-
         with get_cursor(cls) as cursor:
             with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(drop_query, drop_params)
-                cursor.execute(agg_query, agg_params)
-                for query in index_queries:
-                    cursor.execute(query)
+                helper.aggregate(cursor)
 
 
 class AwcLocation(models.Model):
@@ -213,19 +206,8 @@ class AwcLocation(models.Model):
     @classmethod
     def aggregate(cls):
         helper = LocationAggregationHelper()
-        drop_table_query = helper.drop_table_query()
-        agg_query = helper.aggregate_query()
-        aww_query = helper.aww_query()
-        ls_query = helper.ls_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_table_query)
-            cursor.execute(agg_query)
-            cursor.execute(aww_query)
-            cursor.execute(ls_query)
-            for rollup_query in rollup_queries:
-                cursor.execute(rollup_query)
+            helper.aggregate(cursor)
 
 
 class ChildHealthMonthly(models.Model):
@@ -318,13 +300,8 @@ class ChildHealthMonthly(models.Model):
     @classmethod
     def aggregate(cls, state_ids, month):
         helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-        drop_query, drop_params = helper.drop_table_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(helper.aggregation_query())
-            for query in helper.indexes():
-                cursor.execute(query)
+            helper.aggregate(cursor)
 
 
 class AggAwc(models.Model):
@@ -481,28 +458,14 @@ class AggAwc(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = AggAwcHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.updates()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
         with get_cursor(cls) as cursor:
-            cursor.execute(agg_query, agg_params)
-            for query, params in update_queries:
-                cursor.execute(query, params)
-            for query in rollup_queries:
-                cursor.execute(query)
-            for query in index_queries:
-                cursor.execute(query)
+            helper.aggregate(cursor)
 
     @classmethod
     def weekly_aggregate(cls, month):
         helper = AggAwcHelper(month)
-        update_queries = helper.weekly_updates()
         with get_cursor(cls) as cursor:
-            for query, params in update_queries:
-                cursor.execute(query, params)
+            helper.weekly_aggregate(cursor)
 
 
 class AggregateLsAWCVisitForm(models.Model):
@@ -517,13 +480,8 @@ class AggregateLsAWCVisitForm(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = LSAwcMgtFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+            helper.aggregate(cursor)
 
 
 class AggregateLsVhndForm(models.Model):
@@ -538,13 +496,8 @@ class AggregateLsVhndForm(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = LSVhndFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+            helper.aggregate(cursor)
 
 
 class AggregateBeneficiaryForm(models.Model):
@@ -559,13 +512,8 @@ class AggregateBeneficiaryForm(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = LSBeneficiaryFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+            helper.aggregate(cursor)
 
 
 class AggLs(models.Model):
@@ -594,28 +542,8 @@ class AggLs(models.Model):
         :return:
         """
         helper = AggLsHelper(month)
-
-        drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0, -1)]
-        create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
-
-        agg_query, agg_params = helper.aggregate_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(3, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(4, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
         with get_cursor(cls) as cursor:
-            for drop_table_query in drop_table_queries:
-                cursor.execute(drop_table_query)
-            for create_table_query, create_params in create_table_queries:
-                cursor.execute(create_table_query, create_params)
-
-            cursor.execute(agg_query, agg_params)
-
-            for rollup_query in rollup_queries:
-                cursor.execute(rollup_query)
-
-            for index_query in index_queries:
-                cursor.execute(index_query)
+            helper.aggregate(cursor)
 
 
 class AggCcsRecord(models.Model):
@@ -680,22 +608,9 @@ class AggCcsRecord(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = AggCcsRecordAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.update_queries()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
         with get_cursor(cls) as cursor:
             with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                for query, params in update_queries:
-                    cursor.execute(query, params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+                helper.aggregate(cursor)
 
 
 class AggChildHealth(models.Model):
@@ -778,22 +693,9 @@ class AggChildHealth(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = AggChildHealthAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.update_queries()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
         with get_cursor(cls) as cursor:
             with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                for query, params in update_queries:
-                    cursor.execute(query, params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+                helper.aggregate(cursor)
 
 
 class AggAwcDaily(models.Model):
@@ -836,21 +738,9 @@ class AggAwcDaily(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = AggAwcDailyAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_query, update_params = helper.update_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = helper.indexes()
-
         with get_cursor(cls) as cursor:
             with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(*helper.create_table_query())
-                cursor.execute(agg_query, agg_params)
-                cursor.execute(update_query, update_params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+                helper.aggregate(cursor)
 
 
 class DailyAttendance(models.Model):
@@ -882,12 +772,8 @@ class DailyAttendance(models.Model):
     @classmethod
     def aggregate(cls, month):
         helper = DailyAttendanceAggregationHelper(month=month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregate_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateComplementaryFeedingForms(models.Model):
@@ -954,12 +840,8 @@ class AggregateComplementaryFeedingForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = ComplementaryFormsAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1005,12 +887,8 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = ComplementaryFormsCcsRecordAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateChildHealthPostnatalCareForms(models.Model):
@@ -1093,12 +971,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1153,12 +1027,8 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1198,12 +1068,8 @@ class AggregateChildHealthTHRForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = THRFormsChildHealthAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateCcsRecordTHRForms(models.Model):
@@ -1239,12 +1105,8 @@ class AggregateCcsRecordTHRForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = THRFormsCcsRecordAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateGrowthMonitoringForms(models.Model):
@@ -1319,12 +1181,8 @@ class AggregateGrowthMonitoringForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1453,12 +1311,8 @@ class AggregateBirthPreparednesForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = BirthPreparednessFormsAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1513,12 +1367,8 @@ class AggregateCcsRecordDeliveryForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = DeliveryFormsAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateInactiveAWW(models.Model):
@@ -1553,12 +1403,8 @@ class AggregateInactiveAWW(models.Model):
     @classmethod
     def aggregate(cls, last_sync):
         helper = InactiveAwwsAggregationHelper(last_sync)
-        missing_location_query = helper.missing_location_query()
-        aggregation_query, agg_params = helper.aggregate_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(missing_location_query)
-            cursor.execute(aggregation_query, agg_params)
+            helper.aggregate(cursor)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1601,12 +1447,8 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = DailyFeedingFormsChildHealthAggregationHelper(state_id, month)
-        drop_query, drop_params = helper.drop_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(drop_query, drop_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AggregateAwcInfrastructureForms(models.Model):
@@ -1654,13 +1496,8 @@ class AggregateAwcInfrastructureForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = AwcInfrastructureAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)
 
 
 class AWWIncentiveReport(models.Model):
@@ -1694,10 +1531,5 @@ class AWWIncentiveReport(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = AwwIncentiveAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+            helper.aggregate(cursor)

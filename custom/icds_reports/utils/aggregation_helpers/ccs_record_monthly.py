@@ -21,6 +21,16 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.month = transform_day_to_month(month)
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
+    def aggregate(self, cursor):
+        drop_query, drop_params = self.drop_table_query()
+        agg_query, agg_params = self.aggregation_query()
+        index_queries = self.indexes()
+
+        cursor.execute(drop_query, drop_params)
+        cursor.execute(agg_query, agg_params)
+        for query in index_queries:
+            cursor.execute(query)
+
     @property
     def ccs_record_monthly_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)

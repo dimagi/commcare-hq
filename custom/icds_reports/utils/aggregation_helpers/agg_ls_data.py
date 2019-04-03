@@ -20,6 +20,28 @@ class AggLsHelper(BaseICDSAggregationHelper):
         self.month_start = transform_day_to_month(month)
         self.next_month_start = self.month_start + relativedelta(months=1)
 
+    def aggregate(self, cursor):
+        drop_table_queries = [self.drop_table_if_exists(i) for i in range(4, 0, -1)]
+        create_table_queries = [self.create_child_table(i) for i in range(4, 0, -1)]
+
+        agg_query, agg_params = self.aggregate_query()
+        rollup_queries = [self.rollup_query(i) for i in range(3, 0, -1)]
+        index_queries = [self.indexes(i) for i in range(4, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
+
+        for drop_table_query in drop_table_queries:
+            cursor.execute(drop_table_query)
+        for create_table_query, create_params in create_table_queries:
+            cursor.execute(create_table_query, create_params)
+
+        cursor.execute(agg_query, agg_params)
+
+        for rollup_query in rollup_queries:
+            cursor.execute(rollup_query)
+
+        for index_query in index_queries:
+            cursor.execute(index_query)
+
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
 

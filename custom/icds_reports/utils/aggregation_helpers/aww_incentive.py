@@ -15,6 +15,14 @@ class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
+
     @property
     def ccs_record_case_ucr_tablename(self):
         doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-ccs_record_cases')
