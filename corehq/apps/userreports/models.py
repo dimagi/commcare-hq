@@ -229,7 +229,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     def filter(self, document, eval_context=None):
         if eval_context is None:
-            EvaluationContext(document)
+            eval_context = EvaluationContext(document)
 
         filter_fn = self._get_main_filter()
         return filter_fn(document, eval_context)
