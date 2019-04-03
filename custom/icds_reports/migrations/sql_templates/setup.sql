@@ -482,12 +482,12 @@ CREATE TABLE agg_child_health
   supervisor_id text NOT NULL,
   awc_id text NOT NULL,
   month date NOT NULL,
-  gender text NOT NULL,
-  age_tranche text NOT NULL,
-  caste text NOT NULL,
-  disabled text NOT NULL,
-  minority text NOT NULL,
-  resident text NOT NULL,
+  gender text,
+  age_tranche text,
+  caste text,
+  disabled text,
+  minority text,
+  resident text,
   valid_in_month integer NOT NULL,
   nutrition_status_weighed integer NOT NULL,
   nutrition_status_unweighed integer NOT NULL,
@@ -518,47 +518,41 @@ CREATE TABLE agg_child_health
   counsel_play_cf_video integer NOT NULL,
   fully_immunized_eligible integer NOT NULL,
   fully_immunized_on_time integer NOT NULL,
-  fully_immunized_late integer NOT NULL
+  fully_immunized_late integer NOT NULL,
+  has_aadhar_id integer,
+  aggregation_level integer,
+  pnc_eligible integer,
+  height_eligible integer,
+  wasting_moderate integer,
+  wasting_severe integer,
+  stunting_moderate integer,
+  stunting_severe integer,
+  cf_initiation_in_month integer,
+  cf_initiation_eligible integer,
+  height_measured_in_month integer,
+  wasting_normal integer,
+  stunting_normal integer,
+  valid_all_registered_in_month integer,
+  ebf_no_info_recorded integer,
+  weighed_and_height_measured_in_month integer,
+  weighed_and_born_in_month integer,
+  days_ration_given_child integer,
+  zscore_grading_hfa_normal int,
+  zscore_grading_hfa_moderate int,
+  zscore_grading_hfa_severe int,
+  wasting_normal_v2 int,
+  wasting_moderate_v2 int,
+  wasting_severe_v2 int,
+  zscore_grading_hfa_recorded_in_month int ,
+  zscore_grading_wfh_recorded_in_month int ,
+  state_is_test smallint,
+  district_is_test smallint,
+  block_is_test smallint,
+  supervisor_is_test smallint,
+  awc_is_test smallint,
+  lunch_count_21_days integer,
+  pse_attended_21_days integer
 );
-ALTER TABLE agg_child_health ALTER COLUMN age_tranche DROP NOT NULL;
-ALTER TABLE agg_child_health ALTER COLUMN disabled DROP NOT NULL;
-ALTER TABLE agg_child_health ALTER COLUMN resident DROP NOT NULL;
-ALTER TABLE agg_child_health ALTER COLUMN caste DROP NOT NULL;
-ALTER TABLE agg_child_health ALTER COLUMN minority DROP NOT NULL;
-ALTER TABLE agg_child_health ALTER COLUMN gender DROP NOT NULL;
-ALTER TABLE agg_child_health ADD COLUMN has_aadhar_id integer;
-ALTER TABLE agg_child_health ADD COLUMN aggregation_level integer;
-ALTER TABLE agg_child_health ADD COLUMN pnc_eligible integer;
-ALTER TABLE agg_child_health ADD COLUMN height_eligible integer;
-ALTER TABLE agg_child_health ADD COLUMN wasting_moderate integer;
-ALTER TABLE agg_child_health ADD COLUMN wasting_severe integer;
-ALTER TABLE agg_child_health ADD COLUMN stunting_moderate integer;
-ALTER TABLE agg_child_health ADD COLUMN stunting_severe integer;
-ALTER TABLE agg_child_health ADD COLUMN cf_initiation_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN cf_initiation_eligible integer;
-ALTER TABLE agg_child_health ADD COLUMN height_measured_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN wasting_normal integer;
-ALTER TABLE agg_child_health ADD COLUMN stunting_normal integer;
-ALTER TABLE agg_child_health ADD COLUMN valid_all_registered_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN ebf_no_info_recorded integer;
-ALTER TABLE agg_child_health ADD COLUMN weighed_and_height_measured_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN weighed_and_born_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN days_ration_given_child integer;
-ALTER TABLE agg_child_health ADD COLUMN zscore_grading_hfa_normal int;
-ALTER TABLE agg_child_health ADD COLUMN zscore_grading_hfa_moderate int;
-ALTER TABLE agg_child_health ADD COLUMN zscore_grading_hfa_severe int;
-ALTER TABLE agg_child_health ADD COLUMN wasting_normal_v2 int;
-ALTER TABLE agg_child_health ADD COLUMN wasting_moderate_v2 int;
-ALTER TABLE agg_child_health ADD COLUMN wasting_severe_v2 int;
-ALTER TABLE agg_child_health ADD COLUMN zscore_grading_hfa_recorded_in_month int ;
-ALTER TABLE agg_child_health ADD COLUMN zscore_grading_wfh_recorded_in_month int ;
-ALTER TABLE agg_child_health ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_child_health ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_child_health ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_child_health ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_child_health ADD COLUMN awc_is_test smallint;
-ALTER TABLE agg_child_health ADD COLUMN lunch_count_21_days integer;
-ALTER TABLE agg_child_health ADD COLUMN pse_attended_21_days integer;
 
 -- Table: daily_attendance
 CREATE TABLE daily_attendance
