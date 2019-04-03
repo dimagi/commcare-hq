@@ -110,6 +110,7 @@ DATABASES.update({
         'PASSWORD': '',
         'HOST': 'citus_worker1',
         'PORT': '5432',
+        'MIGRATE': False,
         'TEST': {
             'SERIALIZE': False,
         },
@@ -123,6 +124,7 @@ DATABASES.update({
         'PASSWORD': '',
         'HOST': 'citus_worker2',
         'PORT': '5432',
+        'MIGRATE': False,
         'TEST': {
             'SERIALIZE': False,
         },

@@ -7,6 +7,8 @@ services:
     labels: ['com.citusdata.role=Master']
     volumes:
       - ${VOLUME_PREFIX}citus_master:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ['/var/run/docker.sock:/var/run/docker.sock']
@@ -20,6 +22,8 @@ services:
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}citus_worker1:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     ports: ["${CITUS_WORKER2_EXTERNAL_PORT:-5602}:5432"]
@@ -27,3 +31,5 @@ services:
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}citus_worker2:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
