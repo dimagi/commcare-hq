@@ -168,9 +168,10 @@ class ToggleEditView(BasePageView):
 
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
-        item_list = request.POST.get('item_list', [])
         randomness = request.POST.get('randomness', None)
         randomness = decimal.Decimal(randomness) if randomness else None
+
+        item_list = request.POST.get('item_list', [])
         if item_list:
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
@@ -179,23 +180,12 @@ class ToggleEditView(BasePageView):
         currently_enabled = set(item_list)
         toggle.enabled_users = item_list
 
-        save_randomness = (
-            self.is_random_editable and randomness is not None
-        )
-        if save_randomness and (0 <= randomness <= 1):
-            setattr(toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, randomness)
-            # clear cache
-            if isinstance(self.toggle_meta(), DynamicallyPredictablyRandomToggle):
-                _clear_caches_for_dynamic_toggle(self.static_toggle)
-
-        elif save_randomness:
-            messages.error(request, "The randomness value {} must be between 0 and 1".format(randomness))
+        if self.is_random_editable and randomness is not None:
+            self._save_randomness(toggle, randomness)
 
         toggle.save()
-        self._notify_on_change(currently_enabled - previously_enabled)
-        changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
-
-        _call_save_fn_and_clear_cache(toggle.slug, changed_entries, currently_enabled, self.static_toggle)
+        _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
+        _call_save_fn_and_clear_cache(self.static_toggle, previously_enabled, currently_enabled)
 
         data = {
             'items': item_list
@@ -206,27 +196,38 @@ class ToggleEditView(BasePageView):
             data['service_type'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
-    def _notify_on_change(self, added_entries):
-        is_deprecated_toggle = (self.static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
-        if added_entries and (self.static_toggle.notification_emails or is_deprecated_toggle):
-            subject = "User {} added {} on {} in environment {}".format(
-                self.request.user.username, self.static_toggle.slug,
-                added_entries, settings.SERVER_ENVIRONMENT
-            )
-
-            if self.static_toggle.notification_emails:
-                emails = [
-                    "{}@{}.com".format(email, "dimagi")
-                    for email in self.static_toggle.notification_emails
-                ]
-                _assert = soft_assert(to=emails, send_to_ops=is_deprecated_toggle)
-            else:
-                _assert = soft_assert(send_to_ops=is_deprecated_toggle)
-
-            _assert(False, subject)
+    def _save_randomness(self, toggle, randomness):
+        if 0 <= randomness <= 1:
+            setattr(toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, randomness)
+            # clear cache
+            if isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle):
+                _clear_caches_for_dynamic_toggle(self.static_toggle)
+        else:
+            messages.error(self.request, "The randomness value {} must be between 0 and 1".format(randomness))
 
 
-def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enabled, static_toggle):
+def _notify_on_change(static_toggle, added_entries, username):
+    is_deprecated_toggle = (static_toggle.tag in (TAG_DEPRECATED, TAG_CUSTOM, TAG_INTERNAL))
+    if added_entries and (static_toggle.notification_emails or is_deprecated_toggle):
+        subject = "User {} added {} on {} in environment {}".format(
+            username, static_toggle.slug,
+            added_entries, settings.SERVER_ENVIRONMENT
+        )
+
+        if static_toggle.notification_emails:
+            emails = [
+                "{}@{}.com".format(email, "dimagi")
+                for email in static_toggle.notification_emails
+            ]
+            _assert = soft_assert(to=emails, send_to_ops=is_deprecated_toggle)
+        else:
+            _assert = soft_assert(send_to_ops=is_deprecated_toggle)
+
+        _assert(False, subject)
+
+
+def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_enabled):
+    changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
     for entry in changed_entries:
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
