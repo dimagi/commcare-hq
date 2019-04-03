@@ -21,20 +21,16 @@
     <div class="row">
         <div class="col-sm-10">
             <p>
-                {% blocktrans %}
-                    Features can be enabled or disabled based on feature flags or privileges. This page
-                    is intended to provide a list of what features a domain has access to.
-                {% endblocktrans %}
+                Features can be enabled or disabled based on feature flags or privileges. This page
+                is intended to provide a list of what features a domain has access to.
             </p>
             {% if use_sql_backend %}
             <div class="alert alert-warning" role="alert">
-                {% blocktrans %}
-                    NOTE: This domain is using the SCALE backend which implies the following feature flags:
-                    <ul>
-                        <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
-                        <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
-                    </ul>
-                {% endblocktrans %}
+                NOTE: This domain is using the SCALE backend which implies the following feature flags:
+                <ul>
+                    <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
+                    <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
+                </ul>
             </div>
             {% endif %}
         </div>
@@ -45,18 +41,16 @@
             <h1>Privileges</h1>
             <p>
                 {% url "domain_subscription_view" domain as software_plan_url %}
-                {% blocktrans %}
-                    Access to some features is dependent on a the software plan to which the domain
-                    is subscribed.
-                    <a href="{{ software_plan_url }}">Current Subscription</a>
-                {% endblocktrans %}
+                Access to some features is dependent on a the software plan to which the domain
+                is subscribed.
+                <a href="{{ software_plan_url }}">Current Subscription</a>
             </p>
         </div>
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>
-                    <th>{% trans "Privilege" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th>Privilege</th>
+                    <th class="checkmark-column">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     {% for privilege_name, enabled_for_domain in privileges %}
@@ -81,27 +75,23 @@
             <h1>Feature Flags</h1>
             <p>
                 {% url 'toggle_list' as toggle_url %}
-                {% blocktrans %}
-                    Feature Flags turn on features for individual users or projects. They are editable only by
-                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
-                    In addition, some feature flags are randomly enabled by domain.
-                {% endblocktrans %}
+                Feature Flags turn on features for individual users or projects. They are editable only by
+                super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+                In addition, some feature flags are randomly enabled by domain.
             </p>
             <p>
-                {% blocktrans %}
-                    Following are all flags enabled for this domain and/or for you.
-                    This does not include any flags set for other users in this domain.
-                {% endblocktrans %}
+                Following are all flags enabled for this domain and/or for you.
+                This does not include any flags set for other users in this domain.
             </p>
         </div>
         <div class="col-sm-10">
             <table class="table table-striped" id="toggles-table">
                 <thead>
-                    <th>{% trans "Tag" %}</th>
-                    <th>{% trans "Feature" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for me?" %}</th>
-                    <th>{% trans "Edit" %}</th>
+                    <th>Tag</th>
+                    <th>Feature</th>
+                    <th class="checkmark-column">Enabled for domain?</th>
+                    <th class="checkmark-column">Enabled for me?</th>
+                    <th>Edit</th>
                 </thead>
                 <tbody data-bind="foreach: toggles">
                     <tr data-bind="css: cssClass">
@@ -135,7 +125,7 @@
                         <td class="checkmark-column">
                             <i class="fa fa-check" data-bind="visible: userEnabled"></i>
                         </td>
-                        <td><a data-bind="attr: {href: url}">{% trans "change" %}</a></td>
+                        <td><a data-bind="attr: {href: url}">change</a></td>
                     </tr>
                 </tbody>
             </table>
@@ -149,8 +139,8 @@
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>
-                    <th>{% trans "Feature" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th>Feature</th>
+                    <th class="checkmark-column">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
