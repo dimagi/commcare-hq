@@ -11,6 +11,14 @@
     width: inherit;
 }
 
+.alert-maintenance,
+.alert-trial {
+  z-index:@zindex-navbar;
+  position: relative;
+  text-align: center;
+  margin-bottom: 0;
+}
+
 .fixes-filters {
     position: fixed;
     z-index: 1;

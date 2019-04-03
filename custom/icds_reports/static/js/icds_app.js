@@ -35,6 +35,18 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         return false;
     };
 
+    var $maintenance = $(".alert-maintenance");
+    if ($maintenance.length) {
+        var id = $maintenance.data("id"),
+            alertCookie = "alert_maintenance";
+        if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+            $maintenance.removeClass('hide');
+            $maintenance.on('click', '.close', function () {
+                $.cookie(alertCookie, id, { expires: 7, path: '/' });
+            });
+        }
+    }
+
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
             $window.location.href = reportAnIssueUrl;
