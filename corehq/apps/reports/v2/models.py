@@ -167,7 +167,8 @@ class BaseColumnFilter(object):
     def get_filtered_query(self, query, config):
         """
         Override this to return the filtered query
-        :param query:
+        :param query: chain-able query (like ESQuery)
+        :param config: dict
         :return: query
         """
         raise NotImplementedError("please implement get_filtered_query")
