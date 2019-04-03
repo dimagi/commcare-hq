@@ -111,6 +111,7 @@ services:
     depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
+      POSTGRES_DB: commcare_ucr_citus
   citus_worker1:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
