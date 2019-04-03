@@ -3,12 +3,14 @@ hqDefine('domain/js/toggles', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
     'hqwebapp/js/main',
 ], function (
     $,
     ko,
     _,
-    initialPageData
+    initialPageData,
+    alertUser
 ) {
 
     var Toggle = function (data) {
@@ -31,9 +33,22 @@ hqDefine('domain/js/toggles', [
             }
         });
 
+        self.setTogglePending = ko.observable(false);
         self.toggleEnabledState = function () {
+            self.setTogglePending(true);
             var newState = !self.domainEnabled();
-            self.domainEnabled(newState);
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse('set_toggle', self.slug),
+                data: {
+                    item: initialPageData.get('domain'),
+                    enabled: newState,
+                    namespace: 'domain',
+                },
+                success: function () { self.domainEnabled(newState); },
+                error: function () { alertUser.alert_user("Something went wrong", 'danger'); },
+                complete: function () { self.setTogglePending(false); },
+            });
         };
 
         return self;

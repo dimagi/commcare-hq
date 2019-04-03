@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
@@ -355,3 +356,18 @@ def _get_most_recently_used(last_used):
         'name': most_recently_used[0],
         'date': last_used[most_recently_used[0]]
     } if most_recently_used else None
+
+
+@require_superuser_or_contractor
+@require_POST
+def set_toggle(request, toggle_slug):
+    toggle = find_static_toggle(toggle_slug)
+    if not toggle:
+        raise Http404()
+
+    toggle.set(
+        item=request.POST['item'],
+        enabled=request.POST['enabled'] == 'true',
+        namespace=request.POST['namespace'],
+    )
+    return HttpResponse(json.dumps({'success': True}), content_type="application/json")

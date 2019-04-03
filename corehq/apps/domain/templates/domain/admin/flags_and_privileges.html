@@ -15,7 +15,9 @@
 {% endblock %}
 {% block page_content %}
 
+    {% initial_page_data 'domain' domain %}
     {% initial_page_data 'toggles' toggles %}
+    {% registerurl 'set_toggle' '---' %}
 
     <div class="row">
         <div class="col-sm-10">
@@ -123,11 +125,13 @@
 
                         <td class="checkmark-column">
                             <div data-bind="visible: hasDomainNamespace">
+                                <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
                                 <button type="button"
                                         class="btn"
                                         data-bind="click: toggleEnabledState,
                                                 css: {
                                                     'active': domainEnabled,
+                                                    'disabled': setTogglePending,
                                                     'btn-primary': domainEnabled,
                                                     'btn-default': !domainEnabled(),
                                                 },
