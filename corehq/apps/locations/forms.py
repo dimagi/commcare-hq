@@ -53,7 +53,7 @@ class LocationSelectWidget(forms.Widget):
         location_ids = value or []
         if location_ids and not self.multiselect:
             location_ids = location_ids.split(',')
-        if location_ids and isinstance(location_ids[0], dict):
+        elif location_ids and isinstance(location_ids[0], dict):
             location_ids = [loc['id'] for loc in location_ids]
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
