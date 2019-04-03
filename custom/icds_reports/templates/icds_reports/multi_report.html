@@ -16,16 +16,20 @@
 
             self.providerSlug = options.providerSlug;
             self.queryUrl = "{{ request.get_full_path }}";
+            self.loadingFailed = ko.observable(false);
 
             self.init = function(){
+                var $element = $("#" + self.providerSlug);
                 $.ajax({
                     url: self.queryUrl + "&provider_slug=" + self.providerSlug,
                     success: function(data) {
-                        var $element = $("#" + self.providerSlug);
                         $element.html(data.report);
                         progressCount++;
                         var progressHtml = "<span>" + progressCount + " / "+ dataProviders.length + " reports loaded</span>";
                         $("#progressCount").html(progressHtml);
+                    },
+                    error: function(){
+                        self.loadingFailed(true);
                     }
                     // Todo; handle error
                 });
@@ -72,9 +76,12 @@
         <br/>
         <br/>
             <h2 class="media-heading">{{ provider.title }}</h2><br/>
-            <div style="text-align: center;">
+            <div style="text-align: center;" data-bind="visible: !loadingFailed()">
                 <h4>{% trans "Loading Report" %}</h4>
                 <i class="fa fa-spin fa-spinner fa-3x"></i>
+            </div>
+            <div class="alert alert-danger" data-bind="visible: loadingFailed()">
+                Error loading this report
             </div>
         <br/>
         </div>

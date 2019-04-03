@@ -94,9 +94,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @property
     def report_context(self):
         if self.should_render_subreport:
-            import random
-            import time
-            time.sleep(random.randint(2, 6))
             subreport = self.request.GET.get('provider_slug', None)
             dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
             return {'report': self.get_report_context(dp)}
