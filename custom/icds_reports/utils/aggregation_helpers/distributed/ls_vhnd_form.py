@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_LS_VHND_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class LSVhndFormAggHelper(BaseICDSAggregationHelper):
+class LSVhndFormAggDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-ls_vhnd_form'
     aggregate_parent_table = AGG_LS_VHND_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_vhnd_form_'

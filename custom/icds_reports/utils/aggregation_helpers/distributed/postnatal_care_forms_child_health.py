@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from custom.icds_reports.const import AGG_CHILD_HEALTH_PNC_TABLE
 
 
-class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+class PostnatalCareFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
     tablename = AGG_CHILD_HEALTH_PNC_TABLE
 

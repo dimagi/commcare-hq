@@ -7,17 +7,17 @@ from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AggCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = 'agg_ccs_record'
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        helper = AggCcsRecordAggregationHelper(self.month)
+        helper = AggCcsRecordAggregationDistributedHelper(self.month)
         agg_query, agg_params = self.aggregation_query()
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]

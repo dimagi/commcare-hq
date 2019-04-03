@@ -5,10 +5,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DAILY_FEEDING_TABLE_ID
 from custom.icds_reports.utils.aggregation_helpers import date_to_string, transform_day_to_month
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
+class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     tablename = 'daily_attendance'
     ucr_daily_attendance_table = DAILY_FEEDING_TABLE_ID
 

@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_DAILY_FEEDING_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
     tablename = AGG_DAILY_FEEDING_TABLE
 

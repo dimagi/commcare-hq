@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 import datetime
 from django.utils.functional import cached_property
 
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
+class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-usage_forms'
     temp_tablename = 'tmp_awc_location'
 

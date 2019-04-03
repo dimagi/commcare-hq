@@ -6,7 +6,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 
 
-class BaseICDSAggregationHelper(object):
+class BaseICDSAggregationDistributedHelper(object):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
 

@@ -9,10 +9,10 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_CF_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
+class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 

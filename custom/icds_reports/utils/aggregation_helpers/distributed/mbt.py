@@ -7,7 +7,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
 
 
-class MBTHelper(object):
+class MBTDistributedHelper(object):
 
     def __init__(self, state_id, month):
         self.state_id = state_id
@@ -46,7 +46,7 @@ class MBTHelper(object):
         )
 
 
-class CcsMbtHelper(MBTHelper):
+class CcsMbtDistributedHelper(MBTDistributedHelper):
     base_class = CcsRecordMonthly
 
     @property
@@ -141,7 +141,7 @@ class CcsMbtHelper(MBTHelper):
                 'date_death')
 
 
-class ChildHealthMbtHelper(MBTHelper):
+class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
     base_class = ChildHealthMonthly
 
     @property
@@ -253,7 +253,7 @@ class ChildHealthMbtHelper(MBTHelper):
         )
 
 
-class AwcMbtHelper(MBTHelper):
+class AwcMbtDistributedHelper(MBTDistributedHelper):
     base_class = AggAwc
 
     @property

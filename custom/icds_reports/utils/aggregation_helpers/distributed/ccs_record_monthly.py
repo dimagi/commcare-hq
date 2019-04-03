@@ -12,10 +12,10 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE)
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
+class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = 'ccs_record_monthly'
 
     def __init__(self, month):

@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
+class AwcInfrastructureAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-infrastructure_form_v2'
     aggregate_parent_table = AGG_INFRASTRUCTURE_TABLE
     aggregate_child_table_prefix = 'icds_db_infra_form_'

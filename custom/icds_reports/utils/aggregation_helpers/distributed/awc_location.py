@@ -4,11 +4,11 @@ from __future__ import unicode_literals
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from six.moves import map
 
 
-class LocationAggregationHelper(BaseICDSAggregationHelper):
+class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = 'awc_location'
 
     ucr_location_table = AWC_LOCATION_TABLE_ID

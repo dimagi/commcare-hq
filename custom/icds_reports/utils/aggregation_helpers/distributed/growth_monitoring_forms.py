@@ -5,10 +5,10 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_GROWTH_MONITORING_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
+class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
     tablename = AGG_GROWTH_MONITORING_TABLE
 

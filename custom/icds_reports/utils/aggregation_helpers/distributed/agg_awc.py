@@ -11,10 +11,10 @@ from six.moves import map
 from corehq.util.python_compatibility import soft_assert_type_text
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class AggAwcHelper(BaseICDSAggregationHelper):
+class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     base_tablename = 'agg_awc'
     ucr_data_source_id = 'static-awc_location'
 

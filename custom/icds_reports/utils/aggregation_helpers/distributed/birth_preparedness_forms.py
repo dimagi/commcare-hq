@@ -6,10 +6,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_CCS_RECORD_BP_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
+class BirthPreparednessFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
     tablename = AGG_CCS_RECORD_BP_TABLE
 

@@ -13,10 +13,10 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
 )
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
+class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     """This helper differs from the others in the following ways:
 
     * It must insert into a temporary table before inserting into the final table

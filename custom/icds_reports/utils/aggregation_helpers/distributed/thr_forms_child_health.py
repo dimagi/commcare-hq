@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.const import AGG_CHILD_HEALTH_THR_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+class THRFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-dashboard_thr_forms'
     tablename = AGG_CHILD_HEALTH_THR_TABLE
 

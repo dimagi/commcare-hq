@@ -5,10 +5,10 @@ from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class ComplementaryFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+class ComplementaryFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
     tablename = AGG_CCS_RECORD_CF_TABLE
 

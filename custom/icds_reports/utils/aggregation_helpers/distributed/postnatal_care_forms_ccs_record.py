@@ -6,10 +6,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_CCS_RECORD_PNC_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
-class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
+class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
     tablename = AGG_CCS_RECORD_PNC_TABLE
 
