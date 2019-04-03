@@ -68,6 +68,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
+_use_citus = override_settings(ICDS_USE_CITS=True)
+
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
@@ -78,6 +80,7 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
+    _use_citus.enable()
 
     domain = create_domain('icds-cas')
     SQLLocation.objects.all().delete()
@@ -284,6 +287,7 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
+    _use_citus.disable()
     _call_center_domain_mock.stop()
 
 
