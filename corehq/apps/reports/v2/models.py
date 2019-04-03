@@ -54,7 +54,8 @@ class BaseReport(object):
     def get_column_filter(self, filter_type):
         name_to_class = dict([(f.filter_type, f) for f in self.column_filters])
         try:
-            return name_to_class[filter_type]
+            filter_class = name_to_class[filter_type]
+            return filter_class(self.domain)
         except (KeyError, NameError):
             raise ColumnFilterNotFoundError(
                 "ColumnFilter '{}' cannot be found.".format(filter_type)
@@ -160,8 +161,10 @@ class BaseColumnFilter(object):
     title = None
     choices = []
 
-    @classmethod
-    def get_filtered_query(cls, query, config):
+    def __init__(self, domain):
+        self.domain = domain
+
+    def get_filtered_query(self, query, config):
         """
         Override this to return the filtered query
         :param query:
