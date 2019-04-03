@@ -49,9 +49,8 @@ class ExploreCaseDataReport(BaseReport):
 
     def get_data_response(self, endpoint):
         query = self._get_base_query()
-
-        # todo think about filtering
-        # for f in self.get_filters():
-        #     query = f.get_filtered_query(query)
+        for config in endpoint.report_context.get('columnFilters', []):
+            column_filter = self.get_column_filter(config['filterType'])
+            query = column_filter.get_filtered_query(query, config)
 
         return endpoint.get_response(query, CaseDataFormatter)
