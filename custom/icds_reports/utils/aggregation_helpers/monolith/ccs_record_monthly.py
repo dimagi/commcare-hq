@@ -16,6 +16,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'ccs-record-monthly'
     base_tablename = 'ccs_record_monthly'
 
     def __init__(self, month):

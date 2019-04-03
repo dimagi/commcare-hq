@@ -8,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class THRFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'thr-forms-child-health'
     ucr_data_source_id = 'static-dashboard_thr_forms'
     tablename = AGG_CHILD_HEALTH_THR_TABLE
 

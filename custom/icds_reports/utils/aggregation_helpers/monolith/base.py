@@ -6,7 +6,16 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 
 
-class BaseICDSAggregationHelper(object):
+class AggregationHelper(object):
+    """Base class used to tag aggregation helpers for monolithic postgres
+
+    See ..distributed.base.DistributedAggregationHelper for corresponding class
+    for distributed postgres
+    """
+    helper_key = None  # must match the corresponding key on the distributed helper
+
+
+class BaseICDSAggregationHelper(AggregationHelper):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
 

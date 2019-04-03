@@ -15,6 +15,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'agg-awc'
     base_tablename = 'agg_awc'
     ucr_data_source_id = 'static-awc_location'
 

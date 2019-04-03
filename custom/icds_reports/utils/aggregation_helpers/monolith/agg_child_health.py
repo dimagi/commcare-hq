@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-child-health'
     base_tablename = 'agg_child_health'
 
     def __init__(self, month):

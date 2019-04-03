@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class LSVhndFormAggHelper(BaseICDSAggregationHelper):
+    helper_key = 'ls-vhnd-form'
     ucr_data_source_id = 'static-ls_vhnd_form'
     aggregate_parent_table = AGG_LS_VHND_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_vhnd_form_'

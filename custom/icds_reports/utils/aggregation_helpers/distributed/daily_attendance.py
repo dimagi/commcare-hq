@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class DailyAttendanceAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'daily-attendance'
     tablename = 'daily_attendance'
     ucr_daily_attendance_table = DAILY_FEEDING_TABLE_ID
 

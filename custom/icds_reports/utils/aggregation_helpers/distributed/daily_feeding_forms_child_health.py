@@ -8,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'daily-feeding-forms-child-health'
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
     tablename = AGG_DAILY_FEEDING_TABLE
 

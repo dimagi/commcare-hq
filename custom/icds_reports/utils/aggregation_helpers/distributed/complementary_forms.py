@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class ComplementaryFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'complementary-forms'
     ucr_data_source_id = 'static-complementary_feeding_forms'
     tablename = AGG_COMP_FEEDING_TABLE
 

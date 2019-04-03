@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'postnatal-care-forms-child-health'
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_PNC_TABLE
     aggregate_child_table_prefix = 'icds_db_child_pnc_form_'

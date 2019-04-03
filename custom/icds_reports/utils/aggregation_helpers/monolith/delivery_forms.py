@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'delivery-forms'
     ucr_data_source_id = 'static-dashboard_delivery_forms'
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
     aggregate_child_table_prefix = 'icds_db_delivery_form_'

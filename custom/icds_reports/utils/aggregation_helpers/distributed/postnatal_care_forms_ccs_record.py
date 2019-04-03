@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class PostnatalCareFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'postnatal-care-forms-ccs-record'
     ucr_data_source_id = 'static-postnatal_care_forms'
     tablename = AGG_CCS_RECORD_PNC_TABLE
 

@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class BirthPreparednessFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'birth-preparedness-forms'
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
     tablename = AGG_CCS_RECORD_BP_TABLE
 

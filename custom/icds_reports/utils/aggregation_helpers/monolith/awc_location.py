@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'location'
     base_tablename = 'awc_location'
 
     ucr_location_table = AWC_LOCATION_TABLE_ID

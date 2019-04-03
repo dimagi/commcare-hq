@@ -12,6 +12,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AwwIncentiveAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'awc-incentive'
     aggregate_parent_table = AWW_INCENTIVE_TABLE
     aggregate_child_table_prefix = 'icds_db_aww_incentive_'
 

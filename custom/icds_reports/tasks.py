@@ -83,6 +83,7 @@ from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
     create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, \
     create_lady_supervisor_excel_file
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import ChildHealthMonthlyAggregationHelper
 from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
     CcsMbtHelper,
@@ -492,7 +493,7 @@ def get_cursor(model, write=True):
 
 @track_time
 def _child_health_monthly_table(state_ids, day):
-    helper = ChildHealthMonthlyAggregationHelper(state_ids, force_to_date(day))
+    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
     with get_cursor(ChildHealthMonthly) as cursor:
@@ -1034,7 +1035,7 @@ def build_incentive_report(agg_date=None):
 def create_mbt_for_month(state_id, month):
     helpers = (CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper)
     for helper_class in helpers:
-        helper = helper_class(state_id, month)
+        helper = get_helper(helper_class.helper_key)(state_id, month)
         with get_cursor(helper.base_class, write=False) as cursor, tempfile.TemporaryFile() as f:
             cursor.copy_expert(helper.query(), f)
             f.seek(0)

@@ -28,7 +28,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     * Partition the child_health_monthly table (may be done in citus work).
       This would make it much easier to make it like other helpers
     """
-
+    helper_key = 'child-health-monthly'
     base_tablename = 'child_health_monthly'
 
     def __init__(self, state_ids, month):

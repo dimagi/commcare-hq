@@ -5,9 +5,10 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
+from custom.icds_reports.utils.aggregation_helpers.distributed.base import DistributedAggregationHelper
 
 
-class MBTDistributedHelper(object):
+class MBTDistributedHelper(DistributedAggregationHelper):
 
     def __init__(self, state_id, month):
         self.state_id = state_id
@@ -47,6 +48,7 @@ class MBTDistributedHelper(object):
 
 
 class CcsMbtDistributedHelper(MBTDistributedHelper):
+    helper_key = 'css-mbt'
     base_class = CcsRecordMonthly
 
     @property
@@ -142,6 +144,7 @@ class CcsMbtDistributedHelper(MBTDistributedHelper):
 
 
 class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
+    helper_key = 'child-health-mbt'
     base_class = ChildHealthMonthly
 
     @property
@@ -254,6 +257,7 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
 
 
 class AwcMbtDistributedHelper(MBTDistributedHelper):
+    helper_key = 'awc-mbt'
     base_class = AggAwc
 
     @property

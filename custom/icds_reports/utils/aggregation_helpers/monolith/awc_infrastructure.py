@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'awc-infrastructure'
     ucr_data_source_id = 'static-infrastructure_form_v2'
     aggregate_parent_table = AGG_INFRASTRUCTURE_TABLE
     aggregate_child_table_prefix = 'icds_db_infra_form_'

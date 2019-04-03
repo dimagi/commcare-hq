@@ -8,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class THRFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'thr-forms-ccs-record'
     ucr_data_source_id = 'static-dashboard_thr_forms'
     tablename = AGG_CCS_RECORD_THR_TABLE
 

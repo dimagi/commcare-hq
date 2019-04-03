@@ -11,6 +11,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'birth-preparedness-forms'
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
     aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
     aggregate_child_table_prefix = 'icds_db_bp_form_'

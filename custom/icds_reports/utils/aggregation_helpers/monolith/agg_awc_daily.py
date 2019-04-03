@@ -10,6 +10,7 @@ from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDS
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
+    helper_key = 'agg-awc-daily'
     aggregate_parent_table = 'agg_awc_daily'
 
     def __init__(self, date):

@@ -8,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'inactive-awws'
     ucr_data_source_id = 'static-usage_forms'
     temp_tablename = 'tmp_awc_location'
 

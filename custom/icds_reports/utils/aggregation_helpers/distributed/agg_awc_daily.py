@@ -11,6 +11,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'agg-awc-daily'
     aggregate_parent_table = 'agg_awc_daily'
 
     def __init__(self, date):

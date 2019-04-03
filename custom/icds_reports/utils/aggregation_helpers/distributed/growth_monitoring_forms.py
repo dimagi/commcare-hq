@@ -9,6 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'growth-monitoring-forms'
     ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
     tablename = AGG_GROWTH_MONITORING_TABLE
 

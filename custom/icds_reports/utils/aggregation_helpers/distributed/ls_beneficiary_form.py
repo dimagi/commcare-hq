@@ -8,6 +8,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 
 
 class LSBeneficiaryFormAggDistributedHelper(BaseICDSAggregationDistributedHelper):
+    helper_key = 'ls-beneficiary-form'
     ucr_data_source_id = 'static-ls_home_visit_forms_filled'
     aggregate_parent_table = AGG_LS_BENEFICIARY_TABLE
     aggregate_child_table_prefix = 'icds_db_ls_beneficiary_form_'
