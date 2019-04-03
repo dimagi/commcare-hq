@@ -69,7 +69,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.filterOptions = ko.computed(function () {
             return _.filter(self.availableFilters(), function (filter) {
                 return filter.filterType() === self.appliedFilterType();
-            })
+            });
         });
 
         self.columnNameOptions = ko.observableArray();
