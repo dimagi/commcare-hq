@@ -421,10 +421,10 @@ CREATE TABLE agg_ccs_record
   month date NOT NULL,
   ccs_status text NOT NULL,
   trimester text,
-  caste text NOT NULL,
-  disabled text NOT NULL,
-  minority text NOT NULL,
-  resident text NOT NULL,
+  caste text,
+  disabled text,
+  minority text,
+  resident text,
   valid_in_month integer NOT NULL,
   lactating integer NOT NULL,
   pregnant integer NOT NULL,
@@ -436,7 +436,7 @@ CREATE TABLE agg_ccs_record
   anc2_received_at_delivery integer NOT NULL,
   anc3_received_at_delivery integer NOT NULL,
   anc4_received_at_delivery integer NOT NULL,
-  registration_trimester_at_delivery numeric NOT NULL,
+  registration_trimester_at_delivery numeric,
   using_ifa integer NOT NULL,
   ifa_consumed_last_seven_days integer NOT NULL,
   anemic_normal integer NOT NULL,
@@ -457,27 +457,21 @@ CREATE TABLE agg_ccs_record
   counsel_immediate_bf integer NOT NULL,
   counsel_fp_vid integer NOT NULL,
   counsel_immediate_conception integer NOT NULL,
-  counsel_accessible_postpartum_fp integer NOT NULL
+  counsel_accessible_postpartum_fp integer NOT NULL,
+  has_aadhar_id integer,
+  aggregation_level integer,
+  valid_all_registered_in_month integer,
+  institutional_delivery_in_month integer,
+  lactating_all integer,
+  pregnant_all integer,
+  valid_visits int,
+  expected_visits decimal,
+  state_is_test smallint,
+  district_is_test smallint,
+  block_is_test smallint,
+  supervisor_is_test smallint,
+  awc_is_test smallint
 );
-ALTER TABLE agg_ccs_record ALTER COLUMN registration_trimester_at_delivery DROP NOT NULL;
-ALTER TABLE agg_ccs_record ALTER COLUMN disabled DROP NOT NULL;
-ALTER TABLE agg_ccs_record ALTER COLUMN resident DROP NOT NULL;
-ALTER TABLE agg_ccs_record ALTER COLUMN caste DROP NOT NULL;
-ALTER TABLE agg_ccs_record ALTER COLUMN minority DROP NOT NULL;
-ALTER TABLE agg_ccs_record ADD COLUMN has_aadhar_id integer;
-ALTER TABLE agg_ccs_record ADD COLUMN aggregation_level integer;
-ALTER TABLE agg_ccs_record ADD COLUMN valid_all_registered_in_month integer;
-ALTER TABLE agg_ccs_record ADD COLUMN institutional_delivery_in_month integer;
-ALTER TABLE agg_ccs_record ADD COLUMN lactating_all integer;
-ALTER TABLE agg_ccs_record ADD COLUMN pregnant_all integer;
-ALTER TABLE agg_ccs_record ADD COLUMN valid_visits int;
-ALTER TABLE agg_ccs_record ADD COLUMN expected_visits int;
-ALTER TABLE agg_ccs_record ALTER COLUMN expected_visits type decimal;
-ALTER TABLE agg_ccs_record ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_ccs_record ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_ccs_record ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_ccs_record ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_ccs_record ADD COLUMN awc_is_test smallint;
 
 -- Table: agg_child_health
 CREATE TABLE agg_child_health
