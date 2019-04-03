@@ -4,6 +4,8 @@ group: edge
 branches:
   only:
     - master
+    - master-travis-4-job
+    - master-travis-5-job-no-skip
 env:
   matrix:
     # need node installs for app_manager.XpathValidatorTest
