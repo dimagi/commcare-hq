@@ -10,10 +10,8 @@ import csv342 as csv
 
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from six.moves import zip
-from unittest2 import skip
 
 
-@skip("This test is breaking the build on master and should be debugged on a branch.")
 class TestLocationView(CSVTestCase):
     always_include_columns = {'awc_id', 'case_id'}
     # indicator numbers:
