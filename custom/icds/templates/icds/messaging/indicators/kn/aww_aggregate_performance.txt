@@ -1,10 +1,10 @@
-Aggregate Performance Report over the last 30 days for your AWC
+ನಿಮ್ಮ ಅಂಗನವಾಡಿ ಕೇಂದ್ರಕ್ಕೆ ಸಂಬಂಧಿಸಿದ ಕೊನೆಯ 30 ದಿನಗಳಲ್ಲಿ ಒಟ್ಟು ಸಾಧನೆಯ ವರದಿ
 
-1. Number of visits / Number of desired visits: {{ visits }} / 65
-2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+1. ಭೇಟಿಗಳ ಸಂಖ್ಯೆ /  ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ನೀಡಿದ ಭೇಟಿಗಳ ಸಂಖ್ಯೆ: {{ visits }} / {{ visits_goal }}
+2. ಭೇಟಿಗಳ ಸಂಖ್ಯೆ / ಸಮಯಕ್ಕೆ ಸರಿಯಾಗಿ ನೀಡಿದ ಭೇಟಿಗಳ ಸಂಖ್ಯೆ: {{ on_time_visits }} / {{ visits }}
 
-THR Distribution: {{ thr_distribution }}
+ಟಿ‍ಹೆಚ್‍ಆರ್ ವಿತರಣೆ: {{ thr_distribution }}
 
-Number of children weighed: {{ children_weighed }}
+ತೂಕ ಮಾಡಿದ ಸಂಖ್ಯೆ: {{ children_weighed }}
 
-Days AWC open / Goal: {{ days_open }} / 25
+ಅಂಗನವಾಡಿ ಕೇಂದ್ರ ತೆರೆದಿರುವ ದಿನಗಳ ಸರಾಸರಿ ಸಂಖ್ಯೆ/ ಗುರಿ: {{ days_open }} / 25
