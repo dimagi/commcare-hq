@@ -244,28 +244,6 @@ class ToggleEditView(ToggleBaseView):
             _assert(False, subject)
 
 
-def toggle_app_manager_v2(request):
-    slug = "app_manager_v2"
-    on_or_off = request.POST.get('on_or_off', 'on')
-    try:
-        toggle = Toggle.get(slug)
-    except ResourceNotFound:
-        toggle = Toggle(slug=slug)
-
-    enable = on_or_off == "on"
-    enabled = request.user.username in toggle.enabled_users
-    if enable != enabled:
-        changed_entries = [request.user.username]
-        if enable:
-            toggle.enabled_users.append(request.user.username)
-        else:
-            toggle.enabled_users.remove(request.user.username)
-        toggle.save()
-        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, find_static_toggle(slug))
-
-    return HttpResponse(json.dumps({'success': True}), content_type="application/json")
-
-
 def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enabled, static_toggle):
     for entry in changed_entries:
         enabled = entry in currently_enabled
