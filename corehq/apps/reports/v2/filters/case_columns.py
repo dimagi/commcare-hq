@@ -38,3 +38,32 @@ class TextCaseColumnFilter(BaseColumnFilter):
             query = query.case_property_query(property_name, value, clause)
 
         return query
+
+
+class NumericCaseColumnFilter(BaseColumnFilter):
+    filter_type = 'case_numeric'
+    title = ugettext_lazy("Number")
+    choices = [
+        FilterChoiceMeta('equals', ugettext_lazy('is equal to')),
+        FilterChoiceMeta('greater_than', ugettext_lazy('is greater than')),
+        FilterChoiceMeta('less_than', ugettext_lazy('is less than')),
+        FilterChoiceMeta('not_equals', ugettext_lazy('is not equal to')),
+    ]
+
+    def get_filtered_query(self, query, config):
+        property_name = config['propertyName']
+        filter_name = config['filterName']
+        value = config['filterValue']
+
+        if value == "":
+            operator = "!=" if filter_name.startswith('not_') else "="
+            query = query.xpath_query(self.domain, "{} {} ''".format(property_name, operator))
+        elif filter_name.endswith('equals'):
+            clause = queries.MUST_NOT if filter_name.startswith('not_') else queries.MUST
+            query = query.case_property_query(property_name, value, clause)
+        elif filter_name == 'greater_than':
+            query = query.numeric_range_case_property_query(property_name, gt=value)
+        elif filter_name == 'less_than':
+            query = query.numeric_range_case_property_query(property_name, lt=value)
+
+        return query

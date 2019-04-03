@@ -7,7 +7,10 @@ from corehq.apps.reports.v2.endpoints.case_properties import (
     CasePropertiesEndpoint
 )
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
-from corehq.apps.reports.v2.filters.case_columns import TextCaseColumnFilter
+from corehq.apps.reports.v2.filters.case_columns import (
+    TextCaseColumnFilter,
+    NumericCaseColumnFilter,
+)
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
@@ -42,6 +45,7 @@ class ExploreCaseDataReport(BaseReport):
 
     column_filters = (
         TextCaseColumnFilter,
+        NumericCaseColumnFilter,
     )
 
     def _get_base_query(self):
@@ -49,6 +53,7 @@ class ExploreCaseDataReport(BaseReport):
 
     def get_data_response(self, endpoint):
         query = self._get_base_query()
+
         for config in endpoint.report_context.get('columnFilters', []):
             column_filter = self.get_column_filter(config['filterType'])
             query = column_filter.get_filtered_query(query, config)
