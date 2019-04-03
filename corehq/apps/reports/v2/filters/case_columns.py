@@ -17,8 +17,7 @@ class TextCaseColumnFilter(BaseColumnFilter):
         FilterChoiceMeta('not_equals', ugettext_lazy('Does Not Equal')),
     ]
 
-    @classmethod
-    def get_filtered_query(cls, query, config):
+    def get_filtered_query(self, query, config):
         property_name = config['propertyName']
         filter_name = config['filterName']
         value = config['filterValue']
