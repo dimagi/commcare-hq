@@ -29,20 +29,8 @@ hqDefine('reports/v2/js/datagrid', [
         self.data = options.dataModel;
         self.columns = ko.observableArray();
 
-        self.reportContext = ko.computed(function () {
-            return {
-                existingColumnNames: _.map(self.columns(), function (column) {
-                    return column.name();
-                }),
-                columnsWithFilters: _.filter(self.columns(), function (column) {
-                    return column.appliedFilters().length > 0;
-                }),
-            };
-        });
-
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
-            reportContext: self.reportContext,
             availableFilters: options.availableFilters,
         });
 
@@ -50,7 +38,22 @@ hqDefine('reports/v2/js/datagrid', [
             _.each(options.initialColumns, function (data) {
                 self.columns.push(columns.columnModel(data));
             });
+
+            self.reportContext = ko.computed(function () {
+                return {
+                    existingColumnNames: _.map(self.columns(), function (column) {
+                        return column.name();
+                    }),
+                    columnFilters: _.flatten(_.map(_.filter(self.columns(), function (column) {
+                        return column.appliedFilters().length > 0;
+                    }), function (column) {
+                        return column.getFilters();
+                    })),
+                };
+            });
+
             self.data.init(self.reportContext);
+            self.editColumnController.init(self.reportContext);
         };
 
         self.updateColumn = function (column) {

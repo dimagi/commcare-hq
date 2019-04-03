@@ -36,6 +36,17 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return ko.mapping.toJS(self);
         };
 
+        self.getFilters = function () {
+            return _.map(self.appliedFilters(), function (appliedFilter) {
+                return {
+                    propertyName: self.name(),
+                    filterType: appliedFilter.filter().filterType(),
+                    filterName: appliedFilter.filter().name(),
+                    filterValue: appliedFilter.value(),
+                };
+            });
+        };
+
         return self;
     };
 
@@ -43,7 +54,6 @@ hqDefine('reports/v2/js/datagrid/columns', [
         var self = {};
 
         self.endpoint = options.endpoint;
-        self.reportContext = options.reportContext;
 
         self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
             return filters.columnFilterModel(data);
@@ -55,6 +65,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.column = ko.observable();
         self.isNew = ko.observable();
         self.hasFilterUpdate = ko.observable(false);
+
+        self.init = function (reportContextObservable) {
+            self.reportContext = reportContextObservable;
+        };
 
         self.setNew = function () {
             self.reloadOptions();
@@ -102,6 +116,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.reloadOptions = function () {
+            if (!self.reportContext) {
+                throw new Error("Please call init() before calling loadOptions().");
+            }
+
             $.ajax({
                 url: self.endpoint.getUrl(),
                 method: 'post',
