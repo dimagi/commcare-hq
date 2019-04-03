@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from contextlib import contextmanager
 from datetime import date
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
@@ -48,7 +49,29 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
-class CcsRecordMonthly(models.Model):
+def maybe_atomic(cls, atomic=True):
+    if atomic:
+        return transaction.atomic(using=db_for_read_write(cls))
+    else:
+        @contextmanager
+        def noop_context():
+            yield
+
+        return noop_context()
+
+
+class AggregateMixin(object):
+    __agg_helper_cls = None
+    __agg_atomic = True
+
+    @classmethod
+    def aggregate(cls, *args, **kwargs):
+        helper = cls.__agg_helper_cls(*args, **kwargs)
+        with get_cursor(cls) as cursor, maybe_atomic(cls, cls.__agg_atomic):
+            helper.aggregate(cursor)
+
+
+class CcsRecordMonthly(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
@@ -152,15 +175,11 @@ class CcsRecordMonthly(models.Model):
         managed = False
         db_table = 'ccs_record_monthly'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = CcsRecordMonthlyAggregationHelper(month)
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                helper.aggregate(cursor)
+    __agg_helper_cls = CcsRecordMonthlyAggregationHelper
+    __agg_atomic = True
 
 
-class AwcLocation(models.Model):
+class AwcLocation(models.Model, AggregateMixin):
     doc_id = models.TextField()
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -193,14 +212,11 @@ class AwcLocation(models.Model):
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
 
-    @classmethod
-    def aggregate(cls):
-        helper = LocationAggregationHelper()
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = LocationAggregationHelper
+    __agg_atomic = False
 
 
-class ChildHealthMonthly(models.Model):
+class ChildHealthMonthly(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
@@ -285,14 +301,11 @@ class ChildHealthMonthly(models.Model):
         managed = False
         db_table = 'child_health_monthly'
 
-    @classmethod
-    def aggregate(cls, state_ids, month):
-        helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = ChildHealthMonthlyAggregationHelper
+    __agg_atomic = False
 
 
-class AggAwc(models.Model):
+class AggAwc(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -444,19 +457,16 @@ class AggAwc(models.Model):
         db_table = 'agg_awc'
 
     @classmethod
-    def aggregate(cls, month):
-        helper = AggAwcHelper(month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
-
-    @classmethod
     def weekly_aggregate(cls, month):
         helper = AggAwcHelper(month)
         with get_cursor(cls) as cursor:
             helper.weekly_aggregate(cursor)
 
+    __agg_helper_cls = AggAwcHelper
+    __agg_atomic = False
 
-class AggregateLsAWCVisitForm(models.Model):
+
+class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     awc_visits = models.IntegerField(help_text='awc visits made by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -465,14 +475,11 @@ class AggregateLsAWCVisitForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSAwcMgtFormAggHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = LSAwcMgtFormAggHelper
+    __agg_atomic = False
 
 
-class AggregateLsVhndForm(models.Model):
+class AggregateLsVhndForm(models.Model, AggregateMixin):
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -481,14 +488,11 @@ class AggregateLsVhndForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSVhndFormAggHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = LSVhndFormAggHelper
+    __agg_atomic = False
 
 
-class AggregateBeneficiaryForm(models.Model):
+class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -497,14 +501,11 @@ class AggregateBeneficiaryForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSBeneficiaryFormAggHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = LSBeneficiaryFormAggHelper
+    __agg_atomic = False
 
 
-class AggLs(models.Model):
+class AggLs(models.Model, AggregateMixin):
     """
     Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
@@ -522,19 +523,11 @@ class AggLs(models.Model):
     class Meta(object):
         db_table = 'agg_ls'
 
-    @classmethod
-    def aggregate(cls, month):
-        """
-        Aggregates the LS data and roll up from supervisor level
-        to state level
-        :return:
-        """
-        helper = AggLsHelper(month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = AggLsHelper
+    __agg_atomic = False
 
 
-class AggCcsRecord(models.Model):
+class AggCcsRecord(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -593,15 +586,11 @@ class AggCcsRecord(models.Model):
         managed = False
         db_table = 'agg_ccs_record'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggCcsRecordAggregationHelper(month)
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                helper.aggregate(cursor)
+    __agg_helper_cls = AggCcsRecordAggregationHelper
+    __agg_atomic = True
 
 
-class AggChildHealth(models.Model):
+class AggChildHealth(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -678,15 +667,11 @@ class AggChildHealth(models.Model):
         managed = False
         db_table = 'agg_child_health'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggChildHealthAggregationHelper(month)
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                helper.aggregate(cursor)
+    __agg_helper_cls = AggChildHealthAggregationHelper
+    __agg_atomic = True
 
 
-class AggAwcDaily(models.Model):
+class AggAwcDaily(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -723,15 +708,11 @@ class AggAwcDaily(models.Model):
         managed = False
         db_table = 'agg_awc_daily'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggAwcDailyAggregationHelper(month)
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                helper.aggregate(cursor)
+    __agg_helper_cls = AggAwcDailyAggregationHelper
+    __agg_atomic = True
 
 
-class DailyAttendance(models.Model):
+class DailyAttendance(models.Model, AggregateMixin):
     # not the real pkey - see unique_together
     doc_id = models.TextField(primary_key=True)
     awc_id = models.TextField(null=True)
@@ -754,14 +735,11 @@ class DailyAttendance(models.Model):
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = DailyAttendanceAggregationHelper(month=month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = DailyAttendanceAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateComplementaryFeedingForms(models.Model):
+class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
 
@@ -822,11 +800,8 @@ class AggregateComplementaryFeedingForms(models.Model):
         db_table = AGG_COMP_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = ComplementaryFormsAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = ComplementaryFormsAggregationHelper
+    __agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -839,7 +814,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateCcsRecordComplementaryFeedingForms(models.Model):
+class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
 
@@ -869,14 +844,11 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
         db_table = AGG_CCS_RECORD_CF_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = ComplementaryFormsCcsRecordAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = ComplementaryFormsCcsRecordAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateChildHealthPostnatalCareForms(models.Model):
+class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
     """Aggregated data for child health cases based on
     AWW App, Home Visit Scheduler module,
     Post Natal Care and Exclusive Breastfeeding forms.
@@ -953,11 +925,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = PostnatalCareFormsChildHealthAggregationHelper
+    __agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -970,7 +939,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateCcsRecordPostnatalCareForms(models.Model):
+class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
     """Aggregated data for ccs record cases based on
     AWW App, Home Visit Scheduler module,
     Post Natal Care and Exclusive Breastfeeding forms.
@@ -1010,17 +979,14 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
-    def aggregate(cls, state_id, month):
-        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
-
-    @classmethod
     def compare_with_old_data(cls, state_id, month):
         pass
 
+    __agg_helper_cls = PostnatalCareFormsCcsRecordAggregationHelper
+    __agg_atomic = False
 
-class AggregateChildHealthTHRForms(models.Model):
+
+class AggregateChildHealthTHRForms(models.Model, AggregateMixin):
     """Aggregated data for child_health cases based on
     Take Home Ration forms
 
@@ -1050,14 +1016,11 @@ class AggregateChildHealthTHRForms(models.Model):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = THRFormsChildHealthAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = THRFormsChildHealthAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateCcsRecordTHRForms(models.Model):
+class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
     """Aggregated data for ccs_record cases based on
     Take Home Ration forms
 
@@ -1087,14 +1050,11 @@ class AggregateCcsRecordTHRForms(models.Model):
         db_table = AGG_CCS_RECORD_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = THRFormsCcsRecordAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = THRFormsCcsRecordAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateGrowthMonitoringForms(models.Model):
+class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App
 
     376FA2E1 -> Delivery
@@ -1163,11 +1123,8 @@ class AggregateGrowthMonitoringForms(models.Model):
         db_table = AGG_GROWTH_MONITORING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = GrowthMonitoringFormsAggregationHelper
+    __agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1180,7 +1137,7 @@ class AggregateGrowthMonitoringForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateBirthPreparednesForms(models.Model):
+class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
     supervisor_id = models.TextField(null=True)
@@ -1293,11 +1250,8 @@ class AggregateBirthPreparednesForms(models.Model):
         db_table = AGG_CCS_RECORD_BP_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = BirthPreparednessFormsAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = BirthPreparednessFormsAggregationHelper
+    __agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1310,7 +1264,7 @@ class AggregateBirthPreparednesForms(models.Model):
             return [row.case_id for row in rows]
 
 
-class AggregateCcsRecordDeliveryForms(models.Model):
+class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     """Aggregated data for ccs_record cases based on
     Delivery forms
 
@@ -1349,14 +1303,11 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = DeliveryFormsAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = DeliveryFormsAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateInactiveAWW(models.Model):
+class AggregateInactiveAWW(models.Model, AggregateMixin):
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -1385,17 +1336,14 @@ class AggregateInactiveAWW(models.Model):
             return delta.days
         return 'N/A'
 
-    @classmethod
-    def aggregate(cls, last_sync):
-        helper = InactiveAwwsAggregationHelper(last_sync)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
-
     class Meta(object):
         app_label = 'icds_reports'
 
+    __agg_helper_cls = InactiveAwwsAggregationHelper
+    __agg_atomic = False
 
-class AggregateChildHealthDailyFeedingForms(models.Model):
+
+class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
     """Aggregated data for child_health cases based on
     Daily Feeding forms
 
@@ -1429,14 +1377,11 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         db_table = AGG_DAILY_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = DailyFeedingFormsChildHealthAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = DailyFeedingFormsChildHealthAggregationHelper
+    __agg_atomic = False
 
 
-class AggregateAwcInfrastructureForms(models.Model):
+class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     """Aggregated data for AWC locations based on infrastructure forms
 
     A child table exists for each state_id and month.
@@ -1478,14 +1423,11 @@ class AggregateAwcInfrastructureForms(models.Model):
         db_table = AGG_INFRASTRUCTURE_TABLE
         unique_together = ('supervisor_id', 'awc_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = AwcInfrastructureAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = AwcInfrastructureAggregationHelper
+    __agg_atomic = False
 
 
-class AWWIncentiveReport(models.Model):
+class AWWIncentiveReport(models.Model, AggregateMixin):
     """Monthly updated table that holds metrics for the incentive report"""
 
     # partitioned based on these fields
@@ -1513,8 +1455,5 @@ class AWWIncentiveReport(models.Model):
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = AwwIncentiveAggregationHelper(state_id, month)
-        with get_cursor(cls) as cursor:
-            helper.aggregate(cursor)
+    __agg_helper_cls = AwwIncentiveAggregationHelper
+    __agg_atomic = False
