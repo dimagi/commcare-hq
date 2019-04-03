@@ -84,7 +84,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.setNew = function () {
-            self.reloadOptions();
+            self.loadOptions();
             self.oldColumn(undefined);
 
             if (self.isNew() && self.column()) {
@@ -99,7 +99,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.set = function (existingColumn) {
-            self.reloadOptions();
+            self.loadOptions();
             self.oldColumn(columnModel(existingColumn).unwrap());
             self.column(columnModel(existingColumn.unwrap(), self.availableFilters));
             self.isNew(false);
@@ -130,7 +130,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.hasFilterUpdate(true);
         };
 
-        self.reloadOptions = function () {
+        self.loadOptions = function () {
             if (!self.reportContext) {
                 throw new Error("Please call init() before calling loadOptions().");
             }
