@@ -178,54 +178,54 @@ CREATE TABLE agg_awc
   infra_cooking_utensils integer,
   infra_medicine_kits integer,
   infra_adequate_space_pse integer
+  usage_num_hh_reg integer,
+  usage_num_add_person integer,
+  usage_num_add_pregnancy integer,
+  is_launched text,
+  training_phase integer,
+  trained_phase_1 integer,
+  trained_phase_2 integer,
+  trained_phase_3 integer,
+  trained_phase_4 integer,
+  aggregation_level integer,
+  num_launched_states integer,
+  num_launched_districts integer,
+  num_launched_blocks integer,
+  num_launched_supervisors integer,
+  num_launched_awcs integer,
+  cases_household integer,
+  cases_person integer,
+  cases_person_all integer,
+  cases_person_has_aadhaar integer,
+  cases_ccs_pregnant_all integer,
+  cases_ccs_lactating_all integer,
+  cases_child_health_all integer,
+  cases_person_adolescent_girls_11_14 integer,
+  cases_person_adolescent_girls_15_18 integer,
+  cases_person_adolescent_girls_11_14_all integer,
+  cases_person_adolescent_girls_15_18_all integer,
+  infra_infant_weighing_scale integer,
+  cases_person_beneficiary integer,
+  cases_person_referred integer,
+  awc_days_pse_conducted integer,
+  num_awc_infra_last_update integer,
+  cases_person_has_aadhaar_v2 integer,
+  cases_person_beneficiary_v2 integer,
+  electricity_awc integer,
+  infantometer integer,
+  stadiometer integer,
+  num_anc_visits integer,
+  num_children_immunized integer,
+  state_is_test smallint,
+  district_is_test smallint,
+  block_is_test smallint,
+  supervisor_is_test smallint,
+  awc_is_test smallint,
+  num_awcs_conducted_cbe integer,
+  num_awcs_conducted_vhnd integer,
+  valid_visits integer,
+  expected_visits integer
 );
-ALTER TABLE agg_awc ADD COLUMN usage_num_hh_reg integer;
-ALTER TABLE agg_awc ADD COLUMN usage_num_add_person integer;
-ALTER TABLE agg_awc ADD COLUMN usage_num_add_pregnancy integer;
-ALTER TABLE agg_awc ADD COLUMN is_launched text;
-ALTER TABLE agg_awc ADD COLUMN training_phase integer;
-ALTER TABLE agg_awc ADD COLUMN trained_phase_1 integer;
-ALTER TABLE agg_awc ADD COLUMN trained_phase_2 integer;
-ALTER TABLE agg_awc ADD COLUMN trained_phase_3 integer;
-ALTER TABLE agg_awc ADD COLUMN trained_phase_4 integer;
-ALTER TABLE agg_awc ADD COLUMN aggregation_level integer;
-ALTER TABLE agg_awc ADD COLUMN num_launched_states integer;
-ALTER TABLE agg_awc ADD COLUMN num_launched_districts integer;
-ALTER TABLE agg_awc ADD COLUMN num_launched_blocks integer;
-ALTER TABLE agg_awc ADD COLUMN num_launched_supervisors integer;
-ALTER TABLE agg_awc ADD COLUMN num_launched_awcs integer;
-ALTER TABLE agg_awc ADD COLUMN cases_household integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_all integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_has_aadhaar integer;
-ALTER TABLE agg_awc ADD COLUMN cases_ccs_pregnant_all integer;
-ALTER TABLE agg_awc ADD COLUMN cases_ccs_lactating_all integer;
-ALTER TABLE agg_awc ADD COLUMN cases_child_health_all integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_11_14 integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_15_18 integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_15_18_all integer;
-ALTER TABLE agg_awc ADD COLUMN infra_infant_weighing_scale integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_beneficiary integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_referred integer;
-ALTER TABLE agg_awc ADD COLUMN awc_days_pse_conducted integer;
-ALTER TABLE agg_awc ADD COLUMN num_awc_infra_last_update integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_has_aadhaar_v2 integer;
-ALTER TABLE agg_awc ADD COLUMN cases_person_beneficiary_v2 integer;
-ALTER TABLE agg_awc ADD COLUMN electricity_awc integer;
-ALTER TABLE agg_awc ADD COLUMN infantometer integer;
-ALTER TABLE agg_awc ADD COLUMN stadiometer integer;
-ALTER TABLE agg_awc ADD COLUMN num_anc_visits integer;
-ALTER TABLE agg_awc ADD COLUMN num_children_immunized integer;
-ALTER TABLE agg_awc ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN awc_is_test smallint;
-ALTER TABLE agg_awc ADD COLUMN num_awcs_conducted_cbe integer;
-ALTER TABLE agg_awc ADD COLUMN num_awcs_conducted_vhnd integer;
-ALTER TABLE agg_awc ADD COLUMN valid_visits integer;
-ALTER TABLE agg_awc ADD COLUMN expected_visits integer;
 
 -- Table: ccs_record_monthly
 CREATE TABLE ccs_record_monthly
@@ -269,63 +269,63 @@ CREATE TABLE ccs_record_monthly
 	bp2_complete integer,
 	bp3_complete integer,
 	pnc_complete integer,
-	postnatal integer
+	postnatal integer,
+    has_aadhar_id integer,
+    counsel_fp_methods integer,
+    pregnant integer,
+    pregnant_all integer,
+    lactating integer,
+    lactating_all integer,
+    institutional_delivery_in_month integer,
+    add date,
+    anc_in_month smallint,
+    caste text,
+    disabled text,
+    minority text,
+    resident text,
+    anc_weight smallint,
+    anc_blood_pressure smallint,
+    bp_sys smallint,
+    bp_dia smallint,
+    anc_hemoglobin decimal,
+    bleeding smallint,
+    swelling smallint,
+    blurred_vision smallint,
+    convulsions smallint,
+    rupture smallint,
+    anemia smallint,
+    eating_extra smallint,
+    resting smallint,
+    immediate_breastfeeding smallint,
+    person_name text,
+    edd date,
+    delivery_nature smallint,
+    is_ebf smallint,
+    breastfed_at_birth smallint,
+    anc_1 date,
+    anc_2 date,
+    anc_3 date,
+    anc_4 date,
+    tt_1 date,
+    tt_2 date,
+    valid_in_month smallint,
+    preg_order smallint,
+    mobile_number text,
+    bp_date date,
+    num_pnc_visits smallint,
+    num_anc_complete smallint,
+    last_date_thr date,
+    opened_on date,
+    home_visit_date date,
+    dob date,
+    valid_visits smallint,
+    anc_abnormalities smallint,
+    closed smallint,
+    date_death date,
+    person_case_id text,
+    child_name text,
+    institutional_delivery integer
 );
-ALTER TABLE ccs_record_monthly ADD COLUMN has_aadhar_id integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN counsel_fp_methods integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN pregnant integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN pregnant_all integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN lactating integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN lactating_all integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN institutional_delivery_in_month integer;
-ALTER TABLE ccs_record_monthly ADD COLUMN add date;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_in_month smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN caste text;
-ALTER TABLE ccs_record_monthly ADD COLUMN disabled text;
-ALTER TABLE ccs_record_monthly ADD COLUMN minority text;
-ALTER TABLE ccs_record_monthly ADD COLUMN resident text;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_weight smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_blood_pressure smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN bp_sys smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN bp_dia smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_hemoglobin decimal;
-ALTER TABLE ccs_record_monthly ADD COLUMN bleeding smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN swelling smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN blurred_vision smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN convulsions smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN rupture smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anemia smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN eating_extra smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN resting smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN immediate_breastfeeding smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN person_name text;
-ALTER TABLE ccs_record_monthly ADD COLUMN edd date;
-ALTER TABLE ccs_record_monthly ADD COLUMN delivery_nature smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN is_ebf smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN breastfed_at_birth smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_1 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_2 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_3 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_4 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN tt_1 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN tt_2 date;
-ALTER TABLE ccs_record_monthly ADD COLUMN valid_in_month smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN preg_order smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN mobile_number text;
-ALTER TABLE ccs_record_monthly ADD COLUMN bp_date date;
-ALTER TABLE ccs_record_monthly ADD COLUMN num_pnc_visits smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN num_anc_complete smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN last_date_thr date;
-ALTER TABLE ccs_record_monthly ADD COLUMN opened_on date;
-ALTER TABLE ccs_record_monthly ADD COLUMN home_visit_date date;
-ALTER TABLE ccs_record_monthly ADD COLUMN dob date;
-ALTER TABLE ccs_record_monthly ADD COLUMN valid_visits smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_abnormalities smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN closed smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN date_death date;
-ALTER TABLE ccs_record_monthly ADD COLUMN person_case_id text;
-ALTER TABLE ccs_record_monthly ADD COLUMN child_name text;
-ALTER TABLE ccs_record_monthly ADD COLUMN institutional_delivery integer;
 
 -- Table: child_health_monthly
 CREATE TABLE child_health_monthly
@@ -371,44 +371,44 @@ CREATE TABLE child_health_monthly
 	counsel_increase_food_bf integer,
 	counsel_manage_breast_problems integer,
 	counsel_skin_to_skin integer,
-	counsel_immediate_breastfeeding integer
+	counsel_immediate_breastfeeding integer,
+    recorded_weight decimal,
+    recorded_height decimal,
+    has_aadhar_id integer,
+    thr_eligible integer,
+    pnc_eligible integer,
+    cf_initiation_in_month integer,
+    cf_initiation_eligible integer,
+    height_measured_in_month integer,
+    current_month_stunting text,
+    stunting_last_recorded text,
+    wasting_last_recorded text,
+    current_month_wasting text,
+    valid_in_month integer,
+    valid_all_registered_in_month integer,
+    ebf_no_info_recorded integer,
+    dob date,
+    sex text,
+    age_tranche text,
+    caste text,
+    disabled text,
+    minority text,
+    resident text,
+    immunization_in_month smallint,
+    days_ration_given_child smallint,
+    zscore_grading_hfa smallint,
+    zscore_grading_hfa_recorded_in_month smallint,
+    zscore_grading_wfh smallint,
+    zscore_grading_wfh_recorded_in_month smallint,
+    muac_grading smallint,
+    muac_grading_recorded_in_month smallint,
+    person_name text,
+    mother_name text,
+    mother_phone_number text,
+    date_death date,
+    mother_case_id text,
+    lunch_count integer
 );
-ALTER TABLE child_health_monthly ADD COLUMN recorded_weight decimal;
-ALTER TABLE child_health_monthly ADD COLUMN recorded_height decimal;
-ALTER TABLE child_health_monthly ADD COLUMN has_aadhar_id integer;
-ALTER TABLE child_health_monthly ADD COLUMN thr_eligible integer;
-ALTER TABLE child_health_monthly ADD COLUMN pnc_eligible integer;
-ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_in_month integer;
-ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_eligible integer;
-ALTER TABLE child_health_monthly ADD COLUMN height_measured_in_month integer;
-ALTER TABLE child_health_monthly ADD COLUMN current_month_stunting text;
-ALTER TABLE child_health_monthly ADD COLUMN stunting_last_recorded text;
-ALTER TABLE child_health_monthly ADD COLUMN wasting_last_recorded text;
-ALTER TABLE child_health_monthly ADD COLUMN current_month_wasting text;
-ALTER TABLE child_health_monthly ADD COLUMN valid_in_month integer;
-ALTER TABLE child_health_monthly ADD COLUMN valid_all_registered_in_month integer;
-ALTER TABLE child_health_monthly ADD COLUMN ebf_no_info_recorded integer;
-ALTER TABLE child_health_monthly ADD COLUMN dob date;
-ALTER TABLE child_health_monthly ADD COLUMN sex text;
-ALTER TABLE child_health_monthly ADD COLUMN age_tranche text;
-ALTER TABLE child_health_monthly ADD COLUMN caste text;
-ALTER TABLE child_health_monthly ADD COLUMN disabled text;
-ALTER TABLE child_health_monthly ADD COLUMN minority text;
-ALTER TABLE child_health_monthly ADD COLUMN resident text;
-ALTER TABLE child_health_monthly ADD COLUMN immunization_in_month smallint;
-ALTER TABLE child_health_monthly ADD COLUMN days_ration_given_child smallint;
-ALTER TABLE child_health_monthly ADD COLUMN zscore_grading_hfa smallint;
-ALTER TABLE child_health_monthly ADD COLUMN zscore_grading_hfa_recorded_in_month smallint;
-ALTER TABLE child_health_monthly ADD COLUMN zscore_grading_wfh smallint;
-ALTER TABLE child_health_monthly ADD COLUMN zscore_grading_wfh_recorded_in_month smallint;
-ALTER TABLE child_health_monthly ADD COLUMN muac_grading smallint;
-ALTER TABLE child_health_monthly ADD COLUMN muac_grading_recorded_in_month smallint;
-ALTER TABLE child_health_monthly ADD COLUMN person_name text;
-ALTER TABLE child_health_monthly ADD COLUMN mother_name text;
-ALTER TABLE child_health_monthly ADD COLUMN mother_phone_number text;
-ALTER TABLE child_health_monthly ADD COLUMN date_death date;
-ALTER TABLE child_health_monthly ADD COLUMN mother_case_id text;
-ALTER TABLE child_health_monthly ADD COLUMN lunch_count integer;
 
 -- Table: agg_ccs_record
 CREATE TABLE agg_ccs_record
