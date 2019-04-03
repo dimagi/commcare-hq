@@ -26,6 +26,8 @@ from six.moves import zip
 from functools import reduce
 from six.moves import range
 
+from corehq.util.soft_assert import soft_assert
+
 
 class SqlReportException(Exception):
     pass
@@ -254,6 +256,13 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
+        if not self.group_by:
+            soft_assert(
+                to='{}@{}'.format('skelly', 'dimagi.com'),
+                exponential_backoff=True,
+            )(False, "sql-agg called without group_by", {
+                'queries': self.get_sql_queries()
+            })
         return sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit

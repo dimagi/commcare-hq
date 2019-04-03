@@ -933,3 +933,43 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
             ['TN', 0, 1],
         ]:
             self.assertIn(table_row, table)
+
+    def test_doc_id_aggregation(self):
+        # this uses a cheat to get all rows in the table
+        # grouping on only doc_id works because PostgreSQL knows
+        # it is a unique column
+        # adding this is a workaround for sql-agg which would otherwise
+        # only return the last row from the query results
+        report_config = self._create_report(
+            aggregation_columns=[
+                'doc_id',
+            ],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_state",
+                    "field": 'indicator_col_id_state',
+                    'column_id': 'report_column_col_id_state',
+                    'aggregation': 'simple'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_city",
+                    "field": 'indicator_col_id_city',
+                    'column_id': 'report_column_col_id_city',
+                    'aggregation': 'simple'
+                },
+            ],
+            filters=None,
+        )
+        view = self._create_view(report_config)
+        table = view.export_table[0][1]
+        self.assertEqual(len(table), 5)
+        for table_row in [
+            ['report_column_display_state', 'report_column_display_city'],
+            ['MA', 'Boston'],
+            ['MA', 'Boston'],
+            ['MA', 'Cambridge'],
+            ['TN', 'Nashville']
+        ]:
+            self.assertIn(table_row, table)
