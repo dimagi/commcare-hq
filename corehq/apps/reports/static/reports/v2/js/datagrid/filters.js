@@ -17,6 +17,7 @@ hqDefine('reports/v2/js/datagrid/filters', [
         var self = {};
 
         self.filterType = ko.observable(data.filterType);
+        self.filterTypeTitle = ko.observable(data.filterTypeTitle);
         self.name = ko.observable(data.name);
         self.title = ko.observable(data.title);
 

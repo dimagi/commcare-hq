@@ -62,7 +62,12 @@ class BaseReport(object):
             'endpoints': [e._asdict() for e in endpoints],
             'columns': [c._asdict() for c in self.columns],
             'column_filters': [
-                dict(filterType=f.filter_type, name=c.name, title=c.title)
+                dict(
+                    filterType=f.filter_type,
+                    filterTypeTitle=f.title,
+                    name=c.name,
+                    title=c.title
+                )
                 for f in self.column_filters for c in f.choices
             ],
         }
@@ -140,6 +145,7 @@ class BaseDataFormatter(object):
 
 class BaseColumnFilter(object):
     filter_type = None
+    title = None
     choices = []
 
     @classmethod
