@@ -16,6 +16,7 @@ from six.moves import zip
 
 from custom.icds_reports.models.aggregate import get_cursor, AggregateInactiveAWW
 from custom.icds_reports.tests import CSVTestCase, OUTPUT_PATH
+from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
 from custom.icds_reports.utils.aggregation_helpers.monolith import InactiveAwwsAggregationHelper
 
 
@@ -464,7 +465,8 @@ class InactiveAWWsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         last_sync = date(2017, 4, 1)
-        cls.helper = InactiveAwwsAggregationHelper(last_sync)
+        helper_class = get_helper(InactiveAwwsAggregationHelper.helper_key)
+        cls.helper = helper_class(last_sync)
         super(InactiveAWWsTest, cls).setUpClass()
 
     def tearDown(self):
