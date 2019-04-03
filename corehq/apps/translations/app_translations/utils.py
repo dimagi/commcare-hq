@@ -107,13 +107,13 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
 
 def get_modules_and_forms_row(row_type, sheet_name, languages, media_image, media_audio, unique_id):
     """
-    assemble the various pieces of data that make up a row in the
-    {sheet_name} sheet into a single row (a flat tuple).
+    Assemble the various pieces of data that make up a row in the
+    modules and forms sheet sheet into a single row (a flat tuple).
 
     This function is meant as the single point of truth for the
-    column ordering of {sheet_name}
+    column ordering of this sheet.
 
-    """.format(sheet_name=MODULES_AND_FORMS_SHEET_NAME)
+    """
     assert row_type is not None
     assert sheet_name is not None
     assert isinstance(languages, list)
