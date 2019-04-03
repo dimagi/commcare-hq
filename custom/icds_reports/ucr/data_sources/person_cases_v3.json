@@ -512,19 +512,27 @@
         "column_ids": [
           "opened_on",
           "closed_on"
-        ],
+        ]
+      },
+      {
         "column_ids": [
           "awc_id",
           "dob"
-        ],
+        ]
+      },
+      {
         "column_ids": [
           "supervisor_id",
           "dob"
-        ],
+        ]
+      },
+      {
         "column_ids": [
           "block_id",
           "dob"
-        ],
+        ]
+      },
+      {
         "column_ids": [
           "district_id",
           "dob"
