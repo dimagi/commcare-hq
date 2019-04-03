@@ -15,6 +15,7 @@ from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthE
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 
 def get_toggles_previews(domain_link):
