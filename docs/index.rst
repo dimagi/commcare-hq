@@ -45,6 +45,8 @@ Welcome to CommCareHQ's documentation!
    restore-logic
    couchdb
    celery
+   ucr
+   js-guide/README
 
 Tips for documenting
 --------------------

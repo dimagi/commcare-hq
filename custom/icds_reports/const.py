@@ -105,7 +105,6 @@ AGG_LS_BENEFICIARY_TABLE = 'icds_dashboard_ls_beneficiary_forms'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
-PERSON_TABLE_ID = 'static-person_cases_v2'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'

@@ -6,6 +6,7 @@ from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS
+from custom.icds_reports.utils import phone_number_function
 
 
 class SystemUsageExport(ExportableMixin, SqlData):
@@ -28,6 +29,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns
