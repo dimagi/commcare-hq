@@ -68,8 +68,8 @@ def pull_missing_multimedia_for_app(app):
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
             raise MultimediaMissingError(_(
-                'Application has missing multimedia even after an attempt to pull them. '
-                'An email has been sent with details. Please try again. If persists, report an issue.'
+                'Application has missing multimedia even after an attempt to re-pull them. '
+                'Please try re-pulling the app. If this persists, report an issue.'
             ))
 
 
