@@ -85,8 +85,6 @@ if USE_PARTITIONED_DATABASE:
 
     WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
-# CitusDB setup is done by Django migrations in the testapps.citus_* apps. These
-# migrations are only run during unit tests.
 DATABASES.update({
     'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -98,37 +96,7 @@ DATABASES.update({
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
-            'DEPENDENCIES': ['citus-ucr-worker1', 'citus-ucr-worker2'],
         },
-        'ROLE': 'citus_master'
-    },
-    'citus-ucr-worker1': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': 'citus_worker1',
-        'PORT': '5432',
-        'MIGRATE': False,
-        'TEST': {
-            'SERIALIZE': False,
-        },
-        'ROLE': 'citus_worker'
-    },
-    'citus-ucr-worker2': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': 'citus_worker2',
-        'PORT': '5432',
-        'MIGRATE': False,
-        'TEST': {
-            'SERIALIZE': False,
-        },
-        'ROLE': 'citus_worker'
     },
 })
 
