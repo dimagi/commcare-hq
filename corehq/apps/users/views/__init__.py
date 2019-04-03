@@ -60,7 +60,6 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
-from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
     WebUserInvitationForm,
