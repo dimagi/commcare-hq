@@ -105,6 +105,8 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master:}/var/lib/postgresql/data
     environment:
       POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ['/var/run/docker.sock:/var/run/docker.sock']
@@ -112,6 +114,8 @@ services:
     environment:
       CITUS_HOST: citus_master
       POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
   citus_worker1:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
@@ -120,6 +124,8 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
     environment:
       POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
@@ -128,3 +134,5 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
     environment:
       POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq

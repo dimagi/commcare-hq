@@ -90,8 +90,8 @@ DATABASES.update({
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
-        'PASSWORD': '',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
