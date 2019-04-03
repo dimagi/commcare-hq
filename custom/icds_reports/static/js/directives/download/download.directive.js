@@ -122,12 +122,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 6, name: 'Child Beneficiary List'},
         {id: 7, name: 'ICDS-CAS Monthly Register'},
         {id: 8, name: 'AWW Performance Report'},
+        {id: 9, name: 'LS Performance Report'},
     ];
-
-    if (vm.haveAccessToFeatures) {
-        vm.indicators.push({id: 9, name: 'LS Performance Report'});
-    }
-
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
