@@ -100,7 +100,7 @@ def get_domains_to_update_es_filter():
     return filters.OR(
         not_updated,
         more_than_a_week_ago,
-        filters.AND(less_than_a_week_ago, domains_submitted_today)
+        filters.AND(less_than_a_week_ago, filters.term('name', domains_submitted_today))
     )
 
 

@@ -249,7 +249,7 @@ class LocationFilterAPI(View):
 @method_decorator([login_and_domain_required, require_superuser_or_contractor], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
-    urlname = 'aggregation_script_page'
+    urlname = 'aaa_aggregation_script_page'
     template_name = 'icds_reports/aggregation_script.html'
 
     @use_daterangepicker
