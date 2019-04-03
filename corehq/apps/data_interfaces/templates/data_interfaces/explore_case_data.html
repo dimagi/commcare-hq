@@ -116,17 +116,26 @@ breadcrumbs todo
                        data-bind="textInput: name,
                                   datagridAutocomplete: $root.editColumnController.columnNameOptions" />
               </div>
+
               <!-- ko foreach: appliedFilters -->
               <div class="row">
+                <div class="col-xs-2">
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.filterTypeOptions,
+                                     optionsText: function (choice) {
+                                        return $root.editColumnController.filterTitleByType[choice];
+                                     },
+                                     value: $root.editColumnController.appliedFilterType"></select>
+                </div>
                 <div class="col-xs-4">
                   <select class="form-control"
-                          data-bind="options: $root.editColumnController.availableFilters,
+                          data-bind="options: $root.editColumnController.filterOptions,
                                      optionsText: 'title',
                                      value: filter,
                                      event: { change: $root.editColumnController.updateFilters },
                                      optionsCaption: 'Choose filter...'"></select>
                 </div>
-                <div class="col-xs-6">
+                <div class="col-xs-4">
                   <input type="text"
                          class="form-control"
                          data-bind="textInput: value,

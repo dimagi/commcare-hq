@@ -59,6 +59,19 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return filters.columnFilterModel(data);
         }));
 
+        self.defaultFilterType = options.availableFilters[0].filterType;
+        self.appliedFilterType = ko.observable();
+        self.filterTitleByType = _.object(_.map(options.availableFilters, function (data) {
+            return [data.filterType, data.filterTypeTitle];
+        }));
+        self.filterTypeOptions = ko.observableArray(_.keys(self.filterTitleByType));
+
+        self.filterOptions = ko.computed(function () {
+            return _.filter(self.availableFilters(), function (filter) {
+                return filter.filterType() === self.appliedFilterType();
+            })
+        });
+
         self.columnNameOptions = ko.observableArray();
 
         self.oldColumn = ko.observable();
@@ -82,6 +95,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 self.isNew(true);
                 self.hasFilterUpdate(false);
             }
+            self.updateDefaultFilterType();
         };
 
         self.set = function (existingColumn) {
@@ -90,6 +104,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.column(columnModel(existingColumn.unwrap(), self.availableFilters));
             self.isNew(false);
             self.hasFilterUpdate(false);
+            self.updateDefaultFilterType();
         };
 
         self.unset = function () {
@@ -131,6 +146,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
                 .done(function (data) {
                     self.columnNameOptions(data.options);
                 });
+        };
+
+        self.updateDefaultFilterType = function () {
+            self.appliedFilterType((self.column().appliedFilters().length > 0) ? self.column().appliedFilters()[0].filter().filterType() : self.defaultFilterType);
         };
 
         self.isColumnValid = ko.computed(function () {
