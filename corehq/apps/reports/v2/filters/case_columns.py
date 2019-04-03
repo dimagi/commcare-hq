@@ -4,11 +4,14 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.es import queries
-from corehq.apps.reports.v2.models import BaseColumnFilter, FilterChoiceMeta
+from corehq.apps.reports.v2.models import (
+    BaseColumnFilter,
+    FilterChoiceMeta,
+)
 
 
 class TextCaseColumnFilter(BaseColumnFilter):
-    filter_type = 'column_text'
+    filter_type = 'case_text'
     title = ugettext_lazy("Text")
     choices = [
         FilterChoiceMeta('contains', ugettext_lazy('Contains')),
