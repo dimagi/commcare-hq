@@ -434,9 +434,8 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             del kwargs['location']
         super(AdminInvitesUserForm, self).__init__(data=data, *args, **kwargs)
         if domain_obj and domain_obj.commtrack_enabled:
-            widget = LocationSelectWidget(domain_obj.name, select2_version='v4')
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
-                                                          widget=widget,
+                                                          widget=LocationSelectWidget(domain_obj.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
             programs = Program.by_domain(domain_obj.name, wrap=False)
