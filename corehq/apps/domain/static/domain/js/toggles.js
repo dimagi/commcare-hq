@@ -21,7 +21,7 @@ hqDefine('domain/js/toggles', [
         self.tagCssClass = data['tag_css_class'];
         self.domainEnabled = ko.observable(data['domain_enabled']);
         self.userEnabled = ko.observable(data['user_enabled']);
-        self.url = initialPageData.reverse('edit_toggle', self.slug);
+        self.hasDomainNamespace = data['has_domain_namespace'];
 
         self.cssClass = ko.computed(function () {
             if (self.domainEnabled()) {
@@ -30,6 +30,11 @@ hqDefine('domain/js/toggles', [
                 return 'info';
             }
         });
+
+        self.toggleEnabledState = function () {
+            var newState = !self.domainEnabled();
+            self.domainEnabled(newState);
+        };
 
         return self;
     };

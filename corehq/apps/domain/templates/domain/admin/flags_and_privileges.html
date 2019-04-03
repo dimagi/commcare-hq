@@ -16,7 +16,6 @@
 {% block page_content %}
 
     {% initial_page_data 'toggles' toggles %}
-    {% registerurl 'edit_toggle' '---' %}
 
     <div class="row">
         <div class="col-sm-10">
@@ -89,9 +88,8 @@
                 <thead>
                     <th>Tag</th>
                     <th>Feature</th>
-                    <th class="checkmark-column">Enabled for domain?</th>
                     <th class="checkmark-column">Enabled for me?</th>
-                    <th>Edit</th>
+                    <th class="checkmark-column">Enabled for domain?</th>
                 </thead>
                 <tbody data-bind="foreach: toggles">
                     <tr data-bind="css: cssClass">
@@ -120,12 +118,25 @@
                         </td>
 
                         <td class="checkmark-column">
-                            <i class="fa fa-check" data-bind="visible: domainEnabled"></i>
-                        </td>
-                        <td class="checkmark-column">
                             <i class="fa fa-check" data-bind="visible: userEnabled"></i>
                         </td>
-                        <td><a data-bind="attr: {href: url}">change</a></td>
+
+                        <td class="checkmark-column">
+                            <div data-bind="visible: hasDomainNamespace">
+                                <button type="button"
+                                        class="btn"
+                                        data-bind="click: toggleEnabledState,
+                                                css: {
+                                                    'active': domainEnabled,
+                                                    'btn-primary': domainEnabled,
+                                                    'btn-default': !domainEnabled(),
+                                                },
+                                                text: domainEnabled() ? 'Enabled' : 'Not Enabled'
+                                                "></button>
+                            </div>
+                            <div data-bind="visible: !hasDomainNamespace">---</div>
+                        </td>
+
                     </tr>
                 </tbody>
             </table>
