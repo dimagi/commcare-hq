@@ -197,8 +197,9 @@ def _setup_ucr_tables():
 
 
 def _teardown_ucr_tables():
-    with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
-        configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
-        adapters = [get_indicator_adapter(config) for config in configs]
-        for adapter in adapters:
-            adapter.drop_table()
+    with mock.patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'):
+        with override_settings(SERVER_ENVIRONMENT=TEST_ENVIRONMENT):
+            configs = StaticDataSourceConfiguration.by_domain(TEST_DOMAIN)
+            adapters = [get_indicator_adapter(config) for config in configs]
+            for adapter in adapters:
+                adapter.drop_table()
