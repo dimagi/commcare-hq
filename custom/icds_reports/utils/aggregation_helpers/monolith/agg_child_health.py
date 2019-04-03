@@ -2,13 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.util import get_table_name
 from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
@@ -54,9 +52,9 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('gender', 'chm.sex'),
             ('age_tranche', 'chm.age_tranche'),
             ('caste', 'chm.caste'),
-            ('disabled', "COALESCE(chm.disabled, 'no')", "coalesce_disabled"),
-            ('minority', "COALESCE(chm.minority, 'no')", "coalesce_minority"),
-            ('resident', "COALESCE(chm.resident, 'no')", "coalesce_resident"),
+            ('disabled', "COALESCE(chm.disabled, 'no') as coalesce_disabled"),
+            ('minority', "COALESCE(chm.minority, 'no') as coalesce_minority"),
+            ('resident', "COALESCE(chm.resident, 'no') as coalesce_resident"),
             ('valid_in_month', "SUM(chm.valid_in_month)"),
             ('nutrition_status_weighed', "SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_unweighed', "SUM(chm.wer_eligible) - SUM(chm.nutrition_status_weighed)"),
@@ -150,54 +148,46 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
             ('days_ration_given_child', "SUM(chm.days_ration_given_child)"),
         )
-        query_cols = []
-        for c in columns:
-            if len(c) == 3:
-                name = c[2]
-            else:
-                name = c[0]
-            query_cols.append((name, c[1]))
         return """
-        CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
-            {query_cols}
+        INSERT INTO "{tablename}" (
+            {columns}
+        ) (SELECT
+            {calculations}
             FROM "{child_health_monthly_table}" chm
             LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = chm.awc_id
             WHERE chm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
             GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id,
                      chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident
-            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id;
-        INSERT INTO "{tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
-        DROP TABLE "{tmp_tablename}";
+            ORDER BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, chm.awc_id
+        )
         """.format(
             tablename=self.tablename,
-            final_columns=", ".join([col[0] for col in columns]),
-            query_cols=", ".join(['{} as {}'.format(q, name) for name, q in query_cols]),
+            columns=", ".join([col[0] for col in columns]),
+            calculations=", ".join([col[1] for col in columns]),
             child_health_monthly_table='child_health_monthly',
-            tmp_tablename='tmp_{}'.format(self.tablename)
         ), {
             "start_date": self.month
         }
 
     def update_queries(self):
         yield """
-        CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
-            doc_id as awc_id,
-            MAX(state_is_test) as state_is_test,
-            MAX(district_is_test) as district_is_test,
-            MAX(block_is_test) as block_is_test,
-            MAX(supervisor_is_test) as supervisor_is_test,
-            MAX(awc_is_test) as awc_is_test
-            FROM "{awc_location_tablename}"
-            GROUP BY awc_id;
-        UPDATE "{tablename}" agg SET
+            UPDATE "{tablename}" agg SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
               supervisor_is_test = ut.supervisor_is_test,
               awc_is_test = ut.awc_is_test
             FROM (
-              SELECT * FROM "{tmp_tablename}"
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "{awc_location_tablename}"
+              GROUP BY awc_id
             ) ut
             WHERE ut.awc_id = agg.awc_id AND (
                 (
@@ -216,7 +206,6 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             )
         """.format(
             tablename=self.tablename,
-            tmp_tablename='tmp_{}'.format(self.tablename),
             awc_location_tablename='awc_location',
         ), {
         }

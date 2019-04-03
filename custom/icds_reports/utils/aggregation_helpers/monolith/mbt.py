@@ -1,11 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-import tempfile
-
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
 
@@ -40,7 +37,7 @@ class MBTHelper(object):
 
     def query(self):
         return """
-        COPY (SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id AND awc.supervisor_id=t.supervisor_id WHERE awc.state_id='{state_id}' AND t.month='{month}') TO STDOUT WITH CSV HEADER;
+        COPY (SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id WHERE awc.state_id='{state_id}' AND t.month='{month}') TO STDOUT WITH CSV HEADER;
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
@@ -238,11 +235,11 @@ class ChildHealthMbtHelper(MBTHelper):
     def query(self):
         return """
         COPY (SELECT {columns} FROM {table} t
-        LEFT JOIN awc_location awc on t.awc_id=awc.doc_id and awc.supervisor_id=t.supervisor_id
+        LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
         LEFT JOIN "{person_cases_ucr}" mother on mother.doc_id=t.mother_case_id
-          AND awc.state_id = mother.state_id and mother.supervisor_id=t.supervisor_id
+          AND awc.state_id = mother.state_id
           AND lower(substring(mother.state_id, '.{{3}}$'::text)) = '{state_id_last_3}'
-        LEFT JOIN "ccs_record_monthly" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob AND (ccs.child_name is null OR ccs.child_name=t.person_name) AND ccs.month=t.month AND ccs.supervisor_id=t.supervisor_id
+        LEFT JOIN "ccs_record_monthly_{month}" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob AND (ccs.child_name is null OR ccs.child_name=t.person_name)
         WHERE awc.state_id='{state_id}' AND t.month='{month}')
         TO STDOUT WITH CSV HEADER;
         """.format(
@@ -398,14 +395,8 @@ class AwcMbtHelper(MBTHelper):
 
     def query(self):
         return """
-        CREATE TEMPORARY TABLE "tmp_awc_mbt" AS SELECT
-            {awc_columns}
-        FROM awc_location;
-        COPY (SELECT {columns} FROM {table} t LEFT JOIN "tmp_awc_mbt" awc on t.awc_id=awc.doc_id  WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
-        DROP TABLE "tmp_awc_mbt";
+        COPY (SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
         """.format(
-            loc_columns=','.join(self.location_columns),
-            awc_columns=','.join(self.columns),
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
             state_id=self.state_id,

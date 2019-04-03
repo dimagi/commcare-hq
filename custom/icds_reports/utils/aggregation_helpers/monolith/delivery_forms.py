@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
@@ -12,19 +14,16 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
     aggregate_child_table_prefix = 'icds_db_delivery_form_'
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
+        curr_month_query, curr_month_params = self.create_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
         cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        tablename = self.aggregate_parent_table
-        return 'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(tablename=self.aggregate_parent_table), {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        tablename = self.aggregate_parent_table
+        tablename = self.generate_child_tablename(month)
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
@@ -56,7 +55,7 @@ class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 case_load_ccs_record0 IS NOT NULL
           WINDOW w AS (
-            PARTITION BY supervisor_id, case_load_ccs_record0
+            PARTITION BY case_load_ccs_record0
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
           )
         )

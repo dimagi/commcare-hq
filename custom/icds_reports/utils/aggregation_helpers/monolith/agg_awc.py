@@ -3,15 +3,15 @@ from __future__ import unicode_literals
 
 import six
 from dateutil.relativedelta import relativedelta
+from six.moves import map
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from six.moves import map
-
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
-    month_formatter
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
+    month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
@@ -120,28 +120,24 @@ class AggAwcHelper(BaseICDSAggregationHelper):
 
     def updates(self):
         yield """
-        CREATE TEMPORARY TABLE "{temp_table}" AS
-            SELECT
-                awc_id,
-                supervisor_id,
-                month,
-                sum(awc_open_count) AS awc_days_open,
-                CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open,
-                sum(pse_conducted) as awc_days_pse_conducted
-            FROM "{daily_attendance}"
-            WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id;
         UPDATE "{tablename}" agg_awc SET
             awc_days_open = ut.awc_days_open,
             awc_num_open = ut.awc_num_open,
             awc_days_pse_conducted = ut.awc_days_pse_conducted
         FROM (
-            SELECT * FROM "{temp_table}"
+            SELECT
+                awc_id,
+                month,
+                sum(awc_open_count) AS awc_days_open,
+                CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open,
+                sum(pse_conducted) as awc_days_pse_conducted
+            FROM "{daily_attendance}"
+            WHERE month = %(start_date)s GROUP BY awc_id, month
         ) ut
-        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id
         """.format(
             tablename=self.tablename,
-            daily_attendance='daily_attendance',
-            temp_table="temp_{}".format(self.tablename)
+            daily_attendance='daily_attendance_{}'.format(month_formatter(self.month_start)),
         ), {
             'start_date': self.month_start
         }
@@ -172,17 +168,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_home_visit" AS SELECT
-            ucr.awc_id,
-            agg_cf.month,
-            SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
-            sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
-            FROM  "{ccs_record_case_ucr}" ucr
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s and agg_cf.supervisor_id=ucr.supervisor_id
-            WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
-                date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
-                date_trunc('month', ucr.opened_on) <= %(start_date)s
-            GROUP BY ucr.awc_id, agg_cf.month;
         UPDATE "{tablename}" agg_awc SET
             cases_ccs_pregnant = ut.cases_ccs_pregnant,
             cases_ccs_lactating = ut.cases_ccs_lactating,
@@ -202,12 +187,24 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
                 sum(agg_ccs_record.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record
-            LEFT OUTER JOIN "tmp_home_visit" home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
+            LEFT OUTER JOIN (
+                    SELECT 
+                        ucr.awc_id,
+                        agg_cf.month,
+                        SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
+                        sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
+                        FROM  "{ccs_record_case_ucr}" ucr
+                        LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
+                        WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
+                            date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
+                            date_trunc('month', ucr.opened_on) <= %(start_date)s
+
+                        GROUP BY ucr.awc_id, agg_cf.month
+                    )  home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
             WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5 
             GROUP BY agg_ccs_record.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
-        DROP TABLE "tmp_home_visit";
         """.format(
             tablename=self.tablename,
             ccs_record_case_ucr=self._ucr_tablename('static-ccs_record_cases'),
@@ -233,19 +230,6 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         ), {}
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_person" AS SELECT
-            awc_id,
-            supervisor_id,
-            sum({seeking_services}) AS cases_person,
-            count(*) AS cases_person_all,
-            sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_11_14,
-            sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
-            sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_15_18,
-            sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
-            sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
-        FROM "{ucr_tablename}"
-        WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
-        GROUP BY awc_id, supervisor_id;
         UPDATE "{tablename}" agg_awc SET
            cases_person = ut.cases_person,
            cases_person_all = ut.cases_person_all,
@@ -254,9 +238,21 @@ class AggAwcHelper(BaseICDSAggregationHelper):
            cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
            cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
            cases_person_referred = ut.cases_person_referred
-        FROM "tmp_person" ut
-        WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
-        DROP TABLE "tmp_person";
+        FROM (
+            SELECT
+                awc_id,
+                sum({seeking_services}) AS cases_person,
+                count(*) AS cases_person_all,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_11_14,
+                sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_15_18,
+                sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
+                sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
+            FROM "{ucr_tablename}"
+            WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
+            GROUP BY awc_id
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id;
         """.format(
             tablename=self.tablename,
             ucr_tablename=self._ucr_tablename('static-person_cases_v3'),
@@ -271,46 +267,42 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_child" AS SELECT
-            awc_id,
-            sum(has_aadhar_id) as child_has_aadhar,
-            sum(immunization_in_month) AS num_children_immunized
-        FROM "{child_health_monthly}"
-        WHERE month = %(month)s and valid_in_month = 1
-        GROUP BY awc_id;
         UPDATE "{tablename}" agg_awc SET
             cases_person_has_aadhaar_v2 = ut.child_has_aadhar,
             num_children_immunized = ut.num_children_immunized
-        FROM "tmp_child" ut
+        FROM (
+            SELECT
+                awc_id,
+                sum(has_aadhar_id) as child_has_aadhar,
+                sum(immunization_in_month) AS num_children_immunized
+            FROM "{child_health_monthly}"
+            WHERE valid_in_month = 1
+            GROUP BY awc_id
+        ) ut
         WHERE ut.awc_id = agg_awc.awc_id;
-        DROP TABLE "tmp_child";
         """.format(
             tablename=self.tablename,
-            child_health_monthly="child_health_monthly",
-        ), {
-            "month": self.month_start
-        }
+            child_health_monthly="child_health_monthly_{}".format(self.month_start),
+        ), {}
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_ccs" AS SELECT
-            awc_id,
-            sum(anc_in_month) AS num_anc_visits,
-            sum(has_aadhar_id) AS ccs_has_aadhar
-        FROM "{ccs_record_monthly}"
-        WHERE month = %(month)s and (pregnant = 1 OR lactating = 1)
-        GROUP BY awc_id;
         UPDATE "{tablename}" agg_awc SET
             num_anc_visits = ut.num_anc_visits,
             cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar
-        FROM "tmp_ccs" ut
+        FROM (
+            SELECT
+                awc_id,
+                sum(anc_in_month) AS num_anc_visits,
+                sum(has_aadhar_id) AS ccs_has_aadhar
+            FROM "{ccs_record_monthly}"
+            WHERE pregnant = 1 OR lactating = 1
+            GROUP BY awc_id
+        ) ut
         WHERE ut.awc_id = agg_awc.awc_id;
-        DROP TABLE "tmp_ccs";
         """.format(
             tablename=self.tablename,
-            ccs_record_monthly="ccs_record_monthly"
-        ), {
-            "month": self.month_start
-        }
+            ccs_record_monthly="ccs_record_monthly_{}".format(self.month_start),
+        ), {}
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -446,22 +438,23 @@ class AggAwcHelper(BaseICDSAggregationHelper):
         }
 
         yield """
-        CREATE TEMPORARY TABLE "tmp_awc" AS SELECT
-            doc_id as awc_id,
-            MAX(state_is_test) as state_is_test,
-            MAX(district_is_test) as district_is_test,
-            MAX(block_is_test) as block_is_test,
-            MAX(supervisor_is_test) as supervisor_is_test,
-            MAX(awc_is_test) as awc_is_test
-        FROM "{awc_location_tablename}"
-        GROUP BY awc_id;
             UPDATE "{tablename}" agg_awc SET
               state_is_test = ut.state_is_test,
               district_is_test = ut.district_is_test,
               block_is_test = ut.block_is_test,
               supervisor_is_test = ut.supervisor_is_test,
               awc_is_test = ut.awc_is_test
-            FROM "tmp_awc" ut
+            FROM (
+              SELECT
+                doc_id as awc_id,
+                MAX(state_is_test) as state_is_test,
+                MAX(district_is_test) as district_is_test,
+                MAX(block_is_test) as block_is_test,
+                MAX(supervisor_is_test) as supervisor_is_test,
+                MAX(awc_is_test) as awc_is_test
+              FROM "{awc_location_tablename}"
+              GROUP BY awc_id
+            ) ut
             WHERE ut.awc_id = agg_awc.awc_id AND (
                 (
                   agg_awc.state_is_test IS NULL OR
@@ -476,8 +469,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                   ut.supervisor_is_test != agg_awc.supervisor_is_test OR
                   ut.awc_is_test != agg_awc.awc_is_test
                 )
-            );
-        DROP TABLE "tmp_awc";
+            )
         """.format(
             tablename=self.tablename,
             awc_location_tablename='awc_location',

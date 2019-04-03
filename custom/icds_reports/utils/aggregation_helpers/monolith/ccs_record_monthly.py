@@ -11,7 +11,8 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE)
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
@@ -22,11 +23,10 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(self.drop_table_query())
         cursor.execute(agg_query, agg_params)
         for query in index_queries:
             cursor.execute(query)
@@ -57,10 +57,16 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     @property
     def tablename(self):
-        return self.base_tablename
+        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': month_formatter(self.month)}
+        return 'DELETE FROM "{}"'.format(self.tablename)
+
+    @property
+    def person_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-person_cases_v3')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
 
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
@@ -118,7 +124,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
         columns = (
             ('awc_id', 'case_list.awc_id'),
             ('case_id', 'case_list.case_id'),
-            ('supervisor_id', 'case_list.supervisor_id'),
+            ("supervisor_id", "case_list.supervisor_id"),
             ('month', self.month.strftime("'%Y-%m-%d'")),
             ('age_in_months', 'trunc({})'.format(age_in_months_end)),
             ('ccs_status', "CASE WHEN {} THEN 'pregnant' ELSE CASE WHEN {} THEN "
@@ -251,25 +257,18 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             {calculations}
             FROM "{ccs_record_case_ucr}" case_list
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON case_list.person_case_id = person_cases.doc_id
-                AND case_list.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
-                AND case_list.supervisor_id = ut.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id 
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_thr.supervisor_id
             LEFT OUTER JOIN "{agg_bp_table}" agg_bp ON case_list.doc_id = agg_bp.case_id 
                 AND agg_bp.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_bp.supervisor_id
             LEFT OUTER JOIN "{agg_pnc_table}" agg_pnc ON case_list.doc_id = agg_pnc.case_id 
                 AND agg_pnc.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_pnc.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON case_list.doc_id = agg_cf.case_id 
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_cf.supervisor_id
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id 
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_delivery.supervisor_id
-            ORDER BY case_list.supervisor_id, case_list.awc_id, case_list.case_id, case_list.modified_on
+            ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
             tablename=self.tablename,
@@ -293,6 +292,6 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
 
     def indexes(self):
         return [
-            'CREATE INDEX IF NOT EXISTS crm_awc_case_idx ON "{}" (awc_id, case_id)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS crm_person_add_case_idx ON "{}" (person_case_id, add, case_id)'.format(self.tablename)
+            'CREATE INDEX ON "{}" (awc_id, case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (person_case_id, add, case_id)'.format(self.tablename)
         ]

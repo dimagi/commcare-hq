@@ -4,27 +4,24 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_COMP_FEEDING_TABLE
-from custom.icds_reports.utils.aggregation_helpers import (
-    BaseICDSAggregationHelper, month_formatter
-)
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
-    tablename = AGG_COMP_FEEDING_TABLE
+    aggregate_parent_table = AGG_COMP_FEEDING_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_cf_form_'
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
+        prev_month_query, prev_month_params = self.create_table_query(self.month - relativedelta(months=1))
+        curr_month_query, curr_month_params = self.create_table_query()
         agg_query, agg_params = self.aggregation_query()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(prev_month_query, prev_month_params)
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
         cursor.execute(agg_query, agg_params)
-
-    def drop_table_query(self):
-        return (
-            'DELETE FROM "{}" WHERE month=%(month)s AND state_id = %(state)s'.format(self.tablename),
-            {'month': month_formatter(self.month), 'state': self.state_id}
-        )
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
@@ -32,8 +29,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         return """
         SELECT DISTINCT child_health_case_id AS case_id,
-        %(current_month_start)s::date AS month,
-        supervisor_id AS supervisor_id,
+        LAST_VALUE(supervisor_id) OVER w AS supervisor_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
         MAX(comp_feeding) OVER w AS comp_feeding_ever,
@@ -46,7 +42,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
-            PARTITION BY supervisor_id, child_health_case_id
+            PARTITION BY child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(ucr_tablename=self.ucr_tablename), {
@@ -57,13 +53,14 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_query(self):
         month = self.month.replace(day=1)
-        query_params = {
-            "month": month_formatter(month),
-            "previous_month": month_formatter(month - relativedelta(months=1)),
-            "state_id": self.state_id
-        }
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
         query_params.update(ucr_query_params)
 
         # GREATEST calculations are for when we want to know if a thing has
@@ -101,14 +98,11 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
                  THEN ucr.hand_wash ELSE prev_month.hand_wash
             END AS hand_wash
           FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
-            AND ucr.month = prev_month.month + INTERVAL '1 month'
-          WHERE coalesce(ucr.month, %(month)s) = %(month)s
-            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
         )
         """.format(
-            tablename=self.tablename,
-            ucr_table_query=ucr_query
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
         ), query_params

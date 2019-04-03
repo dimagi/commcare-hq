@@ -4,28 +4,45 @@ from __future__ import unicode_literals
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DAILY_FEEDING_TABLE_ID
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, date_to_string, \
+from custom.icds_reports.utils.aggregation_helpers import date_to_string, \
     transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
-    tablename = 'daily_attendance'
+    base_tablename = 'daily_attendance'
     ucr_daily_attendance_table = DAILY_FEEDING_TABLE_ID
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
+        curr_month_query, curr_month_params = self.create_table_query()
         agg_query, agg_params = self.aggregate_query()
+        indexes_query = self.indexes()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
         cursor.execute(agg_query, agg_params)
+        cursor.execute(indexes_query)
+
+    @property
+    def tablename(self):
+        return "{}_{}".format(self.base_tablename, date_to_string(self.month))
+
+    def create_table_query(self):
+        return """
+            CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = %(table_date)s)) INHERITS ("{parent_tablename}")
+        """.format(
+            tablename=self.tablename,
+            parent_tablename=self.base_tablename,
+        ), {
+            "table_date": date_to_string(self.month)
+        }
 
     def drop_table_query(self):
-        return 'DELETE FROM "{}" WHERE month = %(month)s'.format(self.tablename), {
-            'month': self.month
-        }
+        return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
 
     @property
     def ucr_daily_attendance_tablename(self):
@@ -62,3 +79,10 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
         ), {
             "start_month": date_to_string(self.month),
         }
+
+    def indexes(self):
+        return """
+            CREATE INDEX "{tablename}_indx1" ON "{tablename}" (awc_id)
+        """.format(
+            tablename=self.tablename
+        )

@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from six.moves import map
+
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AWC_LOCATION_TABLE_ID, AWW_USER_TABLE_ID
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper
-from six.moves import map
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class LocationAggregationHelper(BaseICDSAggregationHelper):
@@ -21,13 +22,11 @@ class LocationAggregationHelper(BaseICDSAggregationHelper):
         drop_table_query = self.drop_table_query()
         agg_query = self.aggregate_query()
         aww_query = self.aww_query()
-        ls_query = self.ls_query()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
 
         cursor.execute(drop_table_query)
         cursor.execute(agg_query)
         cursor.execute(aww_query)
-        cursor.execute(ls_query)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
 

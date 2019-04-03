@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-
 from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
@@ -110,20 +110,18 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
 
     def update_query(self):
         return """
-        CREATE TEMPORARY TABLE "{temp_table}" AS
+        UPDATE "{tablename}" agg_awc SET
+            daily_attendance_open = ut.daily_attendance_open
+        FROM (
             SELECT
                 awc_id,
                 pse_date,
                 sum(awc_open_count) AS daily_attendance_open
             FROM daily_attendance WHERE pse_date = %(date)s
-            GROUP BY awc_id, pse_date;
-        UPDATE "{tablename}" agg_awc SET
-            daily_attendance_open = ut.daily_attendance_open
-        FROM (
-            SELECT * FROM "{temp_table}"
+            GROUP BY awc_id, pse_date
         ) ut
         WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id
-        """.format(tablename=self.tablename, temp_table="temp_{}".format(self.tablename)), {
+        """.format(tablename=self.tablename), {
             'date': self.date
         }
 

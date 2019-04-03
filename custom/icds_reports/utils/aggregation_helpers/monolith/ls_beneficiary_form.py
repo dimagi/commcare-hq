@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_LS_BENEFICIARY_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
@@ -31,25 +33,21 @@ class LSBeneficiaryFormAggHelper(BaseICDSAggregationHelper):
         }
 
         return """
-        CREATE TEMPORARY TABLE "{temp_table}" AS (
-            SELECT
-            state_id,
-            location_id as supervisor_id,
-            %(start_date)s::DATE AS month,
-            count(*) as beneficiary_vists
-            FROM "{ucr_tablename}"
-            WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
-            AND visit_type_entered is not null AND visit_type_entered <> ''
-            AND  state_id=%(state_id)s
-            GROUP BY state_id,location_id
-        );
         INSERT INTO "{tablename}" (
         state_id, supervisor_id, month, beneficiary_vists
         ) (
-             SELECT * FROM "{temp_table}"
+             SELECT
+                state_id,
+                location_id as supervisor_id,
+                %(start_date)s::DATE AS month,
+                count(*) as beneficiary_vists
+                FROM "{ucr_tablename}"
+                WHERE submitted_on >= %(start_date)s AND  submitted_on < %(end_date)s
+                AND visit_type_entered is not null AND visit_type_entered <> ''
+                AND  state_id=%(state_id)s
+                GROUP BY state_id,location_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
-            tablename=tablename,
-            temp_table="temp_{}".format(tablename)
+            tablename=tablename
         ), query_params
