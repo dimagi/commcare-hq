@@ -19,7 +19,7 @@ def get_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0108_child_cases_ccs_record_supervisor_id'),
+        ('icds_reports', '0110_aww_incentive_report_monthly'),
     ]
 
     operations = get_operations()
