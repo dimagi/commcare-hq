@@ -205,7 +205,7 @@ class EditCommCareUserView(BaseEditUserView):
         linked_loc = self.editable_user.location
         initial_id = linked_loc._id if linked_loc else None
         program_id = self.editable_user.get_domain_membership(self.domain).program_id
-        assigned_locations = ','.join(self.editable_user.assigned_location_ids)
+        assigned_locations = self.editable_user.assigned_location_ids
         return CommtrackUserForm(
             domain=self.domain,
             initial={

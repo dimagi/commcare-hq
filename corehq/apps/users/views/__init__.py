@@ -312,15 +312,9 @@ class BaseEditUserView(BaseUserSettingsView):
         return CommtrackUserForm(
             domain=self.domain,
             initial={
-                'primary_location': {
-                    'id': linked_loc,
-                    'text': locations_by_id[linked_loc].name,
-                } if linked_loc else None,
+                'primary_location': linked_loc,
                 'program_id': linked_prog,
-                'assigned_locations': [{
-                    'id': id,
-                    'text': locations_by_id[id].name
-                } for id in assigned_locations],
+                'assigned_locations': assigned_locations,
             },
         )
 

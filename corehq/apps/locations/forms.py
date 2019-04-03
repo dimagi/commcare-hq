@@ -51,10 +51,6 @@ class LocationSelectWidget(forms.Widget):
 
     def render(self, name, value, attrs=None, renderer=None):
         location_ids = value or []
-        if location_ids and not self.multiselect:
-            location_ids = location_ids.split(',')
-        elif location_ids and isinstance(location_ids[0], dict):
-            location_ids = [loc['id'] for loc in location_ids]
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{
@@ -65,7 +61,7 @@ class LocationSelectWidget(forms.Widget):
         return get_template(self.template).render({
             'id': self.id,
             'name': name,
-            'value': ','.join(loc.location_id for loc in locations),
+            'value': [loc.location_id for loc in locations],
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,

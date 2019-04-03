@@ -769,11 +769,23 @@ class PrimaryLocationWidget(forms.Widget):
         self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
     def render(self, name, value, attrs=None):
+        initial_data = {}
+        if value:
+            try:
+                loc = SQLLocation.objects.get(location_id=value)
+                initial_data = {
+                    'id': loc.location_id,
+                    'text': loc.get_path_display(),
+                }
+            except SQLLocation.DoesNotExist:
+                pass
+
         return get_template(self.template).render({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
-            'value': value or '',
+            'value': value,
+            'initial_data': initial_data,
             'attrs': self.build_attrs(self.attrs, attrs),
         })
 
