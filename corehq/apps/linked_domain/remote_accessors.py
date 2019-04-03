@@ -8,6 +8,7 @@ from requests import ConnectionError
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
@@ -65,8 +66,10 @@ def pull_missing_multimedia_for_app(app):
 
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
-            return False
-    return True
+            raise MultimediaMissingError(_(
+                'Application has missing multimedia even after an attempt to pull them. '
+                'An email has been sent with details. Please try again. If persists, report an issue.'
+            ))
 
 
 def _get_missing_multimedia(app):
