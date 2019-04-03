@@ -52,7 +52,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -60,6 +60,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
     WebUserInvitationForm,
@@ -212,7 +213,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 class BaseEditUserView(BaseUserSettingsView):
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 
@@ -303,15 +304,13 @@ class BaseEditUserView(BaseUserSettingsView):
             return CommtrackUserForm(self.request.POST, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
-        linked_loc = user_domain_membership.location_id
-        linked_prog = user_domain_membership.program_id
-        assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
             initial={
-                'primary_location': linked_loc,
-                'program_id': linked_prog,
-                'assigned_locations': assigned_locations}
+                'primary_location': user_domain_membership.location_id,
+                'program_id': user_domain_membership.program_id,
+                'assigned_locations': user_domain_membership.assigned_location_ids,
+            },
         )
 
     def update_user(self):
@@ -957,7 +956,7 @@ class InviteWebUserView(BaseManageWebUserView):
     urlname = 'invite_web_user'
     page_title = ugettext_lazy("Invite Web User to Project")
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(InviteWebUserView, self).dispatch(request, *args, **kwargs)
 
