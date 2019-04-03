@@ -569,11 +569,11 @@ CREATE TABLE daily_attendance
   form_location text,
   form_location_lat numeric,
   form_location_long numeric,
+  image_name text,
+  pse_conducted smallint,
+  supervisor_id text,
   CONSTRAINT daily_attendance_pkey PRIMARY KEY (doc_id)
 );
-ALTER TABLE daily_attendance ADD COLUMN image_name text;
-ALTER TABLE daily_attendance ADD COLUMN pse_conducted smallint ;
-ALTER TABLE daily_attendance ADD COLUMN supervisor_id text;
 
 CREATE TABLE agg_awc_daily
 (
@@ -604,16 +604,16 @@ CREATE TABLE agg_awc_daily
   num_launched_districts integer,
   num_launched_blocks integer,
   num_launched_supervisors integer,
-  num_launched_awcs integer
+  num_launched_awcs integer,
+  cases_person_beneficiary integer,
+  cases_person_has_aadhaar_v2 integer,
+  cases_person_beneficiary_v2 integer,
+  state_is_test smallint,
+  district_is_test smallint,
+  block_is_test smallint,
+  supervisor_is_test smallint,
+  awc_is_test smallint
 );
-ALTER TABLE agg_awc_daily ADD COLUMN cases_person_beneficiary integer;
-ALTER TABLE agg_awc_daily ADD COLUMN cases_person_has_aadhaar_v2 integer;
-ALTER TABLE agg_awc_daily ADD COLUMN cases_person_beneficiary_v2 integer;
-ALTER TABLE agg_awc_daily ADD COLUMN state_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN district_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN block_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE agg_awc_daily ADD COLUMN awc_is_test smallint;
 
 DROP FUNCTION IF EXISTS aggregate_awc_daily(date);
 DROP FUNCTION IF EXISTS aggregate_awc_data(date);
