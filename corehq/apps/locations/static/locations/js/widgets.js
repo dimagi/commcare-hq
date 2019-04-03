@@ -1,4 +1,4 @@
-hqDefine("locations/js/widgets_main_v4", [
+hqDefine("locations/js/widgets", [
     'jquery',
     'underscore',
     'select2/dist/js/select2.full.min',
