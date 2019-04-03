@@ -28,27 +28,25 @@ CREATE TABLE awc_location
   state_id text,
   state_name text,
   state_site_code text,
+  aggregation_leve integer,
+  block_map_location_name text,
+  district_map_location_name text,
+  state_map_location_name text,
+  aww_name text,
+  contact_phone_number text,
+  state_is_test smallint,
+  district_is_test smallint,
+  block_is_test smallint,
+  supervisor_is_test smallint,
+  awc_is_test smallint,
   CONSTRAINT awc_location_pkey PRIMARY KEY (state_id, district_id, block_id, supervisor_id, doc_id)
 );
-ALTER TABLE awc_location ADD COLUMN aggregation_level integer;
 CREATE INDEX awc_location_indx1 ON awc_location (aggregation_level);
 CREATE INDEX awc_location_indx2 ON awc_location (state_id);
 CREATE INDEX awc_location_indx3 ON awc_location (district_id);
 CREATE INDEX awc_location_indx4 ON awc_location (block_id);
 CREATE INDEX awc_location_indx5 ON awc_location (supervisor_id);
 CREATE INDEX awc_location_indx6 ON awc_location (doc_id);
-ALTER TABLE awc_location ADD COLUMN block_map_location_name text;
-ALTER TABLE awc_location ADD COLUMN district_map_location_name text;
-ALTER TABLE awc_location ADD COLUMN state_map_location_name text;
-ALTER TABLE awc_location ADD COLUMN aww_name text;
-ALTER TABLE awc_location ADD COLUMN contact_phone_number text;
-ALTER TABLE awc_location ADD COLUMN state_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN district_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN block_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN supervisor_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN awc_is_test smallint;
-ALTER TABLE awc_location ADD COLUMN ls_name text;
-ALTER TABLE awc_location DROP COLUMN ls_name;
 
 -- View: awc_location_months
 CREATE OR REPLACE VIEW awc_location_months AS
