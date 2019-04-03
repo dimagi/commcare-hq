@@ -52,7 +52,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
-from corehq.apps.hqwebapp.decorators import use_select2, use_select2_v4
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
@@ -60,6 +60,7 @@ from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_other_user,
 )
+from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
     WebUserInvitationForm,
@@ -212,7 +213,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 class BaseEditUserView(BaseUserSettingsView):
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
 
@@ -305,13 +306,22 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
-        assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
+        assigned_locations = user_domain_membership.assigned_location_ids
+        locations = get_locations_from_ids(user_domain_membership.assigned_location_ids, self.domain)
+        locations_by_id = {loc._id: loc for loc in locations}
         return CommtrackUserForm(
             domain=self.domain,
             initial={
-                'primary_location': linked_loc,
+                'primary_location': {
+                    'id': linked_loc,
+                    'text': locations_by_id[linked_loc].name,
+                } if linked_loc else None,
                 'program_id': linked_prog,
-                'assigned_locations': assigned_locations}
+                'assigned_locations': [{
+                    'id': id,
+                    'text': locations_by_id[id].name
+                } for id in assigned_locations],
+            },
         )
 
     def update_user(self):

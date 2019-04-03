@@ -59,10 +59,17 @@ class LocationSelectWidget(forms.Widget):
         self.template = versioned_templates[select2_version]
 
     def render(self, name, value, attrs=None, renderer=None):
-        location_ids = value.split(',') if value else []
+        location_ids = value or []
+        if location_ids and (not self.multiselect or self.select2_version == 'v3'):
+            location_ids = location_ids.split(',')
+        if location_ids and isinstance(location_ids[0], dict):
+            location_ids = [loc['id'] for loc in location_ids]
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+        initial_data = [{
+            'id': loc.location_id,
+            'text': loc.get_path_display(),
+        } for loc in locations]
 
         return get_template(self.template).render({
             'id': self.id,

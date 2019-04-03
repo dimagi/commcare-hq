@@ -789,6 +789,7 @@ class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
         label=ugettext_noop("Locations"),
         required=False,
+        widget=forms.SelectMultiple(choices=[]),
     )
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
@@ -806,12 +807,12 @@ class CommtrackUserForm(forms.Form):
         self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = LocationSelectWidget(
-            self.domain, multiselect=True, id='id_assigned_locations', select2_version='v3'
+            self.domain, multiselect=True, id='id_assigned_locations', select2_version='v4'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
-            select2_version='v3'
+            select2_version='v4'
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
@@ -872,17 +873,10 @@ class CommtrackUserForm(forms.Form):
                 user.reset_locations(self.domain, location_ids)
 
     def clean_assigned_locations(self):
-        # select2 (< 4.0) doesn't format multiselect for remote data as an array
-        #   but formats it as comma-seperated list, so we need to clean the returned data
         from corehq.apps.locations.models import SQLLocation
         from corehq.apps.locations.util import get_locations_from_ids
 
-        value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, six.string_types) or value.strip() == '':
-            return []
-        soft_assert_type_text(value)
-
-        location_ids = [location_id.strip() for location_id in value.split(',')]
+        location_ids = self.data.getlist('assigned_locations')
         try:
             locations = get_locations_from_ids(location_ids, self.domain)
         except SQLLocation.DoesNotExist:
