@@ -31,6 +31,9 @@ class TextCaseColumnFilter(BaseColumnFilter):
             query = query.regexp_case_property_query(
                 property_name, ".*{}.*".format(value), clause
             )
+        elif value == "":
+            operator = "!=" if filter_name.startswith('not_') else "="
+            query = query.xpath_query(self.domain, "{} {} ''".format(property_name, operator))
         elif filter_name.endswith('equals'):
             query = query.case_property_query(property_name, value, clause)
 
