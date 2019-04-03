@@ -54,35 +54,5 @@ hqDefine("locations/js/widgets_main_v3", [
                 formatSelection: function (e) { return e.name; },
             });
         });
-
-        $(".locations-widget-primary-v3").each(function () {
-            var $select = $(this),
-                $source = $('#' + $select.data("sourceCssId")),
-                value = $select.val();
-
-            // This custom event is fired in autocomplete_select_widget.html
-            $source.on('select-ready', function () {
-                updateSelect2($source, $select);
-                // set initial value
-                $select.select2("val", value);
-            });
-
-            // Change options/value for css_id based on what's chosen for source_css_id
-            $source.on('change', function () {
-                updateSelect2($source, $select);
-                if (!$(this).select2('data').length) {
-                    // if no options available, set to null
-                    $select.val(null);
-                } else {
-                    var currentValue = $select.val();
-                    var availableValues = _.map($source.select2('data'), function (item) { return item.id; });
-                    // set as first value of option
-                    if (!currentValue || !availableValues.includes(currentValue)) {
-                        $select.select2("val", $source.select2('data')[0].id);
-                    }
-
-                }
-            }).trigger('change');
-        });
     });
 });
