@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
 from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.models import Subscription
@@ -37,22 +38,13 @@ import six
 NOT_FOUND = "Not Found"
 
 
-class ToggleBaseView(BasePageView):
-
-    @method_decorator(require_superuser_or_contractor)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ToggleBaseView, self).dispatch(request, *args, **kwargs)
-
-    def toggle_map(self):
-        return dict([(t.slug, t) for t in all_toggles()])
-
-
-class ToggleListView(ToggleBaseView):
+class ToggleListView(BasePageView):
     urlname = 'toggle_list'
     page_title = "Feature Flags"
     template_name = 'toggle/flags.html'
 
     @use_datatables
+    @method_decorator(require_superuser_or_contractor)
     def dispatch(self, request, *args, **kwargs):
         return super(ToggleListView, self).dispatch(request, *args, **kwargs)
 
@@ -104,17 +96,14 @@ class ToggleListView(ToggleBaseView):
         }
 
 
-class ToggleEditView(ToggleBaseView):
+@method_decorator(require_superuser_or_contractor, name='dispatch')
+class ToggleEditView(BasePageView):
     urlname = 'edit_toggle'
     template_name = 'toggle/edit_flag.html'
 
-    @method_decorator(require_superuser_or_contractor)
-    def dispatch(self, request, *args, **kwargs):
-        return super(ToggleEditView, self).dispatch(request, *args, **kwargs)
-
     @property
     def page_title(self):
-        return self.toggle_meta().label
+        return self.static_toggle.label
 
     @property
     def page_url(self):
@@ -140,7 +129,7 @@ class ToggleEditView(ToggleBaseView):
     def is_random_editable(self):
         return isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle)
 
-    @property
+    @cached_property
     def static_toggle(self):
         """
         Returns the corresponding toggle definition from corehq/toggles.py
@@ -155,19 +144,12 @@ class ToggleEditView(ToggleBaseView):
         except ResourceNotFound:
             return Toggle(slug=self.toggle_slug)
 
-    def toggle_meta(self):
-        toggle_map = self.toggle_map()
-        if self.toggle_slug in toggle_map:
-            return toggle_map[self.toggle_slug]
-        raise Http404
-
     @property
     def page_context(self):
-        toggle_meta = self.toggle_meta()
         toggle = self.get_toggle()
-        namespaces = [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces]
+        namespaces = [NAMESPACE_USER if n is None else n for n in self.static_toggle.namespaces]
         context = {
-            'toggle_meta': toggle_meta,
+            'static_toggle': self.static_toggle,
             'toggle': toggle,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
@@ -204,7 +186,7 @@ class ToggleEditView(ToggleBaseView):
             setattr(toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, randomness)
             # clear cache
             if isinstance(self.toggle_meta(), DynamicallyPredictablyRandomToggle):
-                _clear_caches_for_dynamic_toggle(self.toggle_meta())
+                _clear_caches_for_dynamic_toggle(self.static_toggle)
 
         elif save_randomness:
             messages.error(request, "The randomness value {} must be between 0 and 1".format(randomness))
@@ -258,9 +240,9 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             username = entry
 
 
-def _clear_caches_for_dynamic_toggle(toggle_meta):
+def _clear_caches_for_dynamic_toggle(static_toggle):
     # note: this is rather coupled with python property internals
-    DynamicallyPredictablyRandomToggle.randomness.fget.clear(toggle_meta)
+    DynamicallyPredictablyRandomToggle.randomness.fget.clear(static_toggle)
     # also have to do this since the toggle itself is cached
     all_toggles.clear()
 
