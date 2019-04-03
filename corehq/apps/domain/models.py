@@ -265,10 +265,24 @@ class DayTimeWindow(DocumentSchema):
 
 @six.python_2_unicode_compatible
 class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
-    """Domain is the highest level collection of people/stuff
-       in the system.  Pretty much everything happens at the
-       domain-level, including user membership, permission to
-       see data, reports, charts, etc."""
+    """
+        Domain is the highest level collection of people/stuff
+        in the system.  Pretty much everything happens at the
+        domain-level, including user membership, permission to
+        see data, reports, charts, etc.
+
+        Exceptions: accounting has some models that combine multiple domains,
+        which make "enterprise" multi-domain features like the enterprise dashboard possible.
+
+        Naming conventions:
+        Most often, variables representing domain names are named `domain`, and
+        variables representing domain objects are named `domain_obj`. New code should
+        follow this convention, unless it's in an area that consistently uses `domain`
+        for the object and `domain_name` for the string.
+
+        There's a `project` attribute attached to requests that's a domain object.
+        In spite of this, don't use `project` in new code.
+   """
 
     _blobdb_type_code = BLOB_CODES.domain
 

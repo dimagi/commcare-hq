@@ -243,7 +243,7 @@ class LocationFilterAPI(View):
 @method_decorator([login_and_domain_required, require_superuser_or_contractor], name='dispatch')
 class AggregationScriptPage(BaseDomainView):
     page_title = 'Aggregation Script'
-    urlname = 'aggregation_script_page'
+    urlname = 'aaa_aggregation_script_page'
     template_name = 'icds_reports/aggregation_script.html'
 
     @use_daterangepicker
@@ -414,7 +414,7 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         elif section == 'eligible_couple':
             helper = EligibleCoupleQueryHelper(request.domain, beneficiary_id, month_end)
             if sub_section == 'eligible_couple_details':
-                data = helper.eligible_couples_details()
+                data = helper.eligible_couple_details()
 
         if not data:
             raise Http404()

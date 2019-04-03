@@ -102,8 +102,10 @@ def paginate_releases(request, domain, app_id):
             descending=True,
             limit=limit,
             skip=skip,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
-                                                 scrap_old_conventions=False).releases_list_json(timezone),
+            wrapper=lambda x: (
+                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                .releases_list_json(timezone)
+            ),
         ).all()
 
     if not bool(only_show_released or query):
@@ -139,16 +141,6 @@ def paginate_releases(request, domain, app_id):
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
             for app in apps
         ]
-
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-    for app in saved_apps:
-        app['include_media'] = app['doc_type'] != 'RemoteApp'
-        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
-        app['target_commcare_flavor'] = (
-            SavedAppBuild.get(app['_id']).target_commcare_flavor
-            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
-            else 'none'
-        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -307,10 +299,6 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
-    if copy:
-        # Set if build is supported for Java Phones
-        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     return json_response({
         "saved_app": copy,
