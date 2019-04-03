@@ -23,7 +23,11 @@ class TestLocationView(CSVTestCase):
 
     def _get_data_from_blobdb(self, indicator, state_id, month):
         sync, _ = get_cas_data_blob_file(indicator, state_id, month)
-        csv_file = io.TextIOWrapper(sync.get_file_from_blobdb(), encoding='utf-8')
+        with sync.get_file_from_blobdb() as streaming_body:
+            # Workaround botocore.response.StreamingBody has no 'readable' attribute
+            fileobj = io.BytesIO(streaming_body.read())
+        # TextIOWrapper uses universal newline mode by default
+        csv_file = io.TextIOWrapper(fileobj, encoding='utf-8')
         csv_data = list(csv.reader(csv_file))
         headers = csv_data[0]
         rows = csv_data[1:]
