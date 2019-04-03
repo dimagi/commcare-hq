@@ -4,12 +4,12 @@ from datetime import timedelta
 
 from testil import eq
 
-from corehq.util.datadog.utils import make_bucket_from_timedeltas, DAY_SCALE_TIME_BUCKETS
+from corehq.util.datadog.utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS
 
 
-def test_make_bucket_from_timedeltas():
+def test_make_buckets_from_timedeltas():
     buckets = [1, 10, 60, 10 * 60, 60 * 60, 12 * 60 * 60, 24 * 60 * 60]
-    eq(make_bucket_from_timedeltas(
+    eq(make_buckets_from_timedeltas(
         timedelta(seconds=1),
         timedelta(seconds=10),
         timedelta(minutes=1),
