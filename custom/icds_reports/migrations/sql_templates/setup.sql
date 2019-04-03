@@ -28,7 +28,7 @@ CREATE TABLE awc_location
   state_id text,
   state_name text,
   state_site_code text,
-  aggregation_leve integer,
+  aggregation_level integer,
   block_map_location_name text,
   district_map_location_name text,
   state_map_location_name text,
@@ -177,7 +177,7 @@ CREATE TABLE agg_awc
   infra_adult_weighing_scale integer,
   infra_cooking_utensils integer,
   infra_medicine_kits integer,
-  infra_adequate_space_pse integer
+  infra_adequate_space_pse integer,
   usage_num_hh_reg integer,
   usage_num_add_person integer,
   usage_num_add_pregnancy integer,
