@@ -36,6 +36,7 @@
             {% endblocktrans %}
         </li>
     </ul>
+    {% if not request.is_view_only %}
     <form class="well well-sm form-inline" method="post" action="{% url "add_group" domain %}" id="create_group_form">
         {% csrf_token %}
         <input type="text" placeholder="{% trans "Group Name" %}" id="id_group_name" name="group_name" class="form-control" />
@@ -44,6 +45,7 @@
             {% trans "Add Group" %}
         </button>
     </form>
+    {% endif %}
 
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -60,9 +62,9 @@
                                 data-title="{% trans 'Reporting Groups' %}"
                                 data-content="{% blocktrans %}
                                     Reporting groups are used in reports to filter and view
-                                    data. You can remove this group from reports by
-                                    editing this group's settings.
-                                    {% endblocktrans %}">
+                                    data.{% endblocktrans %}{% if not request.is_view_only %}
+                                    {% blocktrans %}You can remove this group from reports by
+                                    editing this group's settings.{% endblocktrans %}{% endif %}">
                             </span>
                         </th>
                         <th>
@@ -71,9 +73,10 @@
                                 data-title="{% trans 'Case Sharing Groups' %}"
                                 data-content="{% blocktrans %}
                                     Case sharing groups allow their members to share a
-                                    case list in a case-sharing app. You can change this
-                                    by editing this group's settings.
-                                    {% endblocktrans %}">
+                                    case list in a case-sharing app.{% endblocktrans %}
+                                    {% if not request.is_view_only %}
+                                    {% blocktrans %} You can change this by editing this
+                                    group's settings.{% endblocktrans %}{% endif %}">
                             </span>
                         </th>
                     </thead>
@@ -97,9 +100,16 @@
                 </table>
             {% else %}
                 <div class="alert alert-info">
-                    {% blocktrans %}
-                    You don't have any groups yet, please create a Group to get started.
-                    {% endblocktrans %}
+                    {% if request.is_view_only %}
+                        {% blocktrans %}
+                            There are no groups currently visible to you. If you think this is
+                            incorrect, please contact your project's administrator.
+                        {% endblocktrans %}
+                    {% else %}
+                        {% blocktrans %}
+                            You don't have any groups yet, please create a Group to get started.
+                        {% endblocktrans %}
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
