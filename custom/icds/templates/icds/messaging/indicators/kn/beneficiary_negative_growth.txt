@@ -1,1 +1,1 @@
-As per the latest records of your AWC, the weight of your child {{ child_name }} has reduced in the last month. Please consult your AWW for necessary advice.
+ನಿಮ್ಮ ಅಂಗನವಾಡಿ ಕೇಂದ್ರದ ಇತ್ತೀಚಿನ ದಾಖಲೆಗಳ ಪ್ರಕಾರ, ನಿಮ್ಮ ಮಗುವಿನ ತೂಕವು {{ child_name }} ಕಳೆದ ತಿಂಗಳಲ್ಲಿ ಕಡಿಮೆಯಾಗಿದೆ. ದಯವಿಟ್ಟು ಅಗತ್ಯವಾದ ಸಲಹೆಗಾಗಿ ನಿಮ್ಮ ಅಂಗನವಾಡಿ ಕೇಂದ್ರವನ್ನು ಸಂಪರ್ಕಿಸಿ.
