@@ -7,7 +7,7 @@ from corehq.apps.userreports.models import Validation
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators
 
 
-class DataSourceConfigurationTest(SimpleTestCase):
+class DataSourceValidationTest(SimpleTestCase):
 
     def setUp(self):
         self.config = get_sample_data_source()
