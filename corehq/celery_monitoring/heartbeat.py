@@ -30,6 +30,9 @@ class HeartbeatCache(object):
     def set(self, value):
         cache.set(self._cache_key(), value, timeout=HEARTBEAT_CACHE_TIMEOUT.total_seconds())
 
+    def delete(self):
+        cache.delete(self._cache_key())
+
 
 class Heartbeat(object):
     def __init__(self, queue):
@@ -45,6 +48,10 @@ class Heartbeat(object):
 
     def mark_seen(self):
         self._heartbeat_cache.set(datetime.datetime.utcnow())
+
+    def clear_last_seen(self):
+        """Only used in tests"""
+        self._heartbeat_cache.delete()
 
     def get_blockage_duration(self):
         """

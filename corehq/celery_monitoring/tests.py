@@ -12,7 +12,7 @@ from testil import assert_raises, eq
 
 def test_heartbeat():
     hb = Heartbeat('celery_periodic')
-    hb.get_last_seen.clear(hb)
+    hb.clear_last_seen()
 
     with assert_raises(HeartbeatNeverRecorded):
         hb.get_last_seen()
