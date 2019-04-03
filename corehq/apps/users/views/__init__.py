@@ -304,17 +304,12 @@ class BaseEditUserView(BaseUserSettingsView):
             return CommtrackUserForm(self.request.POST, domain=self.domain)
 
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
-        linked_loc = user_domain_membership.location_id
-        linked_prog = user_domain_membership.program_id
-        assigned_locations = user_domain_membership.assigned_location_ids
-        locations = get_locations_from_ids(user_domain_membership.assigned_location_ids, self.domain)
-        locations_by_id = {loc._id: loc for loc in locations}
         return CommtrackUserForm(
             domain=self.domain,
             initial={
-                'primary_location': linked_loc,
-                'program_id': linked_prog,
-                'assigned_locations': assigned_locations,
+                'primary_location': user_domain_membership.location_id,
+                'program_id': user_domain_membership.program_id,
+                'assigned_locations': user_domain_membership.assigned_location_ids,
             },
         )
 
