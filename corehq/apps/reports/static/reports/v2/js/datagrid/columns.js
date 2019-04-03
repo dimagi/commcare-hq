@@ -42,7 +42,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
                     propertyName: self.name(),
                     filterType: appliedFilter.filter().filterType(),
                     filterName: appliedFilter.filter().name(),
-                    filterValue: appliedFilter.value(),
+                    filterValue: appliedFilter.value() || "",
                 };
             });
         };
