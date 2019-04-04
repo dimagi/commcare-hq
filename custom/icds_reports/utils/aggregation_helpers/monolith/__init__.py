@@ -32,9 +32,38 @@ from .agg_awc import AggAwcHelper
 from .agg_awc_daily import AggAwcDailyAggregationHelper
 from .awc_location import LocationAggregationHelper
 from .daily_attendance import DailyAttendanceAggregationHelper
-# excluded due to circular dependency
-# from .mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
+from .mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
 
+__all__ = (
+    'AggCcsRecordAggregationHelper',
+    'AggChildHealthAggregationHelper',
+    'AwcInfrastructureAggregationHelper',
+    'AwwIncentiveAggregationHelper',
+    'LSAwcMgtFormAggHelper',
+    'LSBeneficiaryFormAggHelper',
+    'LSVhndFormAggHelper',
+    'AggLsHelper',
+    'BirthPreparednessFormsAggregationHelper',
+    'CcsRecordMonthlyAggregationHelper',
+    'ChildHealthMonthlyAggregationHelper',
+    'ComplementaryFormsAggregationHelper',
+    'ComplementaryFormsCcsRecordAggregationHelper',
+    'DailyFeedingFormsChildHealthAggregationHelper',
+    'DeliveryFormsAggregationHelper',
+    'GrowthMonitoringFormsAggregationHelper',
+    'InactiveAwwsAggregationHelper',
+    'PostnatalCareFormsCcsRecordAggregationHelper',
+    'PostnatalCareFormsChildHealthAggregationHelper',
+    'THRFormsChildHealthAggregationHelper',
+    'THRFormsCcsRecordAggregationHelper',
+    'AggAwcHelper',
+    'AggAwcDailyAggregationHelper',
+    'LocationAggregationHelper',
+    'DailyAttendanceAggregationHelper',
+    'CcsMbtHelper',
+    'ChildHealthMbtHelper',
+    'AwcMbtHelper',
+)
 
 def recalculate_aggregate_table(model_class):
     """Expects a class (not instance) of models.Model

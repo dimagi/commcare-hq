@@ -28,9 +28,34 @@ from .thr_froms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
 from .agg_awc import AggAwcDistributedHelper
 from .agg_awc_daily import AggAwcDailyAggregationDistributedHelper
 from .daily_attendance import DailyAttendanceAggregationDistributedHelper
-# excluded due to circular dependency
-# from .mbt import CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper
+from .mbt import CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper
 
+__all__ = (
+    'AggCcsRecordAggregationDistributedHelper',
+    'AggChildHealthAggregationDistributedHelper',
+    'LSAwcMgtFormAggDistributedHelper',
+    'LSBeneficiaryFormAggDistributedHelper',
+    'LSVhndFormAggDistributedHelper',
+    'BirthPreparednessFormsAggregationDistributedHelper',
+    'CcsRecordMonthlyAggregationDistributedHelper',
+    'ChildHealthMonthlyAggregationDistributedHelper',
+    'ComplementaryFormsAggregationDistributedHelper',
+    'ComplementaryFormsCcsRecordAggregationDistributedHelper',
+    'DailyFeedingFormsChildHealthAggregationDistributedHelper',
+    'DeliveryFormsAggregationDistributedHelper',
+    'GrowthMonitoringFormsAggregationDistributedHelper',
+    'InactiveAwwsAggregationDistributedHelper',
+    'PostnatalCareFormsCcsRecordAggregationDistributedHelper',
+    'PostnatalCareFormsChildHealthAggregationDistributedHelper',
+    'THRFormsChildHealthAggregationDistributedHelper',
+    'THRFormsCcsRecordAggregationDistributedHelper',
+    'AggAwcDistributedHelper',
+    'AggAwcDailyAggregationDistributedHelper',
+    'DailyAttendanceAggregationDistributedHelper',
+    'CcsMbtDistributedHelper',
+    'ChildHealthMbtDistributedHelper',
+    'AwcMbtDistributedHelper',
+)
 
 def recalculate_aggregate_table(model_class):
     """Expects a class (not instance) of models.Model

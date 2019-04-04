@@ -4,7 +4,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import CcsRecordMonthly, ChildHealthMonthly, AggAwc
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import DistributedAggregationHelper
 
 
@@ -49,7 +48,11 @@ class MBTDistributedHelper(DistributedAggregationHelper):
 
 class CcsMbtDistributedHelper(MBTDistributedHelper):
     helper_key = 'css-mbt'
-    base_class = CcsRecordMonthly
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import CcsRecordMonthly
+        return CcsRecordMonthly
 
     @property
     def columns(self):
@@ -145,7 +148,11 @@ class CcsMbtDistributedHelper(MBTDistributedHelper):
 
 class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
     helper_key = 'child-health-mbt'
-    base_class = ChildHealthMonthly
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import ChildHealthMonthly
+        return ChildHealthMonthly
 
     @property
     def person_case_ucr_tablename(self):
@@ -258,7 +265,11 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
 
 class AwcMbtDistributedHelper(MBTDistributedHelper):
     helper_key = 'awc-mbt'
-    base_class = AggAwc
+
+    @property
+    def base_class(self):
+        from custom.icds_reports.models import AggAwc
+        return AggAwc
 
     @property
     def columns(self):
