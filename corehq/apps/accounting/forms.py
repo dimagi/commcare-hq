@@ -955,6 +955,37 @@ class CreditForm(forms.Form):
         return True
 
 
+class RemoveAutopayForm(forms.Form):
+
+    remove_autopay = forms.CharField(widget=forms.HiddenInput, required=False)
+
+    def __init__(self, account, *args, **kwargs):
+        super(RemoveAutopayForm, self).__init__(*args, **kwargs)
+        self.account = account
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Remove Autopay User',
+                'remove_autopay'
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Remove Autopay User',
+                    css_class='btn-danger disable-on-submit',
+                    name='cancel_subscription',
+                    type='submit',
+                )
+            ),
+        )
+
+    def remove_autopay_user_from_account(self):
+        self.account.auto_pay_user = None
+        self.account.save()
+
+
 class CancelForm(forms.Form):
     note = forms.CharField(
         widget=forms.TextInput,
@@ -977,7 +1008,7 @@ class CancelForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 StrictButton(
-                    'CANCEL SUBSCRIPTION',
+                    'Cancel Subscription',
                     css_class='btn-danger disable-on-submit',
                     name='cancel_subscription',
                     type='submit',
