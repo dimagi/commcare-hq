@@ -6,6 +6,7 @@ from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
 
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.models import (
     AggAwc,
     AggregationInformation,
@@ -38,7 +39,8 @@ def update_table(domain, slug, method):
     # implement lock
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()
@@ -85,7 +87,8 @@ def update_monthly_table(domain, slug, method, month):
     )
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()

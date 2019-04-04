@@ -1138,3 +1138,7 @@ def get_datatables_ordering_info(request):
     order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
     order_dir = request.GET.get('order[0][dir]', 'asc')
     return start, length, order_by_number_column, order_by_name_column, order_dir
+
+
+def phone_number_function(x):
+    return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
