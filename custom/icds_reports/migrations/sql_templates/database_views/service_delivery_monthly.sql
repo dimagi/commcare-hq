@@ -33,8 +33,8 @@ SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 60 THEN agg_
 SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 72 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_3_6,
 SUM(agg_child_health.pse_attended_21_days) as pse_attended_21_days,
 SUM(agg_child_health.lunch_count_21_days) as lunch_count_21_days,
-SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.rations_21_plus_distributed ELSE 0 END) + ccr.mother_thr as thr_given_21_days,
-SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.valid_in_month ELSE 0 END ) + ccr.mother_thr_eligible as total_thr_candidates
+SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.rations_21_plus_distributed ELSE 0 END) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,
+SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.valid_in_month ELSE 0 END ) + COALESCE(ccr.mother_thr_eligible,0) as total_thr_candidates
 
 FROM "public"."awc_location_months" "awc_location_months"
 LEFT join agg_awc on (
