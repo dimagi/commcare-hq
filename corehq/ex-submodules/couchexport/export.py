@@ -337,7 +337,7 @@ class FormattedRow(object):
             return rows
 
         return [
-            (name, [cls(row) for row in coerce_to_list_of_rows(rows)])
+            (name, (cls(row) for row in coerce_to_list_of_rows(rows)))
             for name, rows in tables
         ]
 
