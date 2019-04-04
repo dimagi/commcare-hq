@@ -1197,8 +1197,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.save()
         self.delete_phone_entry(phone_number)
 
-    def get_django_user(self):
-        return User.objects.get(username__iexact=self.username)
+    def get_django_user(self, db_name=None):
+        queryset = User.objects
+        if db_name:
+            queryset = queryset.using(db_name)
+        return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """

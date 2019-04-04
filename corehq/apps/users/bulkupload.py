@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
+from corehq.sql_db.util import get_default_db_aliases
 from corehq.util.python_compatibility import soft_assert_type_text
 from six.moves import map
 from six.moves import range
@@ -544,7 +545,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
-                        user.get_django_user().check_password(password)
+                        user.get_django_user(db_name=get_default_db_aliases()[0]).check_password(password)
 
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
