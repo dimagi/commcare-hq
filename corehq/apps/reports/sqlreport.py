@@ -256,13 +256,6 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
-        if not self.group_by:
-            soft_assert(
-                to='{}@{}'.format('skelly', 'dimagi.com'),
-                exponential_backoff=True,
-            )(False, "sql-agg called without group_by", {
-                'queries': self.get_sql_queries()
-            })
         return sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit
@@ -284,6 +277,14 @@ class SqlData(ReportDataSource):
     def _get_data(self, start=None, limit=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
+
+        if not self.group_by:
+            soft_assert(
+                to='{}@{}'.format('skelly', 'dimagi.com'),
+                exponential_backoff=True,
+            )(False, "sql-agg called without group_by", {
+                'queries': self.get_sql_queries()
+            })
 
         qc = self.query_context(start=start, limit=limit)
         for c in self.columns:
