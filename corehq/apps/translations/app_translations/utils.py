@@ -209,9 +209,9 @@ class BulkAppTranslationUpdater(object):
             else:
                 language_dict.pop(lang, None)
 
-        # delete anything in language_dict that isn't in langs (anymore)
+        # delete anything in language_dict that isn't in app's langs (anymore)
         for lang in language_dict.keys():
-            if lang not in self.langs:
+            if lang not in self.app.langs:
                 language_dict.pop(lang, None)
 
     def update(self, rows):
