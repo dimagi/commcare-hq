@@ -4,15 +4,14 @@ from __future__ import unicode_literals
 
 from custom.icds_reports.queries import get_cas_data_blob_file
 
+import io
 import os
 import csv342 as csv
 
 from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from six.moves import zip
-from unittest2 import skip
 
 
-@skip("This test is breaking the build on master and should be debugged on a branch.")
 class TestLocationView(CSVTestCase):
     always_include_columns = {'awc_id', 'case_id'}
     # indicator numbers:
@@ -22,7 +21,11 @@ class TestLocationView(CSVTestCase):
 
     def _get_data_from_blobdb(self, indicator, state_id, month):
         sync, _ = get_cas_data_blob_file(indicator, state_id, month)
-        csv_file = sync.get_file_from_blobdb()
+        with sync.get_file_from_blobdb() as streaming_body:
+            # Workaround botocore.response.StreamingBody has no 'readable' attribute
+            fileobj = io.BytesIO(streaming_body.read())
+        # TextIOWrapper uses universal newline mode by default
+        csv_file = io.TextIOWrapper(fileobj, encoding='utf-8')
         csv_data = list(csv.reader(csv_file))
         headers = csv_data[0]
         rows = csv_data[1:]
