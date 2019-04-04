@@ -537,6 +537,34 @@ CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
+CELERY_HEARTBEAT_THRESHOLDS = {
+    "analytics_queue": 30 * 60,
+    "async_restore_queue": 60,
+    "background_queue": None,
+    "case_rule_queue": None,
+    "case_import_queue": 60,
+    "celery": 60,
+    "celery_periodic": None,
+    "email_queue": 30,
+    "export_download_queue": 30,
+    "icds_aggregation_queue": None,
+    "icds_dashboard_reports_queue": None,
+    "ils_gateway_sms_queue": None,
+    "logistics_background_queue": None,
+    "logistics_reminder_queue": None,
+    "reminder_case_update_queue": 15 * 60,
+    "reminder_queue": 15 * 60,
+    "reminder_rule_queue": 15 * 60,
+    "repeat_record_queue": 60 * 60,
+    "saved_exports_queue": 6 * 60 * 60,
+    "sumologic_logs_queue": 6 * 60 * 60,
+    "send_report_throttled": 6 * 60 * 60,
+    "sms_queue": 5 * 60,
+    "submission_reprocessing_queue": 60 * 60,
+    "ucr_indicator_queue": None,
+    "ucr_queue": None,
+}
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -2204,32 +2232,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
-
-
-CELERY_HEARTBEAT_THRESHOLDS = {
-    "analytics_queue": 30 * 60,
-    "async_restore_queue": 60,
-    "background_queue": None,
-    "case_rule_queue": None,
-    "case_import_queue": 60,
-    "celery": 60,
-    "celery_periodic": None,
-    "email_queue": 30,
-    "export_download_queue": 30,
-    "icds_aggregation_queue": None,
-    "icds_dashboard_reports_queue": None,
-    "ils_gateway_sms_queue": None,
-    "logistics_background_queue": None,
-    "logistics_reminder_queue": None,
-    "reminder_case_update_queue": 15 * 60,
-    "reminder_queue": 15 * 60,
-    "reminder_rule_queue": 15 * 60,
-    "repeat_record_queue": 60 * 60,
-    "saved_exports_queue": 6 * 60 * 60,
-    "sumologic_logs_queue": 6 * 60 * 60,
-    "send_report_throttled": 6 * 60 * 60,
-    "sms_queue": 5 * 60,
-    "submission_reprocessing_queue": 60 * 60,
-    "ucr_indicator_queue": None,
-    "ucr_queue": None,
-}
