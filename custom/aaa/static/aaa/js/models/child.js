@@ -49,6 +49,10 @@ hqDefine("aaa/js/models/child", [
             return self.lastImmunizationType() === 1 ? 'Yes' : 'No';
         });
 
+        self.lastImmunizationDate = ko.computed(function () {
+            return options.lastImmunizationType === null ? 'N/A' : self.lastImmunizationDate();
+        });
+
         return self;
     };
 
