@@ -61,13 +61,13 @@ def maybe_atomic(cls, atomic=True):
 
 
 class AggregateMixin(object):
-    __agg_helper_cls = None
-    __agg_atomic = True
+    _agg_helper_cls = None
+    _agg_atomic = True
 
     @classmethod
     def aggregate(cls, *args, **kwargs):
-        helper = cls.__agg_helper_cls(*args, **kwargs)
-        with get_cursor(cls) as cursor, maybe_atomic(cls, cls.__agg_atomic):
+        helper = cls._agg_helper_cls(*args, **kwargs)
+        with get_cursor(cls) as cursor, maybe_atomic(cls, cls._agg_atomic):
             helper.aggregate(cursor)
 
 
@@ -175,8 +175,8 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
         managed = False
         db_table = 'ccs_record_monthly'
 
-    __agg_helper_cls = CcsRecordMonthlyAggregationHelper
-    __agg_atomic = True
+    _agg_helper_cls = CcsRecordMonthlyAggregationHelper
+    _agg_atomic = True
 
 
 class AwcLocation(models.Model, AggregateMixin):
@@ -212,8 +212,8 @@ class AwcLocation(models.Model, AggregateMixin):
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
 
-    __agg_helper_cls = LocationAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = LocationAggregationHelper
+    _agg_atomic = False
 
 
 class ChildHealthMonthly(models.Model, AggregateMixin):
@@ -301,8 +301,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
         managed = False
         db_table = 'child_health_monthly'
 
-    __agg_helper_cls = ChildHealthMonthlyAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = ChildHealthMonthlyAggregationHelper
+    _agg_atomic = False
 
 
 class AggAwc(models.Model, AggregateMixin):
@@ -462,8 +462,8 @@ class AggAwc(models.Model, AggregateMixin):
         with get_cursor(cls) as cursor:
             helper.weekly_aggregate(cursor)
 
-    __agg_helper_cls = AggAwcHelper
-    __agg_atomic = False
+    _agg_helper_cls = AggAwcHelper
+    _agg_atomic = False
 
 
 class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
@@ -475,8 +475,8 @@ class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
-    __agg_helper_cls = LSAwcMgtFormAggHelper
-    __agg_atomic = False
+    _agg_helper_cls = LSAwcMgtFormAggHelper
+    _agg_atomic = False
 
 
 class AggregateLsVhndForm(models.Model, AggregateMixin):
@@ -488,8 +488,8 @@ class AggregateLsVhndForm(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
 
-    __agg_helper_cls = LSVhndFormAggHelper
-    __agg_atomic = False
+    _agg_helper_cls = LSVhndFormAggHelper
+    _agg_atomic = False
 
 
 class AggregateBeneficiaryForm(models.Model, AggregateMixin):
@@ -501,8 +501,8 @@ class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE
 
-    __agg_helper_cls = LSBeneficiaryFormAggHelper
-    __agg_atomic = False
+    _agg_helper_cls = LSBeneficiaryFormAggHelper
+    _agg_atomic = False
 
 
 class AggLs(models.Model, AggregateMixin):
@@ -523,8 +523,8 @@ class AggLs(models.Model, AggregateMixin):
     class Meta(object):
         db_table = 'agg_ls'
 
-    __agg_helper_cls = AggLsHelper
-    __agg_atomic = False
+    _agg_helper_cls = AggLsHelper
+    _agg_atomic = False
 
 
 class AggCcsRecord(models.Model, AggregateMixin):
@@ -586,8 +586,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
         managed = False
         db_table = 'agg_ccs_record'
 
-    __agg_helper_cls = AggCcsRecordAggregationHelper
-    __agg_atomic = True
+    _agg_helper_cls = AggCcsRecordAggregationHelper
+    _agg_atomic = True
 
 
 class AggChildHealth(models.Model, AggregateMixin):
@@ -667,8 +667,8 @@ class AggChildHealth(models.Model, AggregateMixin):
         managed = False
         db_table = 'agg_child_health'
 
-    __agg_helper_cls = AggChildHealthAggregationHelper
-    __agg_atomic = True
+    _agg_helper_cls = AggChildHealthAggregationHelper
+    _agg_atomic = True
 
 
 class AggAwcDaily(models.Model, AggregateMixin):
@@ -708,8 +708,8 @@ class AggAwcDaily(models.Model, AggregateMixin):
         managed = False
         db_table = 'agg_awc_daily'
 
-    __agg_helper_cls = AggAwcDailyAggregationHelper
-    __agg_atomic = True
+    _agg_helper_cls = AggAwcDailyAggregationHelper
+    _agg_atomic = True
 
 
 class DailyAttendance(models.Model, AggregateMixin):
@@ -735,8 +735,8 @@ class DailyAttendance(models.Model, AggregateMixin):
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
 
-    __agg_helper_cls = DailyAttendanceAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = DailyAttendanceAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
@@ -800,8 +800,8 @@ class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
         db_table = AGG_COMP_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = ComplementaryFormsAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = ComplementaryFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -844,8 +844,8 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
         db_table = AGG_CCS_RECORD_CF_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = ComplementaryFormsCcsRecordAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = ComplementaryFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
@@ -925,8 +925,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = PostnatalCareFormsChildHealthAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = PostnatalCareFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -982,8 +982,8 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
     def compare_with_old_data(cls, state_id, month):
         pass
 
-    __agg_helper_cls = PostnatalCareFormsCcsRecordAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = PostnatalCareFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateChildHealthTHRForms(models.Model, AggregateMixin):
@@ -1016,8 +1016,8 @@ class AggregateChildHealthTHRForms(models.Model, AggregateMixin):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = THRFormsChildHealthAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = THRFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
@@ -1050,8 +1050,8 @@ class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
         db_table = AGG_CCS_RECORD_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = THRFormsCcsRecordAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = THRFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
@@ -1123,8 +1123,8 @@ class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
         db_table = AGG_GROWTH_MONITORING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = GrowthMonitoringFormsAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = GrowthMonitoringFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1250,8 +1250,8 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         db_table = AGG_CCS_RECORD_BP_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = BirthPreparednessFormsAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = BirthPreparednessFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1303,8 +1303,8 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = DeliveryFormsAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = DeliveryFormsAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateInactiveAWW(models.Model, AggregateMixin):
@@ -1339,8 +1339,8 @@ class AggregateInactiveAWW(models.Model, AggregateMixin):
     class Meta(object):
         app_label = 'icds_reports'
 
-    __agg_helper_cls = InactiveAwwsAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = InactiveAwwsAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
@@ -1377,8 +1377,8 @@ class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
         db_table = AGG_DAILY_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    __agg_helper_cls = DailyFeedingFormsChildHealthAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = DailyFeedingFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
 
 class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
@@ -1423,8 +1423,8 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
         db_table = AGG_INFRASTRUCTURE_TABLE
         unique_together = ('supervisor_id', 'awc_id', 'month')  # pkey
 
-    __agg_helper_cls = AwcInfrastructureAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = AwcInfrastructureAggregationHelper
+    _agg_atomic = False
 
 
 class AWWIncentiveReport(models.Model, AggregateMixin):
@@ -1455,5 +1455,5 @@ class AWWIncentiveReport(models.Model, AggregateMixin):
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE
 
-    __agg_helper_cls = AwwIncentiveAggregationHelper
-    __agg_atomic = False
+    _agg_helper_cls = AwwIncentiveAggregationHelper
+    _agg_atomic = False
