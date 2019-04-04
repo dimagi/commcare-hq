@@ -9,7 +9,7 @@ from custom.ilsgateway.views import (
     SupervisionDocumentListView, SupervisionDocumentDeleteView,
     SupervisionDocumentView, ReportRunListView,
     ReportRunDeleteView, DashboardPageRedirect, GlobalStats,
-    PendingRecalculationsListView, run_warehouse_runner,
+    PendingRecalculationsListView,
     end_report_run, save_ils_note,
     recalculate_moshi_rural, recalculate_non_facilities,
 )
@@ -22,7 +22,6 @@ urlpatterns = [
     url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(permanent=True), name='ils_dashboard_report'),
     url(r'^ils_config/$', ILSConfigView.as_view(), name=ILSConfigView.urlname),
     url(r'^global_stats/$', GlobalStats.as_view(), name=GlobalStats.urlname),
-    url(r'^run_reports/$', run_warehouse_runner, name='run_reports'),
     url(r'^end_report_run/$', end_report_run, name='end_report_run'),
     url(r'^supervision/$', SupervisionDocumentListView.as_view(), name=SupervisionDocumentListView.urlname),
     url(r'^delete_supervision_document/(?P<document_id>\d+)/$', SupervisionDocumentDeleteView.as_view(),

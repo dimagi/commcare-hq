@@ -34,70 +34,11 @@ from .oneoff import *
 import six
 
 
-@periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
-               queue='logistics_background_queue')
-def report_run_periodic_task():
-    report_run.delay('ils-gateway')
-
-
-@periodic_task(run_every=crontab(hour="8", minute="00", day_of_week="*"),
-               queue='logistics_background_queue')
-def test_domains_report_run_periodic_task():
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        if domain == 'ils-gateway':
-            # skip live domain
-            continue
-        report_run(domain)
-
-
 def get_start_date(last_successful_run):
     now = datetime.utcnow()
     first_day_of_current_month = datetime(now.year, now.month, 1)
     return first_day_of_current_month if not last_successful_run else last_successful_run.end
 
-
-@serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
-def report_run(domain, strict=True):
-    last_successful_run = ReportRun.last_success(domain)
-
-    last_run = ReportRun.last_run(domain)
-
-    start_date = get_start_date(last_successful_run)
-    end_date = datetime.utcnow()
-
-    if last_run and last_run.has_error:
-        run = last_run
-        run.complete = False
-        run.save()
-    else:
-        if start_date == end_date:
-            return
-        # start new run
-        run = ReportRun.objects.create(start=start_date, end=end_date,
-                                       start_run=datetime.utcnow(), domain=domain)
-    has_error = True
-    try:
-        populate_report_data(run.start, run.end, domain, run, strict=strict)
-        has_error = False
-    except Exception as e:
-        # just in case something funky happened in the DB
-        if isinstance(e, DatabaseError):
-            try:
-                transaction.rollback()
-            except:
-                pass
-        has_error = True
-        raise
-    finally:
-        # complete run
-        run = ReportRun.objects.get(pk=run.id)
-        run.has_error = has_error
-        run.end_run = datetime.utcnow()
-        run.complete = True
-        run.save()
-        logging.info("ILSGateway report runner end time: %s" % datetime.utcnow())
-        if not has_error:
-            recalculation_on_location_change.delay(domain, last_successful_run)
 
 facility_delivery_partial = partial(send_for_day, cutoff=15, reminder_class=DeliveryReminder)
 district_delivery_partial = partial(send_for_day, cutoff=13, reminder_class=DeliveryReminder,
