@@ -215,8 +215,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def _get_toggles(self):
 
         def _sort_key(toggle):
-            return (not toggle['domain_enabled'],
-                    not toggle['user_enabled'],
+            return (not (toggle['domain_enabled'] or toggle['user_enabled']),
                     [t.name for t in toggles.ALL_TAGS].index(toggle['tag']),
                     toggle['label'])
 
