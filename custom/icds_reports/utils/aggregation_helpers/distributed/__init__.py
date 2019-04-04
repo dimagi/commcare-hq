@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from .agg_awc import AggAwcDistributedHelper
 from .agg_awc_daily import AggAwcDailyAggregationDistributedHelper
+from .aww_incentive import AwwIncentiveAggregationDistributedHelper
+from .awc_location import LocationAggregationDistributedHelper
 from .agg_ccs_record import AggCcsRecordAggregationDistributedHelper
 from .agg_child_health import AggChildHealthAggregationDistributedHelper
 from .birth_preparedness_forms import BirthPreparednessFormsAggregationDistributedHelper
@@ -49,4 +51,6 @@ __all__ = (
     'CcsMbtDistributedHelper',
     'ChildHealthMbtDistributedHelper',
     'AwcMbtDistributedHelper',
+    'LocationAggregationDistributedHelper',
+    'AwwIncentiveAggregationDistributedHelper',
 )
