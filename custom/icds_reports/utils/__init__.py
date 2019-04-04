@@ -30,8 +30,10 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.models.helper import IcdsFile
@@ -150,6 +152,19 @@ class ICDSMixin(object):
             )
 
     def custom_data(self, selected_location, domain):
+        timer = TimingContext()
+        with timer:
+            to_ret = self._custom_data(selected_location, domain)
+        datadog_histogram(
+            "commcare.icds.block_reports.custom_data_time",
+            timer.duration,
+            tags="location_type:{}, report_slug:{}".format(
+                selected_location.location_type.name, self.slug
+            )
+        )
+        return to_ret
+
+    def _custom_data(self, selected_location, domain):
         data = {}
 
         for config in self.sources['data_source']:
@@ -177,7 +192,17 @@ class ICDSMixin(object):
                             }
                         })
 
-            report_data = ICDSData(domain, filters, config['id']).data()
+            timer = TimingContext()
+            with timer:
+                report_data = ICDSData(domain, filters, config['id']).data()
+            datadog_histogram(
+                "commcare.icds.block_reports.ucr_querytime",
+                timer.duration,
+                tags="config:{}, location_type:{}, report_slug:{}".format(
+                    config['id'], selected_location.location_type.name, self.slug
+                )
+            )
+
             for column in config['columns']:
                 column_agg_func = column['agg_fun']
                 column_name = column['column_name']
