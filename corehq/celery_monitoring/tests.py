@@ -9,7 +9,7 @@ from corehq.celery_monitoring.heartbeat import Heartbeat, HeartbeatNeverRecorded
     HEARTBEAT_FREQUENCY
 from testil import assert_raises, eq
 
-from corehq.celery_monitoring.signals import TimeToStartTimer
+from corehq.celery_monitoring.signals import TimeToStartTimer, TimingNotAvailable
 
 
 def test_heartbeat():
@@ -41,7 +41,8 @@ def test_time_to_start_timer():
     start_time = datetime.datetime.utcnow()
 
     # starts empty
-    eq(TimeToStartTimer(task_id).stop_and_pop_timing(), None)
+    with assert_raises(TimingNotAvailable):
+        TimeToStartTimer(task_id).stop_and_pop_timing()
 
     with freeze_time(start_time):
         TimeToStartTimer(task_id).start_timing()
@@ -50,5 +51,7 @@ def test_time_to_start_timer():
         time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
 
     eq(time_to_start, delay)
+
     # can only pop once, second time empty
-    eq(TimeToStartTimer(task_id).stop_and_pop_timing(), None)
+    with assert_raises(TimingNotAvailable):
+        TimeToStartTimer(task_id).stop_and_pop_timing()

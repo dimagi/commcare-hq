@@ -6,6 +6,10 @@ from celery.signals import before_task_publish, task_prerun
 from django.core.cache import cache
 
 
+class TimingNotAvailable(Exception):
+    pass
+
+
 class TimeToStartTimer(object):
     def __init__(self, task_id):
         self.task_id = task_id
@@ -26,12 +30,13 @@ class TimeToStartTimer(object):
 
         This helps avoid double-recording timings (for example when a task is retried).
         """
-        try:
-            return datetime.datetime.utcnow() - cache.get(self._cache_key)
-        except TypeError:
-            return None
-        finally:
-            cache.delete(self._cache_key)
+        time_sent = cache.get(self._cache_key)
+        if time_sent is None:
+            raise TimingNotAvailable()
+
+        cache.delete(self._cache_key)
+
+        return datetime.datetime.utcnow() - time_sent
 
 
 @before_task_publish.connect
