@@ -6,6 +6,8 @@
 
 {% block js-inline %} {{ block.super }}
 {% if parallel_render %}
+<!-- This is added inline because it needs django template vars that can'e be loaded
+using initial_page_data as this html is not scanned by initial_page_data module -->
 <script>
     $(function () {
         var progressCount = 0;
