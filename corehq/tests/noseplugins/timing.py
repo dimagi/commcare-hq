@@ -86,7 +86,7 @@ class TimingPlugin(Plugin):
         self.event_start = now
 
         slow_seconds = _get_expected_slow_seconds(context) or self.threshold
-        if duration > slow_seconds:
+        if event != 'before' and duration > slow_seconds:
             context.fail("Test ran in {} seconds and is greater than threshold {}".format(duration, slow_seconds))
 
     def startContext(self, context):
