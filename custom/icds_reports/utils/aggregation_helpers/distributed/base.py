@@ -3,19 +3,10 @@ import hashlib
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter, AggregationHelper
 
 
-class DistributedAggregationHelper(object):
-    """Base class used to tag aggregation helpers for distributed postgres
-
-        See ..monolith.base.AggregationHelper for corresponding class
-        for monolith postgres
-        """
-    helper_key = None  # must match the corresponding key on the monolith helper
-
-
-class BaseICDSAggregationDistributedHelper(DistributedAggregationHelper):
+class BaseICDSAggregationDistributedHelper(AggregationHelper):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
 

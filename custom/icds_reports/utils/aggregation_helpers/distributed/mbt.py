@@ -4,10 +4,10 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import DistributedAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers import AggregationHelper
 
 
-class MBTDistributedHelper(DistributedAggregationHelper):
+class MBTDistributedHelper(AggregationHelper):
 
     def __init__(self, state_id, month):
         self.state_id = state_id
