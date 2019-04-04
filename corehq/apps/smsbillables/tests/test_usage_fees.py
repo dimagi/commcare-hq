@@ -4,6 +4,7 @@ from mock import patch
 from random import randint
 
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SQLMobileBackend
@@ -55,6 +56,7 @@ class TestUsageFee(TestCase):
                 self.least_specific_fees[message.direction]
             )
 
+    @attr(slow=15)
     def test_domain_and_direction(self):
         self.apply_direction_fee()
         self.apply_direction_and_domain_fee()
@@ -73,6 +75,7 @@ class TestUsageFee(TestCase):
                         self.most_specific_fees[message.direction][domain]
                     )
 
+    @attr(slow=15)
     def test_multipart_usage_charge(self):
         self.apply_direction_fee()
         self.apply_direction_and_domain_fee()

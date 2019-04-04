@@ -6,6 +6,8 @@ from random import choice, randint
 
 from django.apps import apps
 from django.test import TestCase
+from nose.plugins.attrib import attr
+
 from corehq import toggles
 from corehq.apps.accounting.tests.generator import init_default_currency
 from corehq.apps.sms.models import SMS, SQLMobileBackend
@@ -164,6 +166,7 @@ class TestGatewayFee(TestCase):
                     [1]
                 )
 
+    @attr(slow=15)
     def test_specific_fees(self):
         self.create_least_specific_gateway_fees()
         self.create_country_code_gateway_fees()
@@ -185,6 +188,7 @@ class TestGatewayFee(TestCase):
                     [1]
                 )
 
+    @attr(slow=30)
     def test_prefix_fees(self):
         self.create_prefix_gateway_fees()
 

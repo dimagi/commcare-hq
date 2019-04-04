@@ -6,6 +6,8 @@ from mock import patch, MagicMock
 
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
+from nose.plugins.attrib import attr
+
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.apps.userreports.models import StaticReportConfiguration, StaticDataSourceConfiguration
@@ -45,6 +47,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
             for config in all:
                 self.assertEqual('Custom Title', config.title)
 
+    @attr(slow=15)
     def test_production_config(self):
         for report_config in StaticReportConfiguration.all():
             report_config.validate()
@@ -58,6 +61,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
         )
         self.assertEqual(0, len(duplicates), msg)
 
+    @attr(slow=18)
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains',
            MagicMock(return_value=[domain_lite('cc1')]))
     def test_data_sources_actually_exist(self):

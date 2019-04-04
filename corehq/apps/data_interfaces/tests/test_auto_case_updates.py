@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from contextlib import contextmanager
 
+from nose.plugins.attrib import attr
+
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
@@ -898,6 +900,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
         super(CaseRuleOnSaveTests, self).tearDown()
         self.disable_updates_on_save()
 
+    @attr(slow=300)
     @run_with_all_backends
     def test_run_on_save(self):
         self.enable_updates_on_save()

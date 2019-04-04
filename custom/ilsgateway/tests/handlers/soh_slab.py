@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from nose.plugins.attrib import attr
+
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.util.translation import localize
@@ -31,6 +34,7 @@ class SOHSLABTest(ILSTestScript):
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.dp.get_id, cls.facility_sp_id, 100)
         set_default_consumption_for_supply_point(TEST_DOMAIN, cls.ip.get_id, cls.facility_sp_id, 100)
 
+    @attr(slow=15)
     def test_stock_on_hand_overstocked(self):
         with localize('sw'):
             reminder_trans = six.text_type(REMINDER_TRANS)
