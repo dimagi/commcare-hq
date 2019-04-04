@@ -2,9 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+
 from django.utils.functional import cached_property
 
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
@@ -12,6 +13,13 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, last_sync):
         self.last_sync = last_sync
+
+    def aggregate(self, cursor):
+        missing_location_query = self.missing_location_query()
+        aggregation_query, agg_params = self.aggregate_query()
+
+        cursor.execute(missing_location_query)
+        cursor.execute(aggregation_query, agg_params)
 
     @cached_property
     def aggregate_parent_table(self):

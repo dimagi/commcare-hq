@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
@@ -19,6 +21,14 @@ class AwcInfrastructureAggregationHelper(BaseICDSAggregationHelper):
         'adult_scale_usable', 'baby_scale_usable', 'cooking_utensils_usable',
         'infantometer_usable', 'medicine_kits_usable', 'stadiometer_usable',
     )
+
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
 
     def _window_helper(self, column_name):
         return (

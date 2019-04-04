@@ -12,8 +12,9 @@ from custom.icds_reports.const import (
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
 )
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month, \
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
     month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
@@ -33,6 +34,12 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, state_ids, month):
         self.state_ids = state_ids
         self.month = transform_day_to_month(month)
+
+    def aggregate(self, cursor):
+        cursor.execute(self.drop_table_query())
+        cursor.execute(self.aggregation_query())
+        for query in self.indexes():
+            cursor.execute(query)
 
     @property
     def child_health_case_ucr_tablename(self):
