@@ -13,7 +13,7 @@ from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.log import with_progress_bar
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.apps.couch_sql_migration.couchsqlmigration import _get_case_iterator
+from corehq.apps.couch_sql_migration.couchsqlmigration import CASE_DOC_TYPES, _iter_changes
 
 
 class Command(BaseCommand):
@@ -44,7 +44,7 @@ class Command(BaseCommand):
             case_accessor = CaseReindexAccessor(domain)
             case_ids = (case.case_id for case in iter_all_rows(case_accessor))
         else:
-            changes = _get_case_iterator(domain).iter_all_changes()
+            changes = _iter_changes(domain, CASE_DOC_TYPES)
             case_ids = (case.id for case in changes)
 
         next_event = time.time() + 10
