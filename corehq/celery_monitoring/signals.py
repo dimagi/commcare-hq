@@ -1,6 +1,6 @@
 import datetime
 
-from celery.signals import after_task_publish, task_prerun
+from celery.signals import before_task_publish, task_prerun
 from django.core.cache import cache
 
 
@@ -32,7 +32,7 @@ class TimeToStartTimer(object):
             cache.delete(self._cache_key)
 
 
-@after_task_publish.connect
+@before_task_publish.connect
 def celery_add_time_sent(headers=None, body=None, **kwargs):
     info = headers if 'task' in headers else body
     task_id = info['id']
