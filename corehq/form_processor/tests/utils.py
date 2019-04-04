@@ -163,16 +163,9 @@ run_with_all_backends = functools.partial(
         # run with default setting
         RunConfig(
             settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
+                'TESTS_SHOULD_USE_SQL_BACKEND': True,
             },
             post_run=lambda *args, **kwargs: args[0].tearDown()
-        ),
-        # run with inverse of default setting
-        RunConfig(
-            settings={
-                'TESTS_SHOULD_USE_SQL_BACKEND': not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False),
-            },
-            pre_run=lambda *args, **kwargs: args[0].setUp(),
         ),
     ],
     nose_tags={'all_backends': True}
