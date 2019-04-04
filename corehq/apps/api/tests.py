@@ -49,7 +49,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
-from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
@@ -1694,14 +1693,6 @@ class InternalLocationResourceTest(APIResourceTest, InternalTestMixin):
 
 class EWSLocationResourceTest(APIResourceTest, InternalTestMixin):
     resource = EWSLocationResource
-    api_name = 'v0_3'
-
-    def test_basic(self):
-        self.assert_accessible_via_sessions(self.list_endpoint)
-
-
-class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
-    resource = ILSLocationResource
     api_name = 'v0_3'
 
     def test_basic(self):
