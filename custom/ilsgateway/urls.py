@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url, include
 
-from corehq.apps.api.urls import CommCareHqApi
-from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ilsgateway.slab.views import SLABConfigurationView, SLABEditLocationView
 from custom.ilsgateway.views import (
     SupervisionDocumentListView, SupervisionDocumentDeleteView,
@@ -14,9 +12,6 @@ from custom.ilsgateway.views import (
     recalculate_moshi_rural, recalculate_non_facilities,
 )
 from custom.ilsgateway.views import ILSConfigView
-
-hq_api = CommCareHqApi(api_name='v0.3')
-hq_api.register(ILSLocationResource())
 
 urlpatterns = [
     url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(permanent=True), name='ils_dashboard_report'),
@@ -36,6 +31,4 @@ urlpatterns = [
     # one-off
     url(r'^recalculate_moshi/$', recalculate_moshi_rural, name='recalculate_moshi_rural'),
     url(r'^recalculate_non_facilities/$', recalculate_non_facilities, name='recalculate_non_facilities'),
-    # api
-    url(r'^', include(hq_api.urls)),
 ]
