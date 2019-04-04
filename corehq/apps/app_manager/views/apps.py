@@ -290,9 +290,13 @@ def get_app_view_context(request, app):
 
 def _get_upstream_url(app, request_user):
     """Get the upstream url if the user has access"""
-    if request_user.is_superuser or (
-            not app.domain_link.is_remote
-            and request_user.is_member_of(app.domain_link.master_domain)
+    if (
+            app.domain_link and (
+                request_user.is_superuser or (
+                    not app.domain_link.is_remote
+                    and request_user.is_member_of(app.domain_link.master_domain)
+                )
+            )
     ):
         url = reverse('view_app', args=[app.domain_link.master_domain, app.master])
         if app.domain_link.is_remote:
