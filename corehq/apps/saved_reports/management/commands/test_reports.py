@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from corehq.apps.saved_reports.tasks import daily_reports, weekly_reports
+from corehq.apps.saved_reports.tasks import queue_scheduled_reports
 
 
 class Command(BaseCommand):
-    help = "Tests sending reports. Equvalent to firing the celery tasks right NOW."
+    help = "Tests sending reports. Equivalent to firing the celery tasks right NOW."
 
     def handle(self, **options):
-        daily_reports()
-        weekly_reports()
+        queue_scheduled_reports()
