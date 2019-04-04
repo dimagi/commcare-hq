@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import io
 import tempfile
 from io import BytesIO
+import os
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -38,6 +39,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
+    root = os.path.dirname(__file__)
 
     def upload_raw_excel_translations(self, app, excel_headers, excel_data, expected_messages=None, lang=None):
         """
@@ -758,7 +760,7 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
 
 
 class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
-
+    root = os.path.dirname(__file__)
     file_path = ('data', 'bulk_app_translation', 'download')
     maxDiff = None
 
@@ -1005,6 +1007,7 @@ class RenameLangTest(SimpleTestCase):
 
 
 class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
+    root = os.path.dirname(__file__)
 
     file_path = ('data', 'bulk_app_translation', 'aggregate')
 
