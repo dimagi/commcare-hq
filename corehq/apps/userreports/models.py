@@ -13,7 +13,7 @@ from uuid import UUID
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 from django.utils.translation import ugettext as _
 import yaml
@@ -81,6 +81,25 @@ ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
         raise BadValueError("Invalid ID: '{}'".format(value))
+
+
+class UserReportActionLog(models.Model):
+    BUILD = 0
+    MIGRATE = 1
+    REBUILD = 2
+    DROP = 3
+
+    id = models.BigAutoField(primary_key=True)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    action = models.PositiveSmallIntegerField(default=0, choices=(
+        (BUILD, _('Build')),
+        (MIGRATE, _('Migrate')),
+        (REBUILD, _('Rebuild')),
+        (DROP, _('Drop')),
+    ), db_index=True)
+    context = JSONField()
 
 
 class SQLColumnIndexes(DocumentSchema):
