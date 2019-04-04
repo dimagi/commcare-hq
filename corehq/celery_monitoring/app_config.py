@@ -8,4 +8,4 @@ class CeleryMonitoringAppConfig(AppConfig):
 
     def ready(self):
         # Make sure hooks get registered
-        from .signals import *  # noqa
+        from .signals import *  # noqa  # pylint: disable=import-star-module-level
