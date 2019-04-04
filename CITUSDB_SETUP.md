@@ -77,6 +77,8 @@ and which are workers. This allows it to run migrations
 during test setup which will add the citus extension
 and add the worker nodes to the master.
 
+This ROLE is not set for Travis so that we can skip the expensive test setup.
+
 **CITUS_NODE_NAME**
 
 By defaul when Django creates the test database on the master
