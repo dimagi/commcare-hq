@@ -226,6 +226,13 @@ class AwcLocation(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
+class AwcLocationLocal(AwcLocation):
+
+    class Meta(object):
+        managed = False
+        db_table = 'awc_location_local'
+
+
 class ChildHealthMonthly(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
