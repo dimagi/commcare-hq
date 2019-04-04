@@ -28,6 +28,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.blobs import get_blob_db
 import langcodes
 import pytz
 import re
@@ -2032,14 +2033,14 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
 @require_GET
 def export_report(request, domain, export_hash, format):
     cache = get_redis_client()
-
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
+    report_class = cache.get(export_hash)
+    db = get_blob_db()
+    report_file = db.get(export_hash)
+    if report_file is not None:
         if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file)
+            file = ContentFile(report_file.read())
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
