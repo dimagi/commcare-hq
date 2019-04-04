@@ -31,7 +31,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         cursor.execute(aww_query)
         for rollup_query in rollup_queries:
             cursor.execute(rollup_query)
-        cursor.execute(create_local_table)
+        cursor.execute(self.create_local_table())
 
     @property
     def ucr_location_tablename(self):
