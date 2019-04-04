@@ -2083,11 +2083,6 @@ DOMAIN_MODULE_MAP = {
     'ewsghana-test-4': 'custom.ewsghana',
     'ewsghana-test-5': 'custom.ewsghana',
     'ewsghana-test3': 'custom.ewsghana',
-    'ils-gateway': 'custom.ilsgateway',
-    'ils-gateway-training': 'custom.ilsgateway',
-    'ilsgateway-full-test': 'custom.ilsgateway',
-    'ilsgateway-test-2': 'custom.ilsgateway',
-    'ilsgateway-test3': 'custom.ilsgateway',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
