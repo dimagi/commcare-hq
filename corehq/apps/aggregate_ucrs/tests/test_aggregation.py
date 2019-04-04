@@ -7,6 +7,7 @@ from datetime import datetime
 
 from django.test import TestCase
 from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -376,6 +377,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             month_column == '2018-04-01',
         ).count())
 
+    @attr(slow=15)
     def test_weekly_aggregation(self):
         # generate our table
         aggregate_table_adapter = IndicatorSqlAdapter(self.weekly_aggregate_table_definition)

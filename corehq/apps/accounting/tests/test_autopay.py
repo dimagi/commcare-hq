@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mock
 from django_prbac.models import Role
+from nose.plugins.attrib import attr
 
 from stripe import Charge
 from stripe.resource import StripeObject
@@ -19,6 +20,7 @@ from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCus
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
+@attr(slow=700)  # almost certainly migrations
 class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @classmethod

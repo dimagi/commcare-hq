@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from nose.plugins.attrib import attr
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
@@ -13,6 +14,7 @@ import six
 
 class ILSSoHTest(ILSTestScript):
 
+    @attr(slow=15)
     def test_stock_on_hand(self):
         with localize('sw'):
             response = six.text_type(SOH_CONFIRM)

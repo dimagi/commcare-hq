@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase, TransactionTestCase
 from mock import patch, Mock, call
+from nose.plugins.attrib import attr
 
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
@@ -30,6 +31,7 @@ from datetime import date, time
 import uuid
 
 
+@attr(slow=15)  # may just be general test setup?
 class TestSubscriptionEmailLogic(SimpleTestCase):
 
     def test_new_trial_with_no_previous(self):

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import mock
 from django.test import TestCase
+from nose.plugins.attrib import attr
 from sqlalchemy.engine import reflection
 
 from corehq.apps.userreports.tests.utils import get_sample_data_source
@@ -32,6 +33,7 @@ class RebuildTableTest(TestCase):
         self.adapter = get_indicator_adapter(self.config)
         self.engine = self.adapter.engine
 
+    @attr(slow=15)
     def test_add_index(self):
         # build the table without an index
         self._setup_data_source('add_index')
@@ -57,6 +59,7 @@ class RebuildTableTest(TestCase):
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(len(insp.get_indexes(table_name)), 1)
 
+    @attr(slow=15)
     def test_add_non_nullable_column(self):
         self._setup_data_source('add_non_nullable_col')
 

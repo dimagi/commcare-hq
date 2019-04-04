@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 import mock
 from django.test import TestCase, SimpleTestCase, override_settings
+from nose.plugins.attrib import attr
 from six.moves import range
 
 from casexml.apps.case.mock import CaseBlock
@@ -424,6 +425,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             ], domain=self.domain
         )
 
+    @attr(slow=15)
     def test_process_doc_from_sql_stale_chunked(self):
         pillow = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=[self.config])
         # one less query in chunked mode, as two cases are looked up in single query
