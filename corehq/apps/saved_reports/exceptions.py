@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class UnsupportedSavedReportError(Exception):
     """
     For unknown (discontinued/legacy) saved-reports
