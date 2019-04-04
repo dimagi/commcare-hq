@@ -361,16 +361,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )),
     )
 
-    upload_no_change_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
-                                        'image_en', 'image_fra', 'audio_en',
-                                        'audio_fra', 'unique_id')),
-        ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
-        ('menu1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra',
-                         'image_en', 'image_fra', 'video_en', 'video_fra'))
-    )
-
-    upload_no_change_data = (
+    multi_sheet_upload_no_change_data = (
         (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'menu1', 'My & awesome module', '', '', '', '', '',
            '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
@@ -457,8 +448,9 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
     def test_set_up(self):
         self._shared_test_initial_set_up()
 
-    def test_no_change_upload(self):
-        self.upload_raw_excel_translations(self.upload_no_change_headers, self.upload_no_change_data)
+    def test_no_change_upload_multi_sheet(self):
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers,
+                                           self.multi_sheet_upload_no_change_data)
         self._shared_test_initial_set_up()
 
     def _shared_test_initial_set_up(self):
@@ -549,7 +541,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.app = Application.wrap(self.get_json("app_no_itext"))
         self.assert_question_label('question1', 0, 0, "en", "/data/question1")
         try:
-            self.upload_raw_excel_translations(self.upload_no_change_headers, self.upload_no_change_data)
+            self.upload_raw_excel_translations(self.multi_sheet_upload_headers,
+                                               self.multi_sheet_upload_no_change_data)
         except Exception as e:
             self.fail(e)
 
@@ -640,7 +633,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )
         translation_data = []
         # filter out the case lists translation from the upload
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -652,7 +645,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 mod1_sheet.append(translation)
 
             translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.short.columns[0].header, {'en': 'Name'}
         )
@@ -667,7 +660,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
         translation_data = []
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -688,7 +681,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 mod1_sheet.append(translation)
 
             translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.long.columns[0].header, {'en': 'English Name', 'fra': 'French Name'}
         )
@@ -706,7 +699,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
         translation_data = []
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -722,7 +715,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
             translation_data.append(['menu1', mod1_sheet])
 
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
