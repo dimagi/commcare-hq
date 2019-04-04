@@ -42,7 +42,6 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertIn('extended_info', data)
 
     def test_map_data(self):
-        self.maxDiff=None
         data = get_institutional_deliveries_data_map(
             'icds-cas',
             config={
@@ -203,7 +202,6 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEquals(data['rightLegend']['average'], 81.81818181818181)
 
     def test_chart_data(self):
-        self.maxDiff=None
         self.assertDictEqual(
             get_institutional_deliveries_data_chart(
                 'icds-cas',

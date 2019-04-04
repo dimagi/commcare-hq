@@ -9,7 +9,6 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
-        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -90,7 +89,6 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_state_0_3(self):
-        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -134,7 +132,6 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_3_6(self):
-        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -203,7 +200,6 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_state_3_6(self):
-        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
