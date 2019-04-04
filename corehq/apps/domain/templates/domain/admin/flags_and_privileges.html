@@ -10,6 +10,7 @@
     {% initial_page_data 'domain' domain %}
     {% initial_page_data 'toggles' toggles %}
     {% registerurl 'set_toggle' '---' %}
+    {% registerurl 'edit_toggle' '---' %}
 
     <div class="row">
         <div class="col-sm-10">
@@ -108,9 +109,9 @@
 
                             <div class="row" data-bind="slideVisible: expanded()">
                                 <br />
-                                <p data-bind="visible: description, text: description"></p>
+                                <p data-bind="visible: description, html: description"></p>
                                 <span data-bind="visible: helpLink">
-                                    <a data-bind="attr: {href: helpLink}" target="_blank">Documentation</a>
+                                    <a data-bind="attr: {href: helpLink}">Documentation</a>
                                 </span>
                                 <hr data-bind="visible: description || helpLink" />
                                 <div>
@@ -118,6 +119,9 @@
                                                      text: tag"
                                           class="label"></span>
                                     <span data-bind="text: tagDescription">
+                                </div>
+                                <div class="text-right">
+                                    <small><a class="text-uppercase" data-bind="attr: {href: editLink}, text: slug"></a></small>
                                 </div>
                             </div>
                         </td>

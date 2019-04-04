@@ -34,6 +34,7 @@ hqDefine('domain/js/toggles', [
         self.domainEnabled = ko.observable(data['domain_enabled']);
         self.userEnabled = ko.observable(data['user_enabled']);
         self.hasDomainNamespace = data['has_domain_namespace'];
+        self.editLink = initialPageData.reverse('edit_toggle', self.slug);
 
         self.expanded = ko.observable(false);
         self.showHideDescription = function () { self.expanded(!self.expanded()); };
