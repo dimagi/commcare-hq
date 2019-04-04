@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_noop as _
 
+EXPIRED = 60 * 60 * 24 * 7
+
 INDICATOR_LIST = {
     'registered_eligible_couples': _('Registered Eligible Couples'),
     'registered_pregnancies': _('Registered Pregnancies'),

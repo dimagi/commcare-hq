@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import uuid
+
 from django.db import connections
 
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.sql_db.connections import get_aaa_db_alias
+from couchexport.export import export_from_tables
 from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL
-from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
+from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman, AaaFile
+from io import BytesIO
 
 
 def build_location_filters(location_id, ministry, with_child=True):
@@ -72,3 +76,14 @@ def get_location_model_for_ministry(ministry):
 
     # This should be removed eventually once ministry is reliably being passed back from front end
     return AggVillage
+
+
+def create_excel_file(domain, excel_data, data_type, file_format):
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    aaa_file = AaaFile(blob_id=file_hash, data_type=data_type)
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    aaa_file.store_file_in_blobdb(domain, export_file, expired=60 * 60 * 24)
+    aaa_file.save()
+    return file_hash

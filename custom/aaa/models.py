@@ -27,7 +27,9 @@ from django.utils.decorators import classproperty
 from corehq.sql_db.connections import get_aaa_db_alias
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from custom.aaa.const import ALL, PRODUCT_CODES
+from corehq.blobs import get_blob_db, CODES
+from corehq.blobs.models import BlobMeta
+from custom.aaa.const import ALL, PRODUCT_CODES, EXPIRED
 from dimagi.utils.dates import force_to_date
 from six.moves import zip
 
@@ -1191,6 +1193,35 @@ class AggregationInformation(models.Model):
     step = models.TextField(help_text="Slug for the step of the aggregation")
     aggregation_window_start = models.DateTimeField()
     aggregation_window_end = models.DateTimeField()
+
+
+class AaaFile(models.Model):
+    blob_id = models.CharField(max_length=255)
+    data_type = models.CharField(max_length=255)
+    file_added = models.DateField(auto_now=True)
+
+    def store_file_in_blobdb(self, domain, export_file, expired=EXPIRED):
+        db = get_blob_db()
+        try:
+            kw = {"meta": db.metadb.get(
+                parent_id='AaaFile',
+                key=self.blob_id
+            )}
+        except BlobMeta.DoesNotExist:
+            kw = {
+                "domain": domain,
+                "parent_id": 'AaaFile',
+                "type_code": CODES.tempfile,
+                "key": self.blob_id,
+                "timeout": expired
+            }
+        db.put(export_file, **kw)
+
+    def get_file_from_blobdb(self):
+        return get_blob_db().get(key=self.blob_id)
+
+    def get_file_size(self):
+        return get_blob_db().size(key=self.blob_id)
 
 
 def _dictfetchall(cursor):
