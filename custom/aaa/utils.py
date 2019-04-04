@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.db import connections
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 
@@ -57,7 +58,8 @@ def explain_aggregation_queries(domain, window_start, window_end):
 
 def _explain_query(cls, method, domain, window_start, window_end):
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute('explain ' + agg_query, agg_params)
         return cls.__name__ + method.__name__, cursor.fetchall()
 
