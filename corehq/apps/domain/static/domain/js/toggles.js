@@ -37,12 +37,8 @@ hqDefine('domain/js/toggles', [
         self.expanded = ko.observable(false);
         self.showHideDescription = function () { self.expanded(!self.expanded()); };
 
-        self.cssClass = ko.computed(function () {
-            if (self.domainEnabled()) {
-                return 'success';
-            } else if (self.userEnabled()) {
-                return 'info';
-            }
+        self.isEnabled = ko.computed(function () {
+            return self.domainEnabled() || self.userEnabled();
         });
 
         self.setTogglePending = ko.observable(false);
