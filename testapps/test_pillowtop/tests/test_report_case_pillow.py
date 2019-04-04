@@ -4,6 +4,7 @@ import uuid
 
 from django.test import TestCase, override_settings
 from elasticsearch.exceptions import ConnectionError
+from nose.plugins.attrib import attr
 
 from corehq.apps.es import CaseES
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
@@ -19,6 +20,7 @@ from six.moves import range
 DOMAIN = 'report-case-pillowtest-domain'
 
 
+@attr(slow=250)
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
 class ReportCasePillowTest(TestCase):
 

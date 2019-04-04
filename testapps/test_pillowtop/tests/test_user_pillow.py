@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from django.conf import settings
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
@@ -92,6 +94,7 @@ class UserPillowTest(UserPillowTestBase):
 
 class UnknownUserPillowTest(UserPillowTestBase):
 
+    @attr(slow=200)
     @run_with_all_backends
     def test_unknown_user_pillow(self):
         FormProcessorTestUtils.delete_all_xforms()

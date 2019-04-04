@@ -6,6 +6,7 @@ from collections import Counter
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from mock import patch, MagicMock
+from nose.plugins.attrib import attr
 
 from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.util.test_utils import TestFileMixin
@@ -55,6 +56,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             # since this is a SimpleTest, this should fail if the call actually hits the DB
             example.deactivate()
 
+    @attr(slow=60)
     def test_production_config(self):
         for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()

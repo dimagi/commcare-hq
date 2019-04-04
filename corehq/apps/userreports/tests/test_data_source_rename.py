@@ -9,6 +9,7 @@ import sqlalchemy
 from django.test import TestCase
 from mock import MagicMock, patch
 from sqlalchemy.engine import reflection
+from nose.plugins.attrib import attr
 
 from corehq.apps.userreports.management.commands.rename_ucr_tables import (
     create_ucr_views,
@@ -27,6 +28,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_legacy_table
 from corehq.pillows.case import get_case_pillow
 
 
+@attr(slow=20)  # all tests slow to run
 class DataSourceRenameTest(TestCase):
 
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[]))

@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from nose.plugins.attrib import attr
+
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SUPERVISION_CONFIRM_YES, SUPERVISION_CONFIRM_NO
@@ -25,6 +28,7 @@ class TestSupervision(ILSTestScript):
         self.assertEqual(status.status_type, SupplyPointStatusTypes.SUPERVISION_FACILITY)
         self.assertEqual(status.status_value, SupplyPointStatusValues.RECEIVED)
 
+    @attr(slow=13)  # due to setup
     def test_supervision_no(self):
         with localize('sw'):
             response = six.text_type(SUPERVISION_CONFIRM_NO)

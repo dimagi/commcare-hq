@@ -9,6 +9,8 @@ from io import open
 from django.core.management import call_command
 from django.test import SimpleTestCase
 
+from nose.plugins.attrib import attr
+
 from corehq.apps.hqwebapp.management.commands.build_requirejs import Command as BuildRequireJSCommand
 
 
@@ -48,6 +50,7 @@ class TestRequireJS(SimpleTestCase):
 
         cls._run_jobs(cls.js_files, _categorize_file)
 
+    @attr(slow=16)  # due to setup
     def test_files_match_modules(self):
         errors = []
 
@@ -94,6 +97,7 @@ class TestRequireJS(SimpleTestCase):
 
 
 class TestRequireJSBuild(SimpleTestCase):
+    @attr(slow=35)
     def test_no_select2_conflicts(self):
         call_command('collectstatic', noinput=True, verbosity=0)
         command = BuildRequireJSCommand()
