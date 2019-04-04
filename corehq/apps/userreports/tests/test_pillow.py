@@ -508,9 +508,11 @@ class ReuseEvaluationContextTest(TestCase):
         with self.assertNumQueries(num_queries):
             pillow.process_changes(since=since, forever=False)
 
+    @attr(slow=15)
     def test_reuse_cache(self):
         self._test_reuse_cache()
 
+    @attr(slow=22)
     def test_reuse_cache_chunked(self):
         pillow1 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs[:1])
         pillow2 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs)

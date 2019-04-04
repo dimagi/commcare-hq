@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
+from nose.plugins.attrib import attr
+
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS, NAMESPACE_DOMAIN
 from custom.ilsgateway.tanzania.reminders import REC_HELP, REC_CONFIRMATION, REC_ERROR, INVALID_PRODUCT_CODE
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN
@@ -36,6 +38,7 @@ class ReceiptTest(ILSTestScript):
         EmergencyOrder.objects.all().delete()
         super(ReceiptTest, cls).tearDownClass()
 
+    @attr(slow=15)
     def test_help(self):
         script = """
             5551234 > rec

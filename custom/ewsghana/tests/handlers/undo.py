@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from nose.plugins.attrib import attr
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -16,6 +17,7 @@ class TestUndo(EWSScriptTest):
         }
         FormProcessorTestUtils._delete_all_from_view(XFormInstance.get_db(), 'all_forms/view', view_kwargs)
 
+    @attr(slow=15)
     def test_no_product_reports(self):
         a = """
             5551234 > undo

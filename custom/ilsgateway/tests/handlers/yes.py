@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from nose.plugins.attrib import attr
+
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import YES_HELP
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
@@ -8,6 +11,7 @@ import six
 
 class TestYes(ILSTestScript):
 
+    @attr(slow=15)
     def test_yes(self):
         with localize('sw'):
             response = YES_HELP

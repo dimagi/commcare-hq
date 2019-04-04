@@ -4,6 +4,7 @@ from django.test import TestCase
 import uuid
 
 from elasticsearch.exceptions import ConnectionError
+from nose.plugins.attrib import attr
 
 from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
@@ -33,6 +34,7 @@ class CasePillowTest(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(CasePillowTest, self).tearDown()
 
+    @attr(slow=250)
     @run_with_all_backends
     def test_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es()
@@ -45,6 +47,7 @@ class CasePillowTest(TestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
+    @attr(slow=250)
     @run_with_all_backends
     def test_case_soft_deletion(self):
         case_id, case_name = self._create_case_and_sync_to_es()

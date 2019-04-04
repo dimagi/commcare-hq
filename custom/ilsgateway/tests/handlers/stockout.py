@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 
+from nose.plugins.attrib import attr
+
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
@@ -12,6 +14,7 @@ import six
 
 class TestStockout(ILSTestScript):
 
+    @attr(slow=15)
     def test_stockout(self):
         with localize('sw'):
             response1 = six.text_type(SOH_CONFIRM)
