@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('userreports', '0008_new_table_name_views'),
+        ('userreports', '0009_rename_ucr_tables'),
     ]
 
     operations = [
