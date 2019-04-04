@@ -1,12 +1,8 @@
-from collections import defaultdict
-
 import attr
 from django.conf import settings
-from memoized import memoized
 
-from corehq.sql_db.util import _get_all_nested_subclasses
-from custom.icds_reports.utils.aggregation_helpers.distributed.base import DistributedAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.monolith.base import AggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.distributed import *
+from custom.icds_reports.utils.aggregation_helpers.monolith import *
 
 
 @attr.s
@@ -14,32 +10,55 @@ class HelperPair(object):
     monolith = attr.ib(default=None)
     distributed = attr.ib(default=None)
 
+    def validate(self):
+        return not self.distributed or self.monolith.helper_key == self.distributed.helper_key
 
-@memoized
+
+HELPERS = [
+    HelperPair(AggCcsRecordAggregationHelper, AggCcsRecordAggregationDistributedHelper),
+    HelperPair(AggChildHealthAggregationHelper, AggChildHealthAggregationDistributedHelper),
+    HelperPair(AwcInfrastructureAggregationHelper, None),
+    HelperPair(AwwIncentiveAggregationHelper, None),
+    HelperPair(LSAwcMgtFormAggHelper, LSAwcMgtFormAggDistributedHelper),
+    HelperPair(LSBeneficiaryFormAggHelper, LSBeneficiaryFormAggDistributedHelper),
+    HelperPair(LSVhndFormAggHelper, LSVhndFormAggDistributedHelper),
+    HelperPair(AggLsHelper, None),
+    HelperPair(BirthPreparednessFormsAggregationHelper, BirthPreparednessFormsAggregationDistributedHelper),
+    HelperPair(CcsRecordMonthlyAggregationHelper, CcsRecordMonthlyAggregationDistributedHelper),
+    HelperPair(ChildHealthMonthlyAggregationHelper, ChildHealthMonthlyAggregationDistributedHelper),
+    HelperPair(ComplementaryFormsAggregationHelper, ComplementaryFormsAggregationDistributedHelper),
+    HelperPair(ComplementaryFormsCcsRecordAggregationHelper, ComplementaryFormsCcsRecordAggregationDistributedHelper),
+    HelperPair(DailyFeedingFormsChildHealthAggregationHelper, DailyFeedingFormsChildHealthAggregationDistributedHelper),
+    HelperPair(DeliveryFormsAggregationHelper, DeliveryFormsAggregationDistributedHelper),
+    HelperPair(GrowthMonitoringFormsAggregationHelper, GrowthMonitoringFormsAggregationDistributedHelper),
+    HelperPair(InactiveAwwsAggregationHelper, InactiveAwwsAggregationDistributedHelper),
+    HelperPair(PostnatalCareFormsCcsRecordAggregationHelper, PostnatalCareFormsCcsRecordAggregationDistributedHelper),
+    HelperPair(PostnatalCareFormsChildHealthAggregationHelper, PostnatalCareFormsChildHealthAggregationDistributedHelper),
+    HelperPair(THRFormsChildHealthAggregationHelper, THRFormsChildHealthAggregationDistributedHelper),
+    HelperPair(THRFormsCcsRecordAggregationHelper, THRFormsCcsRecordAggregationDistributedHelper),
+    HelperPair(AggAwcHelper, AggAwcDistributedHelper),
+    HelperPair(AggAwcDailyAggregationHelper, AggAwcDailyAggregationDistributedHelper),
+    HelperPair(LocationAggregationHelper, None),
+    HelperPair(DailyAttendanceAggregationHelper, DailyAttendanceAggregationDistributedHelper),
+    HelperPair(CcsMbtHelper, CcsMbtDistributedHelper),
+    HelperPair(ChildHealthMbtHelper, ChildHealthMbtDistributedHelper),
+    HelperPair(AwcMbtHelper, AwcMbtDistributedHelper),
+]
+
+
 def all_helpers():
-    # this is a bit dodge but these are required otherwise they don't get found by the subclass helper
-    # import must be inside function to avoid circular dependency
-    from .monolith.mbt import CcsMbtHelper, ChildHealthMbtHelper, AwcMbtHelper
-    from .distributed.mbt import CcsMbtDistributedHelper, ChildHealthMbtDistributedHelper, AwcMbtDistributedHelper
-
-    helpers = defaultdict(lambda: HelperPair())
-
-    # not enthralled by this solution but it beat the copy paste I was doing before
-    for helper in _get_all_nested_subclasses(AggregationHelper):
-        if helper.helper_key:
-            helpers[helper.helper_key].monolith = helper
-
-    for helper in _get_all_nested_subclasses(DistributedAggregationHelper):
-        if helper.helper_key:
-            helpers[helper.helper_key].distributed = helper
-
-    for pair in helpers.values():
-        assert pair.monolith, pair
+    helpers = {}
+    for pair in HELPERS:
+        assert pair.validate(), pair
+        helpers[pair.monolith.helper_key] = pair
     return helpers
 
 
+HELPERS_BY_KEY = all_helpers()
+
+
 def get_helper(key):
-    pair = all_helpers()[key]
+    pair = HELPERS_BY_KEY[key]
     if getattr(settings, 'ICDS_USE_CITS', False) and pair.distributed:
         return pair.distributed
     return pair.monolith
