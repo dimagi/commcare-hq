@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from datetime import datetime
+
 from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
 from corehq.toggles import DATA_MIGRATION
 from corehq.util.quickcache import quickcache
@@ -10,6 +13,7 @@ def set_migration_started(domain, slug, dry_run=False):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
     if progress.migration_status == MigrationStatus.NOT_STARTED:
         progress.migration_status = MigrationStatus.DRY_RUN if dry_run else MigrationStatus.IN_PROGRESS
+        progress.started_on = datetime.utcnow()
         progress.save()
         reset_caches(domain, slug)
     else:
@@ -21,8 +25,9 @@ def set_migration_started(domain, slug, dry_run=False):
 
 def set_migration_not_started(domain, slug):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
-    if migration_in_progress(domain, slug, True):
+    if migration_in_progress(domain, slug, include_dry_runs=True):
         progress.migration_status = MigrationStatus.NOT_STARTED
+        progress.started_on = None
         progress.save()
         reset_caches(domain, slug)
     else:
@@ -40,6 +45,7 @@ def set_migration_complete(domain, slug):
 
     if progress.migration_status != MigrationStatus.COMPLETE:
         progress.migration_status = MigrationStatus.COMPLETE
+        progress.completed_on = datetime.utcnow()
         progress.save()
         reset_caches(domain, slug)
 

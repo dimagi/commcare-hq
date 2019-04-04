@@ -25,7 +25,7 @@
   "data_source_table": "static-person_cases_v3",
   "config": {
     "title": "MPR - 10a - Person cases (Static)",
-    "description": "",
+    "description": "This is used in apps for report modules",
     "visible": false,
     "aggregation_columns": [
       "owner_id"

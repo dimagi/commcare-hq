@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from contextlib import contextmanager
 from datetime import date
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
@@ -12,42 +13,35 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE,
                                        AGG_LS_AWC_VISIT_TABLE, AGG_LS_VHND_TABLE,
                                        AGG_LS_BENEFICIARY_TABLE)
-from dateutil.relativedelta import relativedelta
 from django.db import connections, models, transaction
-from six.moves import range
 
-from custom.icds_reports.utils.aggregation_helpers.agg_ccs_record import AggCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_child_health import AggChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.awc_infrastructure import AwcInfrastructureAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.aww_incentive import AwwIncentiveAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_awc_visit_form import LSAwcMgtFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_beneficiary_form import LSBeneficiaryFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.ls_vhnd_form import LSVhndFormAggHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_ls_data import AggLsHelper
-from custom.icds_reports.utils.aggregation_helpers.birth_preparedness_forms import \
-    BirthPreparednessFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.ccs_record_monthly import CcsRecordMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.child_health_monthly import ChildHealthMonthlyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.complementary_forms import ComplementaryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.complementary_forms_ccs_record import \
-    ComplementaryFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.daily_feeding_forms_child_health import \
-    DailyFeedingFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.delivery_forms import DeliveryFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.growth_monitoring_forms import \
-    GrowthMonitoringFormsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.inactive_awws import InactiveAwwsAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_ccs_record import \
-    PostnatalCareFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.postnatal_care_forms_child_health import \
-    PostnatalCareFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.thr_forms_child_health import \
-    THRFormsChildHealthAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.thr_froms_ccs_record import THRFormsCcsRecordAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc import AggAwcHelper
-from custom.icds_reports.utils.aggregation_helpers.agg_awc_daily import AggAwcDailyAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.awc_location import LocationAggregationHelper
-from custom.icds_reports.utils.aggregation_helpers.daily_attendance import DailyAttendanceAggregationHelper
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    AggCcsRecordAggregationHelper,
+    AggChildHealthAggregationHelper,
+    AwcInfrastructureAggregationHelper,
+    AwwIncentiveAggregationHelper,
+    LSAwcMgtFormAggHelper,
+    LSBeneficiaryFormAggHelper,
+    LSVhndFormAggHelper,
+    AggLsHelper,
+    BirthPreparednessFormsAggregationHelper,
+    CcsRecordMonthlyAggregationHelper,
+    ChildHealthMonthlyAggregationHelper,
+    ComplementaryFormsAggregationHelper,
+    ComplementaryFormsCcsRecordAggregationHelper,
+    DailyFeedingFormsChildHealthAggregationHelper,
+    DeliveryFormsAggregationHelper,
+    GrowthMonitoringFormsAggregationHelper,
+    InactiveAwwsAggregationHelper,
+    PostnatalCareFormsCcsRecordAggregationHelper,
+    PostnatalCareFormsChildHealthAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
+    THRFormsCcsRecordAggregationHelper,
+    AggAwcHelper,
+    AggAwcDailyAggregationHelper,
+    LocationAggregationHelper,
+    DailyAttendanceAggregationHelper
+)
 
 
 def get_cursor(model):
@@ -55,7 +49,29 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
-class CcsRecordMonthly(models.Model):
+def maybe_atomic(cls, atomic=True):
+    if atomic:
+        return transaction.atomic(using=db_for_read_write(cls))
+    else:
+        @contextmanager
+        def noop_context():
+            yield
+
+        return noop_context()
+
+
+class AggregateMixin(object):
+    _agg_helper_cls = None
+    _agg_atomic = True
+
+    @classmethod
+    def aggregate(cls, *args, **kwargs):
+        helper = cls._agg_helper_cls(*args, **kwargs)
+        with get_cursor(cls) as cursor, maybe_atomic(cls, cls._agg_atomic):
+            helper.aggregate(cursor)
+
+
+class CcsRecordMonthly(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
@@ -159,21 +175,11 @@ class CcsRecordMonthly(models.Model):
         managed = False
         db_table = 'ccs_record_monthly'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = CcsRecordMonthlyAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        index_queries = helper.indexes()
-
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                for query in index_queries:
-                    cursor.execute(query)
+    _agg_helper_cls = CcsRecordMonthlyAggregationHelper
+    _agg_atomic = True
 
 
-class AwcLocation(models.Model):
+class AwcLocation(models.Model, AggregateMixin):
     doc_id = models.TextField()
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -194,7 +200,6 @@ class AwcLocation(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
-    ls_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
     state_is_test = models.SmallIntegerField(blank=True, null=True)
     district_is_test = models.SmallIntegerField(blank=True, null=True)
@@ -207,25 +212,11 @@ class AwcLocation(models.Model):
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
 
-    @classmethod
-    def aggregate(cls):
-        helper = LocationAggregationHelper()
-        drop_table_query = helper.drop_table_query()
-        agg_query = helper.aggregate_query()
-        aww_query = helper.aww_query()
-        ls_query = helper.ls_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(drop_table_query)
-            cursor.execute(agg_query)
-            cursor.execute(aww_query)
-            cursor.execute(ls_query)
-            for rollup_query in rollup_queries:
-                cursor.execute(rollup_query)
+    _agg_helper_cls = LocationAggregationHelper
+    _agg_atomic = False
 
 
-class ChildHealthMonthly(models.Model):
+class ChildHealthMonthly(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
     awc_id = models.TextField()
     case_id = models.TextField(primary_key=True)
@@ -310,18 +301,11 @@ class ChildHealthMonthly(models.Model):
         managed = False
         db_table = 'child_health_monthly'
 
-    @classmethod
-    def aggregate(cls, state_ids, month):
-        helper = ChildHealthMonthlyAggregationHelper(state_ids, month)
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(helper.aggregation_query())
-            for query in helper.indexes():
-                cursor.execute(query)
+    _agg_helper_cls = ChildHealthMonthlyAggregationHelper
+    _agg_atomic = False
 
 
-class AggAwc(models.Model):
+class AggAwc(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -473,33 +457,16 @@ class AggAwc(models.Model):
         db_table = 'agg_awc'
 
     @classmethod
-    def aggregate(cls, month):
-        helper = AggAwcHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.updates()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(agg_query, agg_params)
-            for query, params in update_queries:
-                cursor.execute(query, params)
-            for query in rollup_queries:
-                cursor.execute(query)
-            for query in index_queries:
-                cursor.execute(query)
-
-    @classmethod
     def weekly_aggregate(cls, month):
         helper = AggAwcHelper(month)
-        update_queries = helper.weekly_updates()
         with get_cursor(cls) as cursor:
-            for query, params in update_queries:
-                cursor.execute(query, params)
+            helper.weekly_aggregate(cursor)
+
+    _agg_helper_cls = AggAwcHelper
+    _agg_atomic = False
 
 
-class AggregateLsAWCVisitForm(models.Model):
+class AggregateLsAWCVisitForm(models.Model, AggregateMixin):
     awc_visits = models.IntegerField(help_text='awc visits made by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -508,19 +475,11 @@ class AggregateLsAWCVisitForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_AWC_VISIT_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSAwcMgtFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
-        with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+    _agg_helper_cls = LSAwcMgtFormAggHelper
+    _agg_atomic = False
 
 
-class AggregateLsVhndForm(models.Model):
+class AggregateLsVhndForm(models.Model, AggregateMixin):
     vhnd_observed = models.IntegerField(help_text='VHND forms submitted by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -529,19 +488,11 @@ class AggregateLsVhndForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_VHND_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSVhndFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
-        with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+    _agg_helper_cls = LSVhndFormAggHelper
+    _agg_atomic = False
 
 
-class AggregateBeneficiaryForm(models.Model):
+class AggregateBeneficiaryForm(models.Model, AggregateMixin):
     beneficiary_vists = models.IntegerField(help_text='Beneficiary visits done by LS')
     month = models.DateField()
     supervisor_id = models.TextField()
@@ -550,19 +501,11 @@ class AggregateBeneficiaryForm(models.Model):
     class Meta(object):
         db_table = AGG_LS_BENEFICIARY_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = LSBeneficiaryFormAggHelper(state_id, month)
-        drop_query = helper.drop_table_query()
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_param = helper.aggregate_query()
-        with get_cursor(cls) as cursor:
-            cursor.execute(drop_query)
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_param)
+    _agg_helper_cls = LSBeneficiaryFormAggHelper
+    _agg_atomic = False
 
 
-class AggLs(models.Model):
+class AggLs(models.Model, AggregateMixin):
     """
     Model refers to the agg_ls table in database.
     Table contains the aggregated data from LS ucrs.
@@ -580,39 +523,11 @@ class AggLs(models.Model):
     class Meta(object):
         db_table = 'agg_ls'
 
-    @classmethod
-    def aggregate(cls, month):
-        """
-        Aggregates the LS data and roll up from supervisor level
-        to state level
-        :return:
-        """
-        helper = AggLsHelper(month)
-
-        drop_table_queries = [helper.drop_table_if_exists(i) for i in range(4, 0, -1)]
-        create_table_queries = [helper.create_child_table(i) for i in range(4, 0, -1)]
-
-        agg_query, agg_params = helper.aggregate_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(3, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(4, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
-        with get_cursor(cls) as cursor:
-            for drop_table_query in drop_table_queries:
-                cursor.execute(drop_table_query)
-            for create_table_query, create_params in create_table_queries:
-                cursor.execute(create_table_query, create_params)
-
-            cursor.execute(agg_query, agg_params)
-
-            for rollup_query in rollup_queries:
-                cursor.execute(rollup_query)
-
-            for index_query in index_queries:
-                cursor.execute(index_query)
+    _agg_helper_cls = AggLsHelper
+    _agg_atomic = False
 
 
-class AggCcsRecord(models.Model):
+class AggCcsRecord(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -671,28 +586,11 @@ class AggCcsRecord(models.Model):
         managed = False
         db_table = 'agg_ccs_record'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggCcsRecordAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.update_queries()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                for query, params in update_queries:
-                    cursor.execute(query, params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+    _agg_helper_cls = AggCcsRecordAggregationHelper
+    _agg_atomic = True
 
 
-class AggChildHealth(models.Model):
+class AggChildHealth(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -769,28 +667,11 @@ class AggChildHealth(models.Model):
         managed = False
         db_table = 'agg_child_health'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggChildHealthAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_queries = helper.update_queries()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
-        index_queries = [query for index_list in index_queries for query in index_list]
-
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(agg_query, agg_params)
-                for query, params in update_queries:
-                    cursor.execute(query, params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+    _agg_helper_cls = AggChildHealthAggregationHelper
+    _agg_atomic = True
 
 
-class AggAwcDaily(models.Model):
+class AggAwcDaily(models.Model, AggregateMixin):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -827,27 +708,11 @@ class AggAwcDaily(models.Model):
         managed = False
         db_table = 'agg_awc_daily'
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = AggAwcDailyAggregationHelper(month)
-        agg_query, agg_params = helper.aggregation_query()
-        update_query, update_params = helper.update_query()
-        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
-        index_queries = helper.indexes()
-
-        with get_cursor(cls) as cursor:
-            with transaction.atomic(using=db_for_read_write(cls)):
-                cursor.execute(helper.drop_table_query())
-                cursor.execute(*helper.create_table_query())
-                cursor.execute(agg_query, agg_params)
-                cursor.execute(update_query, update_params)
-                for query in rollup_queries:
-                    cursor.execute(query)
-                for query in index_queries:
-                    cursor.execute(query)
+    _agg_helper_cls = AggAwcDailyAggregationHelper
+    _agg_atomic = True
 
 
-class DailyAttendance(models.Model):
+class DailyAttendance(models.Model, AggregateMixin):
     # not the real pkey - see unique_together
     doc_id = models.TextField(primary_key=True)
     awc_id = models.TextField(null=True)
@@ -870,21 +735,11 @@ class DailyAttendance(models.Model):
         db_table = 'daily_attendance'
         unique_together = ('supervisor_id', 'doc_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, month):
-        helper = DailyAttendanceAggregationHelper(month=month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregate_query()
-        indexes_query = helper.indexes()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
-            cursor.execute(indexes_query)
+    _agg_helper_cls = DailyAttendanceAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateComplementaryFeedingForms(models.Model):
+class AggregateComplementaryFeedingForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
 
@@ -945,18 +800,8 @@ class AggregateComplementaryFeedingForms(models.Model):
         db_table = AGG_COMP_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = ComplementaryFormsAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = ComplementaryFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -969,7 +814,7 @@ class AggregateComplementaryFeedingForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateCcsRecordComplementaryFeedingForms(models.Model):
+class AggregateCcsRecordComplementaryFeedingForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App, Home Visit Scheduler module,
     Complementary Feeding form.
 
@@ -999,21 +844,11 @@ class AggregateCcsRecordComplementaryFeedingForms(models.Model):
         db_table = AGG_CCS_RECORD_CF_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = ComplementaryFormsCcsRecordAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = ComplementaryFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateChildHealthPostnatalCareForms(models.Model):
+class AggregateChildHealthPostnatalCareForms(models.Model, AggregateMixin):
     """Aggregated data for child health cases based on
     AWW App, Home Visit Scheduler module,
     Post Natal Care and Exclusive Breastfeeding forms.
@@ -1090,18 +925,8 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = PostnatalCareFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1114,7 +939,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateCcsRecordPostnatalCareForms(models.Model):
+class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
     """Aggregated data for ccs record cases based on
     AWW App, Home Visit Scheduler module,
     Post Natal Care and Exclusive Breastfeeding forms.
@@ -1154,24 +979,14 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
     @classmethod
-    def aggregate(cls, state_id, month):
-        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
-
-    @classmethod
     def compare_with_old_data(cls, state_id, month):
         pass
 
+    _agg_helper_cls = PostnatalCareFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
-class AggregateChildHealthTHRForms(models.Model):
+
+class AggregateChildHealthTHRForms(models.Model, AggregateMixin):
     """Aggregated data for child_health cases based on
     Take Home Ration forms
 
@@ -1201,19 +1016,11 @@ class AggregateChildHealthTHRForms(models.Model):
         db_table = AGG_CHILD_HEALTH_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = THRFormsChildHealthAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = THRFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateCcsRecordTHRForms(models.Model):
+class AggregateCcsRecordTHRForms(models.Model, AggregateMixin):
     """Aggregated data for ccs_record cases based on
     Take Home Ration forms
 
@@ -1243,19 +1050,11 @@ class AggregateCcsRecordTHRForms(models.Model):
         db_table = AGG_CCS_RECORD_THR_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = THRFormsCcsRecordAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = THRFormsCcsRecordAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateGrowthMonitoringForms(models.Model):
+class AggregateGrowthMonitoringForms(models.Model, AggregateMixin):
     """Aggregated data based on AWW App
 
     376FA2E1 -> Delivery
@@ -1324,18 +1123,8 @@ class AggregateGrowthMonitoringForms(models.Model):
         db_table = AGG_GROWTH_MONITORING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = GrowthMonitoringFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1348,7 +1137,7 @@ class AggregateGrowthMonitoringForms(models.Model):
             return [row.child_health_case_id for row in rows]
 
 
-class AggregateBirthPreparednesForms(models.Model):
+class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
     # partitioned based on these fields
     state_id = models.CharField(max_length=40)
     supervisor_id = models.TextField(null=True)
@@ -1461,18 +1250,8 @@ class AggregateBirthPreparednesForms(models.Model):
         db_table = AGG_CCS_RECORD_BP_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = BirthPreparednessFormsAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = BirthPreparednessFormsAggregationHelper
+    _agg_atomic = False
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1485,7 +1264,7 @@ class AggregateBirthPreparednesForms(models.Model):
             return [row.case_id for row in rows]
 
 
-class AggregateCcsRecordDeliveryForms(models.Model):
+class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     """Aggregated data for ccs_record cases based on
     Delivery forms
 
@@ -1524,19 +1303,11 @@ class AggregateCcsRecordDeliveryForms(models.Model):
         db_table = AGG_CCS_RECORD_DELIVERY_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = DeliveryFormsAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = DeliveryFormsAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateInactiveAWW(models.Model):
+class AggregateInactiveAWW(models.Model, AggregateMixin):
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
@@ -1565,21 +1336,14 @@ class AggregateInactiveAWW(models.Model):
             return delta.days
         return 'N/A'
 
-    @classmethod
-    def aggregate(cls, last_sync):
-        helper = InactiveAwwsAggregationHelper(last_sync)
-        missing_location_query = helper.missing_location_query()
-        aggregation_query, agg_params = helper.aggregate_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(missing_location_query)
-            cursor.execute(aggregation_query, agg_params)
-
     class Meta(object):
         app_label = 'icds_reports'
 
+    _agg_helper_cls = InactiveAwwsAggregationHelper
+    _agg_atomic = False
 
-class AggregateChildHealthDailyFeedingForms(models.Model):
+
+class AggregateChildHealthDailyFeedingForms(models.Model, AggregateMixin):
     """Aggregated data for child_health cases based on
     Daily Feeding forms
 
@@ -1613,19 +1377,11 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
         db_table = AGG_DAILY_FEEDING_TABLE
         unique_together = ('supervisor_id', 'case_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = DailyFeedingFormsChildHealthAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = DailyFeedingFormsChildHealthAggregationHelper
+    _agg_atomic = False
 
 
-class AggregateAwcInfrastructureForms(models.Model):
+class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     """Aggregated data for AWC locations based on infrastructure forms
 
     A child table exists for each state_id and month.
@@ -1667,19 +1423,11 @@ class AggregateAwcInfrastructureForms(models.Model):
         db_table = AGG_INFRASTRUCTURE_TABLE
         unique_together = ('supervisor_id', 'awc_id', 'month')  # pkey
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = AwcInfrastructureAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = AwcInfrastructureAggregationHelper
+    _agg_atomic = False
 
 
-class AWWIncentiveReport(models.Model):
+class AWWIncentiveReport(models.Model, AggregateMixin):
     """Monthly updated table that holds metrics for the incentive report"""
 
     # partitioned based on these fields
@@ -1707,13 +1455,5 @@ class AWWIncentiveReport(models.Model):
     class Meta(object):
         db_table = AWW_INCENTIVE_TABLE
 
-    @classmethod
-    def aggregate(cls, state_id, month):
-        helper = AwwIncentiveAggregationHelper(state_id, month)
-        curr_month_query, curr_month_params = helper.create_table_query()
-        agg_query, agg_params = helper.aggregation_query()
-
-        with get_cursor(cls) as cursor:
-            cursor.execute(helper.drop_table_query())
-            cursor.execute(curr_month_query, curr_month_params)
-            cursor.execute(agg_query, agg_params)
+    _agg_helper_cls = AwwIncentiveAggregationHelper
+    _agg_atomic = False

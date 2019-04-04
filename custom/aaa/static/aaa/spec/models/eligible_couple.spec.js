@@ -46,7 +46,7 @@ describe('Eligible Couple models', function () {
                     id: '1',
                     name: 'test Name',
                     age: 14,
-                    currentFamilyPlanningMethod: 1,
+                    currentFamilyPlanningMethod: 'condom',
                     adoptionDateOfFamilyPlaning: '2019-03-01',
                 },
                 postData
@@ -54,7 +54,7 @@ describe('Eligible Couple models', function () {
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/eligible_couple/1/?month=3&year=2019">test Name</a>', listView.name());
             assert.equal(14, listView.age());
-            assert.equal('Yes', listView.currentFamilyPlanningMethod());
+            assert.equal('condom', listView.currentFamilyPlanningMethod());
             assert.equal('2019-03-01', listView.adoptionDateOfFamilyPlaning());
         });
     });
