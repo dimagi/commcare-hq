@@ -5,14 +5,6 @@
 
 {% requirejs_main 'domain/js/toggles' %}
 
-{% block head %}{{ block.super }}
-<style type="text/css">
-    th.checkmark-column, td.checkmark-column {
-        white-space: nowrap;
-        text-align: center;
-    }
-</style>
-{% endblock %}
 {% block page_content %}
 
     {% initial_page_data 'domain' domain %}
@@ -51,13 +43,13 @@
             <table class="table table-striped">
                 <thead>
                     <th>Privilege</th>
-                    <th class="checkmark-column">Enabled for domain?</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     {% for privilege_name, enabled_for_domain in privileges %}
                     <tr class="{% if enabled_for_domain %}success{% else %}warning{% endif %}">
                         <td>{{ privilege_name }}</td>
-                        <td class="checkmark-column">
+                        <td class="text-center">
                             {% if enabled_for_domain %}
                                 <i class="fa fa-check"></i>
                             {% else %}
@@ -90,38 +82,42 @@
                 <thead>
                     <th>Tag</th>
                     <th>Feature</th>
-                    <th class="checkmark-column">Enabled for me?</th>
-                    <th class="checkmark-column">Enabled for domain?</th>
+                    <th class="text-center text-nowrap">Enabled for me?</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
                 <tbody data-bind="foreach: toggles">
                     <tr data-bind="css: cssClass">
-                        <td><span class="label"
-                                  data-bind="css: ('label-' + tagCssClass),
-                                             text: tag"></span></td>
+                        <td>
+                            <span data-bind="css: ('label-' + tagCssClass),
+                                             text: tag"
+                                  class="label"></span>
+                        </td>
 
-                        <td data-bind="click: showHideDescription">
+                        <td class="clickable" data-bind="click: showHideDescription">
                             <span data-bind="text: label"></span>
 
                             <span data-bind="visible: helpLink">
                                 (<a data-bind="attr: {href: helpLink}" target="_blank">docs</a>)
                             </span>
 
-                            <span data-bind="visible: !!description">&#8230;</span>
+                            <span data-bind="visible: !!description">&hellip;</span>
 
                             <div data-bind="visible: expanded()" class="well">
                                 <p data-bind="text: description"></p>
-                                <div data-bind="css: ('bg-' + tagCssClass)">
-                                    <strong data-bind="text: tag"></strong>:
+                                <div>
+                                    <span data-bind="css: ('label-' + tagCssClass),
+                                                     text: tag"
+                                          class="label"></span>
                                     <span data-bind="text: tagDescription"></div>
                                 </div>
                             </div>
                         </td>
 
-                        <td class="checkmark-column">
-                            <i class="fa fa-check" data-bind="visible: userEnabled"></i>
+                        <td class="text-center">
+                            <i class="fa fa-user" data-bind="visible: userEnabled"></i>
                         </td>
 
-                        <td class="checkmark-column">
+                        <td class="text-center">
                             <div data-bind="visible: hasDomainNamespace">
                                 <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
                                 <button type="button"
@@ -153,16 +149,16 @@
             <table class="table table-striped">
                 <thead>
                     <th>Feature</th>
-                    <th class="checkmark-column">Enabled for domain?</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
                         <td>Using new SQL/scale backend</td>
-                        <td class="checkmark-column">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td class="text-center">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
                     </tr>
                     <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
                         <td>Using new correct timezone behavior</td>
-                        <td class="checkmark-column">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td class="text-center">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
                     </tr>
                 </tbody>
             </table>

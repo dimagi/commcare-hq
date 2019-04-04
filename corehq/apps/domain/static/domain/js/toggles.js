@@ -4,16 +4,24 @@ hqDefine('domain/js/toggles', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/main',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    alertUser
+    alertUser,
+    assertProperties
 ) {
 
     var Toggle = function (data) {
+        assertProperties.assert(data, [
+            'slug', 'label', 'description', 'help_link', 'tag', 'tag_css_class',
+            'tag_description', 'domain_enabled', 'user_enabled',
+            'has_domain_namespace',
+        ]);
+
         var self = {};
         self.slug = data['slug'];
         self.label = data['label'];
@@ -59,5 +67,5 @@ hqDefine('domain/js/toggles', [
     };
 
     var allToggles = _.map(initialPageData.get('toggles'), Toggle);
-    ko.applyBindings({"toggles": allToggles}, $("#toggles-table")[0]);
+    $("#toggles-table").koApplyBindings({"toggles": allToggles});
 });
