@@ -21,9 +21,13 @@ hqDefine('domain/js/toggles', [
         self.helpLink = data['help_link'];
         self.tag = data['tag'];
         self.tagCssClass = data['tag_css_class'];
+        self.tagDescription = data['tag_description'];
         self.domainEnabled = ko.observable(data['domain_enabled']);
         self.userEnabled = ko.observable(data['user_enabled']);
         self.hasDomainNamespace = data['has_domain_namespace'];
+
+        self.expanded = ko.observable(false);
+        self.showHideDescription = function () { self.expanded(!self.expanded()); };
 
         self.cssClass = ko.computed(function () {
             if (self.domainEnabled()) {

@@ -226,6 +226,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             'description': toggle.description,
             'help_link': toggle.help_link,
             'tag': toggle.tag.name,
+            'tag_description': toggle.tag.description,
             'tag_css_class': toggle.tag.css_class,
             'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
             'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
