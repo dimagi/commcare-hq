@@ -14,8 +14,10 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import UnsupportedScheduledReportError
-from corehq.apps.saved_reports.models import ReportNotification, ReportConfig
-from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports
+from corehq.apps.saved_reports.models import ReportNotification, ReportConfig, \
+    ScheduledReportRecord
+from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports, \
+    get_queued_report_ids
 from corehq.apps.users.models import CouchUser
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -44,14 +46,45 @@ def send_delayed_report(report_id):
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
 
+    # Intentionally let this raise an IndexError if there's no report.
+    # Shouldn't ever happen, and if it does, it means there's something wrong
+    # with our queuing or concurrency model.
+    record = ScheduledReportRecord.objects.filter(
+        state=ScheduledReportRecord.States.queued,
+        scheduled_report_id=notification_id,
+    ).order_by('-scheduled_for')[0]
+
+    # Mark all previous queued record as skipped
+    ScheduledReportRecord.objects.filter(
+        state=ScheduledReportRecord.States.queued,
+        scheduled_report_id=notification_id,
+        scheduled_for__lt=record.scheduled_for,
+    ).update(state=ScheduledReportRecord.States.skipped)
+
     # If the report's start date is later than today, return and do not send the email
     if notification.start_date and notification.start_date > datetime.today().date():
+        # Ideally these records would never get queued in the first place,
+        # but we don't initially have access to this when queuing.
+        # There may be a way push this back to there without affecting the performance
+        # of the queuing process too much, but I am punting on that for now.
+        ScheduledReportRecord.objects.filter(
+            state__in=[ScheduledReportRecord.States.queued,
+                       ScheduledReportRecord.States.skipped],
+            scheduled_report_id=notification_id,
+        ).delete()
         return
 
     try:
         notification.send()
     except UnsupportedScheduledReportError:
         pass
+    except Exception:
+        record.state = ScheduledReportRecord.States.failed
+        record.save()
+        raise
+    else:
+        record.state = ScheduledReportRecord.States.succeeded
+        record.save()
 
 
 @task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
@@ -68,9 +101,10 @@ def initiate_queue_scheduled_reports():
 
 
 @serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def queue_scheduled_reports():
-    for report_id in create_records_for_scheduled_reports():
-        send_delayed_report(report_id)
+def queue_scheduled_reports(send_report_override_for_tests=None):
+    create_records_for_scheduled_reports()
+    for report_id in get_queued_report_ids():
+        (send_report_override_for_tests or send_delayed_report)(report_id)
 
 
 @task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
