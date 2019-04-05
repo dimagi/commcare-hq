@@ -36,7 +36,7 @@ SUM(agg_child_health.lunch_count_21_days) as lunch_count_21_days,
 SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.rations_21_plus_distributed ELSE 0 END) + ccr.mother_thr as thr_given_21_days,
 SUM(CASE WHEN agg_child_health.age_tranche::integer BETWEEN 7 AND 36 THEN agg_child_health.valid_in_month ELSE 0 END ) + ccr.mother_thr_eligible as total_thr_candidates
 
-FROM "public"."awc_location_months" "awc_location_months"
+FROM "public"."awc_location_months_local" "awc_location_months"
 LEFT join agg_awc on (
         ("agg_awc"."month" = "awc_location_months"."month") AND
         ("agg_awc"."state_id" = "awc_location_months"."state_id") AND
