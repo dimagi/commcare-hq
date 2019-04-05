@@ -33,5 +33,5 @@ class DataSourceActionLogAdmin(admin.ModelAdmin):
         'action_source',
         'action',
     ]
-    list_filter = ('action_source', 'action', 'domain')
-    search_fields = ('indicator_config_id',)
+    list_filter = ('action_source', 'action')
+    search_fields = ('domain', 'indicator_config_id',)
