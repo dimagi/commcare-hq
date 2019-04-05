@@ -89,7 +89,10 @@ def rebuild_aggregate_ucr(request, domain, table_id):
         AggregateTableDefinition, domain=domain, table_id=table_id
     )
     aggregate_table_adapter = IndicatorSqlAdapter(table_definition)
-    aggregate_table_adapter.rebuild_table()
+    aggregate_table_adapter.rebuild_table(
+        initiated_by=request.user.username,
+        source='rebuild_aggregate_ucr'
+    )
     populate_aggregate_table_data_task.delay(table_definition.id)
     messages.success(request, 'Table rebuild successfully started.')
     return HttpResponseRedirect(reverse(AggregateUCRView.urlname, args=[domain, table_id]))

@@ -15,7 +15,6 @@ from sqlalchemy.schema import Index, PrimaryKeyConstraint
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, translate_programming_error)
-from corehq.apps.userreports.models import UserReportActionLog
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import view_exists
@@ -118,15 +117,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         partition(orm_table)
         return orm_table
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_action(initiated_by, source, skip_log)
         self.session_helper.Session.remove()
         try:
-            UserReportActionLog.objects.create(
-                domain=self.config.domain,
-                indicator_config_id=self.config.get_id,
-                action=UserReportActionLog.REBUILD
-            )
-
             self._drop_legacy_table_and_view()
             rebuild_table(self.engine, self.get_table())
             self._apply_sql_addons()
