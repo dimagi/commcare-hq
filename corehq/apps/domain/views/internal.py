@@ -212,19 +212,27 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def dispatch(self, request, *args, **kwargs):
         return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
-    @memoized
-    def enabled_flags(self):
-        def _sort_key(toggle_enabled_tuple):
-            toggle, domain_enabled, user_enabled = toggle_enabled_tuple
-            return (not domain_enabled,
-                    not user_enabled,
-                    toggles.ALL_TAGS.index(toggle.tag),
-                    toggle.label)
-        unsorted_toggles = [(
-            toggle,
-            toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
-            toggle.enabled(self.request.couch_user.username, namespace=toggles.NAMESPACE_USER)
-        ) for toggle in toggles.all_toggles()]
+    def _get_toggles(self):
+
+        def _sort_key(toggle):
+            return (not (toggle['domain_enabled'] or toggle['user_enabled']),
+                    [t.name for t in toggles.ALL_TAGS].index(toggle['tag']),
+                    toggle['label'])
+
+        unsorted_toggles = [{
+            'slug': toggle.slug,
+            'label': toggle.label,
+            'description': toggle.description,
+            'help_link': toggle.help_link,
+            'tag': toggle.tag.name,
+            'tag_description': toggle.tag.description,
+            'tag_css_class': toggle.tag.css_class,
+            'has_domain_namespace': toggles.NAMESPACE_DOMAIN in toggle.namespaces,
+            'domain_enabled': toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            'user_enabled': toggle.enabled(self.request.couch_user.username,
+                                           namespace=toggles.NAMESPACE_USER),
+        } for toggle in toggles.all_toggles()]
+
         return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
@@ -237,7 +245,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     @property
     def page_context(self):
         return {
-            'flags': self.enabled_flags(),
+            'toggles': self._get_toggles(),
             'use_sql_backend': self.domain_object.use_sql_backend,
             'privileges': self._get_privileges(),
         }

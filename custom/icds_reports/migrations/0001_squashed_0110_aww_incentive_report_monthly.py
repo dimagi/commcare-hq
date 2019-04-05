@@ -10,7 +10,7 @@ import django.db.migrations.operations.special
 import uuid
 
 from corehq.sql_db.operations import RawSQLMigration
-from custom.icds_reports.utils.migrations import get_view_migrations
+from custom.icds_reports.utils.migrations import get_view_migrations, get_composite_primary_key_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
@@ -1869,3 +1869,18 @@ class Migration(migrations.Migration):
             sql='ALTER TABLE child_health_monthly ADD COLUMN supervisor_id text',
         ),
     ]
+    # 0107_citus_composite_key
+    operations.extend(get_composite_primary_key_migrations([
+        'aggregatebirthpreparednesforms',
+        'aggregateccsrecorddeliveryforms',
+        'aggregateccsrecordpostnatalcareforms',
+        'aggregateccsrecordthrforms',
+        'aggregateccsrecordcomplementaryfeedingforms',
+        'aggregatechildhealthdailyfeedingforms',
+        'aggregatechildhealthpostnatalcareforms',
+        'aggregatechildhealththrforms',
+        'aggregatecomplementaryfeedingforms',
+        'aggregategrowthmonitoringforms',
+        'aggregateawcinfrastructureforms',
+        'dailyattendance',
+    ]))
