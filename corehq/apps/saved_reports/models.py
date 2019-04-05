@@ -382,10 +382,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                     },
                     None,
                 )
-            return ReportContent(
-                json.loads(email_response.content)['report'],
-                dispatch_func(render_as='excel') if attach_excel else None,
-            )
+            try:
+                content_json = json.loads(email_response.content)
+            except ValueError:
+                email_text = email_response.content
+            else:
+                email_text = content_json['report']
+            excel_attachment = dispatch_func(render_as='excel') if attach_excel else None
+            return ReportContent(email_text, excel_attachment)
         except PermissionDenied:
             return ReportContent(
                 _(
@@ -426,14 +430,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 },
                 None,
             )
-        except Exception:
-            notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
-                'domain': self.domain,
-                'user': self.owner.username,
-                'report': self.report_slug,
-                'report config': self.get_id
-            })
-            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_active(self):
