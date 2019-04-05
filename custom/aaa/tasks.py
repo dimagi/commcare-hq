@@ -14,6 +14,8 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     ChildHistory,
+    DenormalizedAWC,
+    DenormalizedVillage,
     Woman,
     WomanHistory,
 )
@@ -104,3 +106,9 @@ def update_agg_awc_table(domain, month):
 def update_agg_village_table(domain, month):
     for agg_query in AggVillage.aggregation_queries:
         update_monthly_table(domain, AggVillage.__name__ + agg_query.__name__, agg_query, month)
+
+
+@task
+def update_location_tables(domain):
+    DenormalizedAWC.build(domain)
+    DenormalizedVillage.build(domain)
