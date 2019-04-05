@@ -12,11 +12,11 @@ from couchdbkit.exceptions import (
 )
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
-from corehq.sql_db.util import get_default_db_aliases
 from corehq.util.python_compatibility import soft_assert_type_text
 from six.moves import map
 from six.moves import range
@@ -33,6 +33,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
     get_existing_usernames)
 from corehq.apps.users.models import UserRole
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from couchexport.writers import Excel2007ExportWriter
@@ -545,7 +546,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
-                        user.get_django_user(db_name=get_default_db_aliases()[0]).check_password(password)
+                        user.get_django_user(db_name=db_for_read_write(User, write=True)).check_password(password)
 
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
