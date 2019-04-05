@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.contrib import admin
-from .models import AsyncIndicator
+from .models import AsyncIndicator, UserReportActionLog
 
 
+@admin.register(AsyncIndicator)
 class AsyncIndicatorAdmin(admin.ModelAdmin):
 
     model = AsyncIndicator
@@ -20,4 +21,17 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
     search_fields = ('doc_id',)
 
 
-admin.site.register(AsyncIndicator, AsyncIndicatorAdmin)
+@admin.register(AsyncIndicator)
+class UserReportActionLogAdmin(admin.ModelAdmin):
+
+    model = UserReportActionLog
+    list_display = [
+        'date_created',
+        'domain',
+        'indicator_config_id',
+        'initiated_by',
+        'action_source',
+        'action',
+    ]
+    list_filter = ('action_source', 'action', 'domain')
+    search_fields = ('indicator_config_id',)

@@ -84,22 +84,22 @@ def _check_ids(value):
 
 
 class UserReportActionLog(models.Model):
-    BUILD = 0
-    MIGRATE = 1
-    REBUILD = 2
-    DROP = 3
+    BUILD = 'build'
+    MIGRATE = 'migrate'
+    REBUILD = 'rebuild'
+    DROP = 'drop'
 
-    id = models.BigAutoField(primary_key=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
-    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    action = models.PositiveSmallIntegerField(default=0, choices=(
+    initiated_by = models.CharField(max_length=126)
+    action_source = models.CharField(max_length=126, null=False, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=32, choices=(
         (BUILD, _('Build')),
         (MIGRATE, _('Migrate')),
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
-    ), db_index=True)
-    context = JSONField()
+    ), db_index=True, null=False)
 
 
 class SQLColumnIndexes(DocumentSchema):
