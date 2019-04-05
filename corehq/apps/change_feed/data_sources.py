@@ -14,7 +14,7 @@ from corehq.form_processor.document_stores import (
 )
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
-from corehq.util.datadog.util import (
+from corehq.util.datadog.utils import (
     case_load_counter,
     form_load_counter,
     ledger_load_counter,
