@@ -8,6 +8,7 @@ hqDefine('app_manager/js/summary/form_models',[
         var self = {};
         _.extend(self, models.controlModel({
             visibleAppIds: _.pluck(viewModels, 'appId'),
+            versionUrlName: viewModels.length > 1 ? 'app_form_summary_diff' : 'app_form_summary',
             onQuery: function (query) {
                 var match = function (needle, haystack) {
                     return !needle || haystack.toLowerCase().indexOf(needle.trim().toLowerCase()) !== -1;

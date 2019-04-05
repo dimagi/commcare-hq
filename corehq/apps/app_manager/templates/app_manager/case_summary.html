@@ -9,13 +9,12 @@
 {% block content_extra %}
     <div class="ko-template" id="case-summary-header">
         {% initial_page_data 'case_metadata' case_metadata %}
+        {% registerurl 'app_case_summary' domain '---' %}
         <div class="page-header" style="margin-top: 0;">
             <h3>
                 <i class="fcc fcc-fd-external-case"></i>
-                <span>{% trans "Case Summary" %} - {% trans "Version" %} {{ app_version }}</span>
-                {% if app_id != latest_app_id %}
-                    <small><a href="{% url 'app_case_summary' domain  latest_app_id %}">{% trans "See latest" %}</a> </small>
-                {% endif %}
+                {% trans "Case Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
+                <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
             </h3>
             <div class="row">
                 <div class="col-xs-3">
@@ -45,7 +44,7 @@
             </div>
         </div>
     </div>
-    <div id="case-summary">
+    <div id="case-summary" class="ko-template">
         {% if has_form_errors %}
             <div class="alert alert-danger">
                 {% url 'app_form_summary' domain latest_app_id as form_summary_url %}

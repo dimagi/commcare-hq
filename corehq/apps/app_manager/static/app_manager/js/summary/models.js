@@ -69,7 +69,7 @@ hqDefine('app_manager/js/summary/models',[
     };
 
     var controlModel = function (options) {
-        assertProperties.assertRequired(options, ['onQuery', 'onSelectMenuItem', 'visibleAppIds']);
+        assertProperties.assertRequired(options, ['onQuery', 'onSelectMenuItem', 'visibleAppIds', 'versionUrlName']);
         var self = {};
 
         // Connection to menu
@@ -104,14 +104,11 @@ hqDefine('app_manager/js/summary/models',[
             return self.firstAppId() != options.visibleAppIds[0] || self.secondAppId() != options.visibleAppIds[1];
         });
         self.changeVersions = function () {
-            var url,
-                showDiff = self.firstAppId() && self.secondAppId();
-            if (showDiff) {
-                url = initialPageData.reverse('app_form_summary_diff', self.firstAppId(), self.secondAppId());
+            if (self.firstAppId && self.secondAppId()){
+                window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
             } else {
-                url = initialPageData.reverse('app_form_summary', self.firstAppId());
+                window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());
             }
-            window.location.href = url;
         };
 
         return self;
