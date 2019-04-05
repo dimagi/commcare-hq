@@ -9,6 +9,7 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from functools import wraps
+from memoized import memoized
 
 import operator
 
@@ -129,6 +130,7 @@ class ICDSMixin(object):
             return json.loads(f.read())[self.slug]
 
     @property
+    @memoized
     def selected_location(self):
         if self.config['location_id']:
             return SQLLocation.objects.get(
@@ -136,6 +138,7 @@ class ICDSMixin(object):
             )
 
     @property
+    @memoized
     def awc(self):
         if self.config['location_id']:
             return self.selected_location.get_descendants(include_self=True).filter(
@@ -143,6 +146,7 @@ class ICDSMixin(object):
             )
 
     @property
+    @memoized
     def awc_number(self):
         if self.awc:
             return len(
@@ -152,6 +156,7 @@ class ICDSMixin(object):
                 ]
             )
 
+    @memoized
     def custom_data(self, selected_location, domain):
         timer = TimingContext()
         with timer:
