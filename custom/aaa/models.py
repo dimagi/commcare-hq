@@ -63,10 +63,6 @@ class LocationDenormalizedModel(models.Model):
 
     @classmethod
     def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             sc_id = village.sc_id,
@@ -75,33 +71,29 @@ class LocationDenormalizedModel(models.Model):
             district_id = village.district_id,
             state_id = village.state_id
         FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
+            SELECT village_id, sc_id, phc_id, taluka_id, district_id, state_id
+            FROM "{village_location_tablename}"
         ) village
-        WHERE child.village_id = village.doc_id
+        WHERE child.village_id = village.village_id
         """.format(
             child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
+            village_location_tablename=DenormalizedVillage._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             supervisor_id = awc.supervisor_id,
             block_id = awc.block_id
         FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
+            SELECT awc_id, supervisor_id, block_id
+            FROM "{awc_location_tablename}"
         ) awc
-        WHERE child.awc_id = awc.doc_id
+        WHERE child.awc_id = awc.awc_id
         """.format(
             child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
+            awc_location_tablename=DenormalizedAWC._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     def _ucr_tablename(self, ucr_name):

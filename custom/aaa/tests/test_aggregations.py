@@ -54,6 +54,7 @@ TEST_ENVIRONMENT = 'icds'
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
+    fixtures = ['locations.json']
     always_include_columns = {'person_case_id'}
 
     @classmethod
