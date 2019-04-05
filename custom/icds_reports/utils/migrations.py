@@ -18,6 +18,7 @@ def get_view_migrations():
         'agg_ls_monthly.sql',
         'service_delivery_monthly.sql',
         'aww_incentive_report_monthly.sql',
+        'awc_location_months_local.sql',
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []
