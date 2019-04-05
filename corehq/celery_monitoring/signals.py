@@ -49,12 +49,16 @@ def celery_add_time_sent(headers=None, body=None, **kwargs):
 @task_prerun.connect
 def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
-    time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
+
     tags = [
         'celery_task_name:{}'.format(task.name),
         'celery_queue:{}'.format(task.queue),
     ]
-    if time_to_start:
-        datadog_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags)
-    else:
+
+    timer = TimeToStartTimer(task_id)
+    try:
+        time_to_start = timer.stop_and_pop_timing()
+    except TimingNotAvailable:
         datadog_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
+    else:
+        datadog_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags)
