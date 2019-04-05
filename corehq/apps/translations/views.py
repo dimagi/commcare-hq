@@ -20,20 +20,6 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
-from corehq.apps.translations.app_translations import (
-    get_menu_row,
-    get_module_rows,
-    get_form_question_rows,
-    get_bulk_app_sheet_headers,
-    get_bulk_multimedia_sheet_headers,
-    get_bulk_app_sheet_rows,
-    get_bulk_multimedia_sheet_rows,
-    get_app_translation_workbook,
-    get_form_sheet_name,
-    get_module_sheet_name,
-    process_bulk_app_translation_upload,
-    validate_bulk_app_translation_upload,
-)
 from corehq.apps.translations.utils import update_app_translations_from_trans_dict
 from corehq.util.workbook_json.excel import InvalidExcelFileException
 
@@ -94,6 +80,10 @@ def download_bulk_ui_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
+    from corehq.apps.translations.app_translations import (
+        get_bulk_app_sheet_headers,
+        get_bulk_app_sheet_rows,
+    )
     app = get_app(domain, app_id)
     headers = get_bulk_app_sheet_headers(app)
     rows = get_bulk_app_sheet_rows(app)
@@ -108,6 +98,10 @@ def download_bulk_app_translations(request, domain, app_id):
 
 @require_can_edit_apps
 def download_bulk_multimedia_translations(request, domain, app_id):
+    from corehq.apps.translations.app_translations import (
+        get_bulk_multimedia_sheet_headers,
+        get_bulk_multimedia_sheet_rows,
+    )
     lang = request.GET.get('lang')
     app = get_app(domain, app_id)
 
@@ -127,6 +121,11 @@ def download_bulk_multimedia_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
+    from corehq.apps.translations.app_translations import (
+        get_app_translation_workbook,
+        process_bulk_app_translation_upload,
+        validate_bulk_app_translation_upload,
+    )
     validate = request.POST.get('validate')
     app = get_app(domain, app_id)
     workbook, msgs = get_app_translation_workbook(request.file)
