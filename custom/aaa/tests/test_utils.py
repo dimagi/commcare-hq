@@ -1,15 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-import time
-
-from django.test import TestCase
-
-from nose.plugins.attrib import attr
+from django.test.testcases import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
-from custom.aaa.const import ALL, MINISTRY_MOHFW, MINISTRY_MWCD
+from custom.aaa.const import MINISTRY_MWCD, ALL, MINISTRY_MOHFW
 from custom.aaa.utils import build_location_filters
 
 
@@ -339,7 +334,3 @@ class TestUtils(TestCase):
         expected_output = {}
         result = build_location_filters('', MINISTRY_MWCD, with_child=False)
         self.assertDictEqual(result, expected_output)
-
-    @attr(slow=10)
-    def slow_test(self):
-        time.sleep(5)
