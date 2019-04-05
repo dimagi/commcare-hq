@@ -1104,7 +1104,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             if case.case_id not in all_updates:
                 _get_logger().debug('initializing update for case {}'.format(case.case_id))
                 all_updates[case.case_id] = CaseUpdate(case_id=case.case_id,
-                                                   owner_ids_on_phone=self.owner_ids_on_phone)
+                                                       owner_ids_on_phone=self.owner_ids_on_phone)
 
             case_update = all_updates[case.case_id]
             case_update.was_live_previously = case.case_id in self.primary_case_ids

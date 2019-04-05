@@ -10,7 +10,7 @@
 {% endblock page_title %}
 
 {% block app_profiles %}
-    {% if request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+    {% if app.is_released and request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
         <h2>App Profiles</h2>
         <table class="table table-condensed">
             <thead>

@@ -28,3 +28,20 @@ def get_column_name(path, suffix=None, add_hash=True):
         new_parts.append(_hash(parts))
     full_name = "_".join(filter(None, new_parts + [suffix]))
     return full_name[-63:]
+
+
+def decode_column_name(column):
+    column_name = column.database_column_name
+    if isinstance(column_name, bytes):
+        column_name = column_name.decode('utf-8')
+    return column_name
+
+
+def table_exists(connection, table_name):
+    res = connection.execute("select 1 from pg_tables where tablename = %s", table_name)
+    return bool(list(res))
+
+
+def view_exists(connection, view_name):
+    res = connection.execute("select 1 from pg_views where viewname = %s", view_name)
+    return bool(list(res))

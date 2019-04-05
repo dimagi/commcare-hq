@@ -165,7 +165,7 @@ def _record_metrics(tags, submission_type, response, result=None, timer=None):
 
     if response.status_code == 201 and timer and result:
         tags += [
-            'duration:%s' % bucket_value(timer.duration, (5, 10, 20), 's'),
+            'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
             'case_count:%s' % bucket_value(len(result.cases), (2, 5, 10)),
             'ledger_count:%s' % bucket_value(len(result.ledgers), (2, 5, 10)),
         ]

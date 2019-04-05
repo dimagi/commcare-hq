@@ -133,7 +133,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.isVisible = function(level) {
-        if ($location.path().indexOf('lady_supervisor') !== -1 && level === 4) {
+        if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
             return false;
         }
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all' && vm.selectedLocations[level - 1].location_id !== 'all');

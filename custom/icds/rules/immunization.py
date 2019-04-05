@@ -152,7 +152,7 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
     if product_schedule_flag:
         tasks_case_schedule_flag = tasks_case.get_case_property('schedule_flag')
         if (
-            not isinstance(tasks_case_schedule_flag, six.string_types) or
+            not isinstance(tasks_case_schedule_flag, (six.text_type, bytes)) or
             product_schedule_flag not in tasks_case_schedule_flag
         ):
             return False

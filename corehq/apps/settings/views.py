@@ -53,6 +53,7 @@ from corehq.apps.settings.forms import (
 )
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS, MULTIPLE_APPS_UNLIMITED
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
@@ -177,6 +178,8 @@ class MyAccountSettingsView(BaseMyAccountView):
         }
 
     def phone_number_is_valid(self):
+        if isinstance(self.phone_number, six.string_types):
+            soft_assert_type_text(self.phone_number)
         return (
             isinstance(self.phone_number, six.string_types) and
             re.compile(r'^\d+$').match(self.phone_number) is not None

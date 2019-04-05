@@ -216,29 +216,20 @@
                     {% endif %}
 
                     {% if not request.user.is_authenticated %}
-                      <nav class="navbar-menus navbar-signin" role="navigation">
+                        <nav class="navbar-menus navbar-signin" role="navigation">
 
-                        <div class="nav-settings-bar pull-right">
-                          <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID and demo_workflow_ab %}
-                                {% if demo_workflow_ab.version == 'hubspot' %}
-                                    <a href="#cta-form-get-demo"
-                                       data-toggle="modal"
-                                       id="cta-form-get-demo-button-header"
-                                       class="btn btn-purple navbar-btn">
-                                       {% trans 'Schedule a Demo' %}
-                                    </a>
+                            <div class="nav-settings-bar pull-right">
+                                <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                                    {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                                        <a href="#cta-form-get-demo"
+                                           data-toggle="modal"
+                                           id="cta-form-get-demo-button-header"
+                                           class="btn btn-purple navbar-btn">
+                                           {% trans 'Schedule a Demo' %}
+                                      </a>
                                 {% endif %}
-
-                            {% if demo_workflow_ab.version == 'drift' %}
-                                <button id="cta-form-get-demo-button-header"
-                                        class="btn btn-purple navbar-btn schedule-demo-drift-cta">
-                                        {% trans 'Schedule a Demo' %}
-                                </button>
-                            {% endif %}
-                          {% endif %}
-                        </div>
-                      </nav>
+                            </div>
+                        </nav>
                     {% endif %}
 
                     <div class="navbar-header hq-header">
@@ -323,7 +314,18 @@
         {% endblock %}
         {% endif %}
         {# modals #}
-        {% block modals %}{% endblock modals %}
+        {% block modals %}
+        {% comment %}
+            TODO - remove 'and False' after making updates
+        {% endcomment %}
+            {% if domain and not enterprise_mode and False %}
+                {% if show_overdue_invoice_modal %}
+                    {% include 'hqwebapp/downgrade_modal.html' %}
+                {% elif show_prepaid_modal %}
+                    {% include 'hqwebapp/prepaid_modal.html' %}
+                {% endif %}
+            {% endif %}
+        {% endblock modals %}
 
         {% if show_mobile_ux_warning %}
           {% include "hqwebapp/partials/mobile_ux_warning.html" %}
@@ -353,6 +355,12 @@
         {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
         {% initial_page_data 'toggles_dict' toggles_dict %}
         {% initial_page_data 'previews_dict' previews_dict %}
+
+        {% if demo_workflow_ab_v2 %}
+          {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
+          {% initial_analytics_data 'hubspot.demoABv2' demo_workflow_ab_v2 %}
+        {% endif %}
+
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
@@ -526,6 +534,14 @@
         {% include 'hqwebapp/partials/ko_inline_edit.html' %}
         {% include 'hqwebapp/partials/ko_search_box.html' %}
         {% include 'hqwebapp/partials/ko_select_toggle.html' %}
+
+        {% if show_overdue_invoice_modal and not requirejs_main %}
+            <script src="{% static 'hqwebapp/js/downgrade_modal.js' %}"></script>
+        {% endif %}
+
+        {% if show_prepaid_modal and not requirejs_main %}
+            <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
+        {% endif %}
 
         {% block js %}{% endblock js %}
 

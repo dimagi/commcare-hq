@@ -17,7 +17,6 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.util.soft_assert import soft_assert
 from soil import DownloadBase
@@ -29,14 +28,6 @@ from soil.util import expose_file_download, expose_cached_download
 logging = get_task_logger(__name__)
 
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
-
-
-@profile_prod('process_bulk_upload_zip.prof', probability=1, limit=None)
-@task(serializer='pickle')
-def profile_and_process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
-                                        license_name=None, author=None, attribution_notes=None):
-    return process_bulk_upload_zip(processing_id, domain, app_id, username, share_media,
-                                   license_name, author, attribution_notes)
 
 
 @task(serializer='pickle')
@@ -199,7 +190,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if len(media_suites) != 1:
                         message = _('Could not identify media_suite.xml in CCZ')
                         errors.append(message)
-                        notify_exception(None, "[ICDS-291] {}".format(message))
                     else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
@@ -208,15 +198,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                                          parsed.findall("media/resource/location[@authority='local']")}
                             names = z.namelist()
                             missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                            if missing:
-                                soft_assert(notify_admins=True)(False, '[ICDS-291] Files missing from CCZ', [{
-                                    'missing file count': len(missing),
-                                    'app_id': app._id,
-                                    'version': app.version,
-                                    'build_profile_id': build_profile_id,
-                                }, {
-                                    'files': missing,
-                                }])
                             errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
         if errors:

@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from corehq.sql_db.operations import HqRunSQL
+
 from django.db import migrations
 
 
@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunSQL(
+        migrations.RunSQL(
             "DROP FUNCTION IF EXISTS get_case_attachment_by_identifier(TEXT, TEXT)",
             "SELECT 1"
         ),

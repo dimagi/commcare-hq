@@ -60,11 +60,13 @@ from corehq.apps.app_manager.helpers.validators import (
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
+from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import (
@@ -111,7 +113,6 @@ from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
-from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
@@ -1103,7 +1104,7 @@ class FormBase(DocumentSchema):
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     def get_app(self):
@@ -1428,6 +1429,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 # Convert this to a dict, using a dummy key because we
                 # don't know the app's supported or default lang yet.
                 if isinstance(old_media, six.string_types):
+                    soft_assert_type_text(old_media)
                     new_media = {'default': old_media}
                     data[media_attr] = new_media
                 elif isinstance(old_media, dict):
@@ -1453,12 +1455,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
             to return first path in sorted lang->media-path list
         """
         assert media_attr in ('media_image', 'media_audio')
-        toggle_enabled = toggles.LANGUAGE_LINKED_MULTIMEDIA.enabled
         app = self.get_app()
 
-        if self.use_default_image_for_all and media_attr == 'media_image' and toggle_enabled(app.domain):
-            lang = app.default_language
-        if self.use_default_audio_for_all and media_attr == 'media_audio' and toggle_enabled(app.domain):
+        if ((self.use_default_image_for_all and media_attr == 'media_image')
+                or (self.use_default_audio_for_all and media_attr == 'media_audio')):
             lang = app.default_language
 
         media_dict = getattr(self, media_attr)
@@ -2349,7 +2349,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         """
         if not self.unique_id:
-            self.unique_id = random_hex()
+            self.unique_id = uuid.uuid4().hex
         return self.unique_id
 
     get_forms = IndexedSchema.Getter('forms')
@@ -3710,7 +3710,7 @@ class ReportAppConfig(DocumentSchema):
     def __init__(self, *args, **kwargs):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
-            self.uuid = random_hex()
+            self.uuid = uuid.uuid4().hex
 
     @classmethod
     def wrap(cls, doc):
@@ -3718,6 +3718,7 @@ class ReportAppConfig(DocumentSchema):
         old_description = doc.get('description')
         if old_description:
             if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
+                soft_assert_type_text(old_description)
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -4379,6 +4380,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
         if "built_with" in data and isinstance(data['built_with'], six.string_types):
+            soft_assert_type_text(data['built_with'])
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -4815,14 +4817,21 @@ class SavedAppBuild(ApplicationBase):
                     'description', 'short_description', 'multimedia_map', 'media_language_map'):
             data.pop(key, None)
         built_on_user_time = ServerTime(self.built_on).user_time(timezone)
+        menu_item_label = self.built_with.get_menu_item_label()
         data.update({
             'id': self.id,
             'built_on_date': built_on_user_time.ui_string(USER_DATE_FORMAT),
             'built_on_time': built_on_user_time.ui_string(USER_TIME_FORMAT),
-            'menu_item_label': self.built_with.get_menu_item_label(),
+            'menu_item_label': menu_item_label,
             'jar_path': self.get_jar_path(),
             'short_name': self.short_name,
             'enable_offline_install': self.enable_offline_install,
+            'include_media': self.doc_type != 'RemoteApp',
+            'j2me_enabled': menu_item_label in CommCareBuildConfig.j2me_enabled_config_labels(),
+            'target_commcare_flavor': (
+                self.target_commcare_flavor
+                if toggles.TARGET_COMMCARE_FLAVOR.enabled(self.domain) else 'none'
+            ),
         })
         comment_from = data['comment_from']
         if comment_from:
@@ -5074,6 +5083,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         if logo_refs and domain_has_privilege(self.domain, privileges.COMMCARE_LOGO_UPLOADER):
             for logo_name in logo_refs:
                 app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
+                    'force': True,
                     'value': self.logo_refs[logo_name]['path'],
                 }
 
@@ -5574,26 +5584,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
             for form in module.get_forms():
                 form.update_app_case_meta(meta)
 
-        seen_types = []
-
-        def get_children(case_type):
-            seen_types.append(case_type)
-            return [
-                type_.name for type_ in meta.case_types
-                if case_type in type_.child_types
-            ]
-
-        def get_hierarchy(case_type):
-            return {child: get_hierarchy(child) for child in get_children(case_type)}
-
-        roots = [type_ for type_ in meta.case_types if not type_.relationships]
-        for type_ in roots:
-            meta.type_hierarchy[type_.name] = get_hierarchy(type_.name)
-
         for type_ in meta.case_types:
-            if type_.name not in seen_types:
-                meta.type_hierarchy[type_.name] = {}
-                type_.error = _("Error in case type hierarchy")
             for prop in type_.properties:
                 prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
@@ -5811,6 +5802,7 @@ class LinkedApplication(Application):
 
 def import_app(app_id_or_source, domain, source_properties=None):
     if isinstance(app_id_or_source, six.string_types):
+        soft_assert_type_text(app_id_or_source)
         app_id = app_id_or_source
         source = get_app(None, app_id)
         source_domain = source['domain']

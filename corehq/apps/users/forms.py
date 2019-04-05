@@ -28,6 +28,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import format_username, cc_user_domain
@@ -803,7 +804,8 @@ class PrimaryLocationWidget(forms.Widget):
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
             'name': name,
-            'value': value or ''
+            'value': value or '',
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -902,6 +904,7 @@ class CommtrackUserForm(forms.Form):
         value = self.cleaned_data.get('assigned_locations')
         if not isinstance(value, six.string_types) or value.strip() == '':
             return []
+        soft_assert_type_text(value)
 
         location_ids = [location_id.strip() for location_id in value.split(',')]
         try:

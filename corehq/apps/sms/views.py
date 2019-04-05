@@ -79,6 +79,7 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -1814,7 +1815,8 @@ def upload_sms_translations(request, domain):
                         if msg_id in msg_ids:
                             val = row[lang]
                             if not isinstance(val, six.string_types):
-                                val = str(val)
+                                val = six.text_type(val)
+                            soft_assert_type_text(val)
                             val = val.strip()
                             result[lang][msg_id] = val
 

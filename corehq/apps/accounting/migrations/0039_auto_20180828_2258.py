@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 from corehq.apps.accounting.bootstrap.config.user_buckets_august_2018 import BOOTSTRAP_CONFIG
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-from corehq.sql_db.operations import HqRunPython
+
 from django.db import migrations, models
 
 
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_bootstrap_new_monthly_pricing, reverse_code=noop),
+        migrations.RunPython(_bootstrap_new_monthly_pricing, reverse_code=noop),
 
         migrations.AddField(
             model_name='softwareplan',

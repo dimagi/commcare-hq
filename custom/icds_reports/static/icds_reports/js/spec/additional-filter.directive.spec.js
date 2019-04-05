@@ -68,6 +68,10 @@ describe('Additional Modal Controller', function () {
             {id: '60', name: '48-60 months'},
             {id: '72', name: '60-72 months'},
         ]);
+        $provide.constant('agesServiceDeliveryDashboard', [
+            {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
+            {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
+        ]);
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", false);
     }));
@@ -75,7 +79,7 @@ describe('Additional Modal Controller', function () {
     var scope, modalInstance, controller, $uibModal, $location;
 
     beforeEach(function () {
-        inject(function ($rootScope, $controller, _$uibModal_, _$location_, genders, ages) {
+        inject(function ($rootScope, $controller, _$uibModal_, _$location_, genders, ages, agesServiceDeliveryDashboard) {
             $uibModal = _$uibModal_;
             $location = _$location_;
             scope = $rootScope.$new();
@@ -99,6 +103,7 @@ describe('Additional Modal Controller', function () {
                 filters: [],
                 genders: genders,
                 ages: ages,
+                agesServiceDeliveryDashboard: agesServiceDeliveryDashboard,
             });
         });
     });
@@ -167,6 +172,10 @@ describe('Additional Modal Controller feature flag enabled', function () {
             {id: '60', name: '48-60 months'},
             {id: '72', name: '60-72 months'},
         ]);
+        $provide.constant('agesServiceDeliveryDashboard', [
+            {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
+            {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
+        ]);
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToFeatures", true);
     }));
@@ -174,7 +183,7 @@ describe('Additional Modal Controller feature flag enabled', function () {
     var scope, modalInstance, controller, $uibModal, $location;
 
     beforeEach(function () {
-        inject(function ($rootScope, $controller, _$uibModal_, _$location_, genders, ages) {
+        inject(function ($rootScope, $controller, _$uibModal_, _$location_, genders, ages, agesServiceDeliveryDashboard) {
             $uibModal = _$uibModal_;
             $location = _$location_;
             scope = $rootScope.$new();
@@ -198,6 +207,7 @@ describe('Additional Modal Controller feature flag enabled', function () {
                 filters: [],
                 genders: genders,
                 ages: ages,
+                agesServiceDeliveryDashboard: agesServiceDeliveryDashboard,
             });
         });
     });

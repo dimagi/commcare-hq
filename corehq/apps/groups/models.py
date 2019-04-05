@@ -94,6 +94,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     def add_user(self, couch_user_id, save=True):
         if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
+        else:
+            soft_assert_type_text(couch_user_id)
         soft_assert_type_text(couch_user_id)
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
@@ -108,6 +110,8 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         '''
         if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
+        else:
+            soft_assert_type_text(couch_user_id)
         soft_assert_type_text(couch_user_id)
         if couch_user_id in self.users:
             for i in range(0, len(self.users)):

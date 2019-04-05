@@ -20,7 +20,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from memoized import memoized
-from six.moves import map
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -31,7 +30,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
-from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.reports.views import should_update_export
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
@@ -628,7 +626,8 @@ def commit_filters(request, domain):
             # restrictions on an export that a more restricted user created (which would mean the more
             # restricted user would lose access to the export)
             old_can_access_all_locations,
-            old_accessible_location_ids
+            old_accessible_location_ids,
+            export.type
         )
         if export.filters != filters:
             export.filters = filters

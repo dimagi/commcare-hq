@@ -35,13 +35,13 @@
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
   <div class="row">
     <div class="col-sm-5">
-      <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
+      <input placeholder="Key" type="text" data-bind="value: key" class="form-control" autocomplete="off"/>
     </div>
     <div class="col-sm-1 text-center">
       <i class="fa fa-arrow-right"></i>
     </div>
     <div class="col-sm-5">
-      <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
+      <input placeholder="Value" type="text" data-bind="value: value" class="form-control" autocomplete="off"/>
     </div>
     <div class="col-sm-1">
       <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
@@ -92,7 +92,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
   <span>
-        <input type="text" class="col-sm-6 form-control" data-bind="
+        <input type="text" class="col-sm-6 form-control" autocomplete="off" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}

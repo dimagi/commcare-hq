@@ -11,11 +11,6 @@ import six
 from django.contrib import messages
 import settingshelper as helper
 
-# odd celery fix
-import djcelery
-
-djcelery.setup_loader()
-
 DEBUG = True
 LESS_DEBUG = DEBUG
 
@@ -189,7 +184,7 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'djcelery',
+    'django_celery_results',
     'django_prbac',
     'djangular',
     'captcha',
@@ -247,6 +242,7 @@ HQ_APPS = (
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
+    'corehq.celery_monitoring',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
     'corehq.sql_db',
     'corehq.sql_accessors',
@@ -304,6 +300,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
+    'corehq.apps.saved_reports',
     'corehq.apps.userreports',
     'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
@@ -509,11 +506,14 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 # celery
-BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
-CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+# https://github.com/celery/celery/issues/4226
+CELERY_BROKER_POOL_LIMIT = None
 
-CELERY_ANNOTATIONS = {
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_TASK_ANNOTATIONS = {
     '*': {
         'on_failure': helper.celery_failure_handler,
         'trail': False,
@@ -528,7 +528,7 @@ CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
-CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
 # http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
 # Keep messages in the events queue only for 2 hours
@@ -673,10 +673,8 @@ GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
-LOCAL_COUCHDB_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-LOCAL_REPEATERS = ()
 
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
@@ -1249,7 +1247,10 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
+
+DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
 INDICATOR_CONFIG = {
 }
@@ -1323,6 +1324,7 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
+    'saved_reports',
     'sms',
     'smsforms',
     'telerivet',
@@ -1368,8 +1370,6 @@ COUCHDB_APPS = [
     # applications
     ('app_manager', APPS_DB),
 ]
-
-COUCHDB_APPS += LOCAL_COUCHDB_APPS
 
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
@@ -1782,7 +1782,7 @@ PILLOWTOPS = {
     ]
 }
 
-BASE_REPEATERS = (
+REPEATERS = (
     'corehq.motech.repeaters.models.FormRepeater',
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
@@ -1794,8 +1794,6 @@ BASE_REPEATERS = (
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
-
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1810,89 +1808,14 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_activity.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_type.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_district.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_state.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_10b_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_11_visitor_book_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'asr_2_3_beneficiaries.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a3_children_delivered.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_2a_deaths.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3_children_registered.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_3i_pregnancies.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4a6_preschool_education.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_4b_iodized_salt.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_child_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_5_pregnancy_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6ac_pse_attendance.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_6b_pse_attendance_per_year.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_7_growth_monitored.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_8_immunizations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_9_vhnd.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10a_children_referred.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_10b_pregnancies_referred.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mobile', 'mpr_11_awc_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3i_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_3ii_person_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4a_6_pse.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4b_infra_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_5_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6ac_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_mpr_6b_child_health_cases_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'list_pnc_delivery_complications.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_above_6mo_nutrition.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_days_open.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_locations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_awc_mgmt_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_beneficiary_feedback.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_born_last_30_days.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_child_nutrition_status.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_children_weighed.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_comp_feeding.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ebf.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_handwashing.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ifa_consumption.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_immun_complete.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_names.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_child_nutrition_status.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_lbw_pre_term.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_report_pregnant_women_names.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_30_days.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_thr_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'testing', '*.json'),
-
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'testing', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
 ]
 
@@ -1928,7 +1851,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
@@ -2087,11 +2009,6 @@ DOMAIN_MODULE_MAP = {
     'ewsghana-test-4': 'custom.ewsghana',
     'ewsghana-test-5': 'custom.ewsghana',
     'ewsghana-test3': 'custom.ewsghana',
-    'ils-gateway': 'custom.ilsgateway',
-    'ils-gateway-training': 'custom.ilsgateway',
-    'ilsgateway-full-test': 'custom.ilsgateway',
-    'ilsgateway-test-2': 'custom.ilsgateway',
-    'ilsgateway-test3': 'custom.ilsgateway',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.intrahealth',
@@ -2173,6 +2090,13 @@ except ImportError:
 else:
     initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
 
+if UNIT_TESTING or DEBUG:
+    try:
+        from ddtrace import tracer
+        tracer.enabled = False
+    except ImportError:
+        pass
+
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
 }
@@ -2199,3 +2123,32 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+
+CELERY_HEARTBEAT_THRESHOLDS = {
+    "analytics_queue": 30 * 60,
+    "async_restore_queue": 60,
+    "background_queue": None,
+    "case_rule_queue": None,
+    "case_import_queue": 60,
+    "celery": 60,
+    "celery_periodic": None,
+    "email_queue": 30,
+    "export_download_queue": 30,
+    "icds_aggregation_queue": None,
+    "icds_dashboard_reports_queue": None,
+    "ils_gateway_sms_queue": None,
+    "logistics_background_queue": None,
+    "logistics_reminder_queue": None,
+    "reminder_case_update_queue": 15 * 60,
+    "reminder_queue": 15 * 60,
+    "reminder_rule_queue": 15 * 60,
+    "repeat_record_queue": 60 * 60,
+    "saved_exports_queue": 6 * 60 * 60,
+    "sumologic_logs_queue": 6 * 60 * 60,
+    "send_report_throttled": 6 * 60 * 60,
+    "sms_queue": 5 * 60,
+    "submission_reprocessing_queue": 60 * 60,
+    "ucr_indicator_queue": None,
+    "ucr_queue": None,
+}

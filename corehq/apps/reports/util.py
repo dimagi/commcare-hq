@@ -17,6 +17,7 @@ from django.utils import html, safestring
 
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.util.log import send_HTML_email
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
@@ -166,6 +167,7 @@ def namedtupledict(name, fields):
 
     def __getitem__(self, item):
         if isinstance(item, six.string_types):
+            soft_assert_type_text(item)
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -384,14 +386,20 @@ def get_possible_reports(domain_name):
                 report_to_check_if_viewable = model
 
             if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain_obj):
+                path = model.__module__ + '.' + model.__name__
                 reports.append({
-                    'path': model.__module__ + '.' + model.__name__,
-                    'name': model.name
+                    'path': path,
+                    'name': model.name,
+                    'slug': path.replace('.', '_'),
                 })
 
     for slug, name, is_visible in get_extra_permissions():
         if is_visible(domain_obj):
-            reports.append({'path': slug, 'name': name})
+            reports.append({
+                'path': slug,
+                'name': name,
+                'slug': slug.replace('.', '_'),
+            })
     return reports
 
 

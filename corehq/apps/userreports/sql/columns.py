@@ -8,12 +8,10 @@ from fluff import TYPE_STRING
 from fluff.util import get_column_type
 
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
-
+from corehq.apps.userreports.sql.util import decode_column_name
 
 def column_to_sql(column):
-    column_name = column.database_column_name
-    if isinstance(column_name, bytes):
-        column_name = column_name.decode('utf-8')
+    column_name = decode_column_name(column)
     return sqlalchemy.Column(
         column_name,
         _get_column_type(column.datatype),

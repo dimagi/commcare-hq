@@ -54,7 +54,6 @@ from corehq.apps.hqmedia.controller import (
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import (
     process_bulk_upload_zip,
-    profile_and_process_bulk_upload_zip,
     build_application_zip,
 )
 from corehq.apps.hqwebapp.decorators import use_select2_v4
@@ -482,20 +481,12 @@ class ProcessBulkUploadView(BaseProcessUploadedView):
             status = BulkMultimediaStatusCache(processing_id)
             status.save()
 
-        if toggles.PROFILE_BULK_MULTIMEDIA_UPLOAD.enabled(self.username):
-            profile_and_process_bulk_upload_zip(processing_id, self.domain, self.app_id,
-                                                username=self.username,
-                                                share_media=self.share_media,
-                                                license_name=self.license_used,
-                                                author=self.author,
-                                                attribution_notes=self.attribution_notes)
-        else:
-            process_bulk_upload_zip(processing_id, self.domain, self.app_id,
-                                    username=self.username,
-                                    share_media=self.share_media,
-                                    license_name=self.license_used,
-                                    author=self.author,
-                                    attribution_notes=self.attribution_notes)
+        process_bulk_upload_zip.delay(processing_id, self.domain, self.app_id,
+                                      username=self.username,
+                                      share_media=self.share_media,
+                                      license_name=self.license_used,
+                                      author=self.author,
+                                      attribution_notes=self.attribution_notes)
 
         return status.get_response()
 
@@ -746,7 +737,6 @@ def iter_media_files(media_objects):
                     'error': e,
                 }
                 errors.append(message)
-                notify_exception(None, "[ICDS-291] {}".format(message))
     return _media_files(), errors
 
 
@@ -947,7 +937,6 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     try:
         files = _download_index_files(app, build_profile_id)
     except Exception as e:
-        notify_exception(None, "[ICDS-291] {}".format(six.text_type(e)))
         errors = [six.text_type(e)]
 
     return _files(files), errors, len(files)

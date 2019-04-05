@@ -7,7 +7,7 @@ import uuid
 from architect.commands import partition
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
-from corehq.sql_db.operations import HqRunPython
+
 
 
 def add_partitions(apps, schema_editor):
@@ -41,5 +41,5 @@ class Migration(migrations.Migration):
                 ('error_hash', models.CharField(max_length=255, null=True, blank=True)),
             ],
         ),
-        HqRunPython(add_partitions),
+        migrations.RunPython(add_partitions),
     ]

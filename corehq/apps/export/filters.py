@@ -14,15 +14,17 @@ from corehq.apps.es.forms import app, submitted, user_id, user_type
 from corehq.apps.es.sms import received as sms_received
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.pillows.utils import USER_TYPES
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 
 def _assert_user_types(user_types):
-        if isinstance(user_types, six.string_types):
-            user_types = [user_types]
+    if isinstance(user_types, six.string_types):
+        soft_assert_type_text(user_types)
+        user_types = [user_types]
 
-        for type_ in user_types:
-            assert type_ in USER_TYPES, "Expected user type to be in {}, got {}".format(USER_TYPES, type_)
+    for type_ in user_types:
+        assert type_ in USER_TYPES, "Expected user type to be in {}, got {}".format(USER_TYPES, type_)
 
 
 class ExportFilter(object):

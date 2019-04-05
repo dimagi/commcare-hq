@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 import json
 from datetime import date
 
-from couchdbkit import ResourceNotFound
 from couchexport.writers import XlsLengthException
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -33,7 +32,7 @@ from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import CouchUser
 from corehq.couchapps.dbaccessors import forms_have_multimedia
-from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.toggles import PAGINATED_EXPORTS
 
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 from corehq.apps.export.exceptions import ExportFormValidationException, ExportAsyncException
@@ -44,14 +43,12 @@ from corehq.apps.export.forms import (
     FilterSmsESExportDownloadForm
 )
 from corehq.apps.export.models import (
-    SMSExportDataSchema,
     FormExportInstance,
-    CaseExportInstance,
-    SMSExportInstance,
     ExportInstance,
 )
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.export.views.utils import ExportsPermissionsManager, get_timezone
+from corehq.apps.export.utils import get_export
 
 
 class DownloadExportViewHelper(object):
@@ -103,30 +100,24 @@ class FormDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'form'
     filter_form_class = EmwfFilterFormExport
 
-    def get_export(self, id=None):
-        try:
-            return FormExportInstance.get(id)
-        except ResourceNotFound:
-            raise Http404()
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id)
 
 
 class CaseDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'case'
     filter_form_class = FilterCaseESExportDownloadForm
 
-    def get_export(self, id=None):
-        return CaseExportInstance.get(id)
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id)
 
 
 class SMSDownloadExportViewHelper(DownloadExportViewHelper):
     model = 'sms'
     filter_form_class = FilterSmsESExportDownloadForm
 
-    def get_export(self, id=None):
-        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
-        return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(self.domain, include_metadata)
-        )
+    def get_export(self, export_id=None):
+        return get_export(self.model, self.domain, export_id, self.request.couch_user.username)
 
 
 class BaseDownloadExportView(HQJSONResponseMixin, BaseProjectDataView):
@@ -304,7 +295,8 @@ def prepare_custom_export(request, domain):
     export_filters = filter_form.get_export_filters(request, filter_form_data)
 
     export_specs = json.loads(request.POST.get('exports'))
-    export_instances = [view_helper.get_export(spec['export_id']) for spec in export_specs]
+    export_ids = [spec['export_id'] for spec in export_specs]
+    export_instances = [view_helper.get_export(export_id) for export_id in export_ids]
 
     try:
         _check_deid_permissions(permissions, export_instances)
@@ -322,7 +314,10 @@ def prepare_custom_export(request, domain):
 
     try:
         download = get_export_download(
-            export_instances=export_instances,
+            domain,
+            export_ids,
+            view_helper.model,
+            request.couch_user.username,
             filters=export_filters,
             filename=filename,
         )

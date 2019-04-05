@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from copy import copy
 import hashlib
 import json
 import logging
@@ -15,6 +16,7 @@ from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -151,14 +153,9 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
 
         if not self.blobs or attachment_id not in self.blobs:
             if not getattr(self, '_id'):
-                # put attchment blows away existing data, so make sure an id has been
-                # assigned to this guy before we do it. this is the expected path
+                # put_attchment blows away existing data, so make sure an id has been assigned
+                # to this guy before we do it. This is the usual path; remote apps are the exception.
                 self.save()
-            else:
-                # this should only be files that had attachments deleted while the bug
-                # was in effect, so hopefully we will stop seeing it after a few days
-                soft_assert(notify_admins=True)(False, '[ICDS-291] someone is uploading a file that should '
-                    'have existed for multimedia', {'media_id': self._id, 'attachment_id': attachment_id})
             self.put_attachment(
                 data,
                 attachment_id,
@@ -479,6 +476,7 @@ class ApplicationMediaReference(object):
 
         if not isinstance(path, six.string_types):
             path = ''
+        soft_assert_type_text(path)
         self.path = path.strip()
 
         if not issubclass(media_class, CommCareMultimedia):
@@ -543,21 +541,6 @@ class ApplicationMediaReference(object):
 
     def get_form_name(self, lang=None):
         return self._get_name(self.form_name, lang=lang)
-
-
-def _log_media_deletion(app, deleted_media):
-    # https://dimagi-dev.atlassian.net/browse/ICDS-2
-    formatted_media = [
-        {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
-        for path, map_item, media in deleted_media
-    ]
-    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-        False, "[ICDS-291] path deleted from multimedia map", json.dumps({
-            'domain': app.domain,
-            'app_id': app._id,
-            'deleted_media': list(formatted_media),
-        }, indent=4)
-    )
 
 
 class MediaMixin(object):
@@ -725,7 +708,7 @@ class FormMediaMixin(MediaMixin):
     def all_media(self, lang=None):
         kwargs = self.get_media_ref_kwargs()
 
-        media = self.menu_media(self, lang=lang)
+        media = copy(self.menu_media(self, lang=lang))
 
         # Form questions
         parsed = self.wrapped_xform()
@@ -794,7 +777,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if not build_profile or not domain_has_privilege(self.domain, privileges.BUILD_PROFILES):
             return self.multimedia_map
 
-        requested_media = self.logo_paths   # logos aren't language-specific
+        requested_media = copy(self.logo_paths)   # logos aren't language-specific
         for lang in build_profile.langs:
             requested_media |= self.all_media_paths(lang=lang)
 
@@ -907,9 +890,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     map_changed = True
                     del self.multimedia_map[path]
 
-        if not allow_deletion and deleted_media:
-            _log_media_deletion(self, deleted_media)
-
         if map_changed:
             self.save()
 
@@ -966,20 +946,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     retry_failures.append(map_item)
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
-
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
-            if retry_successes or retry_failures:
-                soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
-                    False, "[ICDS-291] get_media_objects failed to find multimedia", json.dumps([{
-                        'domain': self.domain,
-                        'app_id': self._id,
-                        'retry_successes_count': len(retry_successes),
-                        'retry_failures_count': len(retry_failures),
-                    }, {
-                        'retry_successes': [s.to_json() for s in retry_successes],
-                        'retry_failures': [f.to_json() for f in retry_failures],
-                    }], indent=4)
-                )
 
     def get_references(self, lang=None):
         """

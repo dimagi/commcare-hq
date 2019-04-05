@@ -370,9 +370,8 @@ hqDefine('hqwebapp/js/main', [
         if ($maintenance.length) {
             var id = $maintenance.data("id"),
                 alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
-                $maintenance.addClass('hide');
-            } else {
+            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
+                $maintenance.removeClass('hide');
                 $maintenance.on('click', '.close', function () {
                     $.cookie(alertCookie, id, { expires: 7, path: '/' });
                 });

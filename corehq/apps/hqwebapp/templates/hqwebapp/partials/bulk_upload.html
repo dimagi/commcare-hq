@@ -2,16 +2,20 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<h2>
-    {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
-        {{ verb }}
-    {% endblocktrans %}
-    {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-        {{ plural_noun }} Using Excel
-    {% endblocktrans %}
-</h2>
+{% if not no_header %}
+    <h2>
+        {% blocktrans with verb=bulk_upload.verb|default:"Upload"|title %}
+            {{ verb }}
+        {% endblocktrans %}
+        {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+            {{ plural_noun }} Using Excel
+        {% endblocktrans %}
+    </h2>
+{% endif %}
+
 <p>
     <ol>
+        {% block prerequisites %}{% endblock %}
         <li id="download_block">
             <p>
                 {% blocktrans with adjective=bulk_upload.adjective %}

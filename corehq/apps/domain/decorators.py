@@ -40,6 +40,7 @@ from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 
 ########################################################################################################
@@ -499,6 +500,7 @@ def track_domain_request(calculated_prop):
                     isinstance(args[1], HttpRequest) and
                     isinstance(args[2], six.string_types)
             ):
+                soft_assert_type_text(args[2])
                 # class-based view; args == (self, request, domain, ...)
                 domain = args[2]
             elif (
@@ -506,6 +508,7 @@ def track_domain_request(calculated_prop):
                     isinstance(args[0], HttpRequest) and
                     isinstance(args[1], six.string_types)
             ):
+                soft_assert_type_text(args[1])
                 # view function; args == (request, domain, ...)
                 domain = args[1]
             else:

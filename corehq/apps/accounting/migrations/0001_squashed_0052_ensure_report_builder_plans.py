@@ -16,7 +16,7 @@ from corehq.apps.accounting.bootstrap.config.resellers_and_managed_hosting impor
 from corehq.apps.accounting.bootstrap.config.user_buckets_jan_2017 import BOOTSTRAP_CONFIG as self_service_config
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
 from corehq.apps.hqadmin.management.commands.cchq_prbac_bootstrap import cchq_prbac_bootstrap
-from corehq.sql_db.operations import HqRunPython
+
 import corehq.util.mixin
 
 
@@ -453,6 +453,6 @@ class Migration(migrations.Migration):
             unique_together=set([('edition', 'is_trial', 'is_report_builder_enabled')]),
         ),
     ] + [
-        HqRunPython(cchq_prbac_bootstrap),
-        HqRunPython(_cchq_software_plan_bootstrap),
+        migrations.RunPython(cchq_prbac_bootstrap),
+        migrations.RunPython(_cchq_software_plan_bootstrap),
     ]

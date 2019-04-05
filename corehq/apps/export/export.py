@@ -21,7 +21,7 @@ from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
-from corehq.util.datadog.utils import load_counter
+from corehq.util.datadog.utils import load_counter, DAY_SCALE_TIME_BUCKETS
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -285,12 +285,15 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     return writer
 
 
-def get_export_download(export_instances, filters, filename=None):
+def get_export_download(domain, export_ids, exports_type, username, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        export_instances,
+        domain,
+        export_ids,
+        exports_type,
+        username,
         filters,
         download.download_id,
         filename=filename
@@ -463,7 +466,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export')
+@datadog_track_errors('rebuild_export', duration_buckets=DAY_SCALE_TIME_BUCKETS)
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance

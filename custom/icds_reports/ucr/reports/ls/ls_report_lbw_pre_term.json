@@ -1,0 +1,170 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-ls_report_lbw_pre_term",
+  "data_source_table": "static-child_health_cases",
+  "config": {
+    "title": "LS Report - Low Birth Weight & Pre Term (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "slug": "is_pretem_or_lbw_open_count",
+        "datatype": "string",
+        "show_all": true,
+        "choices": [
+          {
+            "display": "Yes",
+            "value": "1"
+          }
+        ],
+        "field": "is_pretem_or_lbw_open_count",
+        "type": "choice_list",
+        "display": "Is Preterm or Low Birth Weight"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "owner"
+        },
+        "required": false,
+        "display": "Owner Name",
+        "field": "owner_id",
+        "type": "dynamic_choice_list",
+        "slug": "owner_id"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+      },
+      {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "person_name",
+        "field": "person_name",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "मूल",
+          "tel": "పిల్లలు",
+          "hin": "बच्चे",
+          "en": "Child",
+          "tam": "குழந்தை",
+          "guj": "બાળક",
+          "asm": "শিশু",
+          "pan": "ਬੱਚਾ",
+          "kan": "ಮಗು"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "dob",
+        "field": "dob",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "जन्म तारीख",
+          "tel": "పుట్టిన తేదీ",
+          "hin": "बच्चा",
+          "en": "Date of Birth",
+          "tam": "பிறந்த தேதி",
+          "guj": "જન્મ તારીખ",
+          "asm": "জন্মৰ তাৰিখ",
+          "pan": "ਜਨਮ ਮਿਤੀ",
+          "kan": "ಹುಟ್ಟಿದ ದಿನಾಂಕ"
+        }
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "sex",
+        "field": "sex",
+        "transform": { },
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "mar": "लिंग",
+          "tel": "లింగం",
+          "hin": "लिंग",
+          "en": "Sex",
+          "tam": "பாலினம்",
+          "guj": "જાતી",
+          "asm": "লিংগ",
+          "pan": "ਲਿੰਗ",
+          "kan": "ಲಿಂಗ"
+        }
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

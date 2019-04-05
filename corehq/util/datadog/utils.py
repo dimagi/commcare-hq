@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from datetime import timedelta
 from functools import wraps
 
 from datadog import api
@@ -86,6 +87,21 @@ def update_datadog_metrics(metrics):
         statsd.gauge(metric, value)
 
 
+def make_buckets_from_timedeltas(*timedeltas):
+    return [td.total_seconds() for td in timedeltas]
+
+
+DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
+    timedelta(seconds=1),
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=10),
+    timedelta(hours=1),
+    timedelta(hours=12),
+    timedelta(hours=24),
+)
+
+
 def bucket_value(value, buckets, unit=''):
     """Get value bucket for the given value
 
@@ -96,10 +112,14 @@ def bucket_value(value, buckets, unit=''):
     with tags. More details:
     https://help.datadoghq.com/hc/en-us/articles/211545826
     """
+    buckets = sorted(buckets)
+    number_length = max(len("{}".format(buckets[-1])), 3)
+    lt_template = "lt_{:0%s}{}" % number_length
+    over_template = "over_{:0%s}{}" % number_length
     for bucket in buckets:
         if value < bucket:
-            return "lt_{:03}{}".format(bucket, unit)
-    return "over_{:03}{}".format(buckets[-1], unit)
+            return lt_template.format(bucket, unit)
+    return over_template.format(buckets[-1], unit)
 
 
 def maybe_add_domain_tag(domain_name, tags):
