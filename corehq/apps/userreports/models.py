@@ -100,6 +100,7 @@ class DataSourceActionLog(models.Model):
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
     ), db_index=True, null=False)
+    migration_diffs = JSONField(null=True, blank=True)
 
 
 class SQLColumnIndexes(DocumentSchema):

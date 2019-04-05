@@ -203,10 +203,14 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            pillow_logging.debug("[rebuild] Application migrations to tables: %s", tables_to_act_on.migrate)
-            migrate_tables(engine, diffs.raw, tables_to_act_on.migrate)
-    def migrate_tables(self, engine, diffs, table_names):
-        # TODO: log UCR migrations
+            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
+
+    def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
+        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
+        changes = migrate_tables(engine, diffs, table_names)
+        for table, diffs in changes.items():
+            adapter = adapters_by_table[table]
+            adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
     def rebuild_table(self, adapter):
         config = adapter.config
