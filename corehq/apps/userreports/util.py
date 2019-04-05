@@ -134,10 +134,6 @@ def get_indicator_adapter(config, raise_errors=False):
     return IndicatorSqlAdapter(config)
 
 
-def get_legacy_table_name(domain, table_id):
-    return get_table_name(domain, table_id, max_length=63, prefix=LEGACY_UCR_TABLE_PREFIX)
-
-
 def get_table_name(domain, table_id, max_length=50, prefix=UCR_TABLE_PREFIX):
     """
     :param domain:
