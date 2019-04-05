@@ -45,7 +45,7 @@ def test_time_to_start_timer():
         TimeToStartTimer(task_id).stop_and_pop_timing()
 
     with freeze_time(start_time):
-        TimeToStartTimer(task_id).start_timing()
+        TimeToStartTimer(task_id).start_timing(datetime.datetime.utcnow())
 
     with freeze_time(start_time + delay):
         time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
@@ -55,3 +55,24 @@ def test_time_to_start_timer():
     # can only pop once, second time empty
     with assert_raises(TimingNotAvailable):
         TimeToStartTimer(task_id).stop_and_pop_timing()
+
+
+def test_time_to_start_timer_with_eta():
+    task_id = 'abc1234'
+    delay = datetime.timedelta(seconds=6)
+
+    start_time = datetime.datetime.utcnow()
+    eta = start_time + datetime.timedelta(minutes=5)
+
+    with freeze_time(start_time):
+        TimeToStartTimer(task_id).start_timing(eta)
+
+    with freeze_time(eta + delay):
+        time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
+
+    eq(time_to_start, delay)
+
+
+def test_parse_iso8601():
+    eq(TimeToStartTimer.parse_iso8601('2009-11-17T12:30:56.527191'),
+       datetime.datetime(2009, 11, 17, 12, 30, 56, 527191))

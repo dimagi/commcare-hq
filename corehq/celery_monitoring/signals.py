@@ -5,6 +5,8 @@ import datetime
 from celery.signals import before_task_publish, task_prerun
 from django.core.cache import cache
 
+from dimagi.utils.parsing import string_to_utc_datetime
+
 
 class TimingNotAvailable(Exception):
     pass
@@ -18,8 +20,8 @@ class TimeToStartTimer(object):
     def _cache_key(self):
         return 'task.{}.time_sent'.format(self.task_id)
 
-    def start_timing(self):
-        cache.set(self._cache_key, datetime.datetime.utcnow(), timeout=3 * 24 * 60 * 60)
+    def start_timing(self, eta=None):
+        cache.set(self._cache_key, eta, timeout=3 * 24 * 60 * 60)
 
     def stop_and_pop_timing(self):
         """
@@ -38,12 +40,21 @@ class TimeToStartTimer(object):
 
         return datetime.datetime.utcnow() - time_sent
 
+    @staticmethod
+    def parse_iso8601(datetime_string):
+        return string_to_utc_datetime(datetime_string)
+
 
 @before_task_publish.connect
 def celery_add_time_sent(headers=None, body=None, **kwargs):
     info = headers if 'task' in headers else body
     task_id = info['id']
-    TimeToStartTimer(task_id).start_timing()
+    eta = info['eta']
+    if eta:
+        eta = TimeToStartTimer.parse_iso8601(eta)
+    else:
+        eta = datetime.datetime.utcnow()
+    TimeToStartTimer(task_id).start_timing(eta)
 
 
 @task_prerun.connect
