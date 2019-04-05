@@ -410,11 +410,7 @@ class AwcMbtDistributedHelper(MBTDistributedHelper):
 
     def query(self):
         return """
-        CREATE TEMPORARY TABLE "tmp_awc_mbt" AS SELECT
-            {awc_columns}
-        FROM awc_location;
-        COPY (SELECT {columns} FROM {table} t LEFT JOIN "tmp_awc_mbt" awc on t.awc_id=awc.doc_id  WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
-        DROP TABLE "tmp_awc_mbt";
+        COPY (SELECT {columns} FROM {table} t LEFT JOIN "awc_location_local" awc on t.awc_id=awc.doc_id  WHERE awc.state_id='{state_id}' AND t.month='{month}' and t.aggregation_level=5) TO STDOUT WITH CSV HEADER;
         """.format(
             loc_columns=','.join(self.location_columns),
             awc_columns=','.join(self.columns),
