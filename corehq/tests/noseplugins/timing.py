@@ -124,6 +124,11 @@ def end_event(name, context):
 
 
 def _get_expected_slow_seconds(test_context):
+    # If we skip this test, but its slow due to other test setup
+    fn = getattr(test_context, 'test', None)
+    if fn and hasattr(fn, 'func_name') and fn.func_name == 'skip':
+        return 1000
+
     # class is tagged for class based test
     slow_seconds = getattr(test_context, 'slow', None)
 
