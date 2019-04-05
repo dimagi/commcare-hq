@@ -17,7 +17,6 @@ from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, translate_programming_error)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.sql.util import view_exists
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
