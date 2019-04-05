@@ -80,6 +80,7 @@ hqDefine('app_manager/js/summary/form_diff',[
             langs: langs,
             modules: initialPageData.get("first.modules"),
             read_only: initialPageData.get("first.read_only"),
+            appId: initialPageData.get("first.app_id"),
         });
 
         var secondFormSummaryContent = formModels.formSummaryModel({
@@ -89,11 +90,22 @@ hqDefine('app_manager/js/summary/form_diff',[
             langs: langs,
             modules: initialPageData.get("second.modules"),
             read_only: initialPageData.get("second.read_only"),
+            appId: initialPageData.get("second.app_id"),
         });
 
 
         var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent]);
+
         $("#form-summary-header").koApplyBindings(formSummaryController);
+        models.initVersionsBox(
+            $("#first-version-selector"),
+            {id: initialPageData.get("first.app_id"), text: initialPageData.get("first.app_version")}
+        );
+        models.initVersionsBox(
+            $("#second-version-selector"),
+            {id: initialPageData.get("second.app_id"), text: initialPageData.get("second.app_version")}
+        );
+
         models.initMenu([firstFormSummaryContent, secondFormSummaryContent], formSummaryMenu);
         models.initSummary(firstFormSummaryContent, formSummaryController, "#first-app-summary");
         models.initSummary(secondFormSummaryContent, formSummaryController, "#second-app-summary");

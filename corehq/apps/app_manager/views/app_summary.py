@@ -105,24 +105,16 @@ class FormSummaryDiffView(AppSummaryView):
     template_name = 'app_manager/form_summary_diff.html'
 
     @property
-    def first_app_id(self):
-        return self.kwargs.get('first_app_id')
-
-    @property
-    def second_app_id(self):
-        return self.kwargs.get('second_app_id')
+    def app(self):
+        return self.get_app(self.first_app.master_id)
 
     @property
     def first_app(self):
-        return self.get_app(self.first_app_id)
-
-    @property
-    def app(self):
-        return self.first_app
+        return self.get_app(self.kwargs.get('first_app_id'))
 
     @property
     def second_app(self):
-        return self.get_app(self.second_app_id)
+        return self.get_app(self.kwargs.get('second_app_id'))
 
     def _app_dict(self, lang, langs, app, modules, errors):
         return {
@@ -141,6 +133,13 @@ class FormSummaryDiffView(AppSummaryView):
     @property
     def page_context(self):
         context = super(FormSummaryDiffView, self).page_context
+
+        if self.first_app.master_id != self.second_app.master_id:
+            # This restriction is somewhat arbitrary, as you might want to
+            # compare versions between two different apps on the same domain.
+            # However, it breaks a bunch of assumptions in the UI
+            raise Http404()
+
         first_app_summary, first_errors = get_app_summary_formdata(
             self.domain, self.first_app, include_shadow_forms=False
         )
@@ -151,6 +150,7 @@ class FormSummaryDiffView(AppSummaryView):
         context.update({
             'lang': lang,
             'langs': langs,
+            'app_id': self.app.master_id,
             'first': self._app_dict(lang, langs, self.first_app, first_app_summary, first_errors),
             'second': self._app_dict(lang, langs, self.second_app, second_app_summary, second_errors),
         })

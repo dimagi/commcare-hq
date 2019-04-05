@@ -7,6 +7,7 @@ hqDefine('app_manager/js/summary/form_models',[
     var formSummaryControlModel = function (viewModels) {
         var self = {};
         _.extend(self, models.controlModel({
+            visibleAppIds: _.pluck(viewModels, 'appId'),
             onQuery: function (query) {
                 var match = function (needle, haystack) {
                     return !needle || haystack.toLowerCase().indexOf(needle.trim().toLowerCase()) !== -1;
@@ -89,6 +90,7 @@ hqDefine('app_manager/js/summary/form_models',[
         var self = models.contentModel(options);
 
         assertProperties.assertRequired(options, ['errors', 'modules']);
+        self.version = options.version;
         self.errors = options.errors;
         self.modules = _.map(options.modules, models.moduleModel);
         return self;

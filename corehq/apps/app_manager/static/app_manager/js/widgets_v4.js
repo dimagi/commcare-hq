@@ -37,6 +37,10 @@ hqDefine("app_manager/js/widgets_v4", [
                     };
                 },
             },
+            templateSelection: function (data) {
+                // Only show the version number when selected
+                return data.text.split(": ")[0];
+            },
             width: options.width || '200px',
         });
 
