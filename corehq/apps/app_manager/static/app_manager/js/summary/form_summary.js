@@ -41,9 +41,14 @@ hqDefine('app_manager/js/summary/form_summary',[
             langs: langs,
             modules: initialPageData.get("modules"),
             read_only: initialPageData.get("read_only"),
+            appId: initialPageData.get("app_id"),
         });
 
         var formSummaryController = formModels.formSummaryControlModel([formSummaryContent]);
+        models.initVersionsBox(
+            $("#version-selector"),
+            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
+        );
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initMenu([formSummaryContent], formSummaryMenu);
         models.initSummary(formSummaryContent, formSummaryController, "#form-summary");
