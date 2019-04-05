@@ -31,19 +31,10 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
+    tables = FormattedRow.wrap_all_rows(tables)
     writer = get_writer(format)
-    sheet_headers = []
-    rows_by_sheet = []
-
-    for table in tables:
-        worksheet_title, rows = FormattedRow.wrap_all_rows([table])[0]
-        row_generator = iter(rows)
-        # The first row gets added to sheet_headers, the rest gets added to rows_by_sheet
-        sheet_headers.append((worksheet_title, [next(row_generator)]))
-        rows_by_sheet.append((worksheet_title, row_generator))
-
-    writer.open(sheet_headers, file, max_column_size=max_column_size)
-    writer.write(rows_by_sheet)
+    writer.open(tables, file, max_column_size=max_column_size)
+    writer.write(tables, skip_first=True)
     writer.close()
 
 
@@ -322,24 +313,19 @@ class FormattedRow(object):
     @classmethod
     def wrap_all_rows(cls, tables):
         """
-        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...)). The rows can be generators.
+        Take a list of tuples (name, SINGLE_ROW) or (name, (ROW, ROW, ...))
         """
-
-        def coerce_to_list_of_rows(rows):
-            rows = iter(rows)
-            # peek at the first element, then add it back
-            first_entry = next(rows)
-            rows = itertools.chain([first_entry], rows)
-            if first_entry and (not hasattr(first_entry, '__iter__') or isinstance(first_entry, six.string_types)):
-                soft_assert_type_text(first_entry)
+        ret = []
+        for name, rows in tables:
+            rows = list(rows)
+            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
+                soft_assert_type_text(rows[0])
                 # `rows` is actually just a single row, so wrap it
-                return [rows]
-            return rows
-
-        return [
-            (name, (cls(row) for row in coerce_to_list_of_rows(rows)))
-            for name, rows in tables
-        ]
+                rows = [rows]
+            ret.append(
+                (name, [cls(row) for row in rows])
+            )
+        return ret
 
 
 def _format_tables(tables, id_label='id', separator='.', include_headers=True,
