@@ -254,6 +254,7 @@ class AppTranslationsGenerator(object):
             unique_id_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
 
             def occurrence(_row):
+                sheet_name_index = sheet_name_index.replace("menu", "module")
                 return ':'.join([_row[type_index], _row[sheet_name_index], _row[unique_id_index]])
         else:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
