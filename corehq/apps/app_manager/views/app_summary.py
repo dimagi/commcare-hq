@@ -123,7 +123,7 @@ class FormSummaryDiffView(AppSummaryView):
             'app_langs': app.langs,
             'app_id': app.id,
             'app_name': app.name,
-            'read_only': app.doc_type == 'LinkedApplication',
+            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
             'app_version': app.version,
             'latest_app_id': app.master_id,
             'modules': modules,
