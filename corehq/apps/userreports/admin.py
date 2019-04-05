@@ -21,7 +21,7 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
     search_fields = ('doc_id',)
 
 
-@admin.register(AsyncIndicator)
+@admin.register(DataSourceActionLog)
 class DataSourceActionLogAdmin(admin.ModelAdmin):
 
     model = DataSourceActionLog
