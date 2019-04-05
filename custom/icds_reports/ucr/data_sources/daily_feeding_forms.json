@@ -960,10 +960,29 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
+      // primarily used for MPR report
       {
         "column_ids": [
           "awc_id",
           "submitted_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "date_turns_one_yr"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "date_turns_one_yr"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "date_turns_one_yr"
         ]
       }
     ],
