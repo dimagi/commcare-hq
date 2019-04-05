@@ -44,7 +44,6 @@ from couchexport.export import get_writer
 import six
 from six.moves import zip
 from six.moves import range
-from itertools import chain
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -210,7 +209,6 @@ class GenericReportView(object):
 
         request_data = state.get('request')
         request = FakeHttpRequest()
-        request.domain = self.domain
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
@@ -830,7 +828,6 @@ class GenericTabularReport(GenericReportView):
     use_datatables = True
     charts_per_row = 1
     bad_request_error_text = None
-    exporting_as_excel = False
 
     # Sets bSort in the datatables instance to true/false (config.dataTables.bootstrap.js)
     sortable = True
@@ -998,6 +995,7 @@ class GenericTabularReport(GenericReportView):
         3. str(cell)
         """
         headers = self.headers
+
         def _unformat_row(row):
             def _unformat_val(val):
                 if isinstance(val, dict):
@@ -1007,13 +1005,12 @@ class GenericTabularReport(GenericReportView):
             return [_unformat_val(val) for val in row]
 
         table = headers.as_export_table
-        self.exporting_as_excel = True
-        rows = (_unformat_row(row) for row in self.export_rows)
-        table = chain(table, rows)
+        rows = [_unformat_row(row) for row in self.export_rows]
+        table.extend(rows)
         if self.total_row:
-            table = chain(table, [_unformat_row(self.total_row)])
+            table.append(_unformat_row(self.total_row))
         if self.statistics_rows:
-            table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
+            table.extend([_unformat_row(row) for row in self.statistics_rows])
 
         return [[self.export_sheet_name, table]]
 

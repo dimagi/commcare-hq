@@ -122,7 +122,6 @@ def apps_update_calculated_properties():
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
-    report.rendered_as = 'export'
 
     # need to set request
     setattr(report.request, 'REQUEST', {})
