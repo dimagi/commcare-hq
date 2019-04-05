@@ -125,12 +125,16 @@ def end_event(name, context):
 
 def _get_expected_slow_seconds(test_context):
     # class is tagged for class based test
-    # For function based test, the function is tagged
     slow_seconds = getattr(test_context, 'slow', None)
 
-    if slow_seconds is None:
-        # Function is tagged in a class based test
+    # Function is tagged in a class based test
+    if slow_seconds is None and hasattr(test_context, '_testMethodName'):
         fn = getattr(test_context, test_context._testMethodName)
+        slow_seconds = getattr(fn, 'slow', None)
+
+    # For function based test, the function is tagged
+    if slow_seconds is None and hasattr(test_context, 'test'):
+        fn = test_context.test
         slow_seconds = getattr(fn, 'slow', None)
 
     return slow_seconds
