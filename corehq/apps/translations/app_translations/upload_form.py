@@ -161,10 +161,10 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         keep_value_node = any(v for k, v in translations.items()) or set(self.langs) != set(self.app.langs)
         text_node = self._get_text_node(translation_node, label_id)
         for trans_type, new_translation in translations.items():
-            if not new_translation:
+            if not new_translation and len(self.langs) > 1:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.langs and len(self.langs) > 1:
+                for l in self.langs:
                     key = self._get_col_key(trans_type, l)
                     if key not in row:
                         continue
