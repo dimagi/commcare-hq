@@ -1,32 +1,30 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
 {% load i18n %}
 {% load tzmigration %}
-{% block head %}{{ block.super }}
-<style type="text/css">
-    th.checkmark-column, td.checkmark-column {
-        white-space: nowrap;
-        text-align: center;
-    }
-</style>
-{% endblock %}
+
+{% requirejs_main 'domain/js/toggles' %}
+
 {% block page_content %}
+
+    {% initial_page_data 'domain' domain %}
+    {% initial_page_data 'toggles' toggles %}
+    {% registerurl 'set_toggle' '---' %}
+    {% registerurl 'edit_toggle' '---' %}
+
     <div class="row">
         <div class="col-sm-10">
             <p>
-                {% blocktrans %}
-                    Features can be enabled or disabled based on feature flags or privileges. This page
-                    is intended to provide a list of what features a domain has access to.
-                {% endblocktrans %}
+                Features can be enabled or disabled based on feature flags or privileges. This page
+                is intended to provide a list of what features a domain has access to.
             </p>
             {% if use_sql_backend %}
             <div class="alert alert-warning" role="alert">
-                {% blocktrans %}
-                    NOTE: This domain is using the SCALE backend which implies the following feature flags:
-                    <ul>
-                        <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
-                        <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
-                    </ul>
-                {% endblocktrans %}
+                NOTE: This domain is using the SCALE backend which implies the following feature flags:
+                <ul>
+                    <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
+                    <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
+                </ul>
             </div>
             {% endif %}
         </div>
@@ -37,24 +35,22 @@
             <h1>Privileges</h1>
             <p>
                 {% url "domain_subscription_view" domain as software_plan_url %}
-                {% blocktrans %}
-                    Access to some features is dependent on a the software plan to which the domain
-                    is subscribed.
-                    <a href="{{ software_plan_url }}">Current Subscription</a>
-                {% endblocktrans %}
+                Access to some features is dependent on a the software plan to which the domain
+                is subscribed.
+                <a href="{{ software_plan_url }}">Current Subscription</a>
             </p>
         </div>
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>
-                    <th>{% trans "Privilege" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th>Privilege</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     {% for privilege_name, enabled_for_domain in privileges %}
                     <tr class="{% if enabled_for_domain %}success{% else %}warning{% endif %}">
                         <td>{{ privilege_name }}</td>
-                        <td class="checkmark-column">
+                        <td class="text-center">
                             {% if enabled_for_domain %}
                                 <i class="fa fa-check"></i>
                             {% else %}
@@ -73,59 +69,84 @@
             <h1>Feature Flags</h1>
             <p>
                 {% url 'toggle_list' as toggle_url %}
-                {% blocktrans %}
-                    Feature Flags turn on features for individual users or projects. They are editable only by
-                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
-                    In addition, some feature flags are randomly enabled by domain.
-                {% endblocktrans %}
+                Feature Flags turn on features for individual users or projects. They are editable only by
+                super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+                In addition, some feature flags are randomly enabled by domain.
             </p>
             <p>
-                {% blocktrans %}
-                    Following are all flags enabled for this domain and/or for you.
-                    This does not include any flags set for other users in this domain.
-                {% endblocktrans %}
+                Following are all flags enabled for this domain and/or for you.
+                This does not include any flags set for other users in this domain.
             </p>
         </div>
         <div class="col-sm-10">
-            <table class="table table-striped">
+            <table class="table table-striped" id="toggles-table">
                 <thead>
-                    <th>{% trans "Tag" %}</th>
-                    <th>{% trans "Feature" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for me?" %}</th>
-                    <th>{% trans "Edit" %}</th>
+                    <th>Tag</th>
+                    <th class="text-center text-nowrap"><!-- placeholder for flag icon --></th>
+                    <th>Feature</th>
+                    <th class="text-center text-nowrap">Enabled for me?</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
-                <tbody>
-                    {% for toggle, enabled_for_domain, enabled_for_user in flags %}
-                    <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
-                        <td><span class="label label-{{ toggle.tag.css_class }}">{{ toggle.tag.name }}</span></td>
+                <tbody data-bind="foreach: toggles">
+                    <tr>
                         <td>
+                            <span data-bind="css: ('label-' + tagCssClass),
+                                             text: tag"
+                                  class="label"></span>
+                        </td>
 
-                            {% if toggle.description %}
-                            <a class="collapsed" data-toggle="collapse" aria-expanded="false"
-                               href="#toggleDescription-{{ toggle.slug }}">
-                                <i class="fa fa-angle-double-down"></i>
-                            </a>
-                            {% endif %}
+                        <td>
+                            <i class="fa fa-flag" data-bind="visible: isEnabled"></i>
+                        </td>
 
-                            {{ toggle.label }}
+                        <td>
+                            <div class="row clickable" data-bind="click: showHideDescription">
+                                <span data-bind="text: label,
+                                                 css: {'text-muted': !isEnabled()}"></span>
 
-                            {% if toggle.help_link %} (<a href="{{ toggle.help_link }}" target="_blank">docs</a>){% endif %}
+                                <span data-bind="visible: description || helpLink">&hellip;</span>
+                            </div>
 
-                            {% if toggle.description %}
-                            <div class="collapse" id="toggleDescription-{{ toggle.slug }}">
-                                <div class="well">
-                                    {{ toggle.description }}
+                            <div class="row" data-bind="slideVisible: expanded()">
+                                <br />
+                                <p data-bind="visible: description, html: description"></p>
+                                <span data-bind="visible: helpLink">
+                                    <a data-bind="attr: {href: helpLink}">Documentation</a>
+                                </span>
+                                <hr data-bind="visible: description || helpLink" />
+                                <div>
+                                    <span data-bind="css: ('label-' + tagCssClass),
+                                                     text: tag"
+                                          class="label"></span>
+                                    <span data-bind="text: tagDescription">
+                                </div>
+                                <div class="text-right">
+                                    <small><a class="text-uppercase" data-bind="attr: {href: editLink}, text: slug"></a></small>
                                 </div>
                             </div>
-                            {% endif %}
-
                         </td>
-                        <td class="checkmark-column">{% if enabled_for_domain %}<i class="fa fa-check"></i>{% endif %}</td>
-                        <td class="checkmark-column">{% if enabled_for_user %}<i class="fa fa-check"></i>{% endif %}</td>
-                        <td><a href="{% url 'edit_toggle' toggle.slug %}">{% trans "change" %}</a></td>
+
+                        <td class="text-center">
+                            <i class="fa fa-user" data-bind="visible: userEnabled"></i>
+                        </td>
+
+                        <td class="text-center">
+                            <div data-bind="visible: hasDomainNamespace">
+                                <i class="fa fa-spin fa-refresh" data-bind="visible: setTogglePending"></i>
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: toggleEnabledState,
+                                                css: {
+                                                    'active': domainEnabled,
+                                                    'disabled': setTogglePending,
+                                                },
+                                                text: domainEnabled() ? 'Enabled' : 'Not Enabled'
+                                                "></button>
+                            </div>
+                            <div data-bind="visible: !hasDomainNamespace">---</div>
+                        </td>
+
                     </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -138,17 +159,17 @@
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>
-                    <th>{% trans "Feature" %}</th>
-                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th>Feature</th>
+                    <th class="text-center text-nowrap">Enabled for domain?</th>
                 </thead>
                 <tbody>
                     <tr class="{% if use_sql_backend %}success{% else %}info{% endif %}">
                         <td>Using new SQL/scale backend</td>
-                        <td class="checkmark-column">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td class="text-center">{% if use_sql_backend %}<i class="fa fa-check"></i>{% endif %}</td>
                     </tr>
                     <tr class="{% if request|tzmigration_status == "complete" %}success{% elif enabled_for_user %}info{% endif %}">
                         <td>Using new correct timezone behavior</td>
-                        <td class="checkmark-column">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td class="text-center">{% if request|tzmigration_status == "complete" %}<i class="fa fa-check"></i>{% endif %}</td>
                     </tr>
                 </tbody>
             </table>
