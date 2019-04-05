@@ -11,7 +11,7 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue']);
+        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues']);
         var idValue = options.idValue || 'id';
 
         $select.select2({
@@ -26,13 +26,17 @@ hqDefine("app_manager/js/widgets_v4", [
                     };
                 },
                 processResults: function (data) {
+                    var results = _.map(data.apps, function (build) {
+                        return {
+                            id: build[idValue],
+                            text: build.version + ": " + (build.build_comment || gettext("no comment")),
+                        };
+                    });
+                    if (options.extraValues) {
+                        results = Array.prototype.concat(options.extraValues, results);
+                    }
                     return {
-                        results: _.map(data.apps, function (build) {
-                            return {
-                                id: build[idValue],
-                                text: build.version + ": " + (build.build_comment || gettext("no comment")),
-                            };
-                        }),
+                        results: results,
                         pagination: data.pagination,
                     };
                 },
