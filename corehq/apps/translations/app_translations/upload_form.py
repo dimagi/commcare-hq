@@ -158,13 +158,13 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         label_id = row['label']
         translations = self._get_translations_for_row(row, lang)
         translation_node = self.itext.find("./{f}translation[@lang='%s']" % lang)
-        keep_value_node = any(v for k, v in translations.items())
+        keep_value_node = any(v for k, v in translations.items()) or set(self.langs) != set(self.app.langs)
         text_node = self._get_text_node(translation_node, label_id)
         for trans_type, new_translation in translations.items():
             if not new_translation:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.app.langs:
+                for l in self.langs:
                     key = self._get_col_key(trans_type, l)
                     if key not in row:
                         continue
