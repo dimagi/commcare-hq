@@ -417,21 +417,20 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 class MPRUsingSalt(ICDSMixin, MPRData):
 
     slug = 'using_salt'
+    title = "5. Number of AWCs using Iodized Salt"
 
     @property
-    def title(self):
+    def rows(self):
         if self.config['location_id']:
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
+            percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
+            return [
+                ["Number of AWCs using Iodized Salt:", use_salt],
+                ["% of AWCs:", percent + " %"]
+            ]
 
-            return "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
-
-    @property
-    def subtitle(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        use_salt = data.get('use_salt', 0)
-        percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
-        return ["% of AWCs: {0} %".format(percent)]
+        return []
 
 
 class MPRProgrammeCoverage(ICDSMixin, MPRData):

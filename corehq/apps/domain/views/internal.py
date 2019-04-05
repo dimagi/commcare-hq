@@ -13,12 +13,12 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
 
+from corehq import toggles
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
 from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from corehq.apps.domain.calculations import CALCS, CALC_FNS, CALC_ORDER, dom_calc
@@ -72,7 +72,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     @property
     @memoized
     def internal_settings_form(self):
-        can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
+        can_edit_eula = toggles.CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
             return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
         initial = {
@@ -215,12 +215,16 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     @memoized
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
-            return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
+            toggle, domain_enabled, user_enabled = toggle_enabled_tuple
+            return (not domain_enabled,
+                    not user_enabled,
+                    toggles.ALL_TAGS.index(toggle.tag),
+                    toggle.label)
         unsorted_toggles = [(
             toggle,
-            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
-            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
-        ) for toggle in all_toggles()]
+            toggle.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN),
+            toggle.enabled(self.request.couch_user.username, namespace=toggles.NAMESPACE_USER)
+        ) for toggle in toggles.all_toggles()]
         return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
@@ -289,7 +293,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if not TRANSFER_DOMAIN.enabled(request.domain):
+        if not toggles.TRANSFER_DOMAIN.enabled(request.domain):
             raise Http404()
         return super(TransferDomainView, self).dispatch(request, *args, **kwargs)
 
@@ -386,8 +390,9 @@ def toggle_diff(request, domain):
     diff = []
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
-                for t in feature_previews.all_previews() + all_toggles()
-                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
+                for t in feature_previews.all_previews() + toggles.all_toggles()
+                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
+                and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
         diff.sort(key=lambda x: x['label'])
     return json_response(diff)
 
