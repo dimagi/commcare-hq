@@ -1416,7 +1416,7 @@ Data Cleaning and Validation
 
 Note this is only available for "static" data sources that are created in the HQ repository.
 
-When creating a data source it can valuable to have strict validation on the type of data that can be inserted.
+When creating a data source it can be valuable to have strict validation on the type of data that can be inserted.
 The attribute ``validations`` at the top level of the configuration can use UCR expressions to determine if the data is invalid.
 If an expression is deemed invalid, then the relevant error is stored in the ``InvalidUCRData`` model.
 
