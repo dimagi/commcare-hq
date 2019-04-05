@@ -481,6 +481,18 @@
           "supervisor_id",
           "last_date_gmp"
         ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "last_date_gmp"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "last_date_gmp"
+        ]
       }
     ],
     "disable_destructive_rebuild": true
