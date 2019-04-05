@@ -125,7 +125,6 @@ services:
     environment:
       POSTGRES_DB: commcare_ucr_citus
       POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
@@ -135,4 +134,3 @@ services:
     environment:
       POSTGRES_DB: commcare_ucr_citus
       POSTGRES_USER: commcarehq
-      POSTGRES_PASSWORD: commcarehq
