@@ -1633,15 +1633,16 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
     @property
     def rows(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        children_completing = data.get('open_child_count', 0)
-        vaccination = data.get('open_child_1yr_immun_complete', 1)
-        immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
-        return [
-            ['(I)', 'Children Completing 12 months during the month:', children_completing],
-            ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
-            ['(III)', 'Completed timely immunization coverage (%):', immunization]
-        ]
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            children_completing = data.get('open_child_count', 0)
+            vaccination = data.get('open_child_1yr_immun_complete', 1)
+            immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
+            return [
+                ['(I)', 'Children Completing 12 months during the month:', children_completing],
+                ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
+                ['(III)', 'Completed timely immunization coverage (%):', immunization]
+            ]
 
 
 class MPRVhnd(ICDSMixin, MPRData):
