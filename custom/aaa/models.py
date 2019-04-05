@@ -24,12 +24,15 @@ from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
 
-from corehq.sql_db.connections import get_aaa_db_alias
+from six.moves import zip
+
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.const import ALL, PRODUCT_CODES
-from dimagi.utils.dates import force_to_date
-from six.moves import zip
 
 logger = logging.getLogger(__name__)
 
@@ -1212,3 +1215,70 @@ def _dictfetchone(cursor):
         return ret[0]
 
     return {}
+
+
+class DenormalizedAWC(models.Model):
+    domain = models.TextField()
+    state_id = models.TextField()
+    district_id = models.TextField()
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField(unique=True)
+
+    @classmethod
+    def build(cls, domain):
+        cls.objects.filter(domain=domain).delete()
+        domain_locations = SQLLocation.objects.filter(domain=domain).values(
+            'pk', 'parent_id', 'location_id', 'location_type__code')
+        locations_by_pk = {
+            loc['pk']: loc
+            for loc in domain_locations
+        }
+        awcs = [loc for loc in domain_locations if loc['location_type__code'] == 'awc']
+        to_save = []
+        for awc in awcs:
+            loc = DenormalizedAWC(domain=domain, awc_id=awc['location_id'])
+
+            current_location = awc
+            while current_location['parent_id']:
+                current_location = locations_by_pk[current_location['parent_id']]
+                attr_name = '{}_id'.format(current_location['location_type__code'])
+                setattr(loc, attr_name, current_location['location_id'])
+
+            to_save.append(loc)
+
+        cls.objects.bulk_create(to_save)
+
+
+class DenormalizedVillage(models.Model):
+    domain = models.TextField()
+    state_id = models.TextField()
+    district_id = models.TextField()
+    taluka_id = models.TextField()
+    phc_id = models.TextField()
+    sc_id = models.TextField()
+    village_id = models.TextField(unique=True)
+
+    @classmethod
+    def build(cls, domain):
+        cls.objects.filter(domain=domain).delete()
+        domain_locations = SQLLocation.objects.filter(domain=domain).values(
+            'pk', 'parent_id', 'location_id', 'location_type__code')
+        locations_by_pk = {
+            loc['pk']: loc
+            for loc in domain_locations
+        }
+        villages = [loc for loc in domain_locations if loc['location_type__code'] == 'village']
+        to_save = []
+        for village in villages:
+            loc = DenormalizedVillage(domain=domain, village_id=village['location_id'])
+
+            current_location = village
+            while current_location['parent_id']:
+                current_location = locations_by_pk[current_location['parent_id']]
+                attr_name = '{}_id'.format(current_location['location_type__code'])
+                setattr(loc, attr_name, current_location['location_id'])
+
+            to_save.append(loc)
+
+        cls.objects.bulk_create(to_save)
