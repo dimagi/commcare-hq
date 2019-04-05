@@ -7,7 +7,6 @@ from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 
 import six
-import sqlalchemy
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
@@ -19,10 +18,9 @@ from corehq.apps.userreports.exceptions import (
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import get_indicator_table, get_metadata
-from corehq.apps.userreports.sql.util import table_exists
+from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter, get_legacy_table_name
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
@@ -161,39 +159,11 @@ class ConfigurableReportTableManagerMixin(object):
             table_names = list(table_map)
             engine = connection_manager.get_engine(engine_id)
 
-            # Temporary measure necessary during the process of renaming tables
-            # - Configs point to new tables which may just be views and not real tables
-            # - The global metadata contains references to the new table names
-            legacy_tables = {}
-            table_names_for_diff = []
-            diff_metadata = sqlalchemy.MetaData()
-            with engine.begin() as connection:
-                for table_name in table_names:
-                    sql_adapter = table_map[table_name]
-                    legacy_table_name = get_legacy_table_name(
-                        sql_adapter.config.domain, sql_adapter.config.table_id
-                    )
-                    if not table_exists(connection, table_name) and table_exists(connection, legacy_table_name):
-                        legacy_tables[legacy_table_name] = table_name
-                        pillow_logging.debug("[rebuild] Using legacy table: %s", legacy_table_name)
-                        # popultate metadata with the table schema
-                        get_indicator_table(
-                            sql_adapter.config,
-                            metadata=diff_metadata,
-                            override_table_name=legacy_table_name
-                        )
-                        table_names_for_diff.append(legacy_table_name)
-                    else:
-                        # popultate metadata with the table schema
-                        get_indicator_table(sql_adapter.config, metadata=diff_metadata)
-                        table_names_for_diff.append(table_name)
+            diffs = get_table_diffs(engine, table_names, get_metadata(engine_id))
 
-            diffs = get_table_diffs(engine, table_names_for_diff, diff_metadata)
-
-            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names_for_diff)
-            for real_table_name in tables_to_act_on.rebuild:
-                table_name = legacy_tables.get(real_table_name, real_table_name)
-                pillow_logging.debug("[rebuild] Rebuilding table: %s (%s)", real_table_name, table_name)
+            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names)
+            for table_name in tables_to_act_on.rebuild:
+                pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
