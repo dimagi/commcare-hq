@@ -129,7 +129,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
+        self.log_action(initiated_by, source)
         self.session_helper.Session.remove()
         try:
             self._drop_legacy_table_and_view()

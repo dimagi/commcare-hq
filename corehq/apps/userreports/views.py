@@ -1207,7 +1207,7 @@ def build_data_source_in_place(request, domain, config_id):
         )
     )
 
-    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

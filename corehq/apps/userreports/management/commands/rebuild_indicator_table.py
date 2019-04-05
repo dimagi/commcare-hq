@@ -16,7 +16,9 @@ class Command(BaseCommand):
 
     def handle(self, indicator_config_id, **options):
         if options['in_place']:
-            tasks.rebuild_indicators_in_place(indicator_config_id, options['initiated'])
+            tasks.rebuild_indicators_in_place(
+                indicator_config_id, options['initiated'], source='rebuild_indicator_table'
+            )
         else:
             tasks.rebuild_indicators(
                 indicator_config_id,
