@@ -122,7 +122,7 @@ class IndicatorAdapter(object):
             'indicator_config_id': self.config.get_id,
             'action': action,
             'initiated_by': initiated_by,
-            'source': source,
+            'action_source': source,
         }
         try:
             DataSourceActionLog.objects.create(**kwargs)
