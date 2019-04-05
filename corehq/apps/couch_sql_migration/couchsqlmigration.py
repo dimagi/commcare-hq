@@ -8,6 +8,7 @@ import csv
 import io
 import logging
 import os
+import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime
