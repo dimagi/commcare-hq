@@ -970,19 +970,19 @@
       {
         "column_ids": [
           "supervisor_id",
-          "date_turns_one_yr"
+          "submitted_on"
         ]
       },
       {
         "column_ids": [
           "block_id",
-          "date_turns_one_yr"
+          "submitted_on"
         ]
       },
       {
         "column_ids": [
           "district_id",
-          "date_turns_one_yr"
+          "submitted_on"
         ]
       }
     ],
