@@ -7,6 +7,7 @@ from corehq.sql_db.operations import RawSQLMigration
 def get_view_migrations():
     sql_views = [
         'awc_location_months.sql',
+        'awc_location_months_local.sql',
         'agg_awc_monthly.sql',
         'agg_ccs_record_monthly.sql',
         'agg_child_health_monthly.sql',
@@ -18,7 +19,6 @@ def get_view_migrations():
         'agg_ls_monthly.sql',
         'service_delivery_monthly.sql',
         'aww_incentive_report_monthly.sql',
-        'awc_location_months_local.sql',
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []
