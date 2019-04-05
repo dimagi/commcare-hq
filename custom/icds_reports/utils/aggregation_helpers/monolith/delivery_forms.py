@@ -2,14 +2,24 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class DeliveryFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-dashboard_delivery_forms'
     aggregate_parent_table = AGG_CCS_RECORD_DELIVERY_TABLE
     aggregate_child_table_prefix = 'icds_db_delivery_form_'
+
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

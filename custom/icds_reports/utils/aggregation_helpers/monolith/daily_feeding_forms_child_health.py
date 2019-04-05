@@ -2,14 +2,24 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.const import AGG_DAILY_FEEDING_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
     aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
     aggregate_child_table_prefix = 'icds_db_child_daily_feed_form_'
+
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
 
     def aggregation_query(self):
         tablename = self.generate_child_tablename(self.month)

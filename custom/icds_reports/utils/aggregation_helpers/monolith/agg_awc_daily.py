@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-
 from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
@@ -15,6 +15,21 @@ class AggAwcDailyAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, date):
         self.date = date
         self.month = transform_day_to_month(date)
+
+    def aggregate(self, cursor):
+        agg_query, agg_params = self.aggregation_query()
+        update_query, update_params = self.update_query()
+        rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = self.indexes()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(*self.create_table_query())
+        cursor.execute(agg_query, agg_params)
+        cursor.execute(update_query, update_params)
+        for query in rollup_queries:
+            cursor.execute(query)
+        for query in index_queries:
+            cursor.execute(query)
 
     @property
     def tablename(self):

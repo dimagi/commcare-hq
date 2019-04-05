@@ -4,8 +4,9 @@ from __future__ import unicode_literals
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import DAILY_FEEDING_TABLE_ID
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, date_to_string, \
+from custom.icds_reports.utils.aggregation_helpers import date_to_string, \
     transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
@@ -14,6 +15,16 @@ class DailyAttendanceAggregationHelper(BaseICDSAggregationHelper):
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
+
+    def aggregate(self, cursor):
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregate_query()
+        indexes_query = self.indexes()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
+        cursor.execute(indexes_query)
 
     @property
     def tablename(self):

@@ -2,16 +2,28 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
+
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import AGG_CCS_RECORD_BP_TABLE
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
     aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
     aggregate_child_table_prefix = 'icds_db_bp_form_'
+
+    def aggregate(self, cursor):
+        prev_month_query, prev_month_params = self.create_table_query(self.month - relativedelta(months=1))
+        curr_month_query, curr_month_params = self.create_table_query()
+        agg_query, agg_params = self.aggregation_query()
+
+        cursor.execute(prev_month_query, prev_month_params)
+        cursor.execute(self.drop_table_query())
+        cursor.execute(curr_month_query, curr_month_params)
+        cursor.execute(agg_query, agg_params)
 
     @property
     def _old_ucr_tablename(self):

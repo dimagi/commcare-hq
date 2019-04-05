@@ -11,7 +11,8 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE)
-from custom.icds_reports.utils.aggregation_helpers import BaseICDSAggregationHelper, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
 
 
 class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
@@ -20,6 +21,15 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
+
+    def aggregate(self, cursor):
+        agg_query, agg_params = self.aggregation_query()
+        index_queries = self.indexes()
+
+        cursor.execute(self.drop_table_query())
+        cursor.execute(agg_query, agg_params)
+        for query in index_queries:
+            cursor.execute(query)
 
     @property
     def ccs_record_monthly_ucr_tablename(self):
