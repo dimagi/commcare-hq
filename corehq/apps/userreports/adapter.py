@@ -3,17 +3,11 @@ from __future__ import unicode_literals
 
 from memoized import memoized
 
-from corehq.apps.userreports.models import DataSourceActionLog
 from dimagi.utils.logging import notify_exception
 from corehq.util.test_utils import unit_testing_only
 
 
 class IndicatorAdapter(object):
-    ACTION_BUILD = DataSourceActionLog.BUILD
-    ACTION_REBUILD = DataSourceActionLog.REBUILD
-    ACTION_MIGRATE = DataSourceActionLog.MIGRATE
-    ACTION_DROP = DataSourceActionLog.DROP
-
     def __init__(self, config):
         self.config = config
 
@@ -102,7 +96,24 @@ class IndicatorAdapter(object):
     def run_asynchronous(self):
         return self.config.asynchronous
 
-    def log_action(self, initiated_by, source, action, skip=False):
+    def log_table_build(self, initiated_by, source):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.BUILD)
+
+    def log_table_rebuild(self, initiated_by, source, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.REBUILD, skip)
+
+    def log_table_drop(self, initiated_by, source, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.DROP, skip)
+
+    def log_table_migrate(self, initiated_by, source, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.MIGRATE, skip)
+
+    def _log_action(self, initiated_by, source, action, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
         if skip:
             return
 

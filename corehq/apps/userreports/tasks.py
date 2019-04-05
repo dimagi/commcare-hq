@@ -125,10 +125,9 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
-        adapter.log_action(
+        adapter.log_table_build(
             initiated_by=initiated_by,
             source='resume_building_indicators',
-            action=adapter.ACTION_BUILD
         )
         _iteratively_build_table(config, resume_helper)
 
