@@ -48,6 +48,19 @@ def send_delayed_report(report_id):
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
 
+    # If the report's start date is later than today, return and do not send the email
+    if notification.start_date and notification.start_date > datetime.today().date():
+        # Ideally these records would never get queued in the first place,
+        # but we don't initially have access to this when queuing.
+        # There may be a way push this back to there without affecting the performance
+        # of the queuing process too much, but I am punting on that for now.
+        ScheduledReportRecord.objects.filter(
+            state__in=[ScheduledReportRecord.States.queued,
+                       ScheduledReportRecord.States.skipped],
+            scheduled_report_id=notification_id,
+        ).delete()
+        return
+
     # Intentionally let this raise an IndexError if there's no report.
     # Shouldn't ever happen, and if it does, it means there's something wrong
     # with our queuing or concurrency model.
@@ -62,19 +75,6 @@ def send_report(notification_id):
         scheduled_report_id=notification_id,
         scheduled_for__lt=record.scheduled_for,
     ).update(state=ScheduledReportRecord.States.skipped)
-
-    # If the report's start date is later than today, return and do not send the email
-    if notification.start_date and notification.start_date > datetime.today().date():
-        # Ideally these records would never get queued in the first place,
-        # but we don't initially have access to this when queuing.
-        # There may be a way push this back to there without affecting the performance
-        # of the queuing process too much, but I am punting on that for now.
-        ScheduledReportRecord.objects.filter(
-            state__in=[ScheduledReportRecord.States.queued,
-                       ScheduledReportRecord.States.skipped],
-            scheduled_report_id=notification_id,
-        ).delete()
-        return
 
     try:
         notification.send()
