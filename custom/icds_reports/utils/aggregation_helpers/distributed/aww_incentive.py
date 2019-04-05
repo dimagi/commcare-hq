@@ -43,7 +43,7 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         CREATE TEMPORARY TABLE "tmp_incentive" AS SELECT
             %(state_id)s AS state_id,
             awcm.district_id,
-            %(month)s AS month,
+            %(month)s::DATE AS month,
             awcm.awc_id,
             awcm.block_id,
             awcm.supervisor_id,
@@ -57,8 +57,8 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awcm.wer_weighed,
             awcm.wer_eligible,
             awcm.awc_days_open,
-            sum(ccsm.valid_visits),
-            sum(ccsm.expected_visits)
+            sum(ccsm.valid_visits) as valid_visits,
+            sum(ccsm.expected_visits) as expected_visits
         FROM agg_awc_monthly as awcm
         INNER JOIN agg_ccs_record_monthly AS ccsm
         ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
