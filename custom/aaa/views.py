@@ -27,7 +27,7 @@ from couchexport.models import Format
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
 from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
-from custom.aaa.models import Woman, Child, AaaFile
+from custom.aaa.models import Woman, Child
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -38,7 +38,7 @@ from custom.aaa.tasks import (
     update_woman_history_table,
     prepare_export_reports,
 )
-from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
+from custom.aaa.utils import build_location_filters, get_location_model_for_ministry, get_file_from_blobdb
 
 from dimagi.utils.dates import force_to_date
 
@@ -483,10 +483,9 @@ class CheckExportTask(View):
 class DownloadFile(View):
     def get(self, request, *args, **kwargs):
         file_id = self.kwargs.get('file_id', None)
-        aaa_file = AaaFile.objects.get(blob_id=file_id)
         content_type = Format.from_format('xlsx')
         response = HttpResponse(
-            aaa_file.get_file_from_blobdb().read(),
+            get_file_from_blobdb(file_id).read(),
             content_type=content_type.mimetype
         )
         response['Content-Disposition'] = safe_filename_header(

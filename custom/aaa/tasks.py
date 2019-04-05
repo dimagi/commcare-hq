@@ -139,6 +139,8 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
             ('adoptionDateOfFamilyPlaning', 'Adoption Date Of Family Planning'),
         )
         data = EligibleCoupleQueryHelper.list(domain, selected_date, location_filters, sort_column)
+        month_end = selected_date + relativedelta(months=1) - relativedelta(days=1)
+        data = EligibleCoupleQueryHelper.update_list(data, month_end)
     elif beneficiary_type == 'pregnant_women':
         columns = (
             ('name', 'Name'),
@@ -148,11 +150,6 @@ def prepare_export_reports(domain, selected_date, next_month_start, selected_loc
             ('noOfAncCheckUps', 'No. Of ANC Check-Ups'),
         )
         data = PregnantWomanQueryHelper.list(domain, selected_date, location_filters, sort_column)
-
-    if beneficiary_type == 'eligible_couple':
-        month_end = selected_date + relativedelta(months=1) - relativedelta(days=1)
-        data = EligibleCoupleQueryHelper.update_list(data, month_end)
-    elif beneficiary_type == 'pregnant_women':
         data = PregnantWomanQueryHelper.update_list(data)
 
     export_columns = [col[1] for col in columns]
