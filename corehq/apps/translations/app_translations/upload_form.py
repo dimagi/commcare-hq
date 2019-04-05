@@ -144,7 +144,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             for label in label_ids_to_skip:
                 self.msgs.append((
                     messages.error,
-                    _("You must provide at least one translation for the label '%s'.") % (label)))
+                    _("You must provide at least one translation for the label '{}'.").format(label)))
         return label_ids_to_skip
 
     def _get_text_node(self, translation_node, label_id):

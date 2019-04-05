@@ -4,3 +4,9 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'icds_reports/js/base.js' %}"></script>
 {% endblock %}
+
+
+{% block additional_initial_page_data %}{{ block.super }}
+    {% initial_page_data 'data_providers' data_providers|safe %}
+    {% initial_page_data 'data_providers_json' data_providers_json %}
+{% endblock %}
