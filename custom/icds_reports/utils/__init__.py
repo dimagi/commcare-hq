@@ -97,7 +97,8 @@ class ICDSData(object):
                 report_column.transform = {}
         return static_report_configuration
 
-    def data(self):
+    @quickcache(['cache_key'], timeout=60 * 60)
+    def data(self, cache_key):
         return self.report_config.get_data()
 
 
@@ -154,13 +155,20 @@ class ICDSMixin(object):
 
         for config in self.sources['data_source']:
             filters = {}
+            cache_key = {'report_id': config['id'].format(domain=domain)}
             if selected_location:
                 key = selected_location.location_type.name.lower() + '_id'
                 filters = {
                     key: [Choice(value=selected_location.location_id, display=selected_location.name)]
                 }
+                cache_key[key] = selected_location.location_id
             if 'date_filter_field' in config:
-                filters.update({config['date_filter_field']: self.config['date_span']})
+                datespan = self.config['date_span']
+                filters.update({config['date_filter_field']: datespan})
+                cache_key[config['date_filter_field']] = {
+                    'startdate': datespan.startdate.strftime("%m-%d-%Y"),
+                    'enddate': datespan.enddate.strftime("%m-%d-%Y")
+                }
             if 'filter' in config:
                 for fil in config['filter']:
                     if 'type' in fil:
@@ -169,15 +177,19 @@ class ICDSMixin(object):
                         end_date = now if 'end' not in fil else now - timedelta(days=fil['end'])
                         datespan = DateSpan(start_date, end_date)
                         filters.update({fil['column']: datespan})
+                        cache_key[fil['column']] = {
+                            'startdate': datespan.startdate.strftime("%m-%d-%Y"),
+                            'enddate': datespan.enddate.strftime("%m-%d-%Y")
+                        }
                     else:
-                        filters.update({
-                            fil['column']: {
-                                'operator': fil['operator'],
-                                'operand': fil['value']
-                            }
-                        })
+                        _filter = {fil['column']: {
+                            'operator': fil['operator'],
+                            'operand': fil['value']
+                        }}
+                        filters.update(_filter)
+                        cache_key.update(_filter)
 
-            report_data = ICDSData(domain, filters, config['id']).data()
+            report_data = ICDSData(domain, filters, config['id']).data(cache_key)
             for column in config['columns']:
                 column_agg_func = column['agg_fun']
                 column_name = column['column_name']
