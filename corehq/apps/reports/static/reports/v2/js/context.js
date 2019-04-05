@@ -37,13 +37,9 @@ hqDefine('reports/v2/js/context', [
 
         self.endpoint = {};
 
-        self.init = function () {
-
-            _.each(initialPageData.get('report.endpoints'), function (data) {
-                self.endpoint[data.slug] = endpoint(data);
-            });
-
-        };
+        _.each(initialPageData.get('report.endpoints'), function (data) {
+            self.endpoint[data.slug] = endpoint(data);
+        });
 
         return self;
     };
@@ -51,6 +47,9 @@ hqDefine('reports/v2/js/context', [
     return {
         getReportConfig: function () {
             return reportConfig();
+        },
+        getColumns: function () {
+            return initialPageData.get('report.columns');
         },
     };
 });
