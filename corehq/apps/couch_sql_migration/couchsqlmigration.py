@@ -1,31 +1,40 @@
 # coding: utf-8
-from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import unicode_literals
 from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import csv
 import io
+import logging
 import os
-import uuid
+from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime
 from time import time
 
+import gevent
+import six
 import xmltodict
-from django.db.utils import IntegrityError
-
-from django.conf import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import (
-    get_all_extensions_to_close,
     CaseProcessingResult,
-    get_case_updates,
-    get_case_ids_from_form,
     extract_case_blocks,
+    get_all_extensions_to_close,
+    get_case_ids_from_form,
+    get_case_updates,
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
-from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
+from django.conf import settings
+from django.db.utils import IntegrityError
+from django_redis import get_redis_connection
+from gevent.pool import Pool
+
+from corehq.apps.couch_sql_migration.diff import (
+    filter_case_diffs,
+    filter_form_diffs,
+    filter_ledger_diffs,
+)
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -33,10 +42,14 @@ from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processe
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
+from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    LedgerAccessorSQL,
+    doc_type_to_state,
+)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.models import (
     Attachment,
     CaseAttachmentSQL,
@@ -48,34 +61,30 @@ from corehq.form_processor.models import (
     XFormOperationSQL,
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
-from corehq.form_processor.utils import adjust_datetimes
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils import adjust_datetimes, should_use_sql_backend
 from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
-    clear_local_domain_sql_backend_override)
+)
 from corehq.toggles import (
     COUCH_SQL_MIGRATION_BLACKLIST,
+    NAMESPACE_DOMAIN,
     REMINDERS_MIGRATION_IN_PROGRESS,
-    NAMESPACE_DOMAIN)
-from corehq.util.log import with_progress_bar
-from corehq.util.timer import TimingContext
+)
+from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.log import with_progress_bar
 from corehq.util.pagination import PaginationEventHandler
-from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
+from corehq.util.timer import TimingContext
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from couchforms.models import doc_types as form_doc_types
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.chunked import chunked
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
-from gevent.pool import Pool
-import gevent
-import six
-import logging
-from collections import defaultdict, deque
-from corehq.util import cache_utils
-from django_redis import get_redis_connection
-_logger = logging.getLogger('main_couch_sql_datamigration')
 
+_logger = logging.getLogger('main_couch_sql_datamigration')
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -243,6 +252,10 @@ class CouchSqlDomainMigrator(object):
         _logger.error(message)
         print('[ERROR] {}'.format(message))
 
+    def log_warning(self, message):
+        _logger.warning(message)
+        print('[WARNING] {}'.format(message))
+
     def log_info(self, message):
         _logger.info(message)
         print('[INFO] {}'.format(message))
@@ -280,9 +293,7 @@ class CouchSqlDomainMigrator(object):
         self._rebuild_queues(pool)
 
         # process main forms (including cases and ledgers)
-        changes = _get_main_form_iterator(
-            self.src_domain).iter_all_changes(
-                resumable_key=self._get_resumable_iterator_key('main_forms'))
+        changes = self._get_resumable_iterator(['XFormInstance'], 'main_forms')
 
         # form_id needs to be on self to release appropriately
         self.queues = PartiallyLockingQueue("form_id", max_size=10000)
@@ -498,9 +509,7 @@ class CouchSqlDomainMigrator(object):
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
-        changes = _get_unprocessed_form_iterator(
-            self.src_domain).iter_all_changes(
-                resumable_key=self._get_resumable_iterator_key('unprocessed_forms'))
+        changes = self._get_resumable_iterator(UNPROCESSED_DOC_TYPES, 'unprocessed_forms')
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
@@ -539,9 +548,7 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
-        changes = _get_case_iterator(
-            self.src_domain, doc_types=doc_types).iter_all_changes(
-                resumable_key=self._get_resumable_iterator_key('unprocessed_cases'))
+        changes = self._get_resumable_iterator(doc_types, 'unprocessed_cases')
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
 
@@ -600,9 +607,7 @@ class CouchSqlDomainMigrator(object):
         cases = {}
         batch_size = 100
         pool = Pool(10)
-        changes = _get_case_iterator(
-            self.src_domain).iter_all_changes(
-                resumable_key=self._get_resumable_iterator_key("case_diffs"))
+        changes = self._get_resumable_iterator(CASE_DOC_TYPES, 'case_diffs')
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
             if len(cases) == batch_size:
@@ -634,13 +639,14 @@ class CouchSqlDomainMigrator(object):
                 couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
             )
             if diffs and not sql_case.is_deleted:
-                couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
-
+                try:
+                    couch_case, diffs = self._rebuild_couch_case_and_re_diff(
+                        couch_case, sql_case_json)
+                except Exception as err:
+                    self.log_warning('Case {} rebuild -> {}: {}'.format(
+                        sql_case.case_id, type(err).__name__, err))
             if diffs:
-                self.diff_db.add_diffs(
-                    couch_case['doc_type'], sql_case.case_id,
-                    diffs
-                )
+                self.diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
 
         self._diff_ledgers(case_ids)
 
@@ -738,8 +744,9 @@ class CouchSqlDomainMigrator(object):
     def _log_case_diff_count(self, throttled=False):
         self._log_processed_docs_count(['type:case_diffs'], throttled)
 
-    def _get_resumable_iterator_key(self, source):
-        return "%s.%s.%s" % (self.src_domain, source, self.run_timestamp)
+    def _get_resumable_iterator(self, doc_types, slug):
+        key = "%s.%s.%s" % (self.src_domain, slug, self.run_timestamp)
+        return _iter_changes(self.src_domain, doc_types, resumable_key=key)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
@@ -1093,32 +1100,13 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
         return True
 
 
-def _get_main_form_iterator(domain):
-    return CouchDomainDocTypeChangeProvider(
-        couch_db=XFormInstance.get_db(),
-        domains=[domain],
-        doc_types=['XFormInstance'],
-        event_handler=MigrationPaginationEventHandler(domain),
-    )
-
-
-def _get_unprocessed_form_iterator(domain):
-    return CouchDomainDocTypeChangeProvider(
-        couch_db=XFormInstance.get_db(),
-        domains=[domain],
-        doc_types=UNPROCESSED_DOC_TYPES,
-        event_handler=MigrationPaginationEventHandler(domain),
-    )
-
-
-def _get_case_iterator(domain, doc_types=None):
-    doc_types = doc_types or CASE_DOC_TYPES
+def _iter_changes(domain, doc_types, **kw):
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
         event_handler=MigrationPaginationEventHandler(domain),
-    )
+    ).iter_all_changes(**kw)
 
 
 def get_diff_db_filepath(domain):

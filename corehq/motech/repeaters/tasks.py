@@ -18,12 +18,25 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
     get_overdue_repeat_record_count,
 )
-from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.datadog.gauges import (
+    datadog_bucket_timer,
+    datadog_counter,
+    datadog_gauge_task,
+)
+from corehq.util.datadog.utils import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 
+_check_repeaters_buckets = make_buckets_from_timedeltas(
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=5),
+    timedelta(hours=1),
+    timedelta(hours=5),
+    timedelta(hours=10),
+)
 _soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
 logging = get_task_logger(__name__)
 
@@ -44,14 +57,20 @@ def check_repeaters():
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
+        datadog_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
-        for record in iterate_repeat_records(start):
-            if datetime.utcnow() > six_hours_later:
-                _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
-                break
-            if acquire_redis_lock(record):
+        with datadog_bucket_timer(
+            "commcare.repeaters.check.processing",
+            tags=[],
+            timing_buckets=_check_repeaters_buckets,
+        ):
+            for record in iterate_repeat_records(start):
+                if datetime.utcnow() > six_hours_later:
+                    _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
+                    break
+                datadog_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
     finally:
         check_repeater_lock.release()
@@ -59,7 +78,10 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
-    if repeat_record.state == RECORD_FAILURE_STATE and repeat_record.overall_tries >= repeat_record.max_possible_tries:
+    if (
+        repeat_record.state == RECORD_FAILURE_STATE and
+        repeat_record.overall_tries >= repeat_record.max_possible_tries
+    ):
         repeat_record.cancel()
         repeat_record.save()
         return
@@ -74,9 +96,9 @@ def process_repeat_record(repeat_record):
 
     try:
         if repeater.paused:
-            # postpone repeat record by 1 hour so that these don't get picked in each cycle and
+            # postpone repeat record by 1 day so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
-            repeat_record.postpone_by(timedelta(hours=1))
+            repeat_record.postpone_by(timedelta(days=1))
             return
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
@@ -86,20 +108,6 @@ def process_repeat_record(repeat_record):
                 repeat_record.fire()
     except Exception:
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
-
-
-def acquire_redis_lock(record):
-    # TODO: Drop this lock at least 48 hours after PR #23580 is deployed
-    # By that time all repeat records will have next_check set in the future.
-
-    # Including _rev in the key means that the record will be unlocked
-    # for processing every time we execute a `save()` call.
-    return get_redis_lock(
-        'repeat_record_in_progress-{}_{}'.format(record._id, record._rev),
-        timeout=48 * 60 * 60,
-        name="repeat_record",
-        track_unreleased=False,
-    ).acquire()
 
 
 repeaters_overdue = datadog_gauge_task(

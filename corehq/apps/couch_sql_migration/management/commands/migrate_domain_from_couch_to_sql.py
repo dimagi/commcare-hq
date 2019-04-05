@@ -1,9 +1,8 @@
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
+# encoding: utf-8
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import logging
 from itertools import groupby
@@ -229,7 +228,7 @@ class Command(BaseCommand):
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
         n_couch = len(ids_in_couch)
         n_sql = len(ids_in_sql)
-        has_diff = n_couch != n_sql or diff_count
+        has_diff = ids_in_couch != ids_in_sql or diff_count
 
         if diffs_only and not has_diff:
             return False
@@ -237,12 +236,12 @@ class Command(BaseCommand):
         def _highlight(text):
             return shell_red(text) if has_diff else text
 
-        row = "{:^40} | {:^40}"
-        doc_count_row = row.format(n_couch, n_sql)
-        header = ((82 - len(name)) // 2) * '_'
+        row = "{:^38} {} {:^38}"
+        sep = "|" if ids_in_couch == ids_in_sql else "≠"
+        doc_count_row = row.format(n_couch, sep, n_sql)
 
-        print('\n{} {} {}'.format(header, name, header))
-        print(row.format('Couch', 'SQL'))
+        print('\n{:_^79}'.format(" %s " % name))
+        print(row.format('Couch', '|', 'SQL'))
         print(_highlight(doc_count_row))
         if diff_count:
             print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
@@ -252,17 +251,14 @@ class Command(BaseCommand):
                 couch_only = list(ids_in_couch - ids_in_sql)
                 sql_only = list(ids_in_sql - ids_in_couch)
                 for couch, sql in zip_longest(couch_only, sql_only):
-                    print(row.format(couch or '', sql or ''))
+                    print(row.format(couch or '', '|', sql or ''))
 
         return True
 
 
 def _confirm(message):
-    if input(
-            '{} [y/n]'.format(message)
-    ).lower() == 'y':
-        return
-    else:
+    response = input('{} [y/N]'.format(message)).lower()
+    if response != 'y':
         raise CommandError('abort')
 
 
