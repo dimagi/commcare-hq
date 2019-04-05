@@ -2,23 +2,13 @@
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'postgres',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        },
-    },
-    'aaa-data': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'aaa_commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'postgres',
