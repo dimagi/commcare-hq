@@ -104,6 +104,8 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
             }
 
     def get_report_context(self, data_provider):
+        if not self.filter_set:
+            return {}
         context = dict(
             has_sections=data_provider.has_sections,
             posttitle=data_provider.posttitle,
