@@ -79,7 +79,7 @@ class Heartbeat(object):
             try:
                 datadog_gauge(
                     'commcare.celery.heartbeat.blockage_duration',
-                    self.get_blockage_duration(),
+                    self.get_blockage_duration().total_seconds(),
                     tags=['celery_queue:{}'.format(self.queue)]
                 )
             except HeartbeatNeverRecorded:
