@@ -26,15 +26,7 @@ from corehq.apps.locations.permissions import location_safe
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
 from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
 from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
-from custom.aaa.tasks import (
-    update_agg_awc_table,
-    update_agg_village_table,
-    update_ccs_record_table,
-    update_child_table,
-    update_child_history_table,
-    update_woman_table,
-    update_woman_history_table,
-)
+from custom.aaa.tasks import run_aggregation
 from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
 
 from dimagi.utils.dates import force_to_date
@@ -272,13 +264,7 @@ class AggregationScriptPage(BaseDomainView):
             messages.error(request, 'Date is required')
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
-        update_child_table(self.domain)
-        update_child_history_table(self.domain)
-        update_ccs_record_table(self.domain)
-        update_woman_table(self.domain)
-        update_woman_history_table(self.domain)
-        update_agg_awc_table(self.domain, date)
-        update_agg_village_table(self.domain, date)
+        run_aggregation(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
         return redirect(self.urlname, domain=self.domain)
 
