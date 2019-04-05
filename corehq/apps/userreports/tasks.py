@@ -36,8 +36,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    get_report_config,
-)
+    get_report_config)
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
@@ -126,7 +125,11 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
-        adapter.log_action(initiated_by=initiated_by, source='resume_building_indicators')
+        adapter.log_action(
+            initiated_by=initiated_by,
+            source='resume_building_indicators',
+            action=adapter.ACTION_BUILD
+        )
         _iteratively_build_table(config, resume_helper)
 
 

@@ -118,7 +118,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_action(initiated_by, source, skip_log)
+        self.log_action(initiated_by, source, self.ACTION_REBUILD, skip_log)
         self.session_helper.Session.remove()
         try:
             self._drop_legacy_table_and_view()
@@ -130,7 +130,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.session_helper.Session.commit()
 
     def build_table(self, initiated_by=None, source=None):
-        self.log_action(initiated_by, source)
+        self.log_action(initiated_by, source, self.ACTION_BUILD)
         self.session_helper.Session.remove()
         try:
             self._drop_legacy_table_and_view()
@@ -141,7 +141,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_action(initiated_by, source, self.ACTION_DROP, skip_log)
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         self._drop_legacy_table_and_view()

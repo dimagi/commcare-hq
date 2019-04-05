@@ -454,11 +454,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def is_static(self):
         return id_is_static(self._id)
 
-    def deactivate(self):
+    def deactivate(self, initiated_by=None):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            get_indicator_adapter(self).drop_table()
+            get_indicator_adapter(self).drop_table(initiated_by=initiated_by, source='deactivate-data-source')
 
     def get_case_type_or_xmlns_filter(self):
         """Returns a list of case types or xmlns from the filter of this data source.

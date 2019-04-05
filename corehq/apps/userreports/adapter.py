@@ -9,6 +9,10 @@ from corehq.util.test_utils import unit_testing_only
 
 
 class IndicatorAdapter(object):
+    ACTION_BUILD = DataSourceActionLog.BUILD
+    ACTION_REBUILD = DataSourceActionLog.REBUILD
+    ACTION_MIGRATE = DataSourceActionLog.MIGRATE
+    ACTION_DROP = DataSourceActionLog.DROP
 
     def __init__(self, config):
         self.config = config
@@ -20,7 +24,7 @@ class IndicatorAdapter(object):
     def rebuild_table(self, initiated_by=None, source=None):
         raise NotImplementedError
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None):
         raise NotImplementedError
 
     @unit_testing_only
@@ -98,14 +102,14 @@ class IndicatorAdapter(object):
     def run_asynchronous(self):
         return self.config.asynchronous
 
-    def log_action(self, initiated_by, source, skip=False):
+    def log_action(self, initiated_by, source, action, skip=False):
         if skip:
             return
 
         kwargs = {
             'domain': self.config.domain,
             'indicator_config_id': self.config.get_id,
-            'action': DataSourceActionLog.REBUILD,
+            'action': action,
             'initiated_by': initiated_by,
             'source': source,
         }
