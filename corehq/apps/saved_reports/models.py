@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import calendar
 import functools
 import hashlib
@@ -381,10 +382,14 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                     },
                     None,
                 )
-            return ReportContent(
-                json.loads(email_response.content)['report'],
-                dispatch_func(render_as='excel') if attach_excel else None,
-            )
+            try:
+                content_json = json.loads(email_response.content)
+            except ValueError:
+                email_text = email_response.content
+            else:
+                email_text = content_json['report']
+            excel_attachment = dispatch_func(render_as='excel') if attach_excel else None
+            return ReportContent(email_text, excel_attachment)
         except PermissionDenied:
             return ReportContent(
                 _(
@@ -425,14 +430,6 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 },
                 None,
             )
-        except Exception:
-            notify_exception(None, "Error generating report: {}".format(self.report_slug), details={
-                'domain': self.domain,
-                'user': self.owner.username,
-                'report': self.report_slug,
-                'report config': self.get_id
-            })
-            return ReportContent(_("An error occurred while generating this report."), None)
 
     @property
     def is_active(self):
@@ -707,6 +704,13 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
 
 class ScheduledReportsCheckpoint(models.Model):
+    """
+    Each time a date range is checked for scheduled reports to send
+    a ScheduledReportsCheckpoint is created to mark that.
+    This allows us to achieve full non-overlapping coverage of time as it unfolds,
+    even in the face of varying promptness and uptime in celery and celery beat.
+    Secondarily, it also leaves a positive record of when a time batch was processed.
+    """
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(db_index=True)
 

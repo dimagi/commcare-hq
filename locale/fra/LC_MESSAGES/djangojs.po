@@ -4,9 +4,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Saket Kanth <skanth@dimagi.com>, 2017
 # Dimagi Dev <devops@dimagi.com>, 2017
 # esoergel, 2018
+# Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2018
 # Kelly Adediha <kadediha@dimagi.com>, 2018
@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-25 16:08+0000\n"
+"POT-Creation-Date: 2019-04-03 21:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Ismaïla Diene <idiene@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -3135,20 +3135,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:115
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr "Sélection de la langue..."
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:126
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:130
 msgid "Available Reports"
 msgstr "Rapports disponibles"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:127
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:131
 msgid "Included Reports"
 msgstr "Rapports inclus"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:128
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:132
 msgid "Search Reports..."
 msgstr "Rechercher rapports..."
 
@@ -3277,10 +3277,6 @@ msgstr "Échoué "
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/v2/js/views/case_search.js:55
-msgid "add column"
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
@@ -3498,49 +3494,61 @@ msgstr "Nom"
 msgid "Status"
 msgstr "État"
 
-#: corehq/apps/users/static/users/js/roles.js:135
-msgid "New Role"
-msgstr "Nouveau rôle"
-
-#: corehq/apps/users/static/users/js/roles.js:135
+#: corehq/apps/users/static/users/js/roles.js:137
 msgid "Edit Role: "
 msgstr "Modifier rôle:"
 
-#: corehq/apps/users/static/users/js/roles.js:146
+#: corehq/apps/users/static/users/js/roles.js:137
+#, fuzzy
+#| msgid "New Role"
+msgid "View Role: "
+msgstr "Nouveau rôle"
+
+#: corehq/apps/users/static/users/js/roles.js:138
+msgid "New Role"
+msgstr "Nouveau rôle"
+
+#: corehq/apps/users/static/users/js/roles.js:149
 msgid "Delete Role: "
 msgstr "Supprimer rôle:"
 
-#: corehq/apps/users/static/users/js/roles.js:149
+#: corehq/apps/users/static/users/js/roles.js:152
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:31
+#: corehq/apps/users/static/users/js/roles_and_permissions.js:30
+#, fuzzy
+#| msgid "Search Only"
+msgid "View Only"
+msgstr "Chercher uniquement"
+
+#: corehq/apps/users/static/users/js/web_users.js:30
 msgid "No users matched your search."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:33
+#: corehq/apps/users/static/users/js/web_users.js:32
 msgid "This project has no web users. Please invite a web user above."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:61
+#: corehq/apps/users/static/users/js/web_users.js:60
 msgid ""
 "Could not load users. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:153
+#: corehq/apps/users/static/users/js/web_users.js:136
 msgid "Delete request"
 msgstr "Supprimer la requête"
 
-#: corehq/apps/users/static/users/js/web_users.js:154
+#: corehq/apps/users/static/users/js/web_users.js:137
 msgid "Are you sure you want to delete this request?"
 msgstr "Êtes-vous certain de vouloir supprimer cette requête?"
 
-#: corehq/apps/users/static/users/js/web_users.js:161
+#: corehq/apps/users/static/users/js/web_users.js:144
 msgid "Delete invitation"
 msgstr "Supprimer invitation"
 
-#: corehq/apps/users/static/users/js/web_users.js:162
+#: corehq/apps/users/static/users/js/web_users.js:145
 msgid "Are you sure you want to delete this invitation?"
 msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 

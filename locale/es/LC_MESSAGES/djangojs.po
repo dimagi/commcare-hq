@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-25 16:08+0000\n"
+"POT-Creation-Date: 2019-04-03 21:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3256,20 +3256,20 @@ msgstr ""
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:115
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:126
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:130
 msgid "Available Reports"
 msgstr "Reportes Disponibles"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:127
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:131
 msgid "Included Reports"
 msgstr "Reportes Incluidos"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:128
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:132
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
@@ -3412,10 +3412,6 @@ msgstr "Falló"
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
-
-#: corehq/apps/reports/static/reports/v2/js/views/case_search.js:55
-msgid "add column"
-msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
@@ -3649,49 +3645,61 @@ msgstr "Apellido"
 msgid "Status"
 msgstr "Estatus"
 
-#: corehq/apps/users/static/users/js/roles.js:135
-msgid "New Role"
-msgstr "Nuevo Rol"
-
-#: corehq/apps/users/static/users/js/roles.js:135
+#: corehq/apps/users/static/users/js/roles.js:137
 msgid "Edit Role: "
 msgstr "Editar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:146
+#: corehq/apps/users/static/users/js/roles.js:137
+#, fuzzy
+#| msgid "New Role"
+msgid "View Role: "
+msgstr "Nuevo Rol"
+
+#: corehq/apps/users/static/users/js/roles.js:138
+msgid "New Role"
+msgstr "Nuevo Rol"
+
+#: corehq/apps/users/static/users/js/roles.js:149
 msgid "Delete Role: "
 msgstr "Eliminar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:149
+#: corehq/apps/users/static/users/js/roles.js:152
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:31
+#: corehq/apps/users/static/users/js/roles_and_permissions.js:30
+#, fuzzy
+#| msgid "Search Only"
+msgid "View Only"
+msgstr "Sólo Búsqueda"
+
+#: corehq/apps/users/static/users/js/web_users.js:30
 msgid "No users matched your search."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:33
+#: corehq/apps/users/static/users/js/web_users.js:32
 msgid "This project has no web users. Please invite a web user above."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:61
+#: corehq/apps/users/static/users/js/web_users.js:60
 msgid ""
 "Could not load users. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:153
+#: corehq/apps/users/static/users/js/web_users.js:136
 msgid "Delete request"
 msgstr "Eliminar solicitud"
 
-#: corehq/apps/users/static/users/js/web_users.js:154
+#: corehq/apps/users/static/users/js/web_users.js:137
 msgid "Are you sure you want to delete this request?"
 msgstr "¿Está seguro que desea eliminar esta solicitud?"
 
-#: corehq/apps/users/static/users/js/web_users.js:161
+#: corehq/apps/users/static/users/js/web_users.js:144
 msgid "Delete invitation"
 msgstr "Eliminar invitación"
 
-#: corehq/apps/users/static/users/js/web_users.js:162
+#: corehq/apps/users/static/users/js/web_users.js:145
 msgid "Are you sure you want to delete this invitation?"
 msgstr "¿Está seguro que desea eliminar esta invitación?"
 
