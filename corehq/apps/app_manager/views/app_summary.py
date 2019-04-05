@@ -39,24 +39,27 @@ class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
         })
         return context
 
+    def _app_dict(self, app):
+        lang, langs = get_langs(self.request, app)
+        return {
+            'VELLUM_TYPES': VELLUM_TYPES,
+            'form_name_map': _get_name_map(app),
+            'lang': lang,
+            'langs': langs,
+            'app_langs': app.langs,
+            'app_id': app.id,
+            'app_name': app.name,
+            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
+            'app_version': app.version,
+            'latest_app_id': app.master_id,
+        }
+
     @property
     def page_context(self):
         if not self.app or self.app.doc_type == 'RemoteApp':
             raise Http404()
 
-        lang, langs = get_langs(self.request, self.app)
-        return {
-            'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': _get_name_map(self.app),
-            'lang': lang,
-            'langs': langs,
-            'app_langs': self.app.langs,
-            'app_id': self.app.id,
-            'app_name': self.app.name,
-            'read_only': self.app.doc_type == 'LinkedApplication',
-            'app_version': self.app.version,
-            'latest_app_id': self.app.master_id,
-        }
+        return self._app_dict(self.app)
 
     @property
     def page_url(self):
@@ -116,20 +119,6 @@ class FormSummaryDiffView(AppSummaryView):
     def second_app(self):
         return self.get_app(self.kwargs.get('second_app_id'))
 
-    def _app_dict(self, lang, langs, app, modules, errors):
-        return {
-            'VELLUM_TYPES': VELLUM_TYPES,
-            'form_name_map': _get_name_map(app),
-            'app_langs': app.langs,
-            'app_id': app.id,
-            'app_name': app.name,
-            'read_only': app.doc_type == 'LinkedApplication' or app.id != app.master_id,
-            'app_version': app.version,
-            'latest_app_id': app.master_id,
-            'modules': modules,
-            'errors': errors,
-        }
-
     @property
     def page_context(self):
         context = super(FormSummaryDiffView, self).page_context
@@ -140,19 +129,18 @@ class FormSummaryDiffView(AppSummaryView):
             # However, it breaks a bunch of assumptions in the UI
             raise Http404()
 
-        first_app_summary, first_errors = get_app_summary_formdata(
+        first = self._app_dict(self.first_app)
+        first['modules'], first['errors'] = get_app_summary_formdata(
             self.domain, self.first_app, include_shadow_forms=False
         )
-        second_app_summary, second_errors = get_app_summary_formdata(
+        second = self._app_dict(self.second_app)
+        second['modules'], second['errors'] = get_app_summary_formdata(
             self.domain, self.second_app, include_shadow_forms=False
         )
-        lang, langs = get_langs(self.request, self.app)
         context.update({
-            'lang': lang,
-            'langs': langs,
             'app_id': self.app.master_id,
-            'first': self._app_dict(lang, langs, self.first_app, first_app_summary, first_errors),
-            'second': self._app_dict(lang, langs, self.second_app, second_app_summary, second_errors),
+            'first': first,
+            'second': second,
         })
         return context
 
