@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from memoized import memoized
 
-from corehq.apps.userreports.models import UserReportActionLog
+from corehq.apps.userreports.models import DataSourceActionLog
 from dimagi.utils.logging import notify_exception
 from corehq.util.test_utils import unit_testing_only
 
@@ -105,11 +105,11 @@ class IndicatorAdapter(object):
         kwargs = {
             'domain': self.config.domain,
             'indicator_config_id': self.config.get_id,
-            'action': UserReportActionLog.REBUILD,
+            'action': DataSourceActionLog.REBUILD,
             'initiated_by': initiated_by,
             'source': source,
         }
         try:
-            UserReportActionLog.objects.create(**kwargs)
+            DataSourceActionLog.objects.create(**kwargs)
         except Exception:
             notify_exception(None, "Error saving UCR action log", details=kwargs)

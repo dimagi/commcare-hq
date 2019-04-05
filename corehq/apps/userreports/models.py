@@ -83,7 +83,7 @@ def _check_ids(value):
         raise BadValueError("Invalid ID: '{}'".format(value))
 
 
-class UserReportActionLog(models.Model):
+class DataSourceActionLog(models.Model):
     BUILD = 'build'
     MIGRATE = 'migrate'
     REBUILD = 'rebuild'

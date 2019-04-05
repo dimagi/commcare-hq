@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.contrib import admin
-from .models import AsyncIndicator, UserReportActionLog
+from .models import AsyncIndicator, DataSourceActionLog
 
 
 @admin.register(AsyncIndicator)
@@ -22,9 +22,9 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
 
 
 @admin.register(AsyncIndicator)
-class UserReportActionLogAdmin(admin.ModelAdmin):
+class DataSourceActionLogAdmin(admin.ModelAdmin):
 
-    model = UserReportActionLog
+    model = DataSourceActionLog
     list_display = [
         'date_created',
         'domain',
