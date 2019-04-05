@@ -2123,7 +2123,7 @@ class TestExportData(TestCase):
     def test_aww_performance_export(self):
         data = IncentiveReport(
             location='b2',
-            month=datetime(2017,5,1),
+            month=datetime(2017, 5, 1),
             aggregation_level=3
         ).get_excel_data()
 
@@ -2134,22 +2134,22 @@ class TestExportData(TestCase):
                'Eligible for Incentive'],
               ['st1', 'd1', 'b2', 's4', 'a12', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', 5, '0.00%',
+               'No'],
+              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', 17, '7.50%',
                'No'],
               ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', 17, '7.50%',
-               'No'],
-              ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
-               'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a11', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', '0.00%', 16, '90.00%',
                'No'],
+              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', 12, '100.00%',
