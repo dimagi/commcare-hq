@@ -101,10 +101,10 @@ hqDefine('app_manager/js/summary/models',[
         self.firstAppId = ko.observable();  // this gets prepopulated by select2
         self.secondAppId = ko.observable(); // this gets prepopulated by select2
         self.showChangeVersions = ko.computed(function () {
-            return self.firstAppId() != options.visibleAppIds[0] || self.secondAppId() != options.visibleAppIds[1];
+            return self.firstAppId() !== options.visibleAppIds[0] || self.secondAppId() !== options.visibleAppIds[1];
         });
         self.changeVersions = function () {
-            if (self.firstAppId && self.secondAppId()){
+            if (self.firstAppId && self.secondAppId()) {
                 window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
             } else {
                 window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());

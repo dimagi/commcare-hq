@@ -23,16 +23,18 @@ hqDefine('app_manager/js/summary/form_diff',[
         };
         resizeViewPort();
 
-        $(window).resize(function(){ resizeViewPort(); });
+        $(window).resize(function () {
+            resizeViewPort();
+        });
 
         var getModuleIntersection = function () {
             // returns a list of all modules and forms from both versions
 
             // deep copy these datastructures so we don't overwrite the underlying data
-            var allModules = firstModules = JSON.parse(JSON.stringify(initialPageData.get('first.modules'))),
+            var firstModules = JSON.parse(JSON.stringify(initialPageData.get('first.modules'))),
                 secondModules = JSON.parse(JSON.stringify(initialPageData.get('second.modules'))),
                 firstModulesById = _.indexBy(firstModules, 'id'),
-                secondModulesById = _.indexBy(secondModules, 'id');
+                allModules = firstModules;
             // given the list of modules in the first list
             // if the element from the second is in the first, check the forms, and label them
             // otherwise just add the second element
