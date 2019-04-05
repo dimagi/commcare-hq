@@ -164,7 +164,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             if not new_translation:
                 # If the cell corresponding to the label for this question
                 # in this language is empty, fall back to another language
-                for l in self.langs:
+                for l in self.langs and len(self.langs) > 1:
                     key = self._get_col_key(trans_type, l)
                     if key not in row:
                         continue
