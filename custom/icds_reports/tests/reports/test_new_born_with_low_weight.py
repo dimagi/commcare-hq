@@ -297,7 +297,7 @@ class TestNewBornWithLowWeight(TestCase):
                         "low_birth": 0,
                         "all": 8},
                     {
-                        "y": 0.0,
+                        "y": 0.5,
                         "x": 1493596800000,
                         "in_month": 4,
                         "low_birth": 2,
