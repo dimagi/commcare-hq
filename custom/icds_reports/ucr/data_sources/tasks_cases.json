@@ -404,6 +404,7 @@
     },
     "engine_id": "icds-ucr-non-dashboard",
     "sql_column_indexes": [
+      // primarily for MPR reports
       {
         "column_ids": [
           "awc_id",
@@ -419,6 +420,18 @@
       {
         "column_ids": [
           "supervisor_id",
+          "date_turns_one_yr"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "date_turns_one_yr"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
           "date_turns_one_yr"
         ]
       }
