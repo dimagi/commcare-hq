@@ -288,7 +288,7 @@ class SqlData(ReportDataSource):
             except NotImplementedError:
                 sql = 'unknown'
                 query_meta = [
-                    cls.__name__
+                    cls.__class__.__name__
                     for cls in self.query_context().query_meta.values()
                 ]
 
