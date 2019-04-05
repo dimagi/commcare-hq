@@ -1869,4 +1869,3 @@ class Migration(migrations.Migration):
             sql='ALTER TABLE child_health_monthly ADD COLUMN supervisor_id text',
         ),
     ]
-    operations.extend(get_view_migrations())
