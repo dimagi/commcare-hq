@@ -1617,6 +1617,8 @@ options:
 -  "show_full_path" - Display the full path to the location in the
    filter. Defaults to ``false``. The default behavior shows all
    locations as a flat alphabetical list.
+-  "location_type" - Includes locations of this type only. Default is to not
+   filter on location type.
 
 Example assuming "village" is a location ID, which is converted to names
 using the location ``choice_provider``:
@@ -1632,7 +1634,8 @@ using the location ``choice_provider``:
      "choice_provider": {
          "type": "location",
          "include_descendants": true,
-         "show_full_path": true
+         "show_full_path": true,
+         "location_type": "district"
      }
    }
 
