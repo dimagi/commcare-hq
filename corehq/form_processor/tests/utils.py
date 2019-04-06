@@ -164,8 +164,7 @@ run_with_all_backends = functools.partial(
         RunConfig(
             settings={
                 'TESTS_SHOULD_USE_SQL_BACKEND': True,
-            },
-            post_run=lambda *args, **kwargs: args[0].tearDown()
+            }
         ),
     ],
     nose_tags={'all_backends': True}
