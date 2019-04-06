@@ -129,6 +129,7 @@ class TestGatewayFee(TestCase):
                 / self.other_currency.rate_to_default
             )
 
+    @attr(slow=13)
     def test_country_code_fees(self):
         self.create_least_specific_gateway_fees()
         self.create_country_code_gateway_fees()

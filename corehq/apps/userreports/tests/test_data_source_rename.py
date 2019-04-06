@@ -145,6 +145,7 @@ class DataSourceRenamePartitionedTest(TestCase):
         for doc in docs:
             pillow.process_change(doc_to_change(doc))
 
+    @attr(slow=16)
     def test_rename_parititioned_table(self):
         sample_doc1, _ = get_sample_doc_and_indicators()
         sample_doc1['opened_on'] = datetime(2018, 1, 1)

@@ -1,15 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import six
+from nose.plugins.attrib import attr
+
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_REMINDER_DISTRICT, SUBMITTED_NOTIFICATION_MSD, \
     SUBMITTED_CONFIRM, NOT_SUBMITTED_CONFIRM, SUBMITTED_INVALID_QUANTITY
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
-import six
 
 
 class ILSRandRTest(ILSTestScript):
 
+    @attr(slow=15)
     def test_invalid_randr_with_amounts(self):
         with localize('sw'):
             response1 = six.text_type(SUBMITTED_INVALID_QUANTITY)

@@ -61,6 +61,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
         for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()
 
+    @attr(slow=13)
     def test_for_table_id_conflicts(self):
         counts = Counter((ds.table_id, ds.domain) for ds in
                          StaticDataSourceConfiguration.all())
