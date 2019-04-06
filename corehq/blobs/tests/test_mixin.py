@@ -581,7 +581,7 @@ class TestBlobHelper(BaseTestCase):
         name = "test.0"
         data = "\u4500 content"
         obj.put_attachment(data, name)
-        self.assertEqual(obj.fetch_attachment(name), data)
+        self.assertEqual(obj.fetch_attachment(name).decode('utf-8'), data)
 
     def test_put_and_fetch_attachment_from_couch(self):
         obj = self.make_doc(doc={"_attachments": {}})
@@ -626,7 +626,7 @@ class TestBlobHelper(BaseTestCase):
 
     def test_put_and_fetch_attachment_from_blob_db(self):
         obj = self.make_doc(doc={"external_blobs": {}})
-        content = "test blob"
+        content = b"test blob"
         self.assertFalse(self.couch.data)
         obj.put_attachment(content, "file.txt", content_type="text/plain")
         self.assertEqual(obj.fetch_attachment("file.txt"), content)
