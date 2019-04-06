@@ -15,7 +15,6 @@ from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
 from casexml.apps.stock.models import DocDomainMapping
-from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
@@ -363,49 +362,6 @@ class StockState(models.Model):
     class Meta(object):
         app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
-
-
-@register_column_type()
-class StockExportColumn(ComplexExportColumn):
-    """
-    A special column type for case exports. This will export a column
-    for each product/section combo on the provided domain.
-
-    See couchexport/models.
-    """
-    domain = StringProperty()
-
-    @property
-    @memoized
-    def _column_tuples(self):
-        product_ids = [p._id for p in Product.by_domain(self.domain)]
-        return sorted(list(
-            StockState.objects.filter(product_id__in=product_ids).values_list(
-                'product_id',
-                'section_id'
-            ).distinct()
-        ))
-
-    def get_headers(self):
-        for product_id, section in self._column_tuples:
-            yield "{product} ({section})".format(
-                product=Product.get(product_id).name,
-                section=section
-            )
-
-    def get_data(self, value):
-        states = StockState.objects.filter(case_id=value)
-
-        # use a list to make sure the stock states end up
-        # in the same order as the headers
-        values = [None] * len(self._column_tuples)
-
-        for state in states:
-            column_tuple = (state.product_id, state.section_id)
-            if column_tuple in self._column_tuples:
-                state_index = self._column_tuples.index(column_tuple)
-                values[state_index] = state.stock_on_hand
-        return values
 
 
 def close_supply_point_case(domain, supply_point_id):

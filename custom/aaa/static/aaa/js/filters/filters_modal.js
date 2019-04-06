@@ -5,7 +5,7 @@ hqDefine('aaa/js/filters/filters_modal', [
 ], function (
     $,
     ko,
-    _,
+    _
 ) {
     return {
         viewModel: function (params) {
@@ -19,13 +19,18 @@ hqDefine('aaa/js/filters/filters_modal', [
 
             self.resetFilter = function () {
                 _.each(self.filters, function (filter) {
-                    if(filter.hasOwnProperty('resetFilters')) {
+                    if (filter.hasOwnProperty('resetFilters')) {
                         filter.resetFilters();
                     }
                 });
             };
 
             self.applyFilters = function () {
+                _.each(self.filters, function (filter) {
+                    if (filter.hasOwnProperty('applyFilter')) {
+                        filter.applyFilter();
+                    }
+                });
                 self.localStorage.showModal(false);
                 params.callback();
             };

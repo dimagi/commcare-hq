@@ -61,22 +61,20 @@
                 {% endblocktrans %}
             </p>
             {% endif %}
-            {% if request|toggle_enabled:'LANGUAGE_LINKED_MULTIMEDIA' %}
-                {% if app.langs|length > 1%}
-                    <div data-bind="visible: isDefaultLanguage">
-                        <label>
-                            {% blocktrans %}
-                                Use this {{ label }} for all languages
-                            {% endblocktrans %}:
-                            <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
-                        </label>
-                    </div>
-                    <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
+            {% if app.langs|length > 1%}
+                <div data-bind="visible: isDefaultLanguage">
+                    <label>
                         {% blocktrans %}
-                            This {{ label }} is linked to the default language, and can only be modified there.
-                        {% endblocktrans %}
-                    </div>
-                {% endif %}
+                            Use this {{ label }} for all languages
+                        {% endblocktrans %}:
+                        <input type="checkbox" data-bind="enable: enabled, checked: languagesLinked" />
+                    </label>
+                </div>
+                <div data-bind="visible: languagesLinked() && !isDefaultLanguage">
+                    {% blocktrans %}
+                        This {{ label }} is linked to the default language, and can only be modified there.
+                    {% endblocktrans %}
+                </div>
             {% endif %}
         </div>
     </div>

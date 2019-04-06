@@ -29,6 +29,7 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 import six
 
@@ -180,7 +181,7 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
                     message=(
                         "Fetched Exchange Snapshot Error: {}. "
                         "The problem snapshot id: {}".format(
-                            e.message, res['_source']['_id'])
+                            six.text_type(e), res['_source']['_id'])
                     )
                 )
 
@@ -309,8 +310,16 @@ def import_app(request, snapshot):
 
         full_apps = from_project.full_applications(include_builds=False)
         assert full_apps, 'Bad attempt to copy apps from a project without any!'
+        new_doc = None
         for app in full_apps:
-            new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            try:
+                new_doc = from_project.copy_component(app['doc_type'], app.get_id, to_project_name, user)
+            except ReportConfigurationNotFoundError:
+                messages.error(request, _("App was not imported as it "
+                                          "contains references to a user configurable report"))
+
+        if not new_doc:
+            return HttpResponseRedirect(reverse(ProjectInformationView.urlname, args=[snapshot]))
         clear_app_cache(request, to_project_name)
 
         from_project.downloads += 1
@@ -387,7 +396,7 @@ def copy_snapshot(request, snapshot):
 def project_image(request, snapshot):
     project = Domain.get(snapshot)
     if project.image_path:
-        image = project.fetch_attachment(project.image_path)
+        image = project.fetch_attachment(project.image_path, return_bytes=True)
         return HttpResponse(image, content_type=project.image_type)
     else:
         raise Http404()
@@ -396,7 +405,7 @@ def project_image(request, snapshot):
 def project_documentation_file(request, snapshot):
     project = Domain.get(snapshot)
     if project.documentation_file_path:
-        documentation_file = project.fetch_attachment(project.documentation_file_path)
+        documentation_file = project.fetch_attachment(project.documentation_file_path, return_bytes=True)
         return HttpResponse(documentation_file, content_type=project.documentation_file_type)
     else:
         raise Http404()

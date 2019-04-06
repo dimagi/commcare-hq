@@ -44,7 +44,7 @@
         margin-right: 5px;
         margin-bottom: 5px;
 
-        &.active {
+        &.active, &.active:focus, &.active:hover {
             // Styled similarly to .btn-primary
             // Don't bold font because .active often toggles on and off, and we don't want the size to change
             background-color: @call-to-action-mid;

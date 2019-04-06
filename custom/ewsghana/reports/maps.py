@@ -11,6 +11,7 @@ from corehq.apps.reports.commtrack.data_sources import StockStatusBySupplyPointD
 from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.hqwebapp.decorators import use_maps
+from corehq.util.python_compatibility import soft_assert_type_text
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 from memoized import memoized
 import six
@@ -43,6 +44,7 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
         ).filter(location_type__administrative=False).exclude(is_archived=True)
         if 'loc_type' in self.config and self.config['loc_type']:
             if isinstance(self.config['loc_type'], six.string_types):
+                soft_assert_type_text(self.config['loc_type'])
                 self.config['loc_type'] = [self.config['loc_type']]
             locations = locations.filter(location_type__pk__in=self.config['loc_type'])
         return locations
@@ -148,7 +150,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
             loader = getattr(self, '_get_data_%s' % adapter)
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
-        config = dict(self.request.GET.iterlists())
+        config = dict(six.iterlists(self.request.GET))
         for k, v in six.iteritems(config):
             if len(v) == 1:
                 config[k] = v[0]

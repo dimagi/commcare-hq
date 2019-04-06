@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date
 import json
+import six
 
 from django.conf import settings
 from django.contrib import messages
@@ -63,6 +64,7 @@ from corehq.apps.accounting.forms import (
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
     HideInvoiceForm,
+    RemoveAutopayForm,
 )
 from corehq.apps.accounting.exceptions import (
     NewSubscriptionError, InvoiceError, CreditLineError,
@@ -214,6 +216,13 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
         return CreditForm(self.account, None)
 
     @property
+    @memoized
+    def remove_autopay_form(self):
+        if self.request.method == 'POST' and 'remove_autopay' in self.request.POST:
+            return RemoveAutopayForm(self.account, self.request.POST)
+        return RemoveAutopayForm(self.account)
+
+    @property
     def page_context(self):
         return {
             'account': self.account,
@@ -222,9 +231,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                 if self.account.auto_pay_enabled else None
             ),
             'credit_form': self.credit_form,
-            'credit_list': CreditLine.objects.filter(account=self.account),
+            'credit_list': CreditLine.objects.filter(account=self.account, is_active=True),
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
+            'remove_autopay_form': self.remove_autopay_form,
             'subscription_list': [
                 (
                     sub,
@@ -270,6 +280,9 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
                     % e
                 )
                 messages.error(request, "Issue adding credit: %s" % e)
+        elif 'remove_autopay' in self.request.POST:
+            self.remove_autopay_form.remove_autopay_user_from_account()
+            return HttpResponseRedirect(self.page_url)
         return self.get(request, *args, **kwargs)
 
 
@@ -329,7 +342,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
-                errors.extend([e.message])
+                errors.extend([six.text_type(e)])
                 self.subscription_form._errors.setdefault(NON_FIELD_ERRORS, errors)
         return self.get(request, *args, **kwargs)
 
@@ -447,7 +460,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             'credit_form': self.credit_form,
             'can_change_subscription': self.subscription.is_active,
             'change_subscription_form': self.change_subscription_form,
-            'credit_list': CreditLine.objects.filter(subscription=self.subscription),
+            'credit_list': CreditLine.objects.filter(subscription=self.subscription, is_active=True),
             'disable_cancel': has_subscription_already_ended(self.subscription),
             'form': self.subscription_form,
             "subscription_has_ended": (

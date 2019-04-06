@@ -44,9 +44,9 @@ from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
+from corehq.util.python_compatibility import soft_assert_type_text
 from toggle.shortcuts import find_domains_with_toggle_enabled
 import six
-
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its corresponding OpenMRS location UUID
@@ -62,6 +62,7 @@ def parse_params(params, location=None):
     parsed = {}
     for key, value in params.items():
         if isinstance(value, six.string_types) and '{{' in value:
+            soft_assert_type_text(value)
             template = Template(value)
             value = template.render(today=today, location=location_uuid)
         parsed[key] = value

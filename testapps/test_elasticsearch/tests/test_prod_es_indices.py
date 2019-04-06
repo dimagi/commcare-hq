@@ -134,7 +134,7 @@ EXPECTED_PROD_INDICES = [
                         },
                         "comma": {
                             "type": "pattern",
-                            "pattern": "\s*,\s*"
+                            "pattern": r"\s*,\s*"
                         },
                     }
                 }

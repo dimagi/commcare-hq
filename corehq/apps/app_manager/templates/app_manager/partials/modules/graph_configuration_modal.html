@@ -14,11 +14,9 @@
                       <div class="form-group">
                         <label class="col-sm-2 control-label" for="graphType">{% trans "Graph Type" %}</label>
                         <div class="col-sm-4">
-                            <select id="graphType" class="form-control" data-bind="
-                                options: availableGraphTypes,
-                                value: selectedGraphType
-                            ">
-                            </select>
+                            <select-toggle data-apply-bindings="false"
+                                           params="options: availableGraphTypes,
+                                                   value: selectedGraphType"></select-toggle>
                         </div>
                       </div>
                     </form>

@@ -1,0 +1,114 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-ls_timely_home_visits",
+  "data_source_table": "static-home_visit_forms",
+  "config": {
+    "title": "LS - Timely Home Visits (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "date",
+        "required": false,
+        "slug": "submitted_on",
+        "field": "submitted_on",
+        "type": "date",
+        "display": "Submission Date"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "count",
+        "field": "count",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "visit_on_time",
+        "field": "visit_on_time",
+        "transform": { },
+        "calculate_total": true,
+        "type": "field",
+        "display": "visit_on_time"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

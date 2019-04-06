@@ -7,20 +7,14 @@ hqDefine('app_manager/js/summary/case_summary',[
     'app_manager/js/summary/models',
     'app_manager/js/menu',  // enable lang switcher and "Updates to publish" banner
     'hqwebapp/js/knockout_bindings.ko', // popover
+    'hqwebapp/js/components.ko',    // search box
 ], function ($, _, ko, initialPageData, assertProperties, models) {
 
-    var caseTypeModel = function (caseType, showCalculations) {
+    var caseTypeModel = function (caseType) {
         var self = models.contentItemModel(caseType);
 
         self.properties = _.map(caseType.properties, function (property) {
             return models.contentItemModel(property);
-        });
-
-        self.visibleProperties = ko.computed(function () {
-            return _.filter(self.properties, function (property) {
-                // only show case list / detail calculated properties if calculations are turned on
-                return showCalculations() || !property.is_detail_calculation;
-            });
         });
 
         // Convert these from objects to lists so knockout can process more easily
@@ -46,27 +40,32 @@ hqDefine('app_manager/js/summary/case_summary',[
         return self;
     };
 
-    var caseSummaryModel = function (options) {
-        var self = models.contentModel(_.extend(options, {
+    var caseSummaryControlModel = function (viewModels) {
+        var self = {};
+        _.extend(self, models.controlModel({
             query_label: gettext("Filter properties"),
             onQuery: function (query) {
                 query = query.trim().toLowerCase();
-                _.each(self.caseTypes, function (caseType) {
-                    var hasVisible = false;
-                    _.each(caseType.properties, function (property) {
-                        var isVisible = !query || property.name.indexOf(query) !== -1;
-                        property.matchesQuery(isVisible);
-                        if (!self.showCalculations() && (query && isVisible && property.is_detail_calculation)) {
-                            self.showCalculations(true);
-                        }
-                        hasVisible = hasVisible || isVisible;
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.caseTypes, function (caseType) {
+                        var hasVisible = false;
+                        _.each(caseType.properties, function (property) {
+                            var isVisible = !query || property.name.indexOf(query) !== -1;
+                            property.matchesQuery(isVisible);
+                            if (!viewModel.showCalculations() && (query && isVisible && property.is_detail_calculation)) {
+                                viewModel.showCalculations(true);
+                            }
+                            hasVisible = hasVisible || isVisible;
+                        });
+                        caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
                     });
-                    caseType.matchesQuery(hasVisible || !query && !caseType.properties.length);
                 });
             },
             onSelectMenuItem: function (selectedId) {
-                _.each(self.caseTypes, function (caseType) {
-                    caseType.isSelected(!selectedId || selectedId === caseType.name);
+                _.each(viewModels, function (viewModel) {
+                    _.each(viewModel.caseTypes, function (caseType) {
+                        caseType.isSelected(!selectedId || selectedId === caseType.name);
+                    });
                 });
             },
         }));
@@ -81,9 +80,15 @@ hqDefine('app_manager/js/summary/case_summary',[
             self.showCalculations(!self.showCalculations());
         };
 
+        return self;
+    };
+
+    var caseSummaryModel = function (options) {
+        var self = models.contentModel(options);
+
         assertProperties.assertRequired(options, ['case_types']);
         self.caseTypes = _.map(options.case_types, function (caseType) {
-            return caseTypeModel(caseType, self.showCalculations);
+            return caseTypeModel(caseType);
         });
 
         return self;
@@ -113,6 +118,10 @@ hqDefine('app_manager/js/summary/case_summary',[
             read_only: initialPageData.get("read_only"),
         });
 
-        models.initSummary(caseSummaryMenu, caseSummaryContent);
+        var caseSummaryController = caseSummaryControlModel([caseSummaryContent]);
+
+        $("#case-summary-header").koApplyBindings(caseSummaryController);
+        models.initMenu([caseSummaryContent], caseSummaryMenu);
+        models.initSummary(caseSummaryContent, caseSummaryController, "#case-summary");
     });
 });

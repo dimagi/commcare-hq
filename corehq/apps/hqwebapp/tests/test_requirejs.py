@@ -37,11 +37,11 @@ class TestRequireJS(SimpleTestCase):
         cls.requirejs_files = []
 
         def _categorize_file(filename):
-            proc = subprocess.Popen(["grep", "^\s*hqDefine", filename], stdout=subprocess.PIPE)
+            proc = subprocess.Popen(["grep", r"^\s*hqDefine", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             if out:
                 cls.hqdefine_files.append(filename)
-                proc = subprocess.Popen(["grep", "hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(["grep", r"hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
                 if out:
                     cls.requirejs_files.append(filename)

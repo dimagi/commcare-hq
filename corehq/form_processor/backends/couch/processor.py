@@ -17,6 +17,7 @@ from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
+from corehq.util.datadog.utils import case_load_counter, form_load_counter
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog,
@@ -188,6 +189,10 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
+        if lock:
+            # only record metric if locking since otherwise it has been
+            # (most likley) recorded elsewhere
+            case_load_counter("rebuild_case", domain)()
         case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock, wrap=True)
         found = bool(case)
         if not found:
@@ -201,6 +206,7 @@ class FormProcessorCouch(object):
         try:
             assert case.domain == domain, (case.domain, domain)
             forms = FormProcessorCouch.get_case_forms(case_id)
+            form_load_counter("rebuild_case", domain)(len(forms))
             filtered_forms = [f for f in forms if f.is_normal]
             sorted_forms = sorted(filtered_forms, key=lambda f: f.received_on)
 
@@ -235,7 +241,7 @@ class FormProcessorCouch(object):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
     @staticmethod
-    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+    def get_case_with_lock(case_id, lock=False, wrap=False):
 
         def _get_case():
             if wrap:
@@ -244,9 +250,7 @@ class FormProcessorCouch(object):
                 return CommCareCase.get_db().get(case_id)
 
         try:
-            if strip_history:
-                case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
-            elif lock:
+            if lock:
                 try:
                     case, lock = CommCareCase.get_locked_obj(_id=case_id)
                     if case and not wrap:
@@ -270,7 +274,10 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
     from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
-        assert form.domain == domain
+        assert form.domain == domain, (
+            "Domain mismatch on form {} referenced by case {}: {!r} != {!r}"
+            .format(form.form_id, case_id, form.domain, domain)
+        )
 
         case_updates = get_case_updates(form)
         filtered_updates = [u for u in case_updates if u.id == case_id]

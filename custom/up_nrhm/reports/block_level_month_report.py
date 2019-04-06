@@ -61,7 +61,7 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
             denom = 0
             for v in values:
                 if idx == 10:
-                    numbers = re.split('/|\s|%', v['html'])
+                    numbers = re.split(r'/|\s|%', v['html'])
                     sum += int(numbers[0])
                     if int(numbers[1]) > denom:
                         denom = int(numbers[1])

@@ -82,7 +82,6 @@ from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
 from couchforms.models import UnfinishedSubmissionStub
-from dimagi.utils.make_uuid import random_hex
 from six.moves import range
 
 
@@ -251,12 +250,14 @@ class TestDeleteDomain(TestCase):
 
         self.domain.delete()
 
+        # Check that get_credits_by_subscription_and_features does not return the old deactivated credit line
         subscription_credits = CreditLine.get_credits_by_subscription_and_features(
             self.current_subscription,
             feature_type=FeatureType.SMS,
         )
-        self.assertEqual(len(subscription_credits), 1)
-        self.assertEqual(subscription_credits[0].balance, Decimal('0.0000'))
+        self.assertEqual(len(subscription_credits), 0)
+
+        # Check that old credit line has been tranferred to accoun
         account_credits = CreditLine.get_credits_for_account(
             self.current_subscription.account,
             feature_type=FeatureType.SMS,
@@ -332,7 +333,7 @@ class TestDeleteDomain(TestCase):
             aggregate_table_definition = AggregateTableDefinition.objects.create(
                 domain=domain_name,
                 primary_data_source_id=uuid.uuid4(),
-                table_id=random_hex(),
+                table_id=uuid.uuid4().hex,
             )
             secondary_table_definition = SecondaryTableDefinition.objects.create(
                 table_definition=aggregate_table_definition,
@@ -390,7 +391,7 @@ class TestDeleteDomain(TestCase):
             )
             CaseUploadFormRecord.objects.create(
                 case_upload_record=case_upload_record,
-                form_id=random_hex(),
+                form_id=uuid.uuid4().hex,
             )
             self._assert_case_importer_counts(domain_name, 1)
 
@@ -499,7 +500,7 @@ class TestDeleteDomain(TestCase):
             CaseRuleSubmission.objects.create(
                 created_on=datetime.utcnow(),
                 domain=domain_name,
-                form_id=random_hex(),
+                form_id=uuid.uuid4().hex,
                 rule=automatic_update_rule,
             )
             DomainCaseRuleRun.objects.create(domain=domain_name, started_on=datetime.utcnow())
@@ -700,7 +701,7 @@ class TestDeleteDomain(TestCase):
         for domain_name in [self.domain.name, self.domain2.name]:
             AsyncIndicator.objects.create(
                 domain=domain_name,
-                doc_id=random_hex(),
+                doc_id=uuid.uuid4().hex,
                 doc_type='doc_type',
                 indicator_config_ids=[],
             )

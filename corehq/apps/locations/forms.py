@@ -71,6 +71,7 @@ class LocationSelectWidget(forms.Widget):
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
     def value_from_datadict(self, data, files, name):
@@ -87,6 +88,7 @@ class ParentLocWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -98,6 +100,7 @@ class LocTypeWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -249,7 +252,7 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
-            slug_regex = re.compile('^[-_\w\d]+$')
+            slug_regex = re.compile(r'^[-_\w\d]+$')
             if not slug_regex.match(site_code):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'

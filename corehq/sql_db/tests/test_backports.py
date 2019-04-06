@@ -8,6 +8,7 @@ import random
 from collections import Counter
 
 from corehq.sql_db import backports
+from six.moves import range
 
 
 def seed_random(func):

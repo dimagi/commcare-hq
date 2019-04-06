@@ -6,7 +6,17 @@ from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
 
-from custom.aaa.models import AggAwc, AggregationInformation, AggVillage, CcsRecord, Child, Woman
+from corehq.sql_db.connections import get_aaa_db_alias
+from custom.aaa.models import (
+    AggAwc,
+    AggregationInformation,
+    AggVillage,
+    CcsRecord,
+    Child,
+    ChildHistory,
+    Woman,
+    WomanHistory,
+)
 
 
 def update_table(domain, slug, method):
@@ -29,7 +39,8 @@ def update_table(domain, slug, method):
     # implement lock
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()
@@ -42,8 +53,20 @@ def update_child_table(domain):
 
 
 @task
+def update_child_history_table(domain):
+    for agg_query in ChildHistory.aggregation_queries:
+        update_table(domain, ChildHistory.__name__ + agg_query.__name__, agg_query)
+
+
+@task
 def update_woman_table(domain):
     for agg_query in Woman.aggregation_queries:
+        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
+
+
+@task
+def update_woman_history_table(domain):
+    for agg_query in WomanHistory.aggregation_queries:
         update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
 
 
@@ -64,7 +87,8 @@ def update_monthly_table(domain, slug, method, month):
     )
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()

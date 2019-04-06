@@ -142,7 +142,7 @@ urlpatterns = [
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
-        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/(?P<scheduled_report_secret>[\w-]+)/',
+        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps")
 ] + LOCAL_APP_URLS
@@ -155,20 +155,12 @@ if settings.ENABLE_PRELOGIN_SITE:
 
 if settings.DEBUG:
     try:
-        from debug_toolbar import urls as debug_toolbar_urls
+        import debug_toolbar
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include(debug_toolbar.urls)),
         ]
     except ImportError:
         pass
-
-    if 'package_monitor' in settings.INSTALLED_APPS:
-        try:
-            urlpatterns += [
-                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
-            ]
-        except ImportError:
-            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

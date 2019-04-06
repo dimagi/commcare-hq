@@ -20,6 +20,7 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 from six.moves import zip
 from functools import reduce
@@ -240,6 +241,7 @@ class SqlData(ReportDataSource):
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
             if isinstance(string_or_filter, six.string_types):
+                soft_assert_type_text(string_or_filter)
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter

@@ -29,6 +29,7 @@ from corehq.apps.case_search.const import (
 from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
+from corehq.util.python_compatibility import soft_assert_type_text
 
 from . import filters, queries
 
@@ -121,6 +122,7 @@ class CaseSearchES(CaseES):
         """Returns all cases that reference cases with ids: `case_ids`
         """
         if isinstance(case_ids, six.string_types):
+            soft_assert_type_text(case_ids)
             case_ids = [case_ids]
 
         return self.add_query(
@@ -232,7 +234,8 @@ def reverse_index_case_query(case_ids, identifier=None):
 
     """
     if isinstance(case_ids, six.string_types):
-            case_ids = [case_ids]
+        soft_assert_type_text(case_ids)
+        case_ids = [case_ids]
 
     if identifier is None:      # some old relationships don't have an identifier specified
         f = filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), list(case_ids)),
@@ -306,47 +309,3 @@ def flatten_result(hit, include_score=False):
     for key in SYSTEM_PROPERTIES:
         result.pop(key, None)
     return result
-
-
-class CasePropertyAggregationResult(BucketResult):
-
-    @property
-    def raw_buckets(self):
-        return self.result[self.aggregation.field]['values']['buckets']
-
-    @property
-    def buckets(self):
-        """returns a list of buckets rather than a namedtuple since case property values can
-        have non-valid python names
-        """
-        return self.bucket_list
-
-
-class CasePropertyAggregation(TermsAggregation):
-    type = "case_property"
-    result_class = CasePropertyAggregationResult
-
-    def __init__(self, name, field, size=None):
-        self.name = name
-        self.field = field
-        self.body = {
-            "nested": {
-                "path": "case_properties"
-            },
-            "aggs": {
-                field: {
-                    "filter": {
-                        "term": {
-                            "case_properties.key": field,
-                        }
-                    },
-                    "aggs": {
-                        "values": {
-                            "terms": {
-                                "field": "case_properties.value"
-                            }
-                        }
-                    }
-                }
-            }
-        }

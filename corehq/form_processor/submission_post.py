@@ -27,14 +27,14 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
-    has_permission_to_view_report
+from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.util.datadog.utils import form_load_counter
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
@@ -95,6 +95,7 @@ class SubmissionPost(object):
             assert case_db.domain == domain
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+        self.track_load = form_load_counter("form_submission", domain)
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -160,6 +161,7 @@ class SubmissionPost(object):
             return _('Form successfully saved!')
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
+        from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
         from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
@@ -212,6 +214,7 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def run(self):
+        self.track_load()
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
@@ -235,11 +238,16 @@ class SubmissionPost(object):
         submission_type = 'unknown'
         openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
+            if len(xforms) > 1:
+                self.track_load(len(xforms) - 1)
             if self.case_db:
                 case_db_cache = self.case_db
                 case_db_cache.cached_xforms.extend(xforms)
             else:
-                case_db_cache = self.interface.casedb_cache(domain=self.domain, lock=True, deleted_ok=True, xforms=xforms)
+                case_db_cache = self.interface.casedb_cache(
+                    domain=self.domain, lock=True, deleted_ok=True,
+                    xforms=xforms, load_src="form_submission",
+                )
 
             with case_db_cache as case_db:
                 instance = xforms[0]

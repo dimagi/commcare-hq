@@ -12,11 +12,10 @@ import six
 
 class BulkUiTranslation(SimpleTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(BulkUiTranslation, cls).setUpClass()
-        cls.app = Application.new_app("test-domain", "Test App")
-        cls.app.langs = ["en", "fra"]
+    def setUp(self):
+        super(BulkUiTranslation, self).setUp()
+        self.app = Application.new_app("test-domain", "Test App")
+        self.app.langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):
         if data is None:
@@ -36,10 +35,8 @@ class BulkUiTranslation(SimpleTestCase):
         f = self._build_translation_download_file(headers)
 
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-        self.assertEqual(
-            dict(translations), dict()
-        )
-        self.assertTrue(len(error_properties) == 0)
+        self.assertEqual(dict(translations), {})
+        self.assertEqual(len(error_properties), 0)
 
     def test_translation(self):
         headers = (('translations', ('property', 'en', 'fra')),)

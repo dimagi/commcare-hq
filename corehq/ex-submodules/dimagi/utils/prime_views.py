@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+
 def prime_views(pool_size):
     """
     Prime the views so that a very large import doesn't cause the index

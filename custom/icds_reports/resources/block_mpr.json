@@ -1186,7 +1186,7 @@
   "referral_services": {
     "data_source": [
       {
-        "id": "static-{domain}-static-mpr_10a_person_cases",
+        "id": "static-{domain}-static-mpr_10ab_person_cases",
         "date_filter_field": "last_referral_date",
         "columns": [
           {
@@ -1307,13 +1307,7 @@
               "operator": "!=",
               "value": 0
             }
-          }
-        ]
-      },
-      {
-        "id": "static-{domain}-static-mpr_10b_person_cases",
-        "date_filter_field": "last_referral_date",
-        "columns": [
+          },
           {
             "column_name": "referred_bleeding",
             "column_in_report": "referred_bleeding_all",

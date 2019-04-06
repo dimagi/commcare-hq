@@ -384,7 +384,7 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     try:
         context = get_download_context(download_id, require_result=True)
     except TaskFailedError as e:
-        notify_exception(request, message=e.message)
+        notify_exception(request, message=six.text_type(e))
         return HttpResponseServerError()
 
     return render(request, template, context)
@@ -426,7 +426,7 @@ def _upload_fixture_api(request, domain):
     try:
         excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
-        return UploadFixtureAPIResponse('fail', e.message)
+        return UploadFixtureAPIResponse('fail', six.text_type(e))
 
     with excel_file as filename:
         try:

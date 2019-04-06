@@ -50,5 +50,5 @@ class DomainAPI(View):
         req = args[0]
         if not self.allowed_domain(req.domain):
             raise Http404
-        ret =  super(DomainAPI, self).dispatch(*args, **kwargs)
+        ret = super(DomainAPI, self).dispatch(*args, **kwargs)
         return ret

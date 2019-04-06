@@ -71,12 +71,12 @@ Add the following to localsettings.py
 """
 from __future__ import unicode_literals
 from __future__ import absolute_import
-from io import BytesIO
+from io import BytesIO, SEEK_SET, TextIOWrapper
 
 from django.conf import settings
 from django.test import TestCase
 
-from corehq.blobs.s3db import S3BlobDB
+from corehq.blobs.s3db import S3BlobDB, BlobStream
 from corehq.blobs.tests.util import new_meta, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
 from corehq.util.test_utils import trap_extra_setup
@@ -105,3 +105,85 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
         self.assertEqual(meta2.content_length, meta.content_length)
         with db2.get(meta2.key) as blob2:
             self.assertEqual(blob2.read(), b"content")
+
+
+class TestBlobStream(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestBlobStream, cls).setUpClass()
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+        cls.db = TemporaryS3BlobDB(config)
+        cls.meta = cls.db.put(BytesIO(b"bytes"), meta=new_meta())
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        super(TestBlobStream, cls).tearDownClass()
+
+    def test_text_io_wrapper(self):
+        meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=new_meta())
+        with self.db.get(key=meta.key) as fh:
+            # universl unewline mode: \r -> \n
+            textio = TextIOWrapper(fh, encoding="utf-8")
+            self.assertEqual(list(textio), ["x\n", "y\n", "z\n"])
+
+    def test_checks(self):
+        with self.get_blob() as fh:
+            self.assertTrue(fh.readable())
+            self.assertFalse(fh.seekable())
+            self.assertFalse(fh.writable())
+            self.assertFalse(fh.isatty())
+
+    def test_tell(self):
+        with self.get_blob() as fh:
+            self.assertEqual(fh.tell(), 0)
+            self.assertEqual(fh.read(2), b"by")
+            self.assertEqual(fh.tell(), 2)
+
+    def test_seek(self):
+        with self.get_blob() as fh:
+            self.assertEqual(fh.seek(0), 0)
+            fh.read(2)
+            self.assertEqual(fh.seek(2, SEEK_SET), 2)
+
+    def test_write(self):
+        with self.get_blob() as fh, self.assertRaises(IOError):
+            fh.write(b"def")
+
+    def test_truncate(self):
+        with self.get_blob() as fh, self.assertRaises(IOError):
+            fh.truncate()
+
+    def test_fileno(self):
+        with self.get_blob() as fh, self.assertRaises(IOError):
+            fh.fileno()
+
+    def test_closed(self):
+        with self.get_blob() as fh:
+            self.assertFalse(fh.closed)
+        self.assertTrue(fh.closed)
+
+    def test_close(self):
+        fake = FakeStream()
+        self.assertEqual(fake.close_calls, 0)
+        BlobStream(fake, fake, None).close()
+        self.assertEqual(fake.close_calls, 1)
+
+    def test_close_on_exit_context(self):
+        fake = FakeStream()
+        self.assertEqual(fake.close_calls, 0)
+        with BlobStream(fake, fake, None):
+            pass
+        self.assertEqual(fake.close_calls, 1)
+
+    def get_blob(self):
+        return self.db.get(key=self.meta.key)
+
+
+class FakeStream(object):
+    close_calls = 0
+
+    def close(self):
+        self.close_calls += 1

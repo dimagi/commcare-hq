@@ -122,7 +122,7 @@ class Command(BaseCommand):
             include_docs=True
         )
         for dup in dups:
-            match = re.match('Form is a duplicate of another! \((.*)\)', dup.problem or "")
+            match = re.match(r'Form is a duplicate of another! \((.*)\)', dup.problem or "")
             if match:
                 orig_id = match.groups()[0]
                 try:

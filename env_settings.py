@@ -33,7 +33,7 @@ ES_META = {
                     },
                     "comma": {
                         "type": "pattern",
-                        "pattern": "\s*,\s*"
+                        "pattern": r"\s*,\s*"
                     },
                 }
             }

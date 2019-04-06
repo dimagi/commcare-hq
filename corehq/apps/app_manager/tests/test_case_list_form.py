@@ -427,6 +427,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             suite
         )
 
+
 class CaseListFormFormTests(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'case_list_form'
 

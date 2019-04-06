@@ -55,6 +55,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         json['meta'] = self.meta
         return json
 
+
 def update_settings(es, index, settings_dict):
     return es.indices.put_settings(settings_dict, index=index)
 

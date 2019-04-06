@@ -8,7 +8,8 @@ from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from custom.icds_reports.utils.mixins import ExportableMixin
-from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent
+from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
+    phone_number_function
 
 
 class DemographicsChildHealth(ExportableMixin, SqlData):
@@ -32,6 +33,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
             columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
+                format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
         return columns
@@ -50,6 +52,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -117,6 +120,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     @property
@@ -288,7 +292,7 @@ class DemographicsExport(ExportableMixin):
             },
             {
                 'header': (
-                    'Total number of beneficiaries (Children under 6 years old,  pregnant women and lactating '
+                    'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating '
                     'women, alive and seeking services) who have an Aadhaar ID'
                 ),
                 'slug': 'person_has_aadhaar'

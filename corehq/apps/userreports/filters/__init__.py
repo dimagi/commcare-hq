@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 from corehq.apps.userreports.operators import OPERATOR_DISPLAY
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.userreports.const import NAMED_FILTER_PREFIX
+
+
 class Filter(object):
     """
     Base filter class

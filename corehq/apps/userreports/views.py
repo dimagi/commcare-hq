@@ -7,7 +7,6 @@ import functools
 import json
 import os
 import tempfile
-import uuid
 import re
 
 from django.conf import settings
@@ -50,13 +49,13 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
-from corehq.apps.app_manager.models import Application, Form
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.reports.models import ReportConfig
+from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -78,7 +77,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     UserQueryError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -435,7 +434,7 @@ class EditReportInBuilder(View):
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
-                messages.error(request, e.message)
+                messages.error(request, six.text_type(e))
                 return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
@@ -695,7 +694,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
+        report_data = json.loads(six.moves.urllib.parse.unquote(request.body.decode('utf-8')))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore user filters
@@ -864,7 +863,8 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store_for_doc_type(domain, usable_type)
+        document_store = get_document_store_for_doc_type(
+            domain, usable_type, load_source="eval_expression")
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -911,18 +911,6 @@ def evaluate_data_source(request, domain):
     docs_id = request.POST['docs_id']
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
-        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
-        rows = []
-        for doc in document_store.iter_documents(docs_id):
-            for row in data_source.get_all_values(doc):
-                rows.append({i.column.database_column_name: i.value for i in row})
-        return JsonResponse(data={
-            'rows': rows,
-            'columns': [
-                column.database_column_name for column in data_source.get_columns()
-            ],
-        })
     except DataSourceConfigurationNotFoundError:
         return JsonResponse(
             {"error": _("Data source with id {} not found in domain {}.").format(
@@ -930,6 +918,45 @@ def evaluate_data_source(request, domain):
             )},
             status=404,
         )
+
+    docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+    document_store = get_document_store_for_doc_type(
+        domain, data_source.referenced_doc_type, load_source="eval_data_source")
+    rows = []
+    docs = 0
+    for doc in document_store.iter_documents(docs_id):
+        docs += 1
+        for row in data_source.get_all_values(doc):
+            rows.append({i.column.database_column_name.decode(): i.value for i in row})
+
+    if not docs:
+        return JsonResponse(data={'error': _('No documents found. Check the IDs and try again.')}, status=404)
+
+    data = {
+        'rows': rows,
+        'db_rows': [],
+        'columns': [
+            column.database_column_name.decode() for column in data_source.get_columns()
+        ],
+    }
+
+    try:
+        adapter = get_indicator_adapter(data_source)
+        table = adapter.get_table()
+        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+        db_rows = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in query
+        ]
+        data['db_rows'] = db_rows
+    except ProgrammingError as e:
+        err = translate_programming_error(e)
+        if err and isinstance(err, TableNotFoundWarning):
+            data['db_error'] = _("Datasource table does not exist. Try rebuilding the datasource.")
+        else:
+            data['db_error'] = _("Error querying database for data.")
+
+    return JsonResponse(data=data)
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
@@ -1286,7 +1313,7 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@login_or_basic
+@api_auth
 @require_permission(Permissions.view_reports)
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
@@ -1312,7 +1339,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
-        return HttpResponse(e.message, status=400)
+        return HttpResponse(six.text_type(e), status=400)
 
     q = q.filter_by(**params.keyword_filters)
     for sql_filter in params.sql_filters:

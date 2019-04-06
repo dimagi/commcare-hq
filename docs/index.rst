@@ -28,6 +28,7 @@ Welcome to CommCareHQ's documentation!
    testing
    forms
    management_commands
+   migrations
    commtrack
    cloudcare
    translations
@@ -43,6 +44,9 @@ Welcome to CommCareHQ's documentation!
    caching_and_memoization
    restore-logic
    couchdb
+   celery
+   ucr
+   js-guide/README
 
 Tips for documenting
 --------------------

@@ -6,6 +6,9 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bind="click: function() {localStorage.showModal(false)}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                     <!-- ko if: !hideFilter('beneficiary-type-filter') -->
                         <beneficiary-type-filter
                                 params="

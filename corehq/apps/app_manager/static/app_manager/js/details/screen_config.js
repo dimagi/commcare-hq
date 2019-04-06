@@ -789,36 +789,33 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 });
 
                 self.save = function () {
-                    var i;
-                    //Only save if property names are valid
-                    var containsTab = false;
-                    var columns = self.columns();
-                    for (i = 0; i < columns.length; i++) {
-                        var column = columns[i];
+                    // Only save if property names are valid
+                    var errors = [],
+                        containsTab = false;
+                    _.each(self.columns(), function (column) {
                         column.saveAttempted(true);
-                        if (!column.isTab) {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your property names"));
-                                return;
-                            }
-                        } else {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your tabs"));
-                                return;
-                            }
+                        if (column.isTab) {
                             containsTab = true;
+                            if (column.showWarning()) {
+                                errors.push(gettext("There is an error in your tab: ") + column.field.value);
+                            }
+                        } else if (column.showWarning()) {
+                            errors.push(gettext("There is an error in your property name: ") + column.field.value);
+                        }
+                    });
+                    if (containsTab) {
+                        if (!self.columns()[0].isTab) {
+                            errors.push(gettext("All properties must be below a tab."));
                         }
                     }
-                    if (containsTab) {
-                        if (!columns[0].isTab) {
-                            alert(gettext("All properties must be below a tab"));
-                            return;
-                        }
+                    if (errors.length) {
+                        alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
+                        return;
                     }
 
                     if (self.containsSortConfiguration) {
                         var sortRows = self.config.sortRows.sortRows();
-                        for (i = 0; i < sortRows.length; i++) {
+                        for (var i = 0; i < sortRows.length; i++) {
                             var row = sortRows[i];
                             if (!row.hasValidPropertyName()) {
                                 row.showWarning(true);
@@ -1047,7 +1044,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             containsParentConfiguration: columnType === "short",
                             containsFixtureConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('FIXTURE_CASE_SELECTION')),
                             containsFilterConfiguration: columnType === "short",
-                            containsCaseListLookupConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP')),
+                            containsCaseListLookupConfiguration: (columnType === "short" && (hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_LOOKUP') || hqImport('hqwebapp/js/toggles').toggleEnabled('BIOMETRIC_INTEGRATION'))),
                             // TODO: Check case_search_enabled_for_domain(), not toggle. FB 225343
                             containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType === "short",
@@ -1227,30 +1224,5 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
 ko.bindingHandlers.addSaveButtonListener = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         bindingContext.$parent.initSaveButtonListeners($(element).parent());
-    },
-};
-
-// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-// connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-    init: function (element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            handle: '.grip',
-            cursor: 'move',
-            update: function (event, ui) {
-                //retrieve our actual data item
-                var item = ko.dataFor(ui.item.get(0));
-                //figure out its new position
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                //remove the item and add it back in the right spot
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);
-                }
-                ui.item.remove();
-                item.notifyButton();
-            },
-        });
     },
 };

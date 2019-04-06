@@ -4,6 +4,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
+from corehq.util.python_compatibility import soft_assert_type_text
 import six
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
@@ -53,6 +54,8 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         self.form = form
         self.app = app
         if case_id_or_case is None or isinstance(case_id_or_case, six.string_types):
+            if case_id_or_case is not None:
+                soft_assert_type_text(case_id_or_case)
             self.case_id = case_id_or_case
             self._case = None
         else:

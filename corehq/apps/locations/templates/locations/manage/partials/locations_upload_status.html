@@ -21,9 +21,9 @@
 {% else %}
     <div class="alert alert-danger">
         <h3>{% trans "Upload failed! Details:" %}</h3>
-            {% for e in result.errors %}
-            <p>{{ e }}</p>
-            {% endfor %}
-        </div>
+        {% for e in result.errors %}
+        <p>{{ e }}</p>
+        {% endfor %}
+    </div>
 {% endif %}
 {% endblock results %}

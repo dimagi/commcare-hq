@@ -11,6 +11,8 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+
+from django.utils import html
 from six.moves.urllib.parse import urlparse
 
 from django.conf import settings
@@ -86,6 +88,7 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -291,7 +294,7 @@ def server_up(req):
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
-            '{}: {}'.format(check, status.msg)
+            html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
         create_datadog_event(
@@ -299,7 +302,7 @@ def server_up(req):
             alert_type='error', aggregation_key='serverup',
         )
         status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
-        return HttpResponse('<br>'.join(status_messages), status=500)
+        return HttpResponse(''.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
@@ -368,6 +371,7 @@ def _login(req, domain_name):
     custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
     if custom_landing_page:
         if isinstance(custom_landing_page, six.string_types):
+            soft_assert_type_text(custom_landing_page)
             template_name = custom_landing_page
         else:
             template_name = custom_landing_page.get(req.get_host())
@@ -393,15 +397,15 @@ def _login(req, domain_name):
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
 
-    demo_workflow_ab = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW, req)
+    demo_workflow_ab_v2 = ab_tests.SessionAbTest(ab_tests.DEMO_WORKFLOW_V2, req)
 
     if settings.IS_SAAS_ENVIRONMENT:
-        context['demo_workflow_ab'] = demo_workflow_ab.context
+        context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
-        demo_workflow_ab.update_response(response)
+        demo_workflow_ab_v2.update_response(response)
 
     return response
 
@@ -692,7 +696,7 @@ class BugReportView(View):
 
         # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search('@dimagi\.com$', report['username']) and not is_icds_env:
+        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
@@ -1239,7 +1243,7 @@ def redirect_to_dimagi(endpoint):
     def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
-            'softlayer',
+            'india',
             'staging',
             'changeme',
             'localdev',

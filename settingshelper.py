@@ -139,10 +139,10 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return [self._make_couchdb_tuple(row) for row in self.couchdb_apps]
 
     def _make_couchdb_tuple(self, row):
-        if isinstance(row, six.string_types):
-            app_label, postfix = row, None
-        else:
+        if isinstance(row, tuple):
             app_label, postfix = row
+        else:
+            app_label, postfix = row, None
         if postfix:
             if postfix in self.db_urls_by_prefix:
                 url = self.db_urls_by_prefix[postfix]
@@ -270,7 +270,7 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
 
 def get_release_name(base_dir, server_env):
     release_dir = base_dir.split('/')[-1]
-    if re.match('\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
+    if re.match(r'\d{4}-\d{2}-\d{2}_\d{2}.\d{2}', release_dir):
         release = "{}-{}-deploy".format(release_dir, server_env)
     else:
         release = fetch_git_sha(base_dir)

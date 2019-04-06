@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+
+
 def process_media_attribute(attribute, resp, val):
     if val:
         val = interpolate_media_path(val)

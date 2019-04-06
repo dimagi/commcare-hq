@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
     LOCATION, DataSourceColumnChoiceProvider, LocationChoiceProvider, UserChoiceProvider, \
     USER, OWNER, OwnerChoiceProvider, MultiFieldDataSourceColumnChoiceProvider
-from corehq.apps.userreports.reports.filters.values import(
+from corehq.apps.userreports.reports.filters.values import (
     dynamic_choice_list_url,
     NONE_CHOICE,
     SHOW_ALL_CHOICE,

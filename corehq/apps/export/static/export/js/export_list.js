@@ -204,7 +204,7 @@ hqDefine("export/js/export_list", [
         });
 
         self.totalItems = ko.observable(0);
-        self.itemsPerPage = ko.observable(25);
+        self.itemsPerPage = ko.observable();
         self.goToPage = function (page) {
             self.isLoadingPage(true);
             $.ajax({
@@ -324,17 +324,19 @@ hqDefine("export/js/export_list", [
         self.$emwfFormFilter = $("#id_emwf_form_filter");
 
         // Data from filter form
-        self.emwfCaseFilter = ko.observableArray();
-        self.emwfFormFilter = ko.observableArray();
-        self.dateRange = ko.observable();
-        self.days = ko.observable();
+        self.emwfCaseFilter = ko.observableArray().extend({notify: 'always'});
+        self.emwfFormFilter = ko.observableArray().extend({notify: 'always'});
+        self.dateRange = ko.observable().extend({notify: 'always'});
+        self.days = ko.observable().extend({notify: 'always'});
         self.startDate = ko.observable().extend({
+            notify: 'always',
             pattern: {
                 message: gettext('Invalid date format'),
                 params: '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$',
             },
         });
         self.endDate = ko.observable().extend({
+            notify: 'always',
             pattern: {
                 message: gettext('Invalid date format'),
                 params: '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$',
@@ -344,7 +346,7 @@ hqDefine("export/js/export_list", [
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
         self.filterModalExportId = ko.observable();
-        self.locationRestrictions = ko.observableArray([]);  // List of location names. Export will be restricted to these locations.
+        self.locationRestrictions = ko.observableArray([]).extend({notify: 'always'});  // List of location names. Export will be restricted to these locations.
         self.formSubmitErrorMessage = ko.observable('');
         self.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
         self.isSubmittingForm = ko.observable(false);

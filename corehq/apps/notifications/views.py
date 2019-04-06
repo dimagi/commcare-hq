@@ -56,7 +56,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
         try:
             notification.set_as_last_seen(self.request.user)
         except IllegalModelStateException as e:
-            raise JSONResponseException(e.message)
+            raise JSONResponseException(six.text_type(e))
         return {
             'activated': notification.activated
         }

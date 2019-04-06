@@ -79,6 +79,7 @@ class ExportableMixin(object):
         order_by = []
         for column in order_by_columns:
             order_by.append(OrderBy(column.slug))
+        order_by.append(OrderBy('aggregation_level'))
         return order_by
 
     def to_export(self, format, location):

@@ -189,7 +189,10 @@ def location_map_case_id(user):
         user_id = user.user_id
         if isinstance(user_id, six.text_type) and six.PY2:
             user_id = user_id.encode('utf8')
-        return uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
+        case_id = uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
+        if six.PY2:
+            case_id = case_id.decode('utf-8')
+        return case_id
     return 'user-owner-mapping-' + user.user_id
 
 
@@ -220,7 +223,7 @@ def encode_if_needed(val):
 
 
 def _fetch_ending_numbers(s):
-    matcher = re.compile("\d*$")
+    matcher = re.compile(r"\d*$")
     return matcher.search(s).group()
 
 
@@ -228,7 +231,7 @@ def generate_code(object_name, existing_codes):
     if not object_name:
         object_name = 'no name'
 
-    matcher = re.compile("[\W\d]+")
+    matcher = re.compile(r"[\W\d]+")
     name_slug = matcher.sub(
         '_',
         unicode_slug(object_name.lower())

@@ -5,6 +5,7 @@ import sys
 import datetime
 from functools import cmp_to_key
 
+import six
 from iso8601 import iso8601
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
@@ -32,11 +33,12 @@ from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL
 )
+from ddtrace import tracer
 from django.utils.translation import ugettext as _
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter
-reconciliation_soft_assert = soft_assert('jroth@dimagi.com', include_breadcrumbs=True)
+reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
 
 
 def _validate_length(length):
@@ -319,14 +321,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def reconcile_transactions_if_necessary(self):
         if self.case.check_transaction_order():
             return False
-        datadog_counter("commcare.form_processor.sql.reconciling_transactions")
+        datadog_counter("commcare.form_processor.sql.reconcile_transactions")
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:
-            reconciliation_soft_assert(False, "ReconciliationError: %s" % e.message)
+            reconciliation_soft_assert(False, "ReconciliationError: %s" % six.text_type(e))
 
         return True
 
+    @tracer.wrap(name='form_processor.sql.reconcile_transactions')
     def reconcile_transactions(self):
         transactions = self.case.transactions
         sorted_transactions = sorted(

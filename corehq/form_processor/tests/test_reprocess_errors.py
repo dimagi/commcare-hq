@@ -146,7 +146,7 @@ class ReprocessSubmissionStubTests(TestCase):
         self.assertIsNone(error_forms[0].orig_id)
         self.assertEqual(error_forms[0].form_id, stubs[0].xform_id)
 
-        self.assertEqual(0, len(self.casedb.get_case_ids_in_domain(self.domain)))
+        self.assertEqual(0, len(self.casedb.get_case_ids_in_domain()))
 
         result = reprocess_unfinished_stub(stubs[0])
         self.assertEqual(1, len(result.cases))

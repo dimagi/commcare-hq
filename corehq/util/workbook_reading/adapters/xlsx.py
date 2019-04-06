@@ -34,7 +34,7 @@ def open_xlsx_workbook(filename):
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
         except InvalidFileException as e:
-            raise SpreadsheetFileInvalidError(e.message)
+            raise SpreadsheetFileInvalidError(six.text_type(e))
         except BadZipfile as e:
             f.seek(0)
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
@@ -66,10 +66,19 @@ class _XLSXWorksheetAdaptor(object):
         # self._worksheet.max_row is the max_row with data OR WITH FORMATTING
         # That means that if formatting is applied, that will be the xlsx row limit
         # Note that this is 1-indexed for consistency with openpyxl
+        MAX_BLANK_ROWS = 1000
+
         max_row = 1
-        for i, row in enumerate(self._worksheet.iter_rows(), 1):
-            if any(cell.value for cell in row):
+        blank_rows = 0
+        for i, row in enumerate(self._worksheet.values, 1):
+            if any(v for v in row):
                 max_row = i
+                blank_rows = 0
+            else:
+                blank_rows += 1
+            if blank_rows >= MAX_BLANK_ROWS:
+                # if this threshold is reached, assume there is no more data in the sheet
+                return max_row
         return max_row
 
     def iter_rows(self):

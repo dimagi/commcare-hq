@@ -53,7 +53,7 @@
                 {% trans "Language(s)" %}
             </label>
             <div class="{% css_field_class %} controls">
-                <select multiple name="langs" class="form-control ko-select2">
+                <select multiple name="langs" class="form-control hqwebapp-select2">
                     {% for lang in app.langs %}
                         {% if lang != app.default_language %}
                             <option{% if lang in selected_langs %} selected{% endif %}>{{ lang }}</option>
@@ -67,7 +67,7 @@
                 {% trans "Media Type(s)" %}
             </label>
             <div class="{% css_field_class %} controls">
-                <select multiple name="media_types" class="form-control ko-select2">
+                <select multiple name="media_types" class="form-control hqwebapp-select2">
                     {% for type, name in media_types.items %}
                         <option{% if type in selected_media_types %} selected{% endif %} value="{{ type }}">{{ name }}</option>
                     {% endfor %}

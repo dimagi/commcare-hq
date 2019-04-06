@@ -30,9 +30,13 @@ DATABASES = {
     'ucr': _get_db_config('ucr'),
     'other': _get_db_config('other')
 }
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default'
+}
 
 
-@override_settings(DATABASES=DATABASES)
+@override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
     @override_settings(UCR_DATABASE_URL='ucr-url', REPORTING_DATABASES=None)
     def test_legacy_settings(self):

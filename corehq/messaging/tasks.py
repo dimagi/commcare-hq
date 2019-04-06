@@ -12,6 +12,7 @@ from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from corehq.util.celery_utils import no_result_task
+from corehq.util.datadog.utils import case_load_counter
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 from django.db.models import Q
@@ -52,6 +53,7 @@ def _sync_case_for_messaging(domain, case_id):
         sms_tasks.clear_case_caches(case)
     except CaseNotFound:
         case = None
+    case_load_counter("messaging_sync", domain)()
 
     if case is None or case.is_deleted:
         sms_tasks.delete_phone_numbers_for_owners([case_id])
@@ -78,6 +80,7 @@ def _get_cached_rule(domain, rule_id):
 
 
 def _sync_case_for_messaging_rule(domain, case_id, rule_id):
+    case_load_counter("messaging_rule_sync", domain)()
     case = CaseAccessors(domain).get_case(case_id)
     rule = _get_cached_rule(domain, rule_id)
     if rule:

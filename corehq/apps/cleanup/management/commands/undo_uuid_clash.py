@@ -54,7 +54,7 @@ def undo_form_edits(form_tuples, logger):
     operation_date = datetime.utcnow()
     for live_form, deprecated_form in form_tuples:
         # undo corehq.form_processor.parsers.form.apply_deprecation
-        case_cache = CaseDbCacheSQL(live_form.domain)
+        case_cache = CaseDbCacheSQL(live_form.domain, load_src="undo_form_edits")
         live_case_updates = get_case_updates(live_form)
         deprecated_case_updates = get_case_updates(deprecated_form)
         case_cache.populate(

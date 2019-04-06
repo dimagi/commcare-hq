@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
     def validate_since(self, since):
         if since:
-            if not re.match('^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$', since):
+            if not re.match(r'^\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d$', since):
                 raise CommandError("Please enter UTC timestamp for --since in the format: YYYY-MM-DD HH:MM:SS")
             return parse(since)
         else:

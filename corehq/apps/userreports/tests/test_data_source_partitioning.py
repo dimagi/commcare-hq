@@ -14,7 +14,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.case import get_case_pillow
 
 
-EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'
+EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_8e3a5ee0a4309ee52345c2cdcbb1215a_'
 
 
 class DataSourceConfigurationPartitionTest(TestCase):

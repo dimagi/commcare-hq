@@ -10,6 +10,8 @@ import six
 from six.moves import zip
 from django.core.files.uploadedfile import UploadedFile
 
+from corehq.util.python_compatibility import soft_assert_type_text
+
 
 class InvalidExcelFileException(Exception):
     pass
@@ -70,12 +72,15 @@ class IteratorJSONReader(object):
         for field, value in zip(self.headers, [''] * len(self.headers)):
             if not isinstance(field, six.string_types):
                 raise HeaderValueError('Field %s is not a string.' % field)
+            soft_assert_type_text(field)
             self.set_field_value(obj, field, value)
         return list(obj)
 
     @classmethod
     def set_field_value(cls, obj, field, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8')
+        if isinstance(value, six.text_type):
             value = value.strip()
         # try dict
         try:
@@ -258,6 +263,7 @@ def format_header(path, value):
     s = path[0]
     for p in path[1:]:
         if isinstance(p, six.string_types):
+            soft_assert_type_text(p)
             s += ': %s' % p
         elif isinstance(p, int):
             s += ' %s' % (p + 1)
@@ -288,6 +294,7 @@ def alphanumeric_sort_key(key):
 
 def enforce_string_type(value):
     if isinstance(value, six.string_types):
+        soft_assert_type_text(value)
         return value
 
     if isinstance(value, six.integer_types):

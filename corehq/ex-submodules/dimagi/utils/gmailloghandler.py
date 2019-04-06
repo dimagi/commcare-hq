@@ -7,6 +7,7 @@ import smtplib
 # of sending email alerts from a gmail account (the built-in email
 # handler doesn't support TLS)
 
+
 class TLSSMTPHandler(logging.handlers.SMTPHandler):
     def emit(self, record):
         headers = []
@@ -30,6 +31,7 @@ class TLSSMTPHandler(logging.handlers.SMTPHandler):
         server.login(self.username, self.password)
         server.sendmail(self.fromaddr, self.toaddrs, '%s\r\n\r\n%s' % (header, content))
         server.quit()
+
 
 def example_setup():
     root = logging.getLogger()

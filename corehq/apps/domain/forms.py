@@ -31,7 +31,7 @@ from django.db import transaction
 from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
                                  ImageField, IntegerField, Field)
-from django.forms.widgets import  Select
+from django.forms.widgets import Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -1677,7 +1677,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
         except Exception as e:
             log_accounting_error(
                 "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
-                % (self.domain, self.plan_version.plan.name, e.message),
+                % (self.domain, self.plan_version.plan.name, six.text_type(e)),
                 show_stack_trace=True,
             )
             return False

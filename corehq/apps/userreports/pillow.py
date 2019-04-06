@@ -1,13 +1,13 @@
 from __future__ import absolute_import
-
 from __future__ import division
 from __future__ import unicode_literals
+
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 
 import six
-from alembic.autogenerate.api import compare_metadata
+import sqlalchemy
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import LOCATION as LOCATION_TOPIC
@@ -17,22 +17,16 @@ from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
 )
 from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.rebuild import get_table_diffs, get_tables_rebuild_migrate, migrate_tables
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import metadata
+from corehq.apps.userreports.sql import get_indicator_table, get_metadata
+from corehq.apps.userreports.sql.util import table_exists
 from corehq.apps.userreports.tasks import rebuild_indicators
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_legacy_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
-from dimagi.utils.logging import notify_exception
-from fluff.signals import (
-    migrate_tables,
-    get_migration_context,
-    get_tables_to_migrate,
-    get_tables_to_rebuild,
-    reformat_alembic_diffs
-)
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -154,9 +148,8 @@ class ConfigurableReportTableManagerMixin(object):
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
-            sql_adapter = get_indicator_adapter(adapter.config)
             try:
-                tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+                tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
             except BadSpecError:
                 _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
                 _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
@@ -165,15 +158,42 @@ class ConfigurableReportTableManagerMixin(object):
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
 
         for engine_id, table_map in tables_by_engine.items():
-            engine = connection_manager.get_engine(engine_id)
             table_names = list(table_map)
-            with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_names)
-                raw_diffs = compare_metadata(migration_context, metadata)
-                diffs = reformat_alembic_diffs(raw_diffs)
+            engine = connection_manager.get_engine(engine_id)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_names)
-            for table_name in tables_to_rebuild:
+            # Temporary measure necessary during the process of renaming tables
+            # - Configs point to new tables which may just be views and not real tables
+            # - The global metadata contains references to the new table names
+            legacy_tables = {}
+            table_names_for_diff = []
+            diff_metadata = sqlalchemy.MetaData()
+            with engine.begin() as connection:
+                for table_name in table_names:
+                    sql_adapter = table_map[table_name]
+                    legacy_table_name = get_legacy_table_name(
+                        sql_adapter.config.domain, sql_adapter.config.table_id
+                    )
+                    if not table_exists(connection, table_name) and table_exists(connection, legacy_table_name):
+                        legacy_tables[legacy_table_name] = table_name
+                        pillow_logging.debug("[rebuild] Using legacy table: %s", legacy_table_name)
+                        # popultate metadata with the table schema
+                        get_indicator_table(
+                            sql_adapter.config,
+                            metadata=diff_metadata,
+                            override_table_name=legacy_table_name
+                        )
+                        table_names_for_diff.append(legacy_table_name)
+                    else:
+                        # popultate metadata with the table schema
+                        get_indicator_table(sql_adapter.config, metadata=diff_metadata)
+                        table_names_for_diff.append(table_name)
+
+            diffs = get_table_diffs(engine, table_names_for_diff, diff_metadata)
+
+            tables_to_act_on = get_tables_rebuild_migrate(diffs, table_names_for_diff)
+            for real_table_name in tables_to_act_on.rebuild:
+                table_name = legacy_tables.get(real_table_name, real_table_name)
+                pillow_logging.debug("[rebuild] Rebuilding table: %s (%s)", real_table_name, table_name)
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:
                     try:
@@ -183,9 +203,8 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            tables_to_migrate = get_tables_to_migrate(diffs, table_names)
-            tables_to_migrate -= tables_to_rebuild
-            migrate_tables(engine, raw_diffs, tables_to_migrate)
+            pillow_logging.debug("[rebuild] Application migrations to tables: %s", tables_to_act_on.migrate)
+            migrate_tables(engine, diffs.raw, tables_to_act_on.migrate)
 
     def rebuild_table(self, adapter):
         config = adapter.config
@@ -193,8 +212,8 @@ class ConfigurableReportTableManagerMixin(object):
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-        adapter.rebuild_table()
-        if config.is_static:
+            adapter.rebuild_table()
+        else:
             rebuild_indicators.delay(adapter.config.get_id)
 
 
@@ -265,21 +284,13 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             delete_ids = to_delete_by_adapter[adapter] + to_delete
             try:
                 adapter.bulk_delete(delete_ids)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in deleting changes chunk {ids}: {ex}".format(
-                        ids=delete_ids, ex=ex))
+            except Exception:
                 retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
         # bulk update by adapter
         for adapter, rows in six.iteritems(rows_to_save_by_adapter):
             try:
                 adapter.save_rows(rows)
-            except Exception as ex:
-                notify_exception(
-                    None,
-                    "Error in saving changes chunk {ids}: {ex}".format(
-                        ids=[c.id for c in to_update], ex=repr(ex)))
+            except Exception:
                 retry_changes.update(to_update)
         if async_configs_by_doc_id:
             doc_type_by_id = {
@@ -466,6 +477,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         retry_errors=True,
         processor_chunk_size=processor_chunk_size,
     )
+
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, ucr_configs=None, **kwargs):
