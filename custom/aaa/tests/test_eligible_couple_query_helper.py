@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from datetime import date
+from unittest import skip
 
 from django.test.testcases import TestCase
 
@@ -10,6 +11,7 @@ from custom.aaa.models import Child, Woman, WomanHistory
 from six.moves import range
 
 
+@skip
 class TestEligibleCoupleBeneficiarySections(TestCase):
     domain = 'reach-test'
 
