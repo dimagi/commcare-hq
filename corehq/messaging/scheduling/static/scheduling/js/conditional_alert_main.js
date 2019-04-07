@@ -6,8 +6,8 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function ($, ko, initialPageData) {
-    var conditionalAlertValidations = function (formSubmitted) {
-        var self = this;
+    function conditionalAlertValidations (formSubmitted) {
+        var self = {};
         self.newForm = !formSubmitted;
         self.basicTabValid = function () {
             var name = $("#id_conditional-alert-name").val().trim();
@@ -27,7 +27,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
             var isValid = self.basicTabValid();
             if (!isValid) {
                 self.showRequiredErrorMessage();
-                if(self.newForm) {
+                if (self.newForm) {
                     $("#rule-nav").addClass("hidden");
                     $("#schedule-nav").addClass("hidden");
                 }
@@ -41,7 +41,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
             var isValid = self.ruleTabValid();
             if (!isValid) {
                 self.showRequiredErrorMessage();
-                if(self.newForm) {
+                if (self.newForm) {
                     $("#schedule-nav").addClass("hidden");
                 }
             } else {
@@ -54,21 +54,21 @@ hqDefine("scheduling/js/conditional_alert_main", [
             $(navId).find('a').trigger('click');
         };
         self.handleBasicNavContinue = function () {
-            if(self.validateBasicTab()) {
+            if (self.validateBasicTab()) {
                 self.navigateToNav('#rule-nav');
             }
         };
         self.handleRuleNavContinue = function () {
-            if(self.validateRuleTab()) {
+            if (self.validateRuleTab()) {
                 self.navigateToNav('#schedule-nav');
             }
         };
         return self;
-    }
+    };
 
     $(function () {
         var formSubmitted = initialPageData.get('form_submitted');
-        var validationModel = new conditionalAlertValidations(formSubmitted);
+        var validationModel = conditionalAlertValidations(formSubmitted);
         if (formSubmitted) {
             // set up tabs
             validationModel.validateBasicTab();
