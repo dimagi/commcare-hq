@@ -26,6 +26,7 @@
 
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
+{% initial_page_data 'form_submitted' form_submitted %}
 
 <p class="lead">
     {{ current_page.page_name }}
@@ -85,7 +86,7 @@
                         <div class="panel-body">
                             {% crispy basic_info_form %}
                             {% if new_rule %}
-                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" %}
+                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" click_event="handleBasicNavContinue" %}
                             {% endif %}
                         </div>
                     </div>
@@ -95,7 +96,7 @@
                         <div class="panel-body">
                             {% crispy criteria_form %}
                             {% if new_rule %}
-                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="criteria_continue" %}
+                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="rule_continue" click_event="handleRuleNavContinue" %}
                             {% endif %}
                         </div>
                     </div>
