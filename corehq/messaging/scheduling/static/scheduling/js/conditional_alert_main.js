@@ -6,7 +6,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function ($, ko, initialPageData) {
-    function conditionalAlertValidations (formSubmitted) {
+    function conditionalAlertValidations(formSubmitted) {
         var self = {};
         self.newForm = !formSubmitted;
         self.basicTabValid = function () {
@@ -64,7 +64,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
             }
         };
         return self;
-    };
+    }
 
     $(function () {
         var formSubmitted = initialPageData.get('form_submitted');
