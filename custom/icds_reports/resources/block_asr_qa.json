@@ -3,18 +3,10 @@
     "data_source": [
       {
         "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
-        "filter": [
-          {
-            "type": "daterange",
-            "column": "dob",
-            "operator": "between",
-            "end": 1096,
-            "start": 1825
-          }
-        ],
         "columns": [
           {
-            "column_name": "owner_id",
+            "column_name": "owner_id_1096_1825",
+            "column_in_report": "owner_id",
             "agg_fun": "count"
           }
         ]

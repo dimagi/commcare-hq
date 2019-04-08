@@ -100,6 +100,16 @@
         }
       },
       {
+        "display": "owner_id_1096_1825",
+        "column_id": "owner_id_1096_1825",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "extract(day from now() - dob) BETWEEN 1096 AND 1825": 1
+        }
+      },
+      {
         "display": "open_count",
         "column_id": "open_count",
         "type": "sum_when",
