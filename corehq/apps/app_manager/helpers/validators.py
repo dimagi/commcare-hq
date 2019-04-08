@@ -547,6 +547,7 @@ class AdvancedModuleValidator(ModuleBaseValidator):
                     for index, action in reversed(list(enumerate(non_auto_select_actions))):
                         if (
                             index > 0 and
+                            non_auto_select_actions[index - 1].case_tag and
                             non_auto_select_actions[index - 1].case_tag not in (p.tag for p in action.case_indices)
                         ):
                             errors.append({

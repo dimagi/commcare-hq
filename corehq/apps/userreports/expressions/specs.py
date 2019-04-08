@@ -394,7 +394,9 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, context):
-        document_store = get_document_store_for_doc_type(context.root_doc['domain'], related_doc_type)
+        document_store = get_document_store_for_doc_type(
+            context.root_doc['domain'], related_doc_type,
+            load_source="related_doc_expression")
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:

@@ -1,4 +1,4 @@
-hqDefine("locations/js/widgets_main_v4", [
+hqDefine("locations/js/widgets", [
     'jquery',
     'underscore',
     'select2/dist/js/select2.full.min',
@@ -46,13 +46,13 @@ hqDefine("locations/js/widgets_main_v4", [
                 templateSelection: function (result) { return result.text || result.name; },
             });
 
-            var initial = options.initialData;
+            var initial = options.initial;
             if (initial) {
                 if (!_.isArray(initial)) {
                     initial = [initial];
                 }
                 _.each(initial, function (result) {
-                    $select.append(new Option(result.name, result.id));
+                    $select.append(new Option(result.text, result.id));
                 });
                 $select.val(_.pluck(initial, 'id')).trigger('change');
             }
@@ -74,7 +74,8 @@ hqDefine("locations/js/widgets_main_v4", [
             // This custom event is fired in autocomplete_select_widget.html
             if ($source.hasClass("select2-hidden-accessible")) {
                 updateSelect2($source, $select);
-                $select.val(value).trigger("change");
+                $select.append(new Option(value.text, value.id));
+                $select.val(value.id).trigger("change");
             } else {
                 $source.on('select-ready', function () {
                     updateSelect2($source, $select);
