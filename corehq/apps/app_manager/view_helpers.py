@@ -20,10 +20,13 @@ class ApplicationViewMixin(DomainViewMixin):
         return self.args[1] if len(self.args) > 1 else self.kwargs.get('app_id')
 
     @property
-    @memoized
     def app(self):
+        return self.get_app(self.app_id)
+
+    @memoized
+    def get_app(self, app_id):
         try:
-            return get_app(self.domain, self.app_id)
+            return get_app(self.domain, app_id)
         except Http404 as e:
             raise e
         except Exception as e:
