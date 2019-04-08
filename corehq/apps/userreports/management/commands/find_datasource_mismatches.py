@@ -27,7 +27,8 @@ class Command(BaseCommand):
         config, _ = get_datasource_config(data_source_id, domain)
         adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
-        document_store = get_document_store_for_doc_type(domain, config.referenced_doc_type)
+        document_store = get_document_store_for_doc_type(
+            domain, config.referenced_doc_type, load_source="find_datasource_mismatches")
         bad_rows = []
         for row in with_progress_bar(q, length=q.count()):
             doc_id = row.doc_id

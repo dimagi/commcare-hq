@@ -116,4 +116,24 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         def _doc_gen_fn(obj):
             return obj.to_json()
 
-        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+        super(LedgerV1DocumentStore, self).__init__(
+            StockState, _doc_gen_fn, model_manager=StockState.include_archived)
+
+
+class DocStoreLoadTracker(object):
+
+    def __init__(self, store, track_load):
+        self.store = store
+        self.track_load = track_load
+
+    def get_document(self, doc_id):
+        self.track_load()
+        return self.store.get_document(doc_id)
+
+    def iter_documents(self, ids):
+        for doc in self.store.iter_documents(ids):
+            self.track_load()
+            yield doc
+
+    def __getattr__(self, name):
+        return getattr(self.store, name)

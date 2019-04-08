@@ -155,11 +155,15 @@ class ICDSMixin(object):
         timer = TimingContext()
         with timer:
             to_ret = self._custom_data(selected_location, domain)
+        if selected_location:
+            loc_type = selected_location.location_type.name
+        else:
+            loc_type = None
         datadog_histogram(
             "commcare.icds.block_reports.custom_data_time",
             timer.duration,
             tags="location_type:{}, report_slug:{}".format(
-                selected_location.location_type.name, self.slug
+                loc_type, self.slug
             )
         )
         return to_ret
@@ -195,11 +199,15 @@ class ICDSMixin(object):
             timer = TimingContext()
             with timer:
                 report_data = ICDSData(domain, filters, config['id']).data()
+            if selected_location:
+                loc_type = selected_location.location_type.name
+            else:
+                loc_type = None
             datadog_histogram(
                 "commcare.icds.block_reports.ucr_querytime",
                 timer.duration,
                 tags="config:{}, location_type:{}, report_slug:{}".format(
-                    config['id'], selected_location.location_type.name, self.slug
+                    config['id'], loc_type, self.slug
                 )
             )
 

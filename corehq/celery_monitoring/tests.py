@@ -9,6 +9,8 @@ from corehq.celery_monitoring.heartbeat import Heartbeat, HeartbeatNeverRecorded
     HEARTBEAT_FREQUENCY
 from testil import assert_raises, eq
 
+from corehq.celery_monitoring.signals import TimeToStartTimer, TimingNotAvailable
+
 
 def test_heartbeat():
     hb = Heartbeat('celery_periodic')
@@ -30,3 +32,47 @@ def test_heartbeat():
     with freeze_time(seen_time + datetime.timedelta(minutes=10)):
         eq(hb.get_last_seen(), seen_time)
         eq(hb.get_blockage_duration(), datetime.timedelta(minutes=10) - HEARTBEAT_FREQUENCY)
+
+
+def test_time_to_start_timer():
+    task_id = 'abc123'
+    delay = datetime.timedelta(seconds=6)
+
+    start_time = datetime.datetime.utcnow()
+
+    # starts empty
+    with assert_raises(TimingNotAvailable):
+        TimeToStartTimer(task_id).stop_and_pop_timing()
+
+    with freeze_time(start_time):
+        TimeToStartTimer(task_id).start_timing(datetime.datetime.utcnow())
+
+    with freeze_time(start_time + delay):
+        time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
+
+    eq(time_to_start, delay)
+
+    # can only pop once, second time empty
+    with assert_raises(TimingNotAvailable):
+        TimeToStartTimer(task_id).stop_and_pop_timing()
+
+
+def test_time_to_start_timer_with_eta():
+    task_id = 'abc1234'
+    delay = datetime.timedelta(seconds=6)
+
+    start_time = datetime.datetime.utcnow()
+    eta = start_time + datetime.timedelta(minutes=5)
+
+    with freeze_time(start_time):
+        TimeToStartTimer(task_id).start_timing(eta)
+
+    with freeze_time(eta + delay):
+        time_to_start = TimeToStartTimer(task_id).stop_and_pop_timing()
+
+    eq(time_to_start, delay)
+
+
+def test_parse_iso8601():
+    eq(TimeToStartTimer.parse_iso8601('2009-11-17T12:30:56.527191'),
+       datetime.datetime(2009, 11, 17, 12, 30, 56, 527191))
