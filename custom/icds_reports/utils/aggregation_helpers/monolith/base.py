@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config

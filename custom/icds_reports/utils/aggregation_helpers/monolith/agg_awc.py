@@ -12,6 +12,7 @@ from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, \
     month_formatter
 from custom.icds_reports.utils.aggregation_helpers.monolith.base import BaseICDSAggregationHelper
+from six.moves import range
 
 
 class AggAwcHelper(BaseICDSAggregationHelper):
