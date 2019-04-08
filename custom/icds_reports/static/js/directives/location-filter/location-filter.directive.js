@@ -72,11 +72,13 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         }
         var notDisabledLocationsForLevel = 0;
         window.angular.forEach(vm.getLocationsForLevel(level), function(location) {
-            if (location.user_have_access || location.user_have_access_to_parent) {
+            if (location.location_id && location.location_id !== 'all' && (
+                location.user_have_access || location.user_have_access_to_parent)
+            ) {
                 notDisabledLocationsForLevel += 1;
             }
         });
-        return notDisabledLocationsForLevel <= 1;
+        return notDisabledLocationsForLevel === 0;
     };
 
     vm.onSelect = function($item, level) {
