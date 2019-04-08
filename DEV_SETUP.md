@@ -69,6 +69,17 @@ Next, install the appropriate requirements (only one is necessary).
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
+#### Setup for Python 3 (beta)
+
+- Install [Python 3.6](https://www.python.org/downloads/)
+    - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
+- [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
+- Install HQ requirements for Python 3.6
+    - `$ pip install -r requirements-python3_6/requirements.txt`
+    - `$ pip install -r requirements-python3_6/prod-requirements.txt`
+    - `$ pip install -r requirements-python3_6/dev-requirements.txt`
+    - `$ pip install -r requirements-python3_6/test-requirements.txt`
+
 #### Setup localsettings
 
 First create your `localsettings.py` file:
