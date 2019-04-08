@@ -81,6 +81,10 @@ hqDefine('aaa/js/filters/location_filter', [
                 });
             };
 
+            params.filters[self.slug].verify = function () {
+                return true;
+            };
+
             params.filters[self.slug].resetFilters = function () {
                 _.each(self.hierarchyConfig(), function (location) {
                     location.setDefaultOption(false);

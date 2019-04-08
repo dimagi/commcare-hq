@@ -4796,6 +4796,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return self.langs
 
+    def convert_to_application(self):
+        self.doc_type = 'Application'
+        del self.master
+        del self.linked_app_translations
+        del self.linked_app_logo_refs
+        del self.uses_master_app_form_ids
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
