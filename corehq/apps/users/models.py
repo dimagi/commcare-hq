@@ -20,6 +20,7 @@ from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
@@ -112,9 +113,11 @@ class Permissions(DocumentSchema):
 
     edit_groups = BooleanProperty(default=False)
     view_groups = BooleanProperty(default=False)
+    edit_users_in_groups = BooleanProperty(default=False)
 
     edit_locations = BooleanProperty(default=False)
     view_locations = BooleanProperty(default=False)
+    edit_users_in_locations = BooleanProperty(default=False)
 
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
@@ -216,8 +219,10 @@ class Permissions(DocumentSchema):
             view_commcare_users=True,
             edit_groups=True,
             view_groups=True,
+            edit_users_in_groups=True,
             edit_locations=True,
             view_locations=True,
+            edit_users_in_locations=True,
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
@@ -1193,8 +1198,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.save()
         self.delete_phone_entry(phone_number)
 
-    def get_django_user(self):
-        return User.objects.get(username__iexact=self.username)
+    def get_django_user(self, use_primary_db=False):
+        queryset = User.objects
+        if use_primary_db:
+            queryset = queryset.using(db_for_read_write(User, write=True))
+        return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -2735,10 +2743,16 @@ class AnonymousCouchUser(object):
     def can_view_groups(self):
         return False
 
+    def can_edit_users_in_groups(self):
+        return False
+
     def can_edit_locations(self):
         return False
 
     def can_view_locations(self):
+        return False
+
+    def can_edit_users_in_locations(self):
         return False
 
     def can_edit_web_users(self):

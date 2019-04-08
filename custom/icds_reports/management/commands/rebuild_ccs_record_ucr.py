@@ -20,7 +20,9 @@ class Command(BaseCommand):
         config = _get_config_by_id(indicator_config_id)
 
         document_store = get_document_store_for_doc_type(
-            config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_of_xmlns
+            config.domain, config.referenced_doc_type,
+            case_type_or_xmlns=case_type_of_xmlns,
+            load_source="build_ccs_record_ucr",
         )
 
         current_month_start = datetime.date.today().replace(day=1)
