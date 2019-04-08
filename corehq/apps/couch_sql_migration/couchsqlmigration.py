@@ -7,7 +7,7 @@ import logging
 import os
 from collections import defaultdict, deque
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import time
 
 import gevent
@@ -170,6 +170,8 @@ class CouchSqlDomainMigrator(object):
             self._try_to_process_queues(pool)
 
         # finish up the queues once all changes have been iterated through
+        update_interval = timedelta(seconds=10)
+        next_check = datetime.now()
         while self.queues.has_next():
             wrapped_form = self.queues.get_next()
             if wrapped_form:
@@ -178,8 +180,10 @@ class CouchSqlDomainMigrator(object):
                 gevent.sleep(0.01)  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
-            if remaining_items % 10 == 0:
+            now = datetime.now()
+            if now > next_check:
                 self.log_info('Waiting on {} docs'.format(remaining_items))
+                next_check += update_interval
 
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
