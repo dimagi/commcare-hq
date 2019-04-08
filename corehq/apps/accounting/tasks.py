@@ -84,6 +84,8 @@ _invoicing_complete_soft_assert = soft_assert(
     exponential_backoff=False,
 )
 
+UNPAID_INVOICE_THRESHOLD = 100
+
 
 @transaction.atomic
 def _activate_subscription(subscription):
@@ -727,7 +729,7 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
             | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
             subscription__subscriber__domain=domain,
         ).aggregate(Sum('balance'))['balance__sum']
-        if total_overdue_by_domain_and_invoice_date >= 100:
+        if total_overdue_by_domain_and_invoice_date >= UNPAID_INVOICE_THRESHOLD:
             return overdue_invoice, total_overdue_by_domain_and_invoice_date
     return None, None
 
@@ -771,7 +773,7 @@ def get_accounts_with_customer_invoices_over_threshold(today):
             invoices = [invoice for invoice in invoices if invoice.subscriptions.first().plan_version == plan]
             total_overdue_to_date = sum(invoice.balance for invoice in invoices)
 
-            if total_overdue_to_date > 100:
+            if total_overdue_to_date > UNPAID_INVOICE_THRESHOLD:
                 accounts.add((account, plan))
                 yield overdue_invoice, total_overdue_to_date
 
