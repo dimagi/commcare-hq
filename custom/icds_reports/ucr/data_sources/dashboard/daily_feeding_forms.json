@@ -263,7 +263,7 @@
         }
       }
     },
-    "named_filters": { },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
       "partition_config": [

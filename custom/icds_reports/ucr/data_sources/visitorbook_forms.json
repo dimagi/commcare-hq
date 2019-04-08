@@ -82,7 +82,6 @@
           },
           "location_type": "supervisor",
           "location_property": "_id",
-          "location_property": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,

@@ -64,7 +64,7 @@
             "name": "user_location_id"
           },
           "location_type": "state",
-      	  "location_property": "_id"
+          "location_property": "_id"
         }
       },
       {
@@ -79,7 +79,7 @@
             "name": "user_location_id"
           },
           "location_type": "supervisor",
-      	  "location_property": "_id"
+          "location_property": "_id"
         }
       },
       {

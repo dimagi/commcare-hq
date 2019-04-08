@@ -848,7 +848,6 @@
         "display_name": null,
         "column_id": "medicine_kits_usable"
       },
-
       {
         "expression": {
           "type": "conditional",

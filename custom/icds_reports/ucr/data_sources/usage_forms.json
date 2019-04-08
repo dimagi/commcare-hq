@@ -87,7 +87,7 @@
         "datatype": "string",
         "type": "expression",
         "column_id": "supervisor_id",
-        "expression":{
+        "expression": {
           "type": "location_parent_id",
           "location_id_expression": {
             "type": "named",

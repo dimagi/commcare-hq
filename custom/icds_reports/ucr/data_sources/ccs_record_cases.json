@@ -1079,77 +1079,77 @@
           }
         }
       },
-	  {
-		"expression": {
-			"type": "conditional",
-			"test": {
-			  "operator": "eq", 
-			  "expression": {
-				"value_expression": {
-				  "datatype": null, 
-				  "type": "property_name", 
-				  "property_name": "migration_status"
-				}, 
-				"type": "related_doc", 
-				"related_doc_type": "CommCareCase", 
-				"doc_id_expression": {
-				  "type": "named", 
-				  "name": "parent_id"
-				}
-			  }, 
-			  "type": "boolean_expression", 
-			  "property_value": "migrated"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		}, 
-		"type": "expression", 
-		"column_id": "is_migrated",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-	 {
-	    "expression": {
-			"type": "conditional",
-			"test": {
-				"operator": "not_eq",
-				"expression": {
-					"value_expression": {
-						"datatype": null,
-						"type": "property_name",
-						"property_name": "registered_status"
-					},
-					"type": "related_doc",
-					"related_doc_type": "CommCareCase",
-					"doc_id_expression": {
-						"type": "named",
-						"name": "parent_id"
-					}
-				},
-				"type": "boolean_expression",
-				"property_value": "not_registered"
-			},
-			"expression_if_true": {
-				"type": "constant",
-				"constant": 1
-			},
-			"expression_if_false": {
-				"type": "constant",
-				"constant": 0
-			}
-		},
-		"type": "expression",
-		"column_id": "is_availing",
-		"is_nullable": true,
-		"datatype": "integer"
-	 },
-     {
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "migration_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "migrated"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_migrated",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "not_eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "registered_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "not_registered"
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_availing",
+        "is_nullable": true,
+        "datatype": "integer"
+      },
+      {
         "column_id": "delivery_nature",
         "datatype": "small_integer",
         "type": "expression",
@@ -1178,8 +1178,8 @@
             "constant": 0
           }
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1190,8 +1190,8 @@
           "type": "property_name",
           "property_name": "preg_order"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "string",
         "type": "expression",
@@ -1202,8 +1202,8 @@
           "type": "property_name",
           "property_name": "mobile_number"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1214,8 +1214,8 @@
           "type": "property_name",
           "property_name": "num_pnc_visits"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "small_integer",
         "type": "expression",
@@ -1226,8 +1226,8 @@
           "type": "property_name",
           "property_name": "num_anc_complete"
         }
-     },
-     {
+      },
+      {
         "transform": {},
         "datatype": "string",
         "type": "expression",
@@ -1238,7 +1238,7 @@
           "type": "property_name",
           "property_name": "child_name"
         }
-     }
+      }
     ],
     "named_expressions": {
       "parent_id": {

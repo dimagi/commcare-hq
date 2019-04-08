@@ -78,7 +78,7 @@
             "name": "user_location_id"
           },
           "location_type": "state",
-	  "location_property": "_id"
+          "location_property": "_id"
         },
         "create_index": true
       },
@@ -94,7 +94,7 @@
             "name": "user_location_id"
           },
           "location_type": "supervisor",
-	  "location_property": "_id"
+          "location_property": "_id"
         }
       },
       {
@@ -543,7 +543,7 @@
         }
       }
     },
-    "named_filters": { },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
       "partition_config": [
