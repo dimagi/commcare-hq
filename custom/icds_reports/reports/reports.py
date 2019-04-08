@@ -58,7 +58,7 @@ class ASRReport(IcdsBaseReport):
 
     @property
     def data_provider_classes(self):
-        return [
+        cls_list = [
             ASRIdentification,
             ASROperationalization,
             ASRPopulation,
@@ -67,6 +67,11 @@ class ASRReport(IcdsBaseReport):
             Infrastructure,
             Equipment
         ]
+        if toggles.IMPROVED_ASR_REPORT.enabled_for_request(self.request):
+            for cls in cls_list:
+                if getattr(cls, 'resource_file', None):
+                    cls.resource_file = ('custom', 'icds_reports', 'resources', 'block_asr_qa.json')
+        return cls_list
 
 
 @location_safe
