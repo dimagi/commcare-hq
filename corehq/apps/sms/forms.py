@@ -264,10 +264,12 @@ class SettingsForm(Form):
     sms_case_registration_owner_id = CharField(
         required=False,
         label=ugettext_noop("Default Case Owner"),
+        widget=forms.Select(choices=[]),
     )
     sms_case_registration_user_id = CharField(
         required=False,
         label=ugettext_noop("Registration Submitter"),
+        widget=forms.Select(choices=[]),
     )
     sms_mobile_worker_registration_enabled = ChoiceField(
         required=False,
@@ -1257,6 +1259,7 @@ class InitiateAddSMSBackendForm(Form):
             if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
                 friendly_name = klass.get_generic_name()
                 backend_choices.append((api_id, friendly_name))
+        backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
         self.fields['hq_api_id'].choices = backend_choices
 
         self.helper = HQFormHelper()
@@ -1264,7 +1267,7 @@ class InitiateAddSMSBackendForm(Form):
             hqcrispy.B3MultiField(
                 _("Create Another Gateway"),
                 InlineField('action'),
-                Div(InlineField('hq_api_id'), css_class='col-sm-6 col-md-6 col-lg-4'),
+                Div(InlineField('hq_api_id', css_class="ko-select2"), css_class='col-sm-6 col-md-6 col-lg-4'),
                 Div(StrictButton(
                     mark_safe('<i class="fa fa-plus"></i> Add Another Gateway'),
                     css_class='btn-primary',
