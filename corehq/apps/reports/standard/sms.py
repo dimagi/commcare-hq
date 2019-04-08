@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import cgi
 from collections import namedtuple
 from datetime import datetime
 
@@ -47,6 +46,11 @@ from corehq.apps.reports.standard import (
     ProjectReport,
     ProjectReportParametersMixin,
 )
+from corehq.apps.reports.standard.message_event_display import (
+    get_content_display,
+    get_sms_status_display,
+    get_status_display,
+)
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
     EventStatusFilter,
@@ -60,9 +64,7 @@ from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
     SMS,
-    WORKFLOW_FORWARD,
     WORKFLOWS_FOR_REPORTS,
-    Keyword,
     MessagingEvent,
     MessagingSubEvent,
     PhoneBlacklist,
@@ -85,7 +87,6 @@ from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
 from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
-    MigratedReminder,
     ScheduledBroadcast,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -128,7 +129,6 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
 
     def get_user_link(self, user):
         user_link_template = '<a href="%(link)s">%(username)s</a>'
-        from corehq.apps.users.views.mobile import EditCommCareUserView
         user_link = user_link_template % {
             "link": absolute_reverse(EditCommCareUserView.urlname,
                                      args=[self.domain, user._id]),
@@ -539,207 +539,6 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         else:
             return self._fmt(result)
 
-    def get_status_display(self, event, sms=None):
-        """
-        event can be a MessagingEvent or MessagingSubEvent
-        """
-        # If sms without error, short circuit to the sms status display
-        if event.status != MessagingEvent.STATUS_ERROR and sms:
-            return self.get_sms_status_display(sms)
-
-        # If survey without error, short circuit to the survey status display
-        if (isinstance(event, MessagingSubEvent) and
-                event.status == MessagingEvent.STATUS_COMPLETED and
-                event.xforms_session_id):
-            return _(event.xforms_session.status)
-
-        status = event.status
-        error_code = event.error_code
-
-        # If we have a MessagingEvent with no error_code it means there's
-        # an error in the subevent
-        if status == MessagingEvent.STATUS_ERROR and not error_code:
-            error_code = MessagingEvent.ERROR_SUBEVENT_ERROR
-
-        # If we have a MessagingEvent that's completed but it's tied to
-        # unfinished surveys, then mark it as being in progress
-        if (
-            isinstance(event, MessagingEvent) and
-            event.status == MessagingEvent.STATUS_COMPLETED and
-            MessagingSubEvent.objects.filter(
-                parent_id=event.pk,
-                content_type=MessagingEvent.CONTENT_SMS_SURVEY,
-                # without this line, django does a left join which is not what we want
-                xforms_session_id__isnull=False,
-                xforms_session__session_is_open=True
-            ).count() > 0
-        ):
-            status = MessagingEvent.STATUS_IN_PROGRESS
-
-        status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
-        error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
-            if error_code else None)
-        error_message = _(error_message) if error_message else ''
-        if event.additional_error_text:
-            error_message += ' %s' % event.additional_error_text
-
-        # Sometimes the additional information from touchforms has < or >
-        # characters, so we need to escape them for display
-        if error_message:
-            return '%s - %s' % (_(status), cgi.escape(error_message))
-        else:
-            return _(status)
-
-    def get_sms_status_display(self, sms):
-        if sms.error:
-            error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
-                if sms.system_error_message else None)
-            if error_message:
-                return '%s - %s' % (_('Error'), _(error_message))
-            else:
-                return _('Error')
-        elif not sms.processed:
-            return _('Queued')
-        else:
-            if sms.direction == INCOMING:
-                return _('Received')
-            elif sms.direction == OUTGOING:
-                if sms.workflow == WORKFLOW_FORWARD:
-                    return _('Forwarded')
-                else:
-                    return _('Sent')
-            else:
-                return _('Unknown')
-
-    def get_keyword_display(self, keyword_id, content_cache):
-        from corehq.apps.reminders.views import (
-            EditStructuredKeywordView,
-            EditNormalKeywordView,
-        )
-        if keyword_id in content_cache:
-            return content_cache[keyword_id]
-
-        try:
-            keyword = Keyword.objects.get(couch_id=keyword_id)
-        except Keyword.DoesNotExist:
-            display = _('(Deleted Keyword)')
-        else:
-            urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
-                else EditNormalKeywordView.urlname)
-            display = '<a target="_blank" href="%s">%s</a>' % (
-                reverse(urlname, args=[keyword.domain, keyword_id]),
-                keyword.description,
-            )
-
-        content_cache[keyword_id] = display
-        return display
-
-    def get_reminder_display(self, handler_id, content_cache):
-        if handler_id in content_cache:
-            return content_cache[handler_id]
-
-        display = None
-
-        try:
-            info = MigratedReminder.objects.get(handler_id=handler_id)
-            if info.rule_id:
-                display = self.get_case_rule_display(info.rule_id, content_cache)
-        except MigratedReminder.DoesNotExist:
-            pass
-
-        if not display:
-            display = _("(Deleted Conditional Alert)")
-
-        content_cache[handler_id] = display
-        return display
-
-    def get_scheduled_broadcast_display(self, broadcast_id, content_cache):
-        cache_key = 'scheduled-broadcast-%s' % broadcast_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            broadcast = ScheduledBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
-        except ScheduledBroadcast.DoesNotExist:
-            result = '-'
-        else:
-            if broadcast.deleted:
-                result = _("(Deleted Broadcast)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditScheduleView.urlname,
-                            args=[self.domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id]),
-                    broadcast.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_immediate_broadcast_display(self, broadcast_id, content_cache):
-        cache_key = 'immediate-broadcast-%s' % broadcast_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            broadcast = ImmediateBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
-        except ImmediateBroadcast.DoesNotExist:
-            result = '-'
-        else:
-            if broadcast.deleted:
-                result = _("(Deleted Broadcast)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditScheduleView.urlname,
-                            args=[self.domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id]),
-                    broadcast.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_case_rule_display(self, rule_id, content_cache):
-        cache_key = 'case-rule-%s' % rule_id
-        if cache_key in content_cache:
-            return content_cache[cache_key]
-
-        try:
-            rule = AutomaticUpdateRule.objects.get(domain=self.domain, pk=rule_id)
-        except AutomaticUpdateRule.DoesNotExist:
-            result = '-'
-        else:
-            if rule.deleted:
-                result = _("(Deleted Conditional Alert)")
-            else:
-                result = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(EditConditionalAlertView.urlname,
-                            args=[self.domain, rule_id]),
-                    rule.name,
-                )
-
-        content_cache[cache_key] = result
-        return result
-
-    def get_content_display(self, event, content_cache):
-        if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
-            return self.get_keyword_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
-            return self.get_reminder_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_SCHEDULED_BROADCAST and event.source_id:
-            return self.get_scheduled_broadcast_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_IMMEDIATE_BROADCAST and event.source_id:
-            return self.get_immediate_broadcast_display(event.source_id, content_cache)
-        elif event.source == MessagingEvent.SOURCE_CASE_RULE and event.source_id:
-            return self.get_case_rule_display(event.source_id, content_cache)
-        elif event.content_type in (
-            MessagingEvent.CONTENT_SMS_SURVEY,
-            MessagingEvent.CONTENT_IVR_SURVEY,
-        ):
-            return ('%s (%s)' % (_(dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)),
-                event.form_name or _('Unknown')))
-
-        content_choices = dict(MessagingEvent.CONTENT_CHOICES)
-        return _(content_choices.get(event.content_type, '-'))
-
     def get_event_detail_link(self, event):
         display_text = _('View Details')
         display = '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">%s</a>' % (
@@ -941,10 +740,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 event.recipient_id, contact_cache)
 
             timestamp = ServerTime(event.date).user_time(self.timezone).done()
-            status = self.get_status_display(event)
+            status = get_status_display(event)
             yield [
                 self._fmt_timestamp(timestamp)['html'],
-                self.get_content_display(event, content_cache),
+                get_content_display(self.domain, event, content_cache),
                 self.get_source_display(event, display_only=True),
                 self._fmt_recipient(event, doc_info)['html'],
                 status,
@@ -1040,7 +839,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 messages = SMS.objects.filter(messaging_subevent_id=messaging_subevent.pk)
                 if len(messages) == 0:
                     timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
-                    status = self.get_status_display(messaging_subevent)
+                    status = get_status_display(messaging_subevent)
                     result.append([
                         self._fmt_timestamp(timestamp),
                         self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1053,7 +852,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 else:
                     for sms in messages:
                         timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-                        status = self.get_status_display(messaging_subevent, sms)
+                        status = get_status_display(messaging_subevent, sms)
                         result.append([
                             self._fmt_timestamp(timestamp),
                             self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1065,7 +864,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                         ])
             elif messaging_subevent.content_type in (MessagingEvent.CONTENT_SMS_SURVEY,
                     MessagingEvent.CONTENT_IVR_SURVEY):
-                status = self.get_status_display(messaging_subevent)
+                status = get_status_display(messaging_subevent)
                 xforms_session = messaging_subevent.xforms_session
                 timestamp = xforms_session.start_time if xforms_session else messaging_subevent.date
                 timestamp = ServerTime(timestamp).user_time(self.timezone).done()
@@ -1080,7 +879,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                 ])
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
-                status = self.get_status_display(messaging_subevent)
+                status = get_status_display(messaging_subevent)
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
@@ -1149,7 +948,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
         xforms_session = self.xforms_session
         for sms in SMS.objects.filter(xforms_session_couch_id=xforms_session.couch_id):
             timestamp = ServerTime(sms.date).user_time(self.timezone).done()
-            status = self.get_sms_status_display(sms)
+            status = get_sms_status_display(sms)
             result.append([
                 self._fmt_timestamp(timestamp),
                 self._fmt(sms.text),
