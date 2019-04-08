@@ -839,7 +839,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             msgs.append((
                 messages.error,
                 _("You must provide at least one translation"
-                  " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
+                  " for the label '{0}' in sheet '{1}'").format(label, sheet.worksheet.title)
             ))
     # Update the translations
     for lang in app.langs:

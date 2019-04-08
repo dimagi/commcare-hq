@@ -6,7 +6,7 @@
 
 {% requirejs_main 'toggle_ui/js/edit-flag' %}
 
-{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
+{% block title %}{% trans "Edit Feature Flag: " %}{{ static_toggle.label }}{% endblock %}
 
 {% block stylesheets %}
     <style>
@@ -31,7 +31,7 @@
     {% initial_page_data 'last_used' last_used %}
     {% initial_page_data 'service_type' service_type %}
     {% initial_page_data 'is_random_editable' is_random_editable %}
-    {% initial_page_data 'randomness' toggle_meta.randomness %}
+    {% initial_page_data 'randomness' static_toggle.randomness %}
     <div class="row" style="margin-bottom: 50px;">
         <div class="col-sm-12">
             <span class="pull-right">
@@ -46,22 +46,22 @@
                 {% trans "Show account service type" %}
             </a>
             </span>
-            {% if toggle_meta.description %}
-                <p>{{ toggle_meta.description|safe }}</p>
+            {% if static_toggle.description %}
+                <p>{{ static_toggle.description|safe }}</p>
             {% endif %}
             <p>
-                <span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span>
+                <span class="label label-{{ static_toggle.tag.css_class }}">{{ static_toggle.tag.name }}</span>
                 {% if is_random %}
-                    <span class="label label-info">Random: {{ toggle_meta.randomness }}</span>
+                    <span class="label label-info">Random: {{ static_toggle.randomness }}</span>
                 {% endif %}
             </p>
-            <p>{{ toggle_meta.tag.description }}</p>
-            {% if toggle_meta.help_link %}
-            <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+            <p>{{ static_toggle.tag.description }}</p>
+            {% if static_toggle.help_link %}
+            <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
             {% endif %}
 
-            {% if toggle_meta.relevant_environments %}
-                {% if debug or server_environment in toggle_meta.relevant_environments %}
+            {% if static_toggle.relevant_environments %}
+                {% if debug or server_environment in static_toggle.relevant_environments %}
                 <div class="alert alert-warning" role="alert">
                     {% blocktrans %}
                     <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.
