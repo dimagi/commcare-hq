@@ -391,7 +391,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
         )
-        if toggles.INCLUDE_SMS_ERRORS.enabled(self.request.user.username):
+        if toggles.INCLUDE_SMS_ERRORS.enabled(self.request.couch_user.username):
             queryset = queryset.exclude(
                 direction=OUTGOING,
                 processed=False,
