@@ -40,24 +40,10 @@ class AppCaseMetadataBuilder(object):
 
     def _add_module_contributions(self):
         for module in self.app.get_modules():
-            if isinstance(module, Module):
-                self._add_regular_module_contribution(module)
-            elif isinstance(module, AdvancedModule):
-                self._add_advanced_module_contribution(module)
+            if isinstance(module, (Module, AdvancedModule)):
+                self._add_module_contribution(module)
 
-    def _add_regular_module_contribution(self, module):
-        for column in module.case_details.long.columns:
-            try:
-                self.meta.add_property_detail('long', module.case_type, module.unique_id, column)
-            except CaseMetaException:
-                pass
-        for column in module.case_details.short.columns:
-            try:
-                self.meta.add_property_detail('short', module.case_type, module.unique_id, column)
-            except CaseMetaException:
-                pass
-
-    def _add_advanced_module_contribution(self, module):
+    def _add_module_contribution(self, module):
         for column in module.case_details.long.columns:
             self.meta.add_property_detail('long', module.case_type, module.unique_id, column)
         for column in module.case_details.short.columns:
