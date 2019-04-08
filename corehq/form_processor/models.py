@@ -610,6 +610,9 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             ('domain', 'state'),
             ('domain', 'user_id'),
         ]
+        indexes = [
+            models.Index(['xmlns'])
+        ]
 
 
 class DeprecatedXFormAttachmentSQL(models.Model):
