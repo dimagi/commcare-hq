@@ -6,9 +6,9 @@
 
     <h3>
         <i class="fa fa-file-text-o"></i>
-        {% if is_form_summary %}
+        {% if page_type == 'form_summary' %}
             {% trans "Form Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
-        {% else %}
+        {% elif page_type == 'form_diff' %}
             {% trans "Form Changes" %}  -
             {% trans "Version" %} <select id="first-version-selector" class="form-control" data-bind="value: firstAppId"></select> vs.
             {% trans "Version" %} <select id="second-version-selector" class="form-control" data-bind="value: secondAppId"></select>

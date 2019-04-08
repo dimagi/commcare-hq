@@ -80,7 +80,7 @@ class AppCaseSummaryView(AppSummaryView):
             metadata = {}
             has_form_errors = True
         context.update({
-            'is_case_summary': True,
+            'page_type': 'case_summary',
             'case_metadata': metadata,
             'has_form_errors': has_form_errors,
         })
@@ -96,7 +96,7 @@ class AppFormSummaryView(AppSummaryView):
         context = super(AppFormSummaryView, self).page_context
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
-            'is_form_summary': True,
+            'page_type': 'form_summary',
             'modules': modules,
             'errors': errors,
         })
@@ -138,6 +138,7 @@ class FormSummaryDiffView(AppSummaryView):
             self.domain, self.second_app, include_shadow_forms=False
         )
         context.update({
+            'page_type': 'form_diff',
             'app_id': self.app.master_id,
             'first': first,
             'second': second,
