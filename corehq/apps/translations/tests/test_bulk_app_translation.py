@@ -230,6 +230,10 @@ class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
         col = next(col for col in cols if col.field == field)
         self.assertEqual(text, col.header.get(language, None))
 
+    def assert_module_name(self, module_id, language, name):
+        module = self.app.get_module(module_id)
+        self.assertEqual(name, module.name.get(language, None))
+
 
 class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
@@ -491,11 +495,19 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                                            self.multi_sheet_upload_no_change_data)
         self._shared_test_initial_set_up()
 
+        # Languages not in the app should have their content cleared
+        self.assert_module_name(0, "en", "My & awesome module")
+        self.assert_module_name(0, "es", None)
+
     def test_no_change_upload_single_sheet(self):
         self.upload_raw_excel_translations(self.single_sheet_upload_headers,
                                            self.single_sheet_upload_no_change_data,
                                            lang='en')
         self._shared_test_initial_set_up()
+
+        # Single sheet upload shouldn't attempt to clear anything
+        self.assert_module_name(0, "en", "My & awesome module")
+        self.assert_module_name(0, "es", "Mi cosa increíble")
 
     def _shared_test_initial_set_up(self):
         self.assert_question_label("question1", 0, 0, "en", "/data/question1")
