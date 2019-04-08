@@ -332,6 +332,8 @@ def revert_to_copy(request, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
+    if copy.get_doc_type() == 'LinkedApplication' and app.get_doc_type() == 'Application':
+        copy.convert_to_application()
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(

@@ -16,7 +16,6 @@ from memoized import memoized
 from pygooglechart import ScatterChart
 
 from corehq import toggles
-from corehq.elastic import ES_DEFAULT_INSTANCE
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.es import cases as case_es, filters
 from corehq.apps.es.aggregations import FilterAggregation, MissingAggregation, TermsAggregation
@@ -30,7 +29,6 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from dimagi.utils.chunked import chunked
 
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
@@ -699,6 +697,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
 
+        rows = []
         totals = [0] * (len(self.all_relevant_forms) + 1)
         for simplified_user in self.selected_simplified_users:
             row = []
@@ -715,12 +714,12 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                 )
                 totals = [totals[i] + col.get('sort_key')
                           for i, col in enumerate(row[1:])]
-                yield row
+                rows.append(row)
             else:
-                yield [self.get_user_link(simplified_user), '--']
+                rows.append([self.get_user_link(simplified_user), '--'])
         if self.all_relevant_forms:
             self.total_row = [_("All Users")] + totals
-        yield self.total_row
+        return rows
 
     @property
     @memoized
@@ -1351,7 +1350,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     fix_left_col = True
     emailable = True
-    exportable_all = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
 
@@ -1484,16 +1482,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def user_ids(self):
         return [u["user_id"] for u in self.users_to_iterate]
 
-    def es_last_submissions(self, user_ids):
+    def es_last_submissions(self):
         """
         Creates a dict of userid => date of last submission
         """
-        if self.exporting_as_excel:
-            es_instance_alias = 'export'
-        else:
-            es_instance_alias = ES_DEFAULT_INSTANCE
-        return get_last_submission_time_for_users(self.domain, user_ids,
-                                                  self.datespan, es_instance_alias=es_instance_alias)
+        return get_last_submission_time_for_users(self.domain, self.user_ids, self.datespan)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
@@ -1676,10 +1669,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ])
         return rows
 
-    def _rows_by_user(self, report_data, users):
+    def _rows_by_user(self, report_data):
         rows = []
-        last_form_by_user = self.es_last_submissions([a.user_id for a in users])
-        for user in users:
+        last_form_by_user = self.es_last_submissions()
+        for user in self.users_to_iterate:
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
@@ -1746,13 +1739,12 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
         return avg_datespan
 
-    def _report_data(self, users_to_iterate):
-        user_ids = [a.user_id for a in users_to_iterate]
+    def _report_data(self):
         export = self.rendered_as == 'export'
         avg_datespan = self.avg_datespan
 
-        case_owners = _get_owner_ids_from_users(users_to_iterate)
-        user_ids = user_ids
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
+        user_ids = self.user_ids
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1775,7 +1767,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ),
         )
 
-    def _total_row(self, rows, report_data, users):
+    def _total_row(self, rows, report_data):
         total_row = [_("Total")]
         summing_cols = [1, 2, 4, 5]
 
@@ -1785,9 +1777,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum([x for x in [row[col].get('sort_key', 0) for row in rows] if not math.isnan(x)])
                 )
             else:
-                total_row.append(None)
+                total_row.append('---')
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
-        case_owners = _get_owner_ids_from_users(users)
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
              for id in case_owners])
@@ -1802,78 +1794,22 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     if report_data.submissions_by_user.get(user['user_id'], False):
                         active_users.add(user['user_id'])
                     all_users.add(user['user_id'])
-            total_row[3] = {'numerator': len(active_users), 'denominator': len(all_users)}
+            total_row[3] = '%s / %s' % (len(active_users), len(all_users))
         else:
-            total_row[3] = {'numerator': num, 'denominator': len(rows)}
+            total_row[3] = '%s / %s' % (num, len(rows))
         return total_row
 
     @property
-    def get_all_rows(self):
-        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            return self.user_rows()
-        else:
-            return self.rows
-
-    def user_rows(self):
-        user_es_query = EMWF.user_es_query(
-            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
-        )
-        chunk_size = 50000
-        from corehq.elastic import iter_es_docs_from_query
-        user_iterator = iter_es_docs_from_query(user_es_query)
-        for user_chunk in chunked(user_iterator, chunk_size):
-            users = [util._report_user_dict(user) for user in user_chunk]
-            formatted_data = self._report_data(users_to_iterate=users)
-            if self.view_by_groups:
-                rows = self._rows_by_group(formatted_data)
-            else:
-                rows = self._rows_by_user(formatted_data, users)
-            partial_total_row = self._total_row(rows, formatted_data, users)
-            self.total_row = self._sum_rows_together(self.total_row, partial_total_row)
-            for row in rows:
-                yield row
-        self.total_row = self._format_total_row(self.total_row)
-        yield self.total_row
-
-    @staticmethod
-    def _format_total_row(unformatted_total_row):
-        formatted_total_row = []
-        for entry in unformatted_total_row:
-            if isinstance(entry, dict):
-                formatted_total_row.append("{} / {}".format(entry['numerator'], entry['denominator']))
-            elif not entry:
-                formatted_total_row.append("---")
-            else:
-                formatted_total_row.append(entry)
-        return formatted_total_row
-
-    @staticmethod
-    def _sum_rows_together(original_row, row_to_add):
-        if not original_row:
-            new_row = row_to_add
-        else:
-            new_row = []
-            for index, entry in enumerate(row_to_add):
-                if isinstance(entry, int):
-                    new_row.append(original_row[index] + entry)
-                elif isinstance(entry, dict):
-                    new_row.append({'numerator': original_row[index]['numerator'] + entry['numerator'],
-                                    'denominator': original_row[index]['denominator'] + entry['denominator']})
-                else:
-                    new_row.append(original_row[index])
-
-        return new_row
-
-    @property
     def rows(self):
-        report_data = self._report_data(self.users_to_iterate)
+        report_data = self._report_data()
 
+        rows = []
         if self.view_by_groups:
             rows = self._rows_by_group(report_data)
         else:
-            rows = self._rows_by_user(report_data, self.users_to_iterate)
+            rows = self._rows_by_user(report_data)
 
-        self.total_row = self._format_total_row(self._total_row(rows, report_data, self.users_to_iterate))
+        self.total_row = self._total_row(rows, report_data)
         return rows
 
 
