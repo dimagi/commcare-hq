@@ -37,7 +37,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     DateProperty
 )
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, MultipleResultsFound
 from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -1414,7 +1414,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             include_docs=True,
             reduce=False,
         )
-        result = view_result.one()
+        result = view_result.all()
+        if len(result) > 1:
+            raise MultipleResultsFound('"{}": {}'.format(
+                username, ', '.join([row['id'] for row in result])
+            ))
+        result = result[0] if result else None
         if result and result['doc'] and result['doc']['username'] == username:
             couch_user = cls.wrap_correctly(result['doc'])
             cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)
