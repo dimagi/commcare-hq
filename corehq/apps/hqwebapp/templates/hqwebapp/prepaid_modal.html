@@ -6,7 +6,9 @@
         <div class="modal-content">
             <div class="modal-header {% if prepaid_days_remaining <= 30 %}bg-danger text-danger{% endif %}">
                 <h4 class="modal-title">
-                    {% blocktrans %}
+                    {% blocktrans count prepaid_weeks_remaining=prepaid_weeks_remaining %}
+                    Your prepaid subscription ends in 1 week!
+                    {% plural %}
                     Your prepaid subscription ends in {{ prepaid_weeks_remaining }} weeks!
                     {% endblocktrans %}
                 </h4>
