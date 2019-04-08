@@ -24,6 +24,7 @@ from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
 
+from corehq.sql_db.connections import get_aaa_db_alias
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.aaa.const import ALL, PRODUCT_CODES
@@ -536,7 +537,8 @@ class CcsRecord(LocationDenormalizedModel):
     def add_pregnancy_form_details(self):
         ucr_tablename = self._ucr_tablename('reach-add_pregnancy')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
@@ -548,7 +550,8 @@ class CcsRecord(LocationDenormalizedModel):
     def birth_preparedness_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 """
                 SELECT * FROM "{}"
@@ -564,7 +567,8 @@ class CcsRecord(LocationDenormalizedModel):
     def delivery_form_details(self):
         ucr_tablename = self._ucr_tablename('reach-delivery_forms')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
@@ -576,7 +580,8 @@ class CcsRecord(LocationDenormalizedModel):
     def postnatal_care_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 """
                 SELECT * FROM "{}"
@@ -592,7 +597,8 @@ class CcsRecord(LocationDenormalizedModel):
     def thr_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-thr_forms')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             # We only ever need the last THR form, so order by timeend and return one result
             cursor.execute(
                 """
@@ -610,7 +616,8 @@ class CcsRecord(LocationDenormalizedModel):
     def person_details(self):
         ucr_tablename = self._ucr_tablename('reach-person_cases')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
                 [self.person_case_id]
@@ -622,7 +629,8 @@ class CcsRecord(LocationDenormalizedModel):
     def ccs_record_details(self):
         ucr_tablename = self._ucr_tablename('reach-ccs_record_cases')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
@@ -634,7 +642,8 @@ class CcsRecord(LocationDenormalizedModel):
     def task_case_details(self):
         ucr_tablename = self._ucr_tablename('reach-tasks_cases')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename),
                 [self.ccs_record_case_id]
@@ -868,7 +877,8 @@ class Child(LocationDenormalizedModel):
     def task_case_details(self):
         ucr_tablename = self._ucr_tablename('reach-tasks_cases')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
             result = _dictfetchone(cursor)
 
@@ -877,7 +887,8 @@ class Child(LocationDenormalizedModel):
     def immunizaton_form_details(self):
         ucr_tablename = self._ucr_tablename('reach-immunization_forms')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 'SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename),
                 [self.tasks_case_id]
@@ -889,7 +900,8 @@ class Child(LocationDenormalizedModel):
     def postnatal_care_form_details(self, date_):
         ucr_tablename = self._ucr_tablename('reach-postnatal_care')
 
-        with connections['aaa-data'].cursor() as cursor:
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
             cursor.execute(
                 """
                 SELECT * FROM "{}"

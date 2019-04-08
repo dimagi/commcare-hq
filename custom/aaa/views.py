@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 
 from datetime import date
 
+from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import F, Func, Q
-from django.db.models.functions import ExtractYear
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -22,10 +22,12 @@ from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.util.files import safe_filename_header
+from couchexport.models import Format
 
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
 from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
-from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
+from custom.aaa.models import Woman, Child
 from custom.aaa.tasks import (
     update_agg_awc_table,
     update_agg_village_table,
@@ -34,8 +36,9 @@ from custom.aaa.tasks import (
     update_child_history_table,
     update_woman_table,
     update_woman_history_table,
+    prepare_export_reports,
 )
-from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
+from custom.aaa.utils import build_location_filters, get_location_model_for_ministry, get_file_from_blobdb
 
 from dimagi.utils.dates import force_to_date
 
@@ -208,6 +211,11 @@ class UnifiedBeneficiaryReportAPI(View):
             data = data[start:start + length]
         else:
             number_of_data = 0
+        if beneficiary_type == 'eligible_couple':
+            month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
+            data = EligibleCoupleQueryHelper.update_list(data, month_end)
+        elif beneficiary_type == 'pregnant_women':
+            data = PregnantWomanQueryHelper.update_list(data)
         data = list(data)
         return JsonResponse(data={
             'rows': data,
@@ -221,15 +229,16 @@ class UnifiedBeneficiaryReportAPI(View):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class LocationFilterAPI(View):
     def post(self, request, *args, **kwargs):
-        selected_location = self.request.POST.get('selectedParentId', None)
+        selected_location = self.request.POST.get('parentSelectedId', None)
         location_type = self.request.POST.get('locationType', None)
         domain = self.kwargs['domain']
         locations = SQLLocation.objects.filter(
             domain=domain,
             location_type__code=location_type
-        )
+        ).order_by('name')
+
         if selected_location:
-            locations.filter(parent__location_id=selected_location)
+            locations = locations.filter(parent__location_id=selected_location).order_by('name')
 
         return JsonResponse(data={'data': [
             dict(
@@ -288,13 +297,17 @@ class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
         context['selected_type'] = kwargs.get('details_type')
         context['selected_month'] = int(request.GET.get('month'))
         context['selected_year'] = int(request.GET.get('year'))
+
+        person_model = Woman if context['selected_type'] != 'child' else Child
+
+        village_id = person_model.objects.get(person_case_id=context['beneficiary_id']).village_id
+
+        locations = SQLLocation.objects.get(
+            domain=request.domain, location_id=village_id
+        ).get_ancestors(include_self=True)
+
         context['beneficiary_location_names'] = [
-            'Haryana',
-            'Ambala',
-            'Shahzadpur',
-            'PHC Shahzadpur',
-            'SC shahzadpur',
-            'Rasidpur'
+            loc.name for loc in locations
         ]
         return self.render_to_response(context)
 
@@ -356,10 +369,10 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 # TODO update when the model will be created
                 husband = dict(
                     name=person['husband_name'],
-                    sex='Female',
-                    dob=date(1991, 5, 11),
-                    age_marriage=26,
-                    has_aadhar_number='Yes'
+                    sex='N/A',
+                    dob='N/A',
+                    age_marriage='N/A',
+                    has_aadhar_number='N/A'
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':
@@ -419,3 +432,64 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         if not data:
             raise Http404()
         return JsonResponse(data=data)
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class ExportData(View):
+    def post(self, request, *args, **kwargs):
+        selected_month = int(self.request.POST.get('selectedMonth'))
+        selected_year = int(self.request.POST.get('selectedYear'))
+        selected_date = date(selected_year, selected_month, 1)
+        next_month_start = selected_date + relativedelta(months=1)
+        selected_location = self.request.POST.get('selectedLocation')
+        selected_ministry = self.request.POST.get('selectedMinistry')
+        beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
+
+        task = prepare_export_reports.delay(
+            request.domain,
+            selected_date,
+            next_month_start,
+            selected_location,
+            selected_ministry,
+            beneficiary_type
+        )
+        return JsonResponse(data={
+            'task_id': task.task_id
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class CheckExportTask(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.kwargs.get('task_id', None)
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
+
+        if status:
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
+                }
+            )
+        return JsonResponse({'task_ready': status})
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class DownloadFile(View):
+    def get(self, request, *args, **kwargs):
+        file_id = self.kwargs.get('file_id', None)
+        content_type = Format.from_format('xlsx')
+        response = HttpResponse(
+            get_file_from_blobdb(file_id).read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(
+            'unified_beneficiary_list',
+            content_type.extension
+        )
+        return response

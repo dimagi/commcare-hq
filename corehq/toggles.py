@@ -56,7 +56,8 @@ TAG_INTERNAL = Tag(
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
-ALL_TAGS = [TAG_CUSTOM, TAG_DEPRECATED, TAG_PRODUCT, TAG_SOLUTIONS, TAG_INTERNAL]
+# Order roughly corresponds to how much we want you to use it
+ALL_TAGS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
 
 
 class StaticToggle(object):
@@ -1076,6 +1077,13 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+INCLUDE_SMS_ERRORS = StaticToggle(
+    'include_sms_errors',
+    "Include failed messages in Message Log Report",
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -1734,4 +1742,12 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     'Enables the "variant" version of the Demo Workflow A/B test after login',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+)
+
+
+PARALLEL_MPR_ASR_REPORT = StaticToggle(
+    'parallel_mpr_asr_report',
+    'Release parallel loading of MPR and ASR report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )

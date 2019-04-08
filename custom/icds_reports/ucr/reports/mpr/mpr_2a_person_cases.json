@@ -1,0 +1,330 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_2a_person_cases",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "MPR - 2a - Person cases (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "display": "Date of Death",
+        "slug": "date_death",
+        "type": "date",
+        "field": "date_death",
+        "datatype": "date"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "dead_F_resident_neo_count",
+        "column_id": "dead_F_resident_neo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident = 1 AND date_death - dob <= 28": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_resident_neo_count",
+        "column_id": "dead_M_resident_neo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident = 1 AND date_death - dob <= 28": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_migrant_neo_count",
+        "column_id": "dead_F_migrant_neo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_migrant_neo_count",
+        "column_id": "dead_M_migrant_neo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_resident_postneo_count",
+        "column_id": "dead_F_resident_postneo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_resident_postneo_count",
+        "column_id": "dead_M_resident_postneo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_migrant_postneo_count",
+        "column_id": "dead_F_migrant_postneo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_migrant_postneo_count",
+        "column_id": "dead_M_migrant_postneo_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_resident_child_count",
+        "column_id": "dead_F_resident_child_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_resident_child_count",
+        "column_id": "dead_M_resident_child_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_migrant_child_count",
+        "column_id": "dead_F_migrant_child_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_M_migrant_child_count",
+        "column_id": "dead_M_migrant_child_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_migrant_adult_count",
+        "column_id": "dead_F_migrant_adult_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident IS DISTINCT FROM 1 AND age_at_death_yrs >= 11": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_F_resident_adult_count",
+        "column_id": "dead_F_resident_adult_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "sex = 'F' AND resident = 1 AND age_at_death_yrs >= 11": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_preg_resident_count",
+        "column_id": "dead_preg_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'pregnant' AND resident = 1": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_preg_migrant_count",
+        "column_id": "dead_preg_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'pregnant' AND resident IS DISTINCT FROM  1": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_del_resident_count",
+        "column_id": "dead_del_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'delivery' AND resident = 1": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_del_migrant_count",
+        "column_id": "dead_del_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'delivery' AND resident IS DISTINCT FROM 1": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_pnc_resident_count",
+        "column_id": "dead_pnc_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'pnc' AND resident = 1": 1
+        },
+        "else_": 0
+      },
+      {
+        "display": "dead_pnc_migrant_count",
+        "column_id": "dead_pnc_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "female_death_type = 'pnc' AND resident IS DISTINCT FROM 1": 1
+        },
+        "else_": 0
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

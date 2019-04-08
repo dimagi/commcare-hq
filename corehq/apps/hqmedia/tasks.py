@@ -190,7 +190,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if len(media_suites) != 1:
                         message = _('Could not identify media_suite.xml in CCZ')
                         errors.append(message)
-                        notify_exception(None, "[ICDS-291] {}".format(message))
                     else:
                         with z.open(media_suites[0]) as media_suite:
                             from corehq.apps.app_manager.xform import parse_xml
@@ -199,15 +198,6 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                                          parsed.findall("media/resource/location[@authority='local']")}
                             names = z.namelist()
                             missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                            if missing:
-                                soft_assert(notify_admins=True)(False, '[ICDS-291] Files missing from CCZ', [{
-                                    'missing file count': len(missing),
-                                    'app_id': app._id,
-                                    'version': app.version,
-                                    'build_profile_id': build_profile_id,
-                                }, {
-                                    'files': missing,
-                                }])
                             errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
         if errors:

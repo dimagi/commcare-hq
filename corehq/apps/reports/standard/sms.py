@@ -388,11 +388,20 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = SMS.objects.filter(
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
-        ).exclude(
-            # Exclude outgoing messages that have not yet been processed
-            direction=OUTGOING,
-            processed=False
         )
+        if toggles.INCLUDE_SMS_ERRORS.enabled(self.request.user.username):
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+                error=False,  # Don't exclude errored messages
+            )
+        else:
+            # Exclude outgoing messages that have not yet been processed
+            # Note that this also excludes errored messages
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+            )
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)

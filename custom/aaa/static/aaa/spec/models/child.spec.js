@@ -60,6 +60,26 @@ describe('Child models', function () {
             assert.equal('Yes', childListModel.lastImmunizationType());
             assert.equal('2019-03-01', childListModel.lastImmunizationDate());
         });
+
+        it('test lastImmunizationDate should be N/A when lastImmunizationType is null', function () {
+            var postData = reachUtils.postData({
+                selectedMonth: 3,
+                selectedYear: 2019,
+            });
+            var childListModel = childModels.listView(
+                {
+                    id: '1',
+                    name: 'test Name',
+                    age: 14,
+                    gender: 'Male',
+                    lastImmunizationType: null,
+                    lastImmunizationDate: '',
+                },
+                postData
+            );
+            assert.equal('No', childListModel.lastImmunizationType());
+            assert.equal('N/A', childListModel.lastImmunizationDate());
+        });
     });
 
     describe('child details view model', function () {
