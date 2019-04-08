@@ -37,6 +37,24 @@
       },
       "property_value": "tasks"
     },
+    "validations": [
+      {
+        "name": "owned_by_aww",
+        "error_message": "Case not owned by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": null,

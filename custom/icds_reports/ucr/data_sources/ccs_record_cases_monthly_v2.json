@@ -165,6 +165,27 @@
         }
       ]
     },
+    "validations": [
+      {
+        "name": "owned_by_aww",
+        "error_message": "Case not owned by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "expression": {
+                "type": "property_name",
+                "property_name": "owner_id"
+              },
+              "type": "root_doc"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": null,
