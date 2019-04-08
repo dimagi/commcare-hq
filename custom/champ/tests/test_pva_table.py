@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.util.test_utils import softer_assert
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsTableView
 
@@ -9,6 +11,7 @@ import mock
 from django.core.urlresolvers import reverse
 
 
+@softer_assert('sql-agg-missing-group-by')
 class TestPVATable(ChampTestCase):
 
     def setUp(self):
