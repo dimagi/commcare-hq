@@ -75,10 +75,7 @@ Note that once you're up and running, you'll want to periodically re-run these s
     - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
 - [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
 - Install HQ requirements for Python 3.6
-    - `$ pip install -r requirements-python3_6/requirements.txt`
-    - `$ pip install -r requirements-python3_6/prod-requirements.txt`
     - `$ pip install -r requirements-python3_6/dev-requirements.txt`
-    - `$ pip install -r requirements-python3_6/test-requirements.txt`
 
 #### Setup localsettings
 
