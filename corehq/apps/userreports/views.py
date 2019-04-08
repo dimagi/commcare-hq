@@ -863,7 +863,8 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store_for_doc_type(domain, usable_type)
+        document_store = get_document_store_for_doc_type(
+            domain, usable_type, load_source="eval_expression")
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -919,7 +920,8 @@ def evaluate_data_source(request, domain):
         )
 
     docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-    document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
+    document_store = get_document_store_for_doc_type(
+        domain, data_source.referenced_doc_type, load_source="eval_data_source")
     rows = []
     docs = 0
     for doc in document_store.iter_documents(docs_id):

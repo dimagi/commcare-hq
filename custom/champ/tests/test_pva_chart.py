@@ -2,12 +2,15 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import mock
+
+from corehq.util.test_utils import softer_assert
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsView
 
 from django.core.urlresolvers import reverse
 
 
+@softer_assert('sql-agg-missing-group-by')
 class TestPVAChart(ChampTestCase):
 
     def setUp(self):

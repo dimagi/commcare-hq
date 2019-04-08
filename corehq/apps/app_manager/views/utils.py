@@ -353,15 +353,10 @@ def update_linked_app(app, user_id):
 
     if app.master_is_remote:
         try:
-            missing_mm_populated = pull_missing_multimedia_for_app(app)
+            pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
-            ))
-        if not missing_mm_populated:
-            raise MultimediaMissingError(_(
-                'Application has missing multimedia even after an attempt to pull them. '
-                'An email has been sent with details. Please try again. If persists, report an issue.'
             ))
 
     app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))

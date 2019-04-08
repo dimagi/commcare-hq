@@ -47,6 +47,11 @@
                     <div>Brand: {{ auto_pay_card.brand }}</div>
                     <div>Expiration: {{ auto_pay_card.exp_month }} / {{ auto_pay_card.exp_year }}</div>
                 </p>
+                <div>
+                    <form class="form form-horizontal" method="post" id="remove-autopay-form">
+                        {% crispy remove_autopay_form %}
+                    </form>
+                </div>
             </div>
         {% endif %}
     </div>
