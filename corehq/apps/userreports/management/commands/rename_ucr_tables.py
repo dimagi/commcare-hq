@@ -169,8 +169,8 @@ def _rename_tables(dry_run=False, tables_by_engine=None, confirm=False, engine_i
         for dsconf in dsconfs:
             with engine.begin() as conn:
                 executed = False
-                old_table_exists = table_exists(conn, dsconf.old_table)
-                if old_table_exists:
+                rename = table_exists(conn, dsconf.old_table) and not table_exists(conn, dsconf.new_table)
+                if rename:
                     drop_partition = rename_children = None
                     if dsconf.config.sql_settings.partition_config:
                         drop_partition = _get_drop_partitioning_features_sql(conn, dsconf, dry_run)
@@ -190,7 +190,7 @@ def _rename_tables(dry_run=False, tables_by_engine=None, confirm=False, engine_i
                     executed = _run_sql_with_logging(conn, drop_view_rename_table, dry_run, confirm)
 
             # do this outside the previous transaction to avoid deadlock
-            if old_table_exists and executed and dsconf.config.sql_settings.partition_config:
+            if rename and executed and dsconf.config.sql_settings.partition_config:
                 print('\t\tReinstalling partitioning on "{}"'.format(dsconf.new_table))
                 if not dry_run:
                     dsconf.adapter._install_partition()
