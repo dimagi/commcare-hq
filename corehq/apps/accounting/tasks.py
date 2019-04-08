@@ -67,7 +67,6 @@ from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
@@ -819,8 +818,6 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         _send_downgrade_warning(oldest_unpaid_invoice, context)
     elif days_ago == 30:
         _send_overdue_notice(oldest_unpaid_invoice, context)
-    elif days_ago == 1:
-        _create_overdue_notification(oldest_unpaid_invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
@@ -892,19 +889,6 @@ def _send_overdue_notice(invoice, context):
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=bcc,
         email_from=get_dimagi_from_email())
-
-
-def _create_overdue_notification(invoice, context):
-    if invoice.is_customer_invoice:
-        domains = [subscription.subscriber.domain for subscription in invoice.subscriptions.all()]
-    else:
-        domains = [invoice.get_domain()]
-    message = _('Reminder - your {} statement is past due!'.format(
-        invoice.date_start.strftime('%B')
-    ))
-    note = Notification.objects.create(content=message, url=context['statements_url'],
-                                       domain_specific=True, type='billing', domains=domains)
-    note.activate()
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,
