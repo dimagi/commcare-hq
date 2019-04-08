@@ -70,11 +70,13 @@ def send_report(notification_id):
     ).order_by('-scheduled_for')[0]
 
     # Mark all previous queued record as skipped
-    ScheduledReportRecord.objects.filter(
+    skipped_records = ScheduledReportRecord.objects.filter(
         state=ScheduledReportRecord.States.queued,
         scheduled_report_id=notification_id,
         scheduled_for__lt=record.scheduled_for,
-    ).update(state=ScheduledReportRecord.States.skipped)
+    ).select_for_update()
+    _report_skipped_records(skipped_records)
+    skipped_records.update(state=ScheduledReportRecord.States.skipped)
 
     try:
         notification.send()
