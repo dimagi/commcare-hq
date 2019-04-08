@@ -13,7 +13,7 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 
 CONTEXT_REGEXS = {
     # Module or Form: sheet name for module/form: unique id
-    'module_and_forms_sheet': r'^(Menu|Form):(\w+):(\w+)$',
+    'module_and_forms_sheet': r'^(Module|Form):(\w+):(\w+)$',  # maintain legacy module usage instead of menu
     # case property: list/detail
     'module_sheet': r'^(.+):(list|detail)$',
 }
@@ -58,7 +58,10 @@ class TranslationsParser(object):
         for po_entry in po_entries:
             context = po_entry.msgctxt
             _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
-            ws.append([_type, _sheet_name, po_entry.msgid, po_entry.msgstr, _unique_id])
+            # replace the legacy module notation with new menu notation
+            ws.append([_type.replace('Module', 'Menu'),
+                       _sheet_name.replace('module', 'menu'),
+                       po_entry.msgid, po_entry.msgstr, _unique_id])
 
     @staticmethod
     def _get_rows_for_module_sheet(consolidated_po_entries):
