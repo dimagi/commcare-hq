@@ -318,6 +318,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND lower(substring(child_health.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
+              AND {open_in_month}
             ORDER BY child_health.awc_id
         )
         """.format(
@@ -331,7 +332,8 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
-            person_cases_ucr=self.person_case_ucr_tablename
+            person_cases_ucr=self.person_case_ucr_tablename,
+            open_in_month=open_in_month
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),

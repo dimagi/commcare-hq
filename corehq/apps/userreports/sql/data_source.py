@@ -82,10 +82,6 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         qc = self.query_context()
-        for c in self.columns:
-            # TODO - don't append columns that are not part of filters or group bys
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.count(session.connection(), self.filter_values)
@@ -105,9 +101,6 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
 
         qc = self.query_context()
-        for c in self.columns:
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             totals = qc.totals(

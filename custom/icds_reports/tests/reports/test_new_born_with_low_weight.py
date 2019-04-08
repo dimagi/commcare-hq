@@ -63,7 +63,7 @@ class TestNewBornWithLowWeight(TestCase):
                 'st5': {'in_month': 0, 'original_name': ['st5'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
                 'st6': {'in_month': 0, 'original_name': ['st6'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
                 'st7': {'in_month': 0, 'original_name': ['st7'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'},
-                'st1': {'in_month': 3, 'original_name': ['st1'], 'low_birth': 2, 'all': 4, 'fillKey': '60%-100%'},
+                'st1': {'in_month': 2, 'original_name': ['st1'], 'low_birth': 1, 'all': 2, 'fillKey': '20%-60%'},
                 'st2': {'in_month': 1, 'original_name': ['st2'], 'low_birth': 0, 'all': 3, 'fillKey': '0%-20%'},
                 'st3': {'in_month': 0, 'original_name': ['st3'], 'low_birth': 0, 'all': 0, 'fillKey': '0%-20%'}
             }
@@ -92,7 +92,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 50.0)
+        self.assertEquals(data['rightLegend']['average'], 33.333333333333336)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -106,12 +106,12 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
-                {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
-                {'indicator': 'Total Number of children born and weight in given month:', 'value': '4'},
-                {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
-                {'indicator': '% of children with weight in normal:', 'value': '50.00%'},
-                {'indicator': '% Unweighted:', 'value': '42.86%'},
+                {'indicator': 'Total Number of Newborns born in given month:', 'value': "5"},
+                {'indicator': 'Number of Newborns with LBW in given month:', 'value': "1"},
+                {'indicator': 'Total Number of children born and weight in given month:', 'value': '3'},
+                {'indicator': '% newborns with LBW in given month:', 'value': '33.33%'},
+                {'indicator': '% of children with weight in normal:', 'value': '66.67%'},
+                {'indicator': '% Unweighted:', 'value': '40.00%'},
             ]
         )
 
@@ -171,11 +171,11 @@ class TestNewBornWithLowWeight(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'in_month': 3,
+                    'in_month': 2,
                     'original_name': ['b1', 'b2'],
-                    'low_birth': 2,
-                    'all': 4,
-                    'fillKey': '60%-100%'
+                    'low_birth': 1,
+                    'all': 2,
+                    'fillKey': '20%-60%'
                 }
             }
         )
@@ -191,7 +191,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
+        self.assertEquals(data['rightLegend']['average'], 50.0)
 
     def test_chart_data_keys_length(self):
         data = get_newborn_with_low_birth_weight_chart(
@@ -231,7 +231,7 @@ class TestNewBornWithLowWeight(TestCase):
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 0.0},
                 {'loc_name': 'st3', 'percent': 0.0},
-                {'loc_name': 'st1', 'percent': 66.66666666666667}
+                {'loc_name': 'st1', 'percent': 50.0}
             ]
         )
 
@@ -299,13 +299,13 @@ class TestNewBornWithLowWeight(TestCase):
                         "x": 1491004800000,
                         "in_month": 3,
                         "low_birth": 0,
-                        "all": 8},
+                        "all": 6},
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "in_month": 4,
-                        "low_birth": 2,
-                        "all": 7
+                        "in_month": 3,
+                        "low_birth": 1,
+                        "all": 5
                     }
                 ],
                 "key": "% Newborns with Low Birth Weight"
@@ -330,7 +330,7 @@ class TestNewBornWithLowWeight(TestCase):
                 {'loc_name': 'st7', 'percent': 0.0},
                 {'loc_name': 'st2', 'percent': 0.0},
                 {'loc_name': 'st3', 'percent': 0.0},
-                {'loc_name': 'st1', 'percent': 66.66666666666667}
+                {'loc_name': 'st1', 'percent': 50.0}
             ]
         )
     
