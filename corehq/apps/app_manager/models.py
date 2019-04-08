@@ -1,75 +1,48 @@
 # coding=utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import calendar
-from distutils.version import LooseVersion
-from itertools import chain
-import tempfile
-import os
-import logging
-import hashlib
-import random
-import json
-import types
-import re
 import datetime
+import hashlib
+import itertools
+import json
+import logging
+import os
+import random
+import re
+import types
 import uuid
-from collections import defaultdict, namedtuple, Counter
-from functools import wraps
+from collections import Counter, defaultdict, namedtuple
 from copy import deepcopy
+from distutils.version import LooseVersion
+from functools import wraps
+from io import BytesIO, open
+from itertools import chain
 from mimetypes import guess_type
-from io import BytesIO
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.hashers import make_password
+from django.core.cache import cache
+from django.db import models
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.safestring import SafeBytes
+from django.utils.translation import override
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 import qrcode
-from django.contrib import messages
-from django.utils.safestring import SafeBytes
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.parse import urljoin
-
-from couchdbkit import MultipleResultsFound
-import itertools
-from lxml import etree
-from django.core.cache import cache
-from django.utils.translation import override, ugettext as _, ugettext
-from django.utils.translation import ugettext_lazy
-from django.db import models
+import six
+from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError
+from jsonpath_rw import jsonpath, parse
+from lxml import etree
+from memoized import memoized
+from six.moves import filter, map, range
+from six.moves.urllib.parse import urljoin
+from six.moves.urllib.request import urlopen
 
-from corehq.apps.app_manager.app_schemas.case_properties import (
-    get_all_case_properties,
-    get_parent_type_map,
-    get_usercase_properties,
-)
-from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
-from corehq.apps.integration.models import ApplicationIntegrationMixin
-from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
-from corehq.apps.app_manager.helpers.validators import (
-    ApplicationBaseValidator,
-    ApplicationValidator,
-    FormValidator,
-    FormBaseValidator,
-    IndexedFormBaseValidator,
-    ModuleValidator,
-    ModuleBaseValidator,
-    AdvancedModuleValidator,
-    AdvancedFormValidator,
-    ReportModuleValidator,
-    ShadowFormValidator,
-    ShadowModuleValidator,
-)
-from corehq.apps.app_manager.suite_xml.utils import get_select_chain
-from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
-from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.builds.models import CommCareBuildConfig
-from corehq.apps.data_dictionary.util import get_case_property_description_dict
-from corehq.apps.linked_domain.exceptions import ActionNotPermitted
-from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
-from corehq.apps.userreports.util import get_static_report_mapping
-from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timer import TimingContext, time_method
-from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -86,95 +59,129 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.urls import reverse
-from django.template.loader import render_to_string
-from couchdbkit import ResourceNotFound
-from corehq import toggles, privileges
-from corehq.blobs.mixin import BlobMixin, CODES
-from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
-from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
-from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
-from django_prbac.exceptions import PermissionDenied
-from corehq.apps.accounting.utils import domain_has_privilege
+from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
+from dimagi.utils.dates import DateSpan
+from dimagi.utils.web import get_url_base, parse_int
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager import (
+    app_strings,
+    commcare_settings,
+    current_builds,
+    id_strings,
+    remote_app,
+)
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_parent_type_map,
+    get_usercase_properties,
+)
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.xpath import (
-    dot_interpolate,
-    interpolate_xpath,
+from corehq.apps.app_manager.dbaccessors import (
+    domain_has_apps,
+    get_app,
+    get_latest_build_doc,
+    get_latest_released_app_doc,
+)
+from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
+from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
+    FormNotFoundException,
+    IncompatibleFormTypeException,
+    ModuleNotFoundException,
+    RearrangeError,
+    ScheduleError,
+    VersioningError,
+    XFormException,
+    XFormIdNotUnique,
+    XFormValidationError,
+    XFormValidationFailed,
+)
+from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.apps.app_manager.helpers.validators import (
+    AdvancedFormValidator,
+    AdvancedModuleValidator,
+    ApplicationBaseValidator,
+    ApplicationValidator,
+    FormBaseValidator,
+    FormValidator,
+    IndexedFormBaseValidator,
+    ModuleBaseValidator,
+    ModuleValidator,
+    ReportModuleValidator,
+    ShadowFormValidator,
+    ShadowModuleValidator,
+)
+from corehq.apps.app_manager.suite_xml import xml_models as suite_models
+from corehq.apps.app_manager.suite_xml.generator import (
+    MediaSuiteGenerator,
+    SuiteGenerator,
+)
+from corehq.apps.app_manager.suite_xml.utils import get_select_chain
+from corehq.apps.app_manager.tasks import prune_auto_generated_builds
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.util import (
+    LatestAppInfo,
+    actions_use_usercase,
+    get_and_assert_practice_user_in_domain,
+    get_correct_app_class,
+    get_latest_enabled_build_for_profile,
+    get_latest_enabled_versions_per_profile,
+    is_usercase_in_use,
+    module_offers_search,
+    save_xform,
+    update_form_unique_ids,
+    update_report_module_ids,
+)
+from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import parse_xml as _parse_xml
+from corehq.apps.app_manager.xform import validate_xform
+from corehq.apps.app_manager.xpath import dot_interpolate, interpolate_xpath
+from corehq.apps.appstore.models import SnapshotMixin
+from corehq.apps.builds.models import (
+    BuildRecord,
+    BuildSpec,
+    CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
-from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
-from dimagi.utils.dates import DateSpan
-from memoized import memoized
-from dimagi.utils.web import get_url_base, parse_int
-from corehq.util import bitly
-from corehq.util import view_utils
-from corehq.apps.appstore.models import SnapshotMixin
-from corehq.apps.builds.models import BuildSpec, BuildRecord
+from corehq.apps.data_dictionary.util import get_case_property_description_dict
+from corehq.apps.domain.models import Domain, cached_property
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
     CommCareMultimedia,
     FormMediaMixin,
     ModuleMediaMixin,
 )
+from corehq.apps.integration.models import ApplicationIntegrationMixin
+from corehq.apps.linked_domain.applications import (
+    get_latest_master_app_release,
+    get_master_app_version,
+)
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.reports.daterange import (
+    get_daterange_start_end_dates,
+    get_simple_dateranges,
+)
 from corehq.apps.translations.models import TranslationMixin
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.userreports.util import get_static_report_mapping
+from corehq.apps.users.dbaccessors.couch_users import (
+    get_display_name_for_user_id,
+)
 from corehq.apps.users.util import cc_user_domain
-from corehq.apps.domain.models import cached_property, Domain
-from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
-    id_strings, commcare_settings
-from corehq.apps.app_manager.suite_xml import xml_models as suite_models
-from corehq.apps.app_manager.dbaccessors import (
-    get_app,
-    get_latest_build_doc,
-    get_latest_released_app_doc,
-    domain_has_apps,
-)
-from corehq.apps.app_manager.util import (
-    save_xform,
-    is_usercase_in_use,
-    actions_use_usercase,
-    update_form_unique_ids,
-    get_correct_app_class,
-    get_and_assert_practice_user_in_domain,
-    LatestAppInfo,
-    update_report_module_ids,
-    module_offers_search,
-    get_latest_enabled_build_for_profile,
-    get_latest_enabled_versions_per_profile,
-)
-from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
-    validate_xform
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from corehq.apps.app_manager.exceptions import (
-    AppEditingError,
-    FormNotFoundException,
-    IncompatibleFormTypeException,
-    ModuleNotFoundException,
-    ModuleIdMissingException,
-    RearrangeError,
-    SuiteValidationError,
-    VersioningError,
-    XFormException,
-    XFormIdNotUnique,
-    XFormValidationError,
-    ScheduleError,
-    XFormValidationFailed,
-    PracticeUserException)
-from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
-from jsonpath_rw import jsonpath, parse
-import six
-from six.moves import filter
-from six.moves import range
-from six.moves import map
-from io import open
+from corehq.blobs.mixin import CODES, BlobMixin
+from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
+from corehq.util import bitly, view_utils
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext, time_method
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_domain
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -2558,14 +2565,14 @@ class Module(ModuleBase, ModuleDetailsMixin):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Name")},
+                header={(lang or 'en'): _("Name")},
                 field='name',
                 model='case',
                 hasAutocomplete=True,
             )]
         )
         module = cls(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2699,7 +2706,6 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
             logging.error("There was a {error} while running the pre_delete_hook on {form_id}. "
                           "There is probably nothing to worry about, but you could check to make sure "
                           "that there are no issues with this form.".format(error=e, form_id=self.unique_id))
-            pass
 
     def get_action_type(self):
         actions = self.actions.actions_meta_by_tag
@@ -2721,7 +2727,6 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                 logging.error("There was a {error} while running the pre_move_hook on {form_id}. "
                               "There is probably nothing to worry about, but you could check to make sure "
                               "that there are no issues with this module.".format(error=e, form_id=self.unique_id))
-                pass
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(AdvancedForm, self).add_stuff_to_xform(xform, build_profile_id)
@@ -3128,14 +3133,14 @@ class AdvancedModule(ModuleBase):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Name")},
+                header={(lang or 'en'): _("Name")},
                 field='name',
                 model='case',
             )]
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Module")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -3147,7 +3152,7 @@ class AdvancedModule(ModuleBase):
                     columns=[
                         DetailColumn(
                             format='plain',
-                            header={(lang or 'en'): ugettext("Product")},
+                            header={(lang or 'en'): _("Product")},
                             field='name',
                             model='product',
                         ),
@@ -3760,7 +3765,7 @@ class ReportModule(ModuleBase):
     @classmethod
     def new_module(cls, name, lang):
         module = ReportModule(
-            name={(lang or 'en'): name or ugettext("Reports")},
+            name={(lang or 'en'): name or _("Reports")},
             case_type='',
         )
         module.get_or_create_unique_id()
@@ -3910,13 +3915,13 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         detail = Detail(
             columns=[DetailColumn(
                 format='plain',
-                header={(lang or 'en'): ugettext("Name")},
+                header={(lang or 'en'): _("Name")},
                 field='name',
                 model='case',
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or ugettext("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Module")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
@@ -5712,7 +5717,7 @@ class RemoteApp(ApplicationBase):
                            remote_app.make_remote_suite(self, suite))
             )
         except AppEditingError:
-            raise AppEditingError(ugettext('Problem loading suite file from profile file. Is your profile file correct?'))
+            raise AppEditingError(_('Problem loading suite file from profile file. Is your profile file correct?'))
 
         for suite in suites:
             suite_xml = _parse_xml(suite)
