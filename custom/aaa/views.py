@@ -208,6 +208,11 @@ class UnifiedBeneficiaryReportAPI(View):
             data = data[start:start + length]
         else:
             number_of_data = 0
+        if beneficiary_type == 'eligible_couple':
+            month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
+            data = EligibleCoupleQueryHelper.update_list(data, month_end)
+        elif beneficiary_type == 'pregnant_women':
+            data = PregnantWomanQueryHelper.update_list(data)
         data = list(data)
         return JsonResponse(data={
             'rows': data,
@@ -221,15 +226,16 @@ class UnifiedBeneficiaryReportAPI(View):
 @method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
 class LocationFilterAPI(View):
     def post(self, request, *args, **kwargs):
-        selected_location = self.request.POST.get('selectedParentId', None)
+        selected_location = self.request.POST.get('parentSelectedId', None)
         location_type = self.request.POST.get('locationType', None)
         domain = self.kwargs['domain']
         locations = SQLLocation.objects.filter(
             domain=domain,
             location_type__code=location_type
-        )
+        ).order_by('name')
+
         if selected_location:
-            locations.filter(parent__location_id=selected_location)
+            locations = locations.filter(parent__location_id=selected_location).order_by('name')
 
         return JsonResponse(data={'data': [
             dict(
@@ -288,13 +294,17 @@ class UnifiedBeneficiaryDetailsReport(ReachDashboardView):
         context['selected_type'] = kwargs.get('details_type')
         context['selected_month'] = int(request.GET.get('month'))
         context['selected_year'] = int(request.GET.get('year'))
+
+        person_model = Woman if context['selected_type'] != 'child' else Child
+
+        village_id = person_model.objects.get(person_case_id=context['beneficiary_id']).village_id
+
+        locations = SQLLocation.objects.get(
+            domain=request.domain, location_id=village_id
+        ).get_ancestors(include_self=True)
+
         context['beneficiary_location_names'] = [
-            'Haryana',
-            'Ambala',
-            'Shahzadpur',
-            'PHC Shahzadpur',
-            'SC shahzadpur',
-            'Rasidpur'
+            loc.name for loc in locations
         ]
         return self.render_to_response(context)
 
@@ -356,10 +366,10 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
                 # TODO update when the model will be created
                 husband = dict(
                     name=person['husband_name'],
-                    sex='Female',
-                    dob=date(1991, 5, 11),
-                    age_marriage=26,
-                    has_aadhar_number='Yes'
+                    sex='N/A',
+                    dob='N/A',
+                    age_marriage='N/A',
+                    has_aadhar_number='N/A'
                 )
                 data.update(dict(husband=husband))
         elif sub_section == 'child_details':

@@ -271,7 +271,7 @@ def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
         a list of databases. If any database is standby and its replication has
-        more than accesptable delay, that db is dropped from selection
+        more than acceptable delay, that db is dropped from selection
 
     Args:
         weighted_dbs: a list of tuple of db and the weight.
