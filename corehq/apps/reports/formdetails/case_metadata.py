@@ -30,15 +30,7 @@ class AppCaseMetadataBuilder(object):
         self._build_case_relationships()
         self._add_module_contributions()
         self._add_form_contributions()
-        return self._get_case_metadata()
-
-    def _get_case_metadata(self):
-        descriptions_dict = get_case_property_description_dict(self.domain)
-
-        for type_ in self.meta.case_types:
-            for prop in type_.properties:
-                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
-
+        self._add_case_property_descriptions()
         return self.meta
 
     def _build_case_relationships(self):
@@ -286,3 +278,9 @@ class AppCaseMetadataBuilder(object):
                 form.unique_id,
                 "%s is not a valid question" % question_path
             )
+
+    def _add_case_property_descriptions(self):
+        descriptions_dict = get_case_property_description_dict(self.domain)
+        for type_ in self.meta.case_types:
+            for prop in type_.properties:
+                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
