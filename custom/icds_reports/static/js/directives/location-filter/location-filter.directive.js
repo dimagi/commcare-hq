@@ -176,8 +176,8 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     var ALL_OPTION = {
         name: 'All',
         location_id: 'all',
-        "user_have_access": 0,
-        "user_have_access_to_parent": 1,
+        "user_have_access": false,
+        "user_have_access_to_parent": true,
     };
 
     var initHierarchy = function() {

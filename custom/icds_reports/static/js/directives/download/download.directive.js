@@ -125,7 +125,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 9, name: 'LS Performance Report'},
     ];
 
-    var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var ALL_OPTION = {
+        name: 'All',
+        location_id: 'all',
+        "user_have_access": false,
+        "user_have_access_to_parent": true,
+    };
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
 
     var locationsCache = {};
