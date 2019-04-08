@@ -34,6 +34,8 @@
                     </fieldset>
                 </form>
             </div>
+
+            {% if not enterprise_mode %}
             <div class="well">
                 <div class="form">
                     <fieldset>
@@ -47,6 +49,8 @@
                     </fieldset>
                 </div>
             </div>
+            {% endif %}
+
             {% if allow_report_an_issue %}
             <div class="panel panel-modern-gray">
                 <div class="panel-heading">
