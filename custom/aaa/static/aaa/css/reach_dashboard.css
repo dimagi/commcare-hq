@@ -400,11 +400,11 @@ tr, th {
 }
 
 .arrow-steps .step:first-child:before {
-	border: none  !important;
+	border: none;
 }
 
 .arrow-steps .step:last-child:after {
-	border: none  !important;
+	border: none;
 }
 
 .arrow-steps .step:first-child {

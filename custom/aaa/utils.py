@@ -10,7 +10,7 @@ from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.connections import get_aaa_db_alias
 from couchexport.export import export_from_tables
-from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL, EXPIRED
+from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL, BLOB_EXPIRATION_TIME
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 from io import BytesIO
 
@@ -84,11 +84,11 @@ def create_excel_file(domain, excel_data, data_type, file_format):
     export_file = BytesIO()
     export_from_tables(excel_data, export_file, file_format)
     export_file.seek(0)
-    meta = store_file_in_blobdb(domain, export_file, expired=60 * 60 * 24)
+    meta = store_file_in_blobdb(domain, export_file)
     return meta.key
 
 
-def store_file_in_blobdb(domain, export_file, expired=EXPIRED):
+def store_file_in_blobdb(domain, export_file, expired=BLOB_EXPIRATION_TIME):
     db = get_blob_db()
     key = uuid.uuid4().hex
     try:
