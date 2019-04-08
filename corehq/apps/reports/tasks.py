@@ -43,7 +43,6 @@ from corehq.elastic import (
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.view_utils import absolute_reverse
 from corehq.blobs import CODES, get_blob_db
-from custom.icds_reports.const import DASHBOARD_DOMAIN
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
@@ -129,7 +128,7 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     setattr(report.request, 'REQUEST', {})
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
-    hash_id = _store_excel_in_blobdb(report_class, file)
+    hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
@@ -144,7 +143,7 @@ def _send_email(user, report, hash_id, recipient):
     send_report_download_email(report.name, recipient, link)
 
 
-def _store_excel_in_blobdb(report_class, file):
+def _store_excel_in_blobdb(report_class, file, domain):
 
     # Store classname to redis
     key = uuid.uuid4().hex
@@ -158,7 +157,7 @@ def _store_excel_in_blobdb(report_class, file):
     parent_id = uuid.uuid4().hex
 
     kw = {
-        "domain": DASHBOARD_DOMAIN,
+        "domain": domain,
         "parent_id": parent_id,
         "type_code": CODES.tempfile,
         "key": key,
