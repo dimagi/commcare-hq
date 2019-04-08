@@ -449,7 +449,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex = 'F' and disabled = 1 AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND sex = 'F' and disabled = 1 AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -722,7 +722,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND sex in ('M', 'O') and disabled = 1 AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND sex in ('M', 'O') and disabled = 1 AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -752,7 +752,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y1\\y' AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND disability_type ~ '\\y1\\y' AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -782,7 +782,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y2\\y' AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND disability_type ~ '\\y2\\y' AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -812,7 +812,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y3\\y' AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND disability_type ~ '\\y3\\y' AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -842,7 +842,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y4\\y' AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND disability_type ~ '\\y4\\y' AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
@@ -872,7 +872,7 @@
         "aggregation": "sum",
         "calculate_total": true,
         "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y5\\y' AND extract(day from now() - dob) =< 1095": 1
+          "closed_on IS NULL AND disability_type ~ '\\y5\\y' AND extract(day from now() - dob) <= 1095": 1
         }
       },
       {
