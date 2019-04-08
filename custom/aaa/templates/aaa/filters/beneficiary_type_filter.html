@@ -1,4 +1,4 @@
-<script type="text/html" id="beneficiary-type-template">
+w<script type="text/html" id="beneficiary-type-template">
     <div>
         <h2 class="filter-title"><strong><i class="fa fa-smile-o icon-bar"></i> Beneficiary Type</strong></h2>
         <div class="form-group">
@@ -10,6 +10,7 @@
                 valueAllowUnset: true,
                 select2: {placeholder: 'Current Beneficiary Status'}">
             </select>
+            <span class="hide red" data-bind="css: { show: showErrorMessage }">* This field is required</span>
         </div>
     </div>
     <hr/>
