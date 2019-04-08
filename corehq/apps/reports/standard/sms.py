@@ -1,77 +1,107 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from collections import namedtuple
+from __future__ import absolute_import, unicode_literals
+
 import cgi
-from django.db.models import Q, Count
-from django.urls import reverse
+from collections import namedtuple
+from datetime import datetime
+
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponseRedirect
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.html import escape
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext_noop
+
+import six
 from couchdbkit import ResourceNotFound
+from memoized import memoized
+
+from casexml.apps.case.models import CommCareCase
+
 from corehq import toggles
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
+from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.doc_info import (
+    DomainMismatchException,
+    get_doc_info,
+    get_doc_info_by_id,
+    get_object_info,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import EditLocationView
+from corehq.apps.reports.datatables import (
+    DataTablesColumn,
+    DataTablesHeader,
+    DTSortType,
+)
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
-from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import (
-    MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter,
-    PhoneNumberReportFilter
+from corehq.apps.reports.standard import (
+    DatespanMixin,
+    ProjectReport,
+    ProjectReportParametersMixin,
 )
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import absolute_reverse
-from memoized import memoized
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from casexml.apps.case.models import CommCareCase
-from datetime import datetime
-from django.conf import settings
-from django.utils.functional import cached_property
-from django.utils.html import escape
-from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
-    get_object_info, DomainMismatchException)
+from corehq.apps.sms.filters import (
+    EventStatusFilter,
+    EventTypeFilter,
+    MessageTypeFilter,
+    PhoneNumberFilter,
+    PhoneNumberReportFilter,
+)
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import (
-    WORKFLOWS_FOR_REPORTS,
-    WORKFLOW_FORWARD,
     INCOMING,
     OUTGOING,
+    SMS,
+    WORKFLOW_FORWARD,
+    WORKFLOWS_FOR_REPORTS,
+    Keyword,
     MessagingEvent,
     MessagingSubEvent,
-    SMS,
     PhoneBlacklist,
-    Keyword,
     PhoneNumber,
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.views import EditWebUserView
-from corehq.apps.users.views.mobile import EditCommCareUserView, EditGroupMembersView
+from corehq.apps.users.views.mobile import (
+    EditCommCareUserView,
+    EditGroupMembersView,
+)
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
-from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast, MigratedReminder
-from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    MigratedReminder,
+    ScheduledBroadcast,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
-    TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    TimedScheduleInstance,
+)
+from corehq.messaging.scheduling.views import (
+    EditConditionalAlertView,
+    EditScheduleView,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from django.core.exceptions import ObjectDoesNotExist
-import six
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.view_utils import absolute_reverse
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
