@@ -274,7 +274,10 @@ def _get_actions_from_forms(domain, sorted_forms, case_id):
     from corehq.form_processor.parsers.ledgers import get_stock_actions
     case_actions = []
     for form in sorted_forms:
-        assert form.domain == domain
+        assert form.domain == domain, (
+            "Domain mismatch on form {} referenced by case {}: {!r} != {!r}"
+            .format(form.form_id, case_id, form.domain, domain)
+        )
 
         case_updates = get_case_updates(form)
         filtered_updates = [u for u in case_updates if u.id == case_id]

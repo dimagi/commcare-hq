@@ -86,7 +86,7 @@ hqDefine('aaa/js/filters/location_model', [
             }
         };
 
-        self.locationName = ko.computed(function() {
+        self.locationName = ko.computed(function () {
             var location = _.find(self.locations(), function (location) {
                 return location.id === self.loc();
             });
@@ -95,7 +95,7 @@ hqDefine('aaa/js/filters/location_model', [
 
         self.hideName = ko.computed(function () {
             if (self.parent === '' || self.parent.loc() !== reachUtils.DEFAULTLOCATION.id) {
-                return false
+                return false;
             }
             return self.loc() === reachUtils.DEFAULTLOCATION.id;
         }, self);

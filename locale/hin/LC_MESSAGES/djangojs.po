@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-03-12 19:45+0000\n"
+"POT-Creation-Date: 2019-04-03 21:10+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -103,7 +103,7 @@ msgid "Please enter a valid email."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:76
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
 #: corehq/apps/locations/static/locations/js/location_types.js:367
 msgid "You have unsaved changes."
 msgstr ""
@@ -345,7 +345,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:32
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:666
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:705
 msgid "Case Type required"
 msgstr ""
 
@@ -354,12 +354,12 @@ msgid "Case Tag required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:37
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:670
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:709
 msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:41
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:674
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:713
 msgid "Case Tag already in use"
 msgstr ""
 
@@ -396,21 +396,21 @@ msgid "Expected case type required"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:379
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:574
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:613
 msgid "Subcase parent reference is missing"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:381
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:576
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:615
 msgid "Parent reference ID required for subcases: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:388
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:583
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:622
 msgid "Subcase must be in same repeat context as parent \""
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:489
+#: corehq/apps/app_manager/static/app_manager/js/forms/advanced/actions.js:522
 msgid "Select parent"
 msgstr ""
 
@@ -687,19 +687,19 @@ msgstr ""
 msgid "Please enter a version to compare"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:52
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:46
 msgid "Filter properties"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:106
+#: corehq/apps/app_manager/static/app_manager/js/summary/case_summary.js:110
 msgid "View All Cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:15
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:49
 msgid "Filter questions or cases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:136
+#: corehq/apps/app_manager/static/app_manager/js/summary/form_summary.js:124
 msgid "View All Forms"
 msgstr ""
 
@@ -2845,15 +2845,15 @@ msgid ""
 "it gets fixed as soon as possible."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:63
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:65
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:46
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:55
 msgid "<%= num %> per page"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:83
+#: corehq/apps/hqwebapp/static/hqwebapp/js/components/pagination.js:84
 msgid "Showing <%= firstItem %> to <%= lastItem %> of <%= maxItems %> entries"
 msgstr ""
 
@@ -3094,24 +3094,24 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:347
+#: corehq/apps/reports/static/reports/js/data_corrections.js:346
 msgid "Select a value"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:115
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:8
 msgid "Select a language..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:126
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:130
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:127
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:131
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:128
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:132
 msgid "Search Reports..."
 msgstr ""
 
@@ -3238,10 +3238,6 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
-msgstr ""
-
-#: corehq/apps/reports/static/reports/v2/js/views/case_search.js:55
-msgid "add column"
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
@@ -3455,49 +3451,57 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:135
-msgid "New Role"
-msgstr ""
-
-#: corehq/apps/users/static/users/js/roles.js:135
+#: corehq/apps/users/static/users/js/roles.js:137
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:146
-msgid "Delete Role: "
+#: corehq/apps/users/static/users/js/roles.js:137
+msgid "View Role: "
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:138
+msgid "New Role"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:149
+msgid "Delete Role: "
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js:152
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:31
+#: corehq/apps/users/static/users/js/roles_and_permissions.js:30
+msgid "View Only"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/web_users.js:30
 msgid "No users matched your search."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:33
+#: corehq/apps/users/static/users/js/web_users.js:32
 msgid "This project has no web users. Please invite a web user above."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:61
+#: corehq/apps/users/static/users/js/web_users.js:60
 msgid ""
 "Could not load users. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:153
+#: corehq/apps/users/static/users/js/web_users.js:136
 msgid "Delete request"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:154
+#: corehq/apps/users/static/users/js/web_users.js:137
 msgid "Are you sure you want to delete this request?"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:161
+#: corehq/apps/users/static/users/js/web_users.js:144
 msgid "Delete invitation"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/web_users.js:162
+#: corehq/apps/users/static/users/js/web_users.js:145
 msgid "Are you sure you want to delete this invitation?"
 msgstr ""
 

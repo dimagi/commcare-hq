@@ -125,9 +125,9 @@ class RebuildTableTest(TestCase):
         engine = adapter.engine
 
         # mock rebuild table to ensure the column is added without rebuild table
-        pillow = get_case_pillow(ucr_configs=[config])
-        pillow.processors[0].rebuild_table = mock.MagicMock()
-        self.assertFalse(pillow.processors[0].rebuild_table.called)
+        with mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.rebuild_table'):
+            pillow = get_case_pillow(ucr_configs=[config])
+            self.assertFalse(pillow.processors[0].rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1

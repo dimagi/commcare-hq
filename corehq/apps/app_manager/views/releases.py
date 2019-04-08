@@ -102,8 +102,10 @@ def paginate_releases(request, domain, app_id):
             descending=True,
             limit=limit,
             skip=skip,
-            wrapper=lambda x: SavedAppBuild.wrap(x['value'],
-                                                 scrap_old_conventions=False).releases_list_json(timezone),
+            wrapper=lambda x: (
+                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                .releases_list_json(timezone)
+            ),
         ).all()
 
     if not bool(only_show_released or query):
@@ -125,7 +127,10 @@ def paginate_releases(request, domain, app_id):
             app_es = app_es.is_released()
         if query:
             app_es = app_es.add_query(build_comment(query), queries.SHOULD)
-            app_es = app_es.add_query(version(query), queries.SHOULD)
+            try:
+                app_es = app_es.add_query(version(int(query)), queries.SHOULD)
+            except ValueError:
+                pass
 
         results = app_es.exclude_source().run()
         total_apps = results.total
@@ -136,16 +141,6 @@ def paginate_releases(request, domain, app_id):
             SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
             for app in apps
         ]
-
-    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-    for app in saved_apps:
-        app['include_media'] = app['doc_type'] != 'RemoteApp'
-        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
-        app['target_commcare_flavor'] = (
-            SavedAppBuild.get(app['_id']).target_commcare_flavor
-            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
-            else 'none'
-        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -304,10 +299,6 @@ def save_copy(request, domain, app_id):
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
-    if copy:
-        # Set if build is supported for Java Phones
-        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
-        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     return json_response({
         "saved_app": copy,
@@ -345,15 +336,23 @@ def revert_to_copy(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
+        _("Successfully reverted to version %(old_version)s, now at version %(new_version)s") % {
+            'old_version': copy.version,
+            'new_version': app.version,
+        }
     )
+    copy_build_comment_params = {
+        "old_version": copy.version,
+        "original_comment": copy.build_comment,
+    }
     if copy.build_comment:
-        new_build_comment = "Reverted to version {old_version}\n\n{original_comment}".format(
-            old_version=copy.version, original_comment=copy.build_comment)
+        copy_build_comment_template = _(
+            "Reverted to version {old_version}\n\nPrevious build comments:\n{original_comment}")
     else:
-        new_build_comment = "Reverted to version {old_version}".format(old_version=copy.version)
+        copy_build_comment_template = _("Reverted to version {old_version}")
+
     copy = app.make_build(
-        comment=new_build_comment,
+        comment=copy_build_comment_template.format(**copy_build_comment_params),
         user_id=request.couch_user.get_id,
     )
     copy.save(increment_version=False)

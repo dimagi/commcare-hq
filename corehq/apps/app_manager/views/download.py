@@ -266,6 +266,7 @@ def download_file(request, domain, app_id, path):
         except ResourceConflict:
             if is_retry:
                 raise
+            request.app = Application.get(request.app.get_id)
             create_build_files_if_necessary_handling_conflicts(True)
 
     try:

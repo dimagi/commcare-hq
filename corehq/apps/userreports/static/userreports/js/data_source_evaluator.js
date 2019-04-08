@@ -8,6 +8,8 @@ hqDefine('userreports/js/data_source_evaluator', function () {
         self.uiFeedback = ko.observable();
         self.columns = ko.observable();
         self.rows = ko.observableArray();
+        self.dbRows = ko.observableArray();
+        self.dbError = ko.observable();
         self.loading = ko.observable(false);
 
         self.evaluateDataSource = function () {
@@ -24,20 +26,30 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                         data_source: self.dataSourceId(),
                     },
                     success: function (data) {
-                        var rows = [];
-                        data.rows.forEach(function (row) {
-                            var tableRow = [];
-                            data.columns.forEach(function (column) {
-                                tableRow.push(row[column]);
+                        function transformRows(rows) {
+                            var output = [];
+                            rows.forEach(function (row) {
+                                var tableRow = [];
+                                data.columns.forEach(function (column) {
+                                    tableRow.push(row[column]);
+                                });
+                                output.push(tableRow);
                             });
-                            rows.push(tableRow);
-                        });
+                            return output;
+                        }
+
+                        self.rows(transformRows(data.rows));
+                        self.dbRows(transformRows(data.db_rows));
                         self.columns(data.columns);
-                        self.rows(rows);
+                        self.dbError(data.db_error);
                         self.loading(false);
                     },
                     error: function (data) {
                         self.loading(false);
+                        self.rows(undefined);
+                        self.dbRows(undefined);
+                        self.columns(undefined);
+                        self.dbError(undefined);
                         self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);
                     },
                 });

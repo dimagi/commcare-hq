@@ -43,6 +43,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'growth_monitoring': get_table_name('reach-test', 'reach-growth_monitoring_forms'),
     'household': get_table_name('reach-test', 'reach-household_cases'),
     'person': get_table_name('reach-test', 'reach-person_cases'),
+    'tasks': get_table_name('reach-test', 'reach-tasks_cases'),
     'village': get_table_name('reach-test', 'reach-village_location'),
 }
 INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
@@ -71,8 +72,12 @@ class AggregationScriptTestBase(CSVTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        _teardown_ucr_tables()
+        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman, WomanHistory):
+            model.objects.all().delete()
         super(AggregationScriptTestBase, cls).tearDownClass()
+        # teardown after the django database tear down occurs to prevent database locks
+        # UCR tables are managed through sqlalchemy and their teardown conflicted with django teardown locks
+        _teardown_ucr_tables()
 
     def _convert_decimal_to_string(self, value):
         """

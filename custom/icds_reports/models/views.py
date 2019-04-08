@@ -552,6 +552,38 @@ class AggAwcMonthly(models.Model):
         db_table = 'agg_awc_monthly'
 
 
+class AWWIncentiveReportMonthly(models.Model):
+    """Monthly updated table that holds metrics for the incentive report"""
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    district_id = models.TextField(blank=True, null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    awc_id = models.CharField(max_length=40, primary_key=True)
+    is_launched = models.TextField(null=True)
+    block_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    state_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    block_name = models.TextField(null=True)
+    supervisor_name = models.TextField(null=True)
+    awc_name = models.TextField(null=True)
+    aww_name = models.TextField(null=True)
+    contact_phone_number = models.TextField(null=True)
+    wer_weighed = models.SmallIntegerField(null=True)
+    wer_eligible = models.SmallIntegerField(null=True)
+    awc_num_open = models.SmallIntegerField(null=True)
+    valid_visits = models.SmallIntegerField(null=True)
+    expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+
+    class Meta(object):
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'aww_incentive_report_monthly'
+
+
 class AggCcsRecordMonthly(models.Model):
     awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)

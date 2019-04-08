@@ -267,7 +267,7 @@ class DomainWireInvoiceFactory(object):
             invoices = CustomerInvoice.objects.filter(account=self.account)
         else:
             invoices = Invoice.objects.filter(
-                subscription__subscriber__domain=self.domain,
+                subscription__subscriber__domain=self.domain.name,
                 is_hidden=False,
                 date_paid__exact=None
             ).order_by('-date_start')
