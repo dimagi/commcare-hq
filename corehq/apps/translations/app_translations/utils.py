@@ -212,7 +212,7 @@ class BulkAppTranslationUpdater(object):
 
         # delete anything in language_dict that isn't in app's langs (anymore)
         if self.is_multi_sheet:
-            for lang in language_dict.keys():
+            for lang in list(language_dict.keys()):
                 if lang not in self.app.langs:
                     language_dict.pop(lang, None)
 
