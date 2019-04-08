@@ -306,7 +306,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("question1-label", "in english", "it's in french", "", "", "", "", "", ""),
           ("question2-label", "one &lt; two", "un &lt; deux", "", "", "", "", "", ""),
           ("question2-item1-label", "item1", "item1", "", "", "", "", "", ""),
-          ("question2-item2-label", "item2", "item2", "", "", "", "", "", ""),
+          ("question2-item2-label", "item2", "", "", "", "", "", "", ""),
           ("question3-label", "question3", "question3&#39;s label", "", "", "", "", "", ""),
           ("blank_value_node-label", "", "", "", "", "en-audio.mp3", "fra-audio.mp3", "", ""),
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
@@ -346,7 +346,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("menu1_form1", "", "", "question1-label", "in english", "", "", ""),
           ("menu1_form1", "", "", "question2-label", "one &lt; two", "", "", ""),
           ("menu1_form1", "", "", "question2-item1-label", "item1", "", "", ""),
-          ("menu1_form1", "", "", "question2-item2-label", "item2", "", "", ""),
+          ("menu1_form1", "", "", "question2-item2-label", "", "", "", ""),
           ("menu1_form1", "", "", "question3-label", "question3", "", "", ""),
           ("menu1_form1", "", "", "blank_value_node-label", "", "", "en-audio.mp3", ""),
           ("menu1_form1", "", "", "question3/question4-label",
@@ -363,16 +363,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )),
     )
 
-    upload_no_change_headers = (
-        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
-                                        'image_en', 'image_fra', 'audio_en',
-                                        'audio_fra', 'unique_id')),
-        ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
-        ('menu1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra',
-                         'image_en', 'image_fra', 'video_en', 'video_fra'))
-    )
-
-    upload_no_change_data = (
+    multi_sheet_upload_no_change_data = (
         (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'menu1', 'My & awesome module', '', '', '', '', '',
            '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
@@ -412,6 +403,42 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '', ''),
         ))
+    )
+
+    single_sheet_upload_no_change_data = (
+        (SINGLE_SHEET_NAME, (
+            ('menu1', '', '', '', 'My & awesome module', '', '', ''),
+            ('menu1', 'name', 'list', '', 'Name', '', '', ''),
+            ('menu1', 'name', 'detail', '', 'Name', '', '', ''),
+            ('menu1', 'other-prop (ID Mapping Text)', 'detail', '', 'Other Prop', '', '', ''),
+            ('menu1', 'foo (ID Mapping Value)', 'detail', '', 'bar', '', '', ''),
+            ('menu1', 'baz (ID Mapping Value)', 'detail', '', 'quz', '', '', ''),
+            ('menu1', 'mood (ID Mapping Text)', 'detail', '', 'Other Prop', '', '', ''),
+            ('menu1', '. < 3 (ID Mapping Value)', 'detail', '', ':(', '', '', ''),
+            ('menu1', '. >= 3 (ID Mapping Value)', 'detail', '', ':)', '', '', ''),
+            ('menu1', 'energy (ID Mapping Text)', 'detail', '', 'Other Prop', '', '', ''),
+            ('menu1', '. < 3 (ID Mapping Value)', 'detail', '',
+                'jr://file/commcare/image/module1_list_icon_energy_high.jpg', '', '', ''),
+            ('menu1', '. >= 3 (ID Mapping Value)', 'detail', '',
+                'jr://file/commcare/image/module1_list_icon_energy_low.jpg', '', '', ''),
+            ('menu1', 'line_graph (graph)', 'detail', '', 'Velocity', '', '', ''),
+            ('menu1', 'x-title (graph config)', 'detail', '', 'Time', '', '', ''),
+            ('menu1', 'y-title (graph config)', 'detail', '', 'Speed', '', '', ''),
+            ('menu1', 'name 0 (graph series config)', 'detail', '', 'Bird', '', '', ''),
+            ('menu1', 'name 1 (graph series config)', 'detail', '', 'Cheetah', '', '', ''),
+            ('menu1_form1', '', '', '', 'My more & awesome form', '', '', ''),
+            ('menu1_form1', '', '', 'question1-label', 'question1', '', '', ''),
+            ('menu1_form1', '', '', 'question2-label', 'question2', '', '', ''),
+            ('menu1_form1', '', '', 'question2-item1-label', 'item1', '', '', ''),
+            ('menu1_form1', '', '', 'question2-item2-label', 'item2', '', '', ''),
+            ('menu1_form1', '', '', 'question3-label', 'question3', '', '', ''),
+            ('menu1_form1', '', '', 'question3/question4-label', 'question4', '', '', ''),
+            ('menu1_form1', '', '', 'question3/question5-label', 'question5', '', '', ''),
+            ('menu1_form1', '', '', 'question7-label', 'question7', '', '', ''),
+            ('menu1_form1', '', '', 'add_markdown-label', 'add_markdown', '', '', ''),
+            ('menu1_form1', '', '', 'update_markdown-label', '# update_markdown', '', '', ''),
+            ('menu1_form1', '', '', 'vetoed_markdown-label', '*i just happen to like stars*', '', '', ''),
+        )),
     )
 
     upload_empty_translations = (
@@ -459,8 +486,15 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
     def test_set_up(self):
         self._shared_test_initial_set_up()
 
-    def test_no_change_upload(self):
-        self.upload_raw_excel_translations(self.upload_no_change_headers, self.upload_no_change_data)
+    def test_no_change_upload_multi_sheet(self):
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers,
+                                           self.multi_sheet_upload_no_change_data)
+        self._shared_test_initial_set_up()
+
+    def test_no_change_upload_single_sheet(self):
+        self.upload_raw_excel_translations(self.single_sheet_upload_headers,
+                                           self.single_sheet_upload_no_change_data,
+                                           lang='en')
         self._shared_test_initial_set_up()
 
     def _shared_test_initial_set_up(self):
@@ -551,7 +585,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.app = Application.wrap(self.get_json("app_no_itext"))
         self.assert_question_label('question1', 0, 0, "en", "/data/question1")
         try:
-            self.upload_raw_excel_translations(self.upload_no_change_headers, self.upload_no_change_data)
+            self.upload_raw_excel_translations(self.multi_sheet_upload_headers,
+                                               self.multi_sheet_upload_no_change_data)
         except Exception as e:
             self.fail(e)
 
@@ -642,7 +677,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         )
         translation_data = []
         # filter out the case lists translation from the upload
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -654,7 +689,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 mod1_sheet.append(translation)
 
             translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.short.columns[0].header, {'en': 'Name'}
         )
@@ -669,7 +704,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
         translation_data = []
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -690,7 +725,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
                 mod1_sheet.append(translation)
 
             translation_data.append(['menu1', mod1_sheet])
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.long.columns[0].header, {'en': 'English Name', 'fra': 'French Name'}
         )
@@ -708,7 +743,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )
         translation_data = []
-        for sheet in self.upload_no_change_data:
+        for sheet in self.multi_sheet_upload_no_change_data:
             if sheet[0] != 'menu1':
                 translation_data.append(sheet)
                 continue
@@ -724,7 +759,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
             translation_data.append(['menu1', mod1_sheet])
 
-        self.upload_raw_excel_translations(self.upload_no_change_headers, translation_data)
+        self.upload_raw_excel_translations(self.multi_sheet_upload_headers, translation_data)
         self.assertEqual(
             module.case_details.long.columns[1].header, {'en': 'Other Prop', 'fra': 'Autre Prop'}
         )

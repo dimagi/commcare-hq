@@ -193,6 +193,7 @@ class BulkAppTranslationUpdater(object):
         super(BulkAppTranslationUpdater, self).__init__()
         self.app = app
         self.langs = [lang] if lang else app.langs
+        self.is_multi_sheet = not bool(lang)
 
         # These attributes get populated by update
         self.msgs = None
@@ -209,10 +210,11 @@ class BulkAppTranslationUpdater(object):
             else:
                 language_dict.pop(lang, None)
 
-        # delete anything in language_dict that isn't in langs (anymore)
-        for lang in language_dict.keys():
-            if lang not in self.langs:
-                language_dict.pop(lang, None)
+        # delete anything in language_dict that isn't in app's langs (anymore)
+        if self.is_multi_sheet:
+            for lang in language_dict.keys():
+                if lang not in self.app.langs:
+                    language_dict.pop(lang, None)
 
     def update(self, rows):
         '''
