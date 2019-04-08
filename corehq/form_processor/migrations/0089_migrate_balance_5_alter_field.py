@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0087_migrate_balance_4_switch_columns'),
+        ('form_processor', '0088_migrate_balance_4_switch_columns'),
     ]
 
     operations = [

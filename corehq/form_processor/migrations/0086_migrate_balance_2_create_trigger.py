@@ -13,7 +13,7 @@ migrator = RawSQLMigration(('corehq', 'form_processor', 'migrations', 'sql_templ
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('form_processor', '0084_migrate_balance_1_add_column'),
+        ('form_processor', '0085_migrate_balance_1_add_column'),
     ]
 
     operations = [
