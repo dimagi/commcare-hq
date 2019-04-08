@@ -192,7 +192,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                         ucr.awc_id,
                         agg_cf.month,
                         SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
-                        sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
+                        sum(0.39) AS expected_visits
                         FROM  "{ccs_record_case_ucr}" ucr
                         LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s
                         WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
