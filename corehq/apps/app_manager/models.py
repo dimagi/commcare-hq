@@ -1236,9 +1236,6 @@ class FormBase(DocumentSchema):
     def uses_usercase(self):
         raise NotImplementedError()
 
-    def update_app_case_meta(self, app_case_meta):
-        pass
-
     @property
     @memoized
     def case_list_modules(self):
@@ -1276,78 +1273,6 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     @property
     def validator(self):
         return IndexedFormBaseValidator(self)
-
-    def _add_save_to_case_questions(self, form_questions, app_case_meta):
-        def _make_save_to_case_question(path):
-            from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-            # todo: this is a hack - just make an approximate save-to-case looking question
-            return FormQuestionResponse.wrap({
-                "label": path,
-                "tag": path,
-                "value": path,
-                "repeat": None,
-                "group": None,
-                "type": 'SaveToCase',
-                "relevant": None,
-                "required": None,
-                "comment": None,
-                "hashtagValue": path,
-            })
-
-        def _make_dummy_condition():
-            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
-            return FormActionCondition(type='always')
-
-        for property_info in self.case_references_data.get_save_references():
-            if property_info.case_type:
-                type_meta = app_case_meta.get_type(property_info.case_type)
-                for property_name in property_info.properties:
-                    app_case_meta.add_property_save(
-                        property_info.case_type,
-                        property_name,
-                        self.unique_id,
-                        _make_save_to_case_question(property_info.path),
-                        None
-                    )
-                if property_info.create:
-                    type_meta.add_opener(self.unique_id, _make_dummy_condition())
-                if property_info.close:
-                    type_meta.add_closer(self.unique_id, _make_dummy_condition())
-
-    def add_property_save(self, app_case_meta, case_type, name,
-                          questions, question_path, condition=None):
-        if question_path in questions:
-            app_case_meta.add_property_save(
-                case_type,
-                name,
-                self.unique_id,
-                questions[question_path],
-                condition
-            )
-        else:
-            app_case_meta.add_property_error(
-                case_type,
-                name,
-                self.unique_id,
-                "%s is not a valid question" % question_path
-            )
-
-    def add_property_load(self, app_case_meta, case_type, name,
-                          questions, question_path):
-        if question_path in questions:
-            app_case_meta.add_property_load(
-                case_type,
-                name,
-                self.unique_id,
-                questions[question_path]
-            )
-        else:
-            app_case_meta.add_property_error(
-                case_type,
-                name,
-                self.unique_id,
-                "%s is not a valid question" % question_path
-            )
 
     def get_all_case_updates(self):
         """
@@ -1808,94 +1733,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                 case_relationships_by_child_type[child_case_type].add(
                     (parent_case_type, subcase.reference_id or 'parent'))
         return case_relationships_by_child_type
-
-    def update_app_case_meta(self, app_case_meta):
-        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {
-            q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_triggers=True,
-                include_groups=True, include_translations=True)
-        }
-        self._add_save_to_case_questions(questions, app_case_meta)
-        module_case_type = self.get_module().case_type
-        type_meta = app_case_meta.get_type(module_case_type)
-        for type_, action in self.active_actions().items():
-            if type_ == 'open_case':
-                type_meta.add_opener(self.unique_id, action.condition)
-                self.add_property_save(
-                    app_case_meta,
-                    module_case_type,
-                    'name',
-                    questions,
-                    action.name_path
-                )
-            if type_ == 'close_case':
-                type_meta.add_closer(self.unique_id, action.condition)
-            if type_ == 'update_case' or type_ == 'usercase_update':
-                for name, question_path in FormAction.get_action_properties(action):
-                    self.add_property_save(
-                        app_case_meta,
-                        USERCASE_TYPE if type_ == 'usercase_update' else module_case_type,
-                        name,
-                        questions,
-                        question_path
-                    )
-            if type_ == 'case_preload' or type_ == 'load_from_form' or type_ == 'usercase_preload':
-                for name, question_path in FormAction.get_action_properties(action):
-                    self.add_property_load(
-                        app_case_meta,
-                        USERCASE_TYPE if type_ == 'usercase_preload' else module_case_type,
-                        name,
-                        questions,
-                        question_path
-                    )
-            if type_ == 'subcases':
-                for act in action:
-                    if act.is_active():
-                        sub_type_meta = app_case_meta.get_type(act.case_type)
-                        sub_type_meta.add_opener(self.unique_id, act.condition)
-                        if act.close_condition.is_active():
-                            sub_type_meta.add_closer(self.unique_id, act.close_condition)
-                        for name, question_path in FormAction.get_action_properties(act):
-                            self.add_property_save(
-                                app_case_meta,
-                                act.case_type,
-                                name,
-                                questions,
-                                question_path
-                            )
-
-        def parse_case_type(name, types={"#case": module_case_type,
-                                         "#user": USERCASE_TYPE}):
-            if name.startswith("#") and "/" in name:
-                full_name = name
-                hashtag, name = name.split("/", 1)
-                if hashtag not in types:
-                    hashtag, name = "#case", full_name
-            else:
-                hashtag = "#case"
-            return types[hashtag], name
-
-        def parse_relationship(name):
-            if '/' not in name:
-                return name
-
-            relationship, property_name = name.split('/', 1)
-            if relationship == 'grandparent':
-                relationship = 'parent/parent'
-            return '/'.join([relationship, property_name])
-
-        for case_load_reference in self.case_references.get_load_references():
-            for name in case_load_reference.properties:
-                case_type, name = parse_case_type(name)
-                name = parse_relationship(name)
-                self.add_property_load(
-                    app_case_meta,
-                    case_type,
-                    name,
-                    questions,
-                    case_load_reference.path
-                )
 
 
 class MappingItem(DocumentSchema):
@@ -2848,57 +2685,6 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
                     case_relationships_by_child_type[child_case_type].add(
                         (parent.case_type, case_index.reference_id or 'parent'))
         return case_relationships_by_child_type
-
-    def update_app_case_meta(self, app_case_meta):
-        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
-        questions = {
-            q['value']: FormQuestionResponse(q)
-            for q in self.get_questions(self.get_app().langs, include_translations=True)
-        }
-        self._add_save_to_case_questions(questions, app_case_meta)
-        for action in self.actions.load_update_cases:
-            for name, question_path in action.case_properties.items():
-                self.add_property_save(
-                    app_case_meta,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path
-                )
-            for question_path, name in action.preload.items():
-                self.add_property_load(
-                    app_case_meta,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path
-                )
-            if action.close_condition.is_active():
-                meta = app_case_meta.get_type(action.case_type)
-                meta.add_closer(self.unique_id, action.close_condition)
-
-        for action in self.actions.open_cases:
-            self.add_property_save(
-                app_case_meta,
-                action.case_type,
-                'name',
-                questions,
-                action.name_path,
-                action.open_condition
-            )
-            for name, question_path in action.case_properties.items():
-                self.add_property_save(
-                    app_case_meta,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path,
-                    action.open_condition
-                )
-            meta = app_case_meta.get_type(action.case_type)
-            meta.add_opener(self.unique_id, action.open_condition)
-            if action.close_condition.is_active():
-                meta.add_closer(self.unique_id, action.close_condition)
 
 
 class ShadowForm(AdvancedForm):
