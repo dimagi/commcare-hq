@@ -59,7 +59,4 @@ branches:
   - mk/release-location # MK March 26
   - dmr/add-scheduled-report-records  # Apr 3
   - jls/users-select2-v4  # Jenny March 29
-submodules:
-  submodules/langcodes:
-    branches:
-      - jls/select2-v4  # Jenny March 22
+submodules: {}
