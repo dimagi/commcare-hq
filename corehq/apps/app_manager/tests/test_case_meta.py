@@ -24,7 +24,8 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
-@patch('corehq.apps.app_manager.models.get_case_property_description_dict', MagicMock(return_value={}))
+@patch('corehq.apps.reports.formdetails.case_metadata.get_case_property_description_dict',
+       MagicMock(return_value={}))
 class CaseMetaTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_meta')
 

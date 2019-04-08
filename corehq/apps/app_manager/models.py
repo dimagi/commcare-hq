@@ -75,7 +75,6 @@ from corehq.apps.app_manager import (
 )
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
-    get_parent_type_map,
     get_usercase_properties,
 )
 from corehq.apps.app_manager.commcare_settings import check_condition
@@ -148,7 +147,6 @@ from corehq.apps.builds.models import (
     CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.domain.models import Domain, cached_property
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
@@ -5584,25 +5582,8 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
-        from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        case_relationships = get_parent_type_map(self)
-        meta = AppCaseMetadata()
-        descriptions_dict = get_case_property_description_dict(self.domain)
-
-        for case_type, relationships in case_relationships.items():
-            type_meta = meta.get_type(case_type)
-            type_meta.relationships = relationships
-
-        for module in self.get_modules():
-            module.update_app_case_meta(meta)
-            for form in module.get_forms():
-                form.update_app_case_meta(meta)
-
-        for type_ in meta.case_types:
-            for prop in type_.properties:
-                prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
-
-        return meta
+        from corehq.apps.reports.formdetails.case_metadata import AppCaseMetadataBuilder
+        return AppCaseMetadataBuilder(self.domain, self).case_metadata()
 
     def get_subcase_types(self, case_type):
         """
