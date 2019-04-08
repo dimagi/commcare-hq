@@ -468,6 +468,10 @@ hqDefine("scheduling/js/create_schedule.ko", [
             return self.send_time_type() === 'CASE_PROPERTY_TIME';
         });
 
+        self.trackClick = function() {
+            console.log('click');
+        };
+
         self.init = function () {
             self.initDatePicker($("#id_schedule-start_date"));
             self.setRepeatOptionText(self.send_frequency());

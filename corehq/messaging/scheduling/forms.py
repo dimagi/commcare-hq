@@ -1582,7 +1582,7 @@ class ScheduleForm(Form):
         result = [
             crispy.Field(
                 'send_frequency',
-                data_bind='value: send_frequency',
+                data_bind='value: send_frequency, click: trackClick',
             ),
             crispy.Div(
                 crispy.Field(
