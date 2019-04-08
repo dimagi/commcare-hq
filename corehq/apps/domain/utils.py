@@ -61,7 +61,7 @@ def domain_restricts_superusers(domain):
 
 def user_has_custom_top_menu(domain_name, couch_user):
     """
-    This is currently used for a one-off custom case (ewsghana, ilsgateway)
+    This is currently used for a one-off custom case (ewsghana)
     that required to be a toggle instead of a custom domain module setting
     """
     return (toggles.CUSTOM_MENU_BAR.enabled(domain_name) and

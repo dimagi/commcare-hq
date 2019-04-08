@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
@@ -41,30 +41,32 @@ class GuessReportingMinuteTest(SimpleTestCase):
             self.assertRaises(ValueError, guess_reporting_minute, datetime(2014, 10, 31, 12, minute))
 
 
-class ScheduledReportTest(TestCase):
-
-    def setUp(self):
-        for report in ReportNotification.view(
+def delete_all_report_notifications():
+    for report in ReportNotification.view(
             'reportconfig/all_notifications',
             include_docs=True,
             reduce=False,
-        ).all():
-            report.delete()
+    ).all():
+        report.delete()
+
+
+class ScheduledReportTest(TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        delete_all_report_notifications()
 
     def _check(self, period, as_of, count):
-        self.assertEqual(count, len(list(get_scheduled_report_ids(period, as_of))))
-
-    def testDefaultValue(self):
-        now = datetime.utcnow()
-        # This line makes sure that the date of the ReportNotification is an increment of 15 minutes
-        ReportNotification(hour=now.hour, minute=(now.minute // 15) * 15, interval='daily').save()
-        if now.minute % 15 <= 5:
-            self._check('daily', None, 1)
-        else:
-            self.assertRaises(
-                ValueError,
-                lambda: list(get_scheduled_report_ids('daily', None))
-            )
+        # get_scheduled_report_ids relies on end_datetime
+        # being strictly greater than start_datetime
+        # for tests targeting an exact minute mark,
+        # we need to add a small amount to make it after.
+        # This is a reasonable thing to do because in production,
+        # it'll always run a short time after the periodic task is fired
+        as_of += timedelta(microseconds=1)
+        self.assertEqual(count, len(list(get_scheduled_report_ids(period, end_datetime=as_of))))
 
     def testDailyReportEmptyMinute(self):
         ReportNotification(hour=12, minute=None, interval='daily').save()
@@ -82,7 +84,7 @@ class ScheduledReportTest(TestCase):
         # but not too lenient
         self.assertRaises(
             ValueError,
-            lambda: list(get_scheduled_report_ids('daily', datetime(2014, 10, 31, 12, 6)))
+            lambda: list(get_scheduled_report_ids('daily', end_datetime=datetime(2014, 10, 31, 12, 6)))
         )
 
     def testDailyReportWithMinuteHalfHour(self):
@@ -181,6 +183,7 @@ class ScheduledReportSendingTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.user.delete()
+        delete_all_report_notifications()
         super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):
