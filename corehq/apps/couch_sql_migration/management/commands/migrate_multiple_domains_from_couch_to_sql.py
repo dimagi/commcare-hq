@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import logging
 import os
 import traceback
 
 from django.core.management.base import CommandError, BaseCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, get_diff_db)
+    do_couch_to_sql_migration, get_diff_db, setup_logging)
 from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
     _blow_away_migration
 )
@@ -25,6 +26,8 @@ from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 from io import open
 
+log = logging.getLogger(__name__)
+
 
 class Command(BaseCommand):
 
@@ -32,21 +35,24 @@ class Command(BaseCommand):
         parser.add_argument('path')
         parser.add_argument('--strict', action='store_true', default=False,
                             help="Abort domain migration even for diffs in deleted doc types")
+        parser.add_argument('--log-dir', help="""
+            Directory for couch2sql logs, which are not written if this is not
+            provided. Standard HQ logs will be used regardless of this setting.
+        """)
 
     def handle(self, path, **options):
         with_traceback = options['traceback']
         self.strict = options['strict']
+        setup_logging(options['log_dir'])
 
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
 
-        self.stdout.ending = "\n"
-        self.stderr.ending = "\n"
         with open(path, 'r', encoding='utf-8') as f:
             domains = [name.strip() for name in f.readlines() if name.strip()]
 
         failed = []
-        self.stdout.write("Processing {} domains".format(len(domains)))
+        log.info("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
                 success, reason = self.migrate_domain(domain)
@@ -55,25 +61,23 @@ class Command(BaseCommand):
             except Exception as e:
                 if with_traceback:
                     traceback.print_exc()
-                self.stderr.write("Error migrating domain {}: {}".format(domain, e))
+                log.error("Error migrating domain {}: {}".format(domain, e))
                 self.abort(domain)
                 failed.append((domain, e))
 
         if failed:
-            self.stderr.write("Errors:")
-            self.stderr.write(
-                "\n".join(
-                    ["{}: {}".format(domain, exc) for domain, exc in failed]))
+            log.error("Errors:\n" + "\n".join(
+                ["{}: {}".format(domain, exc) for domain, exc in failed]))
         else:
-            self.stdout.write("All migrations successful!")
+            log.info("All migrations successful!")
 
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):
-            self.stderr.write("{} already on the SQL backend".format(domain))
+            log.error("{} already on the SQL backend".format(domain))
             return True, None
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            self.stderr.write("{} migration is already in progress".format(domain))
+            log.error("{} migration is already in progress".format(domain))
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)
@@ -82,17 +86,23 @@ class Command(BaseCommand):
 
         stats = self.get_diff_stats(domain)
         if stats:
-            self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
+            lines = ["Migration has diffs, aborting for domain {}".format(domain)]
+
+            class stream:
+                write = lines.append
+
             self.abort(domain)
-            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10, 10]))
-            writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
-                (doc_type,) + stat for doc_type, stat in stats.items()
-            ])
+            writer = SimpleTableWriter(stream, TableRowFormatter([50, 10, 10, 10, 10]))
+            writer.write_table(
+                ['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'],
+                [(doc_type,) + stat for doc_type, stat in stats.items()],
+            )
+            log.error("\n".join(lines))
             return False, "has diffs"
 
         assert couch_sql_migration_in_progress(domain)
         set_couch_sql_migration_complete(domain)
-        self.stdout.write(shell_green("Domain migrated: {}".format(domain)))
+        log.info("Domain migrated: {}".format(domain))
         return True, None
 
     def get_diff_stats(self, domain):

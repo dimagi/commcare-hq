@@ -16,6 +16,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     delete_diff_db,
     do_couch_to_sql_migration,
     get_diff_db,
+    setup_logging,
 )
 from corehq.apps.couch_sql_migration.progress import (
     couch_sql_migration_in_progress,
@@ -35,7 +36,7 @@ from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
-_logger = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger('main_couch_sql_datamigration')
 
 
 class Command(BaseCommand):
@@ -56,6 +57,10 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
+        parser.add_argument('--log-dir', help="""
+            Directory for couch2sql logs, which are not written if this is not
+            provided. Standard HQ logs will be used regardless of this setting.
+        """)
         parser.add_argument('--dry-run', action='store_true', default=False,
             help='''
                 Do migration in a way that will not be seen by
@@ -97,6 +102,7 @@ class Command(BaseCommand):
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('no-input only allowed for unit testing')
 
+        setup_logging(options['log_dir'])
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
 
@@ -260,4 +266,4 @@ def _blow_away_migration(domain):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    _logger.info("blew away migration for domain {}".format(domain))
+    log.info("blew away migration for domain {}".format(domain))
