@@ -2,7 +2,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Changes" %} - {% trans "Version" %} {{ first.app_version }} vs. {% trans "Version" %} {{ second.app_version }}{% endblock %}
+{% block title %}
+    {% blocktrans with first_version=first.app_version second_version=second.app_version%}
+        Changes - Version {{ first_version }} vs. Version {{ second_version }}
+    {% endblocktrans %}
+{% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_diff" %}
 

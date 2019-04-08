@@ -2,7 +2,11 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "Form Summary" %} - {% trans "Version" %} {{ app_version }}{% endblock %}
+{% block title %}
+    {% blocktrans with app_version=app_version %}
+        Form Summary - Version {{ app_version }}
+    {% endblocktrans %}
+{% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_summary" %}
 
