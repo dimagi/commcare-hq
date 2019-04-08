@@ -2085,6 +2085,7 @@ DATADOG_DOMAINS = {
     ("production", "malawi-fp-study"),
     ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "isth-production"),
     ("production", "sauti-1"),
 }
 
