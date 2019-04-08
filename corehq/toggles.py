@@ -1077,6 +1077,13 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+INCLUDE_SMS_ERRORS = StaticToggle(
+    'include_sms_errors',
+    "Include failed messages in Message Log Report",
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
