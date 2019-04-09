@@ -15,40 +15,22 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v4.ko", [
     ko.bindingHandlers.select2 = function () {
         var self = {};
 
-        self.SOURCE_KEY = "select2-source";
-
         self.updateSelect2Source = function (element, valueAccessor) {
-            var source = $(element).data(self.SOURCE_KEY);
-            // We clear the array and repopulate it, instead of simply replacing
-            // it, because the select2 options are tied to this specific instance.
-            while (source.length > 0) {
-                source.pop();
-            }
+            var $el = $(element);
+            $el.empty();
             var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
             for (var i = 0; i < newItems.length; i++) {
                 var text = newItems[i].text || newItems[i];
                 var id = newItems[i].id || newItems[i];
-                source.push({
-                    id: id,
-                    text: text,
-                });
+                $el.append(new Option(text, id));
             }
-            return source;
         };
 
         self.init = function (element) {
             var $el = $(element);
-
-            // The select2 jquery element uses the array stored at
-            // $el.data(self.SOURCE_KEY) as its data source. Therefore, the options
-            // can only be changed by modifying this object, overwriting it will
-            // not change the select options.
-            $el.data(self.SOURCE_KEY, []);
-
             $el.select2({
                 multiple: false,
                 width: "element",
-                data: $el.data(self.SOURCE_KEY),
             });
         };
 
@@ -68,16 +50,12 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v4.ko", [
     ko.bindingHandlers.autocompleteSelect2 = function () {
         var self = {};
 
-        self.SOURCE_KEY = "select2-source";
-
         self.select2Options = function (element) {
             var $el = $(element);
-            $el.data(self.SOURCE_KEY, []);
             return {
                 placeholder: $el.attr("placeholder") || ' ',
                 multiple: false,
                 width: "100%",
-                data: $el.data(self.SOURCE_KEY),
                 escapeMarkup: function (text) {
                     return DOMPurify.sanitize(text);
                 },
@@ -97,15 +75,13 @@ hqDefine("hqwebapp/js/select2_knockout_bindings_v4.ko", [
 
         self.update = function (element, valueAccessor, allBindings) {
             var $el = $(element),
-                newValue = ko.unwrap(allBindings().value) || $el.val(),
-                source = ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
+                newValue = ko.unwrap(allBindings().value) || $el.val();
+
+            ko.bindingHandlers.select2.updateSelect2Source(element, valueAccessor);
 
             // Add free text item to source
-            if (newValue && !_.find(source, function (item) { return item.id === newValue; })) {
-                source.unshift({
-                    id: newValue,
-                    text: newValue,
-                });
+            if (newValue && !_.find($el.find("option"), function (option) { return option.value === newValue; })) {
+                $el.prepend(new Option(newValue, newValue));
             }
 
             // Update the selected item
