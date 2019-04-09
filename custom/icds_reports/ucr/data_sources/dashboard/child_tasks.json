@@ -49,8 +49,8 @@
     },
     "validations": [
       {
-        "name": "owned_by_aww",
-        "error_message": "Case not owned by AWW",
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
         "expression": {
           "type": "boolean_expression",
           "operator": "eq",
