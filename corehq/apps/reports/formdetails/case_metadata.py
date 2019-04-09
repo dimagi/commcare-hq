@@ -182,18 +182,17 @@ class _RegularFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def _add_load_references(self):
         for case_load_reference in self.form.case_references.get_load_references():
             for name in case_load_reference.properties:
-                case_type, name = self._parse_case_type(name, self.case_type)
+                case_type, name = self._parse_case_type(name)
                 name = re.sub("^grandparent/", "parent/parent/", name)
                 self._add_property_load(case_type, name, case_load_reference.path)
 
-    @staticmethod
-    def _parse_case_type(full_name, module_case_type):
+    def _parse_case_type(self, full_name):
         if full_name.startswith("#case/"):
-            return module_case_type, full_name.split("/", 1)[1]
+            return self.case_type, full_name.split("/", 1)[1]
         elif full_name.startswith("#user/"):
             return USERCASE_TYPE, full_name.split("/", 1)[1]
         else:
-            return module_case_type, full_name
+            return self.case_type, full_name
 
 
 class _AdvancedFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
