@@ -349,17 +349,22 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @property
     def headers(self):
-        header = DataTablesHeader(
+        headers = DataTablesHeader(*[header for header in [
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("User Name")),
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Status")) if self.include_sms_errors else Ellipsis,
             DataTablesColumn(_("Event"), sortable=False),
             DataTablesColumn(_("Type"), sortable=False),
-        )
-        header.custom_sort = [[0, 'desc']]
-        return header
+        ] if header != Ellipsis])
+        headers.custom_sort = [[0, 'desc']]
+        return headers
+
+    @cached_property
+    def include_sms_errors(self):
+        return toggles.INCLUDE_SMS_ERRORS.enabled(self.request.couch_user.username)
 
     @property
     @memoized
@@ -422,7 +427,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
         )
-        if toggles.INCLUDE_SMS_ERRORS.enabled(self.request.couch_user.username):
+        if self.include_sms_errors:
             queryset = queryset.exclude(
                 direction=OUTGOING,
                 processed=False,
@@ -471,18 +476,17 @@ class MessageLogReport(BaseCommConnectLogReport):
 
         content_cache = {}
         for message in data:
-            row = [
+            yield [val for val in [
                 get_timestamp(message.date),
                 get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
+                get_sms_status_display(message) if self.include_sms_errors else Ellipsis,
                 self._get_message_event_display(message, content_cache),
                 ', '.join(self._get_message_types(message)),
-            ]
-            if include_log_id and self.include_metadata:
-                row.append(message.couch_id)
-            yield row
+                message.couch_id if include_log_id and self.include_metadata else Ellipsis,
+            ] if val != Ellipsis]
 
     def _get_message_event_display(self, message, content_cache):
         if message.messaging_subevent:
