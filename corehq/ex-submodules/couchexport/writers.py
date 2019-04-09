@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import contextlib
 import io
 from base64 import b64decode
 from codecs import BOM_UTF8
@@ -167,6 +168,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
+    @contextlib.contextmanager
     def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
@@ -192,6 +194,7 @@ class ExportWriter(object):
                 list(table)[0],
                 table_title=table_titles.get(table_index)
             )
+        yield
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
