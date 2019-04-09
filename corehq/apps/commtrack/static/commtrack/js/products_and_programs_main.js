@@ -4,7 +4,7 @@ hqDefine('commtrack/js/products_and_programs_main', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'commtrack/js/base_list_view_model',
-    'hqwebapp/js/widgets_v4',   // "Additional Information" on product page uses a .hqwebapp-select2
+    'hqwebapp/js/widgets',   // "Additional Information" on product page uses a .hqwebapp-select2
 ], function (
     $,
     ko,
