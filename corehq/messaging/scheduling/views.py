@@ -141,7 +141,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
                 future_time = self.domain_now + timedelta(minutes=i)
                 future_allowed = time_within_windows(future_time, self.domain_object.restricted_sms_times)
                 if sms_allowed != future_allowed:
-                    result['sms_resume_time'] = future_allowed.strftime('%Y-%m-%d %H:%M')
+                    result['sms_resume_time'] = future_time.strftime('%Y-%m-%d %H:%M')
                     break
         else:
             result['uses_restricted_time_windows'] = False

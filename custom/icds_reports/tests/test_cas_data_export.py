@@ -41,11 +41,11 @@ class TestLocationView(CSVTestCase):
         self._fasterAssertListEqual(
             sorted(
                 expected_csv_file,
-                key=lambda x: x
+                key=lambda x: x['case_id']
             ),
             sorted(
                 csv_data,
-                key=lambda x: x
+                key=lambda x: x['case_id']
             )
         )
 
@@ -60,11 +60,11 @@ class TestLocationView(CSVTestCase):
         self._fasterAssertListEqual(
             sorted(
                 expected_csv_file,
-                key=lambda x: x
+                key=lambda x: x['case_id']
             ),
             sorted(
                 csv_data,
-                key=lambda x: x
+                key=lambda x: x['case_id']
             )
         )
 
@@ -79,10 +79,10 @@ class TestLocationView(CSVTestCase):
         self._fasterAssertListEqual(
             sorted(
                 expected_csv_file,
-                key=lambda x: x
+                key=lambda x: x['awc_id']
             ),
             sorted(
                 csv_data,
-                key=lambda x: x
+                key=lambda x: x['awc_id']
             )
         )

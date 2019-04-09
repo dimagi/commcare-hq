@@ -4796,6 +4796,14 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         else:
             return self.langs
 
+    def convert_to_application(self):
+        self.doc_type = 'Application'
+        del self.master
+        del self.linked_app_translations
+        del self.linked_app_logo_refs
+        del self.linked_app_attrs
+        del self.uses_master_app_form_ids
+
 
 def validate_lang(lang):
     if not re.match(r'^[a-z]{2,3}(-[a-z]*)?$', lang):
@@ -5764,6 +5772,7 @@ class LinkedApplication(Application):
     # the master app everytime the new master is pulled
     linked_app_translations = DictProperty()  # corresponding property: translations
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
+    linked_app_attrs = DictProperty()  # corresponds to app attributes
 
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change
@@ -5794,6 +5803,8 @@ class LinkedApplication(Application):
     def reapply_overrides(self):
         self.translations.update(self.linked_app_translations)
         self.logo_refs.update(self.linked_app_logo_refs)
+        for attribute, value in self.linked_app_attrs.items():
+            setattr(self, attribute, value)
         for key, ref in self.logo_refs.items():
             mm = CommCareMultimedia.get(ref['m_id'])
             self.create_mapping(mm, ref['path'], save=False)

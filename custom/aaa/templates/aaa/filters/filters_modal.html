@@ -14,8 +14,7 @@
                                 params="
                                     postData: postData,
                                     callback: callback,
-                                    filters: filters,
-                                    disableSubmit: disableSubmit">
+                                    filters: filters">
                         </beneficiary-type-filter>
                     <!-- /ko -->
                     <month-year-filter params="postData: postData, callback: callback, filters: filters"></month-year-filter>
@@ -23,7 +22,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-bind="click : function() {resetFilter()}">Reset</button>
-                    <button type="button" class="btn btn-primary" data-bind="click : function() {applyFilters()}, disable: disableSubmit">Apply</button>
+                    <button type="button" class="btn btn-primary" data-bind="click : function() {applyFilters()}">Apply</button>
                 </div>
             </div>
         </div>
