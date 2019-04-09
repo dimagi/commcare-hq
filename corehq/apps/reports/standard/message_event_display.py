@@ -65,7 +65,7 @@ def get_status_display(event, sms=None):
 
     status = dict(MessagingEvent.STATUS_CHOICES).get(status, '-')
     error_message = (MessagingEvent.ERROR_MESSAGES.get(error_code, None)
-        if error_code else None)
+                     if error_code else None)
     error_message = _(error_message) if error_message else ''
     if event.additional_error_text:
         error_message += ' %s' % event.additional_error_text
@@ -81,7 +81,7 @@ def get_status_display(event, sms=None):
 def get_sms_status_display(sms):
     if sms.error:
         error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
-            if sms.system_error_message else None)
+                         if sms.system_error_message else None)
         if error_message:
             return '%s - %s' % (_('Error'), _(error_message))
         else:
@@ -114,7 +114,7 @@ def _get_keyword_display(keyword_id, content_cache):
         display = _('(Deleted Keyword)')
     else:
         urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
-            else EditNormalKeywordView.urlname)
+                   else EditNormalKeywordView.urlname)
         display = '<a target="_blank" href="%s">%s</a>' % (
             reverse(urlname, args=[keyword.domain, keyword_id]),
             keyword.description,
@@ -229,7 +229,7 @@ def get_content_display(domain, event, content_cache):
         MessagingEvent.CONTENT_IVR_SURVEY,
     ):
         return ('%s (%s)' % (_(dict(MessagingEvent.CONTENT_CHOICES).get(event.content_type)),
-            event.form_name or _('Unknown')))
+                             event.form_name or _('Unknown')))
 
     content_choices = dict(MessagingEvent.CONTENT_CHOICES)
     return _(content_choices.get(event.content_type, '-'))
