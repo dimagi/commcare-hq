@@ -164,6 +164,7 @@ class GenericReportView(object):
         self.context = base_context or {}
         self._update_initial_context()
         self.is_rendered_as_email = False # setting this to true in email_response
+        self.is_rendered_as_export = False
         self.override_template = "reports/async/email_report.html"
 
     def __str__(self):
@@ -687,6 +688,7 @@ class GenericReportView(object):
         Intention: Not to be overridden in general.
         Returns the tabular export of the data, if available.
         """
+        self.is_rendered_as_export = True
         if self.exportable_all:
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
