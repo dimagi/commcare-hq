@@ -146,7 +146,7 @@ def _send_email(user, report, hash_id, recipient):
 def _store_excel_in_blobdb(report_class, file, domain):
 
     key = uuid.uuid4().hex
-    expired = 60 * 60 * 24 * 7  # 7 days
+    expired = 60 * 24 * 7  # 7 days
     db = get_blob_db()
 
     kw = {
