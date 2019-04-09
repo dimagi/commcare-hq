@@ -2,7 +2,7 @@ hqDefine('app_manager/js/source_files', [
     'jquery',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'app_manager/js/widgets_v4',       // version dropdown
+    'app_manager/js/widgets',       // version dropdown
 ], function ($, _, initialPageData) {
     $(function () {
         $('.toggle-next').click(function (e) {
