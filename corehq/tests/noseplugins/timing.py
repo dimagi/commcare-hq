@@ -38,6 +38,9 @@ class TimingPlugin(Plugin):
         parser.add_option('--threshold', type=int,
                           default=env.get('NOSE_TIMING_THRESHOLD'),
                           help='Only print timing info for events above this threshold (seconds).')
+        parser.add_option('--fail-slow-tests', action='store_true',
+                          dest='fail_slow_tests',
+                          help='Fails any tests that are over the threshold specified.')
 
     def configure(self, options, conf):
         """Configure plugin.
@@ -47,6 +50,7 @@ class TimingPlugin(Plugin):
         self.timing_file = options.timing_file
         self.pretty_output = options.pretty_output
         self.threshold = options.threshold
+        self.fail_slow_tests = options.fail_slow_tests
 
     def begin(self):
         self.output = (open(self.timing_file, "w", encoding='utf-8')
@@ -86,7 +90,7 @@ class TimingPlugin(Plugin):
         self.event_start = now
 
         slow_seconds = _get_expected_slow_seconds(context) or self.threshold
-        if event != 'before' and duration > slow_seconds:
+        if self.fail_slow_tests and event != 'before' and duration > slow_seconds:
             context.fail("""
             Test ran in {} seconds and is greater than threshold {}.
             For tips on speeding up these tests please refer to https://commcare-hq.readthedocs.io/testing.html
