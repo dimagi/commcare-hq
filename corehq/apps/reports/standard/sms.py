@@ -355,16 +355,16 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
-            DataTablesColumn(_("Status")) if self.include_sms_errors else Ellipsis,
-            DataTablesColumn(_("Event"), sortable=False),
+            DataTablesColumn(_("Status")) if self.testing_changes else Ellipsis,
+            DataTablesColumn(_("Event"), sortable=False) if self.testing_changes else Ellipsis,
             DataTablesColumn(_("Type"), sortable=False),
         ] if header != Ellipsis])
         headers.custom_sort = [[0, 'desc']]
         return headers
 
     @cached_property
-    def include_sms_errors(self):
-        return toggles.INCLUDE_SMS_ERRORS.enabled(self.request.couch_user.username)
+    def testing_changes(self):
+        return toggles.SMS_LOG_CHANGES.enabled(self.request.couch_user.username)
 
     @property
     @memoized
@@ -427,7 +427,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
         )
-        if self.include_sms_errors:
+        if self.testing_changes:
             queryset = queryset.exclude(
                 direction=OUTGOING,
                 processed=False,
@@ -482,8 +482,8 @@ class MessageLogReport(BaseCommConnectLogReport):
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
-                get_sms_status_display(message) if self.include_sms_errors else Ellipsis,
-                self._get_message_event_display(message, content_cache),
+                get_sms_status_display(message) if self.testing_changes else Ellipsis,
+                self._get_message_event_display(message, content_cache) if self.testing_changes else Ellipsis,
                 ', '.join(self._get_message_types(message)),
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
             ] if val != Ellipsis]

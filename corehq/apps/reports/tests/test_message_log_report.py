@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from dimagi.utils.dates import DateSpan
+from corehq.util.test_utils import flag_enabled
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
@@ -15,6 +16,7 @@ from corehq.apps.sms.models import SMS, MessagingEvent
 from corehq.apps.users.models import WebUser
 
 
+@flag_enabled('SMS_LOG_CHANGES')
 class MessageLogReportTest(TestCase):
     domain = uuid.uuid4().hex
 
