@@ -75,11 +75,11 @@ india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
-    resource_file = '../resources/block_mpr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_mpr.json')
 
 
 class ASRData(object):
-    resource_file = '../resources/block_asr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_asr.json')
 
 
 class ICDSData(object):
@@ -124,7 +124,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
+        with open(os.path.join(*self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
