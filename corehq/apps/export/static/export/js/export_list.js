@@ -23,6 +23,7 @@ hqDefine("export/js/export_list", [
     'export/js/utils',
     'hqwebapp/js/validators.ko',        // needed for validation of startDate and endDate
     'hqwebapp/js/components.ko',        // pagination widget
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -370,8 +371,8 @@ hqDefine("export/js/export_list", [
             self.endDate(newSelectedExport.emailedExport.filters.end_date());
             self.locationRestrictions(newSelectedExport.emailedExport.locationRestrictions());
             // select2s require programmatic update
-            self.$emwfCaseFilter.select2("data", self.emwfCaseFilter());
-            self.$emwfFormFilter.select2("data", self.emwfFormFilter());
+            self.$emwfCaseFilter.val(self.emwfCaseFilter());
+            self.$emwfFormFilter.val(self.emwfFormFilter());
         });
         self.showEmwfCaseFilter = ko.computed(function () {
             return self.selectedExportModelType() === 'case';
@@ -404,10 +405,10 @@ hqDefine("export/js/export_list", [
 
             var exportType = export_.exportType();
             if (exportType === 'form') {
-                self.emwfFormFilter(self.$emwfFormFilter.select2("data"));
+                self.emwfFormFilter(self.$emwfFormFilter.val());
                 self.emwfCaseFilter(null);
             } else if (exportType === 'case') {
-                self.emwfCaseFilter(self.$emwfCaseFilter.select2("data"));
+                self.emwfCaseFilter(self.$emwfCaseFilter.val());
                 self.emwfFormFilter(null);
             }
 
