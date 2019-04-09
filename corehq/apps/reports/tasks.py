@@ -144,23 +144,17 @@ def _send_email(user, report, hash_id, recipient):
 
 def _store_excel_in_blobdb(report_class, file, domain):
 
-    # Store classname to redis
     key = uuid.uuid4().hex
-    r = get_redis_client()
-    r.set(key, report_class)
-    r.expire(key, EXPIRE_TIME)
-
-    # Store file to blobdb
     expired = 60 * 60 * 24 * 7  # 7 days
     db = get_blob_db()
-    parent_id = uuid.uuid4().hex
 
     kw = {
         "domain": domain,
-        "parent_id": parent_id,
+        "parent_id": key,
         "type_code": CODES.tempfile,
         "key": key,
-        "timeout": expired
+        "timeout": expired,
+        "properties": {"report_class": report_class}
     }
     file.seek(0)
     db.put(file, **kw)

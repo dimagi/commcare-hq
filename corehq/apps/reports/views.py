@@ -2032,27 +2032,38 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
-    cache = get_redis_client()
-    report_class = cache.get(export_hash)
     db = get_blob_db()
-    report_file = db.get(export_hash)
-    if report_file is not None:
-        if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
-            raise PermissionDenied()
-        if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file.read())
-            response = HttpResponse(file, Format.FORMAT_DICT[format])
-            response['Content-Length'] = file.size
-            response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-                filename=export_hash,
-                extension=Format.FORMAT_DICT[format]['extension']
-            )
-            return response
-        else:
-            return HttpResponseNotFound(_("We don't support this format"))
+
+    from corehq.blobs.models import BlobMeta
+    from corehq.blobs import NotFound
+
+    report_not_found = HttpResponseNotFound(_("That report was not found. Please remember "
+                                              "that download links expire after 24 hours."))
+
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except BlobMeta.DoesNotExist:
+        return report_not_found
+    report_class = meta.properties["report_class"]
+
+    try:
+        report_file = db.get(export_hash)
+    except NotFound:
+        return report_not_found
+
+    if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
+        raise PermissionDenied()
+    if format in Format.VALID_FORMATS:
+        file = ContentFile(report_file.read())
+        response = HttpResponse(file, Format.FORMAT_DICT[format])
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+            filename=export_hash,
+            extension=Format.FORMAT_DICT[format]['extension']
+        )
+        return response
     else:
-        return HttpResponseNotFound(_("That report was not found. Please remember"
-                                      " that download links expire after 24 hours."))
+        return HttpResponseNotFound(_("We don't support this format"))
 
 
 @login_or_digest
