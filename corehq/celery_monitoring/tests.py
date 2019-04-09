@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from django.conf import settings
 
 import datetime
 
@@ -77,3 +78,10 @@ def test_time_to_start_timer_with_eta():
 def test_parse_iso8601():
     eq(TimeToStartTimer.parse_iso8601('2009-11-17T12:30:56.527191'),
        datetime.datetime(2009, 11, 17, 12, 30, 56, 527191))
+
+
+def test_import_tasks():
+    from . import tasks
+    for queue in settings.CELERY_HEARTBEAT_THRESHOLDS:
+        # assert each heartbeat task is there
+        getattr(tasks, Heartbeat(queue).periodic_task_name)
