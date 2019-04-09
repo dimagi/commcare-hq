@@ -49,7 +49,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def parallel_render(self):
-        return not self.is_rendered_as_email and toggles.PARALLEL_MPR_ASR_REPORT.enabled(self.domain)
+        return not self.is_rendered_as_email and toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request)
 
     @property
     def report_config(self):
@@ -93,10 +93,13 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def report_context(self):
-        if self.should_render_subreport:
-            subreport = self.request.GET.get('provider_slug', None)
-            dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
-            return {'report': self.get_report_context(dp)}
+        if self.parallel_render:
+            if self.should_render_subreport:
+                subreport = self.request.GET.get('provider_slug', None)
+                dp = [cls for cls in self.data_provider_classes if cls.slug == subreport][0](self.report_config)
+                return {'report': self.get_report_context(dp)}
+            else:
+                return {}
         else:
             return {
                 'reports': [self.get_report_context(dp) for dp in self.data_providers],

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import datetime
 
@@ -79,14 +80,13 @@ class Heartbeat(object):
             try:
                 datadog_gauge(
                     'commcare.celery.heartbeat.blockage_duration',
-                    self.get_blockage_duration(),
+                    self.get_blockage_duration().total_seconds(),
                     tags=['celery_queue:{}'.format(self.queue)]
                 )
             except HeartbeatNeverRecorded:
                 pass
             self.mark_seen()
 
-        heartbeat.func_name = self.periodic_task_name
         heartbeat.__name__ = self.periodic_task_name
 
         heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue)(heartbeat)

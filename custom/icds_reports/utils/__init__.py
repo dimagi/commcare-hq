@@ -9,6 +9,7 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from functools import wraps
+from memoized import memoized
 
 import operator
 
@@ -75,11 +76,11 @@ india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
-    resource_file = '../resources/block_mpr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_mpr.json')
 
 
 class ASRData(object):
-    resource_file = '../resources/block_asr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_asr.json')
 
 
 class ICDSData(object):
@@ -124,10 +125,11 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
+        with open(os.path.join(*self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
+    @memoized
     def selected_location(self):
         if self.config['location_id']:
             return SQLLocation.objects.get(
@@ -135,6 +137,7 @@ class ICDSMixin(object):
             )
 
     @property
+    @memoized
     def awc(self):
         if self.config['location_id']:
             return self.selected_location.get_descendants(include_self=True).filter(
@@ -151,6 +154,7 @@ class ICDSMixin(object):
                 ]
             )
 
+    @memoized
     def custom_data(self, selected_location, domain):
         timer = TimingContext()
         with timer:

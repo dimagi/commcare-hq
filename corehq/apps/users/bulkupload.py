@@ -544,7 +544,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         # Without this line, digest auth doesn't work.
                         # With this line, digest auth works.
                         # Other than that, I'm not sure what's going on
-                        user.get_django_user().check_password(password)
+                        # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
+                        user.get_django_user(use_primary_db=True).check_password(password)
 
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
