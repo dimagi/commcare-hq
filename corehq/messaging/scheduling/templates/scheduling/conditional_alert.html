@@ -27,6 +27,7 @@
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
 {% initial_page_data 'form_submitted' form_submitted %}
+{% initial_page_data 'rule_name' rule_name %}
 
 <p class="lead">
     {{ current_page.page_name }}
@@ -83,21 +84,17 @@
             <div class="tab-content">
                 <div class="tab-pane {% if not criteria_form_active and not schedule_form_active %}active{% endif %}" id="basic">
                     <div class="row">
-                        <div class="panel-body">
+                        <div class="panel-body" id="conditional-alert-basic-info-panel">
                             {% crispy basic_info_form %}
-                            {% if new_rule %}
-                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" click_event="handleBasicNavContinue" %}
-                            {% endif %}
+                            {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" click_event="handleBasicNavContinue" enable_when="basicTabValid" %}
                         </div>
                     </div>
                 </div>
                 <div class="tab-pane {% if criteria_form_active %}active{% endif %}" id="rule">
                     <div class="row">
-                        <div class="panel-body">
+                        <div class="panel-body" id="rule-criteria-panel">
                             {% crispy criteria_form %}
-                            {% if new_rule %}
-                                {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="rule_continue" click_event="handleRuleNavContinue" %}
-                            {% endif %}
+                            {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="rule_continue" click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
                         </div>
                     </div>
                 </div>
@@ -105,14 +102,9 @@
                     <div class="panel-body">
                         {% include 'scheduling/partials/schedule_form.html' %}
                     </div>
-                    {% if new_rule %}
-                        {% include 'scheduling/partials/conditional_alert_save.html' %}
-                    {% endif %}
+                    {% include 'scheduling/partials/conditional_alert_save.html' %}
                 </div>
             </div>
-            {% if not new_rule %}
-                {% include 'scheduling/partials/conditional_alert_save.html' %}
-            {% endif %}
         </form>
     </div>
 </div>

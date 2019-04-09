@@ -9,7 +9,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         var self = {};
 
         self.constants = constants;
-        self.caseType = ko.observable();
+        self.caseType = ko.observable(initial.case_type);
         self.criteria = ko.observableArray();
 
         self.filterOnServerModified = ko.computed(function () {
@@ -189,6 +189,21 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             }
         };
 
+        self.setScheduleTabVisibility = function () {
+            if (self.ruleTabValid()) {
+                $("#schedule-nav").removeClass("hidden");
+            }
+        };
+
+        self.ruleTabValid = ko.computed(function () {
+            var ruleCaseType = self.caseType();
+            return !_.isEmpty(ruleCaseType);
+        });
+
+        self.handleRuleNavContinue = function () {
+            $("#schedule-nav").removeClass("hidden");
+            $('#schedule-nav').find('a').trigger('click');
+        };
         return self;
     };
 
@@ -248,7 +263,9 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             initialPageData.get('criteria_initial'),
             initialPageData.get('criteria_constants')
         );
-        $('#rule-criteria').koApplyBindings(criteriaModel);
+        // setup tab
+        criteriaModel.setScheduleTabVisibility();
+        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
         criteriaModel.loadInitial();
     });
 

@@ -783,6 +783,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'criteria_form_active': False,
             'schedule_form_active': False,
             'new_rule': not bool(self.rule),
+            'rule_name': self.rule.name if self.rule else '',
         }
 
         if self.request.method == 'POST':
@@ -790,6 +791,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
                 'form_submitted': True,
+                'rule_name': self.basic_info_form.rule_name,
             })
 
         return context
