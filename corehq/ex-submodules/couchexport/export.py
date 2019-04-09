@@ -71,9 +71,8 @@ def export_raw(headers, data, file, format=Format.XLS_2007,
                     ("2", "old dimagi", "529 main st."))))
 
     """
-    context = export_raw_to_writer(headers=headers, data=data, file=file, format=format,
-                                   max_column_size=max_column_size, separator=separator)
-    with context:
+    with export_raw_to_writer(headers=headers, data=data, file=file, format=format,
+                              max_column_size=max_column_size, separator=separator):
         pass
 
 
