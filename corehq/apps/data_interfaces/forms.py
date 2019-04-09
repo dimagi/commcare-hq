@@ -283,6 +283,7 @@ class CaseRuleCriteriaForm(forms.Form):
             'custom_match_definitions': json.loads(self['custom_match_definitions'].value()),
             'property_match_definitions': json.loads(self['property_match_definitions'].value()),
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
+            'case_type': self['case_type'].value(),
         }
 
     @property
@@ -396,7 +397,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.case_type_helper.layout = Layout(
             Fieldset(
                 _("Rule Criteria"),
-                Field('case_type')
+                Field('case_type', data_bind="value: caseType")
             )
         )
 
