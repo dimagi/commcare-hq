@@ -521,11 +521,13 @@ class EligibleCoupleQueryHelper(object):
 
             planning_methods = safe_history.get('family_planning_method')
             if planning_methods:
-                beneficiary['currentFamilyPlanningMethod'] = planning_methods[-1][1].replace("\'", '')
+                last_method = planning_methods[-1]
+                beneficiary['currentFamilyPlanningMethod'] = (
+                    last_method[1].replace("\'", '') if last_method[1] else 'N/A'
+                )
                 beneficiary['adoptionDateOfFamilyPlaning'] = force_to_datetime(
-                    planning_methods[-1][0].replace("\'", '')
-                ).date()
-
+                    last_method[0].replace("\'", '')
+                ).date() if last_method[0] else 'N/A'
         return data
 
     def eligible_couple_details(self):
@@ -562,10 +564,14 @@ class EligibleCoupleQueryHelper(object):
 
         planning_methods = safe_history.get('family_planning_method')
         if planning_methods:
-            data['familyPlaningMethod'] = planning_methods[-1][1]
-            data['familyPlanningMethodDate'] = planning_methods[-1][0]
+            current_method = planning_methods[-1]
+            data['familyPlaningMethod'] = current_method[1].replace("\'", '') if current_method[1] else 'N/A'
+            data['familyPlanningMethodDate'] = force_to_datetime(
+                current_method[0].replace("\'", '')
+            ).date() if current_method[0] else 'N/A'
             if len(planning_methods) > 1:
-                data['previousFamilyPlanningMethod'] = planning_methods[-2][1]
+                previous_method = planning_methods[-2][1].replace("\'", '') if planning_methods[-2][1] else 'N/A'
+                data['previousFamilyPlanningMethod'] = previous_method
 
         preferred_methods = safe_history.get('preferred_family_planning_methods')
         if preferred_methods:
