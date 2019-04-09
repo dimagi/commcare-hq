@@ -37,7 +37,6 @@ from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.hqwebapp.decorators import (
     use_timepicker,
     use_typeahead,
-    use_select2_v4,
     use_jquery_ui,
     use_datatables,
 )
@@ -1061,7 +1060,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(DomainSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
@@ -1440,7 +1438,6 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     urlname = 'list_global_backends'
     page_title = ugettext_noop("SMS Connectivity")
 
-    @use_select2_v4
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
@@ -1712,7 +1709,6 @@ class SMSLanguagesView(BaseMessagingSectionView):
     page_title = ugettext_noop("Languages")
 
     @use_jquery_ui
-    @use_select2_v4
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
@@ -2019,7 +2015,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(domain_admin_required)
     @use_timepicker
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

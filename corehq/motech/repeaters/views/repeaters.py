@@ -20,7 +20,6 @@ from dimagi.utils.post import simple_post
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView, BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.users.models import Permissions
 
@@ -197,10 +196,6 @@ class AddFormRepeaterView(AddRepeaterView):
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
-
-    @use_select2_v4
-    def dispatch(self, request, *args, **kwargs):
-        return super(AddCaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):

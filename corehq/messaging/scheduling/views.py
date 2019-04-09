@@ -26,7 +26,7 @@ from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, Messaging
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2_v4, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -397,7 +397,6 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
-    @use_select2_v4
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)
 
@@ -759,7 +758,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
-    @use_select2_v4
     def dispatch(self, *args, **kwargs):
         return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
 

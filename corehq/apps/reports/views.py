@@ -142,7 +142,6 @@ from corehq.apps.saved_reports.tasks import send_delayed_report, send_email_repo
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
-    use_select2_v4,
     use_datatables,
     use_multiselect,
     use_jquery_ui
@@ -529,7 +528,6 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     template_name = 'reports/edit_scheduled_report.html'
 
     @use_multiselect
-    @use_select2_v4
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(ScheduledReportsView, self).dispatch(request, *args, **kwargs)
@@ -929,7 +927,6 @@ class CaseDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
-    @use_select2_v4
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
@@ -1621,7 +1618,6 @@ class FormDataView(BaseProjectReportSectionView):
     http_method_names = ['get']
 
     @method_decorator(require_form_view_permission)
-    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(FormDataView, self).dispatch(request, *args, **kwargs)
 

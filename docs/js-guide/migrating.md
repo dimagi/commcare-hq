@@ -3,7 +3,6 @@
 Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
 1. [Migrating to RequireJS](#migrating-to-requirejs)
 1. [Moving away from classical inheritance](#moving-away-from-classical-inheritance)
-1. [Upgrading Select2](#upgrading-select2)
 
 ## Migrating to RequireJS
 
@@ -143,72 +142,3 @@ See [our approach to inheritance](https://github.com/dimagi/js-guide/blob/master
 [Sample pull request](https://github.com/dimagi/commcare-hq/pull/19938)
 
 Code that actually manipulates the prototype needs more thought.
-
-## Upgrading Select2
-
-HQ uses two different versions of select2. We're in the process of upgrading usage of the old version,
-because in principle it's crazy to have two versions but also because practically, having multiple versions
-makes it harder to bundle and share code across pages effectively.
-
-|                | New Select2                        | Old Select2                       |
-| -------------- | ---------------------------------- | --------------------------------- |
-| Version        |  4.0.0                             | 3.5.2                             |
-| Docs           | https://select2.org/               | http://select2.github.io/select2/ |
-| JS module      | `select2/dist/js/select2.full.min` | `select2-3.5.2-legacy/select2`    |
-| View decorator | `@use_select2_v4`                  | `@use_select2`                    |
-
-This is a fairly complicated migration both because the old and new version differ in multiple significant ways and because of how code is shared in HQ.
-
-### Figuring out what to migrate
-
-Migrating one select2 widget typically leads to migrating a number of other dependent ones. There are a couple of ways to pick a starting point:
-
-- Pick a view that uses the `use_select2` decorator
-- Pick a javascript module that directly depends on `select2-3.5.2-legacy/select2`
-- Pick a page that includes a script tag for `select2-3.5.2-legacy/select2.js` (rare, because most pages use the `@use_select2` decorator rather than including a script tag)
-- Browse the [requirejs bundle configuration](https://www.commcarehq.org/static/build.txt) to find modules that indirectly depend on `select2-3.5.2-legacy/select2`
-- Javascript modules that don't yet declare dependencies but that call the `.select2()` function
-- Pages that use a select2-dependent knockout binding like `select2`, `autocompleteSelect2`, or `questionsSelect`
-
-### Migrating
-
-The two versions of select2 have several types of differences.
-
-- Javascript: the new API has numerous differences. There are several select2-heavy javascript modules that have both an old and new version, so it can be helpful to look for javascript filenames ending `v3.js` and the corresponding files ending in `v4.js` to see how the API has changed. Changes frequently needed in HQ code:
-   - `formatResult` and `formatSelection` have been renamed to `templateResult` and `templateSelection`
-   - The `results` option for ajax is renamed to `processResults`
-   - `placeholder` is now required if `allowClear` is true (set it to `' '` if there isn't placeholder text)
-   - `formatNoMatches` text for when there are no results is now part of the `language` option
-      - v3 `formatNoMatches: function() { return gettext("No groups found"); }`
-      - v4 `language: { noResults: { return gettext("No groups found"); } }`
-   - The `data` option for ajax now takes a `params` parameter with a `term` property instead of having `term` passed as a parameter
-      - v3 `data: fuction (term) { return { query: term }; }`
-      - v4 `data: function (params) { return { query: params.term } }`
-   - To allow freetext entry, instead of using `createSearchChoice`, set `tags` to true. Custom logic relating to creating new options (such as validation for email inputs) can be added using `createTag`.
-   - To allow for HTML in custom option templates, set `escapeMarkup` to a pass-through function: `function (m) { return m; }`
-   - `initSelection` to initially populate the selected value is deprecated. Instead, you must make sure any selected options are added to the `<select>` element and then call `$element.val(...)` to set the value. Note that you also need to trigger a change event for the value to appear in the UI, and that you can trigger a `change.select2` instead of `change` if you don't want that event to be picked up by other code.
-   - To programmatically update a select2 value, you used to call `$el.select2('val', newValue)` but can now call `$el.val(newValue)` (again triggering a `change` event to make this visible in the UI.
-- HTML: the element underlying the select2 now has to be a `<select>`. Most of our old code uses text inputs. This typically means making one of two changes:
-   - For handwritten HTML, change the element type.
-   - For crispy forms, update the underlying field's widget. Most often this means taking a field like `forms.CharField(label=ugettext_lazy('Thing'))` and adding a `widget=forms.Select(choices=[])` param (or `SelectMultiple`). This can get more complicated when you're dealing with a multiselect (continue reading)
-- Saving multiselects: Multiselects now express their values as arrays of strings, whereas they used to be a single comma-separated string. This can mean updating javascript and also form saving code in python. See the [upgrade of domain pages](https://github.com/dimagi/commcare-hq/pull/22971/) for examples of updating form cleaning and saving code.
-
-Reference PRs:
-- [Form view](https://github.com/dimagi/commcare-hq/pull/22906)
-- [Locations](https://github.com/dimagi/commcare-hq/pull/21797)
-- [Domain pages](https://github.com/dimagi/commcare-hq/pull/22971)
-- [Accounting](https://github.com/dimagi/commcare-hq/pull/23030)
-
-### Figuring out what else you now have to migrate
-
-- A single page can only use one version of select2, so all instances on the page need to be migrated.
-- If you changed any python, most likely a form, any other pages using that form also likely need to be migrated.
-- If you're working on a requirejs page, you need to migrate the entire bundle. A bundle that contains both versions of select2 will throw javascript errors. There's a test to check for this, which you can also run manually: `corehq.apps.hqwebapp.tests.test_requirejs:TestRequireJSBuild.test_no_select2_conflicts`
-
-### Testing
-
-Test that
-- Your page loads without javascript errors
-- You form saves properly
-- Your form displays existing values properly (this often breaks, because of the new requirement that any initial values need to be options in the select)
-- If dealing with a multiselect, try saving one value, multiple values, and no values
