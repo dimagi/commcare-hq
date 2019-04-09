@@ -49,7 +49,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def parallel_render(self):
-        return not self.is_rendered_as_email and toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request)
+        return not self.is_rendered_as_email and not self.is_rendered_as_export and toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request)
 
     @property
     def report_config(self):

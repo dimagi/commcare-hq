@@ -809,10 +809,6 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
-ENVIRONMENT_HOSTS = {
-    'pillowtop': ['localhost']
-}
-
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
@@ -1836,6 +1832,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
