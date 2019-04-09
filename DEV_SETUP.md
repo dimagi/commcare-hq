@@ -73,6 +73,11 @@ Note that once you're up and running, you'll want to periodically re-run these s
 
 - Install [Python 3.6](https://www.python.org/downloads/)
     - For OSX, you can [install using Homebrew](http://osxdaily.com/2018/06/13/how-install-update-python-3x-mac/)
+    - For Ubuntu, you will need both the `python3.6` and `python3.6-dev`
+      packages. If your version of Ubuntu doesn't come with Python 3.6
+      pre-installed or in its standard repos, you can use the
+      [deadsnakes PPA](https://launchpad.net/~deadsnakes) to install version
+      3.6 alongside the stock version of Python 3.
 - [Create and activate virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments)
 - Install HQ requirements for Python 3.6
     - `$ pip install -r requirements-python3_6/dev-requirements.txt`
