@@ -268,7 +268,8 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 AND agg_cf.month = %(start_date)s AND {valid_in_month}
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
-            WHERE case_list.supervisor_id IS NOT NULL
+            WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
+                AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         """.format(
@@ -285,6 +286,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
             person_cases_ucr=self.person_case_ucr_tablename,
             valid_in_month=valid_in_month,
+            open_in_month=open_in_month
         ), {
             "start_date": self.month,
             "end_date": self.end_date,

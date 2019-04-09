@@ -15,7 +15,6 @@ describe('Beneficiary Type Filter', function () {
                 'beneficiary-type-filter': {},
             },
             postData: {},
-            disableSubmit: ko.observable(),
         });
         assert.equal(model.slug, 'beneficiary-type-filter');
         var expectedTypes = [

@@ -315,10 +315,7 @@
         {% endif %}
         {# modals #}
         {% block modals %}
-        {% comment %}
-            TODO - remove 'and False' after making updates
-        {% endcomment %}
-            {% if domain and not enterprise_mode and False %}
+            {% if domain and not enterprise_mode %}
                 {% if show_overdue_invoice_modal %}
                     {% include 'hqwebapp/downgrade_modal.html' %}
                 {% elif show_prepaid_modal %}
