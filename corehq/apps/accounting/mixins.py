@@ -11,6 +11,8 @@ from corehq.apps.accounting.tasks import (
     is_subscription_eligible_for_downgrade_process,
 )
 from corehq.apps.accounting.utils import months_from_date
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import Permissions
 from corehq.util.quickcache import quickcache
 
 
@@ -54,8 +56,12 @@ class BillingModalsMixin(object):
     @property
     def main_context(self):
         main_context = super(BillingModalsMixin, self).main_context
-        main_context.update(self._downgrade_modal_context)
-        main_context.update(self._low_credits_context)
+        if self.request.couch_user and self.request.couch_user.has_permission(
+            self.domain,
+            get_permission_name(Permissions.edit_billing)
+        ):
+            main_context.update(self._downgrade_modal_context)
+            main_context.update(self._low_credits_context)
         return main_context
 
     @property
