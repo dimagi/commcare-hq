@@ -144,7 +144,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         data_for_month['low_birth'] += low_birth
         data_for_month['in_month'] += in_month
         data_for_month['all'] += all_birth
-        data_for_month['y'] = low_birth / float(in_month or 1)
+        data_for_month['y'] = data_for_month['low_birth'] / float(data_for_month['in_month'] or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
