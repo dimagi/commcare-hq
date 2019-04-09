@@ -155,7 +155,7 @@ makes it harder to bundle and share code across pages effectively.
 | Version        |  4.0.0                             | 3.5.2                             |
 | Docs           | https://select2.org/               | http://select2.github.io/select2/ |
 | JS module      | `select2/dist/js/select2.full.min` | `select2-3.5.2-legacy/select2`    |
-| View decorator | `@use_select2_v4`                  | `@use_select2`                    |
+| View decorator | none                               | `@use_select2`                    |
 
 This is a fairly complicated migration both because the old and new version differ in multiple significant ways and because of how code is shared in HQ.
 
