@@ -65,6 +65,15 @@ class Heartbeat(object):
         return max(datetime.datetime.utcnow() - self.get_last_seen() - HEARTBEAT_FREQUENCY,
                    datetime.timedelta(seconds=0))
 
+    def get_and_report_blockage_duration(self):
+        blockage_duration = self.get_blockage_duration()
+        datadog_gauge(
+            'commcare.celery.heartbeat.blockage_duration',
+            blockage_duration.total_seconds(),
+            tags=['celery_queue:{}'.format(self.queue)]
+        )
+        return blockage_duration
+
     @property
     def periodic_task_name(self):
         return 'heartbeat__{}'.format(self.queue)
@@ -78,11 +87,7 @@ class Heartbeat(object):
         """
         def heartbeat():
             try:
-                datadog_gauge(
-                    'commcare.celery.heartbeat.blockage_duration',
-                    self.get_blockage_duration().total_seconds(),
-                    tags=['celery_queue:{}'.format(self.queue)]
-                )
+                self.get_and_report_blockage_duration()
             except HeartbeatNeverRecorded:
                 pass
             self.mark_seen()
