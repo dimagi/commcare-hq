@@ -196,8 +196,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         self.ruleTabValid = ko.computed(function () {
-            var ruleCaseType = self.caseType();
-            return !_.isEmpty(ruleCaseType);
+            return !_.isEmpty(self.caseType());
         });
 
         self.handleRuleNavContinue = function () {

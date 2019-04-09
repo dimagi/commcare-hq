@@ -6,13 +6,13 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function ($, ko, initialPageData) {
-    function basicInformationTab(formSubmitted, name) {
+    function basicInformationTab(name) {
         var self = {};
         self.name = ko.observable(name);
         self.basicTabValid = ko.computed(function() {
             return !_.isEmpty(self.name().trim());
         });
-        self.validateBasicTab = function() {
+        self.setRuleTabVisibility = function() {
             if (self.basicTabValid()) {
                 $("#rule-nav").removeClass("hidden");
             }
@@ -28,11 +28,10 @@ hqDefine("scheduling/js/conditional_alert_main", [
     }
 
     $(function () {
-        var formSubmitted = initialPageData.get('form_submitted');
         var name = initialPageData.get('rule_name');
-        var basicInformation = basicInformationTab(formSubmitted, name);
+        var basicInformation = basicInformationTab(name);
         // setup tab
-        basicInformation.validateBasicTab();
+        basicInformation.setRuleTabVisibility();
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
     });
 });

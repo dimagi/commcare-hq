@@ -790,7 +790,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             context.update({
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
-                'form_submitted': True,
                 'rule_name': self.basic_info_form.rule_name,
             })
 

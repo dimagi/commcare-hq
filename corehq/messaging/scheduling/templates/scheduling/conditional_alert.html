@@ -26,7 +26,6 @@
 
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
-{% initial_page_data 'form_submitted' form_submitted %}
 {% initial_page_data 'rule_name' rule_name %}
 
 <p class="lead">
@@ -48,12 +47,6 @@
     Since you are a Superuser, you will see additional options. See
     <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
     for more information.
-    {% endblocktrans %}
-</p>
-<p id="required_error_message" class="help-block alert alert-danger hidden">
-    <i class="fa fa-warning"></i>
-    {% blocktrans %}
-    Please fill the required fields marked with *
     {% endblocktrans %}
 </p>
 {% endif %}
@@ -86,7 +79,7 @@
                     <div class="row">
                         <div class="panel-body" id="conditional-alert-basic-info-panel">
                             {% crispy basic_info_form %}
-                            {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="basic_continue" click_event="handleBasicNavContinue" enable_when="basicTabValid" %}
+                            {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleBasicNavContinue" enable_when="basicTabValid" %}
                         </div>
                     </div>
                 </div>
@@ -94,7 +87,7 @@
                     <div class="row">
                         <div class="panel-body" id="rule-criteria-panel">
                             {% crispy criteria_form %}
-                            {% include 'scheduling/partials/conditional_alert_continue.html' with button_id="rule_continue" click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
+                            {% include 'scheduling/partials/conditional_alert_continue.html' with click_event="handleRuleNavContinue" enable_when="ruleTabValid" %}
                         </div>
                     </div>
                 </div>
