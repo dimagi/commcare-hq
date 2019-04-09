@@ -6,7 +6,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
 ], function ($, ko, initialPageData) {
-    function basicInformationTab (name) {
+    function basicInformationTab(name) {
         var self = {};
         self.name = ko.observable(name);
         self.basicTabValid = ko.computed(function () {
