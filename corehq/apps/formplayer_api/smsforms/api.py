@@ -291,7 +291,7 @@ def formplayer_post_data_helper(d, content_type, url):
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = str(len(data))
-    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
+    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data).decode('utf-8')
     response = requests.post(
         url,
         data=data,
