@@ -7,13 +7,13 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 from dimagi.utils.dates import DateSpan
-from corehq.util.test_utils import flag_enabled
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.sms import MessageLogReport
-from corehq.apps.sms.models import SMS, MessagingEvent
+from corehq.apps.sms.models import OUTGOING, SMS, MessagingEvent
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('SMS_LOG_CHANGES')
@@ -31,12 +31,21 @@ class MessageLogReportTest(TestCase):
     def test_event_column(self):
         self.make_simple_sms('message')
         self.make_case_rule_sms('Rule 2')
+
         for report_value, rule_name in zip(
             self.get_report_column('Event'),
             ['-', 'Rule 2'],
         ):
             # The cell value should be a link to the rule
             self.assertIn(rule_name, report_value)
+
+    def test_include_erroring_sms_status(self):
+        self.make_simple_sms('message 1', error_message=SMS.ERROR_INVALID_DIRECTION)
+        self.make_simple_sms('message 2')
+        self.assertEqual(
+            self.get_report_column('Status'),
+            ['Error - Unknown message direction.', 'Sent'],
+        )
 
     @classmethod
     def setUpClass(cls):
@@ -68,11 +77,14 @@ class MessageLogReportTest(TestCase):
         for row in report.rows:
             yield dict(zip(headers, row))
 
-    def make_simple_sms(self, message):
+    def make_simple_sms(self, message, error_message=None):
         sms = SMS.objects.create(
             domain=self.domain,
             date=datetime.utcnow(),
+            direction=OUTGOING,
             text=message,
+            error=bool(error_message),
+            system_error_message=error_message,
         )
         self.addCleanup(sms.delete)
 
@@ -88,6 +100,7 @@ class MessageLogReportTest(TestCase):
         sms = SMS.objects.create(
             domain=self.domain,
             date=datetime.utcnow(),
+            direction=OUTGOING,
             text='this is a message',
             messaging_subevent=subevent,
         )
