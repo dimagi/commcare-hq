@@ -5,7 +5,7 @@ import hashlib
 from quickcache.django_quickcache import get_django_quickcache
 from quickcache import ForceSkipCache
 from celery._state import get_current_task
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 
 from corehq.util.soft_assert import soft_assert
 
@@ -26,9 +26,9 @@ def get_session_key():
         # at least in tests, current_task may have the same id between different tasks!
         session_id = current_task.request.id
     if not session_id:
-        request = get_request()
+        request = global_context.request
         if request:
-            session_id = str(id(get_request()))
+            session_id = str(id(request))
         else:
             session_id = None
 

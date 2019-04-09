@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.template.loader import render_to_string
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 from corehq.apps.accounting.utils import get_default_domain_url
 
 
@@ -15,7 +15,7 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
     )
     # this can be None, though usually this will be initiated
     # by an http request
-    request = get_request()
+    request = global_context.request
     email_context = {
         'domain': domain,
         'domain_url': get_default_domain_url(domain),

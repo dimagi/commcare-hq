@@ -28,7 +28,7 @@ from corehq.blobs.models import BlobMeta
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.util import random_url_id
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
-from corehq.util.global_request import get_request_domain
+from corehq.util.global_context import global_context
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
@@ -362,7 +362,10 @@ class ExportColumn(DocumentSchema):
                 help_text=_('The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
-        elif get_request_domain() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request_domain()):
+        elif (
+                global_context.get_current_domain()
+                and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(global_context.get_current_domain())
+        ):
             column = SplitUserDefinedExportColumn(**constructor_args)
         else:
             column = ExportColumn(**constructor_args)

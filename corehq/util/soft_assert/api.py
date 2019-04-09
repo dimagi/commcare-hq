@@ -5,7 +5,7 @@ import logging
 from django.conf import settings
 
 from corehq.util.log import get_sanitized_request_repr
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 from corehq.util.soft_assert.core import SoftAssert
 import six
 
@@ -13,7 +13,7 @@ logger = logging.getLogger('soft_asserts')
 
 
 def _send_message(info, backend):
-    request = get_request()
+    request = global_context.request
     request_repr = get_sanitized_request_repr(request)
 
     backend(

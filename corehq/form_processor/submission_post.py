@@ -35,7 +35,7 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.datadog.utils import form_load_counter
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
@@ -384,7 +384,7 @@ class SubmissionPost(object):
         except PostSaveError:
             raise
         except Exception:
-            notify_exception(get_request(), "Error performing post save actions during form processing", {
+            notify_exception(global_context.request, "Error performing post save actions during form processing", {
                 'domain': instance.domain,
                 'form_id': instance.form_id,
             })
@@ -512,7 +512,6 @@ def handle_unexpected_error(interface, instance, exception):
 
 
 def notify_submission_error(instance, exception, message):
-    from corehq.util.global_request.api import get_request
     domain = getattr(instance, 'domain', '---')
     details = {
         'domain': domain,
@@ -520,7 +519,7 @@ def notify_submission_error(instance, exception, message):
     }
     should_email = not isinstance(exception, CouchSaveAborted)  # intentionally don't double-email these
     if should_email:
-        request = get_request()
+        request = global_context.request
         notify_exception(request, message, details=details)
     else:
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})

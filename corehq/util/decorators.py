@@ -4,7 +4,7 @@ from celery.task import task
 from functools import wraps
 import logging
 import requests
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from six.moves import zip
@@ -36,7 +36,7 @@ def handle_uncaught_exceptions(mail_admins=True):
             except Exception as e:
                 msg = "Uncaught exception from {}.{}".format(fn.__module__, fn.__name__)
                 if mail_admins:
-                    notify_exception(get_request(), msg)
+                    notify_exception(global_context.request, msg)
                 else:
                     logging.exception(msg)
 

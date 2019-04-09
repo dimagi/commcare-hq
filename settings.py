@@ -141,7 +141,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.util.global_request.middleware.GlobalRequestMiddleware',
+    'corehq.util.global_context.middleware.GlobalContextMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',

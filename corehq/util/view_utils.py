@@ -16,7 +16,7 @@ from django.utils.http import urlencode
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 
-from corehq.util import global_request
+from corehq.util import global_context
 import six
 
 JSON = 'application/json'
@@ -113,7 +113,7 @@ def _json_exception_response_data(code, exception):
 
 
 def get_request():
-    return global_request.get_request()
+    return global_context.global_context.request
 
 
 def reverse(viewname, params=None, absolute=False, **kwargs):

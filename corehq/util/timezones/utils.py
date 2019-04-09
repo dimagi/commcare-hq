@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
-from corehq.util.global_request import get_request
+from corehq.util.global_context import global_context
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from corehq.util.dates import iso_string_to_datetime
@@ -34,7 +34,7 @@ def validate_timezone_max_length(max_length, zones):
 
 def get_timezone_for_request(request=None):
     if request is None:
-        request = get_request()
+        request = global_context.request
 
     user = getattr(request, 'couch_user', None)
     domain = getattr(request, 'domain', None)

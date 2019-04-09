@@ -25,7 +25,7 @@ from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LEGACY_SYNC_SUPPORT
-from corehq.util.global_request.api import set_request
+from corehq.util.global_context import global_context
 from six.moves import range
 
 
@@ -190,7 +190,7 @@ class TestNewSyncSpecifics(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        set_request(None)
+        global_context.reset()
         super(TestNewSyncSpecifics, cls).tearDownClass()
 
     def test_legacy_support_toggle(self):
@@ -233,7 +233,7 @@ class TestNewSyncSpecifics(TestCase):
         # though we also need to hackily set the request object in the threadlocals
         LEGACY_SYNC_SUPPORT.set(self.domain, True, namespace='domain')
         request = JsonObject(domain=self.domain, path='testsubmit')
-        set_request(request)
+        global_context.request = request
         factory.create_or_update_cases([
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
