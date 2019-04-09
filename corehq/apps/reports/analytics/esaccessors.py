@@ -32,12 +32,11 @@ from six.moves import map
 PagedResult = namedtuple('PagedResult', 'total hits')
 
 
-def get_last_submission_time_for_users(domain, user_ids, datespan):
+def get_last_submission_time_for_users(domain, user_ids, datespan, es_instance_alias=ES_DEFAULT_INSTANCE):
     def convert_to_date(date):
         return string_to_datetime(date).date() if date else None
-
     query = (
-        FormES()
+        FormES(es_instance_alias=es_instance_alias)
         .domain(domain)
         .user_id(user_ids)
         .completed(gte=datespan.startdate.date(), lte=datespan.enddate.date())
@@ -55,12 +54,10 @@ def get_last_submission_time_for_users(domain, user_ids, datespan):
     )
 
     aggregations = query.run().aggregations
-
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
     for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
-
     return result
 
 
