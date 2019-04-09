@@ -52,18 +52,16 @@ class AppCaseMetadataBuilder(object):
     def _add_form_contributions(self):
         for module in self.app.get_modules():
             for form in module.get_forms():
-                if isinstance(form, Form):
-                    self._add_regular_form_contribution(form)
-                elif isinstance(form, AdvancedForm):
-                    self._add_advanced_form_contribution(form)
+                if isinstance(form, (Form, AdvancedForm)):
+                    questions = {q['value']: FormQuestionResponse(q) for q in form.get_cached_questions()}
+                    self._add_save_to_case_questions(form)
 
-    def _add_regular_form_contribution(self, form):
-        questions = {
-            q['value']: FormQuestionResponse(q)
-            for q in form.get_questions(self.app.langs, include_triggers=True,
-                include_groups=True, include_translations=True)
-        }
-        self._add_save_to_case_questions(form, questions)
+                if isinstance(form, Form):
+                    self._add_regular_form_contribution(form, questions)
+                elif isinstance(form, AdvancedForm):
+                    self._add_advanced_form_contribution(form, questions)
+
+    def _add_regular_form_contribution(self, form, questions):
         module_case_type = form.get_module().case_type
         type_meta = self.meta.get_type(module_case_type)
         for type_, action in form.active_actions().items():
@@ -144,12 +142,7 @@ class AppCaseMetadataBuilder(object):
                     case_load_reference.path
                 )
 
-    def _add_advanced_form_contribution(self, form):
-        questions = {
-            q['value']: FormQuestionResponse(q)
-            for q in form.get_questions(self.app.langs, include_translations=True)
-        }
-        self._add_save_to_case_questions(form, questions)
+    def _add_advanced_form_contribution(self, form, questions):
         for action in form.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
@@ -194,41 +187,36 @@ class AppCaseMetadataBuilder(object):
             if action.close_condition.is_active():
                 meta.add_closer(form.unique_id, action.close_condition)
 
-    def _add_save_to_case_questions(self, form, form_questions):
-        def _make_save_to_case_question(path):
-            # todo: this is a hack - just make an approximate save-to-case looking question
-            return FormQuestionResponse.wrap({
-                "label": path,
-                "tag": path,
-                "value": path,
-                "repeat": None,
-                "group": None,
-                "type": 'SaveToCase',
-                "relevant": None,
-                "required": None,
-                "comment": None,
-                "hashtagValue": path,
-            })
-
-        def _make_dummy_condition():
-            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
-            return FormActionCondition(type='always')
-
+    def _add_save_to_case_questions(self, form):
+        # The information for save to case questions comes directly from Vellum
         for property_info in form.case_references_data.get_save_references():
-            if property_info.case_type:
-                type_meta = self.meta.get_type(property_info.case_type)
-                for property_name in property_info.properties:
-                    self.meta.add_property_save(
-                        property_info.case_type,
-                        property_name,
-                        form.unique_id,
-                        _make_save_to_case_question(property_info.path),
-                        None
-                    )
-                if property_info.create:
-                    type_meta.add_opener(form.unique_id, _make_dummy_condition())
-                if property_info.close:
-                    type_meta.add_closer(form.unique_id, _make_dummy_condition())
+            if not property_info.case_type:
+                # If there is no case type given by the user, we can't really
+                # infer what this save to case question refers to
+                continue
+
+            for property_name in property_info.properties:
+                question = FormQuestionResponse.wrap({
+                    "label": property_info.path,
+                    "tag": property_info.path,
+                    "value": property_info.path,
+                    "repeat": None,
+                    "group": None,
+                    "type": 'SaveToCase',
+                    "relevant": None,
+                    "required": None,
+                    "comment": None,
+                    "hashtagValue": property_info.path,
+                })
+                self.meta.add_property_save(property_info.case_type,
+                                            property_name, form.unique_id,
+                                            question)
+
+            type_meta = self.meta.get_type(property_info.case_type)
+            if property_info.create:
+                type_meta.add_opener(form.unique_id, FormActionCondition(type='always'))
+            if property_info.close:
+                type_meta.add_closer(form.unique_id, FormActionCondition(type='always'))
 
     def add_property_save(self, form, case_type, name,
                           questions, question_path, condition=None):
