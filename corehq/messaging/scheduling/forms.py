@@ -3576,7 +3576,7 @@ class ConditionalAlertForm(Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                crispy.Field('name'),
+                crispy.Field('name', data_bind="value: name, valueUpdate: 'afterkeydown'"),
             ),
         )
 
@@ -3584,6 +3584,10 @@ class ConditionalAlertForm(Form):
         return {
             'name': self.initial_rule.name,
         }
+
+    @property
+    def rule_name(self):
+        return self.cleaned_data.get('name')
 
 
 class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
