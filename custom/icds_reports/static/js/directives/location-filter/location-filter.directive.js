@@ -72,13 +72,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         }
         var notDisabledLocationsForLevel = 0;
         window.angular.forEach(vm.getLocationsForLevel(level), function(location) {
-            if (location.location_id && location.location_id !== 'all' && (
-                location.user_have_access || location.user_have_access_to_parent)
-            ) {
+            if (location.user_have_access || location.user_have_access_to_parent) {
                 notDisabledLocationsForLevel += 1;
             }
         });
-        return notDisabledLocationsForLevel === 0;
+        return notDisabledLocationsForLevel <= 1;
     };
 
     vm.onSelect = function($item, level) {
@@ -176,8 +174,8 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     var ALL_OPTION = {
         name: 'All',
         location_id: 'all',
-        "user_have_access": false,
-        "user_have_access_to_parent": true,
+        "user_have_access": 0,
+        "user_have_access_to_parent": 1,
     };
 
     var initHierarchy = function() {
