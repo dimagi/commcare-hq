@@ -60,52 +60,7 @@ class AppCaseMetadataBuilder(object):
                 if isinstance(form, Form):
                     _FormCaseMetadataBuilder(self.meta, form, questions).add_form_contributions()
                 elif isinstance(form, AdvancedForm):
-                    self._add_advanced_form_contribution(form, questions)
-
-    def _add_advanced_form_contribution(self, form, questions):
-        for action in form.actions.load_update_cases:
-            for name, question_path in action.case_properties.items():
-                self.add_property_save(
-                    form,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path
-                )
-            for question_path, name in action.preload.items():
-                self.add_property_load(
-                    form,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path
-                )
-            if action.close_condition.is_active():
-                meta = self.meta.get_type(action.case_type)
-                meta.add_closer(form.unique_id, action.close_condition)
-
-        for action in form.actions.open_cases:
-            self.add_property_save(
-                form,
-                action.case_type,
-                'name',
-                questions,
-                action.name_path,
-                action.open_condition
-            )
-            for name, question_path in action.case_properties.items():
-                self.add_property_save(
-                    form,
-                    action.case_type,
-                    name,
-                    questions,
-                    question_path,
-                    action.open_condition
-                )
-            meta = self.meta.get_type(action.case_type)
-            meta.add_opener(form.unique_id, action.open_condition)
-            if action.close_condition.is_active():
-                meta.add_closer(form.unique_id, action.close_condition)
+                    _AdvancedFormCaseMetadataBuilder(self.meta, form, questions).add_form_contributions()
 
     def _add_save_to_case_questions(self, form):
         # The information for save to case questions comes directly from Vellum
@@ -145,11 +100,34 @@ class AppCaseMetadataBuilder(object):
                 prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
 
 
-class _FormCaseMetadataBuilder(object):
+class _BaseFormCaseMetadataBuilder(object):
     def __init__(self, meta, form, questions):
         self.meta = meta
         self.form = form
         self.questions = questions
+
+    def add_property_save(self, case_type, name, question_path, condition=None):
+        try:
+            question = self.questions[question_path]
+        except KeyError:
+            message = "%s is not a valid question" % question_path
+            self.meta.add_property_error(case_type, name, self.form.unique_id, message)
+        else:
+            self.meta.add_property_save(case_type, name, self.form.unique_id, question, condition)
+
+    def add_property_load(self, case_type, name, question_path):
+        try:
+            question = self.questions[question_path]
+        except KeyError:
+            message = "%s is not a valid question" % question_path
+            self.meta.add_property_error(case_type, name, self.form.unique_id, message)
+        else:
+            self.meta.add_property_load(case_type, name, self.form.unique_id, question)
+
+
+class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
+    def __init__(self, meta, form, questions):
+        super(_FormCaseMetadataBuilder, self).__init__(meta, form, questions)
         self.case_type = self.form.get_module().case_type
 
     def add_form_contributions(self):
@@ -176,7 +154,7 @@ class _FormCaseMetadataBuilder(object):
     def _handle_open_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
         type_meta.add_opener(self.form.unique_id, action.condition)
-        self.add_property_save(self.case_type, 'name', self.questions, action.name_path)
+        self.add_property_save(self.case_type, 'name', action.name_path)
 
     def _handle_close_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
@@ -185,12 +163,12 @@ class _FormCaseMetadataBuilder(object):
     def _handle_update_case_action(self, action_type, action):
         case_type = USERCASE_TYPE if action_type == 'usercase_update' else self.case_type
         for name, question_path in FormAction.get_action_properties(action):
-            self.add_property_save(case_type, name, self.questions, question_path)
+            self.add_property_save(case_type, name, question_path)
 
     def _handle_load_action(self, action_type, action):
         case_type = USERCASE_TYPE if action_type == 'usercase_update' else self.case_type
         for name, question_path in FormAction.get_action_properties(action):
-            self.add_property_load(case_type, name, self.questions, question_path)
+            self.add_property_load(case_type, name, question_path)
 
     def _handle_subcase_actions(self, actions):
         active_actions = [a for a in actions if a.is_active()]
@@ -200,14 +178,14 @@ class _FormCaseMetadataBuilder(object):
             if action.close_condition.is_active():
                 sub_type_meta.add_closer(self.form.unique_id, action.close_condition)
             for name, question_path in FormAction.get_action_properties(action):
-                self.add_property_save(action.case_type, name, self.questions, question_path)
+                self.add_property_save(action.case_type, name, question_path)
 
     def _add_load_references(self):
         for case_load_reference in self.form.case_references.get_load_references():
             for name in case_load_reference.properties:
                 case_type, name = self._parse_case_type(name, self.case_type)
                 name = re.sub("^grandparent/", "parent/parent/", name)
-                self.add_property_load(case_type, name, self.questions, case_load_reference.path)
+                self.add_property_load(case_type, name, case_load_reference.path)
 
     @staticmethod
     def _parse_case_type(full_name, module_case_type):
@@ -218,20 +196,28 @@ class _FormCaseMetadataBuilder(object):
         else:
             return module_case_type, full_name
 
-    def add_property_save(self, case_type, name, questions, question_path, condition=None):
-        try:
-            question = questions[question_path]
-        except KeyError:
-            message = "%s is not a valid question" % question_path
-            self.meta.add_property_error(case_type, name, self.form.unique_id, message)
-        else:
-            self.meta.add_property_save(case_type, name, self.form.unique_id, question, condition)
 
-    def add_property_load(self, case_type, name, questions, question_path):
-        try:
-            question = questions[question_path]
-        except KeyError:
-            message = "%s is not a valid question" % question_path
-            self.meta.add_property_error(case_type, name, self.form.unique_id, message)
-        else:
-            self.meta.add_property_load(case_type, name, self.form.unique_id, question)
+class _AdvancedFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
+    def add_form_contributions(self):
+        self._add_load_update_actions()
+        self._add_open_actions()
+
+    def _add_load_update_actions(self):
+        for action in self.form.actions.load_update_cases:
+            for name, question_path in action.case_properties.items():
+                self.add_property_save(action.case_type, name, question_path)
+            for question_path, name in action.preload.items():
+                self.add_property_load(action.case_type, name, question_path)
+            if action.close_condition.is_active():
+                meta = self.meta.get_type(action.case_type)
+                meta.add_closer(self.form.unique_id, action.close_condition)
+
+    def _add_open_actions(self):
+        for action in self.form.actions.open_cases:
+            self.add_property_save(action.case_type, 'name', action.name_path, action.open_condition)
+            for name, question_path in action.case_properties.items():
+                self.add_property_save(action.case_type, name, question_path, action.open_condition)
+            meta = self.meta.get_type(action.case_type)
+            meta.add_opener(self.form.unique_id, action.open_condition)
+            if action.close_condition.is_active():
+                meta.add_closer(self.form.unique_id, action.close_condition)
