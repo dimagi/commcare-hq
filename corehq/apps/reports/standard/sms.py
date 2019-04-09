@@ -47,7 +47,7 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.standard.message_event_display import (
-    get_content_display,
+    get_event_display,
     get_sms_status_display,
     get_status_display,
 )
@@ -355,6 +355,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             DataTablesColumn(_("Phone Number")),
             DataTablesColumn(_("Direction")),
             DataTablesColumn(_("Message")),
+            DataTablesColumn(_("Event"), sortable=False),
             DataTablesColumn(_("Type"), sortable=False),
         )
         header.custom_sort = [[0, 'desc']]
@@ -437,7 +438,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        return queryset
+        return queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -468,6 +469,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         if paginate and self.pagination:
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
+        content_cache = {}
         for message in data:
             row = [
                 get_timestamp(message.date),
@@ -475,11 +477,18 @@ class MessageLogReport(BaseCommConnectLogReport):
                 get_phone_number(message.phone_number),
                 get_direction(message.direction),
                 message.text,
+                self._get_message_event_display(message, content_cache),
                 ', '.join(self._get_message_types(message)),
             ]
             if include_log_id and self.include_metadata:
                 row.append(message.couch_id)
             yield row
+
+    def _get_message_event_display(self, message, content_cache):
+        if message.messaging_subevent:
+            event = message.messaging_subevent.parent
+            return get_event_display(self.domain, event, content_cache)
+        return "-"
 
     @property
     def rows(self):
@@ -743,7 +752,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             status = get_status_display(event)
             yield [
                 self._fmt_timestamp(timestamp)['html'],
-                get_content_display(self.domain, event, content_cache),
+                get_event_display(self.domain, event, content_cache),
                 self.get_source_display(event, display_only=True),
                 self._fmt_recipient(event, doc_info)['html'],
                 status,

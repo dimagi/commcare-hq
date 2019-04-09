@@ -8,6 +8,7 @@ from django.test.client import RequestFactory
 
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.sms import MessageLogReport
 from corehq.apps.sms.models import SMS, MessagingEvent
@@ -24,6 +25,16 @@ class MessageLogReportTest(TestCase):
             self.get_report_column('Message'),
             ['message 1', 'message 2'],
         )
+
+    def test_event_column(self):
+        self.make_simple_sms('message')
+        self.make_case_rule_sms('Rule 2')
+        for report_value, rule_name in zip(
+            self.get_report_column('Event'),
+            ['-', 'Rule 2'],
+        ):
+            # The cell value should be a link to the rule
+            self.assertIn(rule_name, report_value)
 
     @classmethod
     def setUpClass(cls):
@@ -61,4 +72,22 @@ class MessageLogReportTest(TestCase):
             date=datetime.utcnow(),
             text=message,
         )
+        self.addCleanup(sms.delete)
+
+    def make_case_rule_sms(self, rule_name):
+        rule = AutomaticUpdateRule.objects.create(domain=self.domain, name=rule_name)
+        event = MessagingEvent.objects.create(
+            domain=self.domain,
+            date=datetime.utcnow(),
+            source=MessagingEvent.SOURCE_CASE_RULE,
+            source_id=rule.pk,
+        )
+        subevent = event.create_subevent_for_single_sms()
+        sms = SMS.objects.create(
+            domain=self.domain,
+            date=datetime.utcnow(),
+            text='this is a message',
+            messaging_subevent=subevent,
+        )
+        self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)

@@ -213,7 +213,7 @@ def _get_case_rule_display(domain, rule_id, content_cache):
     return result
 
 
-def get_content_display(domain, event, content_cache):
+def get_event_display(domain, event, content_cache):
     if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
         return _get_keyword_display(event.source_id, content_cache)
     elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
