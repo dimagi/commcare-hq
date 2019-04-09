@@ -10,7 +10,7 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-    'app_manager/js/widgets_v4',       // version dropdown
+    'app_manager/js/widgets',       // version dropdown
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
 
     var menuItemModel = function (options) {
