@@ -527,6 +527,7 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
         };
     Util.setCrossDomainAjaxOptions(options);
     formplayerLoading();
+    console.log(options);
     resp = $.ajax(options);
     resp.fail(function () {
         formplayerLoadingComplete(true);
