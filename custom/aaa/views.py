@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from datetime import date
 
-from celery.result import AsyncResult
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -16,22 +13,35 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView, View
 
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
+from celery.result import AsyncResult
+from dateutil.relativedelta import relativedelta
+
+from couchexport.models import Format
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser_or_contractor,
+)
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.util.files import safe_filename_header
-from couchexport.models import Format
-
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
-from custom.aaa.models import Woman, Child, ChildHistory
+from custom.aaa.dbaccessors import (
+    ChildQueryHelper,
+    EligibleCoupleQueryHelper,
+    PregnantWomanQueryHelper,
+)
+from custom.aaa.models import Child, Woman
 from custom.aaa.tasks import prepare_export_reports, run_aggregation
-from custom.aaa.utils import build_location_filters, get_location_model_for_ministry, get_file_from_blobdb
-
-from dimagi.utils.dates import force_to_date
+from custom.aaa.utils import (
+    build_location_filters,
+    get_file_from_blobdb,
+    get_location_model_for_ministry,
+)
 
 
 class ReachDashboardView(TemplateView):
