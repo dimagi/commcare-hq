@@ -90,15 +90,11 @@ def export_raw_to_writer(headers, data, file, format=Format.XLS_2007,
 
     # format the headers the way the export likes them
     headers = FormattedRow.wrap_all_rows(headers)
-    writer.open(headers, file, max_column_size=max_column_size)
-
-    # do the same for the data
-    data = FormattedRow.wrap_all_rows(data)
-    writer.write(data)
-    try:
+    with writer.open(headers, file, max_column_size=max_column_size):
+        # do the same for the data
+        data = FormattedRow.wrap_all_rows(data)
+        writer.write(data)
         yield writer
-    finally:
-        writer.close()
 
 
 @six.python_2_unicode_compatible
