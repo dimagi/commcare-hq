@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import re
+
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_parent_type_map,
 )
@@ -52,10 +54,11 @@ class AppCaseMetadataBuilder(object):
     def _add_form_contributions(self):
         for module in self.app.get_modules():
             for form in module.get_forms():
-                if isinstance(form, (Form, AdvancedForm)):
-                    questions = {q['value']: FormQuestionResponse(q) for q in form.get_cached_questions()}
-                    self._add_save_to_case_questions(form)
+                if not isinstance(form, (Form, AdvancedForm)):
+                    continue
 
+                questions = {q['value']: FormQuestionResponse(q) for q in form.cached_get_questions()}
+                self._add_save_to_case_questions(form)
                 if isinstance(form, Form):
                     self._add_regular_form_contribution(form, questions)
                 elif isinstance(form, AdvancedForm):
@@ -110,30 +113,10 @@ class AppCaseMetadataBuilder(object):
                                 question_path
                             )
 
-        def parse_case_type(name, types={"#case": module_case_type,
-                                         "#user": USERCASE_TYPE}):
-            if name.startswith("#") and "/" in name:
-                full_name = name
-                hashtag, name = name.split("/", 1)
-                if hashtag not in types:
-                    hashtag, name = "#case", full_name
-            else:
-                hashtag = "#case"
-            return types[hashtag], name
-
-        def parse_relationship(name):
-            if '/' not in name:
-                return name
-
-            relationship, property_name = name.split('/', 1)
-            if relationship == 'grandparent':
-                relationship = 'parent/parent'
-            return '/'.join([relationship, property_name])
-
         for case_load_reference in form.case_references.get_load_references():
             for name in case_load_reference.properties:
-                case_type, name = parse_case_type(name)
-                name = parse_relationship(name)
+                case_type, name = _parse_case_type(name, module_case_type)
+                name = re.sub("^grandparent/", "parent/parent/", name)
                 self.add_property_load(
                     form,
                     case_type,
@@ -258,3 +241,12 @@ class AppCaseMetadataBuilder(object):
         for type_ in self.meta.case_types:
             for prop in type_.properties:
                 prop.description = descriptions_dict.get(type_.name, {}).get(prop.name, '')
+
+
+def _parse_case_type(full_name, module_case_type):
+    if full_name.startswith("#case/"):
+        return module_case_type, full_name.split("/", 1)[1]
+    elif full_name.startswith("#user/"):
+        return USERCASE_TYPE, full_name.split("/", 1)[1]
+    else:
+        return module_case_type, full_name
