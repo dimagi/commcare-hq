@@ -5855,15 +5855,13 @@ def import_app(app_id_or_source, domain, source_properties=None):
     app.save_attachments(attachments)
 
     if not app.is_remote_app():
-        enable_usercase_if_necessary(app)
-
-    # This will raise a ReportConfigurationNotFoundError if there are report modules.
-    # Make sure this is at the end of the function so the rest of the app copying process will succeed.
-    if not app.is_remote_app():
         for _, m in app.get_media_objects():
             if domain not in m.valid_domains:
                 m.valid_domains.append(domain)
                 m.save()
+
+    if not app.is_remote_app():
+        enable_usercase_if_necessary(app)
 
     return app
 
