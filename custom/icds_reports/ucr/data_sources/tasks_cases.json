@@ -404,7 +404,6 @@
     },
     "engine_id": "icds-ucr-non-dashboard",
     "sql_column_indexes": [
-      // primarily for MPR reports
       {
         "column_ids": [
           "awc_id",
