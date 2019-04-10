@@ -960,7 +960,6 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      // primarily used for MPR report
       {
         "column_ids": [
           "awc_id",
