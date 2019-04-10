@@ -782,12 +782,15 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'is_system_admin': self.is_system_admin,
             'criteria_form_active': False,
             'schedule_form_active': False,
+            'new_rule': not bool(self.rule),
+            'rule_name': self.rule.name if self.rule else '',
         }
 
         if self.request.method == 'POST':
             context.update({
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+                'rule_name': self.basic_info_form.rule_name,
             })
 
         return context

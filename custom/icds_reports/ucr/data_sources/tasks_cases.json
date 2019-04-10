@@ -421,6 +421,18 @@
           "supervisor_id",
           "date_turns_one_yr"
         ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "date_turns_one_yr"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "date_turns_one_yr"
+        ]
       }
     ],
     "disable_destructive_rebuild": true
