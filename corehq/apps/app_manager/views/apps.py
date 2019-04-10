@@ -464,7 +464,6 @@ def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_do
                                     "because your application contains a Report Module that references "
                                     "a static UCR configuration.")
         )
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, app_id]))
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
