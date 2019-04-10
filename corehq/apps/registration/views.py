@@ -56,12 +56,31 @@ from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
 
 
+_domainless_new_user_soft_assert = soft_assert(to=[
+    '{}@{}'.format('biyeun', 'dimagi.com'),
+    '{}@{}'.format('jschweers', 'dimagi.com')
+], send_to_ops=False)
+
+
 def get_domain_context():
     return get_per_domain_context(Domain())
 
 
 def registration_default(request):
     return redirect(UserRegistrationView.urlname)
+
+
+def track_domainless_new_user(request):
+    user = request.user
+    is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
+    if is_new_user:
+        _domainless_new_user_soft_assert(
+            False, ("A new user '{}' was redirected to "
+                    "RegisterDomainView on '{}', which shouldn't "
+                    "actually happen.").format(
+                user.username, settings.SERVER_ENVIRONMENT
+            )
+        )
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -195,6 +214,7 @@ class UserRegistrationView(BasePageView):
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:
+                track_domainless_new_user(request)
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
