@@ -109,7 +109,7 @@ def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_times
 class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
         from corehq.apps.tzmigration.planning import DiffDB
-        self._assert_no_migration_restrictions(domain)
+        self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
         self.domain = domain
@@ -437,12 +437,19 @@ class CouchSqlDomainMigrator(object):
                 filter_ledger_diffs(diffs)
             )
 
-    def _assert_no_migration_restrictions(self, domain_name):
-        assert should_use_sql_backend(domain_name)
-        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
-        assert not any(custom_report_domain == domain_name
-                       for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
-        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
+    def _check_for_migration_restrictions(self, domain_name):
+        if not should_use_sql_backend(domain_name):
+            msg = "does not have SQL backend not enabled"
+        elif COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
+            msg = "is blacklisted"
+        elif any(custom_report_domain == domain_name
+                 for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys()):
+            msg = "has custom reports"
+        elif REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name):
+            msg = "has reminders migration in progress"
+        else:
+            return
+        raise MigrationRestricted("{} {}".format(domain_name, msg))
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
@@ -1019,4 +1026,8 @@ class PartiallyLockingQueue(object):
 
 
 class UnexpectedObjectException(Exception):
+    pass
+
+
+class MigrationRestricted(Exception):
     pass
