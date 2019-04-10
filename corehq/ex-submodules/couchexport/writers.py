@@ -189,7 +189,7 @@ class ExportWriter(object):
         for table_index, table in header_table:
             self.add_table(
                 table_index,
-                table[0],
+                list(table)[0],
                 table_title=table_titles.get(table_index)
             )
 

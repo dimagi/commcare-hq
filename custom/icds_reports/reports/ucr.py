@@ -268,10 +268,14 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
            "outer": [ list of outer filters ],
         }
         """
-        inner_filters = [f for f in filters if f.column_name not in self.AGGREGATE_FILTERS]
-        outer_filters = [f for f in filters if f.column_name in self.AGGREGATE_FILTERS]
+        # specifying ancestor_location returns an ANDFilter and does not have a column name
+        # assume that it should go into inner filters
+        complex_filters = [f for f in filters if not hasattr(f, 'column_name')]
+        simple_filters = [f for f in filters if hasattr(f, 'column_name')]
+        inner_filters = [f for f in simple_filters if f.column_name not in self.AGGREGATE_FILTERS]
+        outer_filters = [f for f in simple_filters if f.column_name in self.AGGREGATE_FILTERS]
         return {
-            'inner': inner_filters,
+            'inner': inner_filters + complex_filters,
             'outer': outer_filters,
         }
 

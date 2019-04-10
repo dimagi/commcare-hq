@@ -1,12 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import uuid
+
 from django.db import connections
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.blobs import get_blob_db, CODES
+from corehq.blobs.models import BlobMeta
 from corehq.sql_db.connections import get_aaa_db_alias
-from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL
+from couchexport.export import export_from_tables
+from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL, BLOB_EXPIRATION_TIME
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
+from io import BytesIO
 
 
 def build_location_filters(location_id, ministry, with_child=True):
@@ -72,3 +78,34 @@ def get_location_model_for_ministry(ministry):
 
     # This should be removed eventually once ministry is reliably being passed back from front end
     return AggVillage
+
+
+def create_excel_file(domain, excel_data, data_type, file_format):
+    export_file = BytesIO()
+    export_from_tables(excel_data, export_file, file_format)
+    export_file.seek(0)
+    meta = store_file_in_blobdb(domain, export_file)
+    return meta.key
+
+
+def store_file_in_blobdb(domain, export_file, expired=BLOB_EXPIRATION_TIME):
+    db = get_blob_db()
+    key = uuid.uuid4().hex
+    try:
+        kw = {"meta": db.metadb.get(
+            parent_id='AaaFile',
+            key=key
+        )}
+    except BlobMeta.DoesNotExist:
+        kw = {
+            "domain": domain,
+            "parent_id": 'AaaFile',
+            "type_code": CODES.tempfile,
+            "key": key,
+            "timeout": expired
+        }
+    return db.put(export_file, **kw)
+
+
+def get_file_from_blobdb(key):
+    return get_blob_db().get(key=key)

@@ -3,14 +3,11 @@ from __future__ import unicode_literals
 import os
 import weakref
 from contextlib import contextmanager
-from io import UnsupportedOperation
+from io import RawIOBase, UnsupportedOperation
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import (
-    check_safe_key,
-    ClosingContextProxy,
-)
+from corehq.blobs.util import check_safe_key
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 from dimagi.utils.logging import notify_exception
 
@@ -143,23 +140,41 @@ class S3BlobDB(AbstractBlobDB):
         return self.db.Bucket(self.s3_bucket_name)
 
 
-class BlobStream(ClosingContextProxy):
+class BlobStream(RawIOBase):
 
     def __init__(self, stream, blob_db, blob_key):
-        super(BlobStream, self).__init__(stream)
+        self._obj = stream
         self._blob_db = weakref.ref(blob_db)
         self.blob_key = blob_key
 
+    def readable(self):
+        return True
+
+    def read(self, *args, **kw):
+        return self._obj.read(*args, **kw)
+
+    read1 = read
+
+    def write(self, *args, **kw):
+        raise IOError
+
+    def tell(self):
+        return self._obj._amount_read
+
     def seek(self, offset, from_what=os.SEEK_SET):
-        try:
-            return super(BlobStream, self).seek(offset, from_what)
-        except AttributeError:
-            pass
         if from_what != os.SEEK_SET:
             raise ValueError("seek mode not supported")
-        if offset != self._amount_read:
-            name = type(self._obj).__name__
-            raise ValueError("%s.seek not supported" % name)
+        pos = self.tell()
+        if offset != pos:
+            raise ValueError("seek not supported")
+        return pos
+
+    def close(self):
+        self._obj.close()
+        return super(BlobStream, self).close()
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
 
     @property
     def blob_db(self):

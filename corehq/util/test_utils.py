@@ -70,7 +70,7 @@ class trap_extra_setup(ContextDecorator):
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
 
 
-def softer_assert():
+def softer_assert(comment=None):
     """A shortcut function to get the patch for disabling hardened soft_assert for tests"""
     return mock.patch("corehq.util.soft_assert.core.is_hard_mode", new=lambda: False)
 

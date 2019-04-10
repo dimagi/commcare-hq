@@ -10,7 +10,8 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout) {
+    'app_manager/js/widgets_v4',       // version dropdown
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
 
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
@@ -68,7 +69,7 @@ hqDefine('app_manager/js/summary/models',[
     };
 
     var controlModel = function (options) {
-        assertProperties.assertRequired(options, ['onQuery', 'onSelectMenuItem']);
+        assertProperties.assertRequired(options, ['onQuery', 'onSelectMenuItem', 'visibleAppIds', 'versionUrlName']);
         var self = {};
 
         // Connection to menu
@@ -96,17 +97,32 @@ hqDefine('app_manager/js/summary/models',[
             self.showLabels(false);
         };
 
+        // App diff controls
+        self.firstAppId = ko.observable();  // this gets prepopulated by select2
+        self.secondAppId = ko.observable(); // this gets prepopulated by select2
+        self.showChangeVersions = ko.computed(function () {
+            return self.firstAppId() !== options.visibleAppIds[0] || self.secondAppId() !== options.visibleAppIds[1];
+        });
+        self.changeVersions = function () {
+            if (self.firstAppId && self.secondAppId()) {
+                window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
+            } else {
+                window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());
+            }
+        };
+
         return self;
     };
 
     var contentModel = function (options) {
-        assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'read_only']);
+        assertProperties.assertRequired(options, ['form_name_map', 'lang', 'langs', 'read_only', 'appId']);
         var self = {};
 
         // Utilities
         self.lang = options.lang;
         self.langs = options.langs;
         self.questionIcon = utils.questionIcon;
+        self.appId = options.appId;
         self.translate = function (translations) {
             return utils.translateName(translations, self.lang, self.langs);
         };
@@ -191,6 +207,14 @@ hqDefine('app_manager/js/summary/models',[
         $(contentDiv).koApplyBindings(contentInstance);
     };
 
+    var initVersionsBox = function ($dropdown, initialValue) {
+        widgets.initVersionDropdown($dropdown, {
+            initialValue: initialValue,
+            width: "100px",
+            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest")}],
+        });
+    };
+
     return {
         contentModel: contentModel,
         contentItemModel: contentItemModel,
@@ -200,5 +224,6 @@ hqDefine('app_manager/js/summary/models',[
         initMenu: initMenu,
         initSummary: initSummary,
         controlModel: controlModel,
+        initVersionsBox: initVersionsBox,
     };
 });

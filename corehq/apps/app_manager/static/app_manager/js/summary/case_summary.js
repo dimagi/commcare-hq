@@ -43,6 +43,8 @@ hqDefine('app_manager/js/summary/case_summary',[
     var caseSummaryControlModel = function (viewModels) {
         var self = {};
         _.extend(self, models.controlModel({
+            visibleAppIds: _.pluck(viewModels, 'appId'),
+            versionUrlName: 'app_case_summary',
             query_label: gettext("Filter properties"),
             onQuery: function (query) {
                 query = query.trim().toLowerCase();
@@ -116,11 +118,16 @@ hqDefine('app_manager/js/summary/case_summary',[
             lang: initialPageData.get("lang"),
             langs: initialPageData.get("langs"),
             read_only: initialPageData.get("read_only"),
+            appId: initialPageData.get("app_id"),
         });
 
         var caseSummaryController = caseSummaryControlModel([caseSummaryContent]);
 
         $("#case-summary-header").koApplyBindings(caseSummaryController);
+        models.initVersionsBox(
+            $("#version-selector"),
+            {id: initialPageData.get("app_id"), text: initialPageData.get("app_version")}
+        );
         models.initMenu([caseSummaryContent], caseSummaryMenu);
         models.initSummary(caseSummaryContent, caseSummaryController, "#case-summary");
     });
