@@ -988,7 +988,7 @@ class ExportInstance(BlobMixin, Document):
         Get the pre-computed export for this instance.
         Only daily saved exports could have a pre-computed export.
         """
-        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream, return_bytes=True)
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
     def copy_export(self):
         export_json = self.to_json()

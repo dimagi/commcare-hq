@@ -38,8 +38,7 @@ from six.moves import filter
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None,
-                 select2_version=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -48,33 +47,29 @@ class LocationSelectWidget(forms.Widget):
             self.query_url = query_url
         else:
             self.query_url = reverse('child_locations_for_select2', args=[self.domain])
-        self.select2_version = select2_version
-
-        versioned_templates = {
-            'v3': 'locations/manage/partials/autocomplete_select_widget_v3.html',
-            'v4': 'locations/manage/partials/autocomplete_select_widget_v4.html',
-        }
-        if select2_version not in versioned_templates:
-            raise ValueError("select2_version must be in {}".format(", ".join(list(versioned_templates.keys()))))
-        self.template = versioned_templates[select2_version]
+        self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
-        location_ids = value.split(',') if value else []
+        location_ids = value or []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
+        initial_data = [{
+            'id': loc.location_id,
+            'text': loc.get_path_display(),
+        } for loc in locations]
 
         return get_template(self.template).render({
             'id': self.id,
             'name': name,
-            'value': ','.join(loc.location_id for loc in locations),
+            'value': [loc.location_id for loc in locations],
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
     def value_from_datadict(self, data, files, name):
-        if self.multiselect and self.select2_version == 'v4':
+        if self.multiselect:
             return data.getlist(name)
         return super(LocationSelectWidget, self).value_from_datadict(data, files, name)
 
@@ -87,6 +82,7 @@ class ParentLocWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -98,6 +94,7 @@ class LocTypeWidget(forms.Widget):
         ).render({
             'name': name,
             'value': value,
+            'attrs': self.build_attrs(self.attrs, attrs),
         })
 
 
@@ -661,7 +658,7 @@ class RelatedLocationForm(forms.Form):
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(
-            domain, id='id_related_locations', multiselect=True, select2_version='v4'
+            domain, id='id_related_locations', multiselect=True
         )
 
         locations = (

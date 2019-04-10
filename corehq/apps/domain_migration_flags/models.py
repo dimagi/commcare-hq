@@ -28,6 +28,8 @@ class DomainMigrationProgress(models.Model):
     migration_status = models.CharField(choices=MigrationStatus.choices,
                                         max_length=MigrationStatus.max_length,
                                         default=MigrationStatus.NOT_STARTED)
+    started_on = models.DateTimeField(null=True, default=None)
+    completed_on = models.DateTimeField(null=True, default=None)
 
     class Meta(object):
         app_label = 'domain_migration_flags'

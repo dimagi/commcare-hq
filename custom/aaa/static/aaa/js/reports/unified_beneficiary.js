@@ -17,9 +17,9 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
     childModel,
     pregnantWomenModel
 ) {
-    var tableDom = '<i<t><"row"<"col-md-2"><"col-md-8 center"<"table_pagination"p>><"col-md-2"<"table_info"l>>>>';
+    var tableDom = '<i<t><"row"<"col-md-2" B><"col-md-8 center"<"table_pagination"p>><"col-md-2"<"table_info"l>>>>';
 
-    var unifiedBeneficiary = function (options) {
+    var unifiedBeneficiary = function () {
         var self = {};
         self.sections = ko.observableArray();
         self.title = 'Unified Beneficiary';
@@ -37,7 +37,7 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
 
         self.dt = null;
 
-        var views = {
+        self.views = {
             'eligible_couple': eligibleCoupleModel,
             'pregnant_women': pregnantWomenModel,
             'child': childModel,
@@ -50,9 +50,27 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
             var data = [];
             self.dt.clear();
             _.forEach(rows, function (row) {
-                data.push(reportListView.listView(row, self.postData))
+                data.push(reportListView.listView(row, self.postData));
             });
             return data;
+        };
+
+        self.task_id = null;
+        self.statusCheck = null;
+        self.exportButton = null;
+        self.exportUrl = null;
+
+        self.checkTaskStatus = function () {
+            var checkStatusUrl = initialPageData.reverse('aaa_check_task_status');
+            checkStatusUrl = checkStatusUrl.replace('task_id', self.task_id);
+            $.get(checkStatusUrl, function (response) {
+                if (response.task_ready) {
+                    clearInterval(self.statusCheck);
+                    var exportUrl = initialPageData.reverse('aaa_download_file');
+                    self.exportUrl = exportUrl.replace('file_id', response.task_result);
+                    $(self.exportButton).text('Download');
+                }
+            });
         };
 
         self.updateTable = function () {
@@ -61,13 +79,30 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                 $('#datatable').empty();
             }
             selectedType = self.postData.selectedBeneficiaryType();
-            reportListView = views[selectedType];
+            reportListView = self.views[selectedType];
 
             self.dt = $('#datatable').DataTable({
                 dom: tableDom,
                 columns: reportListView.config().columns,
                 serverSide: true,
-                ajax: function (data, callback, settings) {
+                buttons: [{
+                    text: 'Export List',
+                    action: function (e, dt, node) {
+                        if (self.task_id === null) {
+                            self.exportButton = node;
+                            $(self.exportButton).text('Please wait!');
+                            $.post(initialPageData.reverse('aaa_export_data'), self.postData, function (response) {
+                                self.task_id = response.task_id;
+                                self.statusCheck = setInterval(self.checkTaskStatus, 5 * 1000);
+                            });
+                        } else {
+                            $(self.exportButton).text('Export List');
+                            self.task_id = null;
+                            window.open(self.exportUrl);
+                        }
+                    },
+                }],
+                ajax: function (data, callback) {
                     /* TODO: check why the ajax function is calling when the table is removed.
 
                        For now, we compare selected BeneficiaryType with this in
@@ -91,11 +126,11 @@ hqDefine("aaa/js/reports/unified_beneficiary", [
                                 draw: response.draw,
                                 recordsTotal: response.recordsTotal,
                                 recordsFiltered: response.recordsFiltered,
-                                data: rows
-                            })
+                                data: rows,
+                            });
                         });
                     }
-                }
+                },
             });
         };
 

@@ -9,6 +9,7 @@ import json
 import logging
 from distutils.version import LooseVersion
 
+from django.utils.safestring import mark_safe
 from lxml import etree
 
 from django.template.loader import render_to_string
@@ -148,7 +149,6 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'blacklisted_owner_ids_expression': (
                 module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         },
-        'legacy_select2': True,
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
@@ -277,7 +277,6 @@ def _get_report_module_context(app, module):
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
         'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
-        'legacy_select2': True,
     }
     return context
 
@@ -1113,7 +1112,7 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     case_list.lookup_action = "com.simprints.id.IDENTIFY"
     case_list.lookup_name = _("Scan Fingerprint")
     case_list.lookup_extras = list([
-        dict(key=key, value=value)
+        dict(key=key, value="'{}'".format(value))
         for key, value in app.biometric_context.items()
     ])
     case_list.lookup_responses = [
@@ -1123,7 +1122,27 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
     case_list.lookup_field_header[lang] = _("Confidence")
     case_list.lookup_field_template = 'simprintsId'
 
-    identify = app.new_form(module.id, _("Followup with Person"), lang)
+    form_name = _("Followup with Person")
+
+    context = {
+        'xmlns_uuid': str(uuid.uuid4()).upper(),
+        'form_name': form_name,
+        'lang': lang,
+        'placeholder_label': mark_safe(_(
+            "This is your follow up form for {}. Delete this label and add "
+            "questions for any follow up visits."
+        ).format(
+            "<output value=\"instance('casedb')/casedb/case[@case_id = "
+            "instance('commcaresession')/session/data/case_id]/case_name\" "
+            "vellum:value=\"#case/case_name\" />"
+        ))
+    }
+    attachment = render_to_string(
+        "app_manager/simprints_followup_form.xml",
+        context=context
+    )
+
+    identify = app.new_form(module.id, form_name, lang, attachment=attachment)
     identify.requires = 'case'
     identify.actions.update_case = UpdateCaseAction(
         condition=FormActionCondition(type='always'))

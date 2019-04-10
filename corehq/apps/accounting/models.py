@@ -1129,8 +1129,12 @@ class Subscription(models.Model):
         """
         Overloaded to update domain pillow with subscription information
         """
+        from corehq.apps.accounting.mixins import get_overdue_invoice
+
         super(Subscription, self).save(*args, **kwargs)
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
+        get_overdue_invoice.clear(self.subscriber.domain)
+
         try:
             Domain.get_by_name(self.subscriber.domain).save()
         except Exception:
@@ -2001,6 +2005,12 @@ class Invoice(InvoiceBase):
 
     class Meta(object):
         app_label = 'accounting'
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.accounting.mixins import get_overdue_invoice
+
+        super(Invoice, self).save(*args, **kwargs)
+        get_overdue_invoice.clear(self.subscription.subscriber.domain)
 
     @property
     def email_recipients(self):
@@ -3159,6 +3169,19 @@ class CreditLine(models.Model):
                                 if self.is_product else ""),
                     'balance': self.balance,
                 })
+
+    def save(self, *args, **kwargs):
+        from corehq.apps.accounting.mixins import (
+            get_credits_available_for_product_in_account,
+            get_credits_available_for_product_in_subscription,
+        )
+
+        super(CreditLine, self).save(*args, **kwargs)
+        if self.account:
+            get_credits_available_for_product_in_account.clear(self.account)
+        if self.subscription:
+            get_credits_available_for_product_in_subscription.clear(self.subscription)
+
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None, customer_invoice=None,

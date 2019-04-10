@@ -343,12 +343,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             return SCALAR_NEVER_WAS
 
         result = super(ApplicationStatusReport, self).export_table
-        table = result[0][1]
+        table = list(result[0][1])
         for row in table[1:]:
             # Last submission
             row[1] = _fmt_timestamp(row[1])
             # Last sync
             row[2] = _fmt_timestamp(row[2])
+        result[0][1] = table
         return result
 
 

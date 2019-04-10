@@ -1,13 +1,9 @@
 hqDefine('aaa/js/filters/beneficiary_type_filter', [
     'jquery',
     'knockout',
-    'underscore',
-    'moment/moment',
 ], function (
     $,
-    ko,
-    _,
-    moment
+    ko
 ) {
     return {
         viewModel: function (params) {
@@ -21,15 +17,16 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
             ]);
 
             self.selectedType = ko.observable();
-
-            params.disableSubmit(true);
-
-            self.selectedType.subscribe(function (newValue) {
-                params.disableSubmit(newValue === null);
-            });
+            self.showErrorMessage = ko.observable(false);
 
             params.filters[self.slug].applyFilter = function () {
                 params.postData.selectedBeneficiaryType(self.selectedType() || null);
+            };
+
+            params.filters[self.slug].verify = function () {
+                var isSelected = self.selectedType() !== void(0);
+                self.showErrorMessage(!isSelected);
+                return isSelected;
             };
 
             if (params.filters.hasOwnProperty(self.slug)) {
@@ -38,7 +35,7 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 };
             }
 
-            return self
+            return self;
         },
         template: '<div data-bind="template: { name: \'beneficiary-type-template\' }"></div>',
     };

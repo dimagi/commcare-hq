@@ -2,12 +2,14 @@ from __future__ import absolute_import, division
 from __future__ import unicode_literals
 import json
 import os
+import string
 import time
 import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from functools import wraps
+from memoized import memoized
 
 import operator
 
@@ -29,8 +31,10 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.models.helper import IcdsFile
@@ -72,11 +76,11 @@ india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
-    resource_file = '../resources/block_mpr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_mpr.json')
 
 
 class ASRData(object):
-    resource_file = '../resources/block_asr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_asr.json')
 
 
 class ICDSData(object):
@@ -121,10 +125,11 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
+        with open(os.path.join(*self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
+    @memoized
     def selected_location(self):
         if self.config['location_id']:
             return SQLLocation.objects.get(
@@ -132,6 +137,7 @@ class ICDSMixin(object):
             )
 
     @property
+    @memoized
     def awc(self):
         if self.config['location_id']:
             return self.selected_location.get_descendants(include_self=True).filter(
@@ -148,7 +154,25 @@ class ICDSMixin(object):
                 ]
             )
 
+    @memoized
     def custom_data(self, selected_location, domain):
+        timer = TimingContext()
+        with timer:
+            to_ret = self._custom_data(selected_location, domain)
+        if selected_location:
+            loc_type = selected_location.location_type.name
+        else:
+            loc_type = None
+        datadog_histogram(
+            "commcare.icds.block_reports.custom_data_time",
+            timer.duration,
+            tags="location_type:{}, report_slug:{}".format(
+                loc_type, self.slug
+            )
+        )
+        return to_ret
+
+    def _custom_data(self, selected_location, domain):
         data = {}
 
         for config in self.sources['data_source']:
@@ -176,13 +200,27 @@ class ICDSMixin(object):
                             }
                         })
 
-            report_data = ICDSData(domain, filters, config['id']).data()
+            timer = TimingContext()
+            with timer:
+                report_data = ICDSData(domain, filters, config['id']).data()
+            if selected_location:
+                loc_type = selected_location.location_type.name
+            else:
+                loc_type = None
+            datadog_histogram(
+                "commcare.icds.block_reports.ucr_querytime",
+                timer.duration,
+                tags="config:{}, location_type:{}, report_slug:{}".format(
+                    config['id'], loc_type, self.slug
+                )
+            )
+
             for column in config['columns']:
                 column_agg_func = column['agg_fun']
                 column_name = column['column_name']
                 column_data = 0
                 if column_agg_func == 'sum':
-                    column_data = sum([x.get(column_name, 0) for x in report_data])
+                    column_data = sum([x.get(column_name, 0) or 0 for x in report_data])
                 elif column_agg_func == 'count':
                     column_data = len(report_data)
                 elif column_agg_func == 'count_if':
@@ -994,6 +1032,141 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     return file_hash
 
 
+def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
+    export_info = excel_data[1][1]
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
+    excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "LS Performance Report"
+    worksheet.sheet_view.showGridLines = False
+    # sheet title
+    amount_of_columns = 9 - aggregation_level
+    last_column = string.ascii_uppercase[amount_of_columns]
+    worksheet.merge_cells('B2:{0}2'.format(last_column))
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "Lady Supervisor Performance Report for the {}".format(month)
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+
+    # sheet header
+    header_cells = ['{0}3'.format(column) for column in columns]
+    for cell in header_cells:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+    if state:
+        worksheet['B3'].value = "State: {}".format(state)
+        worksheet.merge_cells('B3:C3')
+    if district:
+        worksheet['D3'].value = "District: {}".format(district)
+    if block:
+        worksheet['E3'].value = "Block: {}".format(block)
+    date_cell = '{0}3'.format(last_column)
+    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    worksheet[date_description_cell].value = "Date when downloaded:"
+    worksheet[date_description_cell].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet[date_cell].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_cell].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 5
+    header_data = excel_data[0]
+    headers = ["S.No"]
+    headers.extend(header_data)
+
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7]
+    standard_widths.extend([15] * (4 - aggregation_level))
+    standard_widths.extend([25, 15, 25, 15])
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
+    widths['D'] = 9 + (len(district) * 4 // 3 if district else 0)
+    widths['E'] = 8 + (len(block) * 4 // 3 if district else 0)
+
+    columns = columns[1:]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else six.text_type(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=60 * 60 * 24)
+    icds_file.save()
+    return file_hash
+
+
 def get_datatables_ordering_info(request):
     # retrive table ordering provided by datatables plugin upon clicking on column header
     start = int(request.GET.get('start', 0))
@@ -1002,3 +1175,7 @@ def get_datatables_ordering_info(request):
     order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column)
     order_dir = request.GET.get('order[0][dir]', 'asc')
     return start, length, order_by_number_column, order_by_name_column, order_dir
+
+
+def phone_number_function(x):
+    return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x

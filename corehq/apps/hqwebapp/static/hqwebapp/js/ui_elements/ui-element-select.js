@@ -12,7 +12,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
         this.ui = $('<span/>');
         this.value = "";
         this.edit = true;
-        this.options = options;
+        this.options = [];
 
         this.on('change', function () {
             this.val(this.ui.find('select').val());
@@ -21,10 +21,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
         this.$edit_view = $('<select class="form-control"/>').change(function () {
             that.fire('change');
         });
-        for (i = 0; i < this.options.length; i += 1) {
-            option = this.options[i];
-            $('<option/>').text(option.label).val(option.value).appendTo(this.$edit_view);
-        }
+
+        this.setOptions(options || []);
 
         this.$noedit_view = $('<span class="ui-element-select"/>');
 
@@ -33,18 +31,12 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
 
     Select.prototype = {
         val: function (value) {
-            var i, option, label;
-            if (value === undefined) {
+            if (!_.isString(value)) {
                 return this.value;
             } else {
                 this.value = value;
-                for (i = 0; i < this.options.length; i += 1) {
-                    option = this.options[i];
-                    if (option.value === value) {
-                        label = option.label;
-                        break;
-                    }
-                }
+                var option = _.find(this.options, function (o) { return value === o.value; }) || {},
+                    label = option.label;
                 this.$edit_view.val(String(this.value || ''));
                 this.$noedit_view.text(label);
                 return this;
@@ -60,6 +52,23 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-select', function () {
                 this.$noedit_view.appendTo(this.ui);
             }
             return this;
+        },
+        setIcon: function (icon) {
+            this.icon = icon;
+            if (icon) {
+                $('<i> </i>').addClass(icon).prependTo(this.$noedit_view);
+            }
+            return this;
+        },
+        setOptions: function (options) {
+            this.options = options;
+            this.$edit_view.html('');
+            for (var i = 0; i < this.options.length; i += 1) {
+                var option = this.options[i],
+                    label = option.label === undefined ? option : option.label,
+                    value = option.value === undefined ? option : option.value;
+                $('<option/>').text(label).val(value).appendTo(this.$edit_view);
+            }
         },
     };
 

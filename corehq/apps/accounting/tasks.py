@@ -67,7 +67,6 @@ from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser, CommCareUser
 from corehq.const import (
     SERVER_DATE_FORMAT,
@@ -83,6 +82,8 @@ _invoicing_complete_soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
 )
+
+UNPAID_INVOICE_THRESHOLD = 100
 
 
 @transaction.atomic
@@ -700,43 +701,54 @@ def run_downgrade_process():
 
     for domain, oldest_unpaid_invoice, total in _get_domains_with_subscription_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
-        if _is_subscription_eligible_for_downgrade_process(current_subscription):
+        if is_subscription_eligible_for_downgrade_process(current_subscription):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today, current_subscription)
 
-    for oldest_unpaid_invoice, total in _get_accounts_with_customer_invoices_over_threshold(today):
+    for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_over_threshold(today):
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
-        if _is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
+        if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
 
 
 def _get_domains_with_subscription_invoices_over_threshold(today):
-    unpaid_saas_invoices = Invoice.objects.filter(
-        is_hidden=False,
-        subscription__service_type=SubscriptionType.PRODUCT,
-        date_paid__isnull=True
-    )
+    for domain in set(_get_unpaid_saas_invoices_in_downgrade_daterange(today).values_list(
+        'subscription__subscriber__domain', flat=True
+    )):
+        overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
+        if overdue_invoice:
+            yield domain, overdue_invoice, total_overdue_to_date
 
-    overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
+
+def get_unpaid_invoices_over_threshold_by_domain(today, domain):
+    for overdue_invoice in _get_unpaid_saas_invoices_in_downgrade_daterange(today).filter(
+        subscription__subscriber__domain=domain
+    ):
+        total_overdue_by_domain_and_invoice_date = _get_all_unpaid_saas_invoices().filter(
+            Q(date_due__lte=overdue_invoice.date_due)
+            | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+            subscription__subscriber__domain=domain,
+        ).aggregate(Sum('balance'))['balance__sum']
+        if total_overdue_by_domain_and_invoice_date >= UNPAID_INVOICE_THRESHOLD:
+            return overdue_invoice, total_overdue_by_domain_and_invoice_date
+    return None, None
+
+
+def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
+    return _get_all_unpaid_saas_invoices().filter(
         date_due__lte=today - datetime.timedelta(days=1),
         date_due__gte=today - datetime.timedelta(days=61)
     ).order_by('date_due').select_related('subscription__subscriber')
 
-    domains = set()
 
-    for overdue_invoice in overdue_saas_invoices_in_downgrade_daterange:
-        domain = overdue_invoice.get_domain()
-        if domain not in domains:
-            total_overdue_to_date = unpaid_saas_invoices.filter(
-                Q(date_due__lte=overdue_invoice.date_due)
-                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
-                subscription__subscriber__domain=domain
-            ).aggregate(Sum('balance'))['balance__sum']
-            if total_overdue_to_date >= 100:
-                domains.add(domain)
-                yield domain, overdue_invoice, total_overdue_to_date
+def _get_all_unpaid_saas_invoices():
+    return Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
 
 
-def _get_accounts_with_customer_invoices_over_threshold(today):
+def get_accounts_with_customer_invoices_over_threshold(today):
     unpaid_customer_invoices = CustomerInvoice.objects.filter(
         is_hidden=False,
         date_paid__isnull=True
@@ -760,12 +772,12 @@ def _get_accounts_with_customer_invoices_over_threshold(today):
             invoices = [invoice for invoice in invoices if invoice.subscriptions.first().plan_version == plan]
             total_overdue_to_date = sum(invoice.balance for invoice in invoices)
 
-            if total_overdue_to_date > 100:
+            if total_overdue_to_date >= UNPAID_INVOICE_THRESHOLD:
                 accounts.add((account, plan))
                 yield overdue_invoice, total_overdue_to_date
 
 
-def _is_subscription_eligible_for_downgrade_process(subscription):
+def is_subscription_eligible_for_downgrade_process(subscription):
     return (
         subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
         and not subscription.skip_auto_downgrade
@@ -808,8 +820,6 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         _send_downgrade_warning(oldest_unpaid_invoice, context)
     elif days_ago == 30:
         _send_overdue_notice(oldest_unpaid_invoice, context)
-    elif days_ago == 1:
-        _create_overdue_notification(oldest_unpaid_invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
@@ -881,19 +891,6 @@ def _send_overdue_notice(invoice, context):
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=bcc,
         email_from=get_dimagi_from_email())
-
-
-def _create_overdue_notification(invoice, context):
-    if invoice.is_customer_invoice:
-        domains = [subscription.subscriber.domain for subscription in invoice.subscriptions.all()]
-    else:
-        domains = [invoice.get_domain()]
-    message = _('Reminder - your {} statement is past due!'.format(
-        invoice.date_start.strftime('%B')
-    ))
-    note = Notification.objects.create(content=message, url=context['statements_url'],
-                                       domain_specific=True, type='billing', domains=domains)
-    note.activate()
 
 
 @task(serializer='pickle', queue='background_queue', ignore_result=True, acks_late=True,

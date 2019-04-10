@@ -268,10 +268,14 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
            "outer": [ list of outer filters ],
         }
         """
-        inner_filters = [f for f in filters if f.column_name not in self.AGGREGATE_FILTERS]
-        outer_filters = [f for f in filters if f.column_name in self.AGGREGATE_FILTERS]
+        # specifying ancestor_location returns an ANDFilter and does not have a column name
+        # assume that it should go into inner filters
+        complex_filters = [f for f in filters if not hasattr(f, 'column_name')]
+        simple_filters = [f for f in filters if hasattr(f, 'column_name')]
+        inner_filters = [f for f in simple_filters if f.column_name not in self.AGGREGATE_FILTERS]
+        outer_filters = [f for f in simple_filters if f.column_name in self.AGGREGATE_FILTERS]
         return {
-            'inner': inner_filters,
+            'inner': inner_filters + complex_filters,
             'outer': outer_filters,
         }
 
@@ -324,7 +328,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             return tuple(getattr(row, key_component) for key_component in self.report_data_source.group_by)
 
         def _row_proxy_to_dict(row):
-            return dict(six.iteritems(row))
+            return dict(row.items())  # noqa: RowProxy doesn't support iteritems
 
         return OrderedDict([
             (_extract_aggregate_key(row), _row_proxy_to_dict(row)) for row in results

@@ -387,7 +387,10 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report(domain).report_columns if c.type != 'expanded']
+        fields=[
+            _column_to_field(c) for c in config.report(domain).report_columns
+            if c.type != 'expanded' and c.visible
+        ]
     )
 
 

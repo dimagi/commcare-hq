@@ -5,7 +5,7 @@ from corehq.toggles import EWS_INVALID_REPORT_RESPONSE, NAMESPACE_DOMAIN
 from custom.ewsghana.handlers import INVALID_MESSAGE, MS_STOCKOUT
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest, restore_location_products, \
     assign_products_to_location, TEST_DOMAIN
-from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
+from custom.ewsghana.reminders import SOH_HELP_MESSAGE
 import six
 
 

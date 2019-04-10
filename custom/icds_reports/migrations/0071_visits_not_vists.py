@@ -14,13 +14,4 @@ class Migration(migrations.Migration):
     dependencies = [
         ('icds_reports', '0070_aww_name_in_agg_ccs_view'),
     ]
-    sql_views = [
-        'awc_location_months.sql',
-        'agg_awc_monthly.sql',
-        'agg_ccs_record_monthly.sql',
-        'agg_child_health_monthly.sql',
-    ]
-    migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []
-    for view in sql_views:
-        operations.append(migrator.get_migration(view))

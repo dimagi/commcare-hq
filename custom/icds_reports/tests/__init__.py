@@ -22,6 +22,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
+    build_incentive_report,
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms)
@@ -177,6 +178,7 @@ def setUpModule():
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+            build_incentive_report(agg_date=datetime(2017, 5, 28))
         except AssertionError as e:
             # we always use soft assert to email when the aggregation has completed
             if "Aggregation completed" not in str(e):

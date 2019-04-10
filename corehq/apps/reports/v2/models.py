@@ -7,6 +7,7 @@ from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
+ColumnContext = namedtuple('ColumnContext', 'title slug width')
 
 
 class BaseReport(object):
@@ -15,8 +16,9 @@ class BaseReport(object):
     """
     slug = None
     data_endpoints = ()
-    filter_endpoints = ()
+    options_endpoints = ()
     formatters = ()
+    columns = []
 
     def __init__(self, request, domain):
         """
@@ -41,9 +43,8 @@ class BaseReport(object):
     def get_data_endpoint(self, endpoint_slug):
         return self._get_endpoint(endpoint_slug, self.data_endpoints)
 
-    def get_filters(self):
-        for endpoint in self.filter_endpoints:
-            yield endpoint(self.request, self.domain)
+    def get_options_endpoint(self, endpoint_slug):
+        return self._get_endpoint(endpoint_slug, self.options_endpoints)
 
     @property
     def context(self):
@@ -52,11 +53,12 @@ class BaseReport(object):
             [EndpointContext(e.slug, 'endpoint_data') for e in self.data_endpoints]
         )
         endpoints.extend(
-            [EndpointContext(e.slug, 'endpoint_filter') for e in self.filter_endpoints]
+            [EndpointContext(e.slug, 'endpoint_options') for e in self.options_endpoints]
         )
         return {
             'slug': self.slug,
             'endpoints': [e._asdict() for e in endpoints],
+            'columns': [c._asdict() for c in self.columns],
         }
 
 
@@ -100,10 +102,10 @@ class BaseEndpoint(object):
         return self.request.POST
 
 
-class BaseFilterEndpoint(BaseEndpoint):
+class BaseOptionsEndpoint(BaseEndpoint):
 
-    def get_filtered_query(self, query):
-        raise NotImplementedError("please implement get_filtered_query")
+    def get_response(self):
+        raise NotImplementedError("please implement get_response")
 
 
 class BaseDataEndpoint(BaseEndpoint):
