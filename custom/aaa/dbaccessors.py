@@ -544,10 +544,10 @@ class EligibleCoupleQueryHelper(object):
             female_children_died = 0
 
         data = {
-            'maleChildrenBorn': max(0, children_by_sex['male']) + max(0, male_children_died),
-            'femaleChildrenBorn': max(0, children_by_sex['female']) + max(0, female_children_died),
-            'maleChildrenAlive': max(0, children_by_sex['male']),
-            'femaleChildrenAlive': max(0, children_by_sex['female']),
+            'maleChildrenBorn': (children_by_sex['male'] or 0) + (male_children_died or 0),
+            'femaleChildrenBorn': (children_by_sex['female'] or 0) + (female_children_died or 0),
+            'maleChildrenAlive': (children_by_sex['male'] or 0),
+            'femaleChildrenAlive': (children_by_sex['female'] or 0),
             'familyPlaningMethod': 'N/A',
             'familyPlanningMethodDate': 'N/A',
             'ashaVisit': 'N/A',
