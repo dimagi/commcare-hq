@@ -5,6 +5,7 @@ import dateutil
 import re
 from django import forms
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy
 from unidecode import unidecode
 
@@ -260,6 +261,13 @@ class BaseFilterExportDownloadForm(forms.Form):
         return [n[1] for n in matches]
 
 
+location_query_help_text = ugettext_lazy(mark_safe(
+    'To quick search for a '
+    '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
+    'target="_blank">location</a>, write your query as "parent"/descendant.'
+))
+
+
 class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -268,11 +276,13 @@ class DashboardFeedFilterForm(forms.Form):
         label=ugettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2AjaxV3(multiple=True),
+        help_text=location_query_help_text,
     )
     emwf_form_filter = forms.Field(
         label=ugettext_lazy("User(s)"),
         required=False,
         widget=Select2AjaxV3(multiple=True),
+        help_text=location_query_help_text,
     )
     date_range = forms.ChoiceField(
         label=ugettext_lazy("Date Range"),
