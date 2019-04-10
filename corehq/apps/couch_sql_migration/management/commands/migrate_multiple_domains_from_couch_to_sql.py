@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import logging
 import os
-import traceback
 from io import open
 
 from django.core.management.base import BaseCommand, CommandError
@@ -13,7 +12,6 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
-from corehq.util.log import with_progress_bar
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
@@ -42,7 +40,6 @@ class Command(BaseCommand):
         """)
 
     def handle(self, path, **options):
-        with_traceback = options['traceback']
         self.strict = options['strict']
         setup_logging(options['log_dir'])
 
@@ -53,18 +50,16 @@ class Command(BaseCommand):
             domains = [name.strip() for name in f.readlines() if name.strip()]
 
         failed = []
-        log.info("Processing {} domains".format(len(domains)))
-        for domain in with_progress_bar(domains, oneline=False):
+        log.info("Processing {} domains\n".format(len(domains)))
+        for domain in domains:
             try:
                 success, reason = self.migrate_domain(domain)
                 if not success:
                     failed.append((domain, reason))
-            except Exception as e:
-                if with_traceback:
-                    traceback.print_exc()
-                log.error("Error migrating domain {}: {}".format(domain, e))
+            except Exception as err:
+                log.exception("Error migrating domain %s", domain)
                 self.abort(domain)
-                failed.append((domain, e))
+                failed.append((domain, err))
 
         if failed:
             log.error("Errors:\n" + "\n".join(
@@ -74,11 +69,11 @@ class Command(BaseCommand):
 
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):
-            log.error("{} already on the SQL backend".format(domain))
+            log.error("{} already on the SQL backend\n".format(domain))
             return True, None
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is already in progress".format(domain))
+            log.error("{} migration is already in progress\n".format(domain))
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)
@@ -87,23 +82,23 @@ class Command(BaseCommand):
 
         stats = self.get_diff_stats(domain)
         if stats:
-            lines = ["Migration has diffs, aborting for domain {}".format(domain)]
+            lines = ["Migration has diffs: {}".format(domain)]
 
             class stream:
                 write = lines.append
 
-            self.abort(domain)
-            writer = SimpleTableWriter(stream, TableRowFormatter([50, 10, 10, 10, 10]))
+            writer = SimpleTableWriter(stream, TableRowFormatter([30, 10, 10, 10, 10]))
             writer.write_table(
                 ['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'],
                 [(doc_type,) + stat for doc_type, stat in stats.items()],
             )
             log.error("\n".join(lines))
+            self.abort(domain)
             return False, "has diffs"
 
         assert couch_sql_migration_in_progress(domain)
         set_couch_sql_migration_complete(domain)
-        log.info("Domain migrated: {}".format(domain))
+        log.info("Domain migrated: {}\n".format(domain))
         return True, None
 
     def get_diff_stats(self, domain):

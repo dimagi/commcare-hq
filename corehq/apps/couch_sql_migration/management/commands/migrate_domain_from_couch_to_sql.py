@@ -266,4 +266,4 @@ def blow_away_migration(domain):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-    log.info("blew away migration for domain {}".format(domain))
+    log.info("blew away migration for domain {}\n".format(domain))
