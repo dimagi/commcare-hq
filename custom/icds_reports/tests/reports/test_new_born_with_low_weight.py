@@ -263,6 +263,7 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertEquals(len(data['chart_data']), 1)
 
     def test_chart_data(self):
+        self.maxDiff=None
         data = get_newborn_with_low_birth_weight_chart(
             'icds-cas',
             config={
@@ -297,7 +298,7 @@ class TestNewBornWithLowWeight(TestCase):
                         "low_birth": 0,
                         "all": 6},
                     {
-                        "y": 0.5,
+                        "y": 0.3333333333333333,
                         "x": 1493596800000,
                         "in_month": 3,
                         "low_birth": 1,
