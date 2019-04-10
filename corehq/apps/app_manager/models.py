@@ -5988,7 +5988,8 @@ class AppReleaseByLocation(models.Model):
 
     def clean(self):
         if self.active:
-            enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id, self.app_id)
+            enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
+                                                                 self.app_id)
             if enabled_release and enabled_release.version > self.version:
                 raise ValidationError({'version': _("Higher version {} already enabled for this application and "
                                                     "location").format(enabled_release.version)})
