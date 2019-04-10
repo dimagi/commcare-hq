@@ -20,7 +20,7 @@ from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCus
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 
 
-@attr(slow=700)  # almost certainly migrations
+@attr(slow=4)
 class TestBillingAutoPay(BaseInvoiceTestCase):
 
     @classmethod

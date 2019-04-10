@@ -4,6 +4,8 @@ import datetime
 
 from django.test.testcases import TestCase
 
+from nose.plugins.attrib import attr
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -19,6 +21,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
 
+@attr(slow=4)
 class TestSubscriptionProperties(TestCase):
 
     @classmethod
