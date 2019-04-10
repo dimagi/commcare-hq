@@ -41,7 +41,6 @@ class LocationTypeSpec(JsonObject):
         if not doc_id:
             return None
 
-        assert context.root_doc['domain']
         return _get_location_type_name(doc_id, context)
 
 
