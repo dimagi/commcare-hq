@@ -2027,23 +2027,45 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.domain.name, "123", 100, 50, 120, query_dict)
         self.assertEqual(next, "")
 
-    def test_auth(self):
-        user_in_wrong_domain_name = 'Mallory'
-        user_in_wrong_domain_password = '1337haxor'
-        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        self.addCleanup(wrong_domain.delete)
-        user_in_wrong_domain = WebUser.create(
-            wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
-        )
-        self.addCleanup(user_in_wrong_domain.delete)
-        user_in_wrong_domain.save()
-        credentials = base64.b64encode(
-            "{}:{}".format(
-                user_in_wrong_domain_name, user_in_wrong_domain_password
-            ).encode('utf-8')
-        ).decode('utf-8')
+    def test_auth_capital_username(self):
+        capital_username_credentials = self._get_basic_credentials(self.username.upper(), self.password)
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION='Basic ' + credentials
+            HTTP_AUTHORIZATION='Basic ' + capital_username_credentials
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_wrong_password(self):
+        wrong_password_credentials = self._get_basic_credentials(self.username, 'wrong_password')
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + wrong_password_credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+
+    def test_auth_wrong_domain(self):
+        user_in_wrong_domain_name = 'mallory'
+        user_in_wrong_domain_password = '1337haxor'
+        wrong_domain_name = 'dvorak'
+
+        wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
+        self.addCleanup(wrong_domain.delete)
+        user_in_wrong_domain = WebUser.create(
+            wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
+        self.addCleanup(user_in_wrong_domain.delete)
+
+        user_in_wrong_domain_credentials = self._get_basic_credentials(user_in_wrong_domain_name, user_in_wrong_domain_password)
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + user_in_wrong_domain_credentials
+        )
+        self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
+
+    @staticmethod
+    def _get_basic_credentials(username, password):
+        return base64.b64encode(
+            "{}:{}".format(
+                username, password
+            ).encode('utf-8')
+        ).decode('utf-8')
