@@ -40,13 +40,13 @@ def _load_custom_commcare_settings():
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
     with open(os.path.join(path, 'commcare-profile-settings.yaml'), encoding='utf-8') as f:
-        for setting in yaml.load(f):
+        for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
 
     with open(os.path.join(path, 'commcare-app-settings.yaml'), encoding='utf-8') as f:
-        for setting in yaml.load(f):
+        for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
             settings.append(setting)
@@ -67,7 +67,7 @@ def _load_commcare_settings_layout(doc_type):
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
-        layout = yaml.load(f)
+        layout = yaml.safe_load(f)
 
     for section in layout:
         # i18n; not statically analyzable

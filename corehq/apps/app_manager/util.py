@@ -449,7 +449,7 @@ def _app_callout_templates():
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
     else:
         logger.info("not found: %s", path)
         data = []
