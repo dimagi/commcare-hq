@@ -27,12 +27,11 @@
       {
         "name": "not_owned_by_same_district",
         "error_message": "All cases must be owned by descendants from the same state and district",
-        "validation": {
+        "expression": {
           "operator": "eq",
           "expression": {
             "location_id": {
               "type": "icds_village_owner_id",
-              "index_identifier": "owner_village",
               "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
@@ -46,7 +45,6 @@
           "property_value": {
             "location_id": {
               "type": "icds_awc_owner_id",
-              "index_identifier": "owner_awc",
               "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
