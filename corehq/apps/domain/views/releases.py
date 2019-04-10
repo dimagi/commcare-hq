@@ -48,15 +48,17 @@ class ManageReleases(BaseProjectSettingsView):
             q = q.filter(location_id=self.request.GET.get('location_id'))
         if self.request.GET.get('app_id'):
             q = q.filter(app_id=self.request.GET.get('app_id'))
-        if self.request.GET.get('version'):
-            q = q.filter(version=self.request.GET.get('version'))
+        version = self.request.GET.get('version')
+        if version:
+            q = q.filter(version=version)
 
         app_releases_by_location = [release.to_json() for release in q]
         for r in app_releases_by_location:
             r['app'] = app_names.get(r['app'], r['app'])
         return {
             'manage_releases_form': self.manage_releases_form,
-            'app_releases_by_location': app_releases_by_location
+            'app_releases_by_location': app_releases_by_location,
+            'selected_build_details': ({'id': version, 'text': version} if version else None),
         }
 
     def post(self, request, *args, **kwargs):
