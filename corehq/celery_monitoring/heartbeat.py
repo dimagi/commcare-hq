@@ -92,7 +92,7 @@ class Heartbeat(object):
                 pass
             self.mark_seen()
 
-        heartbeat.__name__ = self.periodic_task_name
+        heartbeat.__name__ = str(self.periodic_task_name)
 
         heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue)(heartbeat)
         return heartbeat
