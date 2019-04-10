@@ -33,8 +33,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
         self.build_profiles = function () {
             var profiles = [{'label': gettext('(Default)'), 'value': ''}];
-            _.each(appData.build_profiles, function (value, key) {
-                profiles.push({'label': value['name'], 'value': key});
+            _.each(_.sortBy(appData.build_profiles, 'name'), function (value, key) {
+                profiles.push({label: value.name, value: key});
             });
             return profiles;
         };
