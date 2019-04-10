@@ -462,7 +462,7 @@ def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_do
     except ReportConfigurationNotFoundError:
         messages.warning(request, _("Copying the application succeeded, but the application will have errors "
                                     "because your application contains a Mobile Report Module that references "
-                                    "a UCR configured in this project space."))
+                                    "a UCR configured in this project space. Multimedia may be absent."))
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
