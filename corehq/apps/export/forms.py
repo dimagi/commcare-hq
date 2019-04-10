@@ -262,7 +262,7 @@ class BaseFilterExportDownloadForm(forms.Form):
 
 
 location_query_help_text = ugettext_lazy(mark_safe(
-    'To quick search for a '
+    '<i class="fa fa-info-circle"></i> To quick search for a '
     '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
     'target="_blank">location</a>, write your query as "parent"/descendant.'
 ))
