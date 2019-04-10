@@ -7,6 +7,7 @@ from corehq.apps.app_manager.views.app_summary import (
     DownloadCaseSummaryView,
     DownloadFormSummaryView,
     DownloadAppSummaryView,
+    FormSummaryDiffView,
 )
 from corehq.apps.app_manager.views.apps import (
     app_from_template,

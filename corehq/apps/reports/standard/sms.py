@@ -250,6 +250,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
     def export_table(self):
         result = super(BaseCommConnectLogReport, self).export_table
         table = result[0][1]
+        table = list(table)
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
         for row in table[1:]:
@@ -257,6 +258,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
             row[self.contact_index_in_result] = contact_info[0]
             row.insert(0, contact_info[2])
             row.insert(0, contact_info[1])
+        result[0][1] = table
         return result
 
 
@@ -388,11 +390,20 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = SMS.objects.filter(
             domain=self.domain,
             date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
-        ).exclude(
-            # Exclude outgoing messages that have not yet been processed
-            direction=OUTGOING,
-            processed=False
         )
+        if toggles.INCLUDE_SMS_ERRORS.enabled(self.request.user.username):
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+                error=False,  # Don't exclude errored messages
+            )
+        else:
+            # Exclude outgoing messages that have not yet been processed
+            # Note that this also excludes errored messages
+            queryset = queryset.exclude(
+                direction=OUTGOING,
+                processed=False,
+            )
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
@@ -468,8 +479,9 @@ class MessageLogReport(BaseCommConnectLogReport):
     def export_table(self):
         result = super(MessageLogReport, self).export_table
         if self.include_metadata:
-            table = result[0][1]
+            table = list(result[0][1])
             table[0].append(_("Message Log ID"))
+            result[0][1] = table
         return result
 
 

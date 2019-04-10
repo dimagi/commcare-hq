@@ -17,7 +17,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import locations_access_required, location_safe
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
@@ -140,7 +140,7 @@ class InputStockView(BaseDomainView):
 class EWSUserExtensionView(BaseCommTrackManageView):
     template_name = 'ewsghana/user_extension.html'
 
-    @use_select2
+    @use_select2_v4
     def dispatch(self, request, *args, **kwargs):
         return super(EWSUserExtensionView, self).dispatch(request, *args, **kwargs)
 

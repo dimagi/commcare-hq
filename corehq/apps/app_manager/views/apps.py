@@ -156,9 +156,7 @@ def get_app_view_context(request, app):
     This is where additional app or domain specific context can be added to any individual
     commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
     """
-    context = {
-        'legacy_select2': True,
-    }
+    context = {}
 
     settings_layout = copy.deepcopy(
         get_commcare_settings_layout(app.get_doc_type())
@@ -817,12 +815,19 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None),
         ('location_fixture_restore', None),
     )
+    linked_app_attrs = [
+        'target_commcare_flavor',
+    ]
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
+            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
+                app.linked_app_attrs.update({
+                    attribute: value,
+                })
 
     if should_edit("name"):
         clear_app_cache(request, domain)

@@ -1411,6 +1411,40 @@ used as a guide). There are also additional examples in the `practical examples`
        ]
    }
 
+Data Cleaning and Validation
+----------------------------
+
+Note this is only available for "static" data sources that are created in the HQ repository.
+
+When creating a data source it can be valuable to have strict validation on the type of data that can be inserted.
+The attribute ``validations`` at the top level of the configuration can use UCR expressions to determine if the data is invalid.
+If an expression is deemed invalid, then the relevant error is stored in the ``InvalidUCRData`` model.
+
+.. code:: json
+
+   {
+       "domain": "user-reports",
+       "doc_type": "DataSourceConfiguration",
+       "referenced_doc_type": "XFormInstance",
+       "table_id": "sample-repeat",
+       "base_item_expression": {},
+       "validations": [{
+            "name": "is_starred_valid",
+            "error_message": "is_starred has unexpected value",
+            "expression": {
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "is_starred"
+                },
+                "operator": "in",
+                "property_value": ["yes", "no"]
+            }
+       }],
+       "configured_filter": {...},
+       "configured_indicators": [...]
+   }
+
 Report Configurations
 =====================
 
@@ -1617,6 +1651,8 @@ options:
 -  "show_full_path" - Display the full path to the location in the
    filter. Defaults to ``false``. The default behavior shows all
    locations as a flat alphabetical list.
+-  "location_type" - Includes locations of this type only. Default is to not
+   filter on location type.
 
 Example assuming "village" is a location ID, which is converted to names
 using the location ``choice_provider``:
@@ -1632,7 +1668,8 @@ using the location ``choice_provider``:
      "choice_provider": {
          "type": "location",
          "include_descendants": true,
-         "show_full_path": true
+         "show_full_path": true,
+         "location_type": "district"
      }
    }
 

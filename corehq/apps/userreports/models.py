@@ -1,25 +1,73 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from copy import copy, deepcopy
-from datetime import datetime
 import glob
 import json
 import os
 import re
-import six
+from collections import namedtuple
+from copy import copy, deepcopy
+from datetime import datetime
+from io import open
 from uuid import UUID
 
-from django_bulk_update.helper import bulk_update as bulk_update_helper
+import six
+import yaml
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
-import yaml
+from django_bulk_update.helper import bulk_update as bulk_update_helper
+from memoized import memoized
 
-from corehq.apps.userreports.app_manager.data_source_meta import REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES
+from corehq.apps.cachehq.mixins import (
+    CachedCouchDocumentMixin,
+    QuickCachedDocumentMixin,
+)
+from corehq.apps.userreports.app_manager.data_source_meta import (
+    REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
+)
+from corehq.apps.userreports.const import (
+    DATA_SOURCE_TYPE_AGGREGATE,
+    DATA_SOURCE_TYPE_STANDARD,
+    FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_SQL_BACKEND,
+    VALID_REFERENCED_DOC_TYPES,
+)
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_number_of_report_configs_by_data_source,
+    get_report_configs_for_domain,
+)
+from corehq.apps.userreports.exceptions import (
+    BadSpecError,
+    DataSourceConfigurationNotFoundError,
+    DuplicateColumnIdError,
+    InvalidDataSourceType,
+    ReportConfigurationNotFoundError,
+    StaticDataSourceConfigurationNotFoundError,
+    ValidationError,
+)
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.indicators import CompoundIndicator
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.reports.factory import (
+    ChartFactory,
+    ReportColumnFactory,
+    ReportOrderByFactory,
+)
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.apps.userreports.reports.filters.specs import FilterSpec
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.userreports.sql.util import decode_column_name
+from corehq.apps.userreports.util import (
+    get_async_indicator_modify_lock_key,
+    get_indicator_adapter,
+)
+from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -30,50 +78,16 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
-    SchemaProperty,
     SchemaListProperty,
-    StringProperty,
+    SchemaProperty,
     StringListProperty,
+    StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
-from corehq.apps.cachehq.mixins import (
-    CachedCouchDocumentMixin,
-    QuickCachedDocumentMixin,
-)
-from corehq.apps.userreports.const import (
-    FILTER_INTERPOLATION_DOC_TYPES,
-    UCR_SQL_BACKEND,
-    VALID_REFERENCED_DOC_TYPES,
-    DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE)
-from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
-    get_report_configs_for_domain, get_datasources_for_domain
-from corehq.apps.userreports.exceptions import (
-    BadSpecError,
-    DataSourceConfigurationNotFoundError,
-    ReportConfigurationNotFoundError,
-    StaticDataSourceConfigurationNotFoundError,
-    InvalidDataSourceType, DuplicateColumnIdError)
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.indicators.factory import IndicatorFactory
-from corehq.apps.userreports.indicators import CompoundIndicator
-from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.factory import ChartFactory, \
-    ReportColumnFactory, ReportOrderByFactory
-from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
-from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
-from corehq.apps.userreports.sql.util import decode_column_name
-from corehq.pillows.utils import get_deleted_doc_types
-from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from memoized import memoized
-
 from dimagi.utils.modules import to_function
-from io import open
-
 
 ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 
@@ -133,6 +147,12 @@ class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
 
+class Validation(DocumentSchema):
+    name = StringProperty(required=True)
+    expression = DictProperty(required=True)
+    error_message = StringProperty(required=True)
+
+
 class AbstractUCRDataSource(object):
     """
     Base wrapper class for datasource-like things to be used in reports.
@@ -190,6 +210,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
+    validations = SchemaListProperty(Validation)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -206,13 +227,43 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def data_source_id(self):
         return self._id
 
-    def filter(self, document):
+    def filter(self, document, eval_context=None):
+        if eval_context is None:
+            eval_context = EvaluationContext(document)
+
         filter_fn = self._get_main_filter()
-        return filter_fn(document, EvaluationContext(document, 0))
+        return filter_fn(document, eval_context)
 
     def deleted_filter(self, document):
         filter_fn = self._get_deleted_filter()
         return filter_fn and filter_fn(document, EvaluationContext(document, 0))
+
+    @property
+    def has_validations(self):
+        return len(self.validations) > 0
+
+    def validate_document(self, document, eval_context=None):
+        if eval_context is None:
+            eval_context = EvaluationContext(document)
+
+        errors = []
+        for validation in self._validations():
+            if validation.validation_function(document, eval_context) is False:
+                errors.append((validation.name, validation.error_message))
+
+        if errors:
+            raise ValidationError(errors)
+
+    @memoized
+    def _validations(self):
+        return [
+            _Validation(
+                validation.name,
+                validation.error_message,
+                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+            )
+            for validation in self.validations
+        ]
 
     @memoized
     def _get_main_filter(self):
@@ -364,7 +415,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         return self.columns_by_id.get(column_id)
 
     def get_items(self, document, eval_context=None):
-        if self.filter(document):
+        if self.filter(document, eval_context):
             if not self.base_item_expression:
                 return [document]
             else:
@@ -381,6 +432,23 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def get_all_values(self, doc, eval_context=None):
         if not eval_context:
             eval_context = EvaluationContext(doc)
+
+        if self.has_validations:
+            try:
+                self.validate_document(doc, eval_context)
+            except ValidationError as e:
+                for error in e.errors:
+                    InvalidUCRData.objects.get_or_create(
+                        doc_id=doc['_id'],
+                        indicator_config_id=self._id,
+                        validation_name=error[0],
+                        defaults={
+                            'doc_type': doc['doc_type'],
+                            'domain': doc['domain'],
+                            'validation_text': error[1],
+                        }
+                    )
+                return []
 
         rows = []
         for item in self.get_items(doc, eval_context):
@@ -998,6 +1066,20 @@ class AsyncIndicator(models.Model):
         ])
 
 
+class InvalidUCRData(models.Model):
+    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_type = models.CharField(max_length=126, null=False, db_index=True)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    validation_name = models.TextField()
+    validation_text = models.TextField()
+    notes = models.TextField(null=True)
+
+    class Meta(object):
+        unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
+
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1140,3 +1222,6 @@ def _filter_by_server_env(configs):
         if wrapped.server_environment and settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
             continue
         yield wrapped
+
+
+_Validation = namedtuple('_Validation', 'name error_message validation_function')
