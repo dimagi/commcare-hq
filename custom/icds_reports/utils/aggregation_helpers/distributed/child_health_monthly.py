@@ -74,22 +74,35 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
-        end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
+        end_month_string = (self.month + relativedelta(months=1, days=-1)).strftime("'%Y-%m-%d'::date")
         age_in_days = "({} - child_health.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         age_in_months = "(({} - child_health.dob) / 30.4 )".format(start_month_string)
-        open_in_month = ("(({} - child_health.opened_on::date)::integer >= 0) AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)").format(end_month_string, start_month_string)
-        alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(start_month_string)
+        open_in_month = (
+            "(({} - child_health.opened_on::date)::integer >= 0) "
+            "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
+        ).format(end_month_string, start_month_string)
+        alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
+            start_month_string
+        )
         seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
-        born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(seeking_services, start_month_string, end_month_string)
-        valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(open_in_month, alive_in_month, seeking_services, age_in_months)
+        born_in_month = "({} AND child_health.dob BETWEEN {} AND {})".format(
+            seeking_services, start_month_string, end_month_string
+        )
+        valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(
+            open_in_month, alive_in_month, seeking_services, age_in_months
+        )
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
         wer_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
         cf_eligible = "({} AND {} > 6 AND {} <= 24)".format(valid_in_month, age_in_months_end, age_in_months)
-        cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(valid_in_month, age_in_months_end, age_in_months)
+        cf_initiation_eligible = "({} AND {} > 6 AND {} <= 8)".format(
+            valid_in_month, age_in_months_end, age_in_months
+        )
         thr_eligible = "({} AND {} > 6 AND {} <= 36)".format(valid_in_month, age_in_months_end, age_in_months)
-        pnc_eligible = "({} AND {} - child_health.dob > 0 AND {} - child_health.dob <= 20)".format(valid_in_month, end_month_string, start_month_string)
+        pnc_eligible = "({} AND {} - child_health.dob > 0 AND {} - child_health.dob <= 20)".format(
+            valid_in_month, end_month_string, start_month_string
+        )
         height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
         fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months_end)
         immunized_age_in_days = "(child_tasks.immun_one_year_date - child_health.dob)"
@@ -120,16 +133,24 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("open_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
             ("alive_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_in_month)),
             ("born_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(born_in_month)),
-            ("bf_at_birth_born_in_month", "CASE WHEN {} AND child_health.bf_at_birth = 'yes' THEN 1 ELSE 0 END".format(born_in_month)),
-            ("low_birth_weight_born_in_month", "CASE WHEN {} AND child_health.lbw_open_count = 1 THEN 1 ELSE 0 END".format(born_in_month)),
+            ("bf_at_birth_born_in_month",
+                "CASE WHEN {} AND child_health.bf_at_birth = 'yes' THEN 1 ELSE 0 END".format(born_in_month)),
+            ("low_birth_weight_born_in_month",
+                "CASE WHEN {} AND child_health.lbw_open_count = 1 THEN 1 ELSE 0 END".format(born_in_month)),
             ("fully_immunized_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(fully_immunized_eligible)),
-            ("fully_immunized_on_time", "CASE WHEN {} AND {} <= 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
-            ("fully_immunized_late", "CASE WHEN {} AND {} > 365 AND {} THEN 1 ELSE 0 END".format(fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month)),
+            ("fully_immunized_on_time", "CASE WHEN {} AND {} <= 365 AND {} THEN 1 ELSE 0 END".format(
+                fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month
+            )),
+            ("fully_immunized_late", "CASE WHEN {} AND {} > 365 AND {} THEN 1 ELSE 0 END".format(
+                fully_immunized_eligible, immunized_age_in_days, fully_immun_before_month
+            )),
             ("has_aadhar_id",
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(open_in_month, alive_in_month, age_in_months)),
+                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(
+                    open_in_month, alive_in_month, age_in_months
+            )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
             # PSE/DF Indicators
@@ -143,7 +164,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("ebf_not_breastfeeding_reason",
                 "CASE WHEN {} THEN pnc.not_breastfeeding ELSE NULL END".format(ebf_eligible)),
             ("ebf_drinking_liquid",
-                "CASE WHEN {} THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) ELSE 0 END".format(ebf_eligible)),
+                "CASE WHEN {} THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) "
+                "ELSE 0 END".format(ebf_eligible)),
             ("ebf_eating",
                 "CASE WHEN {} THEN COALESCE(pnc.eating, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_no_bf_no_milk", "0"),
@@ -153,9 +175,11 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("counsel_adequate_bf",
                 "CASE WHEN {} THEN COALESCE(pnc.counsel_adequate_bf, 0) ELSE 0 END".format(ebf_eligible)),
             ("ebf_no_info_recorded",
-                "CASE WHEN {} AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s THEN 0 ELSE (CASE WHEN {} THEN 1 ELSE 0 END) END".format(ebf_eligible, ebf_eligible)),
+                "CASE WHEN {} AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s "
+                "THEN 0 ELSE (CASE WHEN {} THEN 1 ELSE 0 END) END".format(ebf_eligible, ebf_eligible)),
             ("counsel_ebf",
-                "CASE WHEN {} THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END".format(ebf_eligible)),
+                "CASE WHEN {} THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) "
+                "ELSE 0 END".format(ebf_eligible)),
             # PNC Indicators
             ("pnc_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pnc_eligible)),
             ("counsel_increase_food_bf",
@@ -201,7 +225,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("current_month_stunting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
-                "WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s "
+                "   THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
@@ -223,25 +248,31 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("current_month_wasting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
-                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s "
+                "   THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
                 "ELSE 'unmeasured' END".format(height_eligible)),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
             ("zscore_grading_hfa_recorded_in_month",
-                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) "
+                "THEN 1 ELSE 0 END"),
             ("zscore_grading_wfh", "gm.zscore_grading_wfh"),
             ("zscore_grading_wfh_recorded_in_month",
-                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) "
+                "THEN 1 ELSE 0 END"),
             ("muac_grading", "gm.muac_grading"),
             ("muac_grading_recorded_in_month",
-                "CASE WHEN (date_trunc('MONTH', gm.muac_grading_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+                "CASE WHEN (date_trunc('MONTH', gm.muac_grading_last_recorded) = %(start_date)s) "
+                "THEN 1 ELSE 0 END"),
             # CF Indicators
             ("cf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(cf_eligible)),
             ("cf_initiation_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(cf_initiation_eligible)),
-            ("cf_in_month", "CASE WHEN {} THEN COALESCE(cf.comp_feeding_latest, 0) ELSE 0 END".format(cf_eligible)),
-            ("cf_diet_diversity", "CASE WHEN {} THEN COALESCE(cf.diet_diversity, 0) ELSE 0 END".format(cf_eligible)),
+            ("cf_in_month",
+                "CASE WHEN {} THEN COALESCE(cf.comp_feeding_latest, 0) ELSE 0 END".format(cf_eligible)),
+            ("cf_diet_diversity",
+                "CASE WHEN {} THEN COALESCE(cf.diet_diversity, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_diet_quantity", "CASE WHEN {} THEN COALESCE(cf.diet_quantity, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_handwashing", "CASE WHEN {} THEN COALESCE(cf.hand_wash, 0) ELSE 0 END".format(cf_eligible)),
             ("cf_demo", "CASE WHEN {} THEN COALESCE(cf.demo_comp_feeding, 0) ELSE 0 END".format(cf_eligible)),
@@ -301,7 +332,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         ) (SELECT
             {calculations}
             FROM "{child_health_case_ucr}" child_health
-            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON child_health.doc_id = child_tasks.child_health_case_id
+            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON
+              child_health.doc_id = child_tasks.child_health_case_id
               AND child_health.state_id = child_tasks.state_id
               AND lower(substring(child_tasks.state_id, '.{{3}}$'::text)) = %(state_id_last_3)s
               AND child_health.supervisor_id = child_tasks.supervisor_id
@@ -312,16 +344,20 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
               AND child_health.supervisor_id = cf.supervisor_id
-            LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id AND thr.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_thr_table}" thr ON child_health.doc_id = thr.case_id
+              AND thr.month = %(start_date)s
               AND child_health.state_id = thr.state_id
               AND child_health.supervisor_id = thr.supervisor_id
-            LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id AND gm.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_gm_table}" gm ON child_health.doc_id = gm.case_id
+              AND gm.month = %(start_date)s
               AND child_health.state_id = gm.state_id
               AND child_health.supervisor_id = gm.supervisor_id
-            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id AND pnc.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON child_health.doc_id = pnc.case_id
+              AND pnc.month = %(start_date)s
               AND child_health.state_id = pnc.state_id
               AND child_health.supervisor_id = pnc.supervisor_id
-            LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id AND df.month = %(start_date)s
+            LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
+              AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
               AND child_health.supervisor_id = df.supervisor_id
             WHERE child_health.doc_id IS NOT NULL

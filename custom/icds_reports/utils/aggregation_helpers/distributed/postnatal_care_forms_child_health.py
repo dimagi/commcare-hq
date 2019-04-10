@@ -85,8 +85,10 @@ class PostnatalCareFormsChildHealthAggregationDistributedHelper(BaseICDSAggregat
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
-            GREATEST(ucr.counsel_increase_food_bf, prev_month.counsel_increase_food_bf) AS counsel_increase_food_bf,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed)
+                AS latest_time_end_processed,
+            GREATEST(ucr.counsel_increase_food_bf, prev_month.counsel_increase_food_bf)
+                AS counsel_increase_food_bf,
             GREATEST(ucr.counsel_breast, prev_month.counsel_breast) AS counsel_breast,
             GREATEST(ucr.skin_to_skin, prev_month.skin_to_skin) AS skin_to_skin,
             ucr.is_ebf AS is_ebf,

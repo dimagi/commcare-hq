@@ -63,12 +63,13 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         INNER JOIN agg_ccs_record_monthly AS ccsm
         ON ccsm.month=awcm.month AND ccsm.awc_id=awcm.awc_id AND ccsm.aggregation_level=awcm.aggregation_level
         WHERE awcm.month = %(month)s AND awcm.state_id = %(state_id)s and awcm.aggregation_level=5
-        GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id, awcm.state_name, awcm.district_name,
-                   awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
-                   awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
-                   awcm.awc_days_open;
+        GROUP BY awcm.awc_id, awcm.block_id, awcm.supervisor_id, awcm.district_id,
+            awcm.state_name, awcm.district_name,
+            awcm.block_name, awcm.supervisor_name, awcm.awc_name, awcm.aww_name,
+            awcm.contact_phone_number, awcm.wer_weighed, awcm.wer_eligible,
+            awcm.awc_days_open;
         INSERT INTO "{tablename}" (
-            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name, 
+            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
             wer_eligible, awc_num_open, valid_visits, expected_visits
         )
@@ -80,8 +81,13 @@ class AwwIncentiveAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             SUM(COALESCE(agg_cf.valid_visits, 0)) as valid,
             ucr.awc_id
             FROM "{ccs_record_case_ucr}" ucr
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id AND agg_cf.month = %(month)s and agg_cf.supervisor_id = ucr.supervisor_id
-            WHERE %(month)s - add BETWEEN 184 AND 548 AND (closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s) AND date_trunc('month', opened_on) <= %(month)s
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.doc_id = agg_cf.case_id
+                AND agg_cf.month = %(month)s AND agg_cf.supervisor_id = ucr.supervisor_id
+            WHERE %(month)s - add BETWEEN 184 AND 548
+                AND (
+                    closed_on IS NULL OR date_trunc('month', closed_on)::DATE > %(month)s
+                )
+                AND date_trunc('month', opened_on) <= %(month)s
             GROUP BY ucr.awc_id, ucr.supervisor_id;
         UPDATE "{tablename}" perf
         SET expected_visits = expected_visits + cf_data.expected,

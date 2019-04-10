@@ -3,8 +3,6 @@ from __future__ import absolute_import, unicode_literals
 from contextlib import contextmanager
 from datetime import date
 
-from django.conf import settings
-
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,

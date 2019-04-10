@@ -1,8 +1,67 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import attr
 from django.conf import settings
 
-from custom.icds_reports.utils.aggregation_helpers.distributed import *
-from custom.icds_reports.utils.aggregation_helpers.monolith import *
+from custom.icds_reports.utils.aggregation_helpers.distributed import (
+    AggAwcDistributedHelper,
+    AggAwcDailyAggregationDistributedHelper,
+    AggChildHealthAggregationDistributedHelper,
+    AggCcsRecordAggregationDistributedHelper,
+    AwcMbtDistributedHelper,
+    AwwIncentiveAggregationDistributedHelper,
+    BirthPreparednessFormsAggregationDistributedHelper,
+    CcsMbtDistributedHelper,
+    CcsRecordMonthlyAggregationDistributedHelper,
+    ChildHealthMbtDistributedHelper,
+    ChildHealthMonthlyAggregationDistributedHelper,
+    ComplementaryFormsAggregationDistributedHelper,
+    ComplementaryFormsCcsRecordAggregationDistributedHelper,
+    DailyAttendanceAggregationDistributedHelper,
+    DailyFeedingFormsChildHealthAggregationDistributedHelper,
+    DeliveryFormsAggregationDistributedHelper,
+    GrowthMonitoringFormsAggregationDistributedHelper,
+    InactiveAwwsAggregationDistributedHelper,
+    LocationAggregationDistributedHelper,
+    LSAwcMgtFormAggDistributedHelper,
+    LSBeneficiaryFormAggDistributedHelper,
+    LSVhndFormAggDistributedHelper,
+    PostnatalCareFormsCcsRecordAggregationDistributedHelper,
+    PostnatalCareFormsChildHealthAggregationDistributedHelper,
+    THRFormsCcsRecordAggregationDistributedHelper,
+    THRFormsChildHealthAggregationDistributedHelper,
+)
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    AggAwcHelper,
+    AggAwcDailyAggregationHelper,
+    AggCcsRecordAggregationHelper,
+    AggChildHealthAggregationHelper,
+    AggLsHelper,
+    AwcInfrastructureAggregationHelper,
+    AwcMbtHelper,
+    AwwIncentiveAggregationHelper,
+    BirthPreparednessFormsAggregationHelper,
+    CcsMbtHelper,
+    CcsRecordMonthlyAggregationHelper,
+    ChildHealthMbtHelper,
+    ChildHealthMonthlyAggregationHelper,
+    ComplementaryFormsAggregationHelper,
+    ComplementaryFormsCcsRecordAggregationHelper,
+    DailyAttendanceAggregationHelper,
+    DailyFeedingFormsChildHealthAggregationHelper,
+    DeliveryFormsAggregationHelper,
+    GrowthMonitoringFormsAggregationHelper,
+    InactiveAwwsAggregationHelper,
+    LocationAggregationHelper,
+    LSAwcMgtFormAggHelper,
+    LSBeneficiaryFormAggHelper,
+    LSVhndFormAggHelper,
+    PostnatalCareFormsCcsRecordAggregationHelper,
+    PostnatalCareFormsChildHealthAggregationHelper,
+    THRFormsCcsRecordAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
+)
 
 
 @attr.s
@@ -15,34 +74,90 @@ class HelperPair(object):
 
 
 HELPERS = [
-    HelperPair(AggAwcHelper, AggAwcDistributedHelper),
-    HelperPair(AggAwcDailyAggregationHelper, AggAwcDailyAggregationDistributedHelper),
-    HelperPair(AggCcsRecordAggregationHelper, AggCcsRecordAggregationDistributedHelper),
-    HelperPair(AggChildHealthAggregationHelper, AggChildHealthAggregationDistributedHelper),
-    HelperPair(AggLsHelper, None),
-    HelperPair(AwcInfrastructureAggregationHelper, None),
-    HelperPair(AwwIncentiveAggregationHelper, AwwIncentiveAggregationDistributedHelper),
-    HelperPair(AwcMbtHelper, AwcMbtDistributedHelper),
-    HelperPair(BirthPreparednessFormsAggregationHelper, BirthPreparednessFormsAggregationDistributedHelper),
-    HelperPair(ChildHealthMbtHelper, ChildHealthMbtDistributedHelper),
-    HelperPair(ChildHealthMonthlyAggregationHelper, ChildHealthMonthlyAggregationDistributedHelper),
-    HelperPair(CcsMbtHelper, CcsMbtDistributedHelper),
-    HelperPair(CcsRecordMonthlyAggregationHelper, CcsRecordMonthlyAggregationDistributedHelper),
-    HelperPair(ComplementaryFormsAggregationHelper, ComplementaryFormsAggregationDistributedHelper),
-    HelperPair(ComplementaryFormsCcsRecordAggregationHelper, ComplementaryFormsCcsRecordAggregationDistributedHelper),
-    HelperPair(DailyAttendanceAggregationHelper, DailyAttendanceAggregationDistributedHelper),
-    HelperPair(DailyFeedingFormsChildHealthAggregationHelper, DailyFeedingFormsChildHealthAggregationDistributedHelper),
-    HelperPair(DeliveryFormsAggregationHelper, DeliveryFormsAggregationDistributedHelper),
-    HelperPair(GrowthMonitoringFormsAggregationHelper, GrowthMonitoringFormsAggregationDistributedHelper),
-    HelperPair(InactiveAwwsAggregationHelper, InactiveAwwsAggregationDistributedHelper),
-    HelperPair(LocationAggregationHelper, LocationAggregationDistributedHelper),
-    HelperPair(LSAwcMgtFormAggHelper, LSAwcMgtFormAggDistributedHelper),
-    HelperPair(LSBeneficiaryFormAggHelper, LSBeneficiaryFormAggDistributedHelper),
-    HelperPair(LSVhndFormAggHelper, LSVhndFormAggDistributedHelper),
-    HelperPair(PostnatalCareFormsCcsRecordAggregationHelper, PostnatalCareFormsCcsRecordAggregationDistributedHelper),
-    HelperPair(PostnatalCareFormsChildHealthAggregationHelper, PostnatalCareFormsChildHealthAggregationDistributedHelper),
-    HelperPair(THRFormsChildHealthAggregationHelper, THRFormsChildHealthAggregationDistributedHelper),
-    HelperPair(THRFormsCcsRecordAggregationHelper, THRFormsCcsRecordAggregationDistributedHelper),
+    HelperPair(
+        AggAwcHelper, AggAwcDistributedHelper
+    ),
+    HelperPair(
+        AggAwcDailyAggregationHelper, AggAwcDailyAggregationDistributedHelper
+    ),
+    HelperPair(
+        AggCcsRecordAggregationHelper, AggCcsRecordAggregationDistributedHelper
+    ),
+    HelperPair(
+        AggChildHealthAggregationHelper, AggChildHealthAggregationDistributedHelper
+    ),
+    HelperPair(
+        AggLsHelper, None
+    ),
+    HelperPair(
+        AwcInfrastructureAggregationHelper, None
+    ),
+    HelperPair(
+        AwwIncentiveAggregationHelper, AwwIncentiveAggregationDistributedHelper
+    ),
+    HelperPair(
+        AwcMbtHelper, AwcMbtDistributedHelper
+    ),
+    HelperPair(
+        BirthPreparednessFormsAggregationHelper, BirthPreparednessFormsAggregationDistributedHelper
+    ),
+    HelperPair(
+        ChildHealthMbtHelper, ChildHealthMbtDistributedHelper
+    ),
+    HelperPair(
+        ChildHealthMonthlyAggregationHelper, ChildHealthMonthlyAggregationDistributedHelper
+    ),
+    HelperPair(
+        CcsMbtHelper, CcsMbtDistributedHelper
+    ),
+    HelperPair(
+        CcsRecordMonthlyAggregationHelper, CcsRecordMonthlyAggregationDistributedHelper
+    ),
+    HelperPair(
+        ComplementaryFormsAggregationHelper, ComplementaryFormsAggregationDistributedHelper
+    ),
+    HelperPair(
+        ComplementaryFormsCcsRecordAggregationHelper, ComplementaryFormsCcsRecordAggregationDistributedHelper
+    ),
+    HelperPair(
+        DailyAttendanceAggregationHelper, DailyAttendanceAggregationDistributedHelper
+    ),
+    HelperPair(
+        DailyFeedingFormsChildHealthAggregationHelper, DailyFeedingFormsChildHealthAggregationDistributedHelper
+    ),
+    HelperPair(
+        DeliveryFormsAggregationHelper, DeliveryFormsAggregationDistributedHelper
+    ),
+    HelperPair(
+        GrowthMonitoringFormsAggregationHelper, GrowthMonitoringFormsAggregationDistributedHelper
+    ),
+    HelperPair(
+        InactiveAwwsAggregationHelper, InactiveAwwsAggregationDistributedHelper
+    ),
+    HelperPair(
+        LocationAggregationHelper, LocationAggregationDistributedHelper
+    ),
+    HelperPair(
+        LSAwcMgtFormAggHelper, LSAwcMgtFormAggDistributedHelper
+    ),
+    HelperPair(
+        LSBeneficiaryFormAggHelper, LSBeneficiaryFormAggDistributedHelper
+    ),
+    HelperPair(
+        LSVhndFormAggHelper, LSVhndFormAggDistributedHelper
+    ),
+    HelperPair(
+        PostnatalCareFormsCcsRecordAggregationHelper, PostnatalCareFormsCcsRecordAggregationDistributedHelper
+    ),
+    HelperPair(
+        PostnatalCareFormsChildHealthAggregationHelper, PostnatalCareFormsChildHealthAggregationDistributedHelper
+    ),
+    HelperPair(
+        THRFormsChildHealthAggregationHelper, THRFormsChildHealthAggregationDistributedHelper
+    ),
+    HelperPair(
+        THRFormsCcsRecordAggregationHelper, THRFormsCcsRecordAggregationDistributedHelper
+    ),
 ]
 
 

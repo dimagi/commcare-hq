@@ -21,8 +21,12 @@ class DeliveryFormsAggregationDistributedHelper(BaseICDSAggregationDistributedHe
         cursor.execute(agg_query, agg_params)
 
     def drop_table_query(self):
-        tablename = self.aggregate_parent_table
-        return 'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(tablename=self.aggregate_parent_table), {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}
+        return (
+            'DELETE FROM "{tablename}" WHERE state_id = %(state_id)s and month=%(month)s'.format(
+                tablename=self.aggregate_parent_table
+            ),
+            {'state_id': self.state_id, 'month': month_formatter(self.month.replace(day=1))}
+        )
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

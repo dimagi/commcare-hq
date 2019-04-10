@@ -79,8 +79,12 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             1,
             'no',
             5,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            CASE WHEN
+                (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0
+                THEN 1 ELSE 0 END,
+            CASE WHEN
+                (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0
+                THEN 1 ELSE 0 END
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -179,7 +183,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
             sum(CASE WHEN agg_cf.valid_visits IS NOT NULL THEN 0.39 ELSE 0 END) AS expected_visits
             FROM  "{ccs_record_case_ucr}" ucr
-            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id AND agg_cf.month = %(start_date)s and agg_cf.supervisor_id=ucr.supervisor_id
+            LEFT OUTER JOIN "{agg_cf_table}" agg_cf ON ucr.case_id = agg_cf.case_id
+                AND agg_cf.month = %(start_date)s AND agg_cf.supervisor_id=ucr.supervisor_id
             WHERE %(start_date)s - add BETWEEN 184 AND 548 AND (ucr.closed_on IS NULL OR
                 date_trunc('month', ucr.closed_on)::DATE >= %(start_date)s) AND
                 date_trunc('month', ucr.opened_on) <= %(start_date)s
@@ -189,7 +194,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             cases_ccs_lactating = ut.cases_ccs_lactating,
             cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all,
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
-            cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
+            cases_person_beneficiary_v2 = (
+                COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
+            ),
             valid_visits = ut.valid_visits,
             expected_visits = ut.expected_visits
         FROM (
@@ -203,8 +210,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(agg_ccs_record.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
                 sum(agg_ccs_record.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record
-            LEFT OUTER JOIN "tmp_home_visit" home_visit ON agg_ccs_record.awc_id = home_visit.awc_id AND home_visit.month=agg_ccs_record.month
-            WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5 
+            LEFT OUTER JOIN "tmp_home_visit" home_visit ON agg_ccs_record.awc_id = home_visit.awc_id
+                AND home_visit.month=agg_ccs_record.month
+            WHERE agg_ccs_record.month = %(start_date)s AND aggregation_level = 5
             GROUP BY agg_ccs_record.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;
@@ -215,7 +223,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start
-            }
+        }
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -239,11 +247,26 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             supervisor_id,
             sum({seeking_services}) AS cases_person,
             count(*) AS cases_person_all,
-            sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_11_14,
-            sum(CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all,
-            sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN ({seeking_services}) ELSE 0 END) as cases_person_adolescent_girls_15_18,
-            sum(CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all,
-            sum(CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s THEN 1 ELSE 0 END) as cases_person_referred
+            sum(CASE WHEN
+                %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
+                THEN ({seeking_services}) ELSE 0 END
+            ) as cases_person_adolescent_girls_11_14,
+            sum(
+                CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
+                THEN 1 ELSE 0 END
+            ) as cases_person_adolescent_girls_11_14_all,
+            sum(
+                CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                THEN ({seeking_services}) ELSE 0 END
+            ) as cases_person_adolescent_girls_15_18,
+            sum(
+                CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                THEN 1 ELSE 0 END
+            ) as cases_person_adolescent_girls_15_18_all,
+            sum(
+                CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
+                THEN 1 ELSE 0 END
+            ) as cases_person_referred
         FROM "{ucr_tablename}"
         WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
         GROUP BY awc_id, supervisor_id;
@@ -261,7 +284,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.tablename,
             ucr_tablename=self._ucr_tablename('static-person_cases_v3'),
-            seeking_services="(CASE WHEN registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END)"
+            seeking_services=(
+                "CASE WHEN "
+                "registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 "
+                "THEN 1 ELSE 0 END"
+            )
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end,
@@ -358,7 +385,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(ebf) AS usage_num_ebf,
                 sum(cf) AS usage_num_cf,
                 sum(delivery) AS usage_num_delivery,
-                CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active,
+                CASE WHEN (
+                    sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr)
+                    + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
+                ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active,
                 sum(due_list_ccs) AS usage_num_due_list_ccs,
                 sum(due_list_child) AS usage_num_due_list_child_health
             FROM "{usage_table}"
@@ -418,7 +448,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 toilet_functional AS infra_functional_toilet,
                 baby_scale_usable AS infra_baby_weighing_scale,
                 GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale,
-                GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable, 0) AS infra_infant_weighing_scale,
+                GREATEST(
+                    baby_scale_available, flat_scale_available, baby_scale_usable, 0
+                ) AS infra_infant_weighing_scale,
                 cooking_utensils_usable AS infra_cooking_utensils,
                 medicine_kits_usable AS infra_medicine_kits,
                 CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse,
@@ -659,7 +691,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             sum(add_household) AS usage_num_hh_reg,
             CASE WHEN sum(add_household) > 0 THEN 'yes' ELSE 'no' END as is_launched
             CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs
-            CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
+            CASE WHEN (
+                sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp)
+                + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
+            ) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active
             FROM "{usage_table}"
             WHERE month >= %(start_date)s GROUP BY awc_id, month
         ) ut

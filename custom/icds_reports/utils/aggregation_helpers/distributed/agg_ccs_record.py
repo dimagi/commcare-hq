@@ -18,7 +18,6 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        helper = AggCcsRecordAggregationDistributedHelper(self.month)
         agg_query, agg_params = self.aggregation_query()
         update_queries = self.update_queries()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
@@ -94,8 +93,10 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             ('counsel_accessible_postpartum_fp', 'sum(crm.counsel_accessible_postpartum_fp)'),
             ('has_aadhar_id', 'sum(crm.has_aadhar_id)'),
             ('aggregation_level', '5 '),
-            ('valid_all_registered_in_month', 'sum(CASE WHEN (crm.valid_in_month=1 AND crm.open_in_month=1 AND'
-                                            ' (crm.pregnant_all=1 OR crm.lactating_all=1)) THEN 1 ELSE 0 END)'),
+            ('valid_all_registered_in_month',
+                'sum(CASE WHEN (crm.valid_in_month=1 AND crm.open_in_month=1 AND'
+                ' (crm.pregnant_all=1 OR crm.lactating_all=1)) THEN 1 ELSE 0 END)'
+             ),
             ('institutional_delivery_in_month', 'sum(crm.institutional_delivery_in_month)'),
             ('lactating_all', 'sum(crm.lactating_all)'),
             ('pregnant_all', 'sum(crm.pregnant_all)'),
@@ -121,8 +122,9 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             FROM  "{ccs_record_monthly_table}" as crm
             LEFT OUTER JOIN "awc_location" awc_loc ON awc_loc.doc_id = crm.awc_id
             WHERE crm.month = %(start_date)s AND awc_loc.state_id != '' AND awc_loc.state_id IS NOT NULL
-            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id, crm.awc_id, crm.month,
-                     crm.ccs_status, coalesce_trimester, crm.caste, coalesce_disabled, coalesce_minority, coalesce_resident;
+            GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, awc_loc.supervisor_id,
+                crm.awc_id, crm.month, crm.ccs_status, coalesce_trimester, crm.caste,
+                coalesce_disabled, coalesce_minority, coalesce_resident;
         INSERT INTO "{tablename}" ({final_columns}) SELECT * from "{tmp_tablename}";
         DROP TABLE "{tmp_tablename}";
         """.format(

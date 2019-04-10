@@ -64,7 +64,10 @@ class BirthPreparednessFormsAggregationDistributedHelper(BaseICDSAggregationDist
         LAST_VALUE(anc_abnormalities) OVER w as anc_abnormalities,
         LAST_VALUE(using_ifa) OVER w as using_ifa,
         GREATEST(LAST_VALUE(ifa_last_seven_days) OVER w, 0) as ifa_last_seven_days,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
+        SUM(CASE WHEN
+            (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8
+            THEN 1 ELSE 0 END
+        ) OVER w as valid_visits
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
@@ -93,7 +96,7 @@ class BirthPreparednessFormsAggregationDistributedHelper(BaseICDSAggregationDist
         INSERT INTO "{tablename}" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
-          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
+          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin,
           bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits,
           play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid, conceive,
           counsel_accessible_ppfp, ifa_last_seven_days,using_ifa
@@ -120,9 +123,13 @@ class BirthPreparednessFormsAggregationDistributedHelper(BaseICDSAggregationDist
             COALESCE(ucr.rupture,prev_month.rupture) as rupture,
             COALESCE(ucr.anc_abnormalities,prev_month.anc_abnormalities) as anc_abnormalities,
             COALESCE(ucr.valid_visits, 0) as valid_visits,
-            GREATEST(ucr.play_birth_preparedness_vid, prev_month.play_birth_preparedness_vid) as play_birth_preparedness_vid,
+            GREATEST(
+                ucr.play_birth_preparedness_vid, prev_month.play_birth_preparedness_vid
+            ) as play_birth_preparedness_vid,
             GREATEST(ucr.counsel_preparation, prev_month.counsel_preparation) as counsel_preparation,
-            GREATEST(ucr.play_family_planning_vid, prev_month.play_family_planning_vid) as play_family_planning_vid,
+            GREATEST(
+                ucr.play_family_planning_vid, prev_month.play_family_planning_vid
+            ) as play_family_planning_vid,
             GREATEST(ucr.conceive,prev_month.conceive) as conceive,
             GREATEST(ucr.counsel_accessible_ppfp, prev_month.counsel_accessible_ppfp) as counsel_accessible_ppfp,
             COALESCE(ucr.ifa_last_seven_days, prev_month.ifa_last_seven_days) as ifa_last_seven_days,

@@ -166,17 +166,23 @@ class GrowthMonitoringFormsAggregationDistributedHelper(BaseICDSAggregationDistr
                 '1970-01-01'
             ) AS latest_time_end_processed,
             COALESCE(ucr.weight_child, prev_month.weight_child) AS weight_child,
-            GREATEST(ucr.weight_child_last_recorded, prev_month.weight_child_last_recorded) AS weight_child_last_recorded,
+            GREATEST(ucr.weight_child_last_recorded, prev_month.weight_child_last_recorded)
+                AS weight_child_last_recorded,
             COALESCE(ucr.height_child, prev_month.height_child) AS height_child,
-            GREATEST(ucr.height_child_last_recorded, prev_month.height_child_last_recorded) AS height_child_last_recorded,
+            GREATEST(ucr.height_child_last_recorded, prev_month.height_child_last_recorded)
+                AS height_child_last_recorded,
             COALESCE(ucr.zscore_grading_wfa, prev_month.zscore_grading_wfa) AS zscore_grading_wfa,
-            GREATEST(ucr.zscore_grading_wfa_last_recorded, prev_month.zscore_grading_wfa_last_recorded) AS zscore_grading_wfa_last_recorded,
+            GREATEST(ucr.zscore_grading_wfa_last_recorded, prev_month.zscore_grading_wfa_last_recorded)
+                AS zscore_grading_wfa_last_recorded,
             COALESCE(ucr.zscore_grading_hfa, prev_month.zscore_grading_hfa) AS zscore_grading_hfa,
-            GREATEST(ucr.zscore_grading_hfa_last_recorded, prev_month.zscore_grading_hfa_last_recorded) AS zscore_grading_hfa_last_recorded,
+            GREATEST(ucr.zscore_grading_hfa_last_recorded, prev_month.zscore_grading_hfa_last_recorded)
+                AS zscore_grading_hfa_last_recorded,
             COALESCE(ucr.zscore_grading_wfh, prev_month.zscore_grading_wfh) AS zscore_grading_wfh,
-            GREATEST(ucr.zscore_grading_wfh_last_recorded, prev_month.zscore_grading_wfh_last_recorded) AS zscore_grading_wfh_last_recorded,
+            GREATEST(ucr.zscore_grading_wfh_last_recorded, prev_month.zscore_grading_wfh_last_recorded)
+                AS zscore_grading_wfh_last_recorded,
             COALESCE(ucr.muac_grading, prev_month.muac_grading) AS muac_grading,
-            GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded) AS muac_grading_last_recorded
+            GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded)
+                AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{tablename}" prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id

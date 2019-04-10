@@ -34,7 +34,10 @@ class ComplementaryFormsCcsRecordAggregationDistributedHelper(BaseICDSAggregatio
         SELECT DISTINCT ccs_record_case_id AS case_id,
         %(current_month_start)s as month,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits,
+        SUM(
+            CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8
+            THEN 1 ELSE 0 END
+        ) OVER w as valid_visits,
         supervisor_id as supervisor_id
         FROM "{ucr_tablename}"
         WHERE (
