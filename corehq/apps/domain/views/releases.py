@@ -11,7 +11,6 @@ from django.http.response import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
 from django.contrib import messages
-from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
