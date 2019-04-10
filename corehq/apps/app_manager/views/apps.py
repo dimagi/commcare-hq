@@ -824,7 +824,7 @@ def edit_app_attr(request, domain, app_id, attr):
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if attribute in linked_app_attrs:
+            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })

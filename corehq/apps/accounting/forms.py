@@ -1278,9 +1278,12 @@ class SoftwarePlanVersionForm(forms.Form):
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         'Role',
-                        InlineField('role_slug',
-                                    data_bind="value: role.existing.roleSlug",
-                                    css_class="input-xxlarge"),
+                        InlineField(
+                            'role_slug',
+                            data_bind="value: role.existing.roleSlug",
+                            css_class="input-xxlarge",
+                            style="width: 100%;",
+                        ),
                         crispy.Div(
                             data_bind="template: {"
                                       " name: 'selected-role-privileges-template', "
