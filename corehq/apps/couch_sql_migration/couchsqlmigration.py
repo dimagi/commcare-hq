@@ -164,12 +164,15 @@ class CouchSqlDomainMigrator(object):
             if form.get('problem', None):
                 self.errors_with_normal_doc_type.append(change.id)
                 continue
-            wrapped_form = XFormInstance.wrap(form)
-            form_received = wrapped_form.received_on
-            assert last_received_on <= form_received
-            last_received_on = form_received
-            self._try_to_process_form(wrapped_form, pool)
-            self._try_to_process_queues(pool)
+            try:
+                wrapped_form = XFormInstance.wrap(form)
+                form_received = wrapped_form.received_on
+                assert last_received_on <= form_received
+                last_received_on = form_received
+                self._try_to_process_form(wrapped_form, pool)
+                self._try_to_process_queues(pool)
+            except Exception:
+                log.exception("Error migrating form %s", change.id)
 
         # finish up the queues once all changes have been iterated through
         update_interval = timedelta(seconds=10)
@@ -222,8 +225,7 @@ class CouchSqlDomainMigrator(object):
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
-            log.error("Unable to migrate form: {}".format(wrapped_form.form_id))
-            raise
+            log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
             self.queues.release_lock_for_queue_obj(wrapped_form)
             self.processed_docs += 1
@@ -279,23 +281,26 @@ class CouchSqlDomainMigrator(object):
 
     def _migrate_unprocessed_form(self, couch_form_json):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
-        couch_form = _wrap_form(couch_form_json)
-        sql_form = XFormInstanceSQL(
-            form_id=couch_form.form_id,
-            xmlns=couch_form.xmlns,
-            user_id=couch_form.user_id,
-        )
-        _copy_form_properties(self.domain, sql_form, couch_form)
-        _migrate_form_attachments(sql_form, couch_form)
-        _migrate_form_operations(sql_form, couch_form)
+        try:
+            couch_form = _wrap_form(couch_form_json)
+            sql_form = XFormInstanceSQL(
+                form_id=couch_form.form_id,
+                xmlns=couch_form.xmlns,
+                user_id=couch_form.user_id,
+            )
+            _copy_form_properties(self.domain, sql_form, couch_form)
+            _migrate_form_attachments(sql_form, couch_form)
+            _migrate_form_operations(sql_form, couch_form)
 
-        if couch_form.doc_type != 'SubmissionErrorLog':
-            self._save_diffs(couch_form, sql_form)
+            if couch_form.doc_type != 'SubmissionErrorLog':
+                self._save_diffs(couch_form, sql_form)
 
-        _save_migrated_models(sql_form)
+            _save_migrated_models(sql_form)
 
-        self.processed_docs += 1
-        self._log_unprocessed_forms_processed_count(throttled=True)
+            self.processed_docs += 1
+            self._log_unprocessed_forms_processed_count(throttled=True)
+        except Exception:
+            log.exception("Error migrating form %s", couch_form_json["_id"])
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
@@ -820,7 +825,8 @@ def commit_migration(domain_name):
     clear_local_domain_sql_backend_override(domain_name)
     if not should_use_sql_backend(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
-        assert should_use_sql_backend(domain_name)
+        assert should_use_sql_backend(domain_name), \
+            "could not set use_sql_backend for domain %s (try again)" % domain_name
     datadog_counter("commcare.couch_sql_migration.total_committed")
     log.info("committed migration for {}".format(domain_name))
 
