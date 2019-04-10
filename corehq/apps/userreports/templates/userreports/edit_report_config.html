@@ -21,7 +21,7 @@
                       </div>
                       <div class="modal-body">
                         <fieldset>
-                            <legend>{% trans 'Deleting this will break below apps that refer the report' %}</legend>
+                            <legend>{% trans 'Deleting this will break below apps that refer the report. In addition there may be older app versions that depend on these reports, they are not displayed here. Please delete with caution.' %}</legend>
                             <ul>
                                 {% for app in referring_apps %}
                                     <li>
