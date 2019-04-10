@@ -193,7 +193,7 @@ def redirect_to_default(req, domain=None):
 
         if 0 == len(domains) and not req.user.is_superuser:
             from corehq.apps.registration.views import track_domainless_new_user
-            track_domainless_new_user(request)
+            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
             from corehq.apps.dashboard.views import dashboard_default
