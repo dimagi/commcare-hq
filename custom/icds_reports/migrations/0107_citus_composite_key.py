@@ -6,6 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import migrations
 
+
 def _citus_composite_key_sql(model_cls):
     pkey_name = '{}_pkey'.format(model_cls._meta.db_table)
     fields = list(model_cls._meta.unique_together)[0]
