@@ -36,10 +36,23 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
+        cursor.execute(*self.create_table_query())
         cursor.execute(self.drop_table_query())
         cursor.execute(self.aggregation_query())
         for query in self.indexes():
             cursor.execute(query)
+
+    def create_table_query(self):
+        return """
+        CREATE TABLE IF NOT EXISTS "{tablename}" (
+            CHECK (month = DATE %(date)s),
+        ) INHERITS ("{parent_tablename}")
+        """.format(
+            parent_tablename=self.base_tablename,
+            tablename=self.tablename,
+        ), {
+            "date": self.month.strftime("%Y-%m-%d"),
+        }
 
     @property
     def child_health_case_ucr_tablename(self):
