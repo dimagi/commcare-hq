@@ -7,6 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
+from corehq.util.test_utils import softer_assert
 from dimagi.utils.dates import DateSpan
 
 from .sql_fixture import load_data
@@ -65,11 +66,13 @@ class BaseReportTest(unittest.TestCase):
 
 class SimpleReportTest(BaseReportTest):
 
+    @softer_assert('sql-agg-missing-group-by')
     def test_no_group_no_filter(self):
         html_data, sort_data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
         self.assertEqual(len(sort_data), 1)
         self.assertEqual(sort_data[0], [2, 2, 66])
 
+    @softer_assert('sql-agg-missing-group-by')
     def test_no_group_with_filter(self):
         filters = ["date > :startdate"]
         report = test_report(UserTestReport, filters=filters)

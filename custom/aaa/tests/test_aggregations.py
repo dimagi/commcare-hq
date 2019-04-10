@@ -72,8 +72,12 @@ class AggregationScriptTestBase(CSVTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        _teardown_ucr_tables()
+        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman, WomanHistory):
+            model.objects.all().delete()
         super(AggregationScriptTestBase, cls).tearDownClass()
+        # teardown after the django database tear down occurs to prevent database locks
+        # UCR tables are managed through sqlalchemy and their teardown conflicted with django teardown locks
+        _teardown_ucr_tables()
 
     def _convert_decimal_to_string(self, value):
         """

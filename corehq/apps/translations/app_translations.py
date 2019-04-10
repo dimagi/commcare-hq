@@ -211,9 +211,9 @@ def run_translation_checker(file_obj):
     return translation_checker_messages, result_wb
 
 
-def validate_bulk_app_translation_upload(app, workbook, email, file_obj):
+def validate_bulk_app_translation_upload(app, workbook, email, file_obj, lang_to_compare):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
-    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
     checker_messages, result_wb = run_translation_checker(file_obj)
     if msgs:
         _email_app_translations_discrepancies(msgs, checker_messages, email, app.name, result_wb)
@@ -681,7 +681,7 @@ def _update_translation_dict(prefix, language_dict, row, langs):
             language_dict.pop(lang, None)
 
     # delete anything in language_dict that isn't in langs (anymore)
-    for lang in language_dict.keys():
+    for lang in list(language_dict.keys()):
         if lang not in langs:
             language_dict.pop(lang, None)
 
@@ -839,7 +839,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             msgs.append((
                 messages.error,
                 _("You must provide at least one translation"
-                  " for the label '%s' in sheet '%s'") % (label, sheet.worksheet.title)
+                  " for the label '{0}' in sheet '{1}'").format(label, sheet.worksheet.title)
             ))
     # Update the translations
     for lang in app.langs:

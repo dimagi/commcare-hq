@@ -5,7 +5,7 @@ hqDefine('aaa/js/filters/location_filter', [
     'moment/moment',
     'hqwebapp/js/initial_page_data',
     'aaa/js/utils/reach_utils',
-    'aaa/js/filters/location_model'
+    'aaa/js/filters/location_model',
 ], function (
     $,
     ko,
@@ -79,6 +79,10 @@ hqDefine('aaa/js/filters/location_filter', [
                 _.forEach(self.hierarchyConfig(), function (location) {
                     location.applyFilter();
                 });
+            };
+
+            params.filters[self.slug].verify = function () {
+                return true;
             };
 
             params.filters[self.slug].resetFilters = function () {

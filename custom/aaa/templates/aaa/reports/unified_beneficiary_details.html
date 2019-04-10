@@ -24,8 +24,8 @@
                     <span class="text-middle" data-bind="text: postData.selectedYear"></span>
                 </div>
                 <div class="col-md-2 border-right">
-                    <i class="fa fa-2x fa-smile-o"></i>
-                    <span class="text-middle" data-bind="text: reachUtils.toTitleCase(selectedType)"></span>
+                    <img style="width: 29px; height: 29px;" src="{% static 'aaa/images/noun_person.png' %}">
+                    <span data-bind="text: reachUtils.toTitleCase(selectedType)"></span>
                 </div>
                 <div class="col-md-8">
                     <i class="fa fa-2x fa-map-marker icon-bar"></i>
@@ -42,6 +42,7 @@
                 <div class="row shadow details-box">
                     <div class="col-md-12 main-title">
                         <h2 data-bind="text: detailsModel.personDetails.person().name"></h2>
+                        <button class="btn btn-default to-pdf-button" data-bind="click: function() { window.print(); }">{% trans "Export Report" %}</button>
                     </div>
                     <div class="col-md-12 no-padding">
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -64,9 +65,9 @@
                         </ul>
                         <div class="tab-content" id="myTabContent">
                             <div class="tab-pane fade active in" id="person-details" role="tabpanel" aria-labelledby="person-details-tab">
-                                <div class="row no-margin details-table">
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                <div class="row no-margin details-box">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Gender' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().gender"></span>
@@ -74,8 +75,8 @@
                                         </div>
                                     </div>
                                     <!-- ko if: selectedType !== 'child' -->
-                                        <div class="col-md-6 row-content">
-                                            <div class="padding-15 row">
+                                        <div class="col-md-6 table-item">
+                                            <div class="row">
                                                 <label class="col-md-5 col-form-label">{% trans 'Status' %}:</label>
                                                 <div class="col-md-7">
                                                     <span data-bind="text: detailsModel.personDetails.person().status"></span>
@@ -83,8 +84,8 @@
                                             </div>
                                         </div>
                                     <!-- /ko -->
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Date of Birth' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().dob"></span>
@@ -92,8 +93,8 @@
                                         </div>
                                     </div>
                                     <!-- ko if: selectedType !== 'child' -->
-                                        <div class="col-md-6 row-content">
-                                            <div class="padding-15 row">
+                                        <div class="col-md-6 table-item">
+                                            <div class="row">
                                                 <label class="col-md-5 col-form-label">{% trans 'Married At' %}:</label>
                                                 <div class="col-md-7">
                                                     <span data-bind="text: detailsModel.personDetails.person().marriedAt"></span>
@@ -101,16 +102,16 @@
                                             </div>
                                         </div>
                                     <!-- /ko -->
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Age' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().age"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Aadhaar No' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().aadhaarNo"></span>
@@ -121,49 +122,49 @@
                             </div>
                             <!-- ko if: selectedType !== 'child' -->
                                 <div class="tab-pane fade" id="husband-details" role="tabpanel" aria-labelledby="husband-details-tab">
-                                <div class="row no-margin details-table">
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                <div class="row no-margin details-box">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Name' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().name"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Gender' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().gender"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Date of Birth' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().dob"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Age husband' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().age"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Married at' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().marriedAt"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Aadhaar no' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.husband().aadhaarNo"></span>
@@ -175,17 +176,17 @@
                             <!-- /ko -->
                             <!-- ko if: selectedType === 'child' -->
                                 <div class="tab-pane fade" id="mother-details" role="tabpanel" aria-labelledby="mother-details-tab">
-                                <div class="row no-margin details-table">
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                <div class="row no-margin details-box">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Name' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="html: detailsModel.personDetails.mother().nameLink"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label"></label>
                                             <div class="col-md-7">
                                                 <span></span>
@@ -196,65 +197,65 @@
                             </div>
                             <!-- /ko -->
                             <div class="tab-pane fade" id="other-details" role="tabpanel" aria-labelledby="other-details-tab">
-                                <div class="row no-margin details-table">
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                <div class="row no-margin details-box">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Address' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().address"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Subcentre' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().subcentre"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Village' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().village"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Anganwadi Centre' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().anganwadiCentre"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Phone no' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().phone"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Religion household' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().religion"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'Caste household' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().caste"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 row-content">
-                                        <div class="padding-15 row">
+                                    <div class="col-md-6 table-item">
+                                        <div class="row">
                                             <label class="col-md-5 col-form-label">{% trans 'BPL/APL' %}:</label>
                                             <div class="col-md-7">
                                                 <span data-bind="text: detailsModel.personDetails.person().bplOrApl"></span>
@@ -362,7 +363,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('pregnancy_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Pregnancy Details' %}</h4>
                     </div>
@@ -485,7 +486,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('antenatal_care_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 table-title">
                         <div class="row">
                             <div class="col-md-4"><h4>{% trans 'Antenatal Care' %}</h4></div>
@@ -649,7 +650,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('abortion_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Abortion Details' %}</h4>
                     </div>
@@ -731,7 +732,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('delivery_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Delivery Details' %}</h4>
                     </div>
@@ -941,7 +942,7 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('infant_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Infant Details' %}</h4>
                     </div>
@@ -1077,91 +1078,91 @@
                 <br/>
             <!-- /ko -->
             <!-- ko if: showSection('vaccination_details') -->
-                <div class="row shadow details-box">
+                <div class="row shadow details-box break">
                     <div class="col-md-12 secondary-title">
                         <h4>{% trans 'Vaccination Details' %}</h4>
                     </div>
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due at birth" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.atBirth -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due at 6 weeks" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.sixWeek -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due at 10 weeks" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.tenWeek -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due at 14 weeks" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.fourteenWeek -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due between 9 and 12 months" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.nineTwelveMonths -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due between 16 and 24 months" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.sixTeenTwentyFourMonth -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
-                    <div class="col-md-12 row-content padding-15 subtitle">
+                    <div class="col-md-12 table-item subtitle">
                         {% trans "Due between 24 and 72 months" %}
                     </div>
                     <!-- ko foreach: detailsModel.infantDetails().vaccinationDetails.twentyTwoSeventyTwoMonth -->
                         <div class="col-md-2-5">
                             <div class="row details-box no-margin center">
-                                <div class="col-md-12 row-content padding-15"><strong data-bind="text: vitaminName"></strong></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: date"></span></div>
-                                <div class="col-md-12 row-content padding-15"><span data-bind="text: adverseEffects"></span></div>
+                                <div class="col-md-12 table-item"><strong data-bind="text: vitaminName"></strong></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: date"></span></div>
+                                <div class="col-md-12 table-item"><span data-bind="text: adverseEffects"></span></div>
                             </div>
                         </div>
                     <!-- /ko -->
@@ -1208,7 +1209,7 @@
                     </div>
                     <div class="col-md-6 table-item">
                         <div class="row">
-                            <label class="col-md-6 col-form-label">{% trans 'Previouts Growth Monitoring Status' %}:</label>
+                            <label class="col-md-6 col-form-label">{% trans 'Previous Growth Monitoring Status' %}:</label>
                             <div class="col-md-6">
                                 <span data-bind="text: detailsModel.infantDetails().previousGrowthMonitoringStatus"></span>
                             </div>

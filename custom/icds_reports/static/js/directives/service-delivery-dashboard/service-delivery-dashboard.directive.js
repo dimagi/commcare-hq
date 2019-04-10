@@ -139,12 +139,16 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
     function simpleRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + full[indicator] + '</div>' || vm.dataNotEntered;
+            return '<div>' + (
+                full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered
+            ) + '</div>';
         };
     }
     function simpleYesNoRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + full[indicator] && full[indicator] !== vm.dataNotEntered ? 'Yes' : 'No' + '</div>' || vm.dataNotEntered;
+            return '<div>' + (
+                full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered
+            ) + '</div>';
         };
     }
     function renderHomeVisits(data, type, full) {

@@ -56,7 +56,8 @@ TAG_INTERNAL = Tag(
     css_class='default',
     description="These are tools for our engineering team to use to manage the product",
 )
-ALL_TAGS = [TAG_CUSTOM, TAG_DEPRECATED, TAG_PRODUCT, TAG_SOLUTIONS, TAG_INTERNAL]
+# Order roughly corresponds to how much we want you to use it
+ALL_TAGS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
 
 
 class StaticToggle(object):
@@ -1034,6 +1035,19 @@ BASIC_CHILD_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LEGACY_CHILD_MODULES = StaticToggle(
+    'legacy_child_modules',
+    'Legacy, non-nested child modules',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Child Menus are now displayed nested under their parent menu. Some "
+        "apps built before this change will require that their modules be "
+        "reordered to fit this paradigm. This feature flag exists to support "
+        "those applications until they're transitioned."
+    )
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1061,6 +1075,13 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'Use SMS with inactive contacts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+INCLUDE_SMS_ERRORS = StaticToggle(
+    'include_sms_errors',
+    "Include failed messages in Message Log Report",
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1728,4 +1749,19 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     'Enables the "variant" version of the Demo Workflow A/B test after login',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+)
+
+
+PARALLEL_MPR_ASR_REPORT = StaticToggle(
+    'parallel_mpr_asr_report',
+    'Release parallel loading of MPR and ASR report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+IMPROVED_ASR_REPORT = StaticToggle(
+    'improved_asr_report',
+    'This makes ASR report use the new asr_2_3 UCR report',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

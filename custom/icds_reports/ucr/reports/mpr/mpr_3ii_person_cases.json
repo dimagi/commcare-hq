@@ -1,0 +1,164 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "static-mpr_3ii_person_cases",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "MPR - 3ii - Person cases (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id"
+    ],
+    "filters": [
+      {
+        "display": "Date Case Opened",
+        "slug": "opened_on",
+        "type": "date",
+        "field": "opened_on",
+        "datatype": "date"
+      },
+      {
+        "display": "Age at Registration Low Bound",
+        "slug": "age_at_reg",
+        "type": "numeric",
+        "field": "age_at_reg",
+        "datatype": "integer"
+      },
+      {
+        "display": "Age at Registration High Bound",
+        "slug": "age_at_reg1",
+        "type": "numeric",
+        "field": "age_at_reg",
+        "datatype": "integer"
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+            "field": "supervisor_id",
+            "location_type": "supervisor"
+        }
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        }
+      }
+    ],
+    "columns": [
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        }
+      },
+      {
+        "display": "F_resident_count",
+        "column_id": "F_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident = 1": 1
+        }
+      },
+      {
+        "display": "M_resident_count",
+        "column_id": "M_resident_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident = 1": 1
+        }
+      },
+      {
+        "display": "F_migrant_count",
+        "column_id": "F_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex = 'F' AND resident != 1": 1
+        }
+      },
+      {
+        "display": "M_migrant_count",
+        "column_id": "M_migrant_count",
+        "type": "sum_when",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": {
+          "closed_on IS NULL AND sex IN ('M', 'O') AND resident != 1": 1
+        }
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

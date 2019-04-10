@@ -77,7 +77,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     UserQueryError,
-)
+    translate_programming_error, TableNotFoundWarning)
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
@@ -863,7 +863,8 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store_for_doc_type(domain, usable_type)
+        document_store = get_document_store_for_doc_type(
+            domain, usable_type, load_source="eval_expression")
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -910,18 +911,6 @@ def evaluate_data_source(request, domain):
     docs_id = request.POST['docs_id']
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
-        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
-        rows = []
-        for doc in document_store.iter_documents(docs_id):
-            for row in data_source.get_all_values(doc):
-                rows.append({i.column.database_column_name: i.value for i in row})
-        return JsonResponse(data={
-            'rows': rows,
-            'columns': [
-                column.database_column_name for column in data_source.get_columns()
-            ],
-        })
     except DataSourceConfigurationNotFoundError:
         return JsonResponse(
             {"error": _("Data source with id {} not found in domain {}.").format(
@@ -929,6 +918,45 @@ def evaluate_data_source(request, domain):
             )},
             status=404,
         )
+
+    docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+    document_store = get_document_store_for_doc_type(
+        domain, data_source.referenced_doc_type, load_source="eval_data_source")
+    rows = []
+    docs = 0
+    for doc in document_store.iter_documents(docs_id):
+        docs += 1
+        for row in data_source.get_all_values(doc):
+            rows.append({i.column.database_column_name.decode(): i.value for i in row})
+
+    if not docs:
+        return JsonResponse(data={'error': _('No documents found. Check the IDs and try again.')}, status=404)
+
+    data = {
+        'rows': rows,
+        'db_rows': [],
+        'columns': [
+            column.database_column_name.decode() for column in data_source.get_columns()
+        ],
+    }
+
+    try:
+        adapter = get_indicator_adapter(data_source)
+        table = adapter.get_table()
+        query = adapter.get_query_object().filter(table.c.doc_id.in_(docs_id))
+        db_rows = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in query
+        ]
+        data['db_rows'] = db_rows
+    except ProgrammingError as e:
+        err = translate_programming_error(e)
+        if err and isinstance(err, TableNotFoundWarning):
+            data['db_error'] = _("Datasource table does not exist. Try rebuilding the datasource.")
+        else:
+            data['db_error'] = _("Error querying database for data.")
+
+    return JsonResponse(data=data)
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):

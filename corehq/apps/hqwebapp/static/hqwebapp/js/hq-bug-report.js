@@ -14,6 +14,7 @@ hqDefine('hqwebapp/js/hq-bug-report', [
         var resetForm = function () {
             $hqwebappBugReportForm.find("button[type='submit']").button('reset');
             $hqwebappBugReportForm.resetForm();
+            $hqwebappBugReportCancel.enableButton();
             $hqwebappBugReportSubmit.button('reset');
             $ccFormGroup.removeClass('has-error has-feedback');
             $ccFormGroup.find(".label-danger").addClass('hide');
