@@ -2386,8 +2386,6 @@ class ManageAppReleasesForm(forms.Form):
         self.fields['app_id'].choices = self.app_id_choices()
         if request.GET.get('app_id'):
             self.fields['app_id'].initial = request.GET.get('app_id')
-        if request.GET.get('version'):
-            self.fields['version'].initial = request.GET.get('version')
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
