@@ -60,4 +60,5 @@ branches:
   #- jls/reports-select2-v4  # Jenny April 9
   - es/sms-log-report  # Ethan April 10
   - location_query_help_text  # Nick April 10
+  - skip-setting  # Nick April 10
 submodules: {}
