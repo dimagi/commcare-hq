@@ -150,8 +150,8 @@ from corehq.apps.app_manager.util import (
     module_offers_search,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
-    get_app_release_by_location,
-    expire_get_app_release_by_location_cache,
+    get_latest_app_release_by_location,
+    expire_get_latest_app_release_by_location_cache,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -5984,11 +5984,11 @@ class AppReleaseByLocation(models.Model):
 
     def save(self, *args, **kwargs):
         super(AppReleaseByLocation, self).save(*args, **kwargs)
-        expire_get_app_release_by_location_cache(self)
+        expire_get_latest_app_release_by_location_cache(self)
 
     def clean(self):
         if self.active:
-            enabled_release = get_app_release_by_location(self.domain, self.location.location_id, self.app_id)
+            enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id, self.app_id)
             if enabled_release and enabled_release.version > self.version:
                 raise ValidationError({'version': _("Higher version {} already enabled for this application and "
                                                     "location").format(enabled_release.version)})

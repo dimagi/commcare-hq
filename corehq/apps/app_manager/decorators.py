@@ -13,7 +13,7 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import get_app_release_by_location, get_latest_enabled_build_for_profile
+from corehq.apps.app_manager.util import get_latest_app_release_by_location, get_latest_enabled_build_for_profile
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, CommCareUser
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -62,7 +62,7 @@ def _get_latest_enabled_build(domain, username, app_id, profile_id, location_fla
         user_location_id = user.location_id
         if user_location_id:
             parent_app_id = get_app(domain, app_id).copy_of
-            latest_enabled_build = get_app_release_by_location(domain, user_location_id, parent_app_id)
+            latest_enabled_build = get_latest_app_release_by_location(domain, user_location_id, parent_app_id)
     if not latest_enabled_build:
         # Fall back to the old logic to support migration
         # ToDo: Remove this block once migration is complete

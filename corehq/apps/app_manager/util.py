@@ -639,7 +639,7 @@ def get_latest_enabled_build_for_profile(domain, profile_id):
 
 
 @quickcache(['domain', 'location_id', 'app_id'], timeout=24 * 60 * 60)
-def get_app_release_by_location(domain, location_id, app_id):
+def get_latest_app_release_by_location(domain, location_id, app_id):
     """
     for a location search for enabled app releases for all parent locations.
     Child location's setting takes precedence over parent
@@ -664,7 +664,7 @@ def get_app_release_by_location(domain, location_id, app_id):
             return get_app(domain, build_id)
 
 
-def expire_get_app_release_by_location_cache(app_release_by_location):
+def expire_get_latest_app_release_by_location_cache(app_release_by_location):
     """
     expire cache for the location and its descendants for the app corresponding to this enabled app release
     why? : Latest enabled release for a location is dependent on restrictions added for
@@ -674,7 +674,7 @@ def expire_get_app_release_by_location_cache(app_release_by_location):
     location = SQLLocation.active_objects.get(location_id=app_release_by_location.location_id)
     location_and_descendants = location.get_descendants(include_self=True)
     for loc in location_and_descendants:
-        get_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
+        get_latest_app_release_by_location.clear(app_release_by_location.domain, loc.location_id,
                                           app_release_by_location.app_id)
 
 
