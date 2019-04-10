@@ -2055,7 +2055,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         self.addCleanup(user_in_wrong_domain.delete)
 
-        user_in_wrong_domain_credentials = self._get_basic_credentials(user_in_wrong_domain_name, user_in_wrong_domain_password)
+        user_in_wrong_domain_credentials = self._get_basic_credentials(
+            user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
             HTTP_AUTHORIZATION='Basic ' + user_in_wrong_domain_credentials
