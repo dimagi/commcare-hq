@@ -6002,14 +6002,14 @@ class AppReleaseByLocation(models.Model):
         :param build_id: id of the build corresponding to the version
         """
         try:
-            enabled_app_release = AppReleaseByLocation.objects.get(
+            release = AppReleaseByLocation.objects.get(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
         except cls.DoesNotExist:
-            enabled_app_release = AppReleaseByLocation(
+            release = AppReleaseByLocation(
                 domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
             )
-        enabled_app_release.activate() if active else enabled_app_release.deactivate()
+        release.activate() if active else release.deactivate()
 
     def deactivate(self):
         self.active = False

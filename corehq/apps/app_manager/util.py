@@ -652,8 +652,8 @@ def get_latest_app_release_by_location(domain, location_id, app_id):
     # for a location. Do not use the first object itself in order to respect the location hierarchy and use
     # the closest location to determine the valid active release
     latest_enabled_releases = {
-        enabled_release.location_id: enabled_release.build_id
-        for enabled_release in
+        release.location_id: release.build_id
+        for release in
         AppReleaseByLocation.objects.filter(
             location_id__in=location_and_ancestor_ids, app_id=app_id, domain=domain, active=True).order_by(
             'version')

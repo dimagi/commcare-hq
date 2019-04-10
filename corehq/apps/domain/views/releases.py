@@ -100,9 +100,9 @@ def activate_release_restriction(request, domain, restriction_id):
 def update_release_restriction(request, domain, restriction_id, active):
     if not toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(request):
         return HttpResponseForbidden()
-    app_release_by_location = AppReleaseByLocation.objects.get(id=restriction_id, domain=domain)
+    release = AppReleaseByLocation.objects.get(id=restriction_id, domain=domain)
     try:
-        app_release_by_location.activate() if active else app_release_by_location.deactivate()
+        release.activate() if active else release.deactivate()
     except ValidationError as e:
         response_content = {
             'message': ','.join(e.messages)
@@ -111,9 +111,9 @@ def update_release_restriction(request, domain, restriction_id, active):
         response_content = {
             'id': restriction_id,
             'success': True,
-            'activated_on': (datetime.strftime(app_release_by_location.activated_on, '%Y-%m-%d %H:%M:%S')
-                             if app_release_by_location.activated_on else None),
-            'deactivated_on': (datetime.strftime(app_release_by_location.deactivated_on, '%Y-%m-%d %H:%M:%S')
-                               if app_release_by_location.deactivated_on else None),
+            'activated_on': (datetime.strftime(release.activated_on, '%Y-%m-%d %H:%M:%S')
+                             if release.activated_on else None),
+            'deactivated_on': (datetime.strftime(release.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if release.deactivated_on else None),
         }
     return HttpResponse(json.dumps(response_content), content_type='application/json')
