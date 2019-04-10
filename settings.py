@@ -537,6 +537,7 @@ CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
+# in seconds
 CELERY_HEARTBEAT_THRESHOLDS = {
     "analytics_queue": 30 * 60,
     "async_restore_queue": 60,
@@ -808,10 +809,6 @@ S3_SECRET_KEY = None
 SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
-
-ENVIRONMENT_HOSTS = {
-    'pillowtop': ['localhost']
-}
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
@@ -1836,6 +1833,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
@@ -2085,6 +2083,7 @@ DATADOG_DOMAINS = {
     ("production", "malawi-fp-study"),
     ("production", "no-lean-season"),
     ("production", "rec"),
+    ("production", "isth-production"),
     ("production", "sauti-1"),
 }
 

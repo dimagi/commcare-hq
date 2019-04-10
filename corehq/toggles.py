@@ -1077,6 +1077,15 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SMS_LOG_CHANGES = StaticToggle(
+    'sms_log_changes',
+    "Message Log Report: Test new additions",
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    description=("Include failed messages, show message status, show event. "
+                 "This feature flag exists to QA on real prod data."),
+)
+
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     'enable_include_sms_gateway_charging',
     'Enable include SMS gateway charging',
@@ -1743,4 +1752,11 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'Release parallel loading of MPR and ASR report',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+IMPROVED_ASR_REPORT = StaticToggle(
+    'improved_asr_report',
+    'This makes ASR report use the new asr_2_3 UCR report',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

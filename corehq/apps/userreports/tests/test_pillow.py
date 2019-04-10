@@ -19,7 +19,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
-from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
+from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator, Validation, InvalidUCRData
 from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, \
     ConfigurableReportPillowProcessor
@@ -80,6 +80,11 @@ class ChunkedUCRProcessorTest(TestCase):
 
     def tearDown(self):
         self.adapter.clear_table()
+        delete_all_cases()
+        delete_all_xforms()
+        InvalidUCRData.objects.all().delete()
+        self.config.validations = []
+        self.config.save()
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     def test_basic_sql(self, processor_patch):
@@ -91,7 +96,6 @@ class ChunkedUCRProcessorTest(TestCase):
         )
         # processor.process_change should not get called but processor.process_changes_chunk
         self.assertFalse(processor_patch.called)
-        self._delete_cases(cases)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def _create_cases(self, datetime_mock, docs=[]):
@@ -107,10 +111,6 @@ class ChunkedUCRProcessorTest(TestCase):
             for doc in docs
         ]
         return cases
-
-    def _delete_cases(self, cases):
-        for case in cases:
-            CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
     def _create_and_process_changes(self, docs=[]):
         since = self.pillow.get_change_feed().get_latest_offsets()
@@ -129,7 +129,6 @@ class ChunkedUCRProcessorTest(TestCase):
         process_changes_patch.assert_called_once()
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 10)
-        self._delete_cases(cases)
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
@@ -144,7 +143,6 @@ class ChunkedUCRProcessorTest(TestCase):
 
         # since chunked processing failed, normal processing should get called
         process_change_patch.assert_has_calls([mock.call(mock.ANY)] * 4)
-        self._delete_cases(cases)
 
     @mock.patch('corehq.form_processor.document_stores.ReadonlyCaseDocumentStore.iter_documents')
     def test_partial_fallback_data(self, iter_docs_patch):
@@ -162,7 +160,6 @@ class ChunkedUCRProcessorTest(TestCase):
             set([case.case_id for case in cases]),
             set([row.doc_id for row in query.all()])
         )
-        self._delete_cases(cases)
 
     def test_get_docs(self):
         docs = [
@@ -179,7 +176,59 @@ class ChunkedUCRProcessorTest(TestCase):
             set([c.id for c in changes]),
             set([doc['_id'] for doc in result_docs])
         )
-        self._delete_cases(cases)
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
+    def test_invalid_data_bulk_processor(self, process_change):
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+        self.config.save()
+
+        cases = self._create_and_process_changes()
+        num_rows = self.adapter.get_query_object().count()
+        self.assertEqual(num_rows, 0)
+        invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
+        self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
+        # processor.process_change should not get called but processor.process_changes_chunk
+        self.assertFalse(process_change.called)
+
+    @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
+    def test_invalid_data_serial_processor(self, process_changes_chunk):
+        process_changes_chunk.side_effect = Exception
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+        self.config.save()
+
+        cases = self._create_and_process_changes()
+        num_rows = self.adapter.get_query_object().count()
+        self.assertEqual(num_rows, 0)
+        invalid_data = InvalidUCRData.objects.all().values_list('doc_id', flat=True)
+        self.assertEqual(set([case.case_id for case in cases]), set(invalid_data))
 
 
 class IndicatorPillowTest(TestCase):
@@ -555,12 +604,15 @@ class AsyncIndicatorTest(TestCase):
     def tearDownClass(cls):
         cls.config.delete()
         cls.adapter.drop_table()
-        delete_all_cases()
-        delete_all_xforms()
         super(AsyncIndicatorTest, cls).tearDownClass()
 
     def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
         AsyncIndicator.objects.all().delete()
+        InvalidUCRData.objects.all().delete()
+        self.config.validations = []
+        self.config.save()
 
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
@@ -646,6 +698,52 @@ class AsyncIndicatorTest(TestCase):
         errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
+
+    def test_async_invalid_data(self):
+        self.config.validations = [
+            Validation.wrap({
+                "name": "impossible_condition",
+                "error_message": "This condition is impossible to satisfy",
+                "expression": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "doesnt_exist"
+                    },
+                    "operator": "in",
+                    "property_value": ["nonsense"]
+                }
+            })
+        ]
+
+        self.config.save()
+        parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
+        since = self.pillow.get_change_feed().get_latest_offsets()
+        for i in range(3):
+            form, cases = post_case_blocks(
+                [
+                    CaseBlock(
+                        create=i == 0,
+                        case_id=parent_id,
+                        case_name='parent-name',
+                        case_type='bug',
+                        update={'update-prop-parent': i},
+                    ).as_xml(),
+                    CaseBlock(
+                        create=i == 0,
+                        case_id=child_id,
+                        case_name='child-name',
+                        case_type='bug-child',
+                        index={'parent': ('bug', parent_id)},
+                        update={'update-prop-child': i}
+                    ).as_xml()
+                ], domain=self.domain
+            )
+        self.pillow.process_changes(since=since, forever=False)
+
+        # run async queue
+        queue_async_indicators()
+        self.assertEqual(InvalidUCRData.objects.count(), 1)
 
 
 class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):

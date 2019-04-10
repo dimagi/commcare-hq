@@ -26,6 +26,8 @@ from six.moves import zip
 from functools import reduce
 from six.moves import range
 
+from corehq.util.soft_assert import soft_assert
+
 
 class SqlReportException(Exception):
     pass
@@ -254,10 +256,13 @@ class SqlData(ReportDataSource):
             return []
 
     def query_context(self, start=None, limit=None):
-        return sqlagg.QueryContext(
+        qc = sqlagg.QueryContext(
             self.table_name, self.wrapped_filters, self.group_by, self.order_by,
             start=start, limit=limit
         )
+        for c in self.columns:
+            qc.append_column(c.view)
+        return qc
 
     def get_data(self, start=None, limit=None):
         data = self._get_data(start=start, limit=limit)
@@ -276,10 +281,26 @@ class SqlData(ReportDataSource):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
-        qc = self.query_context(start=start, limit=limit)
-        for c in self.columns:
-            qc.append_column(c.view)
+        if not self.group_by:
+            query_meta = []
+            try:
+                sql = self.get_sql_queries()
+            except NotImplementedError:
+                sql = 'unknown'
+                query_meta = [
+                    cls.__class__.__name__
+                    for cls in self.query_context().query_meta.values()
+                ]
 
+            soft_assert(
+                to='{}@{}'.format('skelly', 'dimagi.com'),
+                exponential_backoff=True,
+            )(False, "sql-agg called without group_by", {
+                'queries': sql,
+                'custom_meta': query_meta
+            })
+
+        qc = self.query_context(start=start, limit=limit)
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.resolve(session.connection(), self.filter_values)
@@ -290,9 +311,6 @@ class SqlData(ReportDataSource):
 
     def get_sql_queries(self):
         qc = self.query_context()
-        for c in self.columns:
-            qc.append_column(c.view)
-
         session_helper = connection_manager.get_session_helper(self.engine_id)
         with session_helper.session_context() as session:
             return qc.get_query_strings(session.connection())

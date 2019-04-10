@@ -357,7 +357,7 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
             file_name = 'flagspecs.yaml'
         path = os.path.join(os.path.dirname(__file__), file_name)
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
@@ -371,7 +371,7 @@ class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
 
 class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
@@ -385,7 +385,7 @@ class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
 
 def abt_supervisor_expression(spec, context):

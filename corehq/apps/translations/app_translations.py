@@ -681,7 +681,7 @@ def _update_translation_dict(prefix, language_dict, row, langs):
             language_dict.pop(lang, None)
 
     # delete anything in language_dict that isn't in langs (anymore)
-    for lang in language_dict.keys():
+    for lang in list(language_dict.keys()):
         if lang not in langs:
             language_dict.pop(lang, None)
 

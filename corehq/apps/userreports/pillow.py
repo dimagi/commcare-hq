@@ -266,7 +266,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         for doc in docs:
             eval_context = EvaluationContext(doc)
             for adapter in adapters:
-                if adapter.config.filter(doc):
+                if adapter.config.filter(doc, eval_context):
                     if adapter.run_asynchronous:
                         async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                     else:
@@ -362,7 +362,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # make copy to avoid modifying list during iteration
             adapters = list(self.table_adapters_by_domain[domain])
             for table in adapters:
-                if table.config.filter(doc):
+                if table.config.filter(doc, eval_context):
                     if table.run_asynchronous:
                         async_tables.append(table.config._id)
                     else:

@@ -135,7 +135,7 @@ def check_celery():
         if threshold:
             threshold = datetime.timedelta(seconds=threshold)
             try:
-                blockage_duration = Heartbeat(queue).get_blockage_duration()
+                blockage_duration = Heartbeat(queue).get_and_report_blockage_duration()
             except HeartbeatNeverRecorded:
                 blocked_queues.append((queue, 'as long as we can see', threshold))
             else:
