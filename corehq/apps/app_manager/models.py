@@ -6024,7 +6024,7 @@ class AppReleaseByLocation(models.Model):
 
     def to_json(self):
         return {
-            'location': self.location.name,
+            'location': self.location.get_path_display(),
             'app': self.app_id,
             'build_id': self.build_id,
             'version': self.version,
