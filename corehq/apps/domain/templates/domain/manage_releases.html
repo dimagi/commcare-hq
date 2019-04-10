@@ -8,9 +8,11 @@
 {% block page_content %}
     {% initial_page_data 'app_releases_by_location' app_releases_by_location %}
     {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
+    {% initial_page_data 'locationSearchSelectInitialValue' selected_location_details %}
     {% registerurl 'deactivate_release_restriction' domain '---'%}
     {% registerurl 'activate_release_restriction' domain '---'%}
     {% registerurl "paginate_releases" domain '---' %}
+    {% registerurl 'location_search' domain %}
 
     <div class="row">
         <div class="col-sm-12">

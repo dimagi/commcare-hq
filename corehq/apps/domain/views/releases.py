@@ -11,6 +11,7 @@ from django.http.response import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.core.exceptions import ValidationError
 from django.contrib import messages
+from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
@@ -19,6 +20,7 @@ from corehq.apps.domain.forms import ManageAppReleasesForm
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_select2_v4
+from corehq.apps.locations.models import SQLLocation
 
 
 @method_decorator([toggles.MANAGE_RELEASES_PER_LOCATION.required_decorator()], name='dispatch')
@@ -40,12 +42,20 @@ class ManageReleases(BaseProjectSettingsView):
         )
         return form
 
+    @staticmethod
+    def _location_path_display(location_id):
+        return SQLLocation.active_objects.get(location_id=location_id).get_path_display()
+
     @property
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         q = AppReleaseByLocation.objects.filter(domain=self.domain)
-        if self.request.GET.get('location_id'):
-            q = q.filter(location_id=self.request.GET.get('location_id'))
+        location_id_slug = self.request.GET.get('location_id')
+        location_id = None
+        if location_id_slug:
+            location_id = self.manage_releases_form.extract_location_id(location_id_slug)
+            if location_id:
+                q = q.filter(location_id=location_id)
         if self.request.GET.get('app_id'):
             q = q.filter(app_id=self.request.GET.get('app_id'))
         version = self.request.GET.get('version')
@@ -59,6 +69,9 @@ class ManageReleases(BaseProjectSettingsView):
             'manage_releases_form': self.manage_releases_form,
             'app_releases_by_location': app_releases_by_location,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
+            'selected_location_details': ({'id': location_id_slug,
+                                           'text': self._location_path_display(location_id)}
+                                          if location_id else None),
         }
 
     def post(self, request, *args, **kwargs):

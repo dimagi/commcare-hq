@@ -4,6 +4,7 @@ hqDefine('app_manager/js/manage_releases', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
+    'locations/js/utils',
     'hqwebapp/js/widgets_v4', // using select2/dist/js/select2.full.min for ko-select2 on location select
     'translations/js/app_translations',
 ], function (
@@ -11,7 +12,8 @@ hqDefine('app_manager/js/manage_releases', [
     ko,
     _,
     initialPageData,
-    assertProperties
+    assertProperties,
+    locationUtils
 ) {
     'use strict';
     $(function () {
@@ -91,7 +93,7 @@ hqDefine('app_manager/js/manage_releases', [
             var self = {};
             self.search = function () {
                 var appId = $("#app-id-search-select").val();
-                var locationId = $("#location-search-select").val();
+                var locationId = $("#location_search_select").val();
                 var version = $("#version-input").val() || '';
                 window.location.search = ("location_id=" + locationId + "&app_id=" + appId + "&version=" +
                     version);
@@ -103,5 +105,6 @@ hqDefine('app_manager/js/manage_releases', [
         }
         var searchViewModel = manageReleaseSearchViewModel();
         $("#manage-app-releases").koApplyBindings(searchViewModel);
+        locationUtils.enableLocationSearchSelect();
     });
 });

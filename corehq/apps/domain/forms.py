@@ -2377,7 +2377,7 @@ class SelectSubscriptionTypeForm(forms.Form):
 
 class ManageAppReleasesForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
-    location_id = forms.ChoiceField(label=ugettext_lazy("Location"), choices=(), required=False)
+    location_id = forms.CharField(label=ugettext_lazy("Location"), widget=Select(choices=[]), required=False)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
 
     def __init__(self, request, domain, *args, **kwargs):
@@ -2386,9 +2386,6 @@ class ManageAppReleasesForm(forms.Form):
         self.fields['app_id'].choices = self.app_id_choices()
         if request.GET.get('app_id'):
             self.fields['app_id'].initial = request.GET.get('app_id')
-        self.fields['location_id'].choices = self.location_id_choices()
-        if request.GET.get('location_id'):
-            self.fields['location_id'].initial = request.GET.get('location_id')
         if request.GET.get('version'):
             self.fields['version'].initial = request.GET.get('version')
         self.helper = HQFormHelper()
@@ -2396,7 +2393,7 @@ class ManageAppReleasesForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Field('app_id', id='app-id-search-select', css_class="ko-select2"),
-            crispy.Field('location_id', id='location-search-select', css_class="ko-select2"),
+            crispy.Field('location_id', id='location_search_select'),
             crispy.Field('version', id='version-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -2413,11 +2410,6 @@ class ManageAppReleasesForm(forms.Form):
             choices.append((app.id, app.name))
         return choices
 
-    def location_id_choices(self):
-        choices = [(None, _('Select Location'))]
-        choices.extend(SQLLocation.active_objects.filter(domain=self.domain).values_list('location_id', 'name'))
-        return choices
-
     @cached_property
     def version_build_id(self):
         app_id = self.cleaned_data['app_id']
@@ -2428,6 +2420,12 @@ class ManageAppReleasesForm(forms.Form):
         if not self.cleaned_data.get('app_id'):
             self.add_error('app_id', _("Please select application"))
         return self.cleaned_data.get('app_id')
+
+    @staticmethod
+    def extract_location_id(location_id_slug):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
+        return selected_ids[0] if selected_ids else None
 
     def clean_location_id(self):
         if not self.cleaned_data.get('location_id'):
@@ -2449,7 +2447,7 @@ class ManageAppReleasesForm(forms.Form):
                 self.add_error('version', e)
 
     def save(self):
-        location_id = self.cleaned_data['location_id']
+        location_id = self.extract_location_id(self.cleaned_data['location_id'])
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
         try:
