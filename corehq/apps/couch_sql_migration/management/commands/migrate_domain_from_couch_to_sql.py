@@ -130,7 +130,7 @@ class Command(BaseCommand):
                     "Are you sure you want to continue?".format(domain)
                 )
             set_couch_sql_migration_not_started(domain)
-            _blow_away_migration(domain)
+            blow_away_migration(domain)
 
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
@@ -250,7 +250,7 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def _blow_away_migration(domain):
+def blow_away_migration(domain):
     assert not should_use_sql_backend(domain)
     delete_diff_db(domain)
 
