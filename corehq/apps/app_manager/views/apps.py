@@ -460,9 +460,10 @@ def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_do
     try:
         app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties)
     except ReportConfigurationNotFoundError:
-        messages.error(request, _("Copying the application failed because "
-                                  "your application contains a Report Module "
-                                  "that references a static UCR configuration."))
+        messages.error(request, _("Copying the application succeeded, but the application will have errors "
+                                  "because your application contains a Report Module that references "
+                                  "a static UCR configuration.")
+        )
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, app_id]))
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
