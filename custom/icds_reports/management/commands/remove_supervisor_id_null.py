@@ -21,7 +21,6 @@ def get_count_sql(ucr_table):
     """.format(ucr_table=ucr_table)
 
 
-
 def get_sql_scripts(delete=False):
     table_names = [
         'ucr_icds-cas_dashboard_child_health_daily_2cd9a7c1',
@@ -33,7 +32,6 @@ def get_sql_scripts(delete=False):
         'ucr_icds-cas_static-child_delivery_forms_eafd4095',
         'ucr_icds-cas_static-child_health_cases_a46c129f',
         'ucr_icds-cas_static-child_tasks_cases_3548e54b',
-        'ucr_icds-cas_static-commcare_user_cases_85763310',
         'ucr_icds-cas_static-complementary_feeding_f2d76da0',
         'ucr_icds-cas_static-daily_feeding_forms_85b1167f',
         'ucr_icds-cas_static-dashboard_birth_prepa_e3e359ff',
