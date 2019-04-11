@@ -819,7 +819,12 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     """
     # todo: clean up this API?
     from django.http import HttpRequest
-
+    if not request:
+        request = HttpRequest()
+        request.couch_user = couch_user
+        request.user = couch_user.get_django_user()
+        request.domain = domain
+        request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
     return _render_report_configs(
         request,
