@@ -196,26 +196,35 @@ class UnifiedBeneficiaryReportAPI(View):
         sort_column_dir = self.request.POST.get('sortColumnDir', 'asc')
 
         location_filters = build_location_filters(selected_location, selected_ministry, with_child=False)
-
+        sort_column_with_dir = sort_column
         if sort_column_dir == 'desc':
-            sort_column = '-' + sort_column
+            sort_column_with_dir = '-' + sort_column
         data = []
         if beneficiary_type == 'child':
-            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column)
+            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column_with_dir)
         elif beneficiary_type == 'eligible_couple':
-            data = EligibleCoupleQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
+            data = EligibleCoupleQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
         elif beneficiary_type == 'pregnant_women':
-            data = PregnantWomanQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
+            sort_column_with_dir = '"%s" %s' % (sort_column, sort_column_dir)
+            data = PregnantWomanQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
         if data:
-            number_of_data = data.count()
+            number_of_data = len(data)
             data = data[start:start + length]
         else:
             number_of_data = 0
         if beneficiary_type == 'eligible_couple':
             month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
             data = EligibleCoupleQueryHelper.update_list(data, month_end)
-        elif beneficiary_type == 'pregnant_women':
-            data = PregnantWomanQueryHelper.update_list(data)
         data = list(data)
         return JsonResponse(data={
             'rows': data,
