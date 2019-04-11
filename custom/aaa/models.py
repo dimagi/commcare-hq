@@ -1009,9 +1009,18 @@ class AggLocation(models.Model):
     registered_children = models.PositiveIntegerField(null=True)
 
     eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
-    high_risk_pregnancies = models.PositiveIntegerField(null=True)
-    institutional_deliveries = models.PositiveIntegerField(null=True)
-    total_deliveries = models.PositiveIntegerField(null=True)
+    high_risk_pregnancies = models.PositiveIntegerField(
+        null=True,
+        help_text="hrp=yes when the ccs record was open and pregnant during the month"
+    )
+    institutional_deliveries = models.PositiveIntegerField(
+        null=True,
+        help_text="add in this month and child_birth_location = 'hospital' regardless of open status"
+    )
+    total_deliveries = models.PositiveIntegerField(
+        null=True,
+        help_text="add in this month regardless of open status"
+    )
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
@@ -1070,7 +1079,16 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {select_location_levels}, %(window_start)s AS month,
-                COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    hrp = 'yes'
+                    AND (
+                        daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                        AND (
+                            (opened_on < add OR add IS NULL)
+                            AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
+                        )
+                    )), 0
+                ) as high_risk_pregnancies,
                 COALESCE(COUNT(*) FILTER (WHERE
                     add <@ daterange(%(window_start)s, %(window_end)s)
                     AND child_birth_location = 'hospital'
@@ -1079,10 +1097,7 @@ class AggLocation(models.Model):
                     add <@ daterange(%(window_start)s, %(window_end)s)
                 ), 0) as total_deliveries
             FROM "{woman_tablename}" woman
-            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
-                  AND (opened_on < closed_on OR closed_on IS NULL)
-                  AND (opened_on < add OR add IS NULL)
+            WHERE (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
                   AND domain = %(domain)s
             GROUP BY ROLLUP({location_levels})
