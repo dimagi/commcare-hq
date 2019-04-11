@@ -66,4 +66,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     print("{}: {}".format(table_name, e))
                 else:
-                    print("{}: {}".format(table_name, result.fetchone()[0]))
+                    if not options['delete']:
+                        print("{}: {}".format(table_name, result.fetchone()[0]))
+                    else:
+                        print("{}: null supervisors deleted".format(table_name))
