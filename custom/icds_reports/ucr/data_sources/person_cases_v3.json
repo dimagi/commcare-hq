@@ -36,6 +36,24 @@
       },
       "property_value": "person"
     },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "awc_id",
@@ -45,8 +63,7 @@
           "datatype": null,
           "type": "property_name",
           "property_name": "owner_id"
-        },
-        "create_index": true
+        }
       },
       {
         "column_id": "supervisor_id",
@@ -75,8 +92,7 @@
           },
           "location_type": "block",
           "location_property": "_id"
-        },
-        "create_index": true
+        }
       },
       {
         "column_id": "district_id",
@@ -513,6 +529,30 @@
         "column_ids": [
           "opened_on",
           "closed_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "dob"
         ]
       }
     ],

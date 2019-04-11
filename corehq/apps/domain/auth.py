@@ -91,11 +91,12 @@ def get_username_and_password_from_request(request):
     if auth[0].lower() == DIGEST:
         try:
             digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-            username = digest.username
+            username = digest.username.lower()
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
         username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
+        username = username.lower()
         # decode password submitted from mobile app login
         password = decode_password(password, username)
     return username, password

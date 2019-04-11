@@ -1,14 +1,21 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-
+{% registerurl 'app_form_summary' domain '---' %}
+{% registerurl 'app_form_summary_diff' domain '---' '---' %}
 <div class="page-header ko-template" style="margin-top: 0;" id="form-summary-header">
+
     <h3>
         <i class="fa fa-file-text-o"></i>
-        {% trans "Form Summary" %}  - {% trans "Version" %} {{ app_version }}
-        {% if app_id != latest_app_id %}
-            <small><a href="{% url 'app_form_summary' domain  latest_app_id %}">{% trans "See latest" %}</a> </small>
+        {% if page_type == 'form_summary' %}
+            {% trans "Form Summary" %} - {% trans "Version" %} <select id="version-selector" class="form-control" data-bind="value: firstAppId"></select>
+        {% elif page_type == 'form_diff' %}
+            {% trans "Form Changes" %}  -
+            {% trans "Version" %} <select id="first-version-selector" class="form-control" data-bind="value: firstAppId"></select> vs.
+            {% trans "Version" %} <select id="second-version-selector" class="form-control" data-bind="value: secondAppId"></select>
         {% endif %}
+        <a class="btn btn-default" data-bind="click: changeVersions, visible: showChangeVersions">{% trans "Go" %}</a>
     </h3>
+
     <div class="row" id="app-summary-controls">
         <div class="col-xs-3">
             <search-box data-apply-bindings="false"

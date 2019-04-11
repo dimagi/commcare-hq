@@ -49,6 +49,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
@@ -215,7 +216,25 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'referring_apps': self.get_referring_apps(),
         }
+
+    def get_referring_apps(self):
+        to_ret = []
+        apps = get_apps_in_domain(self.domain)
+        for app in apps:
+            app_url = reverse('view_app', args=[self.domain, app.id])
+            for module in app.get_report_modules():
+                module_url = reverse('view_module', args=[self.domain, app.id, module.unique_id])
+                for config in module.report_configs:
+                    if config.report_id == self.report_id:
+                        to_ret.append({
+                            "app_url": app_url,
+                            "app_name": app.name,
+                            "module_url": module_url,
+                            "module_name": module.name['en']
+                        })
+        return to_ret
 
     @property
     @memoized
@@ -863,7 +882,8 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store_for_doc_type(domain, usable_type)
+        document_store = get_document_store_for_doc_type(
+            domain, usable_type, load_source="eval_expression")
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -919,7 +939,8 @@ def evaluate_data_source(request, domain):
         )
 
     docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-    document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
+    document_store = get_document_store_for_doc_type(
+        domain, data_source.referenced_doc_type, load_source="eval_data_source")
     rows = []
     docs = 0
     for doc in document_store.iter_documents(docs_id):

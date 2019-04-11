@@ -42,7 +42,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         data = super(FormattedSupervisoryReport, self).export_table
 
         # remove zeroes
-        table = data[0][1]
+        table = list(data[0][1])
         for row in range(1, len(table) - 1):
             for column in range(2, len(table[row])):
                 if table[row][column] == 0:
@@ -69,7 +69,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
             'Must increase number of allowed location columns in '
             'custom/abt/reports/data_sources/supervisory.json'
         )
-
+        data[0][1] = table
         return data
 
     @property

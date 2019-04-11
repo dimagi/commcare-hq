@@ -40,6 +40,24 @@
         "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
       ]
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "timeend",
@@ -314,7 +332,7 @@
         "column_id": "unscheduled_visit",
         "datatype": "small_integer",
         "type": "expression",
-        "expression": { 
+        "expression": {
           "type": "root_doc",
           "expression": {
             "type": "property_path",

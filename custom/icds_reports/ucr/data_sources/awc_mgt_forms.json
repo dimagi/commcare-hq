@@ -38,6 +38,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551"
     },
+    "validations": [
+      {
+        "name": "submitted_by_supervisor",
+        "error_message": "Form not submitted by supervisor",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "supervisor"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "display_name": "User ID",

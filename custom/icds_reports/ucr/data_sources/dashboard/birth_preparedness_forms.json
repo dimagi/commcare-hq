@@ -33,6 +33,24 @@
       },
       "property_value": "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
     },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
     "configured_indicators": [
       {
         "column_id": "timeend",
@@ -60,7 +78,7 @@
             "name": "user_location_id"
           },
           "location_type": "state",
-	  "location_property": "_id"
+          "location_property": "_id"
         },
         "create_index": true
       },
@@ -77,7 +95,7 @@
             "name": "user_location_id"
           },
           "location_type": "supervisor",
-	  "location_property": "_id"
+          "location_property": "_id"
         }
       },
       {
@@ -526,7 +544,7 @@
         }
       }
     },
-    "named_filters": { },
+    "named_filters": {},
     "engine_id": "icds-ucr",
     "sql_settings": {
       "citus_config": {

@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from datetime import date
 
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import F, Func, Q
-from django.db.models.functions import ExtractYear
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -16,28 +13,35 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView, View
 
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser_or_contractor
+from celery.result import AsyncResult
+from dateutil.relativedelta import relativedelta
+
+from couchexport.models import Format
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    require_superuser_or_contractor,
+)
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-
+from corehq.util.files import safe_filename_header
 from custom.aaa.const import COLORS, INDICATOR_LIST, NUMERIC, PERCENT
-from custom.aaa.dbaccessors import ChildQueryHelper, EligibleCoupleQueryHelper, PregnantWomanQueryHelper
-from custom.aaa.models import Woman, Child, CcsRecord, ChildHistory
-from custom.aaa.tasks import (
-    update_agg_awc_table,
-    update_agg_village_table,
-    update_ccs_record_table,
-    update_child_table,
-    update_child_history_table,
-    update_woman_table,
-    update_woman_history_table,
+from custom.aaa.dbaccessors import (
+    ChildQueryHelper,
+    EligibleCoupleQueryHelper,
+    PregnantWomanQueryHelper,
 )
-from custom.aaa.utils import build_location_filters, get_location_model_for_ministry
-
-from dimagi.utils.dates import force_to_date
+from custom.aaa.models import Child, Woman
+from custom.aaa.tasks import prepare_export_reports, run_aggregation
+from custom.aaa.utils import (
+    build_location_filters,
+    get_file_from_blobdb,
+    get_location_model_for_ministry,
+)
 
 
 class ReachDashboardView(TemplateView):
@@ -193,26 +197,35 @@ class UnifiedBeneficiaryReportAPI(View):
         sort_column_dir = self.request.POST.get('sortColumnDir', 'asc')
 
         location_filters = build_location_filters(selected_location, selected_ministry, with_child=False)
-
+        sort_column_with_dir = sort_column
         if sort_column_dir == 'desc':
-            sort_column = '-' + sort_column
+            sort_column_with_dir = '-' + sort_column
         data = []
         if beneficiary_type == 'child':
-            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column)
+            data = ChildQueryHelper.list(request.domain, next_month_start, location_filters, sort_column_with_dir)
         elif beneficiary_type == 'eligible_couple':
-            data = EligibleCoupleQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
+            data = EligibleCoupleQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
         elif beneficiary_type == 'pregnant_women':
-            data = PregnantWomanQueryHelper.list(request.domain, selected_date, location_filters, sort_column)
+            sort_column_with_dir = '"%s" %s' % (sort_column, sort_column_dir)
+            data = PregnantWomanQueryHelper.list(
+                request.domain,
+                selected_date,
+                location_filters,
+                sort_column_with_dir
+            )
         if data:
-            number_of_data = data.count()
+            number_of_data = len(data)
             data = data[start:start + length]
         else:
             number_of_data = 0
         if beneficiary_type == 'eligible_couple':
             month_end = date(selected_year, selected_month, 1) + relativedelta(months=1) - relativedelta(days=1)
             data = EligibleCoupleQueryHelper.update_list(data, month_end)
-        elif beneficiary_type == 'pregnant_women':
-            data = PregnantWomanQueryHelper.update_list(data)
         data = list(data)
         return JsonResponse(data={
             'rows': data,
@@ -272,13 +285,7 @@ class AggregationScriptPage(BaseDomainView):
             messages.error(request, 'Date is required')
             return redirect(self.urlname, domain=self.domain)
         date = force_to_date(date_param)
-        update_child_table(self.domain)
-        update_child_history_table(self.domain)
-        update_ccs_record_table(self.domain)
-        update_woman_table(self.domain)
-        update_woman_history_table(self.domain)
-        update_agg_awc_table(self.domain, date)
-        update_agg_village_table(self.domain, date)
+        run_aggregation(self.domain, date)
         messages.success(request, 'Aggregation task has run.')
         return redirect(self.urlname, domain=self.domain)
 
@@ -429,3 +436,64 @@ class UnifiedBeneficiaryDetailsReportAPI(View):
         if not data:
             raise Http404()
         return JsonResponse(data=data)
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class ExportData(View):
+    def post(self, request, *args, **kwargs):
+        selected_month = int(self.request.POST.get('selectedMonth'))
+        selected_year = int(self.request.POST.get('selectedYear'))
+        selected_date = date(selected_year, selected_month, 1)
+        next_month_start = selected_date + relativedelta(months=1)
+        selected_location = self.request.POST.get('selectedLocation')
+        selected_ministry = self.request.POST.get('selectedMinistry')
+        beneficiary_type = self.request.POST.get('selectedBeneficiaryType')
+
+        task = prepare_export_reports.delay(
+            request.domain,
+            selected_date,
+            next_month_start,
+            selected_location,
+            selected_ministry,
+            beneficiary_type
+        )
+        return JsonResponse(data={
+            'task_id': task.task_id
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class CheckExportTask(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.kwargs.get('task_id', None)
+        res = AsyncResult(task_id) if task_id else None
+        status = res and res.ready()
+
+        if status:
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_successful': res.successful(),
+                    'task_result': res.result if res.successful() else None
+                }
+            )
+        return JsonResponse({'task_ready': status})
+
+
+@location_safe
+@method_decorator([login_and_domain_required, csrf_exempt], name='dispatch')
+class DownloadFile(View):
+    def get(self, request, *args, **kwargs):
+        file_id = self.kwargs.get('file_id', None)
+        content_type = Format.from_format('xlsx')
+        response = HttpResponse(
+            get_file_from_blobdb(file_id).read(),
+            content_type=content_type.mimetype
+        )
+        response['Content-Disposition'] = safe_filename_header(
+            'unified_beneficiary_list',
+            content_type.extension
+        )
+        return response
