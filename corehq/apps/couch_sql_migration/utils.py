@@ -8,16 +8,13 @@ from couchdbkit.exceptions import ResourceConflict
 from django.db import connection
 
 
-def sql_save_with_resource_conflict(model, document, old_doc_rev=None):
+def sql_save_with_resource_conflict(model, document, old_doc_rev=None, sql_only_model=False):
     """Imitates the behavior of a couch save.
 
     If you are also saving to couch, this save should come after the couch
     save and the document's previous revision should be passed in.
 
-    If you are not saving this same model to couch, do not pass in old_doc_rev
     """
-
-    sql_only_model = old_doc_rev is None
 
     doc_id = document._id
     if sql_only_model:
