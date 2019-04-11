@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import datetime
 
 from celery.task import periodic_task
+from django.conf import settings
 from django.core.cache import cache
 
 from corehq.util.datadog.gauges import datadog_gauge
@@ -39,6 +40,7 @@ class Heartbeat(object):
     def __init__(self, queue):
         self.queue = queue
         self._heartbeat_cache = HeartbeatCache(queue)
+        self.threshold = settings.CELERY_HEARTBEAT_THRESHOLDS[self.queue]
 
     def get_last_seen(self):
         value = self._heartbeat_cache.get()
@@ -65,6 +67,20 @@ class Heartbeat(object):
         return max(datetime.datetime.utcnow() - self.get_last_seen() - HEARTBEAT_FREQUENCY,
                    datetime.timedelta(seconds=0))
 
+    def get_and_report_blockage_duration(self):
+        blockage_duration = self.get_blockage_duration()
+        datadog_gauge(
+            'commcare.celery.heartbeat.blockage_duration',
+            blockage_duration.total_seconds(),
+            tags=['celery_queue:{}'.format(self.queue)]
+        )
+        datadog_gauge(
+            'commcare.celery.heartbeat.blockage_ok',
+            1 if blockage_duration.total_seconds() <= self.threshold else 0,
+            tags=['celery_queue:{}'.format(self.queue)]
+        )
+        return blockage_duration
+
     @property
     def periodic_task_name(self):
         return 'heartbeat__{}'.format(self.queue)
@@ -78,16 +94,12 @@ class Heartbeat(object):
         """
         def heartbeat():
             try:
-                datadog_gauge(
-                    'commcare.celery.heartbeat.blockage_duration',
-                    self.get_blockage_duration().total_seconds(),
-                    tags=['celery_queue:{}'.format(self.queue)]
-                )
+                self.get_and_report_blockage_duration()
             except HeartbeatNeverRecorded:
                 pass
             self.mark_seen()
 
-        heartbeat.__name__ = self.periodic_task_name
+        heartbeat.__name__ = str(self.periodic_task_name)
 
         heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue)(heartbeat)
         return heartbeat

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+from django.conf import settings
 
 import datetime
 
@@ -33,6 +34,13 @@ def test_heartbeat():
     with freeze_time(seen_time + datetime.timedelta(minutes=10)):
         eq(hb.get_last_seen(), seen_time)
         eq(hb.get_blockage_duration(), datetime.timedelta(minutes=10) - HEARTBEAT_FREQUENCY)
+
+
+def test_get_and_report_blockage_duration():
+    hb = Heartbeat('celery_periodic')
+    hb.mark_seen()
+    # just assert that this doesn't error
+    hb.get_and_report_blockage_duration()
 
 
 def test_time_to_start_timer():
@@ -77,3 +85,10 @@ def test_time_to_start_timer_with_eta():
 def test_parse_iso8601():
     eq(TimeToStartTimer.parse_iso8601('2009-11-17T12:30:56.527191'),
        datetime.datetime(2009, 11, 17, 12, 30, 56, 527191))
+
+
+def test_import_tasks():
+    from . import tasks
+    for queue in settings.CELERY_HEARTBEAT_THRESHOLDS:
+        # assert each heartbeat task is there
+        getattr(tasks, Heartbeat(queue).periodic_task_name)

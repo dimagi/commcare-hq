@@ -21,6 +21,14 @@ def _get_location(location_id, context):
         return None
 
 
+def _get_location_type_name(location_id, context):
+    location = _get_location(location_id, context)
+    if not location:
+        return None
+
+    return location.location_type.name
+
+
 class LocationTypeSpec(JsonObject):
     type = TypeProperty('location_type_name')
     location_id_expression = DictProperty(required=True)
@@ -33,10 +41,7 @@ class LocationTypeSpec(JsonObject):
         if not doc_id:
             return None
 
-        assert context.root_doc['domain']
-        location = _get_location(doc_id, context)
-        if location:
-            return location.location_type.name
+        return _get_location_type_name(doc_id, context)
 
 
 class LocationParentIdSpec(JsonObject):
