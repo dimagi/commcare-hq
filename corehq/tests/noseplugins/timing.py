@@ -89,7 +89,7 @@ class TimingPlugin(Plugin):
             ])
         self.event_start = now
 
-        slow_seconds = _get_expected_slow_seconds(context) or self.threshold
+        slow_seconds = _get_expected_slow_seconds(event, context) or self.threshold
         if self.fail_slow_tests and event != 'before' and duration > slow_seconds:
             context.fail("""
             Test ran in {} seconds and is greater than threshold {}.
@@ -127,23 +127,30 @@ def end_event(name, context):
     PLUGIN_INSTANCE.end_event(name, context)
 
 
-def _get_expected_slow_seconds(test_context):
+def _get_expected_slow_seconds(event, test_context):
+    attr_name = {
+        "before": "slow_before",
+        "setup": "slow_setup",
+        "run": "slow",
+        "teardown": "slow_teardown",
+    }[event]
+
     # If we skip this test, but its slow due to other test setup
     fn = getattr(test_context, 'test', None)
     if fn and hasattr(fn, 'func_name') and fn.func_name == 'skip':
         return 1000
 
     # class is tagged for class based test
-    slow_seconds = getattr(test_context, 'slow', None)
+    slow_seconds = getattr(test_context, attr_name, None)
 
     # Function is tagged in a class based test
     if slow_seconds is None and hasattr(test_context, '_testMethodName'):
         fn = getattr(test_context, test_context._testMethodName)
-        slow_seconds = getattr(fn, 'slow', None)
+        slow_seconds = getattr(fn, attr_name, None)
 
     # For function based test, the function is tagged
     if slow_seconds is None and hasattr(test_context, 'test'):
         fn = test_context.test
-        slow_seconds = getattr(fn, 'slow', None)
+        slow_seconds = getattr(fn, attr_name, None)
 
     return slow_seconds
