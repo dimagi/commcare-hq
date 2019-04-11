@@ -5,6 +5,8 @@ from decimal import Decimal
 import random
 import datetime
 
+from nose.plugins.attrib import attr
+
 from dimagi.utils.dates import add_months_to_date
 from corehq.util.dates import get_previous_month_date_range
 
@@ -353,6 +355,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
                 self.assertEqual(user_line_item.total, self.advanced_rate.per_excess_fee * num_to_charge)
                 self.assertEqual(user_line_item.subtotal, self.advanced_rate.per_excess_fee * num_to_charge)
 
+    @attr(slow=12)
     def test_account_level_user_credits(self):
         # Add User usage
         num_users = self.user_rate.monthly_limit + 10
@@ -372,6 +375,7 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
         invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal(1509.0000))
 
+    @attr(slow=10)
     def test_subscription_level_user_credits(self):
         # Add User usage
         num_users = self.user_rate.monthly_limit + 10

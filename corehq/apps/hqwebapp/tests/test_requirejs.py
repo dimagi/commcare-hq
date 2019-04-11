@@ -50,7 +50,7 @@ class TestRequireJS(SimpleTestCase):
 
         cls._run_jobs(cls.js_files, _categorize_file)
 
-    @attr(slow=16)  # due to setup
+    @attr(slow_setup=25)
     def test_files_match_modules(self):
         errors = []
 
@@ -97,7 +97,7 @@ class TestRequireJS(SimpleTestCase):
 
 
 class TestRequireJSBuild(SimpleTestCase):
-    @attr(slow=35)
+    @attr(slow=40)
     def test_no_select2_conflicts(self):
         call_command('collectstatic', noinput=True, verbosity=0)
         command = BuildRequireJSCommand()

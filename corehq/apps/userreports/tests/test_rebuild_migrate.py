@@ -102,6 +102,7 @@ class RebuildTableTest(TestCase):
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
 
+    @attr(slow=14)
     def test_add_nullable_column(self):
         self._setup_data_source('add_nullable_col')
 

@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import six
+from nose.plugins.attrib import attr
+
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
@@ -28,6 +31,7 @@ def create_products(cls, domain_name, codes):
         setattr(cls, code, product)
 
 
+@attr(slow_setup=15)
 class ILSTestScript(TestScript):
 
     @classmethod

@@ -11,6 +11,8 @@ import sqlalchemy
 
 from django.test.testcases import TestCase, override_settings
 
+from nose.plugins.attrib import attr
+
 from corehq.sql_db.connections import connection_manager
 from six.moves import zip
 
@@ -224,6 +226,7 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
             sort_key=self.sort_key
         )
 
+    @attr(slow=12)
     def test_agg_child_health_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_3',
@@ -396,6 +399,7 @@ class AggAwcAggregationTest(AggregationScriptTestBase):
 class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
     always_include_columns = {'awc_id', 'case_id'}
 
+    @attr(slow=13)
     def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
             'child_health_monthly_2017-04-01',

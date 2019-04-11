@@ -11,9 +11,9 @@ from custom.ilsgateway.tanzania.reminders import SUBMITTED_REMINDER_DISTRICT, SU
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 
+@attr(slow_setup=15)
 class ILSRandRTest(ILSTestScript):
 
-    @attr(slow=15)
     def test_invalid_randr_with_amounts(self):
         with localize('sw'):
             response1 = six.text_type(SUBMITTED_INVALID_QUANTITY)

@@ -12,9 +12,9 @@ from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 import six
 
 
+@attr(slow_setup=15)
 class ILSSoHTest(ILSTestScript):
 
-    @attr(slow=15)
     def test_stock_on_hand(self):
         with localize('sw'):
             response = six.text_type(SOH_CONFIRM)

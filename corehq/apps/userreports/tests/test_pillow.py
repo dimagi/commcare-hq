@@ -348,6 +348,7 @@ class IndicatorPillowTest(TestCase):
         self._check_sample_doc_state(expected_indicators)
         case.delete()
 
+    @attr(slow=15)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):
         self.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[self.config])
@@ -374,6 +375,7 @@ class IndicatorPillowTest(TestCase):
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
+    @attr(slow=13)
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
         self.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[self.config])
@@ -561,7 +563,7 @@ class ReuseEvaluationContextTest(TestCase):
     def test_reuse_cache(self):
         self._test_reuse_cache()
 
-    @attr(slow=22)
+    @attr(slow=25)
     def test_reuse_cache_chunked(self):
         pillow1 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs[:1])
         pillow2 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs)
@@ -585,6 +587,7 @@ class ReuseEvaluationContextTest(TestCase):
             self.assertEqual(int(rows[0].parent_property), 0)
 
 
+@attr(slow_setup=12)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class AsyncIndicatorTest(TestCase):
     domain = 'bug-domain'

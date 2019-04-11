@@ -12,6 +12,7 @@ from custom.zipline.models import EmergencyOrder, update_product_quantity_json_f
 import six
 
 
+@attr(slow_setup=15)
 class ReceiptTest(ILSTestScript):
 
     @classmethod
@@ -38,7 +39,6 @@ class ReceiptTest(ILSTestScript):
         EmergencyOrder.objects.all().delete()
         super(ReceiptTest, cls).tearDownClass()
 
-    @attr(slow=15)
     def test_help(self):
         script = """
             5551234 > rec

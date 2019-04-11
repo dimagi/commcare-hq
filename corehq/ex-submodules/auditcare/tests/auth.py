@@ -9,6 +9,8 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from nose.plugins.attrib import attr
+
 from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
 from auditcare.tests.testutils import delete_all, get_latest_access
@@ -59,9 +61,7 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(model_count+1, model_count2)    
         self.assertEqual(total_count+1, total_count2)
     
-    
     def testLogin(self):
-
         #login
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'mockmock'})
@@ -79,7 +79,6 @@ class AuthenticationTestCase(TestCase):
 #        logout_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com'], include_docs=True).count()
 #        self.assertEqual(start_count+2, logout_count)
         
-        
     def testSingleFailedLogin(self):
         start_count = AccessAudit.view('auditcare/login_events', key=['user', 'mockmock@mockmock.com']).count()
         response = self.client.post(reverse('auth_login'), {'username': 'mockmock@mockmock.com', 'password': 'wrongwrongwrong'})
@@ -91,7 +90,6 @@ class AuthenticationTestCase(TestCase):
         latest_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEquals(latest_audit.access_type, models.ACCESS_FAILED)
         self.assertEquals(latest_audit.failures_since_start, 1)
-
 
     def testRepeatedFailedLogin(self):
         from auditcare.decorators import login
@@ -126,8 +124,7 @@ class AuthenticationTestCase(TestCase):
         cooled_audit = get_latest_access(['user', 'mockmock@mockmock.com'])
         self.assertEquals(cooled_audit.failures_since_start, 1)
 
-
-
+    @attr(slow=15)
     def testAuditViews(self):
         for v in settings.AUDIT_VIEWS:
             pass

@@ -47,11 +47,12 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
             for config in all:
                 self.assertEqual('Custom Title', config.title)
 
-    @attr(slow=15)
+    @attr(slow=20)
     def test_production_config(self):
         for report_config in StaticReportConfiguration.all():
             report_config.validate()
 
+    @attr(slow=7)
     def test_for_report_id_conflicts(self):
         counts = Counter(rc.get_id for rc in
                          StaticReportConfiguration.all())
@@ -61,7 +62,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
         )
         self.assertEqual(0, len(duplicates), msg)
 
-    @attr(slow=18)
+    @attr(slow=20)
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains',
            MagicMock(return_value=[domain_lite('cc1')]))
     def test_data_sources_actually_exist(self):

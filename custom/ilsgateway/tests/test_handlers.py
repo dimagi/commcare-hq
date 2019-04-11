@@ -5,6 +5,8 @@ import datetime
 from django.utils import translation
 from django.utils.translation import ugettext as _
 
+from nose.plugins.attrib import attr
+
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
@@ -37,6 +39,7 @@ from custom.zipline.models import EmergencyOrder
 import six
 
 
+@attr(slow_setup=15)
 class TestHandlers(ILSTestScript):
 
     def tearDown(self):

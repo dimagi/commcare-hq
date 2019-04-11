@@ -28,7 +28,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_legacy_table
 from corehq.pillows.case import get_case_pillow
 
 
-@attr(slow=20)  # all tests slow to run
+@attr(slow=25)  # all tests slow to run
 class DataSourceRenameTest(TestCase):
 
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[]))
@@ -111,6 +111,7 @@ class DataSourceRenameTest(TestCase):
         )
 
 
+@attr(slow_setup=15)
 class DataSourceRenamePartitionedTest(TestCase):
     @classmethod
     def setUpClass(cls):

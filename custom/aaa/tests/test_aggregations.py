@@ -53,6 +53,7 @@ TEST_DOMAIN = 'reach-test'
 TEST_ENVIRONMENT = 'icds'
 
 
+@attr(slow_setup=12)
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
     always_include_columns = {'person_case_id'}
@@ -151,7 +152,6 @@ class AggregationScriptTestBase(CSVTestCase):
             sort_key=['awc_id', 'village_id', 'ccs_record_case_id']
         )
 
-    @attr(slow=12)  # due to setup
     def test_agg_awc_table(self):
         self._load_and_compare_data(
             AggAwc,

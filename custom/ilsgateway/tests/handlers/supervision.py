@@ -10,6 +10,7 @@ from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 import six
 
 
+@attr(slow_setup=15)
 class TestSupervision(ILSTestScript):
 
     def test_supervision_yes(self):
@@ -28,7 +29,6 @@ class TestSupervision(ILSTestScript):
         self.assertEqual(status.status_type, SupplyPointStatusTypes.SUPERVISION_FACILITY)
         self.assertEqual(status.status_value, SupplyPointStatusValues.RECEIVED)
 
-    @attr(slow=13)  # due to setup
     def test_supervision_no(self):
         with localize('sw'):
             response = six.text_type(SUPERVISION_CONFIRM_NO)

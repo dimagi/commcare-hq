@@ -31,7 +31,7 @@ from datetime import date, time
 import uuid
 
 
-@attr(slow=15)  # may just be general test setup?
+@attr(slow_setup=15)  # may just be general test setup?
 class TestSubscriptionEmailLogic(SimpleTestCase):
 
     def test_new_trial_with_no_previous(self):
@@ -126,6 +126,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertInitialRoles()
         self._assertStdUsers()
 
+    @attr(slow=12)
     def test_resubscription(self):
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,

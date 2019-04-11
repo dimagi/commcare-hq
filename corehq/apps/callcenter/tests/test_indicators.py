@@ -5,6 +5,8 @@ from collections import namedtuple
 from django.test.utils import override_settings
 from mock import patch
 
+from nose.plugins.attrib import attr
+
 from corehq.apps.callcenter.const import DATE_RANGES, WEEK1, WEEK0, MONTH0, MONTH1
 from corehq.apps.callcenter.indicator_sets import AAROHI_MOTHER_FORM, CallCenterIndicators, \
     cache_key, CachedIndicators
@@ -516,6 +518,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
+    @attr(slow=15)
     @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
@@ -559,6 +562,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         clear_data(self.domain.name)
         self.domain.delete()
 
+    @attr(slow=12)
     @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
@@ -607,6 +611,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         connection_manager.dispose_engine('ucr')
         self.db_context.__exit__(None, None, None)
 
+    @attr(slow=14)
     @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})

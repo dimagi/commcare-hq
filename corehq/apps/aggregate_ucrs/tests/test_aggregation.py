@@ -377,7 +377,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             month_column == '2018-04-01',
         ).count())
 
-    @attr(slow=15)
+    @attr(slow=18)
     def test_weekly_aggregation(self):
         # generate our table
         aggregate_table_adapter = IndicatorSqlAdapter(self.weekly_aggregate_table_definition)
