@@ -80,5 +80,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_assert_migrated, migrations.RunPython.noop)
+        migrations.RunPython(_assert_migrated, migrations.RunPython.noop, elidable=True)
     ]
