@@ -161,11 +161,11 @@ python-levenshtein==0.12.0
 python-magic==0.4.15
 python-mimeparse==1.6.0
 python-termstyle==0.1.10  # via sniffer
-pytz==2018.9
+pytz==2019.1
 pyyaml==5.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
-quickcache==0.5.3
+quickcache==0.5.4
 raven==6.1.0
 rcssmin==1.0.6
 recommonmark==0.5.0
