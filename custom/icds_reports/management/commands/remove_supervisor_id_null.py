@@ -21,6 +21,7 @@ def get_count_sql(ucr_table):
     """.format(ucr_table=ucr_table)
 
 
+
 def get_sql_scripts(delete=False):
     table_names = [
         'ucr_icds-cas_dashboard_child_health_daily_2cd9a7c1',
@@ -52,6 +53,13 @@ def get_sql_scripts(delete=False):
         'ucr_icds-cas_static-vhnd_form_28e7fd58',
         'child_health_monthly',
         'ccs_record_monthly',
+
+        # non dashboard tables
+        'ucr_icds-cas_static-ccs_record_cases_mont_6c60c6dd',
+        'ucr_icds-cas_static-child_cases_monthly_v_c7032e8d',
+        'ucr_icds-cas_static-gm_forms_2325944e',
+        'ucr_icds-cas_static-home_visit_forms_02056025',
+        'ucr_icds-cas_static-visitorbook_forms_76e9914e',
     ]
 
     sql_scripts = {}
