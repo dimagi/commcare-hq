@@ -965,6 +965,24 @@
           "awc_id",
           "submitted_on"
         ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "submitted_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "block_id",
+          "submitted_on"
+        ]
+      },
+      {
+        "column_ids": [
+          "district_id",
+          "submitted_on"
+        ]
       }
     ],
     "disable_destructive_rebuild": true
