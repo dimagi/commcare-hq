@@ -5345,7 +5345,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
-        from corehq.apps.reports.formdetails.case_metadata import AppCaseMetadataBuilder
+        from corehq.apps.app_manager.app_schemas.app_case_metadata import AppCaseMetadataBuilder
         return AppCaseMetadataBuilder(self.domain, self).case_metadata()
 
     def get_subcase_types(self, case_type):
