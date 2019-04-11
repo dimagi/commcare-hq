@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('userreports', '0009_rename_ucr_tables'),
+        ('userreports', '0010_add_invaliducrdata'),
     ]
 
     operations = [
