@@ -701,36 +701,37 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                 if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
                     # If the email doesn't work because it is too large to fit in the HTML body,
                     # send it as an excel attachment, by creating a mock request with the right data.
-                    mock_request = HttpRequest()
-                    mock_request.couch_user = self.owner
-                    mock_request.user = self.owner.get_django_user()
-                    mock_request.domain = self.domain
-                    mock_request.couch_user.current_domain = self.domain
-                    mock_request.couch_user.language = 'lang (PV - fix this)'
-                    mock_request.method = 'GET'
-                    mock_request.bypass_two_factor = True
 
-                    report_config = self.configs[0]
-                    mock_query_string_parts = [report_config.query_string, 'filterSet=true']
-                    if report_config.is_configurable_report:
-                        mock_query_string_parts.append(urlencode(report_config.filters, True))
-                        mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
-                    mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
-                    date_range = report_config.get_date_range()
-                    start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                    end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+                    for report_config in self.configs:
+                        mock_request = HttpRequest()
+                        mock_request.couch_user = self.owner
+                        mock_request.user = self.owner.get_django_user()
+                        mock_request.domain = self.domain
+                        mock_request.couch_user.current_domain = self.domain
+                        mock_request.couch_user.language = 'lang (PV - fix this)'
+                        mock_request.method = 'GET'
+                        mock_request.bypass_two_factor = True
 
-                    datespan = DateSpan(start_date, end_date)
-                    request_data = vars(mock_request)
-                    request_data['couch_user'] = mock_request.couch_user.userID
-                    request_data['datespan'] = datespan
+                        mock_query_string_parts = [report_config.query_string, 'filterSet=true']
+                        if report_config.is_configurable_report:
+                            mock_query_string_parts.append(urlencode(report_config.filters, True))
+                            mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
+                        mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
+                        date_range = report_config.get_date_range()
+                        start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                        end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
 
-                    full_request = {'request': request_data,
-                                    'domain': request_data['domain'],
-                                    'context': {},
-                                    'request_params': json_request(request_data['GET'])}
+                        datespan = DateSpan(start_date, end_date)
+                        request_data = vars(mock_request)
+                        request_data['couch_user'] = mock_request.couch_user.userID
+                        request_data['datespan'] = datespan
 
-                    export_all_rows_task(report_config.report, full_request)
+                        full_request = {'request': request_data,
+                                        'domain': request_data['domain'],
+                                        'context': {},
+                                        'request_params': json_request(request_data['GET'])}
+
+                        export_all_rows_task(report_config.report, full_request)
 
     def remove_recipient(self, email):
         try:
