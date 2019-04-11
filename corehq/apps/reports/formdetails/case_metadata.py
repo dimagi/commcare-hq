@@ -54,7 +54,7 @@ class AppCaseMetadataBuilder(object):
         for module in self.app.get_modules():
             for form in module.get_forms():
                 if isinstance(form, Form):
-                    _RegularFormCaseMetadataBuilder(self.meta, form).add_form_contributions()
+                    _FormCaseMetadataBuilder(self.meta, form).add_form_contributions()
                 elif isinstance(form, AdvancedForm):
                     _AdvancedFormCaseMetadataBuilder(self.meta, form).add_form_contributions()
 
@@ -123,13 +123,13 @@ class _BaseFormCaseMetadataBuilder(object):
             self.meta.add_property_load(case_type, name, self.form.unique_id, question)
 
 
-class _RegularFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
+class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def __init__(self, meta, form):
-        super(_RegularFormCaseMetadataBuilder, self).__init__(meta, form)
+        super(_FormCaseMetadataBuilder, self).__init__(meta, form)
         self.case_type = self.form.get_module().case_type
 
     def add_form_contributions(self):
-        super(_RegularFormCaseMetadataBuilder, self).add_form_contributions()
+        super(_FormCaseMetadataBuilder, self).add_form_contributions()
         self._add_form_actions()
         self._add_load_references()
 
