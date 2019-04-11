@@ -10,7 +10,7 @@ from six.moves import range
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from custom.aaa.dbaccessors import EligibleCoupleQueryHelper
-from custom.aaa.models import Child, Woman, WomanHistory
+from custom.aaa.models import Child, Woman
 
 
 class TestEligibleCoupleBeneficiarySections(TestCase):
