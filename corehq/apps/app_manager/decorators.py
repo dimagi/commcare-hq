@@ -61,7 +61,7 @@ def safe_cached_download(f):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
         latest = True if request.GET.get('latest') == 'true' else False
-        # target it used update to latest build/saved state/release of the app
+        # target is used update to latest build/saved state/release of the app
         target = request.GET.get('target') or None
 
         # make endpoints that call the user fail hard
