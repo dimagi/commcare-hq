@@ -357,12 +357,12 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 im.save(out, new_domain.image_type.split('/')[-1])
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)
             elif request.POST.get('old_image', False):
-                new_domain.put_attachment(content=old.fetch_attachment(old.image_path, return_bytes=True), name=new_domain.image_path)
+                new_domain.put_attachment(content=old.fetch_attachment(old.image_path), name=new_domain.image_path)
 
             if documentation_file:
                 new_domain.put_attachment(content=documentation_file, name=documentation_file.name)
             elif request.POST.get('old_documentation_file', False):
-                new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path, return_bytes=True),
+                new_domain.put_attachment(content=old.fetch_attachment(old.documentation_file_path),
                                           name=new_domain.documentation_file_path)
 
             for application in new_domain.full_applications():

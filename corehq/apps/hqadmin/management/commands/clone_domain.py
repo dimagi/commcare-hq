@@ -312,7 +312,7 @@ class Command(BaseCommand):
             del doc['_attachments']
         if attachment_stubs:
             # fetch attachments before assigning new _id
-            attachments = {k: doc.fetch_attachment(k, return_bytes=True) for k in attachment_stubs}
+            attachments = {k: doc.fetch_attachment(k) for k in attachment_stubs}
 
         doc._id = uuid.uuid4().hex
         del doc['_rev']

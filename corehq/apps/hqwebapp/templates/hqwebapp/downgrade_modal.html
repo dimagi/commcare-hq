@@ -5,10 +5,6 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header {% if days_until_downgrade <= 30 %}bg-danger text-danger{% endif %}">
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                    <span class="sr-only">Close</span>
-                </button>
                 <h4 class="modal-title">
                     {% blocktrans %}
                     Your invoice for {{ invoice_month }} is past due!
@@ -17,7 +13,10 @@
             </div>
             <div class="modal-body">
                 <p>
-                    {% blocktrans %}
+                    {% blocktrans count days_until_downgrade=days_until_downgrade %}
+                    You're at risk of losing access to paid features and priority support if your invoice isn't paid in
+                    1 day.
+                    {% plural %}
                     You're at risk of losing access to paid features and priority support if your invoice isn't paid in
                     {{ days_until_downgrade }} days.
                     {% endblocktrans %}

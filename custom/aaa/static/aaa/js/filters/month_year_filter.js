@@ -55,6 +55,10 @@ hqDefine('aaa/js/filters/month_year_filter', [
                 params.postData.selectedMonth(self.selectedMonth());
             };
 
+            params.filters[self.slug].verify = function () {
+                return true;
+            };
+
             params.filters[self.slug].resetFilters = function () {
                 self.selectedMonth(moment().month() + 1);
                 self.selectedYear(moment().year());
