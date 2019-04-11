@@ -24,12 +24,15 @@ from django.contrib.postgres.fields import ArrayField, DateRangeField
 from django.db import connections, models
 from django.utils.decorators import classproperty
 
-from corehq.sql_db.connections import get_aaa_db_alias
+from six.moves import zip
+
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.const import ALL, PRODUCT_CODES
-from dimagi.utils.dates import force_to_date
-from six.moves import zip
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +63,6 @@ class LocationDenormalizedModel(models.Model):
 
     @classmethod
     def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             sc_id = village.sc_id,
@@ -72,33 +71,29 @@ class LocationDenormalizedModel(models.Model):
             district_id = village.district_id,
             state_id = village.state_id
         FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
+            SELECT village_id, sc_id, phc_id, taluka_id, district_id, state_id
+            FROM "{village_location_tablename}"
         ) village
-        WHERE child.village_id = village.doc_id
+        WHERE child.village_id = village.village_id
         """.format(
             child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
+            village_location_tablename=DenormalizedVillage._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             supervisor_id = awc.supervisor_id,
             block_id = awc.block_id
         FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
+            SELECT awc_id, supervisor_id, block_id
+            FROM "{awc_location_tablename}"
         ) awc
-        WHERE child.awc_id = awc.doc_id
+        WHERE child.awc_id = awc.awc_id
         """.format(
             child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
+            awc_location_tablename=DenormalizedAWC._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     def _ucr_tablename(self, ucr_name):
@@ -1227,3 +1222,53 @@ def _dictfetchone(cursor):
         return ret[0]
 
     return {}
+
+
+class AbstractDenormalizedModel(models.Model):
+    domain = models.TextField()
+    state_id = models.TextField()
+    district_id = models.TextField()
+
+    @classmethod
+    def build(cls, domain):
+        cls.objects.filter(domain=domain).delete()
+        domain_locations = SQLLocation.objects.filter(domain=domain).values(
+            'pk', 'parent_id', 'location_id', 'location_type__code')
+        locations_by_pk = {
+            loc['pk']: loc
+            for loc in domain_locations
+        }
+        locations = [loc for loc in domain_locations if loc['location_type__code'] == cls.location_type_code]
+        to_save = []
+        for location in locations:
+            loc = cls(domain=domain)
+            current_location = location
+            attr_name = '{}_id'.format(current_location['location_type__code'])
+            setattr(loc, attr_name, current_location['location_id'])
+
+            while current_location['parent_id']:
+                current_location = locations_by_pk[current_location['parent_id']]
+                attr_name = '{}_id'.format(current_location['location_type__code'])
+                setattr(loc, attr_name, current_location['location_id'])
+
+            to_save.append(loc)
+
+        cls.objects.bulk_create(to_save)
+
+    class Meta(object):
+        abstract = True
+
+
+class DenormalizedAWC(AbstractDenormalizedModel):
+    location_type_code = 'awc'
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField(unique=True)
+
+
+class DenormalizedVillage(AbstractDenormalizedModel):
+    location_type_code = 'village'
+    taluka_id = models.TextField()
+    phc_id = models.TextField()
+    sc_id = models.TextField()
+    village_id = models.TextField(unique=True)
