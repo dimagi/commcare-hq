@@ -24,11 +24,11 @@ def get_count_sql(ucr_table):
 def get_sql_scripts(delete=False):
     table_names = [
         'ucr_icds-cas_dashboard_child_health_daily_2cd9a7c1',
-        'ucr_icds-cas_static-awc_location_88b3f9c3',
+        # 'ucr_icds-cas_static-awc_location_88b3f9c3', superviosr_id not null constraint
         'ucr_icds-cas_static-awc_mgt_forms_ad1b11f0',
         'ucr_icds-cas_static-cbe_form_f7988a04',
         'ucr_icds-cas_static-ccs_record_cases_cedcca39',
-        'ucr_icds-cas_static-ccs_record_cases_mont_22b3ea30',
+        # 'ucr_icds-cas_static-ccs_record_cases_mont_22b3ea30', tableau data source to be deleted
         'ucr_icds-cas_static-child_delivery_forms_eafd4095',
         'ucr_icds-cas_static-child_health_cases_a46c129f',
         'ucr_icds-cas_static-child_tasks_cases_3548e54b',
