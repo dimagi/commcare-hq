@@ -17,3 +17,13 @@ Current progress
 Document | Owner | Phase Completed
 ---------|-------|----------------
 Toggle | @emord | 3
+
+Currently Undocumented/Unexplored
+===============================
+
+* Some models such as Application and CommCareUser often pull the JSON without wrapping the JSONObject.
+  That's currently not supported by DocumentField
+* By default Django cannot create the most useful jsonb indexes.
+  This can be done now with a custom index migration.
+  Should also be possible in Django 2.2 https://docs.djangoproject.com/en/2.2/ref/models/indexes/#opclasses
+* Some models may lend well to partitioning such as Repeaters. Will architect be able to work with this?
