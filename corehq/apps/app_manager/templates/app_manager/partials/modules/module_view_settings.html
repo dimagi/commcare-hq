@@ -46,7 +46,7 @@
               <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
             </div>
             <div class="panel-body">
-              {% if True %} {# if some feature flag is enabled #}
+              {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
                   <div class="form-group">
                       <label class="{% css_label_class %} control-label">
                           {% trans "Name Mapping" %}
