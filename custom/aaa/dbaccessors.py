@@ -4,9 +4,11 @@ from collections import OrderedDict
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
+from django.db import connections
 from django.db.models import Case, F, Func, IntegerField, Sum, When
 from django.db.models.functions import ExtractYear, ExtractMonth
 
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.models import (
     CcsRecord,
     Child,
@@ -224,44 +226,48 @@ class PregnantWomanQueryHelper(object):
 
     @classmethod
     def list(cls, domain, date_, location_filters, sort_column):
-        return (
-            Woman.objects.annotate(
-                age=ExtractYear(Func(F('dob'), function='age')),
-            ).filter(
-                domain=domain,
-                **location_filters
-            ).extra(
-                select={
-                    'highRiskPregnancy': '\'N/A\'',
-                    'noOfAncCheckUps': '\'N/A\'',
-                    'pregMonth': '\'N/A\'',
-                    'id': 'person_case_id',
-                },
-                where=["daterange(%s, %s) && any(pregnant_ranges)"],
-                params=[date_, date_ + relativedelta(months=1)]
-            ).values(
-                'id', 'name', 'age', 'pregMonth',
-                'highRiskPregnancy', 'noOfAncCheckUps'
-            ).order_by(sort_column)
-        )
+        location_query = ''
+        if location_filters:
+            location_query = [
+                "{loc} = %({loc})s".format(loc=loc) for loc in location_filters.keys()
+            ]
+            location_query = " AND ".join(location_query)
+            location_query = location_query + " AND"
 
-    @classmethod
-    def update_list(cls, data):
-        for beneficiary in data:
-            ccs_record = CcsRecord.objects.annotate(
-                pregMonth=ExtractMonth(Func(F('preg_reg_date'), function='age')),
-            ).filter(
-                person_case_id=beneficiary['id']
-            ).extra(
-                select={
-                    'highRiskPregnancy': 'hrp',
-                    'noOfAncCheckUps': 'num_anc_checkups',
-                }
-            ).values(
-                'highRiskPregnancy', 'noOfAncCheckUps', 'pregMonth'
-            ).first()
-            beneficiary.update(ccs_record)
-        return data
+        query, params = """
+            SELECT
+                (woman.person_case_id) AS "id",
+                woman.name AS "name",
+                EXTRACT('year' FROM age("woman"."dob")) AS "age",
+                EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
+                ccs_record.hrp AS "highRiskPregnancy",
+                ccs_record.num_anc_checkups AS "noOfAncCheckUps"
+            FROM "{woman_table}" woman
+            JOIN "{ccs_record_table}" ccs_record ON ccs_record.person_case_id=woman.person_case_id
+            WHERE (
+                woman.domain = %(domain)s AND
+                {location_where}
+                (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges))
+            ) ORDER BY {sort_col}
+        """.format(
+            location_where=location_query,
+            woman_table=Woman._meta.db_table,
+            ccs_record_table=CcsRecord._meta.db_table,
+            sort_col=sort_column
+        ), {
+            'domain': domain,
+            'start_date': date_,
+            'end_date': date_ + relativedelta(months=1),
+        }
+        params.update(location_filters)
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(query, params)
+            desc = cursor.description
+            return [
+                dict(zip([col[0] for col in desc], row))
+                for row in cursor.fetchall()
+            ]
 
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
