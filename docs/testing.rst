@@ -81,3 +81,23 @@ Squashing Migrations
 
 There is overhead to running many migrations at once. Django allows you to squash migrations which will help
 speed up the migrations when running tests.
+
+Failing slow tests
+==================
+
+By default we fail tests that are too slow, where too slow is determined by the ``threshold`` option defined in .travis.yml.
+
+When a test runs longer than its threshold, and it cannot be sped up, an attribute can be added to the test:
+
+.. code:: python
+    from nose.plugins.attrib import attr
+
+    class MyTestClass(TestCase):
+        @attr(slow=10)
+        def test1(self):
+            ...
+
+Classes, methods and functions can all be decorated in the same way.
+The valid attributes are ``slow``, ``slow_setup``, ``slow_teardown``.
+The value of the attribute is the number of seconds that the part of the test is expected to run in.
+Its useful to add some buffer so that the tests do not fail intermittently.
