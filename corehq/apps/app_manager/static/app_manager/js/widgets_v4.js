@@ -12,7 +12,7 @@ hqDefine("app_manager/js/widgets_v4", [
     var initVersionDropdown = function ($select, options) {
         options = options || {};
         assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues',
-                                              'onlyShowReleased']);
+            'onlyShowReleased']);
         var idValue = options.idValue || 'id';
 
         $select.select2({
@@ -24,7 +24,7 @@ hqDefine("app_manager/js/widgets_v4", [
                         limit: 10,
                         query: params.term,
                         page: params.page,
-                        only_show_released: options.onlyShowReleased
+                        only_show_released: options.onlyShowReleased,
                     };
                 },
                 processResults: function (data) {
