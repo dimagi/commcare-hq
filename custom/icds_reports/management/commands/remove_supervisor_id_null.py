@@ -23,16 +23,16 @@ def get_count_sql(ucr_table):
 
 def get_sql_scripts(delete=False):
     table_names = [
-        'ucr_icds-cas_static-pregnant-tasks_cases_6c2a698f',
-        'ucr_icds-cas_static-usage_forms_92fbe2aa',
-        'ucr_icds-cas_static-child_tasks_cases_3548e54b',
         'ucr_icds-cas_dashboard_child_health_daily_2cd9a7c1',
-        'ucr_icds-cas_static-dashboard_growth_moni_4ebf0625',
+        'ucr_icds-cas_static-child_tasks_cases_3548e54b',
         'ucr_icds-cas_static-complementary_feeding_f2d76da0',
         'ucr_icds-cas_static-dashboard_birth_prepa_e3e359ff',
+        'ucr_icds-cas_static-dashboard_delivery_fo_f079e6e1',
+        'ucr_icds-cas_static-dashboard_growth_moni_4ebf0625',
         'ucr_icds-cas_static-dashboard_thr_forms_b8bca6ea',
         'ucr_icds-cas_static-postnatal_care_forms_0c30d94e',
-        'ucr_icds-cas_static-dashboard_delivery_fo_f079e6e1',
+        'ucr_icds-cas_static-pregnant-tasks_cases_6c2a698f',
+        'ucr_icds-cas_static-usage_forms_92fbe2aa',
         'child_health_monthly',
         'ccs_record_monthly',
     ]
