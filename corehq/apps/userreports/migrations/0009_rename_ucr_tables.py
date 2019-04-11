@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import sys
 from collections import defaultdict
 
+from django.conf import settings
 from django.db import migrations
 
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
@@ -55,6 +56,9 @@ def _data_sources_by_engine_id():
 
 
 def _assert_migrated(apps, schema_editor):
+    if settings.UNIT_TESTING:
+        return
+
     for engine_id, data_sources in _data_sources_by_engine_id().items():
         with connection_manager.get_engine(engine_id).begin() as conn:
             for data_source in data_sources:
