@@ -301,6 +301,34 @@ class Woman(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
+    def eligible_couple_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-eligible_couple_forms')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT person_case_id,
+                       array_agg(fp_current_method) AS fp_current_method_history,
+                       array_agg(fp_preferred_method) AS fp_preferred_method_history,
+                       array_agg(timeend::date) AS family_planning_form_history
+                FROM (
+                    SELECT person_case_id,
+                           timeend,
+                           ARRAY[timeend::text, fp_current_method] AS fp_current_method,
+                           ARRAY[timeend::text, fp_preferred_method] AS fp_preferred_method
+                    FROM "{ucr_tablename}"
+                    WHERE person_case_id = %s AND timeend <= %s
+                    ORDER BY timeend ASC
+                ) eligible_couple
+                GROUP BY person_case_id
+                """.format(ucr_tablename=ucr_tablename),
+                [self.person_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
 
 class WomanHistory(models.Model):
     """The history of form properties for any woman registered."""
