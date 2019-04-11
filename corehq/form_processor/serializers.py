@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.utils.functional import lazy
 from jsonfield import JSONField
 from rest_framework import serializers
 
@@ -137,12 +139,28 @@ class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
         )
 
 
+def _serialize_indices(case):
+    return [
+        CommCareCaseIndexSQLSerializer(index).data
+        for index in case.indices
+    ]
+
+
+def _serialize_transactions(case):
+    return [
+        CaseTransactionActionSerializer(trans).data
+        for trans in case.non_revoked_transactions
+    ]
+
+
+lazy_serialize_indices = lazy(_serialize_indices, list)
+lazy_serialize_transactions = lazy(_serialize_transactions, list)
+
+
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
-    indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
-    actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
     case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
     xform_ids = serializers.ListField()
