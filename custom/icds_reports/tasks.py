@@ -273,6 +273,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         if date.weekday() == 5:
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
+            icds_aggregation_task.si(date=(date-timedelta(days=2)).strftime('%Y-%m-%d'),
+                                     func_name='aggregate_awc_daily'),
+            icds_aggregation_task.si(date=(date-timedelta(days=1)).strftime('%Y-%m-%d'),
+                                     func_name='aggregate_awc_daily'),
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
