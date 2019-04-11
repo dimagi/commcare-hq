@@ -21,6 +21,7 @@ hqDefine("translations/js/app_translations", [
                 width: '100%',
                 idValue: 'version',
                 initialValue: initialPageData.get('appVersionSelectInitialValue'),
+                onlyShowReleased: initialPageData.get('appVersionOnlyShowReleased'),
             });
         });
 
