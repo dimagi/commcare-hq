@@ -65,7 +65,7 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
                 'maleChildrenAlive': 0,
                 'femaleChildrenAlive': 0,
                 'familyPlaningMethod': 'condom',
-                'familyPlanningMethodDate': '2019-03-01',
+                'familyPlanningMethodDate': date(2019, 3, 1),
                 'ashaVisit': 'N/A',
                 'previousFamilyPlanningMethod': 'iud',
                 'preferredFamilyPlaningMethod': 'N/A',
