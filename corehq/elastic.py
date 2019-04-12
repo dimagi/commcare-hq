@@ -42,7 +42,7 @@ class ESJSONSerializer(object):
 
     def loads(self, s):
         try:
-            return json.loads(s, cls=DjangoJSONEncoder)
+            return json.loads(s)
         except (ValueError, TypeError) as e:
             raise SerializationError(s, e)
 
@@ -79,7 +79,7 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer)
+    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer())
 
 
 @memoized
@@ -95,7 +95,7 @@ def get_es_export():
         max_retries=3,
         # Timeout in seconds for an elasticsearch query
         timeout=300,
-        serializer=ESJSONSerializer,
+        serializer=ESJSONSerializer(),
     )
 
 
