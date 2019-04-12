@@ -11,10 +11,8 @@ from django.http import (
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, 
-    BASIC,
-    DIGEST,
-    NOAUTH
+    determine_authtype_from_request,
+    BASIC, DIGEST, NOAUTH
 )
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex,
