@@ -51,14 +51,11 @@ name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
   #- jls/log-media-map-app-id # Jenny March 7
-  - mk-434 # MK March 12
   - jls/upload-mm-translations  # Jenny March 14
   - nh/cdc/one_domain  # Norman March 26
   - mk/release-location # MK March 26
   - dmr/add-scheduled-report-records  # Apr 3
   - formplayer-debug  # Nick April 9
   #- jls/reports-select2-v4  # Jenny April 9
-  - es/sms-log-report  # Ethan April 10
-  - location_query_help_text  # Nick April 10
-  - skip-setting  # Nick April 10
+  - fix-RuntimeError  # Nick April 12
 submodules: {}

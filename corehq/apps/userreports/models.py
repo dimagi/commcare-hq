@@ -1207,7 +1207,7 @@ def _get_wrapped_object_from_file(path, wrapper):
         if path.endswith('.json'):
             doc = json.load(f)
         else:
-            doc = yaml.load(f)
+            doc = yaml.safe_load(f)
 
     try:
         return wrapper.wrap(doc)
