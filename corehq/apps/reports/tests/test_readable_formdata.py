@@ -6,12 +6,16 @@ import uuid
 from collections import OrderedDict
 from io import open
 
-import six
-import yaml
 from django.test import SimpleTestCase
 from django.test.testcases import TestCase
+
+import six
+import yaml
 from mock import patch
 
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestionResponse,
+)
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -22,7 +26,6 @@ from corehq.apps.app_manager.xform import XForm
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
-    FormQuestionResponse,
     get_app_summary_formdata,
     get_data_cleaning_data,
     get_questions_from_xform_node,
