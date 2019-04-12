@@ -5,11 +5,13 @@ import hashlib
 
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.util.couch import DocumentNotFound
+from corehq.util.datadog.utils import ucr_load_counter
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
@@ -127,11 +129,15 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False, track_load=None):
+def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     if raise_errors:
-        return ErrorRaisingIndicatorSqlAdapter(config)
-    return IndicatorSqlAdapter(config)
+        adapter = ErrorRaisingIndicatorSqlAdapter(config)
+    else:
+        adapter = IndicatorSqlAdapter(config)
+
+    track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
+    return IndicatorAdapterLoadTracker(adapter, track_load)
 
 
 def get_legacy_table_name(domain, table_id):
