@@ -422,6 +422,43 @@ def upload_fixture_api(request, domain, **kwargs):
                           'code': upload_fixture_api_response.code})
 
 
+@csrf_exempt
+@api_auth
+@require_can_edit_fixtures
+def fixture_api_upload_status(request, domain, download_id, **kwargs):
+    """
+        Use following curl-command to test.
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/status/<download_id>/ -u user@domain.com:password
+    """
+    try:
+        context = get_download_context(download_id, require_result=True)
+    except TaskFailedError as e:
+        notify_exception(request, message=six.text_type(e))
+        response = {
+            'message': _("Upload did not complete. Reason: '{}'".format(e.message)),
+            'error': True,
+        }
+        return json_response(response)
+
+    if context.get('is_ready', False):
+        response = {
+            'complete': True,
+            'message': _("Upload complete."),
+        }
+    elif context.get('error'):
+        response = {
+            'error': True,
+            'message': context.get('error') or _("An unknown error occurred."),
+        }
+    else:
+        progress = context.get('progress', {}).get('percent')
+        response = {
+            'message': _("Task in progress. {}% complete").format(progress),
+            'progress': progress,
+        }
+    return json_response(response)
+
+
 def _upload_fixture_api(request, domain):
     try:
         excel_file, replace, is_async = _get_fixture_upload_args_from_request(request, domain)
