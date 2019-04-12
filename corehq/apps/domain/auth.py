@@ -61,7 +61,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     headers found in the request.
     """
 
-    # Fixes behavior for mobile versions between 2.39.0 and 
+    # Fixes behavior for mobile versions between 2.39.0 and
     # 2.46.0, which did not explicitly request noauth when
     # submitting in demo mode.
     if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
