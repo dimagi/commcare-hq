@@ -625,10 +625,12 @@ def recalculate_stagnant_cases():
 
     for config_id in config_ids:
         config, is_static = get_datasource_config(config_id, domain)
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
         case_ids = _find_stagnant_cases(adapter)
+        num_cases = len(case_ids)
+        adapter.track_load(num_cases)
         celery_task_logger.info(
-            "Found {} stagnant cases in config {}".format(len(case_ids), config_id)
+            "Found {} stagnant cases in config {}".format(num_cases, config_id)
         )
         stagnant_cases = stagnant_cases.union(set(case_ids))
         celery_task_logger.info(

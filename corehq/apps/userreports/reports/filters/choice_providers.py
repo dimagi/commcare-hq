@@ -162,7 +162,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @property
     def _adapter(self):
-        return get_indicator_adapter(self.report.config)
+        return get_indicator_adapter(self.report.config, load_source='choice_provider')
 
     @property
     def _sql_column(self):
@@ -178,7 +178,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
-            return [v[0] for v in query]
+            values = [v[0] for v in query]
+            self._adapter.track_load(len(values))
+            return values
         except ProgrammingError:
             return []
 
@@ -213,6 +215,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
             result = []
             for row in query:
                 for value in row:
+                    self._adapter.track_load()
                     if query_context and query_context.query.lower() not in value.lower():
                         continue
                     result.append(value)

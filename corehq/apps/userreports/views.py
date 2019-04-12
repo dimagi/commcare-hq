@@ -1336,7 +1336,7 @@ def process_url_params(params, columns):
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    adapter = get_indicator_adapter(config)
+    adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
     return export_sql_adapter_view(request, domain, adapter, url)
 
@@ -1381,6 +1381,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     def get_table(q):
         yield list(table.columns.keys())
         for row in q:
+            adapter.track_load()
             yield row
 
     fd, path = tempfile.mkstemp()

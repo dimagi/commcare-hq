@@ -77,7 +77,7 @@ def export_aggregate_ucr(request, domain, table_id):
     table_definition = get_object_or_404(
         AggregateTableDefinition, domain=domain, table_id=table_id
     )
-    aggregate_table_adapter = get_indicator_adapter(table_definition)
+    aggregate_table_adapter = get_indicator_adapter(table_definition, load_source='export_aggregate_ucr')
     url = reverse('export_aggregate_ucr', args=[domain, table_definition.table_id])
     return export_sql_adapter_view(request, domain, aggregate_table_adapter, url)
 
