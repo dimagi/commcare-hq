@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext
 from sqlalchemy import or_
 
@@ -160,7 +161,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         # this one's query_count, so leaving unimplemented for now
         raise NotImplementedError()
 
-    @property
+    @cached_property
     def _adapter(self):
         return get_indicator_adapter(self.report.config, load_source='choice_provider')
 
