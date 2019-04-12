@@ -106,8 +106,8 @@ class SQLTelerivetBackend(SQLSMSBackend):
             raise TelerivetException(
                 "Received HTTP response status code %s (%s) from backend %s" % (
                     response.status_code,
-                    self.pk,
                     data,
+                    self.pk,
                 )
             )
 
