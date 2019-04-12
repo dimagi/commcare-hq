@@ -9,7 +9,7 @@ from django.test import TestCase, override_settings
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, InvalidUCRData
 from corehq.apps.userreports.util import get_indicator_adapter
 from six.moves import range
 
@@ -38,8 +38,15 @@ class SaveErrorsTest(TestCase):
     def setUp(self):
         self.config = get_sample_config()
 
+    def tearDown(self):
+        self.config = get_sample_config()
+        self._get_adapter().drop_table()
+
+    def _get_adapter(self):
+        return get_indicator_adapter(self.config, raise_errors=True)
+
     def test_raise_error_for_missing_table(self):
-        adapter = get_indicator_adapter(self.config, raise_errors=True)
+        adapter = self._get_adapter()
         adapter.drop_table()
 
         doc = {
@@ -52,7 +59,7 @@ class SaveErrorsTest(TestCase):
             adapter.best_effort_save(doc)
 
     def test_missing_column(self):
-        adapter = get_indicator_adapter(self.config, raise_errors=True)
+        adapter = self._get_adapter()
         adapter.build_table()
         with adapter.engine.begin() as connection:
             context = MigrationContext.configure(connection)
@@ -67,6 +74,21 @@ class SaveErrorsTest(TestCase):
         }
         with self.assertRaises(MissingColumnWarning):
             adapter.best_effort_save(doc)
+
+    def test_non_nullable_column(self):
+        self.config.configured_indicators[0]['is_nullable'] = False
+        self.config._id = 'docs id'
+        adapter = self._get_adapter()
+        adapter.build_table()
+
+        doc = {
+            "_id": '123',
+            "domain": "domain",
+            "doc_type": "CommCareCase",
+            "name": None
+        }
+        adapter.best_effort_save(doc)
+        self.assertEqual(InvalidUCRData.objects.count(), 1)
 
 
 class AdapterBulkSaveTest(TestCase):
