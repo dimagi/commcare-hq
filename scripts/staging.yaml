@@ -57,5 +57,4 @@ branches:
   - dmr/add-scheduled-report-records  # Apr 3
   - formplayer-debug  # Nick April 9
   #- jls/reports-select2-v4  # Jenny April 9
-  - fix-SessionDetailsView  # Nick April 12
 submodules: {}
