@@ -10,6 +10,7 @@ from django.views.decorators.debug import sensitive_variables
 from tastypie.authentication import ApiKeyAuthentication
 
 from corehq.apps.users.models import CouchUser
+from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.util.hmac_request import validate_request_hmac
 from dimagi.utils.django.request import mutable_querydict
 from python_digest import parse_digest_credentials
@@ -19,6 +20,7 @@ ANDROID = 'android'
 
 BASIC = 'basic'
 DIGEST = 'digest'
+NOAUTH = 'noauth'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
 
@@ -54,6 +56,13 @@ def determine_authtype_from_header(request, default=DIGEST):
 
 
 def determine_authtype_from_request(request, default=DIGEST):
+    """
+    There's a bug on mobile where demo submissions weren't always
+    sending noauth headers, but that should be the default.
+    """
+    if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        return NOAUTH
+    
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
