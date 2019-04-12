@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import json
 import uuid
 
+from django.core.serializers.json import DjangoJSONEncoder
+
 from couchdbkit.exceptions import ResourceConflict
 from django.db import connection
 
@@ -26,7 +28,7 @@ def sql_save_with_resource_conflict(model, document, old_doc_rev=None, sql_only_
 
     doc_json = document.to_json()
     doc_json['_rev'] = new_doc_rev
-    doc_json_string = json.dumps(doc_json)
+    doc_json_string = json.dumps(doc_json, cls=DjangoJSONEncoder)
 
     with connection.cursor() as cursor:
         cursor.execute("""
