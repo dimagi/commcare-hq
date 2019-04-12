@@ -36,7 +36,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
@@ -466,6 +466,38 @@ def _upload_fixture_api(request, domain):
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
     with excel_file as filename:
+
+        if is_async:
+            with open(filename, 'r') as f:
+                file_ref = expose_cached_download(
+                    f.read(),
+                    file_extension=file_extention_from_filename(filename),
+                    expiry=1 * 60 * 60,
+                )
+                download_id = file_ref.download_id
+                task = fixture_upload_async.delay(
+                    domain,
+                    download_id,
+                    replace,
+                )
+                file_ref.set_task(task)
+
+                status_url = "{}{}".format(
+                    get_url_base(),
+                    reverse('fixture_api_status', args=(domain, download_id))
+                )
+
+                curl_command = "curl -v --digest {} -u {}".format(
+                    status_url, request.user.username
+                )
+
+                return UploadFixtureAPIResponse('success', {
+                    "download_id": download_id,
+                    "status_url": status_url,
+                    "curl_command": curl_command,
+                    "message": _("File uploaded successfully.")
+                })
+
         try:
             validate_fixture_file_format(filename)
         except FixtureUploadError as e:
