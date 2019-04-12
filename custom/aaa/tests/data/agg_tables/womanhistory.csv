@@ -1,2 +1,0 @@
-person_case_id,fp_current_method_history,fp_preferred_method_history,family_planning_form_history
-ec_using_condoms,"[[u'2019-02-03 00:00:00', u'condom']]","[[u'2019-02-03 00:00:00', None]]","[datetime.date(2019, 2, 3)]"
