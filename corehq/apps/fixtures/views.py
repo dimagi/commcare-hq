@@ -195,7 +195,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
         fields = item.fields
         updated_fields = {}
         patches = deepcopy(fields_patches)
-        for old_field in fields.keys():
+        for old_field in list(fields):
             patch = patches.pop(old_field, {})
             if not any(patch):
                 updated_fields[old_field] = fields.pop(old_field)
@@ -205,7 +205,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
             if "remove" in patch:
                 continue
                 # destroy_field(field_to_delete, transaction)
-        for new_field_name in patches.keys():
+        for new_field_name in list(patches):
             patch = patches.pop(new_field_name, {})
             if "is_new" in patch:
                 updated_fields[new_field_name] = FieldList(
