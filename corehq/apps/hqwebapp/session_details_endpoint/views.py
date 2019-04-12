@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
+import six
+
 from django.http import HttpResponseBadRequest, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -29,10 +31,12 @@ class SessionDetailsView(View):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
+        # print('SessionDetailsView.post')
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
         except ValueError:
-            return HttpResponseBadRequest()
+            raise
+            # return HttpResponseBadRequest()
 
         if not data or not isinstance(data, dict):
             return HttpResponseBadRequest()
@@ -41,7 +45,9 @@ class SessionDetailsView(View):
         if not session_id:
             return HttpResponseBadRequest()
 
+        # print(session_id)
         user = get_django_user_from_session_key(session_id)
+        # print(user)
         if user:
             couch_user = CouchUser.get_by_username(user.username)
             if not couch_user:
