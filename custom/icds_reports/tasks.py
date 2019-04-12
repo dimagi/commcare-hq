@@ -1018,14 +1018,14 @@ def collect_inactive_dashboard_users():
 
 def _get_inactive_dashboard_user_rows(not_logged_in_week):
     from corehq.apps.users.models import CommCareUser
-    rows = ['"Username", "Location", "State"']
+    rows = ['"Username","Location","State"']
     for username in not_logged_in_week:
         user = CommCareUser.get_by_username(username)
         loc = user.sql_location
         loc_name = loc.name if loc else ''
         state = loc.get_ancestor_of_type('state') if loc else None
         state_name = state.name if state else ''
-        rows.append('"{}", "{}", "{}"'.format(username, loc_name, state_name))
+        rows.append('"{}","{}","{}"'.format(username, loc_name, state_name))
 
     return rows
 
