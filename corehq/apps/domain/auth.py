@@ -57,16 +57,16 @@ def determine_authtype_from_header(request, default=DIGEST):
 
 def determine_authtype_from_request(request, default=DIGEST):
     """
-    There's a bug on mobile where demo submissions weren't always
-    sending noauth headers, but that should be the default.
-    """
-    if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
-        return NOAUTH
-
-    """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
     """
+
+    # Fixes behavior for mobile versions between 2.39.0 and 
+    # 2.46.0, which did not explicitly request noauth when
+    # submitting in demo mode.
+    if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        return NOAUTH
+
     user_agent = request.META.get('HTTP_USER_AGENT')
     if is_probably_j2me(user_agent):
         return DIGEST
