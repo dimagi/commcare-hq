@@ -424,7 +424,7 @@ def upload_fixture_api(request, domain, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
@@ -471,6 +471,8 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
+        is_async = request.POST["async"]
+        is_async = is_async.lower() == "true"
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
@@ -481,7 +483,7 @@ def _get_fixture_upload_args_from_request(request, domain):
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    return _excel_upload_file(upload_file), replace
+    return _excel_upload_file(upload_file), replace, is_async
 
 
 @login_and_domain_required
