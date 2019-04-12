@@ -36,7 +36,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.datadog.utils import create_datadog_event
+from corehq.util.datadog.utils import create_datadog_event, case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -621,8 +621,8 @@ def recalculate_stagnant_cases():
         'static-icds-cas-static-child_cases_monthly_v2',
     ]
 
+    track_case_load = case_load_counter("find_stagnant_cases", domain)
     stagnant_cases = set()
-
     for config_id in config_ids:
         config, is_static = get_datasource_config(config_id, domain)
         adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
@@ -644,6 +644,7 @@ def recalculate_stagnant_cases():
         current_case_num += len(case_ids)
         cases = case_accessor.get_cases(list(case_ids))
         for case in cases:
+            track_case_load()
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
             "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
