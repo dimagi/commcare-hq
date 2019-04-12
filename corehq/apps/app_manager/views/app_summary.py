@@ -19,6 +19,9 @@ from dimagi.utils.web import json_response
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
+from corehq.apps.app_manager.app_schemas.form_metadata import (
+    get_app_summary_formdata,
+)
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
@@ -27,7 +30,6 @@ from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import get_app_summary_formdata
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
