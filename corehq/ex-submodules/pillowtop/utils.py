@@ -4,14 +4,13 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
-import json
 import sys
 
 import json
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 from kafka import KafkaConsumer
 
+from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
 from dimagi.utils.modules import to_function
 
@@ -19,7 +18,6 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 import six
-from six.moves import map
 
 from corehq.util.python_compatibility import soft_assert_type_text
 
@@ -266,7 +264,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
         json_bulk_chunks = [
-            json.dumps(obj, cls=DjangoJSONEncoder)
+            json.dumps(obj, cls=CommCareJSONEncoder)
             for obj in bulk_chunk
         ]
         if six.PY3:

@@ -8,9 +8,9 @@ import logging
 import time
 from io import open
 
-from django.core.serializers.json import DjangoJSONEncoder
 from six.moves.urllib.parse import unquote
 
+from corehq.util.json import CommCareJSONEncoder
 from dimagi.utils.chunked import chunked
 from django.conf import settings
 from elasticsearch import Elasticsearch, SerializationError
@@ -52,7 +52,7 @@ class ESJSONSerializer(object):
             return data
 
         try:
-            return json.dumps(data, cls=DjangoJSONEncoder)
+            return json.dumps(data, cls=CommCareJSONEncoder)
         except (ValueError, TypeError) as e:
             raise SerializationError(data, e)
 
