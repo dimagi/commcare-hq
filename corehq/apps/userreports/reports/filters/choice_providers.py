@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
@@ -162,7 +162,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @property
     def _adapter(self):
-        return IndicatorSqlAdapter(self.report.config)
+        return get_indicator_adapter(self.report.config)
 
     @property
     def _sql_column(self):
