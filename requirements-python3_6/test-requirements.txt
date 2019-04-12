@@ -85,7 +85,7 @@ idna==2.8
 ipaddress==1.0.22
 iso8601==0.1.12
 jdcal==1.4
-jinja2==2.10
+jinja2==2.10.1
 jmespath==0.9.4
 json-delta==2.0
 jsonfield==1.0.3
