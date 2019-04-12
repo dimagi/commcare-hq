@@ -11,12 +11,11 @@ from toggle.models import Toggle
 from corehq.toggles import all_toggles
 
 
-def _assert_migrated(apps, schema_editor):
+def _force_create_toggles(apps, schema_editor):
     for toggle in all_toggles():
         try:
             couch_toggle = Toggle.couch_get(toggle.slug)
         except ResourceNotFound:
-            # force creation
             couch_toggle = Toggle(slug=toggle.slug, enabled_users=[])
         couch_toggle.save()
 
@@ -28,5 +27,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_assert_migrated, migrations.RunPython.noop)
+        migrations.RunPython(_force_create_toggles, migrations.RunPython.noop)
     ]
