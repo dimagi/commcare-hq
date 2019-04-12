@@ -69,7 +69,6 @@ class SaveErrorsTest(TestCase):
             adapter.best_effort_save(doc)
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class AdapterBulkSaveTest(TestCase):
 
     def setUp(self):
