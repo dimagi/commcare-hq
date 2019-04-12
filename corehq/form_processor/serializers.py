@@ -140,17 +140,11 @@ class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
 
 
 def _serialize_indices(case):
-    return [
-        CommCareCaseIndexSQLSerializer(index).data
-        for index in case.indices
-    ]
+    return list(CommCareCaseIndexSQLSerializer(case.indices, many=True).data)
 
 
 def _serialize_transactions(case):
-    return [
-        CaseTransactionActionSerializer(trans).data
-        for trans in case.non_revoked_transactions
-    ]
+    return list(CaseTransactionActionSerializer(case.non_revoked_transactions, many=True).data)
 
 
 lazy_serialize_indices = lazy(_serialize_indices, list)
