@@ -62,7 +62,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     """
     if request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return NOAUTH
-    
+
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
