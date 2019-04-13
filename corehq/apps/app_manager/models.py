@@ -22,6 +22,7 @@ from mimetypes import guess_type
 from io import BytesIO
 
 import qrcode
+from django.contrib import messages
 from django.utils.safestring import SafeBytes
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
@@ -5811,7 +5812,7 @@ class LinkedApplication(Application):
         self.save()
 
 
-def import_app(app_id_or_source, domain, source_properties=None):
+def import_app(app_id_or_source, domain, source_properties=None, request=None):
     if isinstance(app_id_or_source, six.string_types):
         soft_assert_type_text(app_id_or_source)
         app_id = app_id_or_source
@@ -5854,11 +5855,17 @@ def import_app(app_id_or_source, domain, source_properties=None):
 
     app.save_attachments(attachments)
 
-    if not app.is_remote_app():
-        for _, m in app.get_media_objects():
-            if domain not in m.valid_domains:
-                m.valid_domains.append(domain)
-                m.save()
+    try:
+        if not app.is_remote_app():
+            for path, media in app.get_media_objects():
+                if domain not in media.valid_domains:
+                    media.valid_domains.append(domain)
+                    media.save()
+    except ReportConfigurationNotFoundError:
+        if request:
+            messages.warning(request, _("Copying the application succeeded, but the application will have errors "
+                                        "because your application contains a Mobile Report Module that references "
+                                        "a UCR configured in this project space. Multimedia may be absent."))
 
     if not app.is_remote_app():
         enable_usercase_if_necessary(app)

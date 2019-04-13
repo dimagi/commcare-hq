@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from mock.mock import MagicMock
 import mock
 
-from corehq.util.test_utils import softer_assert
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
@@ -29,7 +28,6 @@ RUN_QUERY_VALUE = {
 }
 
 
-@softer_assert('sql-agg-missing-group-by')
 class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
 
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)

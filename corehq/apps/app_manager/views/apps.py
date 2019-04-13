@@ -457,13 +457,7 @@ def _create_linked_app(request, master_app, link_domain, link_app_name):
 
 def _copy_app_helper(request, master_domain, master_app_id_or_source, copy_to_domain, copy_to_app_name, app_id):
     extra_properties = {'name': copy_to_app_name}
-    try:
-        app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties)
-    except ReportConfigurationNotFoundError:
-        messages.error(request, _("Copying the application failed because "
-                                  "your application contains a Report Module "
-                                  "that references a static UCR configuration."))
-        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, app_id]))
+    app_copy = import_app_util(master_app_id_or_source, copy_to_domain, extra_properties, request)
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
@@ -824,7 +818,7 @@ def edit_app_attr(request, domain, app_id, attr):
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if attribute in linked_app_attrs:
+            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })
