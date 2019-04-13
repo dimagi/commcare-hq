@@ -79,7 +79,7 @@ idna==2.8                 # via email-validator, requests
 ipaddress==1.0.22         # via cryptography, faker
 iso8601==0.1.12
 jdcal==1.4                # via openpyxl
-jinja2==2.10
+jinja2==2.10.1
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0
 jsonfield==1.0.3
