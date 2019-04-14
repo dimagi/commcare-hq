@@ -247,7 +247,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             # Check that names match (user is not allowed to change property in the
             # upload). Mismatched names indicate the user probably botched the sheet.
             if row.get('id', None) != detail.field:
-                message = _('A row for menu {index} has an unexpected case property "{field}"'
+                message = _('A row for menu {index} has an unexpected case property "{field}". '
                             'Case properties must appear in the same order as they do in the bulk '
                             'app translation download. No translations updated for this row.').format(
                                 index=self.module.id + 1,
