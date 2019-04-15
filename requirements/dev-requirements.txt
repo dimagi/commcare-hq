@@ -187,7 +187,7 @@ smartypants==2.0.1
 sniffer==0.4.0
 snowballstemmer==1.2.1    # via sphinx
 socketpool==0.5.3
-soupsieve==1.9
+soupsieve==1.9.1
 sphinx==1.8.5             # via recommonmark
 sphinxcontrib-websupport==1.1.0  # via sphinx
 sqlagg==0.12.0
