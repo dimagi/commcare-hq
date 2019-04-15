@@ -111,7 +111,8 @@ class MessageLogReportTest(TestCase):
         self.addCleanup(sms.delete)
 
     def make_survey_sms(self, rule_name):
-        # It appears that in production, many SMSs don't have a direct link to the triggering event - the connection is roundabout via the xforms_session
+        # It appears that in production, many SMSs don't have a direct link to the
+        # triggering event - the connection is roundabout via the xforms_session
         rule = AutomaticUpdateRule.objects.create(domain=self.domain, name=rule_name)
         xforms_session = SQLXFormsSession.objects.create(
             domain=self.domain,
