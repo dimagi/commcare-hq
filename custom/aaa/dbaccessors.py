@@ -14,9 +14,9 @@ from custom.aaa.models import (
     Child,
     ChildHistory,
     Woman,
-    WomanHistory,
 )
 from dimagi.utils.dates import force_to_datetime
+from six.moves import zip
 
 
 class ChildQueryHelper(object):
@@ -520,12 +520,10 @@ class EligibleCoupleQueryHelper(object):
     @classmethod
     def update_list(cls, data, month_end):
         for beneficiary in data:
-            history = WomanHistory.objects.filter(person_case_id=beneficiary['id']).first()
-            safe_history = {}
-            if history:
-                safe_history = history.date_filter(month_end)
+            woman = Woman.objects.get(person_case_id=beneficiary['id'])
+            ec_details = woman.eligible_couple_form_details(month_end)
 
-            planning_methods = safe_history.get('family_planning_method')
+            planning_methods = ec_details.get('fp_current_method_history')
             if planning_methods:
                 last_method = planning_methods[-1]
                 beneficiary['currentFamilyPlanningMethod'] = (
@@ -563,12 +561,9 @@ class EligibleCoupleQueryHelper(object):
             'preferredFamilyPlaningMethod': 'N/A',
         }
 
-        history = WomanHistory.objects.filter(person_case_id=self.person_case_id).first()
-        safe_history = {}
-        if history:
-            safe_history = history.date_filter(self.month_end)
+        ec_details = woman.eligible_couple_form_details(self.month_end)
 
-        planning_methods = safe_history.get('family_planning_method')
+        planning_methods = ec_details.get('fp_current_method_history')
         if planning_methods:
             current_method = planning_methods[-1]
             data['familyPlaningMethod'] = current_method[1].replace("\'", '') if current_method[1] else 'N/A'
@@ -579,10 +574,11 @@ class EligibleCoupleQueryHelper(object):
                 previous_method = planning_methods[-2][1].replace("\'", '') if planning_methods[-2][1] else 'N/A'
                 data['previousFamilyPlanningMethod'] = previous_method
 
-        preferred_methods = safe_history.get('preferred_family_planning_methods')
+        preferred_methods = ec_details.get('fp_preferred_method_history')
         if preferred_methods:
-            data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1]
+            data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1] or 'N/A'
 
-        data['ashaVisit'] = safe_history.get('last_family_planning_form') or 'N/A'
+        if ec_details.get('family_planning_form_history'):
+            data['ashaVisit'] = ec_details.get('family_planning_form_history')[-1]
 
         return data

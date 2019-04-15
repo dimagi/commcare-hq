@@ -23,7 +23,6 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     Woman,
-    WomanHistory,
 )
 from custom.aaa.tasks import run_aggregation
 from custom.icds_reports.tests import CSVTestCase
@@ -58,7 +57,7 @@ class AggregationScriptTestBase(CSVTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman, WomanHistory):
+        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman):
             model.objects.all().delete()
         super(AggregationScriptTestBase, cls).tearDownClass()
         # teardown after the django database tear down occurs to prevent database locks
@@ -113,13 +112,6 @@ class AggregationScriptTestBase(CSVTestCase):
             Woman,
             os.path.join(OUTPUT_PATH, 'woman.csv'),
             sort_key=['awc_id', 'village_id', 'person_case_id']
-        )
-
-    def test_agg_woman_history_table(self):
-        self._load_and_compare_data(
-            WomanHistory,
-            os.path.join(OUTPUT_PATH, 'womanhistory.csv'),
-            sort_key=['person_case_id']
         )
 
     def test_agg_child_table(self):

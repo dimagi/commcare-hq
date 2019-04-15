@@ -35,8 +35,10 @@ class ODataMetadataView(View):
     @method_decorator(api_auth)
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
+        # template .items is evaluated as a dict lookup instead of a function, which messes with defaultdict
+        case_type_to_properties = dict(get_case_type_to_properties(domain))
         metadata = render_to_string('api/odata_metadata.xml', {
-            'case_type_to_properties': get_case_type_to_properties(domain),
+            'case_type_to_properties': case_type_to_properties,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

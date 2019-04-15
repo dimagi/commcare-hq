@@ -74,11 +74,12 @@ class Heartbeat(object):
             blockage_duration.total_seconds(),
             tags=['celery_queue:{}'.format(self.queue)]
         )
-        datadog_gauge(
-            'commcare.celery.heartbeat.blockage_ok',
-            1 if blockage_duration.total_seconds() <= self.threshold else 0,
-            tags=['celery_queue:{}'.format(self.queue)]
-        )
+        if self.threshold:
+            datadog_gauge(
+                'commcare.celery.heartbeat.blockage_ok',
+                1 if blockage_duration.total_seconds() <= self.threshold else 0,
+                tags=['celery_queue:{}'.format(self.queue)]
+            )
         return blockage_duration
 
     @property
