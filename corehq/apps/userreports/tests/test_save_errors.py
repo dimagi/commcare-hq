@@ -88,7 +88,11 @@ class SaveErrorsTest(TestCase):
             "name": None
         }
         adapter.best_effort_save(doc)
-        self.assertEqual(InvalidUCRData.objects.count(), 1)
+
+        invalid = InvalidUCRData.objects.all()
+        self.assertEqual(len(invalid), 1)
+        self.assertEqual(invalid[0].validation_name, 'not_null_violation')
+        self.assertEqual(invalid[0].doc_id, '123')
 
 
 class AdapterBulkSaveTest(TestCase):
