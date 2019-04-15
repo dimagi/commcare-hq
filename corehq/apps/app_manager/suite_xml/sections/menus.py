@@ -10,6 +10,7 @@ from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_c
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
 from memoized import memoized
+from corehq import toggles
 
 
 class MenuContributor(SuiteContributorByModule):
@@ -113,7 +114,8 @@ class MenuContributor(SuiteContributorByModule):
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
-                            'menu_locale_id': id_strings.module_locale(module),
+                            'menu_locale_id': self._get_menu_locale_id(module),
+                            'menu_xpath_function': self._get_menu_xpath_function(module),
                             'media_image': bool(len(module.all_image_paths())),
                             'media_audio': bool(len(module.all_audio_paths())),
                             'image_locale_id': id_strings.module_icon_locale(module),
@@ -132,14 +134,19 @@ class MenuContributor(SuiteContributorByModule):
                                 and not module.root_module.put_in_root):
                             # Mobile will combine this module with its parent
                             # Reference the parent's name to avoid ambiguity
-                            locale_id = id_strings.module_locale(module.root_module)
+                            locale_kwargs = {
+                                'menu_locale_id': self._get_menu_locale_id(module.root_module),
+                                'menu_xpath_function': self._get_menu_xpath_function(module.root_module),
+                            }
                         else:
-                            locale_id = id_strings.module_locale(module)
+                            locale_kwargs = {
+                                'menu_locale_id': self._get_menu_locale_id(module),
+                                'menu_xpath_function': self._get_menu_xpath_function(module),
+                            }
                         menu_kwargs.update({
-                            'locale_id': locale_id,
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
-                        })
+                        }, **locale_kwargs)
                         menu = Menu(**menu_kwargs)
 
                     excluded_form_ids = []
@@ -164,6 +171,14 @@ class MenuContributor(SuiteContributorByModule):
             self._give_root_menu_grid_style(menus)
 
         return menus
+
+    def _get_menu_locale_id(self, module):
+        if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.app.domain):
+            return id_strings.module_locale(module)
+
+    def _get_menu_xpath_function(self, module):
+        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.app.domain):
+            return 'true()'
 
     @staticmethod
     def _schedule_filter_conditions(form, module, case):
