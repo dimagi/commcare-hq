@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff
+
+from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
+
 
 PARTIAL_DIFFS = {
     'XFormInstance*': [
@@ -10,18 +12,18 @@ PARTIAL_DIFFS = {
         {'path': ('computed_',)},  # couch only
         {'path': ('state',)},  # SQL only
         {'path': ('computed_modified_on_',)},  # couch only
-        {'path': ('deprecated_form_id',), 'old_value': Ellipsis, 'new_value': None},  # SQL always has this
+        {'path': ('deprecated_form_id',), 'old_value': MISSING, 'new_value': None},  # SQL always has this
         {'path': ('path',)},  # couch only
         {'path': ('user_id',)},  # couch only
         {'path': ('external_blobs',)},  # couch only
         {'diff_type': 'type', 'path': ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')},
-        {'path': ('problem',), 'old_value': Ellipsis, 'new_value': None},
+        {'path': ('problem',), 'old_value': MISSING, 'new_value': None},
         {'path': ('problem',), 'old_value': '', 'new_value': None},
-        {'path': ('orig_id',), 'old_value': Ellipsis, 'new_value': None},
-        {'path': ('edited_on',), 'old_value': Ellipsis, 'new_value': None},
-        {'path': ('repeats',), 'new_value': Ellipsis},  # report records save in form
-        {'path': ('form_migrated_from_undefined_xmlns',), 'new_value': Ellipsis},
-        {'diff_type': 'missing', 'old_value': None, 'new_value': Ellipsis},
+        {'path': ('orig_id',), 'old_value': MISSING, 'new_value': None},
+        {'path': ('edited_on',), 'old_value': MISSING, 'new_value': None},
+        {'path': ('repeats',), 'new_value': MISSING},  # report records save in form
+        {'path': ('form_migrated_from_undefined_xmlns',), 'new_value': MISSING},
+        {'diff_type': 'missing', 'old_value': None, 'new_value': MISSING},
     ],
     'XFormInstance': [],
     'XFormInstance-Deleted': [],
@@ -53,24 +55,24 @@ PARTIAL_DIFFS = {
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
         {'diff_type': 'type', 'path': ('user_id',), 'old_value': None},
         {'diff_type': 'type', 'path': ('opened_on',), 'old_value': None},
-        {'diff_type': 'type', 'path': ('opened_by',), 'old_value': Ellipsis},
+        {'diff_type': 'type', 'path': ('opened_by',), 'old_value': MISSING},
         # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
-        {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': Ellipsis, 'new_value': {}},
-        {'diff_type': 'missing', 'old_value': None, 'new_value': Ellipsis},
+        {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': MISSING, 'new_value': {}},
+        {'diff_type': 'missing', 'old_value': None, 'new_value': MISSING},
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
-        {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': Ellipsis},
-        {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': Ellipsis},
+        {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': MISSING},
+        {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': MISSING},
     ],
     'CommCareCase-Deleted': [
-        {'diff_type': 'missing', 'path': ('-deletion_id',), 'old_value': Ellipsis, 'new_value': None},
+        {'diff_type': 'missing', 'path': ('-deletion_id',), 'old_value': MISSING, 'new_value': None},
         {
             'diff_type': 'complex', 'path': ('-deletion_id', 'deletion_id'),
-            'old_value': Ellipsis, 'new_value': None
+            'old_value': MISSING, 'new_value': None
         },
-        {'diff_type': 'missing', 'path': ('-deletion_date',), 'old_value': Ellipsis, 'new_value': None},
+        {'diff_type': 'missing', 'path': ('-deletion_date',), 'old_value': MISSING, 'new_value': None},
     ],
     'CommCareCaseIndex': [
         # SQL JSON has case_id field in indices which couch JSON doesn't
@@ -78,12 +80,12 @@ PARTIAL_DIFFS = {
         # SQL indices don't have doc_type
         {
             'diff_type': 'missing', 'path': ('indices', '[*]', 'doc_type'),
-            'old_value': 'CommCareCaseIndex', 'new_value': Ellipsis
+            'old_value': 'CommCareCaseIndex', 'new_value': MISSING
         },
         # defaulted on SQL
         {
             'diff_type': 'missing', 'path': ('indices', '[*]', 'relationship'),
-            'old_value': Ellipsis, 'new_value': 'child'
+            'old_value': MISSING, 'new_value': 'child'
         },
     ],
     'LedgerValue': [
@@ -105,33 +107,33 @@ PARTIAL_DIFFS = {
 FORM_IGNORED_DIFFS = (
     FormJsonDiff(
         diff_type='missing', path=('history', '[*]', 'doc_type'),
-        old_value='XFormOperation', new_value=Ellipsis
+        old_value='XFormOperation', new_value=MISSING
     ),
     FormJsonDiff(
         diff_type='diff', path=('doc_type',),
         old_value='HQSubmission', new_value='XFormInstance'
     ),
-    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=Ellipsis),
-    FormJsonDiff(diff_type='missing', path=('form', 'case', '#text'), old_value='', new_value=Ellipsis),
+    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=MISSING),
+    FormJsonDiff(diff_type='missing', path=('form', 'case', '#text'), old_value='', new_value=MISSING),
     FormJsonDiff(diff_type='type', path=('xmlns',), old_value=None, new_value=''),
     FormJsonDiff(diff_type='type', path=('initial_processing_complete',), old_value=None, new_value=True),
-    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=Ellipsis, new_value='sql'),
+    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=MISSING, new_value='sql'),
 )
 
 CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type='type', path=('name',), old_value='', new_value=None),
     FormJsonDiff(diff_type='type', path=('closed_by',), old_value='', new_value=None),
-    FormJsonDiff(diff_type='missing', path=('location_id',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('referrals',), old_value=[], new_value=Ellipsis),
-    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=Ellipsis),
+    FormJsonDiff(diff_type='missing', path=('location_id',), old_value=MISSING, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('referrals',), old_value=[], new_value=MISSING),
+    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=MISSING),
     FormJsonDiff(diff_type='type', path=('type',), old_value=None, new_value=''),
     # this happens for cases where the creation form has been archived but the case still has other forms
     FormJsonDiff(diff_type='type', path=('owner_id',), old_value=None, new_value=''),
-    FormJsonDiff(diff_type='missing', path=('closed_by',), old_value=Ellipsis, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('closed_by',), old_value=MISSING, new_value=None),
     FormJsonDiff(diff_type='type', path=('external_id',), old_value='', new_value=None),
-    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=Ellipsis, new_value='sql'),
+    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value=None),
+    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=MISSING, new_value='sql'),
 )
 
 RENAMED_FIELDS = {
@@ -158,7 +160,7 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 def _filter_text_xmlns(diffs):
     return [
         diff for diff in diffs
-        if not (diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', Ellipsis))
+        if not (diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING))
     ]
 
 
@@ -253,11 +255,11 @@ def _check_renamed_fields(filtered_diffs, couch_doc, sql_doc, couch_field_name, 
         if diff.path[0] != sql_field_name and diff.path[0] != couch_field_name
     ]
     if len(remaining_diffs) != len(filtered_diffs):
-        sql_field = sql_doc.get(sql_field_name, Ellipsis)
-        couch_field = couch_doc.get(couch_field_name, Ellipsis)
+        sql_field = sql_doc.get(sql_field_name, MISSING)
+        couch_field = couch_doc.get(couch_field_name, MISSING)
         if sql_field != couch_field \
                 and not _both_dates(couch_field, sql_field) \
-                and not (couch_field == Ellipsis and sql_field == ''):
+                and not (couch_field is MISSING and sql_field == ''):
             remaining_diffs.append(FormJsonDiff(
                 diff_type='complex', path=(couch_field_name, sql_field_name),
                 old_value=couch_field, new_value=sql_field
@@ -287,7 +289,7 @@ def _filter_user_case_diffs(couch_case, sql_case, diffs):
         if diff.path[0] not in ('external_id', 'hq_user_id')
     ]
     hq_user_id_couch = couch_case['hq_user_id']
-    hq_user_id_sql = sql_case.get('external_id', Ellipsis)
+    hq_user_id_sql = sql_case.get('external_id', MISSING)
     if hq_user_id_sql != hq_user_id_couch:
         filtered_diffs.append(FormJsonDiff(
             diff_type='complex', path=('hq_user_id', 'external_id'),
@@ -329,8 +331,8 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
         sql_attachments = sql_case.get('case_attachments', {})
 
         for name, couch_att in couch_attachments.items():
-            sql_att = sql_attachments.get(name, Ellipsis)
-            if sql_att == Ellipsis:
+            sql_att = sql_attachments.get(name, MISSING)
+            if sql_att is MISSING:
                 remaining_diffs.append(FormJsonDiff(
                     diff_type='missing', path=('case_attachments', name),
                     old_value=couch_att, new_value=sql_att

@@ -8,8 +8,9 @@ from corehq.apps.couch_sql_migration.diff import (
     filter_form_diffs, FORM_IGNORED_DIFFS, PARTIAL_DIFFS,
     filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
 )
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
 from corehq.util.test_utils import softer_assert
+
 
 DATE_DIFFS = [
     FormJsonDiff(
@@ -23,15 +24,15 @@ DATE_DIFFS = [
 ]
 
 DELETION_DIFFS = [
-    FormJsonDiff(diff_type='missing', path=('-deletion_id',), old_value='abc', new_value=Ellipsis),
-    FormJsonDiff(diff_type='missing', path=('deletion_id',), old_value=Ellipsis, new_value='abc'),
-    FormJsonDiff(diff_type='missing', path=('-deletion_date',), old_value='123', new_value=Ellipsis),
-    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=Ellipsis, new_value='123'),
+    FormJsonDiff(diff_type='missing', path=('-deletion_id',), old_value='abc', new_value=MISSING),
+    FormJsonDiff(diff_type='missing', path=('deletion_id',), old_value=MISSING, new_value='abc'),
+    FormJsonDiff(diff_type='missing', path=('-deletion_date',), old_value='123', new_value=MISSING),
+    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value='123'),
 ]
 
 REAL_DIFFS = [
     FormJsonDiff(diff_type='diff', path=('name',), old_value='Form1', new_value='Form2'),
-    FormJsonDiff(diff_type='missing', path=('random_field',), old_value='legacy value', new_value=Ellipsis),
+    FormJsonDiff(diff_type='missing', path=('random_field',), old_value='legacy value', new_value=MISSING),
     FormJsonDiff(diff_type='type', path=('timeStart',), old_value='2016-04-01T15:39:42Z', new_value='not a date'),
 ]
 
@@ -206,7 +207,7 @@ class DiffTestCases(SimpleTestCase):
         self.assertEqual(filtered, [
             FormJsonDiff(
                 diff_type='complex', path=('hq_user_id', 'external_id'),
-                old_value='123', new_value=Ellipsis
+                old_value='123', new_value=MISSING
             )
         ])
 
