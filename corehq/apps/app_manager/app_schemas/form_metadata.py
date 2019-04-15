@@ -1,15 +1,22 @@
 from __future__ import absolute_import, unicode_literals
 
+import re
 from collections import defaultdict
 
-
 import six
+from deepdiff import DeepDiff
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     AppCaseMetadata,
     FormQuestionResponse,
 )
 from corehq.apps.app_manager.exceptions import XFormException
+
+REMOVED = 'removed'
+ADDED = 'added'
+CHANGED = 'changed'
+
+INTERESTING_ATTRIBUTES = ('name', 'label', 'constraint', 'calculate', 'comment', 'required', 'setvalue', 'relevant')
 
 
 class _AppSummaryFormDataGenerator(object):
@@ -123,3 +130,87 @@ def get_app_summary_formdata(domain, app, include_shadow_forms=True):
     """Returns formdata formatted for the app summary
     """
     return _AppSummaryFormDataGenerator(domain, app, include_shadow_forms).generate()
+
+
+class AppDiffGenerator(object):
+    def __init__(self, app1, app2):
+        self.first = get_app_summary_formdata(app1.domain, app1)[0]
+        self.second = get_app_summary_formdata(app2.domain, app2)[0]
+
+        self._populate_id_caches()
+        self._mark_removed_items()
+        self._mark_added_items()
+
+    def _populate_id_caches(self):
+        self._first_ids = set()
+        self._first_questions_by_id = defaultdict(dict)
+        self._second_ids = set()
+        self._second_questions_by_id = defaultdict(dict)
+
+        for module in self.first:
+            self._first_ids.add(module['id'])
+            for form in module['forms']:
+                self._first_ids.add(form['id'])
+                for question in form['questions']:
+                    self._first_questions_by_id[form['id']][question['value']] = question
+
+        for module in self.second:
+            self._second_ids.add(module['id'])
+            for form in module['forms']:
+                self._second_ids.add(form['id'])
+                for question in form['questions']:
+                    self._second_questions_by_id[form['id']][question['value']] = question
+
+    def _mark_removed_items(self):
+        for module in self.first:
+            if module['id'] not in self._second_ids:
+                module['diff_state'] = REMOVED
+            else:
+                self._mark_removed_forms(module['forms'])
+
+    def _mark_removed_forms(self, forms):
+        for form in forms:
+            if form['id'] not in self._second_ids:
+                form['diff_state'] = REMOVED
+            else:
+                self._mark_removed_questions(form['id'], form.get('questions', []))
+
+    def _mark_removed_questions(self, form_id, questions):
+        for question in questions:
+            if question['value'] not in self._second_questions_by_id[form_id]:
+                question['diff_state'] = REMOVED
+
+    def _mark_added_items(self):
+        for module in self.second:
+            if module['id'] not in self._first_ids:
+                module['diff_state'] = ADDED
+            else:
+                self._mark_added_forms(module['forms'])
+
+    def _mark_added_forms(self, forms):
+        for form in forms:
+            if form['id'] not in self._first_ids:
+                form['diff_state'] = ADDED
+            else:
+                self._mark_added_questions(form['id'], form['questions'])
+
+    def _mark_added_questions(self, form_id, questions):
+        for second_question in questions:
+            question_path = second_question['value']
+            if question_path not in self._first_questions_by_id[form_id]:
+                second_question['diff_state'] = ADDED
+            else:
+                first_question = self._first_questions_by_id[form_id][question_path]
+                self._mark_changed_questions(first_question, second_question)
+
+    def _mark_changed_questions(self, first_question, second_question):
+        for attribute in INTERESTING_ATTRIBUTES:
+            attribute_changed = first_question.get(attribute) != second_question.get(attribute)
+            attribute_added = not first_question.get(attribute) and second_question.get(attribute)
+            if (attribute_changed or attribute_added):
+                first_question['diff_state'] = CHANGED
+                second_question['diff_state'] = CHANGED
+
+
+def get_app_diff(app1, app2):
+    return AppDiffGenerator(app1, app2)
