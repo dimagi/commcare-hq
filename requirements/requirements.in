@@ -66,7 +66,7 @@ django-partial-index~=0.5.0
 jsonpath-rw==1.4.0
 django-transfer==0.4
 Pygments~=2.0
-Jinja2==2.10
+Jinja2~=2.10
 tinys3==0.1.12
 django-formtools==2.1
 django-otp==0.3.13
