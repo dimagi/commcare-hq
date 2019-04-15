@@ -3541,14 +3541,18 @@ class ReportModule(ModuleBase):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
+    # TODO: move these methods to corehq/apps/app_manager/suite_xml/sections/menus.py?
+    # Then DRY up the logic for menu_locale_id and menu_xpath_function
     def get_menus(self, supports_module_filter=False):
         kwargs = {}
         if supports_module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
 
+        name_enum = toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.domain)
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
-            menu_locale_id=id_strings.module_locale(self),
+            menu_locale_id=id_strings.module_locale(self) if menu_enum else None,
+            menu_xpath_function='true()' if menu_enum else None,
             media_image=bool(len(self.all_image_paths())),
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
