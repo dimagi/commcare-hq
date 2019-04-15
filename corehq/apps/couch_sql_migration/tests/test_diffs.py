@@ -5,11 +5,13 @@ from copy import deepcopy
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
-    filter_form_diffs, FORM_IGNORED_DIFFS, PARTIAL_DIFFS,
+    filter_form_diffs, FORM_IGNORED_DIFFS, IGNORE_RULES,
     filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
 )
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
 from corehq.util.test_utils import softer_assert
+
+from ..diffrule import ANY
 
 
 DATE_DIFFS = [
@@ -38,15 +40,26 @@ REAL_DIFFS = [
 
 
 def _get_partial_diffs(doc_type):
-    diff_defaults = FormJsonDiff(diff_type='type', path=None, old_value=0, new_value=1)._asdict()
-    return [
-        FormJsonDiff(**dict(diff_defaults, **partial))
-        for partial in PARTIAL_DIFFS[doc_type]
-    ]
+    diff_defaults = dict(diff_type='type', path=None, old_value=0, new_value=1)
+    return [FormJsonDiff(**_diff_args(rule, diff_defaults)) for rule in IGNORE_RULES[doc_type]]
+
+
+def _diff_args(ignore_rule, diff_defaults):
+    kwargs = {}
+    for attr, key in [
+        ("type", "diff_type"),
+        ("path", "path"),
+        ("old", "old_value"),
+        ("new", "new_value"),
+    ]:
+        value = getattr(ignore_rule, attr)
+        kwargs[key] = (value if value is not ANY else diff_defaults[key])
+    return kwargs
 
 
 @softer_assert()
 class DiffTestCases(SimpleTestCase):
+
     def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected):
         filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)

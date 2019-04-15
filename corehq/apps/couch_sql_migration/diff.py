@@ -3,27 +3,29 @@ from __future__ import unicode_literals
 
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
 
+from .diffrule import Ignore
 
-PARTIAL_DIFFS = {
+
+IGNORE_RULES = {
     'XFormInstance*': [
-        {'path': ('_rev',)},  # couch only
-        {'path': ('migrating_blobs_from_couch',)},  # couch only
-        {'path': ('#export_tag',)},  # couch only
-        {'path': ('computed_',)},  # couch only
-        {'path': ('state',)},  # SQL only
-        {'path': ('computed_modified_on_',)},  # couch only
-        {'path': ('deprecated_form_id',), 'old_value': MISSING, 'new_value': None},  # SQL always has this
-        {'path': ('path',)},  # couch only
-        {'path': ('user_id',)},  # couch only
-        {'path': ('external_blobs',)},  # couch only
-        {'diff_type': 'type', 'path': ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')},
-        {'path': ('problem',), 'old_value': MISSING, 'new_value': None},
-        {'path': ('problem',), 'old_value': '', 'new_value': None},
-        {'path': ('orig_id',), 'old_value': MISSING, 'new_value': None},
-        {'path': ('edited_on',), 'old_value': MISSING, 'new_value': None},
-        {'path': ('repeats',), 'new_value': MISSING},  # report records save in form
-        {'path': ('form_migrated_from_undefined_xmlns',), 'new_value': MISSING},
-        {'diff_type': 'missing', 'old_value': None, 'new_value': MISSING},
+        Ignore(path='_rev'),  # couch only
+        Ignore(path='migrating_blobs_from_couch'),  # couch only
+        Ignore(path='#export_tag'),  # couch only
+        Ignore(path='computed_'),  # couch only
+        Ignore(path='state'),  # SQL only
+        Ignore(path='computed_modified_on_'),  # couch only
+        Ignore(path='deprecated_form_id', old=MISSING, new=None),  # SQL always has this
+        Ignore(path='path'),  # couch only
+        Ignore(path='user_id'),  # couch only
+        Ignore(path='external_blobs'),  # couch only
+        Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
+        Ignore(path='problem', old=MISSING, new=None),
+        Ignore(path='problem', old='', new=None),
+        Ignore(path='orig_id', old=MISSING, new=None),
+        Ignore(path='edited_on', old=MISSING, new=None),
+        Ignore(path='repeats', old=MISSING),  # report records save in form
+        Ignore(path='form_migrated_from_undefined_xmlns', new=MISSING),
+        Ignore(type='missing', old=None, new=MISSING),
     ],
     'XFormInstance': [],
     'XFormInstance-Deleted': [],
@@ -33,78 +35,70 @@ PARTIAL_DIFFS = {
     'XFormDuplicate': [],
     'XFormDeprecated': [],
     'CommCareCase*': [
-        {'path': ('_rev',)},  # couch only
-        {'path': ('initial_processing_complete',)},  # couch only
-        {'path': ('actions', '[*]')},  # ignore case actions
-        {'path': ('id',)},  # SQL only
-        {'path': ('@xmlns',)},  # legacy
-        {'path': ('_attachments',)},  # couch only
-        {'path': ('external_blobs',)},  # couch only
-        {'path': ('#export_tag',)},  # couch only
-        {'path': ('computed_',)},  # couch only
-        {'path': ('version',)},  # couch only
-        {'path': ('deleted',)},  # SQL only
-        {'path': ('export_tag',)},  # couch only
-        {'path': ('computed_modified_on_',)},  # couch only
-        {'path': ('case_id',)},  # legacy
-        {'path': ('@case_id',)},  # legacy
-        {'path': ('case_json',)},  # SQL only
-        {'path': ('modified_by',)},  # SQL only
+        Ignore(path='_rev'),  # couch only
+        Ignore(path='initial_processing_complete'),  # couch only
+        Ignore(path=('actions', '[*]')),  # ignore case actions
+        Ignore(path='id'),  # SQL only
+        Ignore(path='@xmlns'),  # legacy
+        Ignore(path='_attachments'),  # couch only
+        Ignore(path='external_blobs'),  # couch only
+        Ignore(path='#export_tag'),  # couch only
+        Ignore(path='computed_'),  # couch only
+        Ignore(path='version'),  # couch only
+        Ignore(path='deleted'),  # SQL only
+        Ignore(path='export_tag'),  # couch only
+        Ignore(path='computed_modified_on_'),  # couch only
+        Ignore(path='case_id'),  # legacy
+        Ignore(path='@case_id'),  # legacy
+        Ignore(path='case_json'),  # SQL only
+        Ignore(path='modified_by'),  # SQL only
         # legacy bug left cases with no owner_id
-        {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
-        {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
-        {'diff_type': 'type', 'path': ('user_id',), 'old_value': None},
-        {'diff_type': 'type', 'path': ('opened_on',), 'old_value': None},
-        {'diff_type': 'type', 'path': ('opened_by',), 'old_value': MISSING},
+        Ignore('diff', 'owner_id', old=''),
+        Ignore('type', 'owner_id', old=None),
+        Ignore('type', 'user_id', old=None),
+        Ignore('type', 'opened_on', old=None),
+        Ignore('type', 'opened_by', old=MISSING),
         # form has case block with no actions
-        {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
-        {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': MISSING, 'new_value': {}},
-        {'diff_type': 'missing', 'old_value': None, 'new_value': MISSING},
+        Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
+        Ignore('missing', 'case_attachments', old=MISSING, new={}),
+        Ignore('missing', old=None, new=MISSING),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
-        {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': MISSING},
-        {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': MISSING},
+        Ignore('missing', '-deletion_id', new=MISSING),
+        Ignore('missing', '-deletion_date', new=MISSING),
     ],
     'CommCareCase-Deleted': [
-        {'diff_type': 'missing', 'path': ('-deletion_id',), 'old_value': MISSING, 'new_value': None},
-        {
-            'diff_type': 'complex', 'path': ('-deletion_id', 'deletion_id'),
-            'old_value': MISSING, 'new_value': None
-        },
-        {'diff_type': 'missing', 'path': ('-deletion_date',), 'old_value': MISSING, 'new_value': None},
+        Ignore('missing', '-deletion_id', old=MISSING, new=None),
+        Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
+        Ignore('missing', '-deletion_date', old=MISSING, new=None),
     ],
     'CommCareCaseIndex': [
         # SQL JSON has case_id field in indices which couch JSON doesn't
-        {'path': ('indices', '[*]', 'case_id')},
+        Ignore(path=('indices', '[*]', 'case_id')),
         # SQL indices don't have doc_type
-        {
-            'diff_type': 'missing', 'path': ('indices', '[*]', 'doc_type'),
-            'old_value': 'CommCareCaseIndex', 'new_value': MISSING
-        },
+        Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
         # defaulted on SQL
-        {
-            'diff_type': 'missing', 'path': ('indices', '[*]', 'relationship'),
-            'old_value': MISSING, 'new_value': 'child'
-        },
+        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
     ],
     'LedgerValue': [
-        {'path': ('_id',)},  # couch only
+        Ignore(path='_id'),  # couch only
     ],
     'case_attachment': [
-        {'path': ('doc_type',)},  # couch only
-        {'path': ('attachment_properties',)},  # couch only
-        {'path': ('attachment_from',)},  # couch only
-        {'path': ('attachment_src',)},  # couch only
-        {'path': ('content_type',)},  # couch only
-        {'path': ('server_mime',)},  # couch only
-        {'path': ('attachment_name',)},  # couch only
-        {'path': ('server_md5',)},  # couch only
+        Ignore(path='_id'),  # couch only
+        Ignore(path='attachment_properties'),  # couch only
+        Ignore(path='attachment_from'),  # couch only
+        Ignore(path='attachment_src'),  # couch only
+        Ignore(path='content_type'),  # couch only
+        Ignore(path='server_mime'),  # couch only
+        Ignore(path='attachment_name'),  # couch only
+        Ignore(path='server_md5'),  # couch only
     ]
 }
 
 
 FORM_IGNORED_DIFFS = (
+    Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
     FormJsonDiff(
         diff_type='missing', path=('history', '[*]', 'doc_type'),
         old_value='XFormOperation', new_value=MISSING
@@ -149,8 +143,8 @@ RENAMED_FIELDS = {
 def filter_form_diffs(couch_form, sql_form, diffs):
     doc_type = couch_form['doc_type']
     filtered = _filter_exact_matches(diffs, FORM_IGNORED_DIFFS)
-    partial_diffs = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['XFormInstance*']
-    filtered = _filter_partial_matches(filtered, partial_diffs)
+    partial_diffs = IGNORE_RULES[doc_type] + IGNORE_RULES['XFormInstance*']
+    filtered = _filter_ignored(couch_form, sql_form, filtered, partial_diffs)
     filtered = _filter_text_xmlns(filtered)
     filtered = _filter_date_diffs(filtered)
     filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
@@ -167,8 +161,8 @@ def _filter_text_xmlns(diffs):
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
-    partial_filters = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'] + PARTIAL_DIFFS['CommCareCaseIndex']
-    filtered_diffs = _filter_partial_matches(filtered_diffs, partial_filters)
+    partial_filters = IGNORE_RULES[doc_type] + IGNORE_RULES['CommCareCase*'] + IGNORE_RULES['CommCareCaseIndex']
+    filtered_diffs = _filter_ignored(couch_case, sql_case, filtered_diffs, partial_filters)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
@@ -205,7 +199,7 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
 
 def filter_ledger_diffs(diffs):
-    return _filter_partial_matches(diffs, PARTIAL_DIFFS['LedgerValue'])
+    return _filter_ignored(None, None, diffs, IGNORE_RULES['LedgerValue'])
 
 
 def _filter_exact_matches(diffs, diffs_to_ignore):
@@ -222,19 +216,14 @@ def _filter_exact_matches(diffs, diffs_to_ignore):
     return filtered
 
 
-def _filter_partial_matches(diffs, partial_diffs_to_exclude):
-    """Filter out diffs that match a subset of attributes
-    :type partial_diffs_to_exclude: dict([(attr, value)...])
-    """
-    def _partial_match(diff):
-        for partial in partial_diffs_to_exclude:
-            if all(getattr(diff, attr) == val for attr, val in partial.items()):
-                return True
-        return False
+def _filter_ignored(couch_obj, sql_obj, diffs, ignore_rules):
+    """Filter out diffs that match ignore rules
 
+    :type ignore_rules: [Ignore(...), ...]
+    """
     return [
         diff for diff in diffs
-        if not _partial_match(diff)
+        if not any(rule.matches(diff, couch_obj, sql_obj) for rule in ignore_rules)
     ]
 
 
@@ -339,7 +328,8 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
                 ))
             else:
                 att_diffs = json_diff(couch_att, sql_att)
-                filtered = _filter_partial_matches(att_diffs, PARTIAL_DIFFS['case_attachment'])
+                filtered = _filter_ignored(
+                    couch_att, sql_att, att_diffs, IGNORE_RULES['case_attachment'])
                 filtered = _filter_renamed_fields(filtered, couch_att, sql_att, 'case_attachment')
                 for diff in filtered:
                     diff_dict = diff._asdict()
@@ -373,7 +363,12 @@ def _filter_case_index_diffs(couch_case, sql_case, diffs):
             diff_dict['path'] = tuple(['indices'] + list(diff.path))
             new_index_diffs.append(FormJsonDiff(**diff_dict))
 
-        new_index_diffs = _filter_partial_matches(new_index_diffs, PARTIAL_DIFFS['CommCareCaseIndex'])
+        new_index_diffs = _filter_ignored(
+            couch_case,
+            sql_case,
+            new_index_diffs,
+            IGNORE_RULES['CommCareCaseIndex'],
+        )
         remaining_diffs.extend(new_index_diffs)
         return remaining_diffs
     else:
