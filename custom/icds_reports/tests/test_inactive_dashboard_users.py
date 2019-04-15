@@ -9,6 +9,7 @@ from custom.icds_reports.tasks import collect_inactive_dashboard_users
 from custom.icds_reports.models.helper import IcdsFile
 from corehq.apps.users.models import CommCareUser
 
+
 class TestInactiveMobileUsers(TestCase):
 
     def test_get_inactive_users(self):
@@ -41,5 +42,9 @@ class TestInactiveMobileUsers(TestCase):
                                   ], data)
 
     def tearDown(self):
-        CommCareUser.get_by_username('123.testing@icds-cas.commcare.org').delete()
-        CommCareUser.get_by_username('234.testing@icds-cas.commcare.org').delete()
+        user = CommCareUser.get_by_username('123.testing@icds-cas.commcare.org')
+        if user:
+            user.delete()
+        user = CommCareUser.get_by_username('234.testing@icds-cas.commcare.org')
+        if user:
+            user.delete()
