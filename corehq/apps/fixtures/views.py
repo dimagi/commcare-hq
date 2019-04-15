@@ -428,7 +428,8 @@ def upload_fixture_api(request, domain, **kwargs):
 def fixture_api_upload_status(request, domain, download_id, **kwargs):
     """
         Use following curl-command to test.
-        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/status/<download_id>/ -u user@domain.com:password
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/status/<download_id>/
+               -u user@domain.com:password
     """
     try:
         context = get_download_context(download_id, require_result=True)
