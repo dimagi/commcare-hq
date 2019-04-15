@@ -92,11 +92,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
             var options = {
                 lang: moduleBrief.lang,
                 langs: moduleBrief.langs,
-                module_id: moduleBrief.id,
                 items: moduleBrief.name_enum,
-                property_name: ko.observable('name'),
+                property_name: 'name',
                 values_are_icons: false,
-                values_are_conditions: true,
+                keys_are_conditions: true,
             };
             var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping(options);
             nameMapping.on("change", function () {
