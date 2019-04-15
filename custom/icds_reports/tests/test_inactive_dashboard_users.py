@@ -1,24 +1,15 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
-from django.test.testcases import TestCase
-from django.test.client import RequestFactory
-from django.core.urlresolvers import reverse
-from custom.icds_reports.tasks import  collect_inactive_dashboard_users
-from custom.icds_reports.models.helper import IcdsFile
-import json
-import mock
-import datetime
+
 import zipfile
 import csv
-class Base(TestCase):
 
-    def setUp(self):
-        self.factory = None
-        self.user = None
-        self.view = None
-        self.url = None
-        self.run_july_third_test = False
+from django.test.testcases import TestCase
+from custom.icds_reports.tasks import collect_inactive_dashboard_users
+from custom.icds_reports.models.helper import IcdsFile
+from corehq.apps.users.models import CommCareUser
+
+class TestInactiveMobileUsers(TestCase):
 
     def test_get_inactive_users(self):
         IcdsFile.objects.filter(data_type='inactive_dashboard_users').all().delete()
@@ -32,10 +23,7 @@ class Base(TestCase):
 
                 self.assertEqual([['Username', 'Location', 'State']], data)
 
-    def test_get_inactive_users_data_Added(self):
-        from corehq.apps.locations.models import LocationType, SQLLocation
-
-        from corehq.apps.users.models import CommCareUser
+    def test_get_inactive_users_data_added(self):
         CommCareUser(domain='icds-cas', username='123.testing@icds-cas.commcare.org').save()
         CommCareUser(domain='icds-cas', username='234.testing@icds-cas.commcare.org').save()
         IcdsFile.objects.filter(data_type='inactive_dashboard_users').all().delete()
@@ -51,3 +39,7 @@ class Base(TestCase):
                                   ['234.testing@icds-cas.commcare.org', '', ''],
                                   ['123.testing@icds-cas.commcare.org', '', '']
                                   ], data)
+
+    def tearDown(self):
+        CommCareUser.get_by_username('123.testing@icds-cas.commcare.org').delete()
+        CommCareUser.get_by_username('234.testing@icds-cas.commcare.org').delete()

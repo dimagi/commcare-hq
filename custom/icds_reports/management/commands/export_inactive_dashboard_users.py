@@ -43,7 +43,7 @@ class Command(BaseCommand):
         output(not_logged_in_week, os.path.join(output_dir, week_file_name))
 
         start_date_month = end_date - timedelta(days=30)
-        not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date,domain=domain)
+        not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date, domain=domain)
         month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
             start_date_month, end_date
         )
