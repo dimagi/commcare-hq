@@ -156,3 +156,4 @@ wrapt==1.11.1             # via ddtrace
 xhtml2pdf==0.2.3
 xlrd==1.0.0
 xlwt==1.3.0
+xmltodict==0.12.0
