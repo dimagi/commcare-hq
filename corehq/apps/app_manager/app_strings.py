@@ -15,6 +15,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.util.translation import localize
 from langcodes import langs_by_code
 import six
+from corehq import toggles
 
 
 def non_empty_only(dct):
@@ -106,6 +107,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 yield id_strings.callout_header_locale(module), trans(detail.lookup_field_header)
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+
+        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
+            for item in module.name_enum:
+                yield id_strings.module_name_enum_variable(module, item.key_as_variable), trans(item.value)
 
         icon = module.icon_app_string(lang, for_default=for_default)
         audio = module.audio_app_string(lang, for_default=for_default)
