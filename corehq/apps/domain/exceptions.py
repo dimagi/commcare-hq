@@ -8,3 +8,7 @@ class NameUnavailableException(Exception):
 
 class DomainDeleteException(Exception):
     pass
+
+
+class DomainDoesNotExist(Exception):
+    pass
