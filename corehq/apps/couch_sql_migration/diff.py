@@ -15,6 +15,10 @@ def ignore_renamed(old_name, new_name):
     return Ignore(check=lambda *a: _is_renamed(old_name, new_name, *a))
 
 
+def has_date_values(old_obj, new_obj, rule, diff):
+    return _both_dates(diff.old_value, diff.new_value)
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -45,6 +49,8 @@ IGNORE_RULES = {
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
+
+        Ignore('diff', check=has_date_values),
     ],
     'XFormInstance': [
         ignore_renamed('uid', 'instanceID'),
@@ -102,6 +108,8 @@ IGNORE_RULES = {
         Ignore('type', 'external_id', old='', new=None),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
+
+        Ignore('diff', check=has_date_values),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -148,7 +156,6 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     doc_type = couch_form['doc_type']
     filtered = _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
     filtered = _filter_text_xmlns(filtered)
-    filtered = _filter_date_diffs(filtered)
     return filtered
 
 
@@ -163,7 +170,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
     filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
@@ -256,13 +262,6 @@ class ComplexDiff(Exception):
 
 def _both_dates(old, new):
     return is_datetime_string(old) and is_datetime_string(new)
-
-
-def _filter_date_diffs(diffs):
-    return [
-        diff for diff in diffs
-        if diff.diff_type != 'diff' or not _both_dates(diff.old_value, diff.new_value)
-    ]
 
 
 def _filter_user_case_diffs(couch_case, sql_case, diffs):

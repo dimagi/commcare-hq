@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import deepcopy
 
+from attr import fields_dict
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
@@ -45,14 +46,14 @@ def _make_ignored_diffs(doc_type):
         FormJsonDiff(**_diff_args(rule, diff_defaults))
         for type in [doc_type, doc_type + "*"]
         for rule in IGNORE_RULES.get(type, [])
-        if not _is_check_any(rule)
+        if not _has_check(rule)
     ]
     assert diffs, "expected diffs for %s" % doc_type
     return diffs
 
 
-def _is_check_any(rule):
-    return all(getattr(rule, attr) is ANY for attr in ["type", "path", "old", "new"])
+def _has_check(rule):
+    return rule.check is not fields_dict(type(rule))["check"].default
 
 
 def _diff_args(ignore_rule, diff_defaults):
