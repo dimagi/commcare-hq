@@ -5,7 +5,7 @@ from copy import deepcopy
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
-    filter_form_diffs, FORM_IGNORED_DIFFS, IGNORE_RULES,
+    filter_form_diffs, IGNORE_RULES,
     filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
 )
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
@@ -75,7 +75,7 @@ class DiffTestCases(SimpleTestCase):
 
         self._test_form_diff_filter(
             {'doc_type': 'XFormInstance'}, {'doc_type': 'XFormInstance'},
-            list(FORM_IGNORED_DIFFS) + ignored_diffs + DATE_DIFFS + REAL_DIFFS,
+            ignored_diffs + DATE_DIFFS + REAL_DIFFS,
             REAL_DIFFS
         )
 

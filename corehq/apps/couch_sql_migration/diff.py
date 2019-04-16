@@ -26,6 +26,16 @@ IGNORE_RULES = {
         Ignore(path='repeats', old=MISSING),  # report records save in form
         Ignore(path='form_migrated_from_undefined_xmlns', new=MISSING),
         Ignore(type='missing', old=None, new=MISSING),
+
+        # FORM_IGNORED_DIFFS
+        Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
+        Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
+        Ignore('missing', 'deleted_on', old=MISSING, new=None),
+        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('missing', ('form', 'case', '#text'), old='', new=MISSING),
+        Ignore('type', 'xmlns', old=None, new=''),
+        Ignore('type', 'initial_processing_complete', old=None, new=True),
+        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
     ],
     'XFormInstance': [],
     'XFormInstance-Deleted': [],
@@ -97,24 +107,6 @@ IGNORE_RULES = {
 }
 
 
-FORM_IGNORED_DIFFS = (
-    Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
-    FormJsonDiff(
-        diff_type='missing', path=('history', '[*]', 'doc_type'),
-        old_value='XFormOperation', new_value=MISSING
-    ),
-    FormJsonDiff(
-        diff_type='diff', path=('doc_type',),
-        old_value='HQSubmission', new_value='XFormInstance'
-    ),
-    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=MISSING),
-    FormJsonDiff(diff_type='missing', path=('form', 'case', '#text'), old_value='', new_value=MISSING),
-    FormJsonDiff(diff_type='type', path=('xmlns',), old_value=None, new_value=''),
-    FormJsonDiff(diff_type='type', path=('initial_processing_complete',), old_value=None, new_value=True),
-    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=MISSING, new_value='sql'),
-)
-
 CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type='type', path=('name',), old_value='', new_value=None),
     FormJsonDiff(diff_type='type', path=('closed_by',), old_value='', new_value=None),
@@ -142,9 +134,8 @@ RENAMED_FIELDS = {
 
 def filter_form_diffs(couch_form, sql_form, diffs):
     doc_type = couch_form['doc_type']
-    filtered = _filter_exact_matches(diffs, FORM_IGNORED_DIFFS)
-    partial_diffs = IGNORE_RULES[doc_type] + IGNORE_RULES['XFormInstance*']
-    filtered = _filter_ignored(couch_form, sql_form, filtered, partial_diffs)
+    ignore_rules = IGNORE_RULES[doc_type] + IGNORE_RULES['XFormInstance*']
+    filtered = _filter_ignored(couch_form, sql_form, diffs, ignore_rules)
     filtered = _filter_text_xmlns(filtered)
     filtered = _filter_date_diffs(filtered)
     filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
