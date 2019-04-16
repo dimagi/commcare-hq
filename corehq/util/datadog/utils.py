@@ -186,5 +186,5 @@ def ucr_load_counter(engine_id, *args, **kw):
 
     This is used to count all kinds of UCR load
     """
-    # grep: commcare.load.sms
+    # grep: commcare.load.ucr
     return load_counter("ucr.{}".format(engine_id), *args, **kw)
