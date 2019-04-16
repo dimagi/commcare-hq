@@ -147,17 +147,25 @@ def _serialize_transactions(case):
     return list(CaseTransactionActionSerializer(case.non_revoked_transactions, many=True).data)
 
 
+def _serialize_xform_ids(case):
+    return list(case.xform_ids)
+
+
+def _serialize_attachments(case):
+    return dict(case.serialized_attachments)
+
+
 lazy_serialize_indices = lazy(_serialize_indices, list)
 lazy_serialize_transactions = lazy(_serialize_transactions, list)
+lazy_serialize_xform_ids = lazy(_serialize_xform_ids, list)
+lazy_serialize_attachments = lazy(_serialize_attachments, dict)
 
 
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
-    case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
-    xform_ids = serializers.ListField()
 
     class Meta(object):
         model = CommCareCaseSQL
