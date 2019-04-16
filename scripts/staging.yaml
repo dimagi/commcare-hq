@@ -53,6 +53,6 @@ branches:
   #- jls/log-media-map-app-id # Jenny March 7
   - jls/upload-mm-translations  # Jenny March 14
   - nh/cdc/one_domain  # Norman March 26
-  - mk/release-location # MK March 26
+#  - mk/release-location # MK March 26
   #- jls/reports-select2-v4  # Jenny April 9
 submodules: {}
