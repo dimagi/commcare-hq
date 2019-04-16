@@ -39,7 +39,7 @@ REAL_DIFFS = [
 ]
 
 
-def _get_partial_diffs(doc_type):
+def _make_ignored_diffs(doc_type):
     diff_defaults = dict(diff_type='type', path=None, old_value=0, new_value=1)
     return [FormJsonDiff(**_diff_args(rule, diff_defaults)) for rule in IGNORE_RULES[doc_type]]
 
@@ -65,11 +65,11 @@ class DiffTestCases(SimpleTestCase):
         self.assertEqual(filtered, expected)
 
     def test_filter_form_diffs(self):
-        partial_diffs = _get_partial_diffs('XFormInstance')
+        ignored_diffs = _make_ignored_diffs('XFormInstance')
 
         self._test_form_diff_filter(
             {'doc_type': 'XFormInstance'}, {'doc_type': 'XFormInstance'},
-            list(FORM_IGNORED_DIFFS) + partial_diffs + DATE_DIFFS + REAL_DIFFS,
+            list(FORM_IGNORED_DIFFS) + ignored_diffs + DATE_DIFFS + REAL_DIFFS,
             REAL_DIFFS
         )
 
@@ -122,8 +122,8 @@ class DiffTestCases(SimpleTestCase):
 
     def test_filter_case_diffs(self):
         couch_case = {'doc_type': 'CommCareCase'}
-        partial_diffs = _get_partial_diffs('CommCareCase')
-        diffs = list(CASE_IGNORED_DIFFS) + partial_diffs + DATE_DIFFS + REAL_DIFFS
+        ignored_diffs = _make_ignored_diffs('CommCareCase')
+        diffs = list(CASE_IGNORED_DIFFS) + ignored_diffs + DATE_DIFFS + REAL_DIFFS
         filtered = filter_case_diffs(couch_case, {}, diffs)
         self.assertEqual(filtered, REAL_DIFFS)
 
@@ -225,8 +225,8 @@ class DiffTestCases(SimpleTestCase):
         ])
 
     def test_filter_ledger_diffs(self):
-        partial_diffs = _get_partial_diffs('LedgerValue')
-        filtered = filter_ledger_diffs(partial_diffs + REAL_DIFFS)
+        ignored_diffs = _make_ignored_diffs('LedgerValue')
+        filtered = filter_ledger_diffs(ignored_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_combo_fields(self):
