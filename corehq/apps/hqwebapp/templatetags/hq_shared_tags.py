@@ -19,7 +19,6 @@ from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from corehq.motech.utils import pformat_json
-from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
@@ -468,13 +467,16 @@ def reverse_chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert(request):
+def maintenance_alert(request, dismissable=True):
     alert = MaintenanceAlert.get_latest_alert()
     if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
         return format_html(
-            '<div class="alert alert-warning alert-maintenance hide" data-id="{}">{}{}</div>',
+            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
+            ' hide' if dismissable else '',
             alert.id,
-            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
+            mark_safe('''
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            ''') if dismissable else '',
             mark_safe(alert.html),
         )
     else:

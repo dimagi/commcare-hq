@@ -63,7 +63,7 @@ class CommCareBuild(BlobMixin, Document):
     def fetch_file(self, path, filename=None):
         if filename:
             path = '/'.join([path, filename])
-        attachment = self.fetch_attachment(path, return_bytes=True)
+        attachment = self.fetch_attachment(path)
         try:
             return attachment.decode('utf-8')
         except UnicodeDecodeError:
@@ -286,7 +286,6 @@ class CommCareBuildConfig(Document):
 
     @classmethod
     @quickcache([], timeout=5 * 60)
-    #This seems to be not working.
     def j2me_enabled_configs(cls):
         return [build for build in cls.fetch().menu if build.j2me_enabled]
 

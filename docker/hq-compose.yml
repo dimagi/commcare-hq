@@ -77,7 +77,7 @@ services:
     expose:
       - "9200"
     volumes:
-      - ${DATA_VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
 
   kafka:
     image: spotify/kafka
@@ -95,7 +95,7 @@ services:
     expose:
       - "9980"
     volumes:
-      - ${DATA_VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs:}/var/lib/riak-data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-riakcs:}/var/lib/riak-data
 
   citus_master:
     image: 'citusdata/citus:8.1.1'
@@ -103,21 +103,34 @@ services:
     labels: ['com.citusdata.role=Master']
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
     volumes: ['/var/run/docker.sock:/var/run/docker.sock']
     depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
+      POSTGRES_PASSWORD: commcarehq
   citus_worker1:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_USER: commcarehq

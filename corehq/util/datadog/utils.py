@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import re
+from datetime import timedelta
 from functools import wraps
 
 from datadog import api
@@ -86,6 +87,21 @@ def update_datadog_metrics(metrics):
         statsd.gauge(metric, value)
 
 
+def make_buckets_from_timedeltas(*timedeltas):
+    return [td.total_seconds() for td in timedeltas]
+
+
+DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
+    timedelta(seconds=1),
+    timedelta(seconds=10),
+    timedelta(minutes=1),
+    timedelta(minutes=10),
+    timedelta(hours=1),
+    timedelta(hours=12),
+    timedelta(hours=24),
+)
+
+
 def bucket_value(value, buckets, unit=''):
     """Get value bucket for the given value
 
@@ -163,3 +179,12 @@ def sms_load_counter(*args, **kw):
     """
     # grep: commcare.load.sms
     return load_counter("sms", *args, **kw)
+
+
+def ucr_load_counter(engine_id, *args, **kw):
+    """Make a UCR load counter function
+
+    This is used to count all kinds of UCR load
+    """
+    # grep: commcare.load.ucr
+    return load_counter("ucr.{}".format(engine_id), *args, **kw)

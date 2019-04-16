@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import re
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -19,20 +18,12 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
-from corehq.apps.users.models import CouchUser
-from corehq.util.log import send_HTML_email
 from corehq.apps.reports.util import send_report_download_email
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
-from couchexport.groupexports import rebuild_export
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request
-from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
-from django.http import HttpRequest
-from django.utils.translation import ugettext as _
 
 from soil import DownloadBase
 from soil.util import expose_download
@@ -40,10 +31,11 @@ from soil.util import expose_download
 from corehq.apps.domain.calculations import (
     all_domain_stats,
     calced_props,
-    CALC_FNS,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
+from corehq.apps.es.forms import FormES
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -55,14 +47,7 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
-from .models import (
-    ReportConfig,
-    FormExportSchema,
-    ReportNotification,
-    UnsupportedScheduledReportError,
-)
 
-from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
 from six.moves import filter
@@ -73,78 +58,12 @@ logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
 
 
-def send_delayed_report(report_id):
-    """
-    Sends a scheduled report, via celery background task.
-    """
-    domain = ReportNotification.get(report_id).domain
-    if (
-        settings.SERVER_ENVIRONMENT == 'production' and
-        any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
-    ):
-        # This is to prevent a few scheduled reports from clogging up
-        # the background queue.
-        # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
-        send_report_throttled.delay(report_id)
-    else:
-        send_report.delay(report_id)
-
-
-@task(serializer='pickle', queue='background_queue', ignore_result=True)
-def send_report(notification_id):
-    notification = ReportNotification.get(notification_id)
-
-    # If the report's start date is later than today, return and do not send the email
-    if notification.start_date and notification.start_date > datetime.today().date():
-        daily_reports()
-        return
-
-    try:
-        notification.send()
-    except UnsupportedScheduledReportError:
-        pass
-
-
-@task(serializer='pickle', queue='send_report_throttled', ignore_result=True)
-def send_report_throttled(notification_id):
-    send_report(notification_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def daily_reports():
-    for report_id in get_scheduled_report_ids('daily'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def weekly_reports():
-    for report_id in get_scheduled_report_ids('weekly'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def monthly_reports():
-    for report_id in get_scheduled_report_ids('monthly'):
-        send_delayed_report(report_id)
-
-
-@task(serializer='pickle', queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
-def rebuild_export_async(config, schema):
-    rebuild_export(config, schema)
-
-
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
-    results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
+    results = DomainES().filter(
+        get_domains_to_update_es_filter()
+    ).fields(["name", "_id", "cp_last_updated"]).scroll()
+
     all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
@@ -153,9 +72,6 @@ def update_calculated_properties():
             send_to_elasticsearch("domains", r, delete=True)
             continue
         try:
-            last_form_submission = CALC_FNS["last_form_submission"](dom, False)
-            if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
-                continue
             props = calced_props(domain_obj, r["_id"], all_stats)
             if props['cp_first_form'] is None:
                 del props['cp_first_form']
@@ -168,23 +84,24 @@ def update_calculated_properties():
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
 
-def _skip_updating_domain_stats(last_updated=None, last_form_submission=None):
+def get_domains_to_update_es_filter():
     """
-    Skip domain if no forms submitted in the last day
-    AND stats were updated less than a week ago.
-
-    :return: True to skip domain
-     """
-    if not last_updated:
-        return False
-
-    last_updated_ago = datetime.utcnow() - iso_string_to_datetime(last_updated)
-    if last_form_submission:
-        last_form_ago = datetime.utcnow() - iso_string_to_datetime(last_form_submission)
-        new_data = last_form_ago < timedelta(days=1)
-    else:
-        new_data = False
-    return last_updated_ago < timedelta(days=7) and not new_data
+    Returns ES filter to filter domains that are never updated or
+        domains that haven't been updated since a week or domains that
+        have been updated within last week but have new form submissions
+        in the last day.
+    """
+    last_week = datetime.utcnow() - timedelta(days=7)
+    more_than_a_week_ago = filters.date_range('cp_last_updated', lt=last_week)
+    less_than_a_week_ago = filters.date_range('cp_last_updated', gte=last_week)
+    not_updated = filters.missing('cp_last_updated')
+    domains_submitted_today = (FormES().submitted(gte=datetime.utcnow() - timedelta(days=1))
+        .terms_aggregation('domain', 'domain').size(0).run().aggregations.domain.keys)
+    return filters.OR(
+        not_updated,
+        more_than_a_week_ago,
+        filters.AND(less_than_a_week_ago, filters.term('name', domains_submitted_today))
+    )
 
 
 def is_app_active(app_id, domain):
@@ -201,97 +118,11 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
-@task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_email_report(self, recipient_emails, domain, report_slug, report_type,
-                      request_data, once, cleaned_data):
-    """
-    Function invokes send_HTML_email to email the html text report.
-    If the report is too large to fit into email then a download link is
-    sent via email to download report
-    :Parameter recipient_list:
-            list of recipient to whom email is to be sent
-    :Parameter domain:
-            domain name
-    :Parameter report_slug:
-            report slug
-    :Parameter report_type:
-            type of the report
-    :Parameter request_data:
-            Dict containing request data
-    :Parameter once
-            boolean argument specifying whether the report is once off report
-            or scheduled report
-    :Parameter cleaned_data:
-            Dict containing cleaned data from the submitted form
-    """
-    from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
-
-    user_id = request_data['couch_user']
-    couch_user = CouchUser.get_by_user_id(user_id)
-    mock_request = HttpRequest()
-
-    mock_request.method = 'GET'
-    mock_request.GET = request_data['GET']
-
-    config = ReportConfig()
-
-    # see ReportConfig.query_string()
-    object.__setattr__(config, '_id', 'dummy')
-    config.name = _("Emailed report")
-    config.report_type = report_type
-    config.report_slug = report_slug
-    config.owner_id = user_id
-    config.domain = domain
-
-    config.start_date = request_data['datespan'].startdate.date()
-    if request_data['datespan'].enddate:
-        config.date_range = 'range'
-        config.end_date = request_data['datespan'].enddate.date()
-    else:
-        config.date_range = 'since'
-
-    GET = dict(six.iterlists(request_data['GET']))
-    exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
-    filters = {}
-    for field in GET:
-        if field not in exclude:
-            filters[field] = GET.get(field)
-
-    config.filters = filters
-
-    subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
-
-    content = _render_report_configs(
-        mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-        notes=cleaned_data['notes'], once=once
-    )[0]
-    body = render_full_report_notification(None, content).content
-
-    try:
-        for recipient in recipient_emails:
-            send_HTML_email(subject, recipient,
-                            body, email_from=settings.DEFAULT_FROM_EMAIL,
-                            smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
-
-    except Exception as er:
-        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES:
-            # If the smtp server rejects the email because of its large size.
-            # Then sends the report download link in the email.
-            report_state = {
-                'request': request_data,
-                'request_params': json_request(request_data['GET']),
-                'domain': domain,
-                'context': {},
-            }
-            export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
-        else:
-            self.retry(exc=er)
-
-
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
+    report.rendered_as = 'export'
 
     # need to set request
     setattr(report.request, 'REQUEST', {})
@@ -335,7 +166,7 @@ def build_form_multimedia_zip(
         export_id,
         zip_name,
         download_id,
-        export_is_legacy,
+        export_is_legacy=False,  # always False
         user_types=None,
         group=None):
 
@@ -348,7 +179,7 @@ def build_form_multimedia_zip(
         group=group,
         user_types=user_types,
     )
-    properties = _get_export_properties(export_id, export_is_legacy)
+    properties = _get_export_properties(export_id)
 
     if not app_id:
         zip_name = 'Unrelated Form'
@@ -443,28 +274,21 @@ def _convert_legacy_indices_to_export_properties(indices):
     ))
 
 
-def _get_export_properties(export_id, export_is_legacy):
+def _get_export_properties(export_id):
     """
     Return a list of strings corresponding to form questions that are
     included in the export.
     """
     properties = set()
     if export_id:
-        if export_is_legacy:
-            schema = FormExportSchema.get(export_id)
-            for table in schema.tables:
-                properties |= _convert_legacy_indices_to_export_properties(
-                    [column.index for column in table.columns]
-                )
-        else:
-            from corehq.apps.export.models import FormExportInstance
-            export = FormExportInstance.get(export_id)
-            for table in export.tables:
-                for column in table.columns:
-                    if column.selected and column.item:
-                        path_parts = [n.name for n in column.item.path]
-                        path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
-                        properties.add("-".join(path_parts))
+        from corehq.apps.export.models import FormExportInstance
+        export = FormExportInstance.get(export_id)
+        for table in export.tables:
+            for column in table.columns:
+                if column.selected and column.item:
+                    path_parts = [n.name for n in column.item.path]
+                    path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
+                    properties.add("-".join(path_parts))
     return properties
 
 

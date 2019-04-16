@@ -15,6 +15,7 @@ from corehq.apps.accounting.utils import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.users.models import CommCareUser, UserRole
@@ -34,6 +35,10 @@ class BaseModifySubscriptionHandler(object):
 
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
         self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
+        if self.domain is None:
+            # This fails down the line anyway
+            # and failing now gives a much better traceback
+            raise DomainDoesNotExist()
         self.date_start = date_start or datetime.date.today()
         self.new_plan_version = new_plan_version
 

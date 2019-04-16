@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId) {
+function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -93,7 +93,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
 
     function renderHeaderTooltip(header, tooltipContent) {
-        return '<i class="fa fa-info-circle headerTooplip" style="float: right;" ><div class="headerTooplipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
+        return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
     }
     function renderNumLaunchedAwcsTooltip() {
         return renderHeaderTooltip('Number of AWC', 'Total Number of Anganwadi Centers launched in the selected location.');
@@ -132,19 +132,25 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     function renderPercentageAndPartials(percentage, nominator, denominator) {
         if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
         if (percentage === vm.dataNotEntered) {
+            if (nominator === 0 && denominator === 0) {
+                return '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+            }
             return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
         }
-        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator +
-            ')</span></div>';
+        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator + ')</span></div>';
     }
     function simpleRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + full[indicator] + '</div>' || vm.dataNotEntered;
+            return '<div>' + (
+                full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered
+            ) + '</div>';
         };
     }
     function simpleYesNoRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + full[indicator] && full[indicator] !== vm.dataNotEntered ? 'Yes' : 'No' + '</div>' || vm.dataNotEntered;
+            return '<div>' + (
+                full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered
+            ) + '</div>';
         };
     }
     function renderHomeVisits(data, type, full) {
@@ -175,6 +181,30 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.selectedLocations = [];
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
+        return i;
+    };
+
+    vm.moveToLocation = function (loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
+    };
+
     vm.getData = function () {
         var getUrl = url('service_delivery_dashboard');
         vm.myPromise = $http({
@@ -201,7 +231,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId'];
+ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {

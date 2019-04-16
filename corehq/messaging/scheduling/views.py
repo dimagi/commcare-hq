@@ -141,7 +141,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
                 future_time = self.domain_now + timedelta(minutes=i)
                 future_allowed = time_within_windows(future_time, self.domain_object.restricted_sms_times)
                 if sms_allowed != future_allowed:
-                    result['sms_resume_time'] = future_allowed.strftime('%Y-%m-%d %H:%M')
+                    result['sms_resume_time'] = future_time.strftime('%Y-%m-%d %H:%M')
                     break
         else:
             result['uses_restricted_time_windows'] = False
@@ -782,12 +782,15 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'is_system_admin': self.is_system_admin,
             'criteria_form_active': False,
             'schedule_form_active': False,
+            'new_rule': not bool(self.rule),
+            'rule_name': self.rule.name if self.rule else '',
         }
 
         if self.request.method == 'POST':
             context.update({
                 'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
                 'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+                'rule_name': self.basic_info_form.rule_name,
             })
 
         return context

@@ -22,7 +22,8 @@ class Command(BaseCommand):
     def handle(self, domain, data_source_id, doc_id, **options):
         config, _ = get_datasource_config(data_source_id, domain)
         doc_type = config.referenced_doc_type
-        doc_store = get_document_store_for_doc_type(domain, doc_type)
+        doc_store = get_document_store_for_doc_type(
+            domain, doc_type, load_source="profile_data_source")
         doc = doc_store.get_document(doc_id)
         sort_by = options['sort']
         local_variables = {'config': config, 'doc': doc}

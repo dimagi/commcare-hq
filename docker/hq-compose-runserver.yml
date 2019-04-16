@@ -24,7 +24,7 @@ services:
       - "8000:8000"
     volumes:
       - ..:/mnt/commcare-hq-ro:ro
-      - hqservice-lib:/mnt/lib
+      - ${VOLUME_PREFIX}lib:/mnt/lib
 
   formplayer:
     extends:

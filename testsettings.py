@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from copy import deepcopy
+
 import settingshelper as helper
 from settings import *
 
@@ -89,19 +92,24 @@ def _set_logging_levels(levels):
         logging.getLogger(path).setLevel(level)
 _set_logging_levels({
     # Quiet down noisy loggers. Selective removal can be handy for debugging.
+    'alembic': 'WARNING',
     'auditcare': 'INFO',
     'boto3': 'WARNING',
     'botocore': 'INFO',
     'couchdbkit.request': 'INFO',
+    'couchdbkit.designer': 'WARNING',
     'datadog': 'WARNING',
     'elasticsearch': 'ERROR',
+    'kafka.conn': 'WARNING',
+    'kafka.client': 'WARNING',
+    'kafka.consumer.kafka': 'WARNING',
+    'kafka.metrics': 'WARNING',
+    'kafka.protocol.parser': 'WARNING',
+    'kafka.producer': 'WARNING',
     'quickcache': 'INFO',
     'requests.packages.urllib3': 'WARNING',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
-    'kafka.conn': 'WARNING',
-    'kafka.client': 'WARNING',
-    'kafka.consumer.kafka': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
@@ -112,36 +120,10 @@ LOGGING = {
     'loggers': {},
 }
 
-# Required in Python 3 to prevent transient but frequent travis errors.
-# Probably is caused by some race condition.
+# Default custom databases to use the same configuration as the default
 if 'icds-ucr' not in DATABASES:
-    DATABASES['icds-ucr'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'icds_commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        }
-    }
-# Define an aaa-data database if its not already defined
-# This is necessary because REPORTING_DATABASES references aaa-data.
-# We must have aaa-data in a separate database
-# https://github.com/dimagi/commcare-hq/pull/23351#issuecomment-467500691
-if 'aaa-data' not in DATABASES:
-    DATABASES['aaa-data'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'aaa_commcarehq',
-        'USER': 'commcarehq',
-        'PASSWORD': 'commcarehq',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'TEST': {
-            'SERIALIZE': False,
-        }
-    }
+    DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
+
 helper.assign_test_db_names(DATABASES)
 
 REPORTING_DATABASES = {
@@ -150,7 +132,7 @@ REPORTING_DATABASES = {
     'icds-ucr': 'icds-ucr',
     'icds-ucr-non-dashboard': 'icds-ucr',
     'icds-test-ucr': 'icds-ucr',
-    'aaa-data': 'aaa-data',
+    'aaa-data': 'default',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED

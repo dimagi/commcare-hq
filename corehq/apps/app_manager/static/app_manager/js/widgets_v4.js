@@ -11,7 +11,8 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assert(options, [], ['url', 'width']);
+        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues']);
+        var idValue = options.idValue || 'id';
 
         $select.select2({
             ajax: {
@@ -25,19 +26,34 @@ hqDefine("app_manager/js/widgets_v4", [
                     };
                 },
                 processResults: function (data) {
+                    var results = _.map(data.apps, function (build) {
+                        return {
+                            id: build[idValue],
+                            text: build.version + ": " + (build.build_comment || gettext("no comment")),
+                        };
+                    });
+                    if (options.extraValues) {
+                        results = Array.prototype.concat(options.extraValues, results);
+                    }
                     return {
-                        results: _.map(data.apps, function (build) {
-                            return {
-                                id: build.id,
-                                text: build.version + ": " + (build.build_comment || gettext("no comment")),
-                            };
-                        }),
+                        results: results,
                         pagination: data.pagination,
                     };
                 },
             },
+            templateSelection: function (data) {
+                // Only show the version number when selected
+                return data.text.split(": ")[0];
+            },
             width: options.width || '200px',
         });
+
+        if (options.initialValue) {
+            // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
+            var option = new Option(options.initialValue.text, options.initialValue.id, true, true);
+            $select.append(option).trigger('change');
+            $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
+        }
     };
 
     $(function () {

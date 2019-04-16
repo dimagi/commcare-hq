@@ -43,7 +43,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.make_uuid import random_hex
 
 
 logger = logging.getLogger(__name__)
@@ -401,7 +400,7 @@ def update_form_unique_ids(app_source, id_map=None):
 
     def change_form_unique_id(form, map):
         unique_id = form['unique_id']
-        new_unique_id = map.get(form['xmlns'], random_hex())
+        new_unique_id = map.get(form['xmlns'], uuid.uuid4().hex)
         form['unique_id'] = new_unique_id
         if ("%s.xml" % unique_id) in app_source['_attachments']:
             app_source['_attachments']["%s.xml" % new_unique_id] = app_source['_attachments'].pop("%s.xml" % unique_id)
@@ -450,7 +449,7 @@ def _app_callout_templates():
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
     else:
         logger.info("not found: %s", path)
         data = []

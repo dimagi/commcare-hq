@@ -7,6 +7,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     "hqwebapp/js/multiselect_utils",
     "hqwebapp/js/widgets_v4",  // autocomplete widget for email recipient list
     "jquery-ui/ui/datepicker",
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function (
     $,
     _,
@@ -48,8 +49,11 @@ hqDefine("reports/js/edit_scheduled_report", [
 
         self.init = function () {
             $(function () {
-                update_day_input(self.weekly_options, self.monthly_options, self.day_value);
-                $('[name="interval"]').change(function () {
+                _.delay(function () {
+                    // Delay initialization so that widget is created by the time this code is called
+                    update_day_input(self.weekly_options, self.monthly_options, self.day_value);
+                });
+                $(document).on('change', '[name="interval"]', function () {
                     update_day_input(self.weekly_options, self.monthly_options);
                 });
                 $("#id_start_date").datepicker({

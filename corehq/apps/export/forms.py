@@ -5,6 +5,7 @@ import dateutil
 import re
 from django import forms
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy
 from unidecode import unidecode
 
@@ -28,22 +29,11 @@ from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
-from corehq.apps.reports.util import (
-    group_filter,
-    users_matching_filter,
-    users_filter,
-    datespan_export_filter,
-    app_export_filter,
-    case_group_filter,
-    case_users_filter,
-    datespan_from_beginning,
-)
+from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget, Select2AjaxV3
 from corehq.pillows import utils
 
-from crispy_forms.bootstrap import InlineField
-from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
 from crispy_forms.layout import Layout
@@ -232,7 +222,7 @@ class BaseFilterExportDownloadForm(forms.Form):
 
     def get_edit_url(self, export):
         """Gets the edit url for the specified export.
-        :param export: FormExportSchema instance or CaseExportSchema instance
+        :param export: FormExportInstance instance or FormExportInstance instance
         :return: url to edit the export
         """
         raise NotImplementedError("must implement get_edit_url")
@@ -271,6 +261,13 @@ class BaseFilterExportDownloadForm(forms.Form):
         return [n[1] for n in matches]
 
 
+location_query_help_text = ugettext_lazy(mark_safe(
+    '<i class="fa fa-info-circle"></i> To quick search for a '
+    '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
+    'target="_blank">location</a>, write your query as "parent"/descendant.'
+))
+
+
 class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -279,11 +276,13 @@ class DashboardFeedFilterForm(forms.Form):
         label=ugettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2AjaxV3(multiple=True),
+        help_text=location_query_help_text,
     )
     emwf_form_filter = forms.Field(
         label=ugettext_lazy("User(s)"),
         required=False,
         widget=Select2AjaxV3(multiple=True),
+        help_text=location_query_help_text,
     )
     date_range = forms.ChoiceField(
         label=ugettext_lazy("Date Range"),
@@ -982,7 +981,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             'app_id': export.app_id,
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
-            'export_is_legacy': False,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
             'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
             'download_id': download_id

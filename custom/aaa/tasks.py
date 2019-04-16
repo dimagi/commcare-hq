@@ -6,6 +6,9 @@ from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
 
+
+from corehq.sql_db.connections import get_aaa_db_alias
+from custom.aaa.dbaccessors import EligibleCoupleQueryHelper, PregnantWomanQueryHelper, ChildQueryHelper
 from custom.aaa.models import (
     AggAwc,
     AggregationInformation,
@@ -13,9 +16,24 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     ChildHistory,
+    DenormalizedAWC,
+    DenormalizedVillage,
     Woman,
-    WomanHistory,
 )
+from custom.aaa.utils import build_location_filters, create_excel_file
+from dimagi.utils.dates import force_to_date
+
+
+@task
+def run_aggregation(domain, month=None):
+    update_location_tables(domain)
+    update_child_table(domain)
+    update_child_history_table(domain)
+    update_woman_table(domain)
+    update_ccs_record_table(domain)
+    if month:
+        update_agg_awc_table(domain, month)
+        update_agg_village_table(domain, month)
 
 
 def update_table(domain, slug, method):
@@ -38,10 +56,17 @@ def update_table(domain, slug, method):
     # implement lock
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()
+
+
+@task
+def update_location_tables(domain):
+    DenormalizedAWC.build(domain)
+    DenormalizedVillage.build(domain)
 
 
 @task
@@ -63,12 +88,6 @@ def update_woman_table(domain):
 
 
 @task
-def update_woman_history_table(domain):
-    for agg_query in WomanHistory.aggregation_queries:
-        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
-
-
-@task
 def update_ccs_record_table(domain):
     for agg_query in CcsRecord.aggregation_queries:
         update_table(domain, CcsRecord.__name__ + agg_query.__name__, agg_query)
@@ -85,7 +104,8 @@ def update_monthly_table(domain, slug, method, month):
     )
 
     agg_query, agg_params = method(domain, window_start, window_end)
-    with connections['aaa-data'].cursor() as cursor:
+    db_alias = get_aaa_db_alias()
+    with connections[db_alias].cursor() as cursor:
         cursor.execute(agg_query, agg_params)
     agg_info.end_time = datetime.utcnow()
     agg_info.save()
@@ -101,3 +121,58 @@ def update_agg_awc_table(domain, month):
 def update_agg_village_table(domain, month):
     for agg_query in AggVillage.aggregation_queries:
         update_monthly_table(domain, AggVillage.__name__ + agg_query.__name__, agg_query, month)
+
+
+@task
+def prepare_export_reports(domain, selected_date, next_month_start, selected_location,
+                           selected_ministry, beneficiary_type):
+    location_filters = build_location_filters(selected_location, selected_ministry, with_child=False)
+    sort_column = 'name'
+
+    selected_date = force_to_date(selected_date)
+    next_month_start = force_to_date(next_month_start)
+
+    columns = []
+    data = []
+
+    if beneficiary_type == 'child':
+        columns = (
+            ('name', 'Name'),
+            ('age', 'Age'),
+            ('gender', 'Gender'),
+            ('lastImmunizationType', 'Last Immunization Type'),
+            ('lastImmunizationDate', 'Last Immunization Date'),
+        )
+        data = ChildQueryHelper.list(domain, next_month_start, location_filters, sort_column)
+    elif beneficiary_type == 'eligible_couple':
+        columns = (
+            ('name', 'Name'),
+            ('age', 'Age'),
+            ('currentFamilyPlanningMethod', 'Current Family Planing Method'),
+            ('adoptionDateOfFamilyPlaning', 'Adoption Date Of Family Planning'),
+        )
+        data = EligibleCoupleQueryHelper.list(domain, selected_date, location_filters, sort_column)
+        month_end = selected_date + relativedelta(months=1) - relativedelta(days=1)
+        data = EligibleCoupleQueryHelper.update_list(data, month_end)
+    elif beneficiary_type == 'pregnant_women':
+        columns = (
+            ('name', 'Name'),
+            ('age', 'Age'),
+            ('pregMonth', 'Preg. Month'),
+            ('highRiskPregnancy', 'High Risk Pregnancy'),
+            ('noOfAncCheckUps', 'No. Of ANC Check-Ups'),
+        )
+        data = PregnantWomanQueryHelper.list(domain, selected_date, location_filters, sort_column)
+
+    export_columns = [col[1] for col in columns]
+
+    export_data = [export_columns]
+    for row in data:
+        row_data = [row[col[0]] or 'N/A' for col in columns]
+        export_data.append(row_data)
+    return create_excel_file(
+        domain,
+        [[beneficiary_type, export_data]],
+        beneficiary_type,
+        'xlsx'
+    )

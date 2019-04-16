@@ -40,29 +40,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
         },
     };
 
-    ko.bindingHandlers.staticChecked = {
-        init: function (element) {
-            $('<span class="icon"></span>').appendTo(element);
-        },
-        update: function (element, valueAccessor, allBindingsAccessor) {
-            var value = ko.utils.unwrapObservable(valueAccessor());
-            var span = $('span', element);
-            var allBindings = allBindingsAccessor();
-            var DEFAULT_ICON = 'fa fa-check';
-            var iconTrue = ko.utils.unwrapObservable(allBindings.iconTrue) || DEFAULT_ICON,
-                iconFalse = ko.utils.unwrapObservable(allBindings.iconFalse) || '';
-
-            if (value) {
-                span.removeClass(iconFalse).addClass(iconTrue);
-            } else {
-                span.removeClass(iconTrue).addClass(iconFalse);
-            }
-        },
-    };
-
     ko.bindingHandlers.langcode = {
         init: function (element, valueAccessor, allBindings) {
-            ko.bindingHandlers.value.init(element, valueAccessor, (function () {
+            var originalValue = ko.utils.unwrapObservable(valueAccessor());
+            ko.bindingHandlers.value.init(element, valueAccessor, function () {
                 var valueUpdate = allBindings.get('valueUpdate') || [];
                 if (typeof valueUpdate === 'string') {
                     valueUpdate = [valueUpdate];
@@ -85,8 +66,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                         }
                     },
                 };
-            }()));
-            $(element).langcodes();
+            }());
+            $(element).langcodes(originalValue);
         },
         update: ko.bindingHandlers.value.update,
     };
@@ -664,9 +645,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     };
 
     ko.bindingHandlers.sortableList = {
-        init: function (element, valueAccessor) {
-            var list = valueAccessor();
+        // Defines a knockout binding for the jquery UI sortable interaction which allows
+        // reordering elements with a drag and drop interface
+        // The element to be used to drag and drop must have a grip class defined
+        // Optionally sortableListSelector can be defined as a selector that describes what items are sortable
+        init: function (element, valueAccessor, allBindings) {
+            var list = valueAccessor(),
+                itemSelector = allBindings().sortableListSelector;
+
             $(element).sortable({
+                handle: '.grip',
+                cursor: 'move',
                 update: function (event, ui) {
                     //retrieve our actual data item
                     var item = ko.dataFor(ui.item.get(0));
@@ -680,6 +669,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     ui.item.remove();
                 },
             });
+            if (itemSelector) {
+                $(element).sortable("option", "items", itemSelector);
+            }
         },
     };
 

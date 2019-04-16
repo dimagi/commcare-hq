@@ -153,14 +153,9 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
 
         if not self.blobs or attachment_id not in self.blobs:
             if not getattr(self, '_id'):
-                # put attchment blows away existing data, so make sure an id has been
-                # assigned to this guy before we do it. this is the expected path
+                # put_attchment blows away existing data, so make sure an id has been assigned
+                # to this guy before we do it. This is the usual path; remote apps are the exception.
                 self.save()
-            else:
-                # this should only be files that had attachments deleted while the bug
-                # was in effect, so hopefully we will stop seeing it after a few days
-                soft_assert(notify_admins=True)(False, '[ICDS-291] someone is uploading a file that should '
-                    'have existed for multimedia', {'media_id': self._id, 'attachment_id': attachment_id})
             self.put_attachment(
                 data,
                 attachment_id,
@@ -548,21 +543,6 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
-def _log_media_deletion(app, deleted_media):
-    # https://dimagi-dev.atlassian.net/browse/ICDS-2
-    formatted_media = [
-        {'path': path, 'map_item': map_item.to_json(), 'media': media.as_dict() if media else None}
-        for path, map_item, media in deleted_media
-    ]
-    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-        False, "[ICDS-291] path deleted from multimedia map", json.dumps({
-            'domain': app.domain,
-            'app_id': app._id,
-            'deleted_media': list(formatted_media),
-        }, indent=4)
-    )
-
-
 class MediaMixin(object):
     """
         An object that has multimedia associated with it.
@@ -910,9 +890,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     map_changed = True
                     del self.multimedia_map[path]
 
-        if not allow_deletion and deleted_media:
-            _log_media_deletion(self, deleted_media)
-
         if map_changed:
             self.save()
 
@@ -969,20 +946,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     retry_failures.append(map_item)
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
-
-        if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
-            if retry_successes or retry_failures:
-                soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
-                    False, "[ICDS-291] get_media_objects failed to find multimedia", json.dumps([{
-                        'domain': self.domain,
-                        'app_id': self._id,
-                        'retry_successes_count': len(retry_successes),
-                        'retry_failures_count': len(retry_failures),
-                    }, {
-                        'retry_successes': [s.to_json() for s in retry_successes],
-                        'retry_failures': [f.to_json() for f in retry_failures],
-                    }], indent=4)
-                )
 
     def get_references(self, lang=None):
         """

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, datetime
 import json
-
+from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -12,9 +12,10 @@ from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastruc
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-
+from custom.icds_reports.reports.incentive import IncentiveReport
 
 class TestExportData(TestCase):
     maxDiff = None
@@ -129,9 +130,9 @@ class TestExportData(TestCase):
                 "38.46 %",
                 "46.15 %",
                 "15.38 %",
-                '66.67 %',
+                '50.00 %',
                 '14.46%',
-                "37.50 %",
+                "20.00 %",
                 "50.00 %",
                 "65.62 %",
                 "53.52 %",
@@ -163,9 +164,9 @@ class TestExportData(TestCase):
                 '38.46 %',
                 '46.15 %',
                 '15.38 %',
-                "66.67 %",
+                "50.00 %",
                 '14.46%',
-                '37.50 %',
+                '20.00 %',
                 '50.00 %',
                 '65.62 %',
                 '53.52 %',
@@ -197,9 +198,9 @@ class TestExportData(TestCase):
                 "38.46 %",
                 "46.15 %",
                 "15.38 %",
-                "66.67 %",
+                "50.00 %",
                 "14.46%",
-                "37.50 %",
+                "20.00 %",
                 "50.00 %",
                 "65.62 %",
                 "53.52 %",
@@ -231,9 +232,9 @@ class TestExportData(TestCase):
                 '38.46 %',
                 "46.15 %",
                 "15.38 %",
-                "66.67 %",
+                "50.00 %",
                 "14.46%",
-                "37.50 %",
+                "20.00 %",
                 "50.00 %",
                 "65.62 %",
                 "53.52 %",
@@ -265,9 +266,9 @@ class TestExportData(TestCase):
                 '38.46 %',
                 "46.15 %",
                 "15.38 %",
-                "66.67 %",
+                "50.00 %",
                 "14.46%",
-                "37.50 %",
+                "20.00 %",
                 "50.00 %",
                 "65.62 %",
                 "53.52 %",
@@ -301,7 +302,7 @@ class TestExportData(TestCase):
                 "46.88 %",
                 "0.00 %",
                 "7.07%",
-                "42.86 %",
+                "50.00 %",
                 "25.00 %",
                 "60.00 %",
                 "50.81 %",
@@ -335,7 +336,7 @@ class TestExportData(TestCase):
                 "46.88 %",
                 "0.00 %",
                 "7.07%",
-                "42.86 %",
+                "50.00 %",
                 "25.00 %",
                 "60.00 %",
                 "50.81 %",
@@ -369,7 +370,7 @@ class TestExportData(TestCase):
                 "46.88 %",
                 "0.00 %",
                 "7.07%",
-                "42.86 %",
+                "50.00 %",
                 "25.00 %",
                 "60.00 %",
                 "50.81 %",
@@ -403,7 +404,7 @@ class TestExportData(TestCase):
                 "46.88 %",
                 "0.00 %",
                 "7.07%",
-                "42.86 %",
+                "50.00 %",
                 "25.00 %",
                 "60.00 %",
                 "50.81 %",
@@ -437,7 +438,7 @@ class TestExportData(TestCase):
                 "46.88 %",
                 "0.00 %",
                 "7.07%",
-                "42.86 %",
+                "50.00 %",
                 "25.00 %",
                 "60.00 %",
                 "50.81 %",
@@ -466,16 +467,16 @@ class TestExportData(TestCase):
                     'Percentage of women eating extra meal during pregnancy',
                     'Percentage of trimester 3 women counselled on immediate breastfeeding'
                 ],
-                ['st1', 171, 120, 38, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 38, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 38, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 38, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 38, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st2', 154, 139, 34, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 34, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 34, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 34, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 34, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
+                ['st1', 171, 120, 31, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '22.50%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
+                ['st2', 154, 139, 30, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '22.30%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
                 ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
                 ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
                 ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
@@ -677,7 +678,7 @@ class TestExportData(TestCase):
                         'Number of take home rations forms', 'Number of due list forms'
                     ],
                     [
-                        'st1', 'd1', 'b1', 's1', 'a1', '91555555',
+                        'st1', 'd1', 'b1', 's1', 'a1', '+91555555',
                         18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
                     ],
                     [
@@ -1195,26 +1196,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             23
-                        ],
-                        [
-                            "a7",
-                            "a7",
-                            "s7",
-                            "b4",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Name 1814",
-                            "2017-01-28",
-                            "4 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered"
                         ],
                         [
                             "a7",
@@ -2020,4 +2001,155 @@ class TestExportData(TestCase):
                     ]
                 ]
             ])
+        )
+
+    def test_lady_supervisor_export(self):
+        data = LadySupervisorExport(
+            config={
+                'domain': 'icds-cas',
+                'aggregation_level': 4,
+                'month': date(2017, 5, 1),
+                'state_id': 'st1',
+            },
+            loc_level=1,
+        ).get_excel_data('st1')
+        expected = [
+            [
+                'Lady Supervisor',
+                [
+                    [
+                        'State',
+                        'District',
+                        'Block',
+                        'Sector Name',
+                        'Name of Lady Supervisor',
+                        'Total No. of AWCs visited',
+                        'Total No. of Beneficiaries Visited',
+                        'Total No. of VHNDs observed'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b1',
+                        's1',
+                        's1',
+                        1,
+                        2,
+                        'Data Not Entered'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b1',
+                        's2',
+                        's2',
+                        1,
+                        1,
+                        2
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b2',
+                        's3',
+                        's3',
+                        'Data Not Entered',
+                        2,
+                        'Data Not Entered'
+                    ],
+                    [
+                        'st1',
+                        'd1',
+                        'b2',
+                        's4',
+                        's4',
+                        'Data Not Entered',
+                        'Data Not Entered',
+                        1
+                    ],
+                ]
+            ],
+            [
+                'Export Info',
+                [
+                    [
+                        'Generated at',
+                        '16:21:11 15 November 2017'
+                    ],
+                    [
+                        'State',
+                        'st1'
+                    ],
+                    [
+                        'Grouped By',
+                        'Supervisor'
+                    ],
+                    [
+                        'Month',
+                        'May'
+                    ],
+                    [
+                        'Year',
+                        2017
+                    ]
+                ]
+            ]
+        ]
+        self.assertListEqual(
+            data,
+            expected
+        )
+
+    def test_aww_performance_export(self):
+        data = IncentiveReport(
+            location='b2',
+            month=datetime(2017,5,1),
+            aggregation_level=3
+        ).get_excel_data()
+
+        expected = [
+            ['AWW Performance Report',
+             [['State', 'District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+               'Home Visits Conducted', 'Number of Days AWC was Open', 'Weighing Efficiency',
+               'Eligible for Incentive'],
+              ['st1', 'd1', 'b2', 's4', 'a12', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', 5, '0.00%',
+               'No'],
+              ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', 17, '7.50%',
+               'No'],
+              ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a11', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', '0.00%', 16, '90.00%',
+               'No'],
+              ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', 12, '100.00%',
+               'No'],
+              ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', 13, '90.48%',
+               'No']]],
+            ['Export Info',
+                          [
+                              ['Generated at', india_now()],
+                              ['Grouped By', 'AWC'],
+                              ['Month', 5],
+                              ['Year', 2017],
+                              ['Disclaimer',
+                               'The information in the report is based on the self-reported '
+                               'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                               ' and is subject to timely data syncs.']
+                          ]
+             ]
+        ]
+        self.assertListEqual(
+            data,
+            expected
         )

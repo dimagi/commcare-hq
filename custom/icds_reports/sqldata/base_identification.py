@@ -6,7 +6,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 
 class BaseIdentification(object):
 
-    title = 'a. Identification'
+    title = '1.a Identification and Basic Information'
     slug = 'identification'
     has_sections = False
     subtitle = []

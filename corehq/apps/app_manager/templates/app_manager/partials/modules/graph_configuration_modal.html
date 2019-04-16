@@ -250,8 +250,11 @@
                 which is necessary because this is inside of a modal.
             -->
             <div class="col-sm-3 ui-front">
-                <input type="text" class="form-control" placeholder="property"
-                       data-bind="autocompleteSelect2: $parent.configPropertyOptions, value: property">
+                <select class="form-control" placeholder="property"
+                        data-bind="autocompleteSelect2: $parent.configPropertyOptions,
+                                   options: $parent.configPropertyOptions,
+                                   value: property,
+                "></select>
             </div>
             <div class="col-sm-1 text-center">
                 <i class="fa fa-arrow-right"></i>

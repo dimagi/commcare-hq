@@ -64,7 +64,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True)
+    adapter = get_indicator_adapter(config, raise_errors=True, load_source='build_indicators')
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -143,7 +143,9 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
     for case_type_or_xmlns in case_type_or_xmlns_list:
         relevant_ids = []
         document_store = get_document_store_for_doc_type(
-            config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
+            config.domain, config.referenced_doc_type,
+            case_type_or_xmlns=case_type_or_xmlns,
+            load_source="build_indicators",
         )
 
         for i, relevant_id in enumerate(document_store.iter_document_ids()):
@@ -177,8 +179,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.after_table_build()
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
@@ -385,7 +385,8 @@ def _build_async_indicators(indicator_doc_ids):
             return
 
         doc_store = get_document_store_for_doc_type(
-            all_indicators[0].domain, all_indicators[0].doc_type
+            all_indicators[0].domain, all_indicators[0].doc_type,
+            load_source="build_async_indicators",
         )
         failed_indicators = set()
 
@@ -411,7 +412,7 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config)
+                        adapter = get_indicator_adapter(config, load_source='build_async_indicators')
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:

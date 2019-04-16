@@ -244,7 +244,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def domain_link(self):
         if self.request.GET.get('domain_link'):
             try:
-                return DomainLink.objects.get(
+                return DomainLink.all_objects.get(
                     pk=self.request.GET.get('domain_link'),
                     master_domain=self.domain
                 )

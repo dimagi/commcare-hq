@@ -2,6 +2,23 @@
 
 [CitusDB](https://docs.citusdata.com/) is a distributed SQL database built on top of PostgreSQL.
 
+## CitusDB in Travis tests
+1. Citus containers added directly to the hq-compose.yml file
+   to make the setup simpler rather than having separate compose files
+   and having to join the networks or use host networking
+2. We use the `commcare_ucr_citus` database instead of `test_commcare_ucr_citus`
+   since that is already set up for CitusDB by the docker containers.
+   We could have docker use a different DB name
+   but Django tries to connect to the `postgres` database anyway in order to
+   create test databases.
+   Having Django setup the test database requires doing it in Django migrations
+   (see below). Although this works it adds a lot of time to the test setup
+   since Django needs to run migrations on the worker nodes. To keep the setup
+   time lower we skip this.
+3. Since there is only a single DB in the Citus cluster (the `postgres` database
+   does not exist) Django is unable to tear down the database. To get around this
+   we use `REUSE_DB=True` which skips database teardown.
+
 ## Running CitusDB
 To run CitusDB in docker execute the following command:
 ```
@@ -28,12 +45,14 @@ DATABASES.update({
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
-        'PASSWORD': '',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
         'HOST': 'localhost',
         'PORT': '5600',
         'TEST': {
             'SERIALIZE': False,
+            # this ensures the master gets created after / destroyed before the workers
+            'DEPENDENCIES': ['citus-ucr-worker1', 'citus-ucr-worker2'],
         },
         'ROLE': 'citus_master'
     },
@@ -41,14 +60,12 @@ DATABASES.update({
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
+        'USER': 'commcarehq',
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5601',
         'TEST': {
             'SERIALIZE': False,
-            # this ensures the master gets created / destroyed before the workers
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker1:5432'
@@ -57,13 +74,12 @@ DATABASES.update({
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
-        'USER': 'postgres',
+        'USER': 'commcarehq',
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5602',
         'TEST': {
             'SERIALIZE': False,
-            'DEPENDENCIES': ['icds-ucr'],
         },
         'ROLE': 'citus_worker',
         'CITUS_NODE_NAME': 'citus_worker2:5432'
@@ -77,6 +93,8 @@ This setting allows Django to know which DB is the master
 and which are workers. This allows it to run migrations
 during test setup which will add the citus extension
 and add the worker nodes to the master.
+
+This ROLE is not set for Travis so that we can skip the expensive test setup.
 
 **CITUS_NODE_NAME**
 

@@ -3,7 +3,9 @@
 Conventions followed in this file:
     * Fields ending in _ranges represent a field's history from forms that are useful for filtering.
       This is only used for fields that are required to filter for specific ranges (usually a date range).
-    * Fields ending in _history represent a field's entire history from forms.
+    * Note _history fields and models should no longer be added to.
+      Instead historical information should be gathered directly from the UCR data source.
+      Fields ending in _history represent a field's entire history from forms.
       They are saved with the format [[date, value], [date, value]].
       They are not guaranteed to be ordered by date.
       They are not intended to be queried on, their interpretation should happen in python.
@@ -16,12 +18,23 @@ Conventions followed in this file:
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 from django.contrib.postgres.fields import ArrayField, DateRangeField
-from django.db import models
+from django.db import connections, models
 from django.utils.decorators import classproperty
 
+from six.moves import zip
+
+from dimagi.utils.dates import force_to_date
+
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import get_aaa_db_alias
+from custom.aaa.const import ALL, PRODUCT_CODES
+
+logger = logging.getLogger(__name__)
 
 
 class LocationDenormalizedModel(models.Model):
@@ -50,10 +63,6 @@ class LocationDenormalizedModel(models.Model):
 
     @classmethod
     def agg_from_village_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-village_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             sc_id = village.sc_id,
@@ -62,34 +71,35 @@ class LocationDenormalizedModel(models.Model):
             district_id = village.district_id,
             state_id = village.state_id
         FROM (
-            SELECT doc_id, sc_id, phc_id, taluka_id, district_id, state_id
-            FROM "{village_location_ucr_tablename}"
+            SELECT village_id, sc_id, phc_id, taluka_id, district_id, state_id
+            FROM "{village_location_tablename}"
         ) village
-        WHERE child.village_id = village.doc_id
+        WHERE child.village_id = village.village_id
         """.format(
             child_tablename=cls._meta.db_table,
-            village_location_ucr_tablename=ucr_tablename,
+            village_location_tablename=DenormalizedVillage._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
     def agg_from_awc_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-awc_location')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
         return """
         UPDATE "{child_tablename}" AS child SET
             supervisor_id = awc.supervisor_id,
             block_id = awc.block_id
         FROM (
-            SELECT doc_id, supervisor_id, block_id
-            FROM "{awc_location_ucr_tablename}"
+            SELECT awc_id, supervisor_id, block_id
+            FROM "{awc_location_tablename}"
         ) awc
-        WHERE child.awc_id = awc.doc_id
+        WHERE child.awc_id = awc.awc_id
         """.format(
             child_tablename=cls._meta.db_table,
-            awc_location_ucr_tablename=ucr_tablename,
+            awc_location_tablename=DenormalizedAWC._meta.db_table,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
+    def _ucr_tablename(self, ucr_name):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, ucr_name)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
 
 
 class Woman(LocationDenormalizedModel):
@@ -230,7 +240,7 @@ class Woman(LocationDenormalizedModel):
             pregnant_ranges = ccs_record.pregnant_ranges
         FROM (
             SELECT person_case_id, array_agg(pregnant_range) as pregnant_ranges
-            FROM(
+            FROM (
                 SELECT person_case_id,
                        daterange(opened_on::date, add, '[]') as pregnant_range
                 FROM "{ccs_record_cases_ucr_tablename}"
@@ -257,8 +267,11 @@ class Woman(LocationDenormalizedModel):
         FROM (
             SELECT person_case_id, array_agg(fp_current_method_range) AS fp_current_method_ranges
             FROM (
-                SELECT person_case_id, fp_current_method, daterange(timeend::date, next_timeend::date) AS fp_current_method_range
-                FROM(
+                SELECT
+                    person_case_id,
+                    fp_current_method,
+                    daterange(timeend::date, next_timeend::date) AS fp_current_method_range
+                FROM (
                     SELECT person_case_id,
                            fp_current_method,
                            timeend,
@@ -288,58 +301,33 @@ class Woman(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
+    def eligible_couple_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-eligible_couple_forms')
 
-class WomanHistory(models.Model):
-    """The history of form properties for any woman registered."""
-
-    person_case_id = models.TextField(primary_key=True)
-
-    # eligible_couple properties
-    fp_current_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
-    fp_preferred_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
-
-    family_planning_form_history = ArrayField(
-        models.DateField(), null=True,
-        help_text="timeEnd from Family Planning forms submitted against this case"
-    )
-
-    @classmethod
-    def agg_from_eligible_couple_forms_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-eligible_couple_forms')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        INSERT INTO "{woman_history_tablename}" AS woman (
-            person_case_id, fp_current_method_history, fp_preferred_method_history, family_planning_form_history
-        ) (
-            SELECT person_case_id,
-                   array_agg(fp_current_method) AS fp_current_method_history,
-                   array_agg(fp_preferred_method) AS fp_preferred_method_history,
-                   array_agg(timeend) AS family_planning_form_history
-            FROM (
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
                 SELECT person_case_id,
-                       timeend,
-                       ARRAY[timeend::text, fp_current_method] AS fp_current_method,
-                       ARRAY[timeend::text, fp_preferred_method] AS fp_preferred_method
-                FROM "{eligible_couple_ucr_tablename}"
-            ) eligible_couple
-            GROUP BY person_case_id
-        )
-        ON CONFLICT (person_case_id) DO UPDATE SET
-           fp_current_method_history = EXCLUDED.fp_current_method_history,
-           fp_preferred_method_history = EXCLUDED.fp_preferred_method_history,
-           family_planning_form_history = EXCLUDED.family_planning_form_history
-        """.format(
-            woman_history_tablename=cls._meta.db_table,
-            eligible_couple_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+                       array_agg(fp_current_method) AS fp_current_method_history,
+                       array_agg(fp_preferred_method) AS fp_preferred_method_history,
+                       array_agg(timeend::date) AS family_planning_form_history
+                FROM (
+                    SELECT person_case_id,
+                           timeend,
+                           ARRAY[timeend::text, fp_current_method] AS fp_current_method,
+                           ARRAY[timeend::text, fp_preferred_method] AS fp_preferred_method
+                    FROM "{ucr_tablename}"
+                    WHERE person_case_id = %s AND timeend <= %s
+                    ORDER BY timeend ASC
+                ) eligible_couple
+                GROUP BY person_case_id
+                """.format(ucr_tablename=ucr_tablename),
+                [self.person_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
 
-    @classproperty
-    def aggregation_queries(cls):
-        return [
-            cls.agg_from_eligible_couple_forms_ucr,
-        ]
+        return result
 
 
 class CcsRecord(LocationDenormalizedModel):
@@ -369,6 +357,11 @@ class CcsRecord(LocationDenormalizedModel):
     lmp = models.DateField(null=True)
     preg_reg_date = models.DateField(null=True)
     woman_weight_at_preg_reg = models.DecimalField(null=True, max_digits=6, decimal_places=2)
+    pnc1_date = models.DateField(null=True)
+    pnc2_date = models.DateField(null=True)
+    pnc3_date = models.DateField(null=True)
+    pnc4_date = models.DateField(null=True)
+    num_anc_checkups = models.PositiveSmallIntegerField(null=True)
 
     @classmethod
     def agg_from_ccs_record_case_ucr(cls, domain, window_start, window_end):
@@ -379,7 +372,8 @@ class CcsRecord(LocationDenormalizedModel):
         return """
         INSERT INTO "{ccs_record_tablename}" AS ccs_record (
             domain, person_case_id, ccs_record_case_id, opened_on, closed_on,
-            hrp, child_birth_location, add, edd, lmp, preg_reg_date, woman_weight_at_preg_reg
+            hrp, child_birth_location, add, edd, lmp, preg_reg_date, woman_weight_at_preg_reg,
+            pnc1_date, pnc2_date, pnc3_date, pnc4_date
         ) (
             SELECT
                 %(domain)s,
@@ -393,7 +387,8 @@ class CcsRecord(LocationDenormalizedModel):
                 edd,
                 lmp,
                 preg_reg_date,
-                woman_weight_at_preg_reg
+                woman_weight_at_preg_reg,
+                pnc1_date, pnc2_date, pnc3_date, pnc4_date
             FROM "{ccs_record_cases_ucr_tablename}" ccs_record_ucr
         )
         ON CONFLICT (ccs_record_case_id) DO UPDATE SET
@@ -404,7 +399,11 @@ class CcsRecord(LocationDenormalizedModel):
            edd = EXCLUDED.edd,
            lmp = EXCLUDED.lmp,
            preg_reg_date = EXCLUDED.preg_reg_date,
-           woman_weight_at_preg_reg = EXCLUDED.woman_weight_at_preg_reg
+           woman_weight_at_preg_reg = EXCLUDED.woman_weight_at_preg_reg,
+           pnc1_date = EXCLUDED.pnc1_date,
+           pnc2_date = EXCLUDED.pnc2_date,
+           pnc3_date = EXCLUDED.pnc3_date,
+           pnc4_date = EXCLUDED.pnc4_date
         """.format(
             ccs_record_tablename=cls._meta.db_table,
             ccs_record_cases_ucr_tablename=ucr_tablename,
@@ -452,15 +451,155 @@ class CcsRecord(LocationDenormalizedModel):
             household_cases_ucr_tablename=ucr_tablename,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
+    @classmethod
+    def agg_from_birth_preparedness_forms_ucr(cls, domain, window_start, window_end):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-birth_preparedness')
+        config, _ = get_datasource_config(doc_id, domain)
+        ucr_tablename = get_table_name(domain, config.table_id)
+
+        return """
+        UPDATE "{ccs_record_tablename}" AS ccs_record SET
+            num_anc_checkups = bp_forms.num_anc_checkups
+        FROM (
+            SELECT ccs_record_case_id, COUNT(*) as num_anc_checkups
+            FROM "{bp_forms_ucr_tablename}"
+            WHERE ccs_record_case_id IS NOT NULL
+            GROUP BY ccs_record_case_id
+        ) bp_forms
+        WHERE ccs_record.ccs_record_case_id = bp_forms.ccs_record_case_id
+        """.format(
+            ccs_record_tablename=cls._meta.db_table,
+            bp_forms_ucr_tablename=ucr_tablename,
+        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+
     @classproperty
     def aggregation_queries(self):
         return [
             self.agg_from_ccs_record_case_ucr,
             self.agg_from_person_case_ucr,
             self.agg_from_household_case_ucr,
+            self.agg_from_birth_preparedness_forms_ucr,
             self.agg_from_village_ucr,
             self.agg_from_awc_ucr,
         ]
+
+    def add_pregnancy_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-add_pregnancy')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def birth_preparedness_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-birth_preparedness')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend < %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
+            )
+            result = _dictfetchall(cursor)
+
+        return result
+
+    def delivery_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-delivery_forms')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE ccs_record_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def postnatal_care_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-postnatal_care')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
+            )
+            result = _dictfetchall(cursor)
+
+        return result
+
+    def thr_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-thr_forms')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            # We only ever need the last THR form, so order by timeend and return one result
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE ccs_record_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                LIMIT 1
+                """.format(ucr_tablename),
+                [self.ccs_record_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def person_details(self):
+        ucr_tablename = self._ucr_tablename('reach-person_cases')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
+                [self.person_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def ccs_record_details(self):
+        ucr_tablename = self._ucr_tablename('reach-ccs_record_cases')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def task_case_details(self):
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE parent_case_id = %s'.format(ucr_tablename),
+                [self.ccs_record_case_id]
+            )
+            result = _dictfetchone(cursor)
+
+        return result
 
 
 class Child(LocationDenormalizedModel):
@@ -510,6 +649,10 @@ class Child(LocationDenormalizedModel):
     child_cried = models.TextField(null=True)
     ccs_record_case_id = models.TextField(null=True)
 
+    # immunization information
+    last_immunization_date = models.DateField(null=True)
+    last_immunization_type = models.TextField(null=True)
+
     @classmethod
     def agg_from_child_health_case_ucr(cls, domain, window_start, window_end):
         doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_health_cases')
@@ -555,6 +698,7 @@ class Child(LocationDenormalizedModel):
             household_case_id = person.household_case_id,
             dob = person.dob,
             sex = person.sex,
+            name = person.name,
             migration_status = person.migration_status,
             has_aadhar_number = person.has_aadhar_number,
             contact_phone_number = person.contact_phone_number
@@ -564,6 +708,7 @@ class Child(LocationDenormalizedModel):
                 doc_id,
                 dob,
                 sex,
+                name,
                 migration_status,
                 aadhar_number IS NOT NULL and aadhar_number != '' AS has_aadhar_number,
                 contact_phone_number
@@ -608,21 +753,39 @@ class Child(LocationDenormalizedModel):
 
     @classmethod
     def agg_from_tasks_case_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-child_tasks_cases')
+        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-tasks_cases')
         config, _ = get_datasource_config(doc_id, domain)
         ucr_tablename = get_table_name(domain, config.table_id)
+        product_codes = ', '.join("'{}'".format(code) for code in PRODUCT_CODES)
+        column_names = ', '.join('due_list_date_{}'.format(code) for code in PRODUCT_CODES)
 
         return """
         UPDATE "{child_tablename}" AS child SET
-            tasks_case_id = tasks.doc_id
+            tasks_case_id = tasks.doc_id,
+            last_immunization_type = tasks.last_immunization_type,
+            last_immunization_date = tasks.last_immunization_date
         FROM (
-            SELECT doc_id, child_health_case_id
-            FROM "{tasks_cases_ucr_tablename}"
+            SELECT
+                doc_id AS doc_id,
+                parent_case_id AS parent_case_id,
+                LAST_VALUE(product_code) OVER w AS last_immunization_type,
+                LAST_VALUE(product_date) OVER w AS last_immunization_date
+            FROM (
+                SELECT doc_id, parent_case_id,
+                       unnest(array[{product_codes}]) AS product_code,
+                       unnest(array[{column_names}]) AS product_date
+                FROM "{tasks_cases_ucr_tablename}"
+                WHERE tasks_type = 'child'
+            ) AS _tasks
+            WHERE product_date != '1970-01-01'
+            WINDOW w AS (PARTITION BY doc_id, parent_case_id ORDER BY product_date DESC)
         ) tasks
-        WHERE child.child_health_case_id = tasks.child_health_case_id
+        WHERE child.child_health_case_id = tasks.parent_case_id
         """.format(
             child_tablename=cls._meta.db_table,
             tasks_cases_ucr_tablename=ucr_tablename,
+            product_codes=product_codes,
+            column_names=column_names,
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
     @classmethod
@@ -659,6 +822,46 @@ class Child(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
             self.agg_from_delivery_forms_ucr,
         ]
+
+    def task_case_details(self):
+        ucr_tablename = self._ucr_tablename('reach-tasks_cases')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute('SELECT * FROM "{}" WHERE doc_id = %s'.format(ucr_tablename), [self.tasks_case_id])
+            result = _dictfetchone(cursor)
+
+        return result
+
+    def immunizaton_form_details(self):
+        ucr_tablename = self._ucr_tablename('reach-immunization_forms')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                'SELECT * FROM "{}" WHERE tasks_case_id = %s'.format(ucr_tablename),
+                [self.tasks_case_id]
+            )
+            result = _dictfetchall(cursor)
+
+        return result
+
+    def postnatal_care_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-postnatal_care')
+
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM "{}"
+                WHERE child_health_case_id = %s AND timeend IS NOT NULL AND timeend <= %s
+                ORDER BY timeend DESC
+                """.format(ucr_tablename),
+                [self.child_health_case_id, date_]
+            )
+            result = _dictfetchall(cursor)
+
+        return result
 
 
 class ChildHistory(models.Model):
@@ -717,6 +920,28 @@ class ChildHistory(models.Model):
             cls.agg_from_growth_monitoring_forms_ucr,
         ]
 
+    @classmethod
+    def before_date(cls, child_health_case_id, date_):
+        ret = {
+            'weight_child_history': [],
+            'height_child_history': [],
+            'zscore_grading_wfa_history': [],
+            'zscore_grading_hfa_history': [],
+            'zscore_grading_wfh_history': [],
+        }
+
+        try:
+            child_history = ChildHistory.objects.get(child_health_case_id=child_health_case_id)
+        except ChildHistory.DoesNotExist:
+            return ret
+        for key in ret:
+            for history_date, history_value in getattr(child_history, key):
+                day = force_to_date(history_date)
+                if day < date_:
+                    ret[key].append((day, history_value))
+
+        return ret
+
 
 class AggLocation(models.Model):
     """Abstract base model for aggregate location tables.
@@ -733,9 +958,18 @@ class AggLocation(models.Model):
     registered_children = models.PositiveIntegerField(null=True)
 
     eligible_couples_using_fp_method = models.PositiveIntegerField(null=True)
-    high_risk_pregnancies = models.PositiveIntegerField(null=True)
-    institutional_deliveries = models.PositiveIntegerField(null=True)
-    total_deliveries = models.PositiveIntegerField(null=True)
+    high_risk_pregnancies = models.PositiveIntegerField(
+        null=True,
+        help_text="hrp=yes when the ccs record was open and pregnant during the month"
+    )
+    institutional_deliveries = models.PositiveIntegerField(
+        null=True,
+        help_text="add in this month and child_birth_location = 'hospital' regardless of open status"
+    )
+    total_deliveries = models.PositiveIntegerField(
+        null=True,
+        help_text="add in this month regardless of open status"
+    )
 
     @classmethod
     def agg_from_woman_table(cls, domain, window_start, window_end):
@@ -777,7 +1011,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             woman_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -794,7 +1028,16 @@ class AggLocation(models.Model):
         ) (
             SELECT
                 %(domain)s, {select_location_levels}, %(window_start)s AS month,
-                COALESCE(COUNT(*) FILTER (WHERE hrp = 'yes'), 0) as high_risk_pregnancies,
+                COALESCE(COUNT(*) FILTER (WHERE
+                    hrp = 'yes'
+                    AND (
+                        daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
+                        AND (
+                            (opened_on < add OR add IS NULL)
+                            AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
+                        )
+                    )), 0
+                ) as high_risk_pregnancies,
                 COALESCE(COUNT(*) FILTER (WHERE
                     add <@ daterange(%(window_start)s, %(window_end)s)
                     AND child_birth_location = 'hospital'
@@ -803,10 +1046,7 @@ class AggLocation(models.Model):
                     add <@ daterange(%(window_start)s, %(window_end)s)
                 ), 0) as total_deliveries
             FROM "{woman_tablename}" woman
-            WHERE daterange(opened_on, closed_on) && daterange(%(window_start)s, %(window_end)s)
-                  AND daterange(opened_on, add) && daterange(%(window_start)s, %(window_end)s)
-                  AND (opened_on < closed_on OR closed_on IS NULL)
-                  AND (opened_on < add OR add IS NULL)
+            WHERE (opened_on < closed_on OR closed_on IS NULL)
                   AND state_id IS NOT NULL
                   AND domain = %(domain)s
             GROUP BY ROLLUP({location_levels})
@@ -818,7 +1058,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             woman_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -848,7 +1088,7 @@ class AggLocation(models.Model):
         """.format(
             agg_tablename=cls._meta.db_table,
             child_tablename=base_tablename,
-            select_location_levels=', '.join("COALESCE({}, 'ALL')".format(lvl) for lvl in cls.location_levels),
+            select_location_levels=', '.join("COALESCE({}, '{}')".format(lvl, ALL) for lvl in cls.location_levels),
             location_levels=', '.join(cls.location_levels),
         ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
 
@@ -915,3 +1155,74 @@ class AggregationInformation(models.Model):
     step = models.TextField(help_text="Slug for the step of the aggregation")
     aggregation_window_start = models.DateTimeField()
     aggregation_window_end = models.DateTimeField()
+
+
+def _dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
+
+
+def _dictfetchone(cursor):
+    ret = _dictfetchall(cursor)
+
+    if len(ret) > 1:
+        logger.error("More than one result found")
+
+    if ret:
+        return ret[0]
+
+    return {}
+
+
+class AbstractDenormalizedModel(models.Model):
+    domain = models.TextField()
+    state_id = models.TextField()
+    district_id = models.TextField()
+
+    @classmethod
+    def build(cls, domain):
+        cls.objects.filter(domain=domain).delete()
+        domain_locations = SQLLocation.objects.filter(domain=domain).values(
+            'pk', 'parent_id', 'location_id', 'location_type__code')
+        locations_by_pk = {
+            loc['pk']: loc
+            for loc in domain_locations
+        }
+        locations = [loc for loc in domain_locations if loc['location_type__code'] == cls.location_type_code]
+        to_save = []
+        for location in locations:
+            loc = cls(domain=domain)
+            current_location = location
+            attr_name = '{}_id'.format(current_location['location_type__code'])
+            setattr(loc, attr_name, current_location['location_id'])
+
+            while current_location['parent_id']:
+                current_location = locations_by_pk[current_location['parent_id']]
+                attr_name = '{}_id'.format(current_location['location_type__code'])
+                setattr(loc, attr_name, current_location['location_id'])
+
+            to_save.append(loc)
+
+        cls.objects.bulk_create(to_save)
+
+    class Meta(object):
+        abstract = True
+
+
+class DenormalizedAWC(AbstractDenormalizedModel):
+    location_type_code = 'awc'
+    block_id = models.TextField()
+    supervisor_id = models.TextField()
+    awc_id = models.TextField(unique=True)
+
+
+class DenormalizedVillage(AbstractDenormalizedModel):
+    location_type_code = 'village'
+    taluka_id = models.TextField()
+    phc_id = models.TextField()
+    sc_id = models.TextField()
+    village_id = models.TextField(unique=True)

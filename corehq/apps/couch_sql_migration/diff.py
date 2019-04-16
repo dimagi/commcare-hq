@@ -66,6 +66,10 @@ PARTIAL_DIFFS = {
     ],
     'CommCareCase-Deleted': [
         {'diff_type': 'missing', 'path': ('-deletion_id',), 'old_value': Ellipsis, 'new_value': None},
+        {
+            'diff_type': 'complex', 'path': ('-deletion_id', 'deletion_id'),
+            'old_value': Ellipsis, 'new_value': None
+        },
         {'diff_type': 'missing', 'path': ('-deletion_date',), 'old_value': Ellipsis, 'new_value': None},
     ],
     'CommCareCaseIndex': [
