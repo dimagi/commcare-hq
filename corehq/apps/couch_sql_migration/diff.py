@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from itertools import chain
+
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
 
 from .diffrule import Ignore
@@ -133,8 +135,7 @@ RENAMED_FIELDS = {
 
 def filter_form_diffs(couch_form, sql_form, diffs):
     doc_type = couch_form['doc_type']
-    ignore_rules = IGNORE_RULES[doc_type] + IGNORE_RULES['XFormInstance*']
-    filtered = _filter_ignored(couch_form, sql_form, diffs, ignore_rules)
+    filtered = _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
     filtered = _filter_text_xmlns(filtered)
     filtered = _filter_date_diffs(filtered)
     filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
@@ -150,8 +151,8 @@ def _filter_text_xmlns(diffs):
 
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
-    ignore_rules = IGNORE_RULES[doc_type] + IGNORE_RULES['CommCareCase*'] + IGNORE_RULES['CommCareCaseIndex']
-    filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, ignore_rules)
+    doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
+    filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
@@ -188,14 +189,17 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
 
 def filter_ledger_diffs(diffs):
-    return _filter_ignored(None, None, diffs, IGNORE_RULES['LedgerValue'])
+    return _filter_ignored(None, None, diffs, ['LedgerValue'])
 
 
-def _filter_ignored(couch_obj, sql_obj, diffs, ignore_rules):
+def _filter_ignored(couch_obj, sql_obj, diffs, doc_types):
     """Filter out diffs that match ignore rules
 
-    :type ignore_rules: [Ignore(...), ...]
+    :param doc_types: List of doc type specifiers (IGNORE_RULES keys).
     """
+    ignore_rules = list(chain.from_iterable(
+        IGNORE_RULES.get(d, []) for d in doc_types
+    ))
     return [
         diff for diff in diffs
         if not any(rule.matches(diff, couch_obj, sql_obj) for rule in ignore_rules)
@@ -303,8 +307,7 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
                 ))
             else:
                 att_diffs = json_diff(couch_att, sql_att)
-                filtered = _filter_ignored(
-                    couch_att, sql_att, att_diffs, IGNORE_RULES['case_attachment'])
+                filtered = _filter_ignored(couch_att, sql_att, att_diffs, ['case_attachment'])
                 filtered = _filter_renamed_fields(filtered, couch_att, sql_att, 'case_attachment')
                 for diff in filtered:
                     diff_dict = diff._asdict()
@@ -342,7 +345,7 @@ def _filter_case_index_diffs(couch_case, sql_case, diffs):
             couch_case,
             sql_case,
             new_index_diffs,
-            IGNORE_RULES['CommCareCaseIndex'],
+            ['CommCareCaseIndex'],
         )
         remaining_diffs.extend(new_index_diffs)
         return remaining_diffs
