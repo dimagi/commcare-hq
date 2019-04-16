@@ -483,13 +483,21 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     def test_process_doc_from_sql_stale_chunked(self):
         pillow = _get_pillow([self.config], processor_chunk_size=100)
-        # one less query in chunked mode, as two cases are looked up in single query
-        self._test_process_doc_from_sql_stale(pillow, num_queries=11)
+        # expected queries:  1 less since parent + child fetched together
+        # get cases (parent + child)
+        # get case indices (child)
+        # get case (parent)
+        self._test_process_doc_from_sql_stale(pillow, num_queries=3)
 
     def test_process_doc_from_sql_stale(self):
+        # expected queries:
+        # get case (parent)
+        # get case (child)
+        # get case indices (child)
+        # get case (parent)
         self._test_process_doc_from_sql_stale()
 
-    def _test_process_doc_from_sql_stale(self, pillow=None, num_queries=12):
+    def _test_process_doc_from_sql_stale(self, pillow=None, num_queries=4):
         '''
         Ensures that when you update a case that the changes are reflected in
         the UCR table.
@@ -569,9 +577,9 @@ class ReuseEvaluationContextTest(TestCase):
     def test_reuse_cache_chunked(self):
         pillow1 = _get_pillow(self.configs[:1], processor_chunk_size=100)
         pillow2 = _get_pillow(self.configs, processor_chunk_size=100)
-        self._test_reuse_cache(pillow1, pillow2, 11)
+        self._test_reuse_cache(pillow1, pillow2, 3)
 
-    def _test_reuse_cache(self, pillow1=None, pillow2=None, num_queries=12):
+    def _test_reuse_cache(self, pillow1=None, pillow2=None, num_queries=4):
         # tests that these two pillows make the same number of DB calls even
         # though pillow2 has an extra config
         pillow1 = pillow1 or self.pillow1
