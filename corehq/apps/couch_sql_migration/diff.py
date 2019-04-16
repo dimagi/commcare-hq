@@ -72,6 +72,20 @@ IGNORE_RULES = {
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
         Ignore('missing', old=None, new=MISSING),
+
+        # CASE_IGNORED_DIFFS
+        Ignore('type', 'name', old='', new=None),
+        Ignore('type', 'closed_by', old='', new=None),
+        Ignore('missing', 'location_id', old=MISSING, new=None),
+        Ignore('missing', 'referrals', old=[], new=MISSING),
+        Ignore('missing', 'location_', old=[], new=MISSING),
+        Ignore('type', 'type', old=None, new=''),
+        # this happens for cases where the creation form has been archived but the case still has other forms
+        Ignore('type', 'owner_id', old=None, new=''),
+        Ignore('missing', 'closed_by', old=MISSING, new=None),
+        Ignore('type', 'external_id', old='', new=None),
+        Ignore('missing', 'deleted_on', old=MISSING, new=None),
+        Ignore('missing', 'backend_id', old=MISSING, new='sql'),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -107,21 +121,6 @@ IGNORE_RULES = {
 }
 
 
-CASE_IGNORED_DIFFS = (
-    FormJsonDiff(diff_type='type', path=('name',), old_value='', new_value=None),
-    FormJsonDiff(diff_type='type', path=('closed_by',), old_value='', new_value=None),
-    FormJsonDiff(diff_type='missing', path=('location_id',), old_value=MISSING, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('referrals',), old_value=[], new_value=MISSING),
-    FormJsonDiff(diff_type='missing', path=('location_',), old_value=[], new_value=MISSING),
-    FormJsonDiff(diff_type='type', path=('type',), old_value=None, new_value=''),
-    # this happens for cases where the creation form has been archived but the case still has other forms
-    FormJsonDiff(diff_type='type', path=('owner_id',), old_value=None, new_value=''),
-    FormJsonDiff(diff_type='missing', path=('closed_by',), old_value=MISSING, new_value=None),
-    FormJsonDiff(diff_type='type', path=('external_id',), old_value='', new_value=None),
-    FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value=None),
-    FormJsonDiff(diff_type='missing', path=('backend_id',), old_value=MISSING, new_value='sql'),
-)
-
 RENAMED_FIELDS = {
     'XFormInstance': [('uid', 'instanceID')],
     'XFormDeprecated': [('deprecated_date', 'edited_on')],
@@ -151,9 +150,8 @@ def _filter_text_xmlns(diffs):
 
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
-    filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
-    partial_filters = IGNORE_RULES[doc_type] + IGNORE_RULES['CommCareCase*'] + IGNORE_RULES['CommCareCaseIndex']
-    filtered_diffs = _filter_ignored(couch_case, sql_case, filtered_diffs, partial_filters)
+    ignore_rules = IGNORE_RULES[doc_type] + IGNORE_RULES['CommCareCase*'] + IGNORE_RULES['CommCareCaseIndex']
+    filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, ignore_rules)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
@@ -191,20 +189,6 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
 def filter_ledger_diffs(diffs):
     return _filter_ignored(None, None, diffs, IGNORE_RULES['LedgerValue'])
-
-
-def _filter_exact_matches(diffs, diffs_to_ignore):
-    filtered = []
-    for diff in diffs:
-        try:
-            if diff not in diffs_to_ignore:
-                filtered.append(diff)
-        except TypeError:
-            # not all diffs support hashing, do slow comparison
-            diff_dict = diff._asdict()
-            if not any(diff_dict == ignore._asdict() for ignore in diffs_to_ignore):
-                filtered.append(diff)
-    return filtered
 
 
 def _filter_ignored(couch_obj, sql_obj, diffs, ignore_rules):

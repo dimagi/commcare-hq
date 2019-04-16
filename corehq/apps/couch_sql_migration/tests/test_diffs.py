@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
     filter_form_diffs, IGNORE_RULES,
-    filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
+    filter_case_diffs, filter_ledger_diffs
 )
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
 from corehq.util.test_utils import softer_assert
@@ -128,8 +128,7 @@ class DiffTestCases(SimpleTestCase):
 
     def test_filter_case_diffs(self):
         couch_case = {'doc_type': 'CommCareCase'}
-        ignored_diffs = _make_ignored_diffs('CommCareCase')
-        diffs = list(CASE_IGNORED_DIFFS) + ignored_diffs + DATE_DIFFS + REAL_DIFFS
+        diffs = _make_ignored_diffs('CommCareCase') + DATE_DIFFS + REAL_DIFFS
         filtered = filter_case_diffs(couch_case, {}, diffs)
         self.assertEqual(filtered, REAL_DIFFS)
 
