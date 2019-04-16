@@ -1,97 +1,123 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import logging
-import hashlib
-import re
-import json
-from xml.dom.minidom import parseString
-from couchdbkit import ResourceNotFound
-from django.shortcuts import render
-import itertools
+from __future__ import absolute_import, unicode_literals
 
-from lxml import etree
-from diff_match_patch import diff_match_patch
-from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+import hashlib
+import itertools
+import json
+import logging
+import re
+from xml.dom.minidom import parseString
+
+from django.conf import settings
+from django.contrib import messages
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from django.conf import settings
-from django.contrib import messages
+
+import six
+from couchdbkit import ResourceNotFound
+from diff_match_patch import diff_match_patch
+from lxml import etree
+from six.moves import zip
 from unidecode import unidecode
 
-from corehq.apps.app_manager import add_ons
-from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_properties, \
-    get_usercase_properties
-from corehq.apps.app_manager.views.media_utils import handle_media_edits
-from corehq.apps.app_manager.views.notifications import notify_form_changed
-from corehq.apps.app_manager.views.schedules import get_schedule_context
-
-from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache, form_has_submissions
-
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from corehq import toggles, privileges
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.exceptions import (
-    FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
-from corehq.apps.es import FormES
-from corehq.apps.programs.models import Program
-from corehq.apps.app_manager.util import (
-    save_xform,
-    is_usercase_in_use,
-    enable_usercase,
-    actions_use_usercase,
-    advanced_actions_use_usercase,
-    CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_SUBSTRING_MATCHES,
-)
-from corehq.apps.app_manager.xform import (
-    CaseError,
-    XFormException,
-    XFormValidationError)
-from corehq.apps.reports.formdetails.readable import FormQuestionResponse, \
-    questions_in_hierarchy
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
-from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-from corehq.apps.domain.decorators import (
-    login_or_digest, api_domain_view,
-    track_domain_request,
-    LoginAndDomainMixin,
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    get_all_case_properties,
+    get_usercase_properties,
 )
-from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE, WORKFLOW_FORM
+from corehq.apps.app_manager.const import (
+    USERCASE_PREFIX,
+    USERCASE_TYPE,
+    WORKFLOW_FORM,
+)
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
+from corehq.apps.app_manager.decorators import (
+    no_conflict_require_POST,
+    require_can_edit_apps,
+    require_deploy_apps,
+)
+from corehq.apps.app_manager.exceptions import (
+    FormNotFoundException,
+    XFormValidationFailed,
+)
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
+    CaseReferences,
+    CustomAssertion,
+    CustomIcon,
+    CustomInstance,
     DeleteFormRecord,
     Form,
-    FormActions,
     FormActionCondition,
+    FormActions,
     FormDatum,
     FormLink,
-    OpenCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    OpenCaseAction,
     UpdateCaseAction,
-    CustomAssertion,
-    CustomInstance,
-    CaseReferences,
-    CustomIcon,
 )
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
-import six
-from six.moves import zip
+from corehq.apps.app_manager.templatetags.xforms_extras import (
+    clean_trans,
+    trans,
+)
+from corehq.apps.app_manager.util import (
+    CASE_XPATH_SUBSTRING_MATCHES,
+    USER_CASE_XPATH_SUBSTRING_MATCHES,
+    actions_use_usercase,
+    advanced_actions_use_usercase,
+    enable_usercase,
+    is_usercase_in_use,
+    save_xform,
+)
+from corehq.apps.app_manager.views.media_utils import handle_media_edits
+from corehq.apps.app_manager.views.notifications import notify_form_changed
+from corehq.apps.app_manager.views.schedules import get_schedule_context
+from corehq.apps.app_manager.views.utils import (
+    CASE_TYPE_CONFLICT_MSG,
+    back_to_main,
+    clear_xmlns_app_id_cache,
+    form_has_submissions,
+    get_langs,
+    handle_custom_icon_edits,
+)
+from corehq.apps.app_manager.xform import (
+    CaseError,
+    XFormException,
+    XFormValidationError,
+)
+from corehq.apps.data_dictionary.util import (
+    add_properties_to_data_dictionary,
+    get_case_property_description_dict,
+)
+from corehq.apps.domain.decorators import (
+    LoginAndDomainMixin,
+    api_domain_view,
+    login_or_digest,
+    track_domain_request,
+)
+from corehq.apps.programs.models import Program
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.util.python_compatibility import soft_assert_type_text
+from corehq.util.view_utils import set_file_download
 
 
 @no_conflict_require_POST
@@ -623,7 +649,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         except XFormValidationError:
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
-            pass
         except XFormValidationFailed:
             xform_validation_missing = True
             messages.warning(request, _("Unable to validate form due to server error."))

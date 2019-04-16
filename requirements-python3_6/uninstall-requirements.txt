@@ -11,3 +11,4 @@ cython
 django-celery
 numpy
 ConcurrentLogHandler
+xhtml2pdf
