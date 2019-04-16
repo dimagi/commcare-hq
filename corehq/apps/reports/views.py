@@ -28,7 +28,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, NotFound, models
 import langcodes
 import pytz
 import re
@@ -2033,16 +2033,12 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
 @require_GET
 def export_report(request, domain, export_hash, format):
     db = get_blob_db()
-
-    from corehq.blobs.models import BlobMeta
-    from corehq.blobs import NotFound
-
     report_not_found = HttpResponseNotFound(_("That report was not found. Please remember "
                                               "that download links expire after 24 hours."))
 
     try:
         meta = db.metadb.get(parent_id=export_hash, key=export_hash)
-    except BlobMeta.DoesNotExist:
+    except models.BlobMeta.DoesNotExist:
         return report_not_found
     report_class = meta.properties["report_class"]
 
