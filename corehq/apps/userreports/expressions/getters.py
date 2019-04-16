@@ -17,8 +17,9 @@ def eval_lazy(value):
     return value
 
 
-def evaluate_lazy_arg(func, value):
-    return func(eval_lazy(value))
+def evaluate_lazy_args(func, *args):
+    args = [eval_lazy(arg) for arg in args]
+    return func(*args)
 
 
 class TransformedGetter(object):
@@ -189,14 +190,14 @@ def transform_from_datatype(datatype):
         'string': transform_unicode,
         'array': transform_array,
     }.get(datatype) or identity
-    return functools.partial(evaluate_lazy_arg, transform)
+    return functools.partial(evaluate_lazy_args, transform)
 
 
 def getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path, \
             'indicator {} has both a name and path specified! you must only pick one.'.format(spec.property_name)
-        return functools.partial(evaluate_lazy_arg, DictGetter(property_name=spec.property_name))
+        return functools.partial(evaluate_lazy_args, DictGetter(property_name=spec.property_name))
     else:
         assert spec.property_path, spec.property_name
-        return functools.partial(evaluate_lazy_arg, NestedDictGetter(property_path=spec.property_path))
+        return functools.partial(evaluate_lazy_args, NestedDictGetter(property_path=spec.property_path))
