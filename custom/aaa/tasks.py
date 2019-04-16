@@ -19,7 +19,6 @@ from custom.aaa.models import (
     DenormalizedAWC,
     DenormalizedVillage,
     Woman,
-    WomanHistory,
 )
 from custom.aaa.utils import build_location_filters, create_excel_file
 from dimagi.utils.dates import force_to_date
@@ -31,7 +30,6 @@ def run_aggregation(domain, month=None):
     update_child_table(domain)
     update_child_history_table(domain)
     update_woman_table(domain)
-    update_woman_history_table(domain)
     update_ccs_record_table(domain)
     if month:
         update_agg_awc_table(domain, month)
@@ -86,12 +84,6 @@ def update_child_history_table(domain):
 @task
 def update_woman_table(domain):
     for agg_query in Woman.aggregation_queries:
-        update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
-
-
-@task
-def update_woman_history_table(domain):
-    for agg_query in WomanHistory.aggregation_queries:
         update_table(domain, Woman.__name__ + agg_query.__name__, agg_query)
 
 

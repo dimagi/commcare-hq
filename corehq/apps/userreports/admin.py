@@ -21,5 +21,19 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
     search_fields = ('doc_id',)
 
 
+class InvalidUCRDataAdmin(admin.ModelAdmin):
+
+    model = InvalidUCRData
+    list_display = [
+        'doc_id',
+        'doc_type',
+        'domain',
+        'indicator_config_id',
+        'validation_name',
+    ]
+    list_filter = ('doc_type', 'domain', 'indicator_config_id', 'validation_name')
+    search_fields = ('doc_id',)
+
+
 admin.site.register(AsyncIndicator, AsyncIndicatorAdmin)
-admin.site.register(InvalidUCRData)
+admin.site.register(InvalidUCRData, InvalidUCRDataAdmin)

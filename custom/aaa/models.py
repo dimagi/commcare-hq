@@ -301,79 +301,33 @@ class Woman(LocationDenormalizedModel):
             self.agg_from_awc_ucr,
         ]
 
+    def eligible_couple_form_details(self, date_):
+        ucr_tablename = self._ucr_tablename('reach-eligible_couple_forms')
 
-class WomanHistory(models.Model):
-    """The history of form properties for any woman registered."""
-
-    person_case_id = models.TextField(primary_key=True)
-
-    # eligible_couple properties
-    fp_current_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
-    fp_preferred_method_history = ArrayField(ArrayField(models.TextField(), size=2), null=True)
-
-    family_planning_form_history = ArrayField(
-        models.DateField(), null=True,
-        help_text="timeEnd from Family Planning forms submitted against this case"
-    )
-
-    @classmethod
-    def agg_from_eligible_couple_forms_ucr(cls, domain, window_start, window_end):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'reach-eligible_couple_forms')
-        config, _ = get_datasource_config(doc_id, domain)
-        ucr_tablename = get_table_name(domain, config.table_id)
-
-        return """
-        INSERT INTO "{woman_history_tablename}" AS woman (
-            person_case_id, fp_current_method_history, fp_preferred_method_history, family_planning_form_history
-        ) (
-            SELECT person_case_id,
-                   array_agg(fp_current_method) AS fp_current_method_history,
-                   array_agg(fp_preferred_method) AS fp_preferred_method_history,
-                   array_agg(timeend) AS family_planning_form_history
-            FROM (
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(
+                """
                 SELECT person_case_id,
-                       timeend,
-                       ARRAY[timeend::text, fp_current_method] AS fp_current_method,
-                       ARRAY[timeend::text, fp_preferred_method] AS fp_preferred_method
-                FROM "{eligible_couple_ucr_tablename}"
-            ) eligible_couple
-            GROUP BY person_case_id
-        )
-        ON CONFLICT (person_case_id) DO UPDATE SET
-           fp_current_method_history = EXCLUDED.fp_current_method_history,
-           fp_preferred_method_history = EXCLUDED.fp_preferred_method_history,
-           family_planning_form_history = EXCLUDED.family_planning_form_history
-        """.format(
-            woman_history_tablename=cls._meta.db_table,
-            eligible_couple_ucr_tablename=ucr_tablename,
-        ), {'domain': domain, 'window_start': window_start, 'window_end': window_end}
+                       array_agg(fp_current_method) AS fp_current_method_history,
+                       array_agg(fp_preferred_method) AS fp_preferred_method_history,
+                       array_agg(timeend::date) AS family_planning_form_history
+                FROM (
+                    SELECT person_case_id,
+                           timeend,
+                           ARRAY[timeend::text, fp_current_method] AS fp_current_method,
+                           ARRAY[timeend::text, fp_preferred_method] AS fp_preferred_method
+                    FROM "{ucr_tablename}"
+                    WHERE person_case_id = %s AND timeend <= %s
+                    ORDER BY timeend ASC
+                ) eligible_couple
+                GROUP BY person_case_id
+                """.format(ucr_tablename=ucr_tablename),
+                [self.person_case_id, date_]
+            )
+            result = _dictfetchone(cursor)
 
-    @classproperty
-    def aggregation_queries(cls):
-        return [
-            cls.agg_from_eligible_couple_forms_ucr,
-        ]
-
-    def date_filter(self, date):
-        sorted_family_planning_method = sorted([
-            method for method in (self.fp_current_method_history or [])
-            if force_to_date(method[0]) <= date
-        ], key=lambda method: force_to_date(method[0]))
-        sorted_preferred_family_planning_method = sorted([
-            method for method in (self.fp_preferred_method_history or [])
-            if force_to_date(method[0]) <= date
-        ], key=lambda method: force_to_date(method[0]))
-        family_planning_forms = sorted(
-            timeend
-            for timeend in (self.family_planning_form_history or [])
-            if timeend <= date
-        )
-
-        return {
-            'family_planning_method': sorted_family_planning_method,
-            'preferred_family_planning_methods': sorted_preferred_family_planning_method,
-            'last_family_planning_form': family_planning_forms[-1] if family_planning_forms else None
-        }
+        return result
 
 
 class CcsRecord(LocationDenormalizedModel):
