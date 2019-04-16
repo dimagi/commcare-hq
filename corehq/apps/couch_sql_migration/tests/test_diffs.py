@@ -41,7 +41,13 @@ REAL_DIFFS = [
 
 def _make_ignored_diffs(doc_type):
     diff_defaults = dict(diff_type='type', path=None, old_value=0, new_value=1)
-    return [FormJsonDiff(**_diff_args(rule, diff_defaults)) for rule in IGNORE_RULES[doc_type]]
+    diffs = [
+        FormJsonDiff(**_diff_args(rule, diff_defaults))
+        for type in [doc_type, doc_type + "*"]
+        for rule in IGNORE_RULES.get(type, [])
+    ]
+    assert diffs, "expected diffs for %s" % doc_type
+    return diffs
 
 
 def _diff_args(ignore_rule, diff_defaults):
