@@ -64,6 +64,7 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
+        self.diffClass = options.diff_state ? 'diff-' + options.diff_state : '';
 
         return self;
     };

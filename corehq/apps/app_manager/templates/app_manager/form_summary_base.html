@@ -21,7 +21,7 @@
 <!-- /ko -->
 
 <ul class="fa-ul" data-bind="foreach: modules">
-    <li data-bind="visible: isVisible">
+    <li data-bind="visible: isVisible, attr: { class: diffClass }">
         <h4>
             <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                 <i data-bind="attr: { 'class': icon }"></i>
@@ -42,7 +42,7 @@
         </ul>
         <!-- /ko -->
         <ul class="fa-ul" data-bind="foreach: forms">
-            <li data-bind="visible: isVisible">
+            <li data-bind="visible: isVisible, attr: { class: diffClass }">
                 <h5>
                     <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                         <i data-bind="attr: { 'class': icon }"></i>
@@ -63,7 +63,7 @@
                 </ul>
                 <!-- /ko -->
                 <ol data-bind="foreach: questions">
-                    <li data-bind="visible: isVisible">
+                    <li data-bind="visible: isVisible, attr: { class: diffClass }">
                         <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
                         <!-- ko ifnot: $root.readOnly -->
                         <a data-bind="attr: { 'href': $parent.url + hashtagValue }, text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>

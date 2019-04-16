@@ -20,6 +20,7 @@ from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
 from corehq.apps.app_manager.app_schemas.form_metadata import (
+    get_app_diff,
     get_app_summary_formdata,
 )
 from corehq.apps.app_manager.const import WORKFLOW_FORM
@@ -133,13 +134,14 @@ class FormSummaryDiffView(AppSummaryView):
             raise Http404()
 
         first = self._app_dict(self.first_app)
-        first['modules'], first['errors'] = get_app_summary_formdata(
-            self.domain, self.first_app, include_shadow_forms=False
-        )
         second = self._app_dict(self.second_app)
-        second['modules'], second['errors'] = get_app_summary_formdata(
-            self.domain, self.second_app, include_shadow_forms=False
-        )
+
+        app_diff = get_app_diff(self.first_app, self.second_app)
+        first['modules'] = app_diff.first
+        second['modules'] = app_diff.second
+        first['errors'] = []
+        second['errors'] = []
+
         context.update({
             'page_type': 'form_diff',
             'app_id': self.app.master_id,
