@@ -81,6 +81,12 @@ def get_service_delivery_data(start, length, order, reversed_order, location_fil
             )
 
     for row in data:
+        if age_sdd == '0_3':
+            if all([row['valid_visits'] != DATA_NOT_ENTERED,
+                    row['expected_visits'] != DATA_NOT_ENTERED,
+                    row['valid_visits'] > row['expected_visits']]):
+                row['valid_visits'] = row['expected_visits']
+                row['home_visits'] = percent_or_not_entered(row['valid_visits'], row['expected_visits'])
         config['data'].append(base_data(row))
 
     percentage_fields = ('home_visits', 'gm', 'thr', 'sn', 'pse')
