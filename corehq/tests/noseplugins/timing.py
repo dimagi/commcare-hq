@@ -129,11 +129,14 @@ def end_event(name, context):
 
 def _get_expected_slow_seconds(event, test_context):
     attr_name = {
-        "before": "slow_before",
         "setup": "slow_setup",
         "run": "slow",
         "teardown": "slow_teardown",
-    }[event]
+    }.get(event, None)
+
+    # If we are passed an event not in dictionary, assume we should not fail
+    if attr_name is None:
+        return 1000
 
     # If we skip this test, but its slow due to other test setup
     fn = getattr(test_context, 'test', None)
