@@ -1077,11 +1077,13 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-INCLUDE_SMS_ERRORS = StaticToggle(
-    'include_sms_errors',
-    "Include failed messages in Message Log Report",
+SMS_LOG_CHANGES = StaticToggle(
+    'sms_log_changes',
+    "Message Log Report: Test new additions",
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    description=("Include failed messages, show message status, show event. "
+                 "This feature flag exists to QA on real prod data."),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(

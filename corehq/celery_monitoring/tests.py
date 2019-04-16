@@ -36,6 +36,13 @@ def test_heartbeat():
         eq(hb.get_blockage_duration(), datetime.timedelta(minutes=10) - HEARTBEAT_FREQUENCY)
 
 
+def test_get_and_report_blockage_duration():
+    hb = Heartbeat('celery_periodic')
+    hb.mark_seen()
+    # just assert that this doesn't error
+    hb.get_and_report_blockage_duration()
+
+
 def test_time_to_start_timer():
     task_id = 'abc123'
     delay = datetime.timedelta(seconds=6)

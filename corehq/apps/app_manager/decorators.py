@@ -83,6 +83,7 @@ def safe_cached_download(f):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
         latest = True if request.GET.get('latest') == 'true' else False
+        # target is used update to latest build/saved state/release of the app
         target = request.GET.get('target') or None
 
         # make endpoints that call the user fail hard
@@ -100,7 +101,7 @@ def safe_cached_download(f):
                 content_response = dict(error="app.update.not.allowed.user.logged_out",
                                         default_response=_("Please log in to the app to check for an update."))
                 return HttpResponse(status=406, content=json.dumps(content_response))
-        if latest:
+        if latest and not target:
             latest_enabled_build = _get_latest_enabled_build(domain, username, app_id, request.GET.get('profile'),
                                                              location_flag_enabled)
         try:
