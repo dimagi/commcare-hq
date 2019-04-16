@@ -132,10 +132,12 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     function renderPercentageAndPartials(percentage, nominator, denominator) {
         if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
         if (percentage === vm.dataNotEntered) {
+            if (nominator === 0 && denominator === 0) {
+                return '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+            }
             return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
         }
-        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator +
-            ')</span></div>';
+        return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator + ')</span></div>';
     }
     function simpleRender(indicator) {
         return function simpleRenderer(data, type, full) {

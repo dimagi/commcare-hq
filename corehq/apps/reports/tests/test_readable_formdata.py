@@ -278,7 +278,7 @@ class ReadableFormdataTest(SimpleTestCase):
         with open(submission_file) as f:
             data = json.load(f)
         with open(result_file) as f:
-            result = yaml.load(f)
+            result = yaml.safe_load(f)
         questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
         questions = get_readable_form_data(data, questions)
 

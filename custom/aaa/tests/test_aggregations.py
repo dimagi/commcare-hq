@@ -6,11 +6,13 @@ from datetime import date, time
 from decimal import Decimal
 from io import open
 
+from django.test.utils import override_settings
+
 import mock
 import postgres_copy
 import six
 import sqlalchemy
-from django.test.utils import override_settings
+from six.moves import range
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -21,22 +23,11 @@ from custom.aaa.models import (
     CcsRecord,
     Child,
     Woman,
-    WomanHistory,
 )
-from custom.aaa.tasks import (
-    update_agg_awc_table,
-    update_agg_village_table,
-    update_ccs_record_table,
-    update_child_table,
-    update_child_history_table,
-    update_woman_table,
-    update_woman_history_table,
-)
+from custom.aaa.tasks import run_aggregation
 from custom.icds_reports.tests import CSVTestCase
-from six.moves import range
 
 FILE_NAME_TO_TABLE_MAPPING = {
-    'awc': get_table_name('reach-test', 'reach-awc_location'),
     'ccs_record': get_table_name('reach-test', 'reach-ccs_record_cases'),
     'child_health': get_table_name('reach-test', 'reach-child_health_cases'),
     'eligible_couple_forms': get_table_name('reach-test', 'reach-eligible_couple_forms'),
@@ -44,7 +35,6 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'household': get_table_name('reach-test', 'reach-household_cases'),
     'person': get_table_name('reach-test', 'reach-person_cases'),
     'tasks': get_table_name('reach-test', 'reach-tasks_cases'),
-    'village': get_table_name('reach-test', 'reach-village_location'),
 }
 INPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'ucr_tables')
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'data', 'agg_tables')
@@ -55,24 +45,19 @@ TEST_ENVIRONMENT = 'icds'
 @override_settings(SERVER_ENVIRONMENT='icds')
 class AggregationScriptTestBase(CSVTestCase):
     always_include_columns = {'person_case_id'}
+    fixtures = ['locations.json']
 
     @classmethod
     def setUpClass(cls):
         super(AggregationScriptTestBase, cls).setUpClass()
         _setup_ucr_tables()
-        update_child_table(TEST_DOMAIN)
-        update_child_history_table(TEST_DOMAIN)
-        update_woman_table(TEST_DOMAIN)
-        update_woman_history_table(TEST_DOMAIN)
-        update_ccs_record_table(TEST_DOMAIN)
 
         for month in range(1, 3):
-            update_agg_awc_table(TEST_DOMAIN, date(2019, month, 1))
-            update_agg_village_table(TEST_DOMAIN, date(2019, month, 1))
+            run_aggregation(TEST_DOMAIN, date(2019, month, 1))
 
     @classmethod
     def tearDownClass(cls):
-        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman, WomanHistory):
+        for model in (AggAwc, AggVillage, Child, CcsRecord, Woman):
             model.objects.all().delete()
         super(AggregationScriptTestBase, cls).tearDownClass()
         # teardown after the django database tear down occurs to prevent database locks
@@ -127,13 +112,6 @@ class AggregationScriptTestBase(CSVTestCase):
             Woman,
             os.path.join(OUTPUT_PATH, 'woman.csv'),
             sort_key=['awc_id', 'village_id', 'person_case_id']
-        )
-
-    def test_agg_woman_history_table(self):
-        self._load_and_compare_data(
-            WomanHistory,
-            os.path.join(OUTPUT_PATH, 'womanhistory.csv'),
-            sort_key=['person_case_id']
         )
 
     def test_agg_child_table(self):
