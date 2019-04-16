@@ -3,9 +3,16 @@ from __future__ import unicode_literals
 
 from itertools import chain
 
+import attr
+
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
 
 from .diffrule import Ignore
+
+
+
+def ignore_renamed(old_name, new_name):
+    return Ignore(check=lambda *a: _is_renamed(old_name, new_name, *a))
 
 
 IGNORE_RULES = {
@@ -39,13 +46,20 @@ IGNORE_RULES = {
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
     ],
-    'XFormInstance': [],
-    'XFormInstance-Deleted': [],
+    'XFormInstance': [
+        ignore_renamed('uid', 'instanceID'),
+    ],
+    'XFormInstance-Deleted': [
+        ignore_renamed('-deletion_id', 'deletion_id'),
+        ignore_renamed('-deletion_date', 'deleted_on'),
+    ],
     'HQSubmission': [],
     'XFormArchived': [],
     'XFormError': [],
     'XFormDuplicate': [],
-    'XFormDeprecated': [],
+    'XFormDeprecated': [
+        ignore_renamed('deprecated_date', 'edited_on'),
+    ],
     'CommCareCase*': [
         Ignore(path='_rev'),  # couch only
         Ignore(path='initial_processing_complete'),  # couch only
@@ -93,11 +107,16 @@ IGNORE_RULES = {
         # couch case was deleted and then restored - SQL case won't have deletion properties
         Ignore('missing', '-deletion_id', new=MISSING),
         Ignore('missing', '-deletion_date', new=MISSING),
+
+        ignore_renamed('@user_id', 'user_id'),
+        ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [
         Ignore('missing', '-deletion_id', old=MISSING, new=None),
         Ignore('complex', ('-deletion_id', 'deletion_id'), old=MISSING, new=None),
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
+        ignore_renamed('-deletion_id', 'deletion_id'),
+        ignore_renamed('-deletion_date', 'deleted_on'),
     ],
     'CommCareCaseIndex': [
         # SQL JSON has case_id field in indices which couch JSON doesn't
@@ -119,17 +138,9 @@ IGNORE_RULES = {
         Ignore(path='server_mime'),  # couch only
         Ignore(path='attachment_name'),  # couch only
         Ignore(path='server_md5'),  # couch only
+        ignore_renamed('attachment_size', 'content_length'),
+        ignore_renamed('identifier', 'name'),
     ]
-}
-
-
-RENAMED_FIELDS = {
-    'XFormInstance': [('uid', 'instanceID')],
-    'XFormDeprecated': [('deprecated_date', 'edited_on')],
-    'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
-    'CommCareCase': [('@user_id', 'user_id'), ('@date_modified', 'modified_on')],
-    'CommCareCase-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
-    'case_attachment': [('attachment_size', 'content_length'), ('identifier', 'name')],
 }
 
 
@@ -138,7 +149,6 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     filtered = _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
     filtered = _filter_text_xmlns(filtered)
     filtered = _filter_date_diffs(filtered)
-    filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
     return filtered
 
 
@@ -158,7 +168,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
-    filtered_diffs = _filter_renamed_fields(filtered_diffs, couch_case, sql_case)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
     return filtered_diffs
 
@@ -200,40 +209,49 @@ def _filter_ignored(couch_obj, sql_obj, diffs, doc_types):
     ignore_rules = list(chain.from_iterable(
         IGNORE_RULES.get(d, []) for d in doc_types
     ))
-    return [
-        diff for diff in diffs
-        if not any(rule.matches(diff, couch_obj, sql_obj) for rule in ignore_rules)
-    ]
+    return list(_filter_diffs(diffs, ignore_rules, couch_obj, sql_obj))
 
 
-def _filter_renamed_fields(diffs, couch_doc, sql_doc, doc_type_override=None):
-    doc_type = doc_type_override or couch_doc['doc_type']
-    if doc_type in RENAMED_FIELDS:
-        renames = RENAMED_FIELDS[doc_type]
-        for rename in renames:
-            diffs = _check_renamed_fields(diffs, couch_doc, sql_doc, *rename)
+def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
+    for diff in diffs:
+        for rule in ignore_rules:
+            try:
+                match = rule.matches(diff, old_obj, new_obj)
+            except ComplexDiff as complex:
+                match = True
+                yield FormJsonDiff(
+                    diff_type='complex',
+                    path=complex.path,
+                    old_value=complex.old_value,
+                    new_value=complex.new_value,
+                )
+            if match:
+                break
+        else:
+            yield diff
 
-    return diffs
+
+def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
+    diffname = diff.path[0]
+    if diffname == old_name or diffname == new_name:
+        old_value = old_obj.get(old_name, MISSING)
+        new_value = new_obj.get(new_name, MISSING)
+        if old_value is not MISSING and new_value is not MISSING:
+            if (
+                diffname == new_name and
+                old_value != new_value and
+                not _both_dates(new_value, old_value)
+            ):
+                raise ComplexDiff((old_name, new_name), old_value, new_value)
+            return True
+    return False
 
 
-def _check_renamed_fields(filtered_diffs, couch_doc, sql_doc, couch_field_name, sql_field_name):
-    from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-    remaining_diffs = [
-        diff for diff in filtered_diffs
-        if diff.path[0] != sql_field_name and diff.path[0] != couch_field_name
-    ]
-    if len(remaining_diffs) != len(filtered_diffs):
-        sql_field = sql_doc.get(sql_field_name, MISSING)
-        couch_field = couch_doc.get(couch_field_name, MISSING)
-        if sql_field != couch_field \
-                and not _both_dates(couch_field, sql_field) \
-                and not (couch_field is MISSING and sql_field == ''):
-            remaining_diffs.append(FormJsonDiff(
-                diff_type='complex', path=(couch_field_name, sql_field_name),
-                old_value=couch_field, new_value=sql_field
-            ))
-
-    return remaining_diffs
+@attr.s
+class ComplexDiff(Exception):
+    path = attr.ib()
+    old_value = attr.ib()
+    new_value = attr.ib()
 
 
 def _both_dates(old, new):
@@ -308,7 +326,6 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
             else:
                 att_diffs = json_diff(couch_att, sql_att)
                 filtered = _filter_ignored(couch_att, sql_att, att_diffs, ['case_attachment'])
-                filtered = _filter_renamed_fields(filtered, couch_att, sql_att, 'case_attachment')
                 for diff in filtered:
                     diff_dict = diff._asdict()
                     # convert the path back to what it should be

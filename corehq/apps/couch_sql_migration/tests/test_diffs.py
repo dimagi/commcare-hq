@@ -40,14 +40,19 @@ REAL_DIFFS = [
 
 
 def _make_ignored_diffs(doc_type):
-    diff_defaults = dict(diff_type='type', path=None, old_value=0, new_value=1)
+    diff_defaults = dict(diff_type='type', path=('data',), old_value=0, new_value=1)
     diffs = [
         FormJsonDiff(**_diff_args(rule, diff_defaults))
         for type in [doc_type, doc_type + "*"]
         for rule in IGNORE_RULES.get(type, [])
+        if not _is_check_any(rule)
     ]
     assert diffs, "expected diffs for %s" % doc_type
     return diffs
+
+
+def _is_check_any(rule):
+    return all(getattr(rule, attr) is ANY for attr in ["type", "path", "old", "new"])
 
 
 def _diff_args(ignore_rule, diff_defaults):
@@ -111,15 +116,30 @@ class DiffTestCases(SimpleTestCase):
         )
 
     def test_filter_form_deletion_fields(self):
-        self._test_form_diff_filter(
-            {'doc_type': 'XFormInstance-Deleted'}, {'doc_type': 'XFormInstance-Deleted'},
-            DELETION_DIFFS + REAL_DIFFS,
-            REAL_DIFFS
-        )
+        couch_doc = {
+            'doc_type': 'XFormInstance-Deleted',
+            '-deletion_id': 'abc',
+            '-deletion_date': '123',
+        }
+        sql_doc = {
+            'doc_type': 'XFormInstance-Deleted',
+            'deletion_id': 'abc',
+            'deleted_on': '123',
+        }
+        self._test_form_diff_filter(couch_doc, sql_doc, DELETION_DIFFS + REAL_DIFFS)
 
     def test_filter_case_deletion_fields(self):
-        couch_case = {'doc_type': 'CommCareCase-Deleted'}
-        filtered = filter_case_diffs(couch_case, {}, DELETION_DIFFS + REAL_DIFFS)
+        couch_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            '-deletion_id': 'abc',
+            '-deletion_date': '123',
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase-Deleted',
+            'deletion_id': 'abc',
+            'deleted_on': '123',
+        }
+        filtered = filter_case_diffs(couch_case, sql_case, DELETION_DIFFS + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_case_diffs(self):
