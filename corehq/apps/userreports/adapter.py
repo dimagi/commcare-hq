@@ -108,7 +108,7 @@ class IndicatorAdapterLoadTracker(object):
         self._track_load = track_load
 
     def __getattr__(self, attr):
-        return getattr(self.wrappee, attr)
+        return getattr(self.adapter, attr)
 
     def track_load(self, value=1):
         self._track_load(value)
