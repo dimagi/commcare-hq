@@ -2046,20 +2046,20 @@ def export_report(request, domain, export_hash, format):
         report_file = db.get(export_hash)
     except NotFound:
         return report_not_found
-
-    if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
-        raise PermissionDenied()
-    if format in Format.VALID_FORMATS:
-        file = ContentFile(report_file.read())
-        response = HttpResponse(file, Format.FORMAT_DICT[format])
-        response['Content-Length'] = file.size
-        response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-            filename=export_hash,
-            extension=Format.FORMAT_DICT[format]['extension']
-        )
-        return response
-    else:
-        return HttpResponseNotFound(_("We don't support this format"))
+    with report_file:
+        if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
+            raise PermissionDenied()
+        if format in Format.VALID_FORMATS:
+            file = ContentFile(report_file.read())
+            response = HttpResponse(file, Format.FORMAT_DICT[format])
+            response['Content-Length'] = file.size
+            response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
+                filename=export_hash,
+                extension=Format.FORMAT_DICT[format]['extension']
+            )
+            return response
+        else:
+            return HttpResponseNotFound(_("We don't support this format"))
 
 
 @login_or_digest
