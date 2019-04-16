@@ -114,6 +114,7 @@ IGNORE_RULES = {
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
         Ignore('diff', check=has_date_values),
+        ignore_renamed('hq_user_id', 'external_id'),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -165,7 +166,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
     filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
@@ -214,18 +214,21 @@ def _filter_ignored(couch_obj, sql_obj, diffs, doc_types):
 
 
 def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
+    seen = set()
     for diff in diffs:
         for rule in ignore_rules:
             try:
                 match = rule.matches(diff, old_obj, new_obj)
             except ComplexDiff as complex:
                 match = True
-                yield FormJsonDiff(
-                    diff_type='complex',
-                    path=complex.path,
-                    old_value=complex.old_value,
-                    new_value=complex.new_value,
-                )
+                if complex.path not in seen:
+                    seen.add(complex.path)
+                    yield FormJsonDiff(
+                        diff_type='complex',
+                        path=complex.path,
+                        old_value=complex.old_value,
+                        new_value=complex.new_value,
+                    )
             if match:
                 break
         else:
@@ -237,12 +240,8 @@ def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
     if diffname == old_name or diffname == new_name:
         old_value = old_obj.get(old_name, MISSING)
         new_value = new_obj.get(new_name, MISSING)
-        if old_value is not MISSING and new_value is not MISSING:
-            if (
-                diffname == new_name and
-                old_value != new_value and
-                not _both_dates(new_value, old_value)
-            ):
+        if old_value is not MISSING or new_value is not MISSING:
+            if old_value != new_value and not _both_dates(new_value, old_value):
                 raise ComplexDiff((old_name, new_name), old_value, new_value)
             return True
     return False
@@ -257,25 +256,6 @@ class ComplexDiff(Exception):
 
 def _both_dates(old, new):
     return is_datetime_string(old) and is_datetime_string(new)
-
-
-def _filter_user_case_diffs(couch_case, sql_case, diffs):
-    """SQL cases store the hq_user_id property in ``external_id`` for easier querying"""
-    if 'hq_user_id' not in couch_case:
-        return diffs
-
-    filtered_diffs = [
-        diff for diff in diffs
-        if diff.path[0] not in ('external_id', 'hq_user_id')
-    ]
-    hq_user_id_couch = couch_case['hq_user_id']
-    hq_user_id_sql = sql_case.get('external_id', MISSING)
-    if hq_user_id_sql != hq_user_id_couch:
-        filtered_diffs.append(FormJsonDiff(
-            diff_type='complex', path=('hq_user_id', 'external_id'),
-            old_value=hq_user_id_couch, new_value=hq_user_id_sql
-        ))
-    return filtered_diffs
 
 
 def _filter_xform_id_diffs(couch_case, sql_case, diffs):
