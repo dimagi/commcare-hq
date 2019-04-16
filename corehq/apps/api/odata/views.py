@@ -37,6 +37,11 @@ class ODataMetadataView(View):
     def get(self, request, domain):
         # template .items is evaluated as a dict lookup instead of a function, which messes with defaultdict
         case_type_to_properties = dict(get_case_type_to_properties(domain))
+        for case_type in case_type_to_properties:
+            case_type_to_properties[case_type] = sorted(
+                {'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'}
+                | set(case_type_to_properties[case_type])
+            )
         metadata = render_to_string('api/odata_metadata.xml', {
             'case_type_to_properties': case_type_to_properties,
         })
