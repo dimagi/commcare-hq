@@ -4,13 +4,23 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
-from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
-    xpath_references_user_case)
+from corehq.apps.app_manager.suite_xml.xml_models import (
+    Command,
+    LocalizedMenu,
+    Menu,
+    Text,
+    Xpath,
+    XpathVariable,
+)
+from corehq.apps.app_manager.util import (
+    is_usercase_in_use,
+    module_uses_name_enum,
+    xpath_references_case,
+    xpath_references_user_case,
+)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
 from memoized import memoized
-from corehq import toggles
 
 
 class MenuContributor(SuiteContributorByModule):
@@ -114,8 +124,8 @@ class MenuContributor(SuiteContributorByModule):
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
-                            'menu_locale_id': self._get_menu_locale_id(module),
-                            'menu_xpath_function': self._get_menu_xpath_function(module),
+                            'menu_locale_id': self.get_menu_locale_id(module),
+                            'menu_enum_text': self.get_menu_enum_text(module),
                             'media_image': bool(len(module.all_image_paths())),
                             'media_audio': bool(len(module.all_audio_paths())),
                             'image_locale_id': id_strings.module_icon_locale(module),
@@ -135,13 +145,13 @@ class MenuContributor(SuiteContributorByModule):
                             # Mobile will combine this module with its parent
                             # Reference the parent's name to avoid ambiguity
                             locale_kwargs = {
-                                'menu_locale_id': self._get_menu_locale_id(module.root_module),
-                                'menu_xpath_function': self._get_menu_xpath_function(module.root_module),
+                                'locale_id': self.get_menu_locale_id(module.root_module),
+                                'enum_text': self.get_menu_enum_text(module.root_module),
                             }
                         else:
                             locale_kwargs = {
-                                'menu_locale_id': self._get_menu_locale_id(module),
-                                'menu_xpath_function': self._get_menu_xpath_function(module),
+                                'locale_id': self.get_menu_locale_id(module),
+                                'enum_text': self.get_menu_enum_text(module),
                             }
                         menu_kwargs.update({
                             'media_image': module.default_media_image,
@@ -172,13 +182,36 @@ class MenuContributor(SuiteContributorByModule):
 
         return menus
 
-    def _get_menu_locale_id(self, module):
-        if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.app.domain):
+    @staticmethod
+    def get_menu_locale_id(module):
+        if not module_uses_name_enum(module):
             return id_strings.module_locale(module)
 
-    def _get_menu_xpath_function(self, module):
-        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.app.domain):
-            return 'true()'
+    @staticmethod
+    def get_menu_enum_text(module):
+        if not module_uses_name_enum(module):
+            return None
+
+        variables = []
+        for item in module.name_enum:
+            v_key = item.key_as_variable
+            v_val = id_strings.module_name_enum_variable(module, v_key)
+            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+
+        xpath_template = "if({key_as_condition}, {key_as_var_name}"
+        parts = []
+        for i, item in enumerate(module.name_enum):
+            parts.append(
+                xpath_template.format(
+                    key_as_condition=item.key_as_condition(),
+                    key_as_var_name=item.ref_to_key_variable(i, 'display')
+                )
+            )
+        parts.append("''")
+        parts.append(")" * len(module.name_enum))
+        xpath_function = ''.join(parts)
+
+        return Text(xpath=Xpath(function=xpath_function, variables=variables))
 
     @staticmethod
     def _schedule_filter_conditions(form, module, case):
