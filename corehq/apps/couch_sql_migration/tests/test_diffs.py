@@ -66,17 +66,16 @@ def _diff_args(ignore_rule, diff_defaults):
 @softer_assert()
 class DiffTestCases(SimpleTestCase):
 
-    def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected):
+    def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected=REAL_DIFFS):
         filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)
 
     def test_filter_form_diffs(self):
         ignored_diffs = _make_ignored_diffs('XFormInstance')
-
         self._test_form_diff_filter(
-            {'doc_type': 'XFormInstance'}, {'doc_type': 'XFormInstance'},
+            {'doc_type': 'XFormInstance'},
+            {'doc_type': 'XFormInstance'},
             ignored_diffs + DATE_DIFFS + REAL_DIFFS,
-            REAL_DIFFS
         )
 
     def test_filter_form_rename_fields_good(self):
@@ -89,11 +88,8 @@ class DiffTestCases(SimpleTestCase):
             'edited_on': 'abc',
         }
         diffs = json_diff(couch_form, sql_form, track_list_indices=False)
-        self._test_form_diff_filter(
-            couch_form, sql_form,
-            diffs + REAL_DIFFS,
-            REAL_DIFFS
-        )
+        assert len(diffs) == 2, diffs
+        self._test_form_diff_filter(couch_form, sql_form, diffs + REAL_DIFFS)
 
     def test_filter_form_rename_fields_bad(self):
         couch_form = {
