@@ -4,17 +4,19 @@ from collections import OrderedDict
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
+from django.db import connections
 from django.db.models import Case, F, Func, IntegerField, Sum, When
 from django.db.models.functions import ExtractYear, ExtractMonth
 
+from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.models import (
     CcsRecord,
     Child,
     ChildHistory,
     Woman,
-    WomanHistory,
 )
 from dimagi.utils.dates import force_to_datetime
+from six.moves import zip
 
 
 class ChildQueryHelper(object):
@@ -224,44 +226,48 @@ class PregnantWomanQueryHelper(object):
 
     @classmethod
     def list(cls, domain, date_, location_filters, sort_column):
-        return (
-            Woman.objects.annotate(
-                age=ExtractYear(Func(F('dob'), function='age')),
-            ).filter(
-                domain=domain,
-                **location_filters
-            ).extra(
-                select={
-                    'highRiskPregnancy': '\'N/A\'',
-                    'noOfAncCheckUps': '\'N/A\'',
-                    'pregMonth': '\'N/A\'',
-                    'id': 'person_case_id',
-                },
-                where=["daterange(%s, %s) && any(pregnant_ranges)"],
-                params=[date_, date_ + relativedelta(months=1)]
-            ).values(
-                'id', 'name', 'age', 'pregMonth',
-                'highRiskPregnancy', 'noOfAncCheckUps'
-            ).order_by(sort_column)
-        )
+        location_query = ''
+        if location_filters:
+            location_query = [
+                "{loc} = %({loc})s".format(loc=loc) for loc in location_filters.keys()
+            ]
+            location_query = " AND ".join(location_query)
+            location_query = location_query + " AND"
 
-    @classmethod
-    def update_list(cls, data):
-        for beneficiary in data:
-            ccs_record = CcsRecord.objects.annotate(
-                pregMonth=ExtractMonth(Func(F('preg_reg_date'), function='age')),
-            ).filter(
-                person_case_id=beneficiary['id']
-            ).extra(
-                select={
-                    'highRiskPregnancy': 'hrp',
-                    'noOfAncCheckUps': 'num_anc_checkups',
-                }
-            ).values(
-                'highRiskPregnancy', 'noOfAncCheckUps', 'pregMonth'
-            ).first()
-            beneficiary.update(ccs_record)
-        return data
+        query, params = """
+            SELECT
+                (woman.person_case_id) AS "id",
+                woman.name AS "name",
+                EXTRACT('year' FROM age("woman"."dob")) AS "age",
+                EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
+                ccs_record.hrp AS "highRiskPregnancy",
+                ccs_record.num_anc_checkups AS "noOfAncCheckUps"
+            FROM "{woman_table}" woman
+            JOIN "{ccs_record_table}" ccs_record ON ccs_record.person_case_id=woman.person_case_id
+            WHERE (
+                woman.domain = %(domain)s AND
+                {location_where}
+                (daterange(%(start_date)s, %(end_date)s) && ANY(pregnant_ranges))
+            ) ORDER BY {sort_col}
+        """.format(
+            location_where=location_query,
+            woman_table=Woman._meta.db_table,
+            ccs_record_table=CcsRecord._meta.db_table,
+            sort_col=sort_column
+        ), {
+            'domain': domain,
+            'start_date': date_,
+            'end_date': date_ + relativedelta(months=1),
+        }
+        params.update(location_filters)
+        db_alias = get_aaa_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(query, params)
+            desc = cursor.description
+            return [
+                dict(zip([col[0] for col in desc], row))
+                for row in cursor.fetchall()
+            ]
 
     def pregnancy_details(self):
         data = CcsRecord.objects.extra(
@@ -514,18 +520,18 @@ class EligibleCoupleQueryHelper(object):
     @classmethod
     def update_list(cls, data, month_end):
         for beneficiary in data:
-            history = WomanHistory.objects.filter(person_case_id=beneficiary['id']).first()
-            safe_history = {}
-            if history:
-                safe_history = history.date_filter(month_end)
+            woman = Woman.objects.get(person_case_id=beneficiary['id'])
+            ec_details = woman.eligible_couple_form_details(month_end)
 
-            planning_methods = safe_history.get('family_planning_method')
+            planning_methods = ec_details.get('fp_current_method_history')
             if planning_methods:
-                beneficiary['currentFamilyPlanningMethod'] = planning_methods[-1][1].replace("\'", '')
+                last_method = planning_methods[-1]
+                beneficiary['currentFamilyPlanningMethod'] = (
+                    last_method[1].replace("\'", '') if last_method[1] else 'N/A'
+                )
                 beneficiary['adoptionDateOfFamilyPlaning'] = force_to_datetime(
-                    planning_methods[-1][0].replace("\'", '')
-                ).date()
-
+                    last_method[0].replace("\'", '')
+                ).date() if last_method[0] else 'N/A'
         return data
 
     def eligible_couple_details(self):
@@ -555,22 +561,24 @@ class EligibleCoupleQueryHelper(object):
             'preferredFamilyPlaningMethod': 'N/A',
         }
 
-        history = WomanHistory.objects.filter(person_case_id=self.person_case_id).first()
-        safe_history = {}
-        if history:
-            safe_history = history.date_filter(self.month_end)
+        ec_details = woman.eligible_couple_form_details(self.month_end)
 
-        planning_methods = safe_history.get('family_planning_method')
+        planning_methods = ec_details.get('fp_current_method_history')
         if planning_methods:
-            data['familyPlaningMethod'] = planning_methods[-1][1]
-            data['familyPlanningMethodDate'] = planning_methods[-1][0]
+            current_method = planning_methods[-1]
+            data['familyPlaningMethod'] = current_method[1].replace("\'", '') if current_method[1] else 'N/A'
+            data['familyPlanningMethodDate'] = force_to_datetime(
+                current_method[0].replace("\'", '')
+            ).date() if current_method[0] else 'N/A'
             if len(planning_methods) > 1:
-                data['previousFamilyPlanningMethod'] = planning_methods[-2][1]
+                previous_method = planning_methods[-2][1].replace("\'", '') if planning_methods[-2][1] else 'N/A'
+                data['previousFamilyPlanningMethod'] = previous_method
 
-        preferred_methods = safe_history.get('preferred_family_planning_methods')
+        preferred_methods = ec_details.get('fp_preferred_method_history')
         if preferred_methods:
-            data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1]
+            data['preferredFamilyPlaningMethod'] = preferred_methods[-1][1] or 'N/A'
 
-        data['ashaVisit'] = safe_history.get('last_family_planning_form') or 'N/A'
+        if ec_details.get('family_planning_form_history'):
+            data['ashaVisit'] = ec_details.get('family_planning_form_history')[-1]
 
         return data

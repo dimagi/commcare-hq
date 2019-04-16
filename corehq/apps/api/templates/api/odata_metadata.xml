@@ -4,11 +4,6 @@
         <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="CommCare">
             {% for case_type, properties in case_type_to_properties.items %}
             <ComplexType Name="CaseProperties:{{ case_type }}" >
-                <Property Name="casename" Type="Edm.String" />
-                <Property Name="casetype" Type="Edm.String" Nullable="false" />
-                <Property Name="dateopened" Type="Edm.DateTimeOffset" />
-                <Property Name="ownerid" Type="Edm.String" Nullable="false" />
-                <Property Name="backendid" Type="Edm.String" />
                 {% for property in properties %}
                 <Property Name="{{ property }}" Type="Edm.String" />
                 {% endfor %}

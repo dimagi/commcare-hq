@@ -37,6 +37,10 @@ hqDefine("aaa/js/models/pregnant_women", [
         self.highRiskPregnancy = ko.computed(function () {
             return self.highRiskPregnancy() === 'yes' ? 'Yes' : 'No';
         });
+
+        self.noOfAncCheckUps = ko.computed(function () {
+            return self.noOfAncCheckUps() === null ? 0 : self.noOfAncCheckUps();
+        });
         return self;
     };
 

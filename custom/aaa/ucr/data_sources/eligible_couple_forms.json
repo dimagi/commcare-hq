@@ -99,14 +99,20 @@
       {
         "column_id": "fp_current_method",
         "datatype": "string",
-        "type": "raw",
-        "property_name": "fp_current_method"
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["update", "fp_current_method"]
+        }
       },
       {
         "column_id": "fp_preferred_method",
         "datatype": "string",
-        "type": "raw",
-        "property_name": "fp_preferred_method"
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["update", "fp_preferred_method"]
+        }
       }
     ],
     "named_expressions": {},
