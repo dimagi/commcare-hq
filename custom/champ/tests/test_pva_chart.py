@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import mock
+
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsView
 

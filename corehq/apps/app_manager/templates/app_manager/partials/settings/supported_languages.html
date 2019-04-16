@@ -11,8 +11,7 @@
             </td>
             <td class="col-sm-3">
                 <form>
-                    <input class="short form-control"
-                       data-bind="langcode: langcode, valueUpdate: 'textchange', inputHandlers: {hasfocus: $root.seen}"/>
+                    <select class="form-control" data-bind="langcode: langcode, valueAllowUnset: true"></select>
                 </form>
 
             </td>

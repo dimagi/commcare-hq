@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import re
 import six
@@ -14,11 +15,14 @@ from django.utils.translation import ugettext as _
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import UnsupportedScheduledReportError
 from corehq.apps.saved_reports.models import ReportNotification, ReportConfig
-from corehq.apps.saved_reports.scheduled import get_scheduled_report_ids
+from corehq.apps.saved_reports.scheduled import create_records_for_scheduled_reports
 from corehq.apps.users.models import CouchUser
+from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.web import json_request
+from corehq.elastic import ESError
 
 
 def send_delayed_report(report_id):
@@ -44,7 +48,6 @@ def send_report(notification_id):
 
     # If the report's start date is later than today, return and do not send the email
     if notification.start_date and notification.start_date > datetime.today().date():
-        daily_reports()
         return
 
     try:
@@ -62,26 +65,13 @@ def send_report_throttled(notification_id):
     run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
 )
-def daily_reports():
-    for report_id in get_scheduled_report_ids('daily'):
-        send_delayed_report(report_id)
+def initiate_queue_scheduled_reports():
+    queue_scheduled_reports()
 
 
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def weekly_reports():
-    for report_id in get_scheduled_report_ids('weekly'):
-        send_delayed_report(report_id)
-
-
-@periodic_task(
-    run_every=crontab(hour="*", minute="*/15", day_of_week="*"),
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'),
-)
-def monthly_reports():
-    for report_id in get_scheduled_report_ids('monthly'):
+@serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def queue_scheduled_reports():
+    for report_id in create_records_for_scheduled_reports():
         send_delayed_report(report_id)
 
 
@@ -145,22 +135,31 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
 
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
-    content = _render_report_configs(
-        mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
-        notes=cleaned_data['notes'], once=once
-    )[0]
-    body = render_full_report_notification(None, content).content
-
     try:
+        content = _render_report_configs(
+            mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
+            notes=cleaned_data['notes'], once=once
+        )[0]
+        body = render_full_report_notification(None, content).content
+
         for recipient in recipient_emails:
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
 
     except Exception as er:
-        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES:
-            # If the smtp server rejects the email because of its large size.
-            # Then sends the report download link in the email.
+        notify_exception(
+            None,
+            message="Encountered error while generating report or sending email",
+            details={
+                'subject': subject,
+                'recipients': str(recipient_emails),
+                'error': er,
+            }
+        )
+        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+            # If the email doesn't work because it is too large to fit in the HTML body,
+            # send it as an excel attachment.
             report_state = {
                 'request': request_data,
                 'request_params': json_request(request_data['GET']),

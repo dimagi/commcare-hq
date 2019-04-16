@@ -417,21 +417,20 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
 class MPRUsingSalt(ICDSMixin, MPRData):
 
     slug = 'using_salt'
+    title = "5. Number of AWCs using Iodized Salt"
 
     @property
-    def title(self):
+    def rows(self):
         if self.config['location_id']:
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
+            percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
+            return [
+                ["Number of AWCs using Iodized Salt:", use_salt],
+                ["% of AWCs:", percent + " %"]
+            ]
 
-            return "5. Number of AWCs using Iodized Salt: {0}".format(use_salt)
-
-    @property
-    def subtitle(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        use_salt = data.get('use_salt', 0)
-        percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
-        return ["% of AWCs: {0} %".format(percent)]
+        return []
 
 
 class MPRProgrammeCoverage(ICDSMixin, MPRData):
@@ -1634,15 +1633,16 @@ class MPRImmunizationCoverage(ICDSMixin, MPRData):
 
     @property
     def rows(self):
-        data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
-        children_completing = data.get('open_child_count', 0)
-        vaccination = data.get('open_child_1yr_immun_complete', 1)
-        immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
-        return [
-            ['(I)', 'Children Completing 12 months during the month:', children_completing],
-            ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
-            ['(III)', 'Completed timely immunization coverage (%):', immunization]
-        ]
+        if self.config['location_id']:
+            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            children_completing = data.get('open_child_count', 0)
+            vaccination = data.get('open_child_1yr_immun_complete', 1)
+            immunization = "%.1f%%" % ((children_completing / float(vaccination or 1)) * 100)
+            return [
+                ['(I)', 'Children Completing 12 months during the month:', children_completing],
+                ['(II)', 'Of this, number of children who have received all vaccinations:', vaccination],
+                ['(III)', 'Completed timely immunization coverage (%):', immunization]
+            ]
 
 
 class MPRVhnd(ICDSMixin, MPRData):

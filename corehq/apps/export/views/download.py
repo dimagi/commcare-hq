@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
+import six
 from datetime import date
 
 from couchexport.writers import XlsLengthException
@@ -303,7 +304,7 @@ def prepare_custom_export(request, domain):
         _check_export_size(domain, export_instances, export_filters)
     except ExportAsyncException as e:
         return json_response({
-            'error': str(e),
+            'error': six.text_type(e),
         })
 
     # Generate filename

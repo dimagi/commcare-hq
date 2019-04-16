@@ -173,7 +173,7 @@ class CaseBlock(object):
 
     def as_string(self):
         warnings.warn(
-            "CaseBlock.as_string (%s) is deprecated. Use CaseBlock.as_bytes or CaseBlock.as_text instead.",
+            "CaseBlock.as_string is deprecated. Use CaseBlock.as_bytes or CaseBlock.as_text instead.",
             DeprecationWarning,
         )
         return self.as_bytes()

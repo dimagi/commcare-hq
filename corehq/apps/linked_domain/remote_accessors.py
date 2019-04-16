@@ -8,12 +8,14 @@ from requests import ConnectionError
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
+from django.utils.translation import ugettext as _
 
 
 def get_toggles_previews(domain_link):
@@ -65,28 +67,10 @@ def pull_missing_multimedia_for_app(app):
 
         still_missing_media = _get_missing_multimedia(app)
         if still_missing_media:
-            soft_assert(to='{}@{}'.format('mkangia', 'dimagi.com'))(
-                False, "[ICDS-291] Multimedia still missing", json.dumps({
-                    'domain': app.domain,
-                    'app_id': app.get_id,
-                    'fetched-attempted': _format_missing_media(missing_media),
-                    'still-missing': _format_missing_media(still_missing_media),
-                }, indent=4)
-            )
-            return False
-        else:
-            soft_assert(to='{}@{}'.format('jschweers', 'dimagi.com'))(
-                False, "[ICDS-291] Multimedia pull successful", json.dumps([{
-                    'domain': app.domain,
-                    'app_id': app.get_id,
-                    'version': app.version,
-                    'length of multimedia_map': len(app.multimedia_map),
-                    'number of missing files pulled': len(missing_media),
-                }, {
-                    'missing': _format_missing_media(missing_media),
-                }], indent=4)
-            )
-    return True
+            raise MultimediaMissingError(_(
+                'Application has missing multimedia even after an attempt to re-pull them. '
+                'Please try re-pulling the app. If this persists, report an issue.'
+            ))
 
 
 def _get_missing_multimedia(app):

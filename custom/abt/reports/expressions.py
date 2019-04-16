@@ -353,7 +353,7 @@ class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2019.yaml')
         with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+            return yaml.safe_load(f)
 
 
 def abt_supervisor_v2019_expression(spec, context):

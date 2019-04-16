@@ -6,6 +6,7 @@ import uuid
 from collections import OrderedDict
 from io import open
 
+import six
 import yaml
 from django.test import SimpleTestCase
 from django.test.testcases import TestCase
@@ -271,13 +272,13 @@ class ReadableFormdataTest(SimpleTestCase):
             'readable_forms', '{}.submission.json'.format(slug))
         result_file = os.path.join(
             os.path.dirname(__file__),
-            'readable_forms', '{}.result.yaml'.format(slug))
+            'readable_forms', '{}.{}.result.yaml'.format(slug, 'py3' if six.PY3 else 'py2'))
         with open(xform_file) as f:
             xform = f.read()
         with open(submission_file) as f:
             data = json.load(f)
         with open(result_file) as f:
-            result = yaml.load(f)
+            result = yaml.safe_load(f)
         questions = get_questions_from_xform_node(XForm(xform), langs=['en'])
         questions = get_readable_form_data(data, questions)
 

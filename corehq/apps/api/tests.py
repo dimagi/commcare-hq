@@ -49,7 +49,6 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
-from custom.ilsgateway.resources.v0_1 import ILSLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
@@ -697,8 +696,10 @@ class TestWebUserResource(APIResourceTest):
             "view_commcare_users": True,
             "edit_groups": True,
             "view_groups": True,
+            "edit_users_in_groups": True,
             "edit_locations": True,
             "view_locations": True,
+            "edit_users_in_locations": True,
             "edit_data": True,
             "edit_web_users": True,
             "view_web_users": True,
@@ -723,8 +724,10 @@ class TestWebUserResource(APIResourceTest):
             'view_commcare_users',
             'edit_groups',
             'view_groups',
+            'edit_users_in_groups',
             'edit_locations',
             'view_locations',
+            'edit_users_in_locations',
             'edit_data',
             'edit_apps',
             'view_reports',
@@ -1696,14 +1699,6 @@ class EWSLocationResourceTest(APIResourceTest, InternalTestMixin):
         self.assert_accessible_via_sessions(self.list_endpoint)
 
 
-class ILSLocationResourceTest(APIResourceTest, InternalTestMixin):
-    resource = ILSLocationResource
-    api_name = 'v0_3'
-
-    def test_basic(self):
-        self.assert_accessible_via_sessions(self.list_endpoint)
-
-
 class TestSimpleReportConfigurationResource(APIResourceTest):
     resource = v0_5.SimpleReportConfigurationResource
     api_name = "v0.5"
@@ -2032,23 +2027,47 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.domain.name, "123", 100, 50, 120, query_dict)
         self.assertEqual(next, "")
 
-    def test_auth(self):
-        user_in_wrong_domain_name = 'Mallory'
-        user_in_wrong_domain_password = '1337haxor'
-        wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        self.addCleanup(wrong_domain.delete)
-        user_in_wrong_domain = WebUser.create(
-            wrong_domain.name, user_in_wrong_domain_name, user_in_wrong_domain_password
-        )
-        self.addCleanup(user_in_wrong_domain.delete)
-        user_in_wrong_domain.save()
-        credentials = base64.b64encode(
-            "{}:{}".format(
-                user_in_wrong_domain_name, user_in_wrong_domain_password
-            ).encode('utf-8')
-        ).decode('utf-8')
+    def test_auth_capital_username(self):
+        capital_username_credentials = self._get_basic_credentials(self.username.upper(), self.password)
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION='Basic ' + credentials
+            HTTP_AUTHORIZATION='Basic ' + capital_username_credentials
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_auth_wrong_password(self):
+        wrong_password_credentials = self._get_basic_credentials(self.username, 'wrong_password')
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + wrong_password_credentials
         )
         self.assertEqual(response.status_code, 401)  # 401 is "Unauthorized"
+
+    def test_auth_wrong_domain(self):
+        user_in_wrong_domain_name = 'mallory'
+        user_in_wrong_domain_password = '1337haxor'
+        wrong_domain_name = 'dvorak'
+
+        wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
+        self.addCleanup(wrong_domain.delete)
+        user_in_wrong_domain = WebUser.create(
+            wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
+        self.addCleanup(user_in_wrong_domain.delete)
+
+        user_in_wrong_domain_credentials = self._get_basic_credentials(
+            user_in_wrong_domain_name, user_in_wrong_domain_password
+        )
+        response = self.client.get(
+            self.single_endpoint(self.report_configuration._id),
+            HTTP_AUTHORIZATION='Basic ' + user_in_wrong_domain_credentials
+        )
+        self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
+
+    @staticmethod
+    def _get_basic_credentials(username, password):
+        return base64.b64encode(
+            "{}:{}".format(
+                username, password
+            ).encode('utf-8')
+        ).decode('utf-8')

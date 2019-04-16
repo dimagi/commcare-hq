@@ -9,6 +9,7 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from functools import wraps
+from memoized import memoized
 
 import operator
 
@@ -18,9 +19,10 @@ from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
+from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
-from xhtml2pdf import pisa
+from weasyprint import HTML, CSS
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -30,8 +32,10 @@ from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.models.helper import IcdsFile
@@ -73,11 +77,11 @@ india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
-    resource_file = '../resources/block_mpr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_mpr.json')
 
 
 class ASRData(object):
-    resource_file = '../resources/block_asr.json'
+    resource_file = ('custom', 'icds_reports', 'resources', 'block_asr.json')
 
 
 class ICDSData(object):
@@ -122,10 +126,11 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
+        with open(os.path.join(*self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
+    @memoized
     def selected_location(self):
         if self.config['location_id']:
             return SQLLocation.objects.get(
@@ -133,6 +138,7 @@ class ICDSMixin(object):
             )
 
     @property
+    @memoized
     def awc(self):
         if self.config['location_id']:
             return self.selected_location.get_descendants(include_self=True).filter(
@@ -149,7 +155,25 @@ class ICDSMixin(object):
                 ]
             )
 
+    @memoized
     def custom_data(self, selected_location, domain):
+        timer = TimingContext()
+        with timer:
+            to_ret = self._custom_data(selected_location, domain)
+        if selected_location:
+            loc_type = selected_location.location_type.name
+        else:
+            loc_type = None
+        datadog_histogram(
+            "commcare.icds.block_reports.custom_data_time",
+            timer.duration,
+            tags="location_type:{}, report_slug:{}".format(
+                loc_type, self.slug
+            )
+        )
+        return to_ret
+
+    def _custom_data(self, selected_location, domain):
         data = {}
 
         for config in self.sources['data_source']:
@@ -177,7 +201,21 @@ class ICDSMixin(object):
                             }
                         })
 
-            report_data = ICDSData(domain, filters, config['id']).data()
+            timer = TimingContext()
+            with timer:
+                report_data = ICDSData(domain, filters, config['id']).data()
+            if selected_location:
+                loc_type = selected_location.location_type.name
+            else:
+                loc_type = None
+            datadog_histogram(
+                "commcare.icds.block_reports.ucr_querytime",
+                timer.duration,
+                tags="config:{}, location_type:{}, report_slug:{}".format(
+                    config['id'], loc_type, self.slug
+                )
+            )
+
             for column in config['columns']:
                 column_agg_func = column['agg_fun']
                 column_name = column['column_name']
@@ -620,10 +658,9 @@ def create_pdf_file(pdf_context):
         pdf_page = template.render(pdf_context)
     except Exception as ex:
         pdf_page = str(ex)
-    pisa.CreatePDF(
-        pdf_page,
-        dest=resultFile,
-        show_error_as_pdf=True)
+    resultFile.write(HTML(string=pdf_page, base_url=settings.STATIC_ROOT).write_pdf(
+        stylesheets=[CSS(settings.STATIC_ROOT + '/css/issnip_monthly_print_style.css'), ])
+    )
     # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
     # we read this to save file in blobdb
     resultFile.seek(0)

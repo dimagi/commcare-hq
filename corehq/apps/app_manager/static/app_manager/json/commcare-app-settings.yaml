@@ -163,6 +163,7 @@
   toggles: TARGET_COMMCARE_FLAVOR
   values: ['none', 'commcare', 'commcare_lts']
   value_names: ['None', 'CommCare', 'CommCare LTS']
+  supports_linked_app: true
   default: 'none'
   since: '2.43'
 

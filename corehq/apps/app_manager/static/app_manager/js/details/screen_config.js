@@ -6,7 +6,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
-            var text = field;
+            var text = field || '';
             if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
                 text = text.substring(text.indexOf(":") + 1);
             }
@@ -48,28 +48,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
             }
             $elem.$edit_view.select2({
                 minimumInputLength: 0,
-                delay: 0,
-                data: {
-                    results: _.map(options, function (o) {
-                        return {
-                            id: o,
-                            text: o,
-                        };
-                    }),
-                },
-                // Allow manually entered text in drop down, which is not supported by legacy select2.
-                createSearchChoice: function (term, data) {
-                    if (!_.find(data, function (d) { return d.text === term; })) {
-                        return {
-                            id: term,
-                            text: term,
-                        };
-                    }
-                },
+                width: '100%',
+                tags: true,
                 escapeMarkup: function (m) {
                     return DOMPurify.sanitize(m);
                 },
-                formatResult: function (result) {
+                templateResult: function (result) {
                     var formatted = result.id;
                     if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
                         formatted = (
@@ -93,20 +77,20 @@ hqDefine('app_manager/js/details/screen_config', function () {
         var self = {};
         params = params || {};
 
-        self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
-        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.textField, params.properties);
+        self.selectField = uiElement.select(params.properties).val(typeof params.field !== 'undefined' ? params.field : "");
+        module.CC_DETAIL_SCREEN.setUpAutocomplete(self.selectField, params.properties);
         self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function () {
-            return module.detailScreenConfig.field_val_re.test(self.textField.val());
+            return module.detailScreenConfig.field_val_re.test(self.selectField.val());
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
             self.notifyButton();
         });
         self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
-        self.textField.on('change', function () {
+        self.selectField.on('change', function () {
             if (!self.hasValidPropertyName()) {
                 self.showWarning(true);
             } else {
@@ -292,6 +276,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
         function getPropertyTitle(property) {
             // Strip "<prefix>:" before converting to title case.
             // This is aimed at prefixes like ledger: and attachment:
+            property = property || '';
             var i = property.indexOf(":");
             return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
         }
@@ -351,7 +336,13 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(self.original.field) ?
                     'fa fa-paperclip' : null);
-                self.field = uiElement.input(self.original.field).setIcon(icon);
+                self.field = undefined;
+                if (self.original.hasAutocomplete) {
+                    self.field = uiElement.select();
+                } else {
+                    self.field = uiElement.input(self.original.field);
+                }
+                self.field.setIcon(icon);
 
                 // Make it possible to observe changes to self.field
                 // note self observableVal is read only!
@@ -714,6 +705,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         }
                     });
                     if (column.original.hasAutocomplete) {
+                        column.field.setOptions(self.properties);
+                        column.field.val(column.original.field);
+                        column.field.observableVal(column.original.field);
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
                     }
                     return column;
@@ -789,36 +783,33 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 });
 
                 self.save = function () {
-                    var i;
-                    //Only save if property names are valid
-                    var containsTab = false;
-                    var columns = self.columns();
-                    for (i = 0; i < columns.length; i++) {
-                        var column = columns[i];
+                    // Only save if property names are valid
+                    var errors = [],
+                        containsTab = false;
+                    _.each(self.columns(), function (column) {
                         column.saveAttempted(true);
-                        if (!column.isTab) {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your property names"));
-                                return;
-                            }
-                        } else {
-                            if (column.showWarning()) {
-                                alert(gettext("There are errors in your tabs"));
-                                return;
-                            }
+                        if (column.isTab) {
                             containsTab = true;
+                            if (column.showWarning()) {
+                                errors.push(gettext("There is an error in your tab: ") + column.field.value);
+                            }
+                        } else if (column.showWarning()) {
+                            errors.push(gettext("There is an error in your property name: ") + column.field.value);
+                        }
+                    });
+                    if (containsTab) {
+                        if (!self.columns()[0].isTab) {
+                            errors.push(gettext("All properties must be below a tab."));
                         }
                     }
-                    if (containsTab) {
-                        if (!columns[0].isTab) {
-                            alert(gettext("All properties must be below a tab"));
-                            return;
-                        }
+                    if (errors.length) {
+                        alert(gettext("There are errors in your configuration.") + "\n" + errors.join("\n"));
+                        return;
                     }
 
                     if (self.containsSortConfiguration) {
                         var sortRows = self.config.sortRows.sortRows();
-                        for (i = 0; i < sortRows.length; i++) {
+                        for (var i = 0; i < sortRows.length; i++) {
                             var row = sortRows[i];
                             if (!row.hasValidPropertyName()) {
                                 row.showWarning(true);
@@ -916,7 +907,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     if (self.containsSortConfiguration) {
                         data.sort_elements = JSON.stringify(_.map(self.config.sortRows.sortRows(), function (row) {
                             return {
-                                field: row.textField.val(),
+                                field: row.selectField.val(),
                                 type: row.type(),
                                 direction: row.direction(),
                                 blanks: row.blanks(),
