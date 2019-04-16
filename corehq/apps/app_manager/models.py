@@ -1766,9 +1766,9 @@ class MappingItem(DocumentSchema):
         else:
             return 'k{key}'.format(key=self.key)
 
-    def key_as_condition(self, property):
+    def key_as_condition(self, property=None):
         if self.treat_as_expression:
-            condition = dot_interpolate(self.key, property)
+            condition = dot_interpolate(self.key, property) if property else self.key
             return "{condition}".format(condition=condition)
         else:
             return "{property} = '{key}'".format(
@@ -3541,18 +3541,16 @@ class ReportModule(ModuleBase):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    # TODO: move these methods to corehq/apps/app_manager/suite_xml/sections/menus.py?
-    # Then DRY up the logic for menu_locale_id and menu_xpath_function
     def get_menus(self, supports_module_filter=False):
+        from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
         kwargs = {}
         if supports_module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
 
-        name_enum = toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(self.domain)
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
-            menu_locale_id=id_strings.module_locale(self) if menu_enum else None,
-            menu_xpath_function='true()' if menu_enum else None,
+            menu_locale_id=MenuContributor.get_menu_locale_id(self),
+            menu_enum_text=MenuContributor.get_menu_enum_text(self),
             media_image=bool(len(self.all_image_paths())),
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
