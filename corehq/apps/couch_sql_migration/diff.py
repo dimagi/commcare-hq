@@ -23,6 +23,10 @@ def is_text_xmlns(old_obj, new_obj, rule, diff):
     return diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING)
 
 
+def xform_ids_order(old_obj, new_obj, rule, diff):
+    return _xform_ids_mismatch(old_obj, new_obj)
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -115,6 +119,7 @@ IGNORE_RULES = {
 
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
+        Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -166,7 +171,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
     filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
@@ -224,7 +228,7 @@ def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
                 if complex.path not in seen:
                     seen.add(complex.path)
                     yield FormJsonDiff(
-                        diff_type='complex',
+                        diff_type=complex.diff_type,
                         path=complex.path,
                         old_value=complex.old_value,
                         new_value=complex.new_value,
@@ -250,37 +254,27 @@ def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
 @attr.s
 class ComplexDiff(Exception):
     path = attr.ib()
-    old_value = attr.ib()
-    new_value = attr.ib()
+    old_value = attr.ib(default=None)
+    new_value = attr.ib(default=None)
+    diff_type = attr.ib(default="complex")
 
 
 def _both_dates(old, new):
     return is_datetime_string(old) and is_datetime_string(new)
 
 
-def _filter_xform_id_diffs(couch_case, sql_case, diffs):
-    """Some couch docs have the xform ID's out of order so assume that
-    if both docs contain the same set of xform IDs then they are the same"""
-    remaining_diffs = [
-        diff for diff in diffs if diff.path != ('xform_ids', '[*]')
-    ]
-    if len(remaining_diffs) == len(diffs):
-        return diffs
-
-    ids_in_couch = set(couch_case['xform_ids'])
-    ids_in_sql = set(sql_case['xform_ids'])
-    if ids_in_couch ^ ids_in_sql:
-        couch_only = ','.join(list(ids_in_couch - ids_in_sql))
-        sql_only = ','.join(list(ids_in_sql - ids_in_couch))
-        remaining_diffs.append(
-            FormJsonDiff(diff_type='set_mismatch', path=('xform_ids', '[*]'), old_value=couch_only, new_value=sql_only)
+def _xform_ids_mismatch(old_obj, new_obj):
+    """Some couch docs have the xform ID's out of order"""
+    old_ids = set(old_obj['xform_ids'])
+    new_ids = set(new_obj['xform_ids'])
+    if old_ids ^ new_ids:
+        raise ComplexDiff(
+            diff_type="set_mismatch",
+            path=('xform_ids', '[*]'),
+            old_value=','.join(list(old_ids - new_ids)),
+            new_value=','.join(list(new_ids - old_ids)),
         )
-    else:
-        remaining_diffs.append(
-            FormJsonDiff(diff_type='list_order', path=('xform_ids', '[*]'), old_value=None, new_value=None)
-        )
-
-    return remaining_diffs
+    raise ComplexDiff(diff_type="list_order", path=('xform_ids', '[*]'))
 
 
 def _filter_case_attachment_diffs(couch_case, sql_case, diffs):

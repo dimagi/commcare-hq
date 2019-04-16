@@ -196,9 +196,9 @@ class DiffTestCases(SimpleTestCase):
             FormJsonDiff(diff_type='diff', path=('xform_ids', '[*]'), old_value='456', new_value='abc')
         ]
 
-        expected_diffs = REAL_DIFFS + [
+        expected_diffs = [
             FormJsonDiff(diff_type='set_mismatch', path=('xform_ids', '[*]'), old_value='456', new_value='abc')
-        ]
+        ] + REAL_DIFFS
         filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
         self.assertEqual(filtered, expected_diffs)
 
