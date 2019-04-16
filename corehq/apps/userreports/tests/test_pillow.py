@@ -33,6 +33,15 @@ from corehq.util.test_utils import softer_assert
 from pillow_retry.models import PillowError
 
 
+def _get_pillow(configs, processor_chunk_size=0):
+    pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
+    # overwrite processors since we're only concerned with UCR here
+    ucr_processor = ConfigurableReportPillowProcessor(data_source_providers=[])
+    ucr_processor.bootstrap(configs)
+    pillow.processors = [ucr_processor]
+    return pillow
+
+
 class ConfigurableReportTableManagerTest(SimpleTestCase):
 
     def test_needs_bootstrap_on_initialization(self):
@@ -69,7 +78,7 @@ class ChunkedUCRProcessorTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[cls.config])
+        cls.pillow = _get_pillow([cls.config], processor_chunk_size=100)
 
     @classmethod
     def tearDownClass(cls):
@@ -240,7 +249,7 @@ class IndicatorPillowTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_case_pillow(processor_chunk_size=0, ucr_configs=[cls.config])
+        cls.pillow = _get_pillow([cls.config])
 
     @classmethod
     def tearDownClass(cls):
@@ -322,8 +331,8 @@ class IndicatorPillowTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch_chunked(self, datetime_mock):
-        self._test_process_doc_from_couch(datetime_mock,
-            get_case_pillow(processor_chunk_size=100, ucr_configs=[self.config]))
+        pillow = _get_pillow([self.config], processor_chunk_size=100)
+        self._test_process_doc_from_couch(datetime_mock, pillow)
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
@@ -349,9 +358,9 @@ class IndicatorPillowTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[self.config])
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         self._test_process_doc_from_sql(datetime_mock)
-        self.pillow = get_case_pillow(processor_chunk_size=0, ucr_configs=[self.config])
+        self.pillow = _get_pillow([self.config])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql(self, datetime_mock):
@@ -375,9 +384,9 @@ class IndicatorPillowTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
-        self.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[self.config])
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         self._test_process_deleted_doc_from_sql(datetime_mock)
-        self.pillow = get_case_pillow(processor_chunk_size=0, ucr_configs=[self.config])
+        self.pillow = _get_pillow([self.config])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
@@ -441,9 +450,8 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def setUp(self):
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
-        self.pillow = get_case_pillow(topics=['case-sql'], ucr_configs=[self.config], processor_chunk_size=0)
         self.adapter = get_indicator_adapter(self.config)
-
+        self.pillow = _get_pillow([self.config])
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
@@ -474,7 +482,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         )
 
     def test_process_doc_from_sql_stale_chunked(self):
-        pillow = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=[self.config])
+        pillow = _get_pillow([self.config], processor_chunk_size=100)
         # one less query in chunked mode, as two cases are looked up in single query
         self._test_process_doc_from_sql_stale(pillow, num_queries=11)
 
@@ -518,8 +526,8 @@ class ReuseEvaluationContextTest(TestCase):
         self.adapters = [get_indicator_adapter(c) for c in self.configs]
 
         # one pillow that has one config, the other has both configs
-        self.pillow1 = get_case_pillow(topics=['case-sql'], ucr_configs=[config1], processor_chunk_size=0)
-        self.pillow2 = get_case_pillow(topics=['case-sql'], ucr_configs=self.configs, processor_chunk_size=0)
+        self.pillow1 = _get_pillow([config1])
+        self.pillow2 = _get_pillow(self.configs)
 
         self.pillow1.get_change_feed().get_latest_offsets()
 
@@ -559,8 +567,8 @@ class ReuseEvaluationContextTest(TestCase):
         self._test_reuse_cache()
 
     def test_reuse_cache_chunked(self):
-        pillow1 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs[:1])
-        pillow2 = get_case_pillow(topics=['case-sql'], processor_chunk_size=100, ucr_configs=self.configs)
+        pillow1 = _get_pillow(self.configs[:1], processor_chunk_size=100)
+        pillow2 = _get_pillow(self.configs, processor_chunk_size=100)
         self._test_reuse_cache(pillow1, pillow2, 11)
 
     def _test_reuse_cache(self, pillow1=None, pillow2=None, num_queries=12):
@@ -593,7 +601,7 @@ class AsyncIndicatorTest(TestCase):
         cls.config.asynchronous = True
         cls.config.save()
         cls.adapter = get_indicator_adapter(cls.config)
-        cls.pillow = get_case_pillow(ucr_configs=[cls.config])
+        cls.pillow = _get_pillow([cls.config])
         cls.pillow.get_change_feed().get_latest_offsets()
 
     @classmethod
@@ -747,7 +755,7 @@ class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):
     @classmethod
     def setUpClass(cls):
         super(ChunkedAsyncIndicatorTest, cls).setUpClass()
-        cls.pillow = get_case_pillow(processor_chunk_size=100, ucr_configs=[cls.config])
+        cls.pillow = _get_pillow([cls.config], processor_chunk_size=100)
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
