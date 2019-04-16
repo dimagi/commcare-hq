@@ -38,6 +38,7 @@ class ConfigurableReportDataSource(object):
         self._columns = columns
 
         self._custom_query_provider = custom_query_provider
+        self._track_load = None
 
     @classmethod
     def from_spec(cls, spec, include_prefilters=False):
