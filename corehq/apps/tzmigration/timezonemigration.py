@@ -18,6 +18,7 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -38,6 +39,8 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 
 
 def _json_diff(obj1, obj2, path, track_list_indices=True):
+    obj1 = eval_lazy(obj1)
+    obj2 = eval_lazy(obj2)
     if isinstance(obj1, str):
         obj1 = six.text_type(obj1)
     if isinstance(obj2, str):
