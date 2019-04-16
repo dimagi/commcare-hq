@@ -19,6 +19,10 @@ def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
 
 
+def is_text_xmlns(old_obj, new_obj, rule, diff):
+    return diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING)
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -45,12 +49,12 @@ IGNORE_RULES = {
         Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'location_', old=[], new=MISSING),
-        Ignore('missing', ('form', 'case', '#text'), old='', new=MISSING),
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
         Ignore('diff', check=has_date_values),
+        Ignore(check=is_text_xmlns),
     ],
     'XFormInstance': [
         ignore_renamed('uid', 'instanceID'),
@@ -154,16 +158,7 @@ IGNORE_RULES = {
 
 def filter_form_diffs(couch_form, sql_form, diffs):
     doc_type = couch_form['doc_type']
-    filtered = _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
-    filtered = _filter_text_xmlns(filtered)
-    return filtered
-
-
-def _filter_text_xmlns(diffs):
-    return [
-        diff for diff in diffs
-        if not (diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING))
-    ]
+    return _filter_ignored(couch_form, sql_form, diffs, [doc_type, 'XFormInstance*'])
 
 
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):

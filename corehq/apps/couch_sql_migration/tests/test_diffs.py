@@ -33,6 +33,13 @@ DELETION_DIFFS = [
     FormJsonDiff(diff_type='missing', path=('deleted_on',), old_value=MISSING, new_value='123'),
 ]
 
+TEXT_XMLNS_DIFFS = [
+    FormJsonDiff(diff_type='missing', path=('path', 'to', '#text'), old_value='', new_value="text?"),
+    FormJsonDiff(diff_type='missing', path=('path', 'to', '@xmlns'), old_value='', new_value="xml"),
+    FormJsonDiff(diff_type='missing', path=('#text',), old_value=MISSING, new_value="text?"),
+    FormJsonDiff(diff_type='missing', path=('@xmlns',), old_value=MISSING, new_value="xml"),
+]
+
 REAL_DIFFS = [
     FormJsonDiff(diff_type='diff', path=('name',), old_value='Form1', new_value='Form2'),
     FormJsonDiff(diff_type='missing', path=('random_field',), old_value='legacy value', new_value=MISSING),
@@ -128,6 +135,13 @@ class DiffTestCases(SimpleTestCase):
             'deleted_on': '123',
         }
         self._test_form_diff_filter(couch_doc, sql_doc, DELETION_DIFFS + REAL_DIFFS)
+
+    def test_filter_text_xmlns_fields(self):
+        self._test_form_diff_filter(
+            {'doc_type': 'XFormInstance'},
+            {'doc_type': 'XFormInstance'},
+            TEXT_XMLNS_DIFFS + REAL_DIFFS,
+        )
 
     def test_filter_case_deletion_fields(self):
         couch_case = {
