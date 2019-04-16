@@ -50,20 +50,24 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
         return
     elif Ellipsis in (obj1, obj2):
         yield FormJsonDiff('missing', path, obj1, obj2)
+    elif isinstance(obj1, dict):
+        if not isinstance(obj2, dict):
+            # special case to deal with OrderedDicts
+            yield FormJsonDiff('type', path, obj1, obj2)
+        else:
+            keys = set(obj1.keys()) | set(obj2.keys())
+
+            def value_or_ellipsis(obj, key):
+                return obj.get(key, Ellipsis)
+
+            for key in keys:
+                for result in _json_diff(value_or_ellipsis(obj1, key),
+                                         value_or_ellipsis(obj2, key),
+                                         path=path + (key,),
+                                         track_list_indices=track_list_indices):
+                    yield result
     elif type(obj1) != type(obj2):
         yield FormJsonDiff('type', path, obj1, obj2)
-    elif isinstance(obj1, dict):
-        keys = set(obj1.keys()) | set(obj2.keys())
-
-        def value_or_ellipsis(obj, key):
-            return obj.get(key, Ellipsis)
-
-        for key in keys:
-            for result in _json_diff(value_or_ellipsis(obj1, key),
-                                     value_or_ellipsis(obj2, key),
-                                     path=path + (key,),
-                                     track_list_indices=track_list_indices):
-                yield result
     elif isinstance(obj1, list):
 
         def value_or_ellipsis(obj, i):
