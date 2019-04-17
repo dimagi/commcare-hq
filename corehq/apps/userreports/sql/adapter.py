@@ -257,16 +257,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return session.query(query.exists()).scalar()
 
 
-class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
+class MultiDBSqlAdapter(IndicatorSqlAdapter):
 
-    def handle_exception(self, doc, exception):
-        ex = translate_programming_error(exception)
-        if ex:
-            raise ex
-        super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
-
-
-class MultiDBSqlAdapter(IndicatorAdapter):
+    mirror_adapter_cls = IndicatorSqlAdapter
 
     def __init__(self, config, override_table_name=None, engine_id=None):
         from corehq.apps.userreports.models import id_is_static
@@ -276,7 +269,7 @@ class MultiDBSqlAdapter(IndicatorAdapter):
         self.mirrored_adapters = [super(MultiDBSqlAdapter, self)]  # include the main primary adapter
         engine_ids = self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
         for engine_id in engine_ids:
-            self.mirrored_adapters.append(IndicatorSqlAdapter(config, override_table_name, engine_id))
+            self.mirrored_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
 
     def build_table(self):
         for adapter in self.mirrored_adapters:
@@ -312,6 +305,23 @@ class MultiDBSqlAdapter(IndicatorAdapter):
             adapter.doc_exists(doc)
             for adapter in self.mirrored_adapters
         ])
+
+
+class ErrorRaisingMixin(object):
+
+    def handle_exception(self, doc, exception):
+        ex = translate_programming_error(exception)
+        if ex:
+            raise ex
+        super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
+
+
+class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter, ErrorRaisingMixin):
+    pass
+
+
+class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter, ErrorRaisingMixin):
+    mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
 def get_indicator_table(indicator_config, metadata, override_table_name=None):

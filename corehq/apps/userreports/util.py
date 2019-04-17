@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import collections
 import hashlib
 
+from django.conf import settings
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
@@ -130,11 +131,19 @@ def number_of_ucr_reports(domain):
 
 
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
-    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
-    if raise_errors:
-        adapter = ErrorRaisingIndicatorSqlAdapter(config)
+    from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
+        MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
+    requires_mirroring = config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
+    if requires_mirroring:
+        if raise_errors:
+            adapter = ErrorRaisingMultiDBAdapter(config)
+        else:
+            adapter = MultiDBSqlAdapter(config)
     else:
-        adapter = IndicatorSqlAdapter(config)
+        if raise_errors:
+            adapter = IndicatorSqlAdapter(config)
+        else:
+            adapter = ErrorRaisingIndicatorSqlAdapter(config)
 
     track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
     return IndicatorAdapterLoadTracker(adapter, track_load)
