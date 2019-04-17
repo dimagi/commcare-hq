@@ -9,8 +9,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     LocalizedMenu,
     Menu,
     Text,
-    Xpath,
-    XpathVariable,
+    XpathEnum,
 )
 from corehq.apps.app_manager.util import (
     is_usercase_in_use,
@@ -192,26 +191,14 @@ class MenuContributor(SuiteContributorByModule):
         if not module_uses_name_enum(module):
             return None
 
-        variables = []
-        for item in module.name_enum:
-            v_key = item.key_as_variable
-            v_val = id_strings.module_name_enum_variable(module, v_key)
-            variables.append(XpathVariable(name=v_key, locale_id=v_val))
-
-        xpath_template = "if({key_as_condition}, {key_as_var_name}"
-        parts = []
-        for i, item in enumerate(module.name_enum):
-            parts.append(
-                xpath_template.format(
-                    key_as_condition=item.key_as_condition(),
-                    key_as_var_name=item.ref_to_key_variable(i, 'display')
-                )
-            )
-        parts.append("''")
-        parts.append(")" * len(module.name_enum))
-        xpath_function = ''.join(parts)
-
-        return Text(xpath=Xpath(function=xpath_function, variables=variables))
+        return Text(xpath=XpathEnum.build(
+            enum=module.name_enum,
+            template='if({key_as_condition}, {key_as_var_name}',
+            get_template_context=lambda item, i: {
+                'key_as_condition': item.key_as_condition(),
+                'key_as_var_name': item.ref_to_key_variable(i, 'display')
+            },
+            get_value=lambda key: id_strings.module_name_enum_variable(module, key)))
 
     @staticmethod
     def _schedule_filter_conditions(form, module, case):

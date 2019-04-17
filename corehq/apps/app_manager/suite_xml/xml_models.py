@@ -55,6 +55,10 @@ class XpathVariable(XmlObject):
     locale_id = StringField('locale/@id')
     xpath = NodeField('xpath', CalculatedPropertyXpath)
 
+    @property
+    def value(self):
+        return self.locale_id or self.xpath
+
 
 class Xpath(XmlObject):
     ROOT_NAME = 'xpath'
@@ -71,6 +75,29 @@ class LocaleArgument(XmlObject):
 class Id(XmlObject):
     ROOT_NAME = 'id'
     xpath = NodeField('xpath', Xpath)
+
+
+class XpathEnum(Xpath):
+    @classmethod
+    def build(cls, enum, template, get_template_context, get_value):
+        variables = []
+        for item in enum:
+            v_key = item.key_as_variable
+            v_val = get_value(v_key)
+            variables.append(XpathVariable(name=v_key, locale_id=v_val))
+
+        parts = []
+        for i, item in enumerate(enum):
+            template_context = get_template_context(item, i)
+            parts.append(template.format(**template_context))
+        parts.append("''")
+        parts.append(")" * len(enum))
+        function = ''.join(parts)
+
+        return cls(
+            function=function,
+            variables=variables,
+        )
 
 
 class Locale(XmlObject):
