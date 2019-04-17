@@ -71,6 +71,9 @@ def registration_default(request):
 
 
 def track_domainless_new_user(request):
+    if settings.UNIT_TESTING:
+        # don't trigger soft assert in a test
+        return
     user = request.user
     is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
     if is_new_user:
