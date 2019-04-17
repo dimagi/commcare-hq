@@ -268,14 +268,11 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 class MultiDBSqlAdapter(IndicatorAdapter):
 
     def __init__(self, config, override_table_name=None, engine_id=None):
-        assert len(self.config.mirrored_engine_ids)), "This UCR is not configured to mirror"
-        assert config.engine_id not in self.config.mirrored_engine_ids
+        config.validate_db_config()
         super(MultiDBSqlAdapter, self).__init__(config, override_table_name)
         self.mirrored_adapters = [super(MultiDBSqlAdapter, self)] # include the main primary adapter
         engine_ids = self.config.mirrored_engine_ids
         for engine_id in engine_ids:
-            # Todo; move these assertions to config
-            assert engine_id in connection_manager.engine_id_is_available(engine_id)
             self.mirrored_adapters.append(IndicatorSqlAdapter(config, override_table_name, engine_id))
 
     def build_table(self):

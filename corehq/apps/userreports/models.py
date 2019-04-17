@@ -66,7 +66,7 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -465,12 +465,23 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def validate_db_config(self):
+        if self.engine_id not in self.mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in self.mirrored_engine_ids:
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
 
+        self.validate_db_config()
         # validate indicators and column uniqueness
         columns = [c.id for c in self.indicators.get_columns()]
         unique_columns = set(columns)
