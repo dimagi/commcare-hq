@@ -74,7 +74,6 @@ hqDefine("locations/js/location", [
         var loc_id = initialPageData.get('location_id');
         var loc_type = initialPageData.get('location_type');
         var hierarchy = initialPageData.get('hierarchy');
-        var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
         var model = locationModels.locationSelectViewModel({
             "hierarchy": hierarchy,
