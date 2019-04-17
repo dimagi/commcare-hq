@@ -81,7 +81,7 @@ def setUpModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    _use_citus.enable()
+    # _use_citus.enable()
 
     domain = create_domain('icds-cas')
     SQLLocation.objects.all().delete()
@@ -184,60 +184,7 @@ def setUpModule():
                         null='' if six.PY3 else b'', columns=columns
                     )
 
-        # move to migrations
-        distribute = [
-            (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
-            (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
-            (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
-            (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
-            (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
-            (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
-            (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
-            (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
-            (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
-            (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
-            (AGG_INFRASTRUCTURE_TABLE, 'supervisor_id'),
-            (AWW_INCENTIVE_TABLE, 'supervisor_id'),
-            ('child_health_monthly', 'supervisor_id'),
-            ('ccs_record_monthly', 'supervisor_id'),
-            ('daily_attendance', 'supervisor_id'),
-        ]
-
-        reference = [
-            'awc_location',
-            'icds_months'
-        ]
-
-        for table, col in distribute:
-            with engine.begin() as conn:
-                res = conn.execute(
-                    """
-                    SELECT c.relname AS child
-                    FROM
-                        pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
-                        JOIN pg_class as p ON (inhparent=p.oid)
-                        where p.relname = %s;
-                    """,
-                    table
-                )
-                for child in [row.child for row in res]:
-                    # only need this because of reusedb if testing on master and this branch
-                    conn.execute('drop table if exists "{}"'.format(child))
-                res = conn.execute("""
-                    select 1 from pg_dist_partition
-                    where partmethod = 'h' and logicalrelid = %s::regclass
-                """, table)
-                if not list(res):
-                    conn.execute("select create_distributed_table(%s, %s)", [table, col])
-
-        for table in reference:
-            with engine.begin() as conn:
-                res = conn.execute("""
-                    select 1 from pg_dist_partition
-                    where partmethod = 'n' and logicalrelid = %s::regclass
-                """, table)
-                if not list(res):
-                    conn.execute("select create_reference_table(%s)", [table])
+        _distribute_tables_for_citus(engine)
 
         for state_id in ('st1', 'st2'):
             _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))
@@ -259,6 +206,63 @@ def setUpModule():
             raise
         finally:
             _call_center_domain_mock.stop()
+
+
+def _distribute_tables_for_citus(engine):
+    if not getattr(settings, 'ICDS_USE_CITS', False):
+        return
+
+    # move to migrations
+    distribute = [
+        (AGG_CCS_RECORD_DELIVERY_TABLE, 'supervisor_id'),
+        (AGG_COMP_FEEDING_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_CF_TABLE, 'supervisor_id'),
+        (AGG_CHILD_HEALTH_THR_TABLE, 'supervisor_id'),
+        (AGG_GROWTH_MONITORING_TABLE, 'supervisor_id'),
+        (AGG_CHILD_HEALTH_PNC_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_PNC_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
+        (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
+        (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
+        (AGG_INFRASTRUCTURE_TABLE, 'supervisor_id'),
+        (AWW_INCENTIVE_TABLE, 'supervisor_id'),
+        ('child_health_monthly', 'supervisor_id'),
+        ('ccs_record_monthly', 'supervisor_id'),
+        ('daily_attendance', 'supervisor_id'),
+    ]
+    reference = [
+        'awc_location',
+        'icds_months'
+    ]
+    for table, col in distribute:
+        with engine.begin() as conn:
+            res = conn.execute(
+                """
+                SELECT c.relname AS child
+                FROM
+                    pg_inherits JOIN pg_class AS c ON (inhrelid=c.oid)
+                    JOIN pg_class as p ON (inhparent=p.oid)
+                    where p.relname = %s;
+                """,
+                table
+            )
+            for child in [row.child for row in res]:
+                # only need this because of reusedb if testing on master and this branch
+                conn.execute('drop table if exists "{}"'.format(child))
+            res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'h' and logicalrelid = %s::regclass
+                """, table)
+            if not list(res):
+                conn.execute("select create_distributed_table(%s, %s)", [table, col])
+    for table in reference:
+        with engine.begin() as conn:
+            res = conn.execute("""
+                    select 1 from pg_dist_partition
+                    where partmethod = 'n' and logicalrelid = %s::regclass
+                """, table)
+            if not list(res):
+                conn.execute("select create_reference_table(%s)", [table])
 
 
 def tearDownModule():
@@ -290,7 +294,7 @@ def tearDownModule():
     SQLLocation.objects.filter(domain='icds-cas').delete()
 
     Domain.get_by_name('icds-cas').delete()
-    _use_citus.disable()
+    # _use_citus.disable()
     _call_center_domain_mock.stop()
 
 
