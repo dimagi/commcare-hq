@@ -117,7 +117,6 @@ class LocationType(models.Model):
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
     last_modified = models.DateTimeField(auto_now=True, db_index=True)
-    has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -392,7 +391,7 @@ class SQLLocation(AdjListModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
-    # For locations where location_type.has_user == True
+    # No longer used. Should be removed once all references have been tracked down and removed
     user_id = models.CharField(max_length=255, blank=True)
 
     objects = _tree_manager = LocationManager()
