@@ -183,11 +183,15 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
-
     new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
     if new_report_config_id is None:
         return
+
+    _compare_ucr_reports(domain, report_config_id, new_report_config_id, filter_values, sort_column, sort_order, params)
+
+
+def _compare_ucr_reports(domain, control_report_id, candidate_report_id, filter_values, sort_column, sort_order, params):
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(spec):
         data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
@@ -214,20 +218,20 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
             json_response["total_row"] = total_row
         return json_response
 
-    old_spec, unused = get_report_config(report_config_id, domain)
-    new_spec, unused = get_report_config(new_report_config_id, domain)
+    control_report, unused = get_report_config(control_report_id, domain)
+    candidate_report, unused = get_report_config(candidate_report_id, domain)
     experiment_context = {
         "domain": domain,
-        "report_config_id": report_config_id,
-        "new_report_config_id": new_report_config_id,
+        "report_config_id": control_report_id,
+        "new_report_config_id": candidate_report_id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
-        c.record(_run_report(old_spec))
+        c.record(_run_report(control_report))
 
     with experiment.candidate() as c:
-        c.record(_run_report(new_spec))
+        c.record(_run_report(candidate_report))
 
     objects = experiment.run()
     return objects
