@@ -36,7 +36,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
@@ -422,13 +422,83 @@ def upload_fixture_api(request, domain, **kwargs):
                           'code': upload_fixture_api_response.code})
 
 
+@csrf_exempt
+@api_auth
+@require_can_edit_fixtures
+def fixture_api_upload_status(request, domain, download_id, **kwargs):
+    """
+        Use following curl-command to test.
+        > curl -v --digest http://127.0.0.1:8000/a/gsid/fixtures/fixapi/status/<download_id>/
+               -u user@domain.com:password
+    """
+    try:
+        context = get_download_context(download_id, require_result=True)
+    except TaskFailedError as e:
+        notify_exception(request, message=six.text_type(e))
+        response = {
+            'message': _("Upload did not complete. Reason: '{}'".format(e.message)),
+            'error': True,
+        }
+        return json_response(response)
+
+    if context.get('is_ready', False):
+        response = {
+            'complete': True,
+            'message': _("Upload complete."),
+        }
+    elif context.get('error'):
+        response = {
+            'error': True,
+            'message': context.get('error') or _("An unknown error occurred."),
+        }
+    else:
+        progress = context.get('progress', {}).get('percent')
+        response = {
+            'message': _("Task in progress. {}% complete").format(progress),
+            'progress': progress,
+        }
+    return json_response(response)
+
+
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', six.text_type(e))
 
     with excel_file as filename:
+
+        if is_async:
+            with open(filename, 'r') as f:
+                file_ref = expose_cached_download(
+                    f.read(),
+                    file_extension=file_extention_from_filename(filename),
+                    expiry=1 * 60 * 60,
+                )
+                download_id = file_ref.download_id
+                task = fixture_upload_async.delay(
+                    domain,
+                    download_id,
+                    replace,
+                )
+                file_ref.set_task(task)
+
+                status_url = "{}{}".format(
+                    get_url_base(),
+                    reverse('fixture_api_status', args=(domain, download_id))
+                )
+
+                curl_command = "curl -v --digest {} -u {}".format(
+                    status_url, request.user.username
+                )
+
+                return UploadFixtureAPIResponse('success', {
+                    "download_id": download_id,
+                    "status_url": status_url,
+                    "curl_command": curl_command,
+                    "message": _("File uploaded successfully.")
+                })
+
         try:
             validate_fixture_file_format(filename)
         except FixtureUploadError as e:
@@ -476,12 +546,14 @@ def _get_fixture_upload_args_from_request(request, domain):
             "Invalid post request."
             "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
 
+    is_async = request.POST.get("async", "").lower() == "true"
+
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    return _excel_upload_file(upload_file), replace
+    return _excel_upload_file(upload_file), replace, is_async
 
 
 @login_and_domain_required

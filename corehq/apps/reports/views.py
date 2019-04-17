@@ -412,9 +412,10 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def config(self):
-        config = ReportConfig.get_or_create(
-            self.saved_report_config_form.cleaned_data['_id']
-        )
+        _id = self.saved_report_config_form.cleaned_data['_id']
+        if not _id:
+            _id = None  # make sure we pass None not a blank string
+        config = ReportConfig.get_or_create(_id)
         if config.owner_id:
             # in case a user maliciously tries to edit another user's config
             assert config.owner_id == self.user_id

@@ -66,9 +66,9 @@ def get_sql_adapters_for_domain(domain_name):
 
 
 def _get_sql_adapter(domain_name, data_source_json):
-    from corehq.apps.userreports.sql import IndicatorSqlAdapter
+    from corehq.apps.userreports.util import get_indicator_adapter
     data_source = _make_data_source_for_domain(data_source_json, domain_name)
-    return IndicatorSqlAdapter(data_source)
+    return get_indicator_adapter(data_source, load_source='callcenter')
 
 
 def _make_data_source_for_domain(data_source_json, domain_name):
