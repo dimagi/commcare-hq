@@ -28,6 +28,12 @@ def xform_ids_order(old_obj, new_obj, rule, diff):
     return _xform_ids_mismatch(old_obj, new_obj)
 
 
+def case_attachments(old_obj, new_obj, rule, diff):
+    if diff.path[0] != "case_attachments":
+        return False
+    return _diff_case_attachments(old_obj, new_obj)
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -121,6 +127,7 @@ IGNORE_RULES = {
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
+        Ignore(check=case_attachments),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -172,7 +179,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
     filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
     return filtered_diffs
@@ -312,30 +318,28 @@ def _xform_ids_mismatch(old_obj, new_obj):
     raise ReplaceDiff(diff_type="list_order", path=('xform_ids', '[*]'))
 
 
-def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
+def _diff_case_attachments(old_obj, new_obj):
     """Attachment JSON format is different between Couch and SQL"""
-    remaining_diffs = [diff for diff in diffs if diff.path[0] != 'case_attachments']
-    if len(remaining_diffs) != len(diffs):
-        couch_attachments = couch_case.get('case_attachments', {})
-        sql_attachments = sql_case.get('case_attachments', {})
-
-        for name, couch_att in couch_attachments.items():
-            sql_att = sql_attachments.get(name, MISSING)
-            if sql_att is MISSING:
-                remaining_diffs.append(FormJsonDiff(
-                    diff_type='missing', path=('case_attachments', name),
-                    old_value=couch_att, new_value=sql_att
-                ))
-            else:
-                att_diffs = json_diff(couch_att, sql_att)
-                filtered = _filter_ignored(couch_att, sql_att, att_diffs, ['case_attachment'])
-                for diff in filtered:
-                    diff_dict = diff._asdict()
-                    # convert the path back to what it should be
-                    diff_dict['path'] = tuple(['case_attachments', name] + list(diff.path))
-                    remaining_diffs.append(FormJsonDiff(**diff_dict))
-
-    return remaining_diffs
+    diffs = []
+    old_attachments = old_obj.get("case_attachments", {})
+    new_attachments = new_obj.get("case_attachments", {})
+    for name in set(old_attachments) | set(new_attachments):
+        old_att = old_attachments.get(name, MISSING)
+        new_att = new_attachments.get(name, MISSING)
+        if old_att is MISSING or new_att is MISSING:
+            diffs.append(FormJsonDiff(
+                diff_type='missing', path=('case_attachments', name),
+                old_value=old_att, new_value=new_att,
+            ))
+        else:
+            att_diffs = json_diff(old_att, new_att)
+            for diff in _filter_ignored(old_att, new_att, att_diffs, ['case_attachment']):
+                # convert the path back to what it should be
+                diff = diff._replace(path=('case_attachments', name) + diff.path)
+                diffs.append(diff)
+    if diffs:
+        raise ReplaceDiff(diffs)
+    return True
 
 
 def _filter_case_index_diffs(couch_case, sql_case, diffs):
