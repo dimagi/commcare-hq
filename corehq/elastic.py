@@ -38,6 +38,9 @@ from six.moves import range
 
 
 class ESJSONSerializer(object):
+    """Modfied version of ``elasticsearch.serializer.JSONSerializer``
+    that uses the CommCareJSONEncoder for serializing to JSON.
+    """
     mimetype = 'application/json'
 
     def loads(self, s):
