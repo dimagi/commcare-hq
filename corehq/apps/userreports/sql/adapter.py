@@ -35,9 +35,9 @@ def get_metadata(engine_id):
 
 class IndicatorSqlAdapter(IndicatorAdapter):
 
-    def __init__(self, config, override_table_name=None):
+    def __init__(self, config, override_table_name=None, engine_id=None):
         super(IndicatorSqlAdapter, self).__init__(config)
-        self.engine_id = get_engine_id(config)
+        self.engine_id = engine_id or get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine
@@ -263,6 +263,55 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
         if ex:
             raise ex
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
+
+
+class MultiDBSqlAdapter(IndicatorAdapter):
+
+    def __init__(self, config, override_table_name=None, engine_id=None):
+        assert len(self.config.mirrored_engine_ids)), "This UCR is not configured to mirror"
+        assert config.engine_id not in self.config.mirrored_engine_ids
+        super(MultiDBSqlAdapter, self).__init__(config, override_table_name)
+        self.mirrored_adapters = [super(MultiDBSqlAdapter, self)] # include the main primary adapter
+        engine_ids = self.config.mirrored_engine_ids
+        for engine_id in engine_ids:
+            # Todo; move these assertions to config
+            assert engine_id in connection_manager.engine_id_is_available(engine_id)
+            self.mirrored_adapters.append(IndicatorSqlAdapter(config, override_table_name, engine_id))
+
+    def build_table(self):
+        for adapter in self.mirrored_adapters:
+            adapter.build_table()
+
+    def rebuild_table(self):
+        for adapter in self.mirrored_adapters:
+            adapter.rebuild_table()
+
+    def drop_table(self):
+        for adapter in self.mirrored_adapters:
+            adapter.drop_table()
+
+    @unit_testing_only
+    def clear_table(self):
+        for adapter in self.mirrored_adapters:
+            adapter.clear_table()
+
+    def save_rows(self, rows):
+        for adapter in self.mirrored_adapters:
+            adapter.save_rows(rows)
+
+    def bulk_save(self, docs):
+        for adapter in self.mirrored_adapters:
+            adapter.bulk_save(docs)
+
+    def bulk_delete(self, doc_ids):
+        for adapter in self.mirrored_adapters:
+            adapter.bulk_delete(doc_ids)
+
+    def doc_exists(self, doc):
+        return any([
+            adapter.doc_exists(doc)
+            for adapter in self.mirrored_adapters
+        ])
 
 
 def get_indicator_table(indicator_config, metadata, override_table_name=None):

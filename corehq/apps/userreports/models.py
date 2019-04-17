@@ -194,6 +194,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    mirrored_engine_ids = StringListProperty(default=[])
     backend_id = StringProperty(default=UCR_SQL_BACKEND)  # no longer used
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)

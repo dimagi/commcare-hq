@@ -98,6 +98,9 @@ class ConnectionManager(object):
     def get_django_db_alias(self, engine_id):
         return self.engine_id_django_db_map[engine_id]
 
+    def engine_id_is_available(self, engine_id):
+        return engine_id in self.engine_id_django_db_map
+
     def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID):
         """
         Returns the SessionHelper object associated with this engine id

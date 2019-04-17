@@ -276,6 +276,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                             change_exceptions.append((changes_by_id[doc["_id"]], e))
                         eval_context.reset_iteration()
                 elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
+                    # todo; just do it anyway and avoid lookups for each doc
                     to_delete_by_adapter[adapter].append(doc['_id'])
 
         # bulk delete by adapter
