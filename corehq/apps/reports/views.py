@@ -412,9 +412,10 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def config(self):
-        config = ReportConfig.get_or_create(
-            self.saved_report_config_form.cleaned_data['_id']
-        )
+        _id = self.saved_report_config_form.cleaned_data['_id']
+        if not _id:
+            _id = None  # make sure we pass None not a blank string
+        config = ReportConfig.get_or_create(_id)
         if config.owner_id:
             # in case a user maliciously tries to edit another user's config
             assert config.owner_id == self.user_id
@@ -809,7 +810,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
 
 def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
                                   email=True, attach_excel=False,
-                                  send_only_active=False):
+                                  send_only_active=False, request=None):
     """
     This function somewhat confusingly returns a tuple of: (response, excel_files)
     If attach_excel is false, excel_files will always be an empty list.
@@ -819,13 +820,12 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
     """
     # todo: clean up this API?
     from django.http import HttpRequest
-
-    request = HttpRequest()
-    request.couch_user = couch_user
-    request.user = couch_user.get_django_user()
-    request.domain = domain
-    request.couch_user.current_domain = domain
-
+    if not request:
+        request = HttpRequest()
+        request.couch_user = couch_user
+        request.user = couch_user.get_django_user()
+        request.domain = domain
+        request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
     return _render_report_configs(
         request,

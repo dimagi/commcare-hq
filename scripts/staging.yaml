@@ -54,7 +54,5 @@ branches:
   - jls/upload-mm-translations  # Jenny March 14
   - nh/cdc/one_domain  # Norman March 26
   - mk/release-location # MK March 26
-  - dmr/add-scheduled-report-records  # Apr 3
-  - formplayer-debug  # Nick April 9
   #- jls/reports-select2-v4  # Jenny April 9
 submodules: {}

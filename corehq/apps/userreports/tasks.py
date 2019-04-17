@@ -64,7 +64,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids):
-    adapter = get_indicator_adapter(config, raise_errors=True)
+    adapter = get_indicator_adapter(config, raise_errors=True, load_source='build_indicators')
 
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
@@ -179,7 +179,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
                 if config.meta.build.initiated == current_config.meta.build.initiated:
                     current_config.meta.build.finished = True
             current_config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
@@ -413,7 +412,7 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config)
+                        adapter = get_indicator_adapter(config, load_source='build_async_indicators')
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
                         eval_context.reset_iteration()
                     except Exception as e:

@@ -14,6 +14,7 @@ from corehq.apps.reports.standard.sms import MessageLogReport
 from corehq.apps.sms.models import OUTGOING, SMS, MessagingEvent
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
+from six.moves import zip
 
 
 @flag_enabled('SMS_LOG_CHANGES')
