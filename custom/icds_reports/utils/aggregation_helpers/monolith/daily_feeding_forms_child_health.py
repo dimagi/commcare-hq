@@ -46,7 +46,8 @@ class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
             MAX(timeend) OVER w AS latest_time_end_processed,
             SUM(attended_child_ids) OVER w AS sum_attended_child_ids,
             SUM(lunch) OVER w AS lunch_count
-          FROM "{ucr_tablename}"
+          FROM "{ucr_tablename}" ucr inner join daily_attendance ON
+          ucr.doc_id = daily_attendance.doc_id and daily_attendance.month=%(current_month_start)s
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 child_health_case_id IS NOT NULL

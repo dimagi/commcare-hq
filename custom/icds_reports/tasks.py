@@ -182,6 +182,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
+            res_daily.get(disable_sync_subtasks=False)
+
             stage_1_tasks = [
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func_name='_aggregate_gm_forms')
                 for state_id in state_ids
@@ -231,7 +234,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
-            res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
+
 
             # https://github.com/celery/celery/issues/4274
             stage_1_task_results = [stage_1_task.delay() for stage_1_task in stage_1_tasks]
@@ -248,7 +251,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_aggregation_task.si(date=calculation_date, func_name='_ccs_record_monthly_table'),
                 icds_aggregation_task.si(date=calculation_date, func_name='_agg_ccs_record_table'),
             ).apply_async()
-            res_daily.get(disable_sync_subtasks=False)
+
             res_ccs.get(disable_sync_subtasks=False)
             res_child.get(disable_sync_subtasks=False)
 
