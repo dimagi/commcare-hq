@@ -92,14 +92,6 @@ hqDefine("locations/js/location", [
         }, model);
         model.loc_type = ko.observable(loc_type);
 
-        model.has_user = ko.computed(function () {
-            var loc_type = (
-                model.allowed_child_types().length === 1 ?
-                    model.allowed_child_types()[0] :
-                    model.loc_type());
-            return loc_types_with_users.indexOf(loc_type) !== -1;
-        });
-
         var locs = initialPageData.get('locations');
         var selected_parent = initialPageData.get('location_parent_get_id');
         model.load(locs, selected_parent);
