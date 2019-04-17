@@ -106,7 +106,7 @@ class DataSourceActionLog(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
     initiated_by = models.CharField(max_length=126, null=True, blank=True)
-    action_source = models.CharField(max_length=126, null=False, db_index=True)
+    action_source = models.CharField(max_length=126, null=True, db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=32, choices=(
         (BUILD, _('Build')),

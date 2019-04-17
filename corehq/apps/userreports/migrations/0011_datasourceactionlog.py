@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(db_index=True, max_length=126)),
                 ('indicator_config_id', models.CharField(db_index=True, max_length=126)),
                 ('initiated_by', models.CharField(max_length=126, null=True, blank=True)),
-                ('action_source', models.CharField(db_index=True, max_length=126)),
+                ('action_source', models.CharField(db_index=True, null=True, max_length=126)),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
                 ('action', models.CharField(choices=[('build', 'Build'), ('migrate', 'Migrate'), ('rebuild', 'Rebuild'), ('drop', 'Drop')], db_index=True, max_length=32)),
                 ('migration_diffs', django.contrib.postgres.fields.jsonb.JSONField(null=True, blank=True)),
