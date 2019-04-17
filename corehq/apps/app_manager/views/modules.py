@@ -474,7 +474,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 status_code=400
             )
 
-    if hasattr(module, "name_enum") and should_edit("name_enum"):
+    if should_edit("name_enum"):
         name_enum = json.loads(request.POST.get("name_enum"))
         module.name_enum = [MappingItem(i) for i in name_enum]
 
