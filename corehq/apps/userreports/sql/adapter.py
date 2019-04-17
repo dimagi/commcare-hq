@@ -6,6 +6,7 @@ import logging
 
 import sqlalchemy
 from architect import install
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from memoized import memoized
 from sqlalchemy.exc import ProgrammingError
@@ -268,10 +269,12 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 class MultiDBSqlAdapter(IndicatorAdapter):
 
     def __init__(self, config, override_table_name=None, engine_id=None):
+        from corehq.apps.userreports.models import id_is_static
+        assert id_is_static(config._id)
         config.validate_db_config()
         super(MultiDBSqlAdapter, self).__init__(config, override_table_name)
-        self.mirrored_adapters = [super(MultiDBSqlAdapter, self)] # include the main primary adapter
-        engine_ids = self.config.mirrored_engine_ids
+        self.mirrored_adapters = [super(MultiDBSqlAdapter, self)]  # include the main primary adapter
+        engine_ids = self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
         for engine_id in engine_ids:
             self.mirrored_adapters.append(IndicatorSqlAdapter(config, override_table_name, engine_id))
 
