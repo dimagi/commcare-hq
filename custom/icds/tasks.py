@@ -12,9 +12,9 @@ from corehq.util.datadog.gauges import datadog_counter
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
-    def delete_old_images():
-        start = datetime.utcnow()
-        max_age = start - timedelta(days=90)
+    def delete_old_images(cutoff=None):
+        cutoff = cutoff or datetime.utcnow()
+        max_age = cutoff - timedelta(days=90)
         db = get_blob_db()
 
         def _get_query(db_name, max_age=max_age):
@@ -38,4 +38,4 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
                 run_again = True
 
         if run_again:
-            delete_old_images.delay()
+            delete_old_images.delay(cutoff)
