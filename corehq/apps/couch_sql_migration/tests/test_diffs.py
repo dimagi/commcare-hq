@@ -379,3 +379,43 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(expected_diffs, filtered_diffs)
+
+    def test_case_attachments(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'case_attachments': {
+                'xyz': {
+                    '_id': 'ignored',
+                    'attachment_properties': 'ignored',
+                    'attachment_from': 'ignored',
+                    'attachment_src': 'ignored',
+                    'content_type': 'ignored-couch',
+                    'server_mime': 'ignored',
+                    'attachment_name': 'ignored',
+                    'server_md5': 'ignored',
+                    'identifier': 'xyz',
+                    'attachment_size': 123,
+                    'properties': 'value',
+                    'unexpected': 'value',
+                },
+            },
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'case_attachments': {
+                'xyz': {
+                    'name': 'xyz',
+                    'content_length': 123,
+                    'content_type': 'ignored-sql',
+                    # for testing only, not an expected transformation
+                    'properties': 'eulav',
+                },
+            },
+        }
+
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [
+            FormJsonDiff('missing', ('case_attachments', 'xyz', 'unexpected'), 'value', MISSING),
+            FormJsonDiff('diff', ('case_attachments', 'xyz', 'properties'), 'value', 'eulav'),
+        ])
