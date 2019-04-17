@@ -377,9 +377,7 @@ def module_offers_search(module):
 def module_uses_name_enum(module):
     if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(module.get_app().domain):
         return False
-    if hasattr(module, 'name_enum'):
-        return bool(module.name_enum)
-    return False
+    return bool(module.name_enum)
 
 
 def get_cloudcare_session_data(domain_name, form, couch_user):
