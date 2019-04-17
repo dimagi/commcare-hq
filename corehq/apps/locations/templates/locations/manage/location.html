@@ -97,13 +97,6 @@
 
               {% crispy form.custom_location_data.form %}
 
-              {% if form.user_form %}
-                <!-- ko if: has_user -->
-                {% crispy form.user_form %}
-                {% crispy form.custom_user_data.form %}
-                <!-- /ko -->
-              {% endif %}
-
               <input type="hidden" name="form_type" value="location-settings" />
 
               {% if consumption %}
