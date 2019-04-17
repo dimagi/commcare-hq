@@ -1,4 +1,3 @@
-/*globals $, hqImport, _, ko, django */
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
@@ -87,23 +86,13 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#case_type_form_group').removeClass('has-error');
         };
 
-        $nameEnumContainer = $("#name-enum-mapping");
-        if ($nameEnumContainer.length) {
-            var options = {
-                lang: moduleBrief.lang,
-                langs: moduleBrief.langs,
-                items: moduleBrief.name_enum,
-                property_name: 'name',
-                values_are_icons: false,
-                keys_are_conditions: true,
-            };
-            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping(options);
-            nameMapping.on("change", function () {
-                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
-                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
-            });
-            $nameEnumContainer.append(nameMapping.ui);
-        }
+        hqImport("app_manager/js/name_enum").init({
+            items: moduleBrief.name_enum,
+            lang: moduleBrief.lang,
+            langs: moduleBrief.langs,
+            name: 'name_enum',
+            selector: '#name-enum-mapping',
+        });
 
         $('#case_type').on('textchange', function () {
             var $el = $(this),
