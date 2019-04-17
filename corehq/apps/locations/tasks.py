@@ -91,17 +91,6 @@ def _get_unique_username(domain, base, suffix=0, tries_left=3):
     return _get_unique_username(domain, base, suffix + 1, tries_left - 1)
 
 
-def make_location_user(location):
-    """For locations where location_type.has_user is True"""
-    return CommCareUser.create(
-        location.domain,
-        _get_unique_username(location.domain, location.site_code),
-        generate_strong_password(),  # They'll need to reset this anyways
-        uuid=uuid.uuid4().hex,
-        commit=False,
-    )
-
-
 @task(serializer='pickle')
 def download_locations_async(domain, download_id, include_consumption, headers_only):
     DownloadBase.set_progress(download_locations_async, 0, 100)
