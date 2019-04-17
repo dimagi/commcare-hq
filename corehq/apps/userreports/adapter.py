@@ -75,6 +75,9 @@ class IndicatorAdapter(object):
         indicator_rows = self.get_all_values(doc, eval_context)
         self.save_rows(indicator_rows)
 
+    def save_rows(self, rows):
+        raise NotImplementedError
+
     def bulk_save(self, docs):
         """
         Evalutes UCR rows for given docs and saves the result in bulk.
@@ -95,6 +98,9 @@ class IndicatorAdapter(object):
     @property
     def run_asynchronous(self):
         return self.config.asynchronous
+
+    def get_distinct_values(self, column, limit):
+        raise NotImplementedError
 
     def log_table_build(self, initiated_by, source):
         from corehq.apps.userreports.models import DataSourceActionLog
@@ -130,3 +136,28 @@ class IndicatorAdapter(object):
         except Exception:
             # blanket catchall to make sure errors here don't interfere with real workflows
             notify_exception(None, "Error saving UCR action log", details=kwargs)
+
+
+class IndicatorAdapterLoadTracker(object):
+    def __init__(self, adapter, track_load):
+        self.adapter = adapter
+        self._track_load = track_load
+
+    def __getattr__(self, attr):
+        return getattr(self.adapter, attr)
+
+    def track_load(self, value=1):
+        self._track_load(value)
+
+    def save_rows(self, rows):
+        self._track_load(len(rows))
+        self.adapter.save_rows(rows)
+
+    def delete(self, doc):
+        self._track_load()
+        self.adapter.delete(doc)
+
+    def get_distinct_values(self, column, limit):
+        distinct_values, too_many_values = self.adapter.get_distinct_values(column, limit)
+        self._track_load(len(distinct_values))
+        return distinct_values, too_many_values

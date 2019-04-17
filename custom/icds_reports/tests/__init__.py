@@ -32,7 +32,6 @@ from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
-    'ccs_monthly': get_table_name('icds-cas', 'static-ccs_record_cases_monthly_tableau_v2'),
     "ccs_cases": get_table_name('icds-cas', 'static-ccs_record_cases'),
     'child_cases': get_table_name('icds-cas', 'static-child_health_cases'),
     'daily_feeding': get_table_name('icds-cas', 'static-daily_feeding_forms'),

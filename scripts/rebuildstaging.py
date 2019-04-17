@@ -350,7 +350,7 @@ class DisableGitHooks(object):
 def main():
     from sys import stdin
     import yaml
-    config = yaml.load(stdin)
+    config = yaml.safe_load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():

@@ -49,6 +49,7 @@ from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
@@ -101,7 +102,6 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -215,7 +215,25 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
+            'referring_apps': self.get_referring_apps(),
         }
+
+    def get_referring_apps(self):
+        to_ret = []
+        apps = get_apps_in_domain(self.domain)
+        for app in apps:
+            app_url = reverse('view_app', args=[self.domain, app.id])
+            for module in app.get_report_modules():
+                module_url = reverse('view_module', args=[self.domain, app.id, module.unique_id])
+                for config in module.report_configs:
+                    if config.report_id == self.report_id:
+                        to_ret.append({
+                            "app_url": app_url,
+                            "app_name": app.name,
+                            "module_url": module_url,
+                            "module_name": module.name['en']
+                        })
+        return to_ret
 
     @property
     @memoized
@@ -1320,7 +1338,7 @@ def process_url_params(params, columns):
 @swallow_programming_errors
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
     return export_sql_adapter_view(request, domain, adapter, url)
 
@@ -1365,6 +1383,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     def get_table(q):
         yield list(table.columns.keys())
         for row in q:
+            adapter.track_load()
             yield row
 
     fd, path = tempfile.mkstemp()

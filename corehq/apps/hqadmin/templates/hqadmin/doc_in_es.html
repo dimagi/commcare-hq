@@ -13,7 +13,7 @@
             </form>
             <br>
             <div class="alert alert-warning">
-                Hey there!  This page is primarily for comparing documents in elasticsearch and couch.
+                Hey there!  This page is primarily for comparing documents in elasticsearch and couch/sql.
                 Are you sure you don't want
                 <a href="{% url "raw_couch" %}?id={{ doc_id }}">raw_couch</a>?
             </div>
@@ -31,14 +31,14 @@
                         <pre>{{ es_doc }}</pre>
                     </div>
                     <div class="col-xs-6">
-                        <h3>Couch Doc:</h3>
+                        <h3>Couch/SQL Doc:</h3>
                         <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
                     </div>
                 </div>
             {% endfor %}
             {% if not found_indices %}
                 <div class="col-xs-6">
-                    <h3>Couch Doc:</h3>
+                    <h3>Couch/SQL Doc:</h3>
                     <pre>{{ couch_info.doc|default:"NOT FOUND" }}</pre>
                 </div>
             {% endif %}

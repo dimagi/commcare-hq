@@ -115,7 +115,7 @@ class CommCareSettingsTest(SimpleTestCase):
 
         for filepath, keys_to_translate in files_and_keys_to_translate:
             with open(os.path.join(base_path, filepath), encoding='utf-8') as f:
-                cc_settings = yaml.load(f)
+                cc_settings = yaml.safe_load(f)
                 for setting in cc_settings:
                     for key in keys_to_translate:
                         value = setting.get(key)

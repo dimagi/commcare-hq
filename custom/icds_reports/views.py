@@ -1750,6 +1750,22 @@ class InactiveAWW(View):
 
 
 @location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveDashboardUsers(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_dashboard_users').order_by('-file_added').first()
+        zip_name = 'inactive_dashboard_users_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'zip', zip_name)
+        except NotFound:
+            raise Http404
+
+
+@location_safe
 class DishaAPIView(View):
 
     def message(self, message_name):
