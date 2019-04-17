@@ -541,12 +541,12 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
-        is_async = request.POST["async"]
-        is_async = is_async.lower() == "true"
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
             "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
+
+    is_async = request.POST.get("async", "").lower() == "true"
 
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(
