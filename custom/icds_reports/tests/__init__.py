@@ -23,7 +23,8 @@ from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import AGG_CCS_RECORD_DELIVERY_TABLE, AGG_COMP_FEEDING_TABLE, \
     AGG_GROWTH_MONITORING_TABLE, AGG_CCS_RECORD_BP_TABLE, AGG_CHILD_HEALTH_PNC_TABLE, AGG_CCS_RECORD_PNC_TABLE, \
-    AGG_CCS_RECORD_THR_TABLE, AGG_DAILY_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_THR_TABLE
+    AGG_CCS_RECORD_THR_TABLE, AGG_DAILY_FEEDING_TABLE, AGG_CCS_RECORD_CF_TABLE, AGG_CHILD_HEALTH_THR_TABLE, \
+    AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -195,6 +196,8 @@ def setUpModule():
             (AGG_CCS_RECORD_BP_TABLE, 'supervisor_id'),
             (AGG_CCS_RECORD_THR_TABLE, 'supervisor_id'),
             (AGG_DAILY_FEEDING_TABLE, 'supervisor_id'),
+            (AGG_INFRASTRUCTURE_TABLE, 'supervisor_id'),
+            (AWW_INCENTIVE_TABLE, 'supervisor_id'),
             ('child_health_monthly', 'supervisor_id'),
             ('ccs_record_monthly', 'supervisor_id'),
             ('daily_attendance', 'supervisor_id'),
