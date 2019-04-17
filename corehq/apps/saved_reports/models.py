@@ -708,7 +708,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         mock_request.user = self.owner.get_django_user()
                         mock_request.domain = self.domain
                         mock_request.couch_user.current_domain = self.domain
-                        mock_request.couch_user.language = 'lang (PV - fix this)'
+                        mock_request.couch_user.language = self.language
                         mock_request.method = 'GET'
                         mock_request.bypass_two_factor = True
 
@@ -731,7 +731,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                         'context': {},
                                         'request_params': json_request(request_data['GET'])}
 
-                        export_all_rows_task(report_config.report, full_request)
+                        export_all_rows_task(report_config.report, full_request, emails)
 
     def remove_recipient(self, email):
         try:
