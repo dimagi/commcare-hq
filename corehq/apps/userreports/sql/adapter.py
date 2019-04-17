@@ -1,13 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import hashlib
 import logging
 
-import sqlalchemy
-from architect import install
 from django.conf import settings
 from django.utils.translation import ugettext as _
+
+import psycopg2
+import sqlalchemy
+from architect import install
 from memoized import memoized
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
@@ -15,11 +16,14 @@ from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
-    ColumnNotFoundError, TableRebuildError, translate_programming_error)
+    ColumnNotFoundError,
+    TableRebuildError,
+    translate_programming_error,
+)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.sql.util import view_exists
-from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
+from corehq.apps.userreports.util import get_legacy_table_name, get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
@@ -311,8 +315,22 @@ class ErrorRaisingMixin(object):
 
     def handle_exception(self, doc, exception):
         ex = translate_programming_error(exception)
-        if ex:
+        if ex is not None:
             raise ex
+
+        orig_exception = getattr(exception, 'orig')
+        if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
+            if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
+                from corehq.apps.userreports.models import InvalidUCRData
+                InvalidUCRData.objects.create(
+                    doc_id=doc['_id'],
+                    doc_type=doc['doc_type'],
+                    domain=doc['domain'],
+                    indicator_config_id=self.config._id,
+                    validation_name='not_null_violation',
+                    validation_text='A column in this doc violates an is_nullable constraint'
+                )
+
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
