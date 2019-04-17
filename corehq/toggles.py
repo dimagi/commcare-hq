@@ -1348,17 +1348,6 @@ DATA_DICTIONARY = StaticToggle(
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
 
-LOCATION_USERS = StaticToggle(
-    'location_users',
-    'Enikshay: Autogenerate users for each location',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "This flag adds an option to the location types page (under 'advanced "
-        "mode') to create users for all locations of a specified type."
-    ),
-)
-
 LOCATION_SAFETY_EXEMPTION = StaticToggle(
     'location_safety_exemption',
     'Exemption from location restrictions for EWS and ILS',
