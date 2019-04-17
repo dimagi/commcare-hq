@@ -43,24 +43,28 @@ class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
         fields = ('id', 'content_type', 'content_length')
 
 
+def _serialize_form_attachments(form):
+    return form.serialized_attachments
+
+
+def _serialize_form_history(form):
+    return list(XFormOperationSQLSerializer(form.history, many=True).data)
+
+
+lazy_serialize_form_attachments = lazy(_serialize_form_attachments, dict)
+lazy_serialize_form_history = lazy(_serialize_form_history, dict)
+
+
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='form_id')
     doc_type = serializers.CharField()
-    history = XFormOperationSQLSerializer(many=True, read_only=True)
     form = serializers.JSONField(source='form_data')
     auth_context = serializers.DictField()
     openrosa_headers = serializers.DictField()
-    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta(object):
         model = XFormInstanceSQL
         exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
-
-    def __init__(self, *args, **kwargs):
-        include_attachments = kwargs.pop('include_attachments', False)
-        if not include_attachments:
-            self.fields.pop('external_blobs')
-        super(XFormInstanceSQLSerializer, self).__init__(*args, **kwargs)
 
 
 class XFormStateField(serializers.ChoiceField):

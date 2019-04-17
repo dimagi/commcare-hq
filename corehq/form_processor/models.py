@@ -518,10 +518,13 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
-        from .serializers import XFormInstanceSQLSerializer
-        serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
+        from .serializers import XFormInstanceSQLSerializer, lazy_serialize_form_attachments, \
+            lazy_serialize_form_history
+        serializer = XFormInstanceSQLSerializer(self)
         data = dict(serializer.data)
-        data['history'] = [dict(op) for op in data['history']]
+        if include_attachments:
+            data['external_blobs'] = lazy_serialize_form_attachments(self)
+        data['history'] = lazy_serialize_form_history(self)
         data['backend_id'] = 'sql'
         return data
 
