@@ -827,6 +827,7 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.domain = domain
         request.couch_user.current_domain = domain
     notification = ReportNotification.get(scheduled_report_id)
+    print("(PV) views - 1")
     return _render_report_configs(
         request,
         notification.configs,
@@ -846,6 +847,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
     """
     Renders only notification's main content, which then may be used to generate full notification body.
     """
+    print("(PV) views 0")
     from dimagi.utils.web import get_url_base
 
     report_outputs = []

@@ -120,30 +120,45 @@ def apps_update_calculated_properties():
 
 @task(serializer='pickle', ignore_result=True)
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
+    print("(PV) task 0")
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
 
+    print("(PV) task 1: RECIPIENT LIST: {}".format(recipient_list))
+
     # need to set request
     setattr(report.request, 'REQUEST', {})
 
+    print("(PV) task 2")
+
     file = report.excel_response
+    print("(PV) task 3")
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+    print("(PV) task 4")
     hash_id = _store_excel_in_redis(report_class, file)
+    print("(PV) task 5")
 
     if not recipient_list:
+        print("(PV) task 6")
         recipient_list = [report.request.couch_user.get_email()]
 
     for recipient in recipient_list:
+        print("(PV) task 7")
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
 
 def _send_email(user, report, hash_id, recipient):
+    print("(PV) send email 0")
     domain = report.domain or user.get_domains()[0]
+    print("(PV) send email 1")
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
+    print("(PV) send email 2")
+
     send_report_download_email(report.name, recipient, link)
+    print("(PV) send email 3")
 
 
 def _store_excel_in_redis(report_class, file):

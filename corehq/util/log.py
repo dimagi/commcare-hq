@@ -318,4 +318,5 @@ def get_traceback_string():
 
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
+    print("(PV) send html 0")
     return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)

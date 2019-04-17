@@ -136,18 +136,24 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     subject = cleaned_data['subject'] or _("Email report from CommCare HQ")
 
     try:
+        print("(PV) views - 2: 0")
         content = _render_report_configs(
             mock_request, [config], domain, user_id, couch_user, True, lang=couch_user.language,
             notes=cleaned_data['notes'], once=once
         )[0]
+        print("(PV) views - 2: 1")
         body = render_full_report_notification(None, content).content
+        print("(PV) views - 2: 2")
 
         for recipient in recipient_emails:
+            print("(PV) views - 2: 3")
             send_HTML_email(subject, recipient,
                             body, email_from=settings.DEFAULT_FROM_EMAIL,
                             smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
+            print("(PV) views - 2: 4")
 
     except Exception as er:
+        print("(PV) views - 2: 5")
         notify_exception(
             None,
             message="Encountered error while generating report or sending email",
@@ -157,6 +163,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                 'error': er,
             }
         )
+        print("(PV) views - 2: 6")
         if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
@@ -166,6 +173,8 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                 'domain': domain,
                 'context': {},
             }
+            print("(PV) views - 2: 7")
             export_all_rows_task(config.report, report_state, recipient_list=recipient_emails)
+            print("(PV) views - 2: 8")
         else:
             self.retry(exc=er)

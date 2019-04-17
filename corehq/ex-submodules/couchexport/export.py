@@ -31,6 +31,7 @@ def get_writer(format):
 
 
 def export_from_tables(tables, file, format, max_column_size=2000):
+    print("(PV) export 1")
     writer = get_writer(format)
     sheet_headers = []
     rows_by_sheet = []
@@ -45,6 +46,7 @@ def export_from_tables(tables, file, format, max_column_size=2000):
     writer.open(sheet_headers, file, max_column_size=max_column_size)
     writer.write(rows_by_sheet)
     writer.close()
+    print("(PV) export 2")
 
 
 def export_raw(headers, data, file, format=Format.XLS_2007,

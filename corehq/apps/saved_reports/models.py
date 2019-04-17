@@ -331,7 +331,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         from corehq.apps.locations.middleware import LocationAccessMiddleware
 
         try:
+            print("(PV) models 0")
             if self.report is None:
+                print("(PV) models 1")
                 return ReportContent(
                     _("The report used to create this scheduled report is no"
                       " longer available on CommCare HQ.  Please delete this"
@@ -339,7 +341,10 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                       " report."),
                     None,
                 )
+            else:
+                print("(PV) models 2")
         except Exception:
+            print("(PV) models 3")
             pass
 
         if getattr(self.report, 'is_deprecated', False):
@@ -350,7 +355,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                   ),
                 None,
             )
-
+        print("(PV) models 4")
         mock_request = HttpRequest()
         mock_request.couch_user = self.owner
         mock_request.user = self.owner.get_django_user()
@@ -359,18 +364,22 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.couch_user.language = lang
         mock_request.method = 'GET'
         mock_request.bypass_two_factor = True
-
+        print("(PV) models 5")
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
             mock_query_string_parts.append(urlencode(self.filters, True))
             mock_query_string_parts.append(urlencode(self.get_date_range(), True))
         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
+        print("(PV) models 6")
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(mock_request)
         LocationAccessMiddleware.apply_location_access(mock_request)
-
+        print("(PV) models 7")
         try:
+            print("(PV) models 8")
+            from corehq.elastic import ESError
+            raise ESError
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(),
                                               mock_request, **self.view_kwargs)
             email_response = dispatch_func(render_as='email')
@@ -672,23 +681,28 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
             attach_excel = getattr(self, 'attach_excel', False)
             try:
+                print("(PV) models - 2 - 0")
                 content, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,
                     send_only_active=True
                 )
+                print("(PV) models - 2 - 1")
 
                 # Will be False if ALL the ReportConfigs in the ReportNotification
                 # have a start_date in the future.
                 if content is False:
+                    print("(PV) models - 2 - 2")
                     return
 
                 for email in emails:
+                    print("(PV) models - 2 - 3")
                     body = render_full_report_notification(None, content, email, self).content
                     send_html_email_async.delay(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,
                         file_attachments=excel_files)
             except Exception as er:
+                print("(PV) models - 2 - 4")
                 notify_exception(
                     None,
                     message="Encountered error while generating report or sending email",
@@ -699,6 +713,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                     }
                 )
                 if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+                    print("(PV) models - 2 - 5")
                     # If the email doesn't work because it is too large to fit in the HTML body,
                     # send it as an excel attachment, by creating a mock request with the right data.
 

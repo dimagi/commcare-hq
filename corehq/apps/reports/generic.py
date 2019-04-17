@@ -999,6 +999,7 @@ class GenericTabularReport(GenericReportView):
         2. cell['sort_key']
         3. str(cell)
         """
+        print("(PV) generic 1")
         headers = self.headers
         def _unformat_row(row):
             def _unformat_val(val):
@@ -1016,7 +1017,7 @@ class GenericTabularReport(GenericReportView):
             table = chain(table, [_unformat_row(self.total_row)])
         if self.statistics_rows:
             table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
-
+        print("(PV) generic 2")
         return [[self.export_sheet_name, table]]
 
     @property
