@@ -1,16 +1,27 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import io
 from collections import namedtuple
 
-import six
 from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
+
+import six
 from six.moves import range
 
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_response
+
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    FormQuestionResponse,
+)
+from corehq.apps.app_manager.app_schemas.form_metadata import (
+    get_app_summary_formdata,
+)
 from corehq.apps.app_manager.const import WORKFLOW_FORM
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule
@@ -19,14 +30,6 @@ from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.reports.formdetails.readable import (
-    FormQuestionResponse,
-    get_app_summary_formdata,
-)
-from couchexport.export import export_raw
-from couchexport.models import Format
-from couchexport.shortcuts import export_response
-from dimagi.utils.web import json_response
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
