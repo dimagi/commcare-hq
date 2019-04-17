@@ -100,17 +100,22 @@ class TestAppDiffs(SimpleTestCase):
         self._add_question(self.app2.modules[0].forms[0], {'label': 'bar'})
         diff = get_app_diff(self.app1, self.app2)
         self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_attribute'], 'label')
         self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'label')
 
     def test_add_question_display_condition(self):
-        self._add_question(self.app1.modules[0].forms[0])
+        self._add_question(self.app1.modules[0].forms[0], {'constraint': ''})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo = bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], ADDED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')
 
     def test_change_question_display_condition(self):
         self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
         diff = get_app_diff(self.app1, self.app2)
         self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')
         self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')

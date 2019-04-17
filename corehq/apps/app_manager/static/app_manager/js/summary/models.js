@@ -65,6 +65,9 @@ hqDefine('app_manager/js/summary/models',[
             return self.isSelected() && self.matchesQuery();
         });
         self.diffClass = options.diff_state ? 'diff-' + options.diff_state : '';
+        self.attributeDiff = _.mapObject(options.attribute_diff, function (value) {
+            return 'diff-' + value;
+        });
 
         return self;
     };

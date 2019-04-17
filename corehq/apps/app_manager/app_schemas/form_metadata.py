@@ -1,10 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-import re
 from collections import defaultdict
 
 import six
-from deepdiff import DeepDiff
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     AppCaseMetadata,
@@ -16,7 +14,8 @@ REMOVED = 'removed'
 ADDED = 'added'
 CHANGED = 'changed'
 
-INTERESTING_ATTRIBUTES = ('name', 'label', 'constraint', 'calculate', 'comment', 'required', 'setvalue', 'relevant')
+INTERESTING_ATTRIBUTES = ('name', 'label', 'constraint', 'calculate',
+                          'comment', 'required', 'setvalue', 'relevant')
 
 
 class _AppSummaryFormDataGenerator(object):
@@ -206,10 +205,21 @@ class AppDiffGenerator(object):
     def _mark_changed_questions(self, first_question, second_question):
         for attribute in INTERESTING_ATTRIBUTES:
             attribute_changed = first_question.get(attribute) != second_question.get(attribute)
-            attribute_added = not first_question.get(attribute) and second_question.get(attribute)
-            if (attribute_changed or attribute_added):
-                first_question['diff_state'] = CHANGED
-                second_question['diff_state'] = CHANGED
+            attribute_added = second_question.get(attribute) and not first_question.get(attribute)
+            if attribute_changed:
+                if 'attribute_diff' in first_question:
+                    first_question['attribute_diff'][attribute] = CHANGED
+                else:
+                    first_question['attribute_diff'] = {attribute: CHANGED}
+                if 'attribute_diff' in second_question:
+                    second_question['attribute_diff'][attribute] = CHANGED
+                else:
+                    second_question['attribute_diff'] = {attribute: CHANGED}
+            if attribute_added:
+                if 'attribute_diff' in second_question:
+                    second_question['attribute_diff'][attribute] = ADDED
+                else:
+                    second_question['attribute_diff'] = {attribute: ADDED}
 
 
 def get_app_diff(app1, app2):
