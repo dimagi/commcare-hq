@@ -37,6 +37,7 @@ from corehq.form_processor.exceptions import UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
@@ -834,7 +835,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def dumps(self, pretty=False):
         indent = 4 if pretty else None
-        return json.dumps(self.to_json(), indent=indent)
+        return json.dumps(self.to_json(), indent=indent, cls=CommCareJSONEncoder)
 
     def pprint(self):
         print(self.dumps(pretty=True))
