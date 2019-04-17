@@ -176,7 +176,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             cases_ccs_lactating_all = ut.cases_ccs_lactating_all,
             cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating,
             valid_visits = ut.valid_visits,
-            expected_visits = ut.expected_visits
+            expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits THEN ut.valid_visits ELSE ut.expected_visits END
         FROM (
             SELECT
                 agg_ccs_record_monthly.awc_id,
