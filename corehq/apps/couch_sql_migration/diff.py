@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from itertools import chain
 
-import attr
 from memoized import memoized
 
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
@@ -224,16 +223,13 @@ def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
         for rule in chain(ignore_rules.get(diff.path, []), any_path_rules):
             try:
                 match = rule.matches(diff, old_obj, new_obj)
-            except ComplexDiff as complex:
+            except ReplaceDiff as replacement:
                 match = True
-                if complex.path not in seen:
-                    seen.add(complex.path)
-                    yield FormJsonDiff(
-                        diff_type=complex.diff_type,
-                        path=complex.path,
-                        old_value=complex.old_value,
-                        new_value=complex.new_value,
-                    )
+                for new_diff in replacement.diffs:
+                    key = (new_diff.diff_type, new_diff.path)
+                    if key not in seen:
+                        seen.add(key)
+                        yield new_diff
             if match:
                 break
         else:
@@ -269,6 +265,19 @@ def _get_ignore_rules(doc_types):
 ANY_PATH = object()
 
 
+class ReplaceDiff(Exception):
+
+    def __init__(self, diffs=None, **kw):
+        if diffs is None:
+            kw.setdefault("diff_type", "complex")
+            kw.setdefault("old_value", None)
+            kw.setdefault("new_value", None)
+            self.diffs = [FormJsonDiff(**kw)]
+        else:
+            assert not kw, 'diffs and kw not allowed together'
+            self.diffs = diffs
+
+
 def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
     diffname = diff.path[0]
     if diffname == old_name or diffname == new_name:
@@ -276,17 +285,13 @@ def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
         new_value = new_obj.get(new_name, MISSING)
         if old_value is not MISSING or new_value is not MISSING:
             if old_value != new_value and not _both_dates(new_value, old_value):
-                raise ComplexDiff((old_name, new_name), old_value, new_value)
+                raise ReplaceDiff(
+                    path=(old_name, new_name),
+                    old_value=old_value,
+                    new_value=new_value,
+                )
             return True
     return False
-
-
-@attr.s
-class ComplexDiff(Exception):
-    path = attr.ib()
-    old_value = attr.ib(default=None)
-    new_value = attr.ib(default=None)
-    diff_type = attr.ib(default="complex")
 
 
 def _both_dates(old, new):
@@ -298,13 +303,13 @@ def _xform_ids_mismatch(old_obj, new_obj):
     old_ids = set(old_obj['xform_ids'])
     new_ids = set(new_obj['xform_ids'])
     if old_ids ^ new_ids:
-        raise ComplexDiff(
+        raise ReplaceDiff(
             diff_type="set_mismatch",
             path=('xform_ids', '[*]'),
             old_value=','.join(list(old_ids - new_ids)),
             new_value=','.join(list(new_ids - old_ids)),
         )
-    raise ComplexDiff(diff_type="list_order", path=('xform_ids', '[*]'))
+    raise ReplaceDiff(diff_type="list_order", path=('xform_ids', '[*]'))
 
 
 def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
