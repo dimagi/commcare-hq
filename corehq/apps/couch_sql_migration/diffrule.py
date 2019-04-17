@@ -16,6 +16,8 @@ class AnyType(object):
     def __repr__(self):
         return "ANY"
 
+    __hash__ = None
+
 
 ANY = AnyType()
 

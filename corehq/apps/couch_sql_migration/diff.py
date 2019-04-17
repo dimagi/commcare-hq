@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from collections import defaultdict
 from itertools import chain
 
 import attr
+from memoized import memoized
 
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff, MISSING
 
@@ -211,16 +213,15 @@ def _filter_ignored(couch_obj, sql_obj, diffs, doc_types):
 
     :param doc_types: List of doc type specifiers (IGNORE_RULES keys).
     """
-    ignore_rules = list(chain.from_iterable(
-        IGNORE_RULES.get(d, []) for d in doc_types
-    ))
+    ignore_rules = _get_ignore_rules(tuple(doc_types))
     return list(_filter_diffs(diffs, ignore_rules, couch_obj, sql_obj))
 
 
 def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
     seen = set()
+    any_path_rules = ignore_rules.get(ANY_PATH, [])
     for diff in diffs:
-        for rule in ignore_rules:
+        for rule in chain(ignore_rules.get(diff.path, []), any_path_rules):
             try:
                 match = rule.matches(diff, old_obj, new_obj)
             except ComplexDiff as complex:
@@ -237,6 +238,35 @@ def _filter_diffs(diffs, ignore_rules, old_obj, new_obj):
                 break
         else:
             yield diff
+
+
+@memoized
+def _get_ignore_rules(doc_types):
+    """Get ignore rules by path for the given doc type specifiers
+
+    This is an optimization to minimize M in O(N * M) nested loop in
+    `_filter_diffs()`. Note very important `@memoized` decorator.
+
+    :returns: A dict of lists of ignore rules:
+    ```
+    {
+        <path>: [<Ignore>, ...],
+        ...,
+        ANY_PATH: [<Ignore>, ...]  # rules with unhashable path
+    }
+    ```
+    """
+    ignore_rules = defaultdict(list)
+    for typespec in doc_types:
+        for rule in IGNORE_RULES[typespec]:
+            try:
+                ignore_rules[rule.path].append(rule)
+            except TypeError:
+                ignore_rules[ANY_PATH].append(rule)
+    return dict(ignore_rules)
+
+
+ANY_PATH = object()
 
 
 def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):

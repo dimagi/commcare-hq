@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from testil import assert_raises
+
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 
 from ..diffrule import ANY, Ignore
@@ -94,3 +96,12 @@ def test_multi_element_path_rules():
 
     yield no_match, Ignore("diff", (ANY,), old=1, new=2)
     yield no_match, Ignore("diff", (ANY, ANY, ANY), old=1, new=2)
+
+
+def test_any_not_hashable():
+    def test(path):
+        with assert_raises(TypeError):
+            {}[path] = None
+
+    yield test, ANY
+    yield test, ("path", ANY)
