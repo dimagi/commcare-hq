@@ -143,26 +143,26 @@ class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
         )
 
 
-def _serialize_indices(case):
+def _serialize_case_indices(case):
     return list(CommCareCaseIndexSQLSerializer(case.indices, many=True).data)
 
 
-def _serialize_transactions(case):
+def _serialize_case_transactions(case):
     return list(CaseTransactionActionSerializer(case.non_revoked_transactions, many=True).data)
 
 
-def _serialize_xform_ids(case):
+def _serialize_case_xform_ids(case):
     return list(case.xform_ids)
 
 
-def _serialize_attachments(case):
+def _serialize_case_attachments(case):
     return dict(case.serialized_attachments)
 
 
-lazy_serialize_indices = lazy(_serialize_indices, list)
-lazy_serialize_transactions = lazy(_serialize_transactions, list)
-lazy_serialize_xform_ids = lazy(_serialize_xform_ids, list)
-lazy_serialize_attachments = lazy(_serialize_attachments, dict)
+lazy_serialize_case_indices = lazy(_serialize_case_indices, list)
+lazy_serialize_case_transactions = lazy(_serialize_case_transactions, list)
+lazy_serialize_case_xform_ids = lazy(_serialize_case_xform_ids, list)
+lazy_serialize_case_attachments = lazy(_serialize_case_attachments, dict)
 
 
 class CommCareCaseSQLSerializer(DeletableModelSerializer):

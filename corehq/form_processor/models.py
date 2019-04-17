@@ -817,15 +817,15 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def to_json(self):
         from .serializers import (
-            CommCareCaseSQLSerializer, lazy_serialize_indices, lazy_serialize_transactions,
-            lazy_serialize_xform_ids, lazy_serialize_attachments
+            CommCareCaseSQLSerializer, lazy_serialize_case_indices, lazy_serialize_case_transactions,
+            lazy_serialize_case_xform_ids, lazy_serialize_case_attachments
         )
         serializer = CommCareCaseSQLSerializer(self)
         ret = dict(serializer.data)
-        ret['indices'] = lazy_serialize_indices(self)
-        ret['actions'] = lazy_serialize_transactions(self)
-        ret['xform_ids'] = lazy_serialize_xform_ids(self)
-        ret['case_attachments'] = lazy_serialize_attachments(self)
+        ret['indices'] = lazy_serialize_case_indices(self)
+        ret['actions'] = lazy_serialize_case_transactions(self)
+        ret['xform_ids'] = lazy_serialize_case_xform_ids(self)
+        ret['case_attachments'] = lazy_serialize_case_attachments(self)
         for key in self.case_json:
             if key not in ret:
                 ret[key] = self.case_json[key]
