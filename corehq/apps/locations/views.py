@@ -293,7 +293,6 @@ class LocationTypesView(BaseDomainView):
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
-            'has_user': loc_type.has_user,
             'code': loc_type.code,
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
@@ -313,7 +312,7 @@ class LocationTypesView(BaseDomainView):
                 soft_assert_type_text(pk)
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative, has_user,
+        def mk_loctype(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -331,7 +330,6 @@ class LocationTypesView(BaseDomainView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
-            loc_type.has_user = has_user
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
