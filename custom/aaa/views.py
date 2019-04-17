@@ -44,6 +44,7 @@ from custom.aaa.utils import (
 )
 
 
+@location_safe
 class ReachDashboardView(TemplateView):
     @property
     def domain(self):
@@ -81,7 +82,6 @@ class ReachDashboardView(TemplateView):
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramOverviewReport(ReachDashboardView):
     template_name = 'aaa/reports/program_overview.html'
@@ -173,7 +173,6 @@ class ProgramOverviewReportAPI(View):
         ]})
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class UnifiedBeneficiaryReport(ReachDashboardView):
     template_name = 'aaa/reports/unified_beneficiary.html'
