@@ -65,21 +65,6 @@ def sync_supply_points(location_type):
         location.save()
 
 
-# TODO add message on types page
-@serial_task("{location_type.domain}-{location_type.pk}",
-             default_retry_delay=30, max_retries=0)
-def update_location_users(location_type):
-    """
-    Called when location_type.has_user is changed.
-    Updates existing locations of that type to create or archive the
-    corresponding users.
-    """
-    if location_type.has_user:
-        _create_or_unarchive_users(location_type)
-    else:
-        _archive_users(location_type)
-
-
 def _get_users_by_loc_id(location_type):
     """Find any existing users previously assigned to this type"""
     loc_ids = SQLLocation.objects.filter(location_type=location_type).location_ids()
@@ -115,37 +100,6 @@ def make_location_user(location):
         uuid=uuid.uuid4().hex,
         commit=False,
     )
-
-
-def _create_or_unarchive_users(location_type):
-    users_by_loc = _get_users_by_loc_id(location_type)
-
-    with IterDB(CommCareUser.get_db()) as iter_db:
-        for loc in SQLLocation.objects.filter(location_type=location_type):
-            user = users_by_loc.get(loc.location_id, None) or make_location_user(loc)
-            user.is_active = True
-            user.user_location_id = loc.location_id
-            user.set_location(loc, commit=False)
-            iter_db.save(user)
-            loc.user_id = user._id
-            loc.save()
-
-
-def _archive_users(location_type):
-
-    def archive(user_doc):
-        if user_doc['is_active']:
-            user_doc['is_active'] = False
-            return DocUpdate(user_doc)
-
-    user_ids = (SQLLocation.objects
-                .filter(location_type=location_type)
-                .values_list('user_id', flat=True))
-    iter_update(CommCareUser.get_db(), archive, user_ids)
-
-    for loc in SQLLocation.objects.filter(location_type=location_type):
-        loc.user_id = ''
-        loc.save()
 
 
 @task(serializer='pickle')
