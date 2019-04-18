@@ -9,7 +9,7 @@ from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER_BAD_CODE, SOH_HELP_MESSAGE, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
-    REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
+    reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     LOSS_ADJUST_HELP
 from custom.ilsgateway.utils import send_translated_message
 
@@ -80,14 +80,6 @@ class MessageInitiatior(KeywordHandler):
         elif command in ["latedelivery"]:
             self.send_message(sql_location, DELIVERY_LATE_DISTRICT, group_name="changeme", group_total=1,
                               not_responded_count=2, not_received_count=3)
-        elif command in ["randr_report"]:
-            now = datetime.utcnow()
-            self.respond(REMINDER_MONTHLY_RANDR_SUMMARY, **reports.construct_summary(
-                sql_location,
-                SupplyPointStatusTypes.R_AND_R_FACILITY,
-                [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
-                get_business_day_of_month_before(now.year, now.month, 5)
-            ))
         elif command in ["soh_report"]:
             now = datetime.utcnow()
             last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
