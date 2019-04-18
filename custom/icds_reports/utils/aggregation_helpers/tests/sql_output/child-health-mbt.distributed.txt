@@ -9,6 +9,6 @@
                 AND (ccs.child_name is null OR ccs.child_name=t.person_name)
                 AND ccs.month=t.month AND ccs.supervisor_id=t.supervisor_id
             WHERE awc.state_id='st1' AND t.month='2019-01-01 00:00:00'
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         
 {}

@@ -41,7 +41,7 @@ class MBTDistributedHelper(AggregationHelper):
             SELECT {columns} FROM {table} t LEFT JOIN awc_location awc on t.awc_id=awc.doc_id
                 AND awc.supervisor_id=t.supervisor_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
@@ -260,7 +260,7 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
                 AND (ccs.child_name is null OR ccs.child_name=t.person_name)
                 AND ccs.month=t.month AND ccs.supervisor_id=t.supervisor_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
@@ -423,7 +423,7 @@ class AwcMbtDistributedHelper(MBTDistributedHelper):
             SELECT {columns} FROM {table} t LEFT JOIN "awc_location_local" awc on t.awc_id=awc.doc_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
             AND t.aggregation_level=5
-        ) TO STDOUT WITH CSV HEADER;
+        ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
             loc_columns=','.join(self.location_columns),
             awc_columns=','.join(self.columns),
