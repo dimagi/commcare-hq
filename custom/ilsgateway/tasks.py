@@ -18,7 +18,7 @@ from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, R
     REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
-    construct_delivery_summary, construct_randr_summary
+    construct_delivery_summary
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
@@ -143,25 +143,6 @@ def delivery_summary_task():
         for user in get_district_people(domain):
             send_translated_message(
                 user, REMINDER_MONTHLY_DELIVERY_SUMMARY, **construct_delivery_summary(user.location)
-            )
-
-
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
-               queue="logistics_reminder_queue")
-def randr_summary_task():
-    """
-        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
-    """
-
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
-    if now.day != business_day.day:
-        return
-
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        for user in get_district_people(domain):
-            send_translated_message(
-                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
             )
 
 
