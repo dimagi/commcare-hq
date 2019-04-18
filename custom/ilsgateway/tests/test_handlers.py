@@ -26,7 +26,7 @@ from custom.ilsgateway.tanzania.reminders import (
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
     REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
     STOP_CONFIRM, SUBMITTED_CONFIRM,
-    SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY,
+    SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT,
     TEST_HANDLER_BAD_CODE,
     TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
@@ -798,50 +798,6 @@ class TestHandlers(ILSTestScript):
             5551234 < %(test_bad_code)s
             """ % {"test_bad_code": response % {"code": "d5000000"}}
         self.run_script(script)
-
-    def test_message_initiator_randr_facility(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUBMITTED_REMINDER_FACILITY)
-        script = """
-            5551234 > test randr d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.facility3.get_id,
-            status_type=SupplyPointStatusTypes.R_AND_R_FACILITY
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_FACILITY, supply_point_status.status_type)
-
-    def test_message_initiator_randr_district(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUBMITTED_REMINDER_DISTRICT)
-        script = """
-            5551234 > test randr d10101
-            5551234 < %(test_handler_confirm)s
-            32350 < %(response)s
-            32351 < %(response)s
-            32352 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.district2.get_id,
-            status_type=SupplyPointStatusTypes.R_AND_R_DISTRICT
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, supply_point_status.status_type)
 
     def test_message_initiator_delivery_facility(self):
         with localize('sw'):
