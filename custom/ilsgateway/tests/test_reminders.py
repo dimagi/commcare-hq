@@ -13,7 +13,6 @@ from custom.ilsgateway.tanzania.reminders import DELIVERY_REMINDER_FACILITY, DEL
     REMINDER_STOCKONHAND, SUPERVISION_REMINDER
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
-from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
 from custom.ilsgateway.tests.utils import bootstrap_user
 import six

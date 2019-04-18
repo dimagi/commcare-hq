@@ -20,7 +20,6 @@ from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
     construct_delivery_summary, construct_randr_summary
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
-from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
@@ -77,15 +76,6 @@ def second_district_delivery_task():
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
-
-
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
-               queue="logistics_reminder_queue")
-def supervision_task():
-    now = datetime.utcnow()
-    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
-    if now.day == last_business_day.day:
-        send_for_all_domains(last_business_day, SupervisionReminder)
 
 
 def get_last_and_nth_business_day(date, n):
