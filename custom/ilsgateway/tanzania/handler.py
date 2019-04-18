@@ -20,7 +20,6 @@ from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
 from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
-from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
 from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
@@ -87,7 +86,6 @@ def handle(verified_contact, text, msg):
 
     handlers_for_registered_users_with_location = {
         ('soh', 'hmk'): SOHHandler,
-        ('submitted', 'nimetuma'): RandrHandler,
         ('delivered', 'dlvd', 'nimepokea'): DeliveredHandler,
         ('sijapokea',): NotDeliveredHandler,
         ('sijatuma',): NotSubmittedHandler,
