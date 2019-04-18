@@ -6,6 +6,7 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
+from custom.icds_reports.decorators import compare_with_citus
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text, underweight_children_help_text, \
     early_initiation_breastfeeding_help_text, exclusive_breastfeeding_help_text, \
     children_initiated_appropriate_complementary_feeding_help_text, institutional_deliveries_help_text
@@ -16,6 +17,7 @@ from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, ex
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
+@compare_with_citus
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
