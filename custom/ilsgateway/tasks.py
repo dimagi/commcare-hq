@@ -17,7 +17,6 @@ from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     REMINDER_MONTHLY_RANDR_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
     construct_delivery_summary, construct_randr_summary
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
@@ -78,49 +77,6 @@ def second_district_delivery_task():
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
-
-
-facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrReminder, location_type='FACILITY')
-district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
-
-
-@periodic_task(run_every=crontab(day_of_month="3-5", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_facility():
-    """Last business day before or on 5th day of the Submission month, 8:00am"""
-    facility_randr_partial(5)
-
-
-@periodic_task(run_every=crontab(day_of_month="8-10", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_facility():
-    """Last business day before or on 10th day of the submission month, 8:00am"""
-    facility_randr_partial(10)
-
-
-@periodic_task(run_every=crontab(day_of_month="10-12", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def third_facility():
-    """Last business day before or on 12th day of the submission month, 8:00am"""
-    facility_randr_partial(12)
-
-
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_district():
-    district_randr_partial(13)
-
-
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_district():
-    district_randr_partial(15)
-
-
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=11, minute=0),
-               queue="logistics_reminder_queue")
-def third_district():
-    district_randr_partial(17)
 
 
 @periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
