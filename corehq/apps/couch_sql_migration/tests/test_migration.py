@@ -1,21 +1,27 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 import uuid
 from datetime import datetime
+from io import open
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.test import TestCase
-from django.test import override_settings
 from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
+from couchforms.models import XFormInstance
+
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db, PartiallyLockingQueue
+from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    PartiallyLockingQueue,
+    get_diff_db,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -25,18 +31,32 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    LedgerAccessorSQL,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
+from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
+)
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.test_utils import (
-    create_and_save_a_form, create_and_save_a_case, set_parent_case,
-    trap_extra_setup, TestFileMixin,
-    softer_assert)
-from couchforms.models import XFormInstance
-from corehq.util.test_utils import patch_datadog, flag_enabled
-from io import open
+    TestFileMixin,
+    create_and_save_a_case,
+    create_and_save_a_form,
+    flag_enabled,
+    patch_datadog,
+    set_parent_case,
+    softer_assert,
+    trap_extra_setup,
+)
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
