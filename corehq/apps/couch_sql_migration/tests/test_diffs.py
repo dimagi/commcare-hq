@@ -6,8 +6,10 @@ from attr import fields_dict
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
-    filter_form_diffs, IGNORE_RULES,
-    filter_case_diffs, filter_ledger_diffs
+    filter_case_diffs,
+    filter_form_diffs,
+    filter_ledger_diffs,
+    load_ignore_rules,
 )
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff, MISSING
 from corehq.util.test_utils import softer_assert
@@ -52,7 +54,7 @@ def _make_ignored_diffs(doc_type):
     diffs = [
         FormJsonDiff(**_diff_args(rule, diff_defaults))
         for type in [doc_type, doc_type + "*"]
-        for rule in IGNORE_RULES.get(type, [])
+        for rule in load_ignore_rules().get(type, [])
         if not _has_check(rule)
     ]
     assert diffs, "expected diffs for %s" % doc_type

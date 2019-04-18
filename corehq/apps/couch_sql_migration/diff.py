@@ -12,40 +12,7 @@ from .diffrule import Ignore
 
 
 
-def ignore_renamed(old_name, new_name):
-    return Ignore(check=lambda *a: _is_renamed(old_name, new_name, *a))
-
-
-def has_date_values(old_obj, new_obj, rule, diff):
-    return _both_dates(diff.old_value, diff.new_value)
-
-
-def is_text_xmlns(old_obj, new_obj, rule, diff):
-    return diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING)
-
-
-def xform_ids_order(old_obj, new_obj, rule, diff):
-    return _xform_ids_mismatch(old_obj, new_obj)
-
-
-def case_attachments(old_obj, new_obj, rule, diff):
-    if diff.path[0] != "case_attachments":
-        return False
-    return _diff_case_attachments(old_obj, new_obj)
-
-
-def case_index_order(old_obj, new_obj, rule, diff):
-    if diff.path[0] != "indices" or len(old_obj['indices']) < 2:
-        return False
-    return _diff_case_index_order(old_obj, new_obj, diff)
-
-
-def is_supply_point(old_obj, new_obj, rule, diff):
-    from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
-    return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
-
-
-IGNORE_RULES = {
+load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
         Ignore(path='migrating_blobs_from_couch'),  # couch only
@@ -179,7 +146,7 @@ IGNORE_RULES = {
         ignore_renamed('attachment_size', 'content_length'),
         ignore_renamed('identifier', 'name'),
     ]
-}
+})
 
 
 def filter_form_diffs(couch_form, sql_form, diffs):
@@ -229,7 +196,7 @@ def filter_ledger_diffs(diffs):
 def _filter_ignored(couch_obj, sql_obj, diffs, doc_types):
     """Filter out diffs that match ignore rules
 
-    :param doc_types: List of doc type specifiers (IGNORE_RULES keys).
+    :param doc_types: List of doc type specifiers (`load_ignore_rules()` keys).
     """
     ignore_rules = _get_ignore_rules(tuple(doc_types))
     return list(_filter_diffs(diffs, ignore_rules, couch_obj, sql_obj))
@@ -273,7 +240,7 @@ def _get_ignore_rules(doc_types):
     """
     ignore_rules = defaultdict(list)
     for typespec in doc_types:
-        for rule in IGNORE_RULES[typespec]:
+        for rule in load_ignore_rules()[typespec]:
             try:
                 ignore_rules[rule.path].append(rule)
             except TypeError:
@@ -297,27 +264,38 @@ class ReplaceDiff(Exception):
             self.diffs = diffs
 
 
-def _is_renamed(old_name, new_name, old_obj, new_obj, rule, diff):
-    diffname = diff.path[0]
-    if diffname == old_name or diffname == new_name:
-        old_value = old_obj.get(old_name, MISSING)
-        new_value = new_obj.get(new_name, MISSING)
-        if old_value is not MISSING or new_value is not MISSING:
-            if old_value != new_value and not _both_dates(new_value, old_value):
-                raise ReplaceDiff(
-                    path=(old_name, new_name),
-                    old_value=old_value,
-                    new_value=new_value,
-                )
-            return True
-    return False
+def ignore_renamed(old_name, new_name):
+    def is_renamed(old_obj, new_obj, rule, diff):
+        diffname = diff.path[0]
+        if diffname == old_name or diffname == new_name:
+            old_value = old_obj.get(old_name, MISSING)
+            new_value = new_obj.get(new_name, MISSING)
+            if old_value is not MISSING or new_value is not MISSING:
+                if old_value != new_value and not _both_dates(new_value, old_value):
+                    raise ReplaceDiff(
+                        path=(old_name, new_name),
+                        old_value=old_value,
+                        new_value=new_value,
+                    )
+                return True
+        return False
+
+    return Ignore(check=is_renamed)
+
+
+def has_date_values(old_obj, new_obj, rule, diff):
+    return _both_dates(diff.old_value, diff.new_value)
+
+
+def is_text_xmlns(old_obj, new_obj, rule, diff):
+    return diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', MISSING)
 
 
 def _both_dates(old, new):
     return is_datetime_string(old) and is_datetime_string(new)
 
 
-def _xform_ids_mismatch(old_obj, new_obj):
+def xform_ids_order(old_obj, new_obj, rule, diff):
     """Some couch docs have the xform ID's out of order"""
     old_ids = set(old_obj['xform_ids'])
     new_ids = set(new_obj['xform_ids'])
@@ -331,8 +309,10 @@ def _xform_ids_mismatch(old_obj, new_obj):
     raise ReplaceDiff(diff_type="list_order", path=('xform_ids', '[*]'))
 
 
-def _diff_case_attachments(old_obj, new_obj):
+def case_attachments(old_obj, new_obj, rule, original_diff):
     """Attachment JSON format is different between Couch and SQL"""
+    if original_diff.path[0] != "case_attachments":
+        return False
     diffs = []
     old_attachments = old_obj.get("case_attachments", {})
     new_attachments = new_obj.get("case_attachments", {})
@@ -355,8 +335,11 @@ def _diff_case_attachments(old_obj, new_obj):
     return True
 
 
-def _diff_case_index_order(old_obj, new_obj, diff):
-    """Attachment JSON format is different between Couch and SQL"""
+def case_index_order(old_obj, new_obj, rule, diff):
+    """Attachment order may be different between Couch and SQL"""
+    if diff.path[0] != "indices" or len(old_obj['indices']) < 2:
+        return False
+
     def key(index):
         return index['identifier']
 
@@ -370,3 +353,8 @@ def _diff_case_index_order(old_obj, new_obj, diff):
     if diffs:
         raise ReplaceDiff(diffs)
     return True
+
+
+def is_supply_point(old_obj, new_obj, rule, diff):
+    from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
+    return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
