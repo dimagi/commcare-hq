@@ -261,7 +261,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return session.query(query.exists()).scalar()
 
 
-class MultiDBSqlAdapter(IndicatorSqlAdapter):
+class MultiDBSqlAdapter(object):
 
     mirror_adapter_cls = IndicatorSqlAdapter
 
@@ -269,11 +269,48 @@ class MultiDBSqlAdapter(IndicatorSqlAdapter):
         from corehq.apps.userreports.models import id_is_static
         assert id_is_static(config._id)
         config.validate_db_config()
-        super(MultiDBSqlAdapter, self).__init__(config, override_table_name)
-        self.mirrored_adapters = [super(MultiDBSqlAdapter, self)]  # include the main primary adapter
+        self.config = config
+        self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
+        self.mirrored_adapters = [self.main_adapter]  # include the main primary adapter
         engine_ids = self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
         for engine_id in engine_ids:
             self.mirrored_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
+
+    def handle_exception(self, doc, exception):
+        self.main_adapter.handle_exception(doc, exception)
+
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
+
+    @memoized
+    def get_table(self):
+        return self.main_adapter.get_table()
+
+    def get_query_object(self):
+        return self.main_adapter.get_query_object()
+
+    def best_effort_save(self, doc, eval_context=None):
+        for adapter in self.mirrored_adapters:
+            adapter.best_effort_save(doc, eval_context)
+
+    def save(self, doc, eval_context=None):
+        for adapter in self.mirrored_adapters:
+            adapter.save(doc, eval_context)
+
+    def get_all_values(self, doc, eval_context=None):
+        return self.config.get_all_values(doc, eval_context)
+
+    @property
+    def run_asynchronous(self):
+        return self.config.asynchronous
+
+    def get_distinct_values(self, column, limit):
+        return self.main_adapter.get_distinct_values(column, limit)
 
     def build_table(self):
         for adapter in self.mirrored_adapters:
@@ -311,7 +348,7 @@ class MultiDBSqlAdapter(IndicatorSqlAdapter):
         ])
 
 
-class ErrorRaisingMixin(object):
+class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
     def handle_exception(self, doc, exception):
         ex = translate_programming_error(exception)
@@ -334,11 +371,7 @@ class ErrorRaisingMixin(object):
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
 
-class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter, ErrorRaisingMixin):
-    pass
-
-
-class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter, ErrorRaisingMixin):
+class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
     mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
