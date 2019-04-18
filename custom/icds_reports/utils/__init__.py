@@ -658,8 +658,9 @@ def create_pdf_file(pdf_context):
         pdf_page = template.render(pdf_context)
     except Exception as ex:
         pdf_page = str(ex)
-    resultFile.write(HTML(string=pdf_page, base_url=settings.STATIC_ROOT).write_pdf(
-        stylesheets=[CSS(settings.STATIC_ROOT + '/css/issnip_monthly_print_style.css'), ])
+    base_url = os.path.join(settings.FILEPATH, 'custom', 'icds_reports', 'static')
+    resultFile.write(HTML(string=pdf_page, base_url=base_url).write_pdf(
+        stylesheets=[CSS(os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')), ])
     )
     # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
     # we read this to save file in blobdb

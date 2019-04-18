@@ -40,7 +40,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.datadog.utils import create_datadog_event
+from corehq.util.datadog.utils import create_datadog_event, case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -109,16 +109,9 @@ UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.com')]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
-CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'india':
-    # Currently QA needs more monthly data, so these are different than on ICDS
-    # If this exists after July 1, ask Emord why these UCRs still exist
-    CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
-
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -283,9 +276,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
+            _bust_awc_cache.si(),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
-        _bust_awc_cache.delay()
+
 
 
 def _create_aggregate_functions(cursor):
@@ -626,18 +620,19 @@ def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
-        'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
     ]
 
+    track_case_load = case_load_counter("find_stagnant_cases", domain)
     stagnant_cases = set()
-
     for config_id in config_ids:
         config, is_static = get_datasource_config(config_id, domain)
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
         case_ids = _find_stagnant_cases(adapter)
+        num_cases = len(case_ids)
+        adapter.track_load(num_cases)
         celery_task_logger.info(
-            "Found {} stagnant cases in config {}".format(len(case_ids), config_id)
+            "Found {} stagnant cases in config {}".format(num_cases, config_id)
         )
         stagnant_cases = stagnant_cases.union(set(case_ids))
         celery_task_logger.info(
@@ -651,6 +646,7 @@ def recalculate_stagnant_cases():
         current_case_num += len(case_ids)
         cases = case_accessor.get_cases(list(case_ids))
         for case in cases:
+            track_case_load()
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
             "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)

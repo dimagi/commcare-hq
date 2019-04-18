@@ -179,3 +179,12 @@ def sms_load_counter(*args, **kw):
     """
     # grep: commcare.load.sms
     return load_counter("sms", *args, **kw)
+
+
+def ucr_load_counter(engine_id, *args, **kw):
+    """Make a UCR load counter function
+
+    This is used to count all kinds of UCR load
+    """
+    # grep: commcare.load.ucr
+    return load_counter("ucr.{}".format(engine_id), *args, **kw)
