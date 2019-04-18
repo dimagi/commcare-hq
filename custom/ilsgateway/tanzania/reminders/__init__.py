@@ -55,12 +55,6 @@ SOH_BAD_FORMAT = _("Sorry, invalid format. "
                    "The message should be in the format 'soh <product> <amount> <product> <amount>...'")
 
 
-SUPERVISION_HELP = _(
-    "Supervision reminders will come monthly, and you can respond 'supervision yes' "
-    "if you have received supervision or 'supervision no' if you have not"
-)
-SUPERVISION_CONFIRM_NO = _('You have reported that you have not yet received supervision this month.')
-SUPERVISION_CONFIRM_YES = _('Thank you for reporting that you have received supervision this month.')
 SUBMITTED_REMINDER_FACILITY = _(
     "Have you sent in your R&R form yet for this quarter? "
     "Please reply \"submitted\" or \"not submitted\""
