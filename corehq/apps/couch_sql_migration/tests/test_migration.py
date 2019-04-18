@@ -64,12 +64,21 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
     file_path = 'data',
     root = os.path.dirname(__file__)
 
-    def setUp(self):
-        super(BaseMigrationTestCase, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(BaseMigrationTestCase, cls).setUpClass()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
-            self.s3db = TemporaryS3BlobDB(config)
-            assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+            cls.s3db = TemporaryS3BlobDB(config)
+            assert get_blob_db() is cls.s3db, (get_blob_db(), cls.s3db)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.s3db.close()
+        super(BaseMigrationTestCase, cls).tearDownClass()
+
+    def setUp(self):
+        super(BaseMigrationTestCase, self).setUp()
 
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain_name = uuid.uuid4().hex
