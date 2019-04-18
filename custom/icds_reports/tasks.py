@@ -1,106 +1,138 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from collections import namedtuple
-import csv342 as csv
-from datetime import date, datetime, timedelta
 import io
 import logging
 import os
 import re
 import tempfile
 import zipfile
+from collections import namedtuple
+from datetime import date, datetime, timedelta
+from io import BytesIO, open
 
-from celery import chain
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
-from io import BytesIO
-from couchexport.export import export_from_tables
 
-from corehq.apps.es.cases import CaseES, server_modified_range
-from corehq.apps.es.forms import FormES, submitted
+import csv342 as csv
+import six
+from celery import chain
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from dateutil.relativedelta import relativedelta
+from six.moves import range
+
+from couchexport.export import export_from_tables
+from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import force_to_date
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
-    get_primary_db_form_counts,
     get_primary_db_case_counts,
+    get_primary_db_form_counts,
 )
+from corehq.apps.es.cases import CaseES, server_modified_range
+from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
-
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_id_username_pairs_by_domain,
+)
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.datadog.utils import create_datadog_event, case_load_counter
+from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
-from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
-    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
-    AWW_INCENTIVE_REPORT, THREE_MONTHS, LS_REPORT_EXPORT
+from custom.icds_reports.const import (
+    AWC_INFRASTRUCTURE_EXPORT,
+    AWW_INCENTIVE_REPORT,
+    BENEFICIARY_LIST_EXPORT,
+    CHILDREN_EXPORT,
+    DASHBOARD_DOMAIN,
+    DEMOGRAPHICS_EXPORT,
+    LS_REPORT_EXPORT,
+    PREGNANT_WOMEN_EXPORT,
+    SYSTEM_USAGE_EXPORT,
+    THREE_MONTHS,
+)
 from custom.icds_reports.models import (
+    AggAwc,
+    AggCcsRecord,
     AggChildHealth,
     AggChildHealthMonthly,
-    AggCcsRecord,
+    AggLs,
+    AggregateAwcInfrastructureForms,
     AggregateBirthPreparednesForms,
-    AggregateCcsRecordTHRForms,
+    AggregateCcsRecordComplementaryFeedingForms,
     AggregateCcsRecordDeliveryForms,
     AggregateCcsRecordPostnatalCareForms,
-    AggregateComplementaryFeedingForms,
-    AggregateGrowthMonitoringForms,
+    AggregateCcsRecordTHRForms,
     AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
-    AggregateAwcInfrastructureForms,
-    ChildHealthMonthly,
-    CcsRecordMonthly,
-    UcrTableNameMapping,
-    AggregateCcsRecordComplementaryFeedingForms,
-    AWWIncentiveReport,
-    AggLs,
-    AggAwc,
+    AggregateComplementaryFeedingForms,
+    AggregateGrowthMonitoringForms,
     AwcLocation,
+    AWWIncentiveReport,
+    CcsRecordMonthly,
+    ChildHealthMonthly,
+    ICDSAuditEntryRecord,
+    UcrTableNameMapping,
 )
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
-    AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
-from custom.icds_reports.models import ICDSAuditEntryRecord
+from custom.icds_reports.models.aggregate import (
+    AggAwcDaily,
+    AggregateBeneficiaryForm,
+    AggregateInactiveAWW,
+    AggregateLsAWCVisitForm,
+    AggregateLsVhndForm,
+    DailyAttendance,
+)
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
-from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.reports.incentive import IncentiveReport
-from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.reports.issnip_monthly_register import (
+    ISSNIPMonthlyReport,
+)
+from custom.icds_reports.sqldata.exports.awc_infrastructure import (
+    AWCInfrastructureExport,
+)
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
-from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
-from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.lady_supervisor import (
+    LadySupervisorExport,
+)
+from custom.icds_reports.sqldata.exports.pregnant_women import (
+    PregnantWomenExport,
+)
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, \
-    create_lady_supervisor_excel_file
-from custom.icds_reports.utils.aggregation_helpers.monolith import ChildHealthMonthlyAggregationHelper
+from custom.icds_reports.utils import (
+    create_aww_performance_excel_file,
+    create_excel_file,
+    create_excel_file_in_openpyxl,
+    create_lady_supervisor_excel_file,
+    create_pdf_file,
+    icds_pre_release_features,
+    track_time,
+    zip_folder,
+)
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    ChildHealthMonthlyAggregationHelper,
+)
 from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
+    AwcMbtHelper,
     CcsMbtHelper,
     ChildHealthMbtHelper,
-    AwcMbtHelper
 )
-from dimagi.utils.chunked import chunked
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.logging import notify_exception
-import six
-from six.moves import range
-from io import open
 
 celery_task_logger = logging.getLogger('celery.task')
 
