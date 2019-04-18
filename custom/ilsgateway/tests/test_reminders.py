@@ -4,16 +4,14 @@ from datetime import datetime
 
 from django.test.testcases import TestCase
 
-from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes
-from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, REMINDER_R_AND_R_DISTRICT, \
-    DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, REMINDER_STOCKONHAND, SUPERVISION_REMINDER
+from custom.ilsgateway.tanzania.reminders import DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, \
+    REMINDER_STOCKONHAND, SUPERVISION_REMINDER
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
@@ -70,44 +68,6 @@ class TestReminders(TestCase):
         SMS.objects.all().delete()
         SupplyPointStatus.objects.all().delete()
         super(TestReminders, self).tearDown()
-
-    def test_randr_reminder_facility(self):
-        date = datetime(2015, 5, 1)
-        RandrReminder(TEST_DOMAIN, date).send()
-        self.assertEqual(SMS.objects.count(), 1)
-
-        statuses = SupplyPointStatus.objects.filter(status_type=SupplyPointStatusTypes.R_AND_R_FACILITY)
-        self.assertEqual(statuses.count(), 1)
-
-        smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(REMINDER_R_AND_R_FACILITY))
-        self.assertEqual(
-            statuses.values_list('location_id', flat=True)[0], self.facility.get_id
-        )
-
-        now = datetime.utcnow()
-
-        RandrReminder(TEST_DOMAIN, date).send()
-        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 0)
-
-    def test_randr_reminder_district(self):
-        date = datetime(2015, 5, 1)
-        RandrReminder(TEST_DOMAIN, date, 'DISTRICT').send()
-        self.assertEqual(SMS.objects.count(), 1)
-
-        statuses = SupplyPointStatus.objects.filter(status_type=SupplyPointStatusTypes.R_AND_R_DISTRICT)
-        self.assertEqual(statuses.count(), 1)
-
-        smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(REMINDER_R_AND_R_DISTRICT))
-        self.assertEqual(
-            statuses.values_list('location_id', flat=True)[0], self.district.get_id
-        )
-
-        now = datetime.utcnow()
-
-        RandrReminder(TEST_DOMAIN, date, 'DISTRICT').send()
-        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 0)
 
     def test_delivery_reminder_facility(self):
         date = datetime(2015, 5, 1)
