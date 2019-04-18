@@ -184,32 +184,34 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
     doc_types = [doc_type, 'CommCareCase*']
-    filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
-    return filtered_diffs
+    diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
+    if forms_that_touch_cases_without_actions:
+        diffs = _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions)
+    return diffs
 
 
 def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
-    """Legacy bug in case processing would not add the form ID to the list of xform_ids for the case
-    if the case block had no actions"""
-    if not forms_that_touch_cases_without_actions:
-        return diffs
+    """Legacy bug in case processing would not add the form ID to the list of
+    xform_ids for the case if the case block had no actions"""
+    other_diffs = []
+    form_id_diffs = []
+    for diff in diffs:
+        if diff.diff_type == 'set_mismatch' and diff.path[0] == 'xform_ids':
+            form_id_diffs.append(diff)
+        else:
+            other_diffs.append(diff)
 
-    form_id_diffs = [
-        diff for diff in diffs
-        if diff.diff_type == 'set_mismatch' and diff.path[0] == ('xform_ids')
-    ]
-    if not len(form_id_diffs):
-        return diffs
-
-    for diff in form_id_diffs:
-        diffs.remove(diff)
-        form_ids = diff.new_value.split(',')
-        diff_ids = [form_id for form_id in form_ids if form_id not in forms_that_touch_cases_without_actions]
-        if diff_ids:
-            diff_dict = diff._asdict()
-            diff_dict['new_value'] = ','.join(diff_ids)
-            diffs.append(FormJsonDiff(**diff_dict))
+    if form_id_diffs:
+        diffs = other_diffs
+        for diff in form_id_diffs:
+            form_ids = diff.new_value.split(',')
+            diff_ids = [
+                form_id for form_id in form_ids
+                if form_id not in forms_that_touch_cases_without_actions
+            ]
+            if diff_ids:
+                diff = diff._replace(new_value=','.join(diff_ids))
+                diffs.append(diff)
 
     return diffs
 
