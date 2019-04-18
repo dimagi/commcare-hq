@@ -15,6 +15,7 @@ from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.userreports.dbaccessors import delete_all_ucr_tables_for_domain
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -236,6 +237,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     CustomDeletion('custom_data_fields', _delete_custom_data_fields),
+    CustomDeletion('ucr', delete_all_ucr_tables_for_domain),
 ]
 
 
