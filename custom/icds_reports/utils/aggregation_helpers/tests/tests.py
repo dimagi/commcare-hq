@@ -6,6 +6,7 @@ import difflib
 import inspect
 import json
 import os
+from collections import OrderedDict
 from datetime import datetime
 
 import attr
@@ -101,7 +102,7 @@ class MockCursor(object):
         self.output = []
 
     def execute(self, query, params=None):
-        params = json.dumps(params, cls=DjangoJSONEncoder) if params else '{}'
+        params = json.dumps(OrderedDict(sorted(params.items())), cls=DjangoJSONEncoder) if params else '{}'
         self.output.append('{}\n{}'.format(query, params))
 
     def compile_output(self):

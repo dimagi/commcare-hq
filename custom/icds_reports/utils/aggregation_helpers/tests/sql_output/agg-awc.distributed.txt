@@ -177,7 +177,7 @@
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         DROP TABLE "tmp_person";
         
-{"start_date": "2019-01-01T00:00:00", "end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_start_15yr": "2004-01-01T00:00:00", "month_end_15yr": "2004-01-31T23:59:59", "month_start_18yr": "2001-01-01T00:00:00"}
+{"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_end_15yr": "2004-01-31T23:59:59", "month_start_15yr": "2004-01-01T00:00:00", "month_start_18yr": "2001-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
         CREATE TEMPORARY TABLE "tmp_child" AS SELECT
             awc_id,

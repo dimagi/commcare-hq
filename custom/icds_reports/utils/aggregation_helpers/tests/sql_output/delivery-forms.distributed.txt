@@ -1,5 +1,5 @@
 DELETE FROM "icds_dashboard_ccs_record_delivery_forms" WHERE state_id = %(state_id)s and month=%(month)s
-{"state_id": "st1", "month": "2019-01-01"}
+{"month": "2019-01-01", "state_id": "st1"}
 
         INSERT INTO "icds_dashboard_ccs_record_delivery_forms" (
           case_id, state_id, supervisor_id, month, latest_time_end_processed,
@@ -26,4 +26,4 @@ DELETE FROM "icds_dashboard_ccs_record_delivery_forms" WHERE state_id = %(state_
           )
         )
         
-{"month": "2019-01-01", "state_id": "st1", "current_month_start": "2019-01-01", "next_month_start": "2019-02-01"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

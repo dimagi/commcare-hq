@@ -23,4 +23,4 @@ DROP TABLE IF EXISTS "icds_db_ls_awc_mgt_form_7a197ee47818209780c23ed9"
                 GROUP BY state_id,location_id
         )
         
-{"state_id": "st1", "start_date": "2019-01-01", "end_date": "2019-02-01"}
+{"end_date": "2019-02-01", "start_date": "2019-01-01", "state_id": "st1"}

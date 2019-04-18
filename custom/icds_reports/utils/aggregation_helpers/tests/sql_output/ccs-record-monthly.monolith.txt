@@ -29,7 +29,7 @@ DELETE FROM "ccs_record_monthly_2019-01-01"
             ORDER BY case_list.awc_id, case_list.case_id, case_list.modified_on
         )
         
-{"start_date": "2019-01-01T00:00:00", "end_date": "2019-01-01T23:59:59"}
+{"end_date": "2019-01-01T23:59:59", "start_date": "2019-01-01T00:00:00"}
 CREATE INDEX ON "ccs_record_monthly_2019-01-01" (awc_id, case_id)
 {}
 CREATE INDEX ON "ccs_record_monthly_2019-01-01" (person_case_id, add, case_id)

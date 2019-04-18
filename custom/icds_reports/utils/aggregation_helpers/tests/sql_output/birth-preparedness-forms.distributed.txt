@@ -88,4 +88,4 @@ DELETE FROM "icds_dashboard_ccs_record_bp_forms" WHERE month=%(month)s AND state
             AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         
-{"month": "2019-01-01", "state_id": "st1", "previous_month": "2018-12-01T00:00:00", "current_month_start": "2019-01-01", "next_month_start": "2019-02-01"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "previous_month": "2018-12-01T00:00:00", "state_id": "st1"}

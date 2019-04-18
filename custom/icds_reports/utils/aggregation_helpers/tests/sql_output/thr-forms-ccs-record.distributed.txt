@@ -22,4 +22,4 @@ DELETE FROM "icds_dashboard_ccs_record_thr_forms" WHERE month=%(month)s AND stat
           )
         )
         
-{"month": "2019-01-01", "state_id": "st1", "current_month_start": "2019-01-01", "next_month_start": "2019-02-01"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}

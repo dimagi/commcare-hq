@@ -69,4 +69,4 @@ DROP TABLE IF EXISTS "icds_db_child_pnc_form_7a197ee47818209780c23ed9"
           ON ucr.case_id = prev_month.case_id
         )
         
-{"month": "2019-01-01", "state_id": "st1", "current_month_start": "2019-01-01", "next_month_start": "2019-02-01"}
+{"current_month_start": "2019-01-01", "month": "2019-01-01", "next_month_start": "2019-02-01", "state_id": "st1"}
