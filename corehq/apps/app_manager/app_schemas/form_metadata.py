@@ -10,12 +10,40 @@ from corehq.apps.app_manager.app_schemas.app_case_metadata import (
 )
 from corehq.apps.app_manager.exceptions import XFormException
 
+from jsonobject import (
+    BooleanProperty,
+    DictProperty,
+    JsonObject,
+    ListProperty,
+    StringProperty,
+)
+
 REMOVED = 'removed'
 ADDED = 'added'
 CHANGED = 'changed'
 
 INTERESTING_ATTRIBUTES = ('name', 'label', 'constraint', 'calculate',
                           'comment', 'required', 'setvalue', 'relevant')
+
+
+class _FormMetadata(JsonObject):
+    id = StringProperty()
+    name = DictProperty()
+    short_comment = StringProperty()
+    action_type = StringProperty()
+    form_filter = StringProperty()
+    questions = ListProperty(FormQuestionResponse)
+    error = DictProperty()
+
+
+class _ModuleMetadata(JsonObject):
+    id = StringProperty()
+    name = DictProperty()
+    short_comment = StringProperty()
+    module_type = StringProperty()
+    is_surveys = BooleanProperty()
+    module_filter = StringProperty()
+    forms = ListProperty(_FormMetadata)
 
 
 class _AppSummaryFormDataGenerator(object):
@@ -36,7 +64,7 @@ class _AppSummaryFormDataGenerator(object):
         return [self._compile_module(module) for module in self.app.get_modules()], self.errors
 
     def _compile_module(self, module):
-        return {
+        return _ModuleMetadata(**{
             'id': module.unique_id,
             'name': module.name,
             'short_comment': module.short_comment,
@@ -44,7 +72,7 @@ class _AppSummaryFormDataGenerator(object):
             'is_surveys': module.is_surveys,
             'module_filter': module.module_filter,
             'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
-        }
+        })
 
     def _get_pertinent_forms(self, module):
         from corehq.apps.app_manager.models import ShadowForm
@@ -53,23 +81,22 @@ class _AppSummaryFormDataGenerator(object):
         return module.get_forms()
 
     def _compile_form(self, form):
-        form_meta = {
+        form_meta = _FormMetadata(**{
             'id': form.unique_id,
             'name': form.name,
             'short_comment': form.short_comment,
             'action_type': form.get_action_type(),
             'form_filter': form.form_filter,
-        }
+        })
         try:
-            form_meta['questions'] = [
+            form_meta.questions = [
                 question
                 for raw_question in form.get_questions(self.app.langs, include_triggers=True,
                                                        include_groups=True, include_translations=True)
                 for question in self._get_question(form.unique_id, raw_question)
             ]
         except XFormException as exception:
-            form_meta['questions'] = []
-            form_meta['error'] = {
+            form_meta.error = {
                 'details': six.text_type(exception),
             }
             self.errors.append(form_meta)
@@ -110,18 +137,18 @@ class _AppSummaryFormDataGenerator(object):
             "required": False,
             "comment": None,
             "constraint": None,
-        }).to_json()
-        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question_path)
-        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question_path)
+            "load_properties": self._case_meta.get_load_properties(form_unique_id, question_path),
+            "save_properties": self._case_meta.get_save_properties(form_unique_id, question_path)
+        })
         self._seen_save_to_case[form_unique_id].append(question_path)
         return response
 
     def _serialized_question(self, form_unique_id, question):
-        response = FormQuestionResponse(question).to_json()
-        response['load_properties'] = self._case_meta.get_load_properties(form_unique_id, question['value'])
-        response['save_properties'] = self._case_meta.get_save_properties(form_unique_id, question['value'])
+        response = FormQuestionResponse(question)
+        response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
+        response.save_properties = self._case_meta.get_save_properties(form_unique_id, question['value'])
         if self._is_save_to_case(question):
-            response['type'] = 'SaveToCase'
+            response.type = 'SaveToCase'
         return response
 
 
