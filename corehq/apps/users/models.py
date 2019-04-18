@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import inspect
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import logging
 import re
@@ -2334,6 +2334,7 @@ def get_fixture_statuses(user_id):
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+    domains_accessed = DictProperty()
 
     fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
@@ -2514,6 +2515,12 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_location(self, domain):
         return self.get_sql_location(domain)
+
+    def update_domain_date(self, domain):
+        yesterday = datetime.today() - timedelta(hours=24)
+        if domain not in self.domains_accessed or self.domains_accessed[domain] < yesterday:
+            self.domains_accessed[domain] = datetime.today()
+            self.save()
 
 
 class FakeUser(WebUser):
