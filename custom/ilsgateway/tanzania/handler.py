@@ -19,7 +19,6 @@ from custom.ilsgateway.tanzania.handlers.register import RegisterHandler
 from custom.ilsgateway.tanzania.handlers.soh import SOHHandler
 from custom.ilsgateway.tanzania.handlers.stockout import StockoutHandler
 from custom.ilsgateway.tanzania.handlers.stop import StopHandler
-from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
 import six
@@ -78,7 +77,6 @@ def handle(verified_contact, text, msg):
         ('help', 'msaada'): HelpHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('stop', 'acha', 'hapo'): StopHandler,
-        ('yes', 'ndio', 'ndyo'): YesHandler,
         ('test',): MessageInitiatior,
     }
 
