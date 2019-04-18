@@ -1186,9 +1186,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user.delete()
         except User.DoesNotExist:
             pass
-        super(CouchUser, self).delete() # Call the "real" delete() method.
-        from .signals import couch_user_post_save
-        couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
         for i in range(0, len(self.phone_numbers)):
