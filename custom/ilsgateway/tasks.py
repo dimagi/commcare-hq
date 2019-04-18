@@ -20,7 +20,6 @@ from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
     construct_delivery_summary, construct_randr_summary
-from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
@@ -218,22 +217,6 @@ def randr_summary_task():
             send_translated_message(
                 user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
             )
-
-
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
-               queue="logistics_reminder_queue")
-def soh_thank_you_task():
-    """
-    Last business day before the 20th at 4:00 PM Tanzania time
-    """
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
-    if now.day != business_day.day:
-        return
-
-    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
 @periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),

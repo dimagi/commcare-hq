@@ -24,7 +24,7 @@ from custom.ilsgateway.tanzania.reminders import (
     INVALID_PRODUCT_CODE, LANGUAGE_CONFIRM, LANGUAGE_UNKNOWN, LOSS_ADJUST_CONFIRM,
     LOSS_ADJUST_HELP, LOSS_ADJUST_NO_SOH, NOT_DELIVERED_CONFIRM, NOT_SUBMITTED_CONFIRM,
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
-    REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE, SOH_THANK_YOU,
+    REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
     STOP_CONFIRM, SUBMITTED_CONFIRM,
     SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY,
     SUPERVISION_REMINDER, TEST_HANDLER_BAD_CODE,
@@ -956,22 +956,6 @@ class TestHandlers(ILSTestScript):
         ).order_by("-status_date")[0]
         self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
         self.assertEqual(SupplyPointStatusTypes.SUPERVISION_FACILITY, supply_point_status.status_type)
-
-    def test_message_initiator_soh_thank_you(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SOH_THANK_YOU)
-        script = """
-            5551234 > test soh_thank_you d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
 
     def testTrans(self):
         with localize('sw'):

@@ -44,7 +44,6 @@ REMINDER_SUPERVISION = _(
 
 SOH_HELP_MESSAGE = _("Please send in your stock on hand information in the format"
                      " 'soh <product> <amount> <product> <amount>...'")
-SOH_THANK_YOU = _("Thank you for reporting your stock on hand this month")
 SOH_CONFIRM = _(
     "Thank you. Please send in your adjustments in the format 'la <product> +-<amount> +-<product> +-<amount>...'"
 )
