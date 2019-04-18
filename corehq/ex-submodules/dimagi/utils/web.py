@@ -118,6 +118,8 @@ def json_handler(obj):
     elif isinstance(obj, Promise):
         return force_text(obj)  # to support ugettext_lazy
     else:
+        if isinstance(obj, bytes):
+            obj = obj.decode('utf-8')
         return json.JSONEncoder().default(obj)
 
 
