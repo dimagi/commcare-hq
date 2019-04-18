@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.db import transaction
 from memoized import memoized
 
 from dimagi.utils.logging import notify_exception
@@ -131,9 +132,12 @@ class IndicatorAdapter(object):
             'action_source': source,
             'migration_diffs': diffs
         }
+
         try:
-            DataSourceActionLog.objects.create(**kwargs)
-        except Exception:
+            # make this atomic so that errors to affect outer transactions
+            with transaction.atomic():
+                DataSourceActionLog.objects.create(**kwargs)
+        except:  # noqa
             # blanket catchall to make sure errors here don't interfere with real workflows
             notify_exception(None, "Error saving UCR action log", details=kwargs)
 
