@@ -55,19 +55,6 @@ SOH_BAD_FORMAT = _("Sorry, invalid format. "
                    "The message should be in the format 'soh <product> <amount> <product> <amount>...'")
 
 
-SUBMITTED_REMINDER_FACILITY = _(
-    "Have you sent in your R&R form yet for this quarter? "
-    "Please reply \"submitted\" or \"not submitted\""
-)
-SUBMITTED_REMINDER_DISTRICT = _(
-    "How many R&R forms have you submitted to MSD? "
-    "Reply with 'submitted A <number of R&Rs submitted for group A> "
-    "B <number of R&Rs submitted for group B>'"
-)
-SUBMITTED_INVALID_QUANTITY = _(
-    'Not a valid number: %(number)s'
-)
-
 NOT_DELIVERED_CONFIRM = _("You have reported that you haven't yet received your delivery.")
 
 DELIVERED_CONFIRM = _("Thank you, you reported a delivery of %(reply_list)s. If incorrect, please resend.")
