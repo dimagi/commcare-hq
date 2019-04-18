@@ -44,7 +44,6 @@ REMINDER_SUPERVISION = _(
 
 SOH_HELP_MESSAGE = _("Please send in your stock on hand information in the format"
                      " 'soh <product> <amount> <product> <amount>...'")
-SOH_THANK_YOU = _("Thank you for reporting your stock on hand this month")
 SOH_CONFIRM = _(
     "Thank you. Please send in your adjustments in the format 'la <product> +-<amount> +-<product> +-<amount>...'"
 )
@@ -55,29 +54,6 @@ SOH_PARTIAL_CONFIRM = _(
 SOH_BAD_FORMAT = _("Sorry, invalid format. "
                    "The message should be in the format 'soh <product> <amount> <product> <amount>...'")
 
-
-SUPERVISION_HELP = _(
-    "Supervision reminders will come monthly, and you can respond 'supervision yes' "
-    "if you have received supervision or 'supervision no' if you have not"
-)
-SUPERVISION_CONFIRM_NO = _('You have reported that you have not yet received supervision this month.')
-SUPERVISION_CONFIRM_YES = _('Thank you for reporting that you have received supervision this month.')
-SUPERVISION_REMINDER = _(
-    "Have you received supervision this month? "
-    "Please reply 'supervision yes' or 'supervision no'"
-)
-SUBMITTED_REMINDER_FACILITY = _(
-    "Have you sent in your R&R form yet for this quarter? "
-    "Please reply \"submitted\" or \"not submitted\""
-)
-SUBMITTED_REMINDER_DISTRICT = _(
-    "How many R&R forms have you submitted to MSD? "
-    "Reply with 'submitted A <number of R&Rs submitted for group A> "
-    "B <number of R&Rs submitted for group B>'"
-)
-SUBMITTED_INVALID_QUANTITY = _(
-    'Not a valid number: %(number)s'
-)
 
 NOT_DELIVERED_CONFIRM = _("You have reported that you haven't yet received your delivery.")
 
@@ -97,16 +73,7 @@ DELIVERY_LATE_DISTRICT = _(
 
 NOT_SUBMITTED_CONFIRM = _("You have reported that you haven't yet sent in your R&R.")
 
-SUBMITTED_NOTIFICATION_MSD = _(
-    "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
-    "Group A, %(group_b)s for Group B, %(group_c)s for Group C"
-)
-SUBMITTED_CONFIRM = _("Thank you %(contact_name)s for submitting your R and R form for %(sp_name)s")
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
-
-ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")
-ARRIVED_DEFAULT = _("Thank you for confirming your arrival at the health facility.")
-ARRIVED_KNOWN = _("Thank you for confirming your arrival at %(facility)s.")
 
 HELP_REGISTERED = _(
     'Welcome to ILSGateway. Available commands are soh, delivered, not delivered, submitted, '
@@ -126,10 +93,6 @@ STOP_CONFIRM = _(
     "Send 'help' to this number for instructions on how to reactivate."
 )
 
-YES_HELP = _(
-    'If you have submitted your R&R, respond \"submitted\". '
-    'If you have received your delivery, respond \"delivered\"'
-)
 
 #test handler
 TEST_HANDLER_HELP = _(
@@ -159,10 +122,6 @@ INVALID_PRODUCT_CODE = _("Sorry, invalid product code %(product_code)s")
 
 
 # reminder reports
-REMINDER_MONTHLY_RANDR_SUMMARY = _(
-    "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s "
-    "did not submit, %(not_responding)s/%(total)s did not reply"
-)
 REMINDER_MONTHLY_SOH_SUMMARY = _(
     "SOH - %(submitted)s/%(total)s reported, %(not_responding)s/%(total)s "
     "did not reply"
