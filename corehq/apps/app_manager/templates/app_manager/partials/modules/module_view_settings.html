@@ -47,6 +47,8 @@
               <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
             </div>
             <div class="panel-body">
+              {% include "app_manager/partials/name_enum.html" with VALUE=module_brief.name_enum %}
+
               {% if not module.is_surveys and module.module_type != 'shadow' %}
                 {% include "app_manager/partials/modules/module_view_case_type.html" %}
               {% endif %}

@@ -69,6 +69,24 @@ hqDefine("app_manager/js/forms/form_view", function () {
         });
 
         // Settings > Logic
+        $nameEnumContainer = $("#name-enum-mapping");   // TODO: DRY up with module_view.js?
+        if ($nameEnumContainer.length) {
+            var options = {
+                lang: initialPageData('current_language'),
+                langs: initialPageData('langs'),
+                items: initialPageData('name_enum'),
+                property_name: 'name',
+                values_are_icons: false,
+                keys_are_conditions: true,
+            };
+            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping(options);
+            nameMapping.on("change", function () {
+                $nameEnumContainer.find("[name='name_enum']").val(JSON.stringify(this.getItems()));
+                $nameEnumContainer.find("[name='name_enum']").trigger('change');    // trigger save button
+            });
+            $nameEnumContainer.append(nameMapping.ui);
+        }
+
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initialPageData('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(formFilterModel());
