@@ -19,6 +19,7 @@ from couchforms.models import XFormInstance
 
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    MigrationRestricted,
     PartiallyLockingQueue,
     get_diff_db,
 )
@@ -104,12 +105,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 class MigrationTestCase(BaseMigrationTestCase):
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration("up-nrhm")
 
     def test_basic_form_migration(self):
