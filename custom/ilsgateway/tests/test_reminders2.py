@@ -123,52 +123,6 @@ class TestDeliveryReminder(RemindersTest):
         self.assertEqual(len(people), 1)
 
 
-class TestRandRReminder(RemindersTest):
-
-    def setUp(self):
-        super(TestRandRReminder, self).setUp()
-        self.facility.metadata['group'] = DeliveryGroups().current_submitting_group()
-        self.facility.save()
-
-    def test_group_exclusion(self):
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-        self.assertEqual(people[0].get_id, self.user1.get_id)
-
-        self.facility.metadata['group'] = DeliveryGroups().current_delivering_group()
-        self.facility.save()
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 0)
-
-        self.facility.metadata['group'] = DeliveryGroups().current_processing_group()
-        self.facility.save()
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 0)
-
-    def test_report_exclusion(self):
-        now = datetime.utcnow()
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-
-        # reports for a different type shouldn't update status
-        script = """
-            5551234 > nimepokea
-        """
-        self.run_script(script)
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-
-        script = """
-            5551234 > nimetuma
-        """
-        self.run_script(script)
-        people = list(RandrReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-        people = list(RandrReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
-        self.assertEqual(len(people), 1)
-
-
 class TestSupervisionStatusSet(RemindersTest):
 
     def setUp(self):
