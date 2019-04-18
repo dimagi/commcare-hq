@@ -603,7 +603,8 @@ def email_dashboad_team(aggregation_date):
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
-    _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+    if not settings.UNIT_TESTING:
+        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
