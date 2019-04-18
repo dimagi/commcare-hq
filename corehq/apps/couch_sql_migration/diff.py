@@ -34,6 +34,12 @@ def case_attachments(old_obj, new_obj, rule, diff):
     return _diff_case_attachments(old_obj, new_obj)
 
 
+def case_index_order(old_obj, new_obj, rule, diff):
+    if diff.path[0] != "indices" or len(old_obj['indices']) < 2:
+        return False
+    return _diff_case_index_order(old_obj, new_obj, diff)
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -124,10 +130,18 @@ IGNORE_RULES = {
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
+        # SQL JSON has case_id field in indices which couch JSON doesn't
+        Ignore(path=('indices', '[*]', 'case_id')),
+        # SQL indices don't have doc_type
+        Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
+        # defaulted on SQL
+        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
+
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
         Ignore(check=case_attachments),
+        Ignore(check=case_index_order),
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
@@ -143,14 +157,6 @@ IGNORE_RULES = {
         Ignore('missing', '-deletion_date', old=MISSING, new=None),
         ignore_renamed('-deletion_id', 'deletion_id'),
         ignore_renamed('-deletion_date', 'deleted_on'),
-    ],
-    'CommCareCaseIndex': [
-        # SQL JSON has case_id field in indices which couch JSON doesn't
-        Ignore(path=('indices', '[*]', 'case_id')),
-        # SQL indices don't have doc_type
-        Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
-        # defaulted on SQL
-        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
     ],
     'LedgerValue': [
         Ignore(path='_id'),  # couch only
@@ -177,9 +183,8 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
-    doc_types = [doc_type, 'CommCareCase*', 'CommCareCaseIndex']
+    doc_types = [doc_type, 'CommCareCase*']
     filtered_diffs = _filter_ignored(couch_case, sql_case, diffs, doc_types)
-    filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
     return filtered_diffs
 
@@ -342,36 +347,18 @@ def _diff_case_attachments(old_obj, new_obj):
     return True
 
 
-def _filter_case_index_diffs(couch_case, sql_case, diffs):
-    """Indices may be in different order - re-sort and compare again.
-    """
-    if 'indices' not in couch_case:
-        return diffs
+def _diff_case_index_order(old_obj, new_obj, diff):
+    """Attachment JSON format is different between Couch and SQL"""
+    def key(index):
+        return index['identifier']
 
-    remaining_diffs = [diff for diff in diffs if diff.path[0] != 'indices']
-    if len(remaining_diffs) == len(diffs):
-        return diffs
-
-    couch_indices = couch_case['indices']
-    sql_indices = sql_case['indices']
-
-    if len(couch_indices) > 1:
-        new_index_diffs = []
-        couch_indices = sorted(couch_indices, key=lambda i: i['identifier'])
-        sql_indices = sorted(sql_indices, key=lambda i: i['identifier'])
-        for diff in json_diff(couch_indices, sql_indices, track_list_indices=False):
-            diff_dict = diff._asdict()
-            # convert the path back to what it should be
-            diff_dict['path'] = tuple(['indices'] + list(diff.path))
-            new_index_diffs.append(FormJsonDiff(**diff_dict))
-
-        new_index_diffs = _filter_ignored(
-            couch_case,
-            sql_case,
-            new_index_diffs,
-            ['CommCareCaseIndex'],
-        )
-        remaining_diffs.extend(new_index_diffs)
-        return remaining_diffs
-    else:
-        return diffs
+    diffs = []
+    old_indices = sorted(old_obj['indices'], key=key)
+    new_indices = sorted(new_obj['indices'], key=key)
+    for diff in json_diff(old_indices, new_indices, track_list_indices=False):
+        # convert the path back to what it should be
+        diff = diff._replace(path=('indices',) + diff.path)
+        diffs.append(diff)
+    if diffs:
+        raise ReplaceDiff(diffs)
+    return True
