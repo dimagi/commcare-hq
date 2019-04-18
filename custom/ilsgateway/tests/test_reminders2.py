@@ -10,7 +10,6 @@ from custom.ilsgateway.models import SupplyPointStatus, DeliveryGroups, SLABConf
 from custom.ilsgateway.slab.messages import REMINDER_STOCKOUT
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc
@@ -117,23 +116,6 @@ class TestDeliveryReminder(RemindersTest):
 
         people = list(DeliveryReminder(TEST_DOMAIN, datetime.utcnow()).get_people())
         self.assertEqual(len(people), 1)
-
-
-class TestSOHThankYou(RemindersTest):
-
-    def test_group_exclusion(self):
-        now = datetime.utcnow()
-        people = list(SOHThankYouReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 0)
-
-        script = """
-            5551234 > soh id 100
-        """
-        self.run_script(script)
-
-        people = list(SOHThankYouReminder(TEST_DOMAIN, now).get_people())
-        self.assertEqual(len(people), 1)
-        self.assertEqual(len(list(SOHThankYouReminder(TEST_DOMAIN, datetime.utcnow()).get_people())), 0)
 
 
 class TestStockOut(RemindersTest):
