@@ -13,7 +13,7 @@ from custom.icds_reports.utils import person_has_aadhaar_column, person_is_benef
 
 
 class DemographicsChildHealth(ExportableMixin, SqlData):
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     table_name = 'agg_child_health_monthly'
 
@@ -89,7 +89,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
 
 class DemographicsAWCMonthly(ExportableMixin, SqlData):
     table_name = 'agg_awc_monthly'
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     @property
     def get_columns_by_loc_level(self):
