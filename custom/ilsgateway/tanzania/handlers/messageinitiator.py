@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 
-from corehq.apps.sms.api import send_sms_to_verified_number
-from corehq.util.translation import localize
 from dimagi.utils.dates import get_business_day_of_month_before
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
@@ -13,7 +11,7 @@ from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER
     SUPERVISION_REMINDER, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    SOH_THANK_YOU, LOSS_ADJUST_HELP
+    LOSS_ADJUST_HELP
 from custom.ilsgateway.utils import send_translated_message
 
 
@@ -130,8 +128,5 @@ class MessageInitiatior(KeywordHandler):
                                                      [SupplyPointStatusValues.RECEIVED,
                                                      SupplyPointStatusValues.NOT_RECEIVED],
                                                      get_business_day_of_month_before(now.year, now.month, 15)))
-        elif command in ["soh_thank_you"]:
-            self.send_message(sql_location, SOH_THANK_YOU)
-
         self.respond(TEST_HANDLER_CONFIRM)
         return True
