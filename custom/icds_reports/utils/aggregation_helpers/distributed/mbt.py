@@ -165,14 +165,6 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
         return get_table_name(self.domain, config.table_id)
 
     @property
-    def ccs_record_monthly_ucr_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(
-            self.domain, 'static-ccs_record_cases_monthly_tableau_v2'
-        )
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
-
-    @property
     def columns(self):
         return ('t.awc_id',
                 't.case_id',
@@ -267,7 +259,6 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
             state_id=self.state_id,
             month=self.month,
             person_cases_ucr=self.person_case_ucr_tablename,
-            ccs_record_monthly=self.ccs_record_monthly_ucr_tablename,
             state_id_last_3=self.state_id[-3:]
         )
 
@@ -425,8 +416,6 @@ class AwcMbtDistributedHelper(MBTDistributedHelper):
             AND t.aggregation_level=5
         ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(
-            loc_columns=','.join(self.location_columns),
-            awc_columns=','.join(self.columns),
             columns=','.join(self.columns + self.location_columns),
             table=self.base_tablename,
             state_id=self.state_id,
