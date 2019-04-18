@@ -27,7 +27,7 @@ from custom.ilsgateway.tanzania.reminders import (
     REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
     STOP_CONFIRM, SUBMITTED_CONFIRM,
     SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY,
-    SUPERVISION_REMINDER, TEST_HANDLER_BAD_CODE,
+    TEST_HANDLER_BAD_CODE,
     TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
@@ -934,28 +934,6 @@ class TestHandlers(ILSTestScript):
         ).order_by("-status_date")[0]
         self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
         self.assertEqual(SupplyPointStatusTypes.SOH_FACILITY, supply_point_status.status_type)
-
-    def test_message_initiator_supervision(self):
-        with localize('sw'):
-            response1 = six.text_type(TEST_HANDLER_CONFIRM)
-            response2 = six.text_type(SUPERVISION_REMINDER)
-        script = """
-            5551234 > test supervision d31049
-            5551234 < %(test_handler_confirm)s
-            32347 < %(response)s
-            32348 < %(response)s
-            32349 < %(response)s
-            """ % {
-            "test_handler_confirm": response1,
-            "response": response2
-        }
-        self.run_script(script)
-        supply_point_status = SupplyPointStatus.objects.filter(
-            location_id=self.facility3.get_id,
-            status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY
-        ).order_by("-status_date")[0]
-        self.assertEqual(SupplyPointStatusValues.REMINDER_SENT, supply_point_status.status_value)
-        self.assertEqual(SupplyPointStatusTypes.SUPERVISION_FACILITY, supply_point_status.status_type)
 
     def testTrans(self):
         with localize('sw'):

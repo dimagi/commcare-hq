@@ -61,10 +61,6 @@ SUPERVISION_HELP = _(
 )
 SUPERVISION_CONFIRM_NO = _('You have reported that you have not yet received supervision this month.')
 SUPERVISION_CONFIRM_YES = _('Thank you for reporting that you have received supervision this month.')
-SUPERVISION_REMINDER = _(
-    "Have you received supervision this month? "
-    "Please reply 'supervision yes' or 'supervision no'"
-)
 SUBMITTED_REMINDER_FACILITY = _(
     "Have you sent in your R&R form yet for this quarter? "
     "Please reply \"submitted\" or \"not submitted\""
