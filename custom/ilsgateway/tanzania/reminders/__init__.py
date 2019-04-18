@@ -77,7 +77,6 @@ SUBMITTED_NOTIFICATION_MSD = _(
     "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
     "Group A, %(group_b)s for Group B, %(group_c)s for Group C"
 )
-SUBMITTED_CONFIRM = _("Thank you %(contact_name)s for submitting your R and R form for %(sp_name)s")
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
 
 ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")

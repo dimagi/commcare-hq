@@ -25,7 +25,7 @@ from custom.ilsgateway.tanzania.reminders import (
     LOSS_ADJUST_HELP, LOSS_ADJUST_NO_SOH, NOT_DELIVERED_CONFIRM, NOT_SUBMITTED_CONFIRM,
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
     REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
-    STOP_CONFIRM, SUBMITTED_CONFIRM,
+    STOP_CONFIRM,
     SUBMITTED_NOTIFICATION_MSD, TEST_HANDLER_BAD_CODE, TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
@@ -567,49 +567,6 @@ class TestHandlers(ILSTestScript):
             5551234 < %(language_unknown)s
             """ % {'language_unknown': response % {"language": "de"}}
         self.run_script(script)
-
-    def test_randr_submitted_district_with_amounts(self):
-        with localize('sw'):
-            response1 = six.text_type(SUBMITTED_CONFIRM)
-            response2 = six.text_type(SUBMITTED_NOTIFICATION_MSD)
-        script = """
-          555 > nimetuma a 10 b 11 c 12
-          555 < {0}
-          111 < {1}
-        """.format(response1 % {"contact_name": self.user_dis.name, "sp_name": self.dis.name},
-                   response2 % {"district_name": self.dis.name, "group_a": 10, "group_b": 11, "group_c": 12})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
-                                               status_type="rr_dist").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, sps.status_type)
-
-    # def test_invalid_randr_with_amounts(self):
-    #     with localize('sw'):
-    #         response1 = unicode(SUBMITTED_INVALID_QUANTITY)
-    #     script = """
-    #         555 > nimetuma a dd b 11 c 12
-    #         555 < {0}
-    #     """ .format(response1 % {'number': 'dd'})
-    #     self.run_script(script)
-    #
-    def test_randr_submitted_facility(self):
-        with localize('sw'):
-            response = six.text_type(SUBMITTED_CONFIRM)
-
-        script = """
-          5551234 > nimetuma
-          5551234 < {0}
-        """.format(response % {"contact_name": self.user_fac1.name, "sp_name": self.loc1.name})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.loc1.get_id,
-                                               status_type="rr_fac").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_FACILITY, sps.status_type)
 
     def test_randr_not_submitted(self):
         with localize('sw'):
