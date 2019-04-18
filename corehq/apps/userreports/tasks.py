@@ -183,14 +183,21 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
-    if new_report_config_id is None:
+    if report_config_id not in settings.UCR_COMPARISONS:
         return
 
-    _compare_ucr_reports(domain, report_config_id, new_report_config_id, filter_values, sort_column, sort_order, params)
+    control_report, unused = get_report_config(report_config_id, domain)
+    candidate_report = None
+
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is not None:
+        candidate_report, unused = get_report_config(new_report_config_id, domain)
+
+    if candidate_report:
+        _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
 
 
-def _compare_ucr_reports(domain, control_report_id, candidate_report_id, filter_values, sort_column, sort_order, params):
+def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(spec):
@@ -218,12 +225,10 @@ def _compare_ucr_reports(domain, control_report_id, candidate_report_id, filter_
             json_response["total_row"] = total_row
         return json_response
 
-    control_report, unused = get_report_config(control_report_id, domain)
-    candidate_report, unused = get_report_config(candidate_report_id, domain)
     experiment_context = {
         "domain": domain,
-        "report_config_id": control_report_id,
-        "new_report_config_id": candidate_report_id,
+        "report_config_id": control_report._id,
+        "new_report_config_id": candidate_report._id,
         "filter_values": filter_values,
     }
     experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
