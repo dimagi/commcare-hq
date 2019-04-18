@@ -191,17 +191,27 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
 
     new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
     if new_report_config_id is not None:
+        # a report is configured to be compared against
         candidate_report, unused = get_report_config(new_report_config_id, domain)
+        _compare_ucr_reports(
+            domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
+    else:
+        # no report is configured. Assume we should try mirrored engine_ids
+        # report_config.config is a DataSourceConfiguration
+        for engine_id in control_report.config.mirrored_engine_ids:
+            _compare_ucr_reports(
+                domain, control_report, control_report, filter_values, sort_column,
+                sort_order, params, candidate_engine_id=engine_id)
 
-    if candidate_report:
-        _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params)
 
-
-def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params):
+def _compare_ucr_reports(domain, control_report, candidate_report, filter_values, sort_column, sort_order, params,
+                         candidate_engine_id=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
-    def _run_report(spec):
+    def _run_report(spec, engine_id=None):
         data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
+        if engine_id:
+            data_source.override_engine_id(engine_id)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -236,7 +246,7 @@ def _compare_ucr_reports(domain, control_report, candidate_report, filter_values
         c.record(_run_report(control_report))
 
     with experiment.candidate() as c:
-        c.record(_run_report(candidate_report))
+        c.record(_run_report(candidate_report, candidate_engine_id))
 
     objects = experiment.run()
     return objects
