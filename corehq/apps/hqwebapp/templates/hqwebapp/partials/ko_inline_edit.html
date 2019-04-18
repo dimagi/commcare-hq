@@ -2,7 +2,7 @@
     <div class="ko-inline-edit inline" data-bind="css: {'has-error': hasError()}">
         <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs, style: {cursor: disallow_edit ? 'default' : 'pointer'}">
             <span data-bind="visible: isSaving()" class="pull-right">
-                <img src="/static/hqstyle/images/loading.gif"/>
+                <i class="fa fa-spin fa-spinner"></i>
             </span>
             <!-- ko if: iconClass -->
             <span class="prefixed-icon" data-bind="css: containerClass">
