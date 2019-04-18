@@ -439,7 +439,7 @@ class CouchSqlDomainMigrator(object):
 
     def _check_for_migration_restrictions(self, domain_name):
         if not should_use_sql_backend(domain_name):
-            msg = "does not have SQL backend not enabled"
+            msg = "does not have SQL backend enabled"
         elif COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
             msg = "is blacklisted"
         elif any(custom_report_domain == domain_name
