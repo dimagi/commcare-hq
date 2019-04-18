@@ -81,7 +81,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
             'no',
             5,
             CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', vhsnd_date_past_month) = %(start_date)s))>0 THEN 1 ELSE 0 END,
-            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END 
+            CASE WHEN (count(*) filter (WHERE date_trunc('MONTH', date_cbe_organise) = %(start_date)s))>0 THEN 1 ELSE 0 END
             FROM "{ucr_table}" awc_location
             LEFT JOIN "{cbe_table}" cbe_table on  awc_location.doc_id = cbe_table.awc_id
             LEFT JOIN "{vhnd_table}" vhnd_table on awc_location.doc_id = vhnd_table.awc_id
@@ -190,7 +190,7 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                 sum(agg_ccs_record_monthly.expected_visits) + COALESCE(home_visit.expected_visits, 0) AS expected_visits
             FROM agg_ccs_record_monthly
             LEFT OUTER JOIN (
-                    SELECT 
+                    SELECT
                         ucr.awc_id,
                         %(start_date)s AS month,
                         SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
@@ -202,10 +202,10 @@ class AggAwcHelper(BaseICDSAggregationHelper):
                             date_trunc('month', ucr.opened_on) <= %(start_date)s
                         GROUP BY ucr.awc_id
                     )  home_visit ON (
-                                        agg_ccs_record_monthly.awc_id = home_visit.awc_id AND 
+                                        agg_ccs_record_monthly.awc_id = home_visit.awc_id AND
                                         home_visit.month=agg_ccs_record_monthly.month
                                         )
-            WHERE agg_ccs_record_monthly.month = %(start_date)s AND aggregation_level = 5 
+            WHERE agg_ccs_record_monthly.month = %(start_date)s AND aggregation_level = 5
             GROUP BY agg_ccs_record_monthly.awc_id,home_visit.valid_visits,home_visit.expected_visits, agg_ccs_record_monthly.month
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id;

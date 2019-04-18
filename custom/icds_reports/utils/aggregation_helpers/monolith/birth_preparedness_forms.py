@@ -91,7 +91,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}" (
           state_id, supervisor_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
-          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
+          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin,
           bleeding, swelling, blurred_vision, convulsions, rupture, anc_abnormalities, valid_visits,
           play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid, conceive,
           counsel_accessible_ppfp, ifa_last_seven_days,using_ifa

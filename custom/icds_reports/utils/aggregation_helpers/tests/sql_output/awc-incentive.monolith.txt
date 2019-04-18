@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS "icds_db_aww_incentive_7a197ee47818209780c23ed9"
 {"month_string": "2019-01-01", "state_id": "st1"}
 
         INSERT INTO "icds_db_aww_incentive_7a197ee47818209780c23ed9" (
-            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name, 
+            state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
             supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
             wer_eligible, awc_num_open, valid_visits, expected_visits
         ) (
