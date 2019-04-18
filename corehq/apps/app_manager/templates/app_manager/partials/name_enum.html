@@ -1,0 +1,13 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
+    <div class="form-group">
+        <label class="{% css_label_class %} control-label">
+            {% trans "Name Mapping" %}
+        </label>
+        <div class="{% css_field_class %}" id="name-enum-mapping">
+            <input name="name_enum" type="hidden" value="{% html_attr VALUE %}" />
+        </div>
+    </div>
+{% endif %}

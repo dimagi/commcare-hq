@@ -69,6 +69,14 @@ hqDefine("app_manager/js/forms/form_view", function () {
         });
 
         // Settings > Logic
+        hqImport("app_manager/js/name_enum").init({
+            items: initialPageData('name_enum'),
+            lang: initialPageData('current_language'),
+            langs: initialPageData('langs'),
+            name: 'name_enum',
+            selector: '#name-enum-mapping',
+        });
+
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initialPageData('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(formFilterModel());
