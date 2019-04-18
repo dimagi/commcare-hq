@@ -10,7 +10,7 @@ from corehq.apps.sms.models import SMS
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, \
-    REMINDER_STOCKONHAND, SUPERVISION_REMINDER
+    REMINDER_STOCKONHAND
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
