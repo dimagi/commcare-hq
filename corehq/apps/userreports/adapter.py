@@ -126,7 +126,7 @@ class IndicatorAdapter(object):
 
         kwargs = {
             'domain': self.config.domain,
-            'indicator_config_id': self.config.get_id,
+            'indicator_config_id': self.config.data_source_id,
             'action': action,
             'initiated_by': initiated_by,
             'action_source': source,
