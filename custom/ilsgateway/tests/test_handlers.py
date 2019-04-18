@@ -26,9 +26,7 @@ from custom.ilsgateway.tanzania.reminders import (
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
     REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
     STOP_CONFIRM, SUBMITTED_CONFIRM,
-    SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT,
-    TEST_HANDLER_BAD_CODE,
-    TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
+    SUBMITTED_NOTIFICATION_MSD, TEST_HANDLER_BAD_CODE, TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
@@ -569,24 +567,6 @@ class TestHandlers(ILSTestScript):
             5551234 < %(language_unknown)s
             """ % {'language_unknown': response % {"language": "de"}}
         self.run_script(script)
-
-    def test_randr_submitted_district(self):
-        with localize('sw'):
-            response1 = six.text_type(SUBMITTED_REMINDER_DISTRICT)
-            response2 = six.text_type(SUBMITTED_NOTIFICATION_MSD)
-        script = """
-          555 > nimetuma
-          555 < {0}
-          111 < {1}
-        """.format(response1,
-                   response2 % {"district_name": self.dis.name, "group_a": 0, "group_b": 0, "group_c": 0})
-        self.run_script(script)
-
-        sps = SupplyPointStatus.objects.filter(location_id=self.dis.get_id,
-                                               status_type="rr_dist").order_by("-status_date")[0]
-
-        self.assertEqual(SupplyPointStatusValues.SUBMITTED, sps.status_value)
-        self.assertEqual(SupplyPointStatusTypes.R_AND_R_DISTRICT, sps.status_type)
 
     def test_randr_submitted_district_with_amounts(self):
         with localize('sw'):
