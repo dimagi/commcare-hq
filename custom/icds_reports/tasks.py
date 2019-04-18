@@ -7,6 +7,7 @@ import re
 import tempfile
 import zipfile
 from collections import namedtuple
+from copy import deepcopy
 from datetime import date, datetime, timedelta
 from io import BytesIO, open
 
@@ -14,6 +15,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
+from django.test import override_settings
 
 import csv342 as csv
 import six
@@ -64,6 +66,7 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
 )
+from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
     AggAwc,
     AggCcsRecord,
@@ -1175,3 +1178,24 @@ def _bust_awc_cache():
     for key in reach_keys:
         cache.delete(key)
     create_datadog_event('redis: delete dashboard keys', 'finish')
+
+
+@task
+def run_citus_experiment(fn, *args, **kwargs):
+    experiment_context = {
+        "function_name": fn.__name__,
+        'args': args,
+        'kwargs': kwargs,
+    }
+    experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
+    with experiment.control() as c:
+        c.record(fn(*args, **kwargs))
+
+    with experiment.candidate() as c:
+        databases = settings.DATABASES
+        databases['icds-ucr'] = deepcopy(databases['citus'])
+        with override_settings(DATABASES=databases):
+            c.record(fn(*args, **kwargs))
+
+    objects = experiment.run()
+    return objects
