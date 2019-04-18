@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import difflib
 import inspect
 import json
@@ -62,7 +66,7 @@ class TestQueryDiffs(SimpleTestCase):
             monolith_diff, distributed_diff = output.get_diffs()
             if monolith_diff or distributed_diff:
                 diff_output.append("\n{0} Diffs detected for agg helper '{1}' {0}".format(
-                    '-'*20, output.helper_key
+                    '-' * 20, output.helper_key
                 ))
                 if monolith_diff:
                     diff_output.append("\nMONOLITH DIFF\n=================")
