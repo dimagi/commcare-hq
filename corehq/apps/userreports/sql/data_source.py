@@ -30,6 +30,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         self._engine_id = get_engine_id(self.config, allow_read_replicas=True)
         return self._engine_id
 
+    def override_engine_id(self, engine_id):
+        self._engine_id = engine_id
+
     @property
     def filters(self):
         return [_f for _f in [fv.to_sql_filter() for fv in self._filter_values.values()] if _f]
