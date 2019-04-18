@@ -75,10 +75,6 @@ NOT_SUBMITTED_CONFIRM = _("You have reported that you haven't yet sent in your R
 
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
 
-ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")
-ARRIVED_DEFAULT = _("Thank you for confirming your arrival at the health facility.")
-ARRIVED_KNOWN = _("Thank you for confirming your arrival at %(facility)s.")
-
 HELP_REGISTERED = _(
     'Welcome to ILSGateway. Available commands are soh, delivered, not delivered, submitted, '
     'not submitted, language, sw, en, stop, supervision, la'

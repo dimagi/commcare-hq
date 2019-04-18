@@ -17,7 +17,7 @@ from custom.ilsgateway.models import (
     DeliveryGroups, SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 )
 from custom.ilsgateway.tanzania.reminders import (
-    ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN, EMG_ERROR, EMG_HELP,
+    EMG_ERROR, EMG_HELP,
     CONTACT_SUPERVISOR, DELIVERED_CONFIRM, DELIVERY_CONFIRM_CHILDREN,
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_LATE_DISTRICT, DELIVERY_PARTIAL_CONFIRM,
     DELIVERY_REMINDER_DISTRICT, DELIVERY_REMINDER_FACILITY, HELP_REGISTERED,
@@ -866,34 +866,6 @@ class TestHandlers(ILSTestScript):
         for ps in StockState.objects.all():
             self.assertEqual(self.user_fac1.location.linked_supply_point().get_id, ps.case_id)
             self.assertTrue(0 != ps.stock_on_hand)
-
-    def test_arrived_help(self):
-        msg = """
-           5551235 > arrived
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_HELP))
-        self.run_script(msg)
-
-    def test_arrived_unknown_code(self):
-        msg = """
-           5551235 > arrived NOTACODEINTHESYSTEM
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_DEFAULT))
-        self.run_script(msg)
-
-    def test_arrived_known_code(self):
-        msg = """
-           5551235 > arrived loc1
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_KNOWN) % {'facility': self.loc1.name})
-        self.run_script(msg)
-
-    def test_arrived_with_time(self):
-        msg = """
-           5551235 > arrived loc1 10:00
-           5551235 < {0}
-        """.format(six.text_type(ARRIVED_KNOWN % {'facility': self.loc1.name}))
-        self.run_script(msg)
 
     def test_soh_in_swahili(self):
         with localize('sw'):
