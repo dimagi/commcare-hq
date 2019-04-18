@@ -93,10 +93,6 @@ STOP_CONFIRM = _(
     "Send 'help' to this number for instructions on how to reactivate."
 )
 
-YES_HELP = _(
-    'If you have submitted your R&R, respond \"submitted\". '
-    'If you have received your delivery, respond \"delivered\"'
-)
 
 #test handler
 TEST_HANDLER_HELP = _(
