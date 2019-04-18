@@ -19,7 +19,6 @@ DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
-ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
 AAA_DB_ENGINE_ID = 'aaa-data'
 
 
