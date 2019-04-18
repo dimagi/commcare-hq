@@ -8,7 +8,6 @@ from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_HELP, TEST_HANDLER_BAD_CODE, SOH_HELP_MESSAGE, \
-    SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY, \
     DELIVERY_REMINDER_FACILITY, DELIVERY_REMINDER_DISTRICT, DELIVERY_LATE_DISTRICT, TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_RANDR_SUMMARY, reports, REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
     LOSS_ADJUST_HELP
@@ -61,18 +60,6 @@ class MessageInitiatior(KeywordHandler):
             now = datetime.utcnow()
             SupplyPointStatus.objects.create(location_id=sql_location.location_id,
                                              status_type=SupplyPointStatusTypes.LOSS_ADJUSTMENT_FACILITY,
-                                             status_value=SupplyPointStatusValues.REMINDER_SENT,
-                                             status_date=now)
-        elif command in ['randr']:
-            if sql_location.location_type.name == 'DISTRICT':
-                self.send_message(sql_location, SUBMITTED_REMINDER_DISTRICT)
-                status_type = SupplyPointStatusTypes.R_AND_R_DISTRICT
-            else:
-                self.send_message(sql_location, SUBMITTED_REMINDER_FACILITY)
-                status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
-            now = datetime.utcnow()
-            SupplyPointStatus.objects.create(location_id=sql_location.location_id,
-                                             status_type=status_type,
                                              status_value=SupplyPointStatusValues.REMINDER_SENT,
                                              status_date=now)
         elif command in ['delivery']:
