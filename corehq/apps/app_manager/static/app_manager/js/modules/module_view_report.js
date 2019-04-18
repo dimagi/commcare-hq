@@ -5,6 +5,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
         var reportModuleModel = hqImport('app_manager/js/modules/report_module').reportModuleModel;
         var staticFilterDataModel = hqImport('app_manager/js/modules/report_module').staticFilterDataModel;
         var choiceListUtils = hqImport('reports_core/js/choice_list_utils_v4');
+
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
@@ -15,6 +16,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             initial_page_data("multimedia_object_map"),
             navMenuMediaItem.default_file_name
         );
+
         var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
         var staticData = staticFilterDataModel(initial_page_data('static_data_options'));
         var reportModule = reportModuleModel(_.extend({}, initial_page_data("report_module_options"), {
@@ -24,7 +26,27 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             menuImage: navMenuMedia.menuImage,
             menuAudio: navMenuMedia.menuAudio,
             containerId: "#settings",
+            moduleNameEnum: initial_page_data('name_enum'),
         }));
+
+        $nameEnumContainer = $("#name-enum-mapping");
+        if ($nameEnumContainer.length) {
+            var options = {
+                lang: initial_page_data('current_language'),
+                langs: initial_page_data('langs'),
+                items: initial_page_data('name_enum'),
+                property_name: 'name',
+                values_are_icons: false,
+                keys_are_conditions: true,
+            };
+            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping(options);
+            nameMapping.on("change", function () {
+                reportModule.moduleNameEnum(this.getItems());
+                reportModule.changeSaveButton();
+            });
+            $nameEnumContainer.append(nameMapping.ui);
+        }
+
         _([
             $('#save-button'),
             $('#module-name'),
