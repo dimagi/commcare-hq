@@ -26,7 +26,7 @@ from custom.ilsgateway.tanzania.reminders import (
     REGISTER_HELP, REGISTER_UNKNOWN_CODE, REGISTER_UNKNOWN_DISTRICT, REGISTRATION_CONFIRM,
     REGISTRATION_CONFIRM_DISTRICT, SOH_CONFIRM, SOH_HELP_MESSAGE,
     STOP_CONFIRM,
-    SUBMITTED_NOTIFICATION_MSD, TEST_HANDLER_BAD_CODE, TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
+    TEST_HANDLER_BAD_CODE, TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group

@@ -73,10 +73,6 @@ DELIVERY_LATE_DISTRICT = _(
 
 NOT_SUBMITTED_CONFIRM = _("You have reported that you haven't yet sent in your R&R.")
 
-SUBMITTED_NOTIFICATION_MSD = _(
-    "%(district_name)s has submitted their R&R forms to MSD: %(group_a)s for "
-    "Group A, %(group_b)s for Group B, %(group_c)s for Group C"
-)
 DELIVERY_CONFIRM_CHILDREN = _("District %(district_name)s has reported that they sent their R&R forms to MSD")
 
 ARRIVED_HELP = _("To report an arrival, please send 'arrived <MSD code>'.")
