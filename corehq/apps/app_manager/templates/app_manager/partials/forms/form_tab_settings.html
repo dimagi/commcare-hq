@@ -45,11 +45,14 @@
                     <h4 class="panel-title panel-title-nolink">{%  trans "Logic" %}</h4>
                 </div>
                 <div class="panel-body" data-bind=" visible: visible, css: {error: hasError()}">
+                    {% include "app_manager/partials/name_enum.html" with VALUE=form.name_enum %}
+
                     {% if allow_form_filtering %}
                         {% include "app_manager/partials/forms/form_filter.html" %}
                     {% else %}
                         <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
                     {% endif %}
+
                     {% if allow_form_workflow %}
                         {% include "app_manager/partials/forms/form_workflow.html" %}
                     {% else %}

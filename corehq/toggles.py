@@ -1048,6 +1048,13 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
+APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
+    'APP_BUILDER_CONDITIONAL_NAMES',
+    'Map menu and form names to different values based on calculations',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
