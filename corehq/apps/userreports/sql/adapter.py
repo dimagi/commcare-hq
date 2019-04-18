@@ -265,14 +265,20 @@ class MultiDBSqlAdapter(object):
 
     mirror_adapter_cls = IndicatorSqlAdapter
 
-    def __init__(self, config, override_table_name=None, engine_id=None):
+    def __init__(self, config, override_table_name=None):
         from corehq.apps.userreports.models import id_is_static
         assert id_is_static(config._id)
         config.validate_db_config()
         self.config = config
         self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
         self.mirrored_adapters = [self.main_adapter]  # include the main primary adapter
-        engine_ids = self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
+        engine_ids = []
+        seen_dbs = [connection_manager.get_django_db_alias(self.main_adapter.engine_id)]
+        for engine_id in self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
+            db = connection_manager.get_django_db_alias(engine_id)
+            if db not in seen_dbs:
+                engine_ids.append(engine_id)
+            seen_dbs.append(db)
         for engine_id in engine_ids:
             self.mirrored_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
 
