@@ -419,3 +419,21 @@ class DiffTestCases(SimpleTestCase):
             FormJsonDiff('missing', ('case_attachments', 'xyz', 'unexpected'), 'value', MISSING),
             FormJsonDiff('diff', ('case_attachments', 'xyz', 'properties'), 'value', 'eulav'),
         ])
+
+    def test_form_with_obsolete_location_id(self):
+        couch_doc = {
+            "doc_type": "XFormInstance",
+            "location_id": "deadbeef",
+            "xmlns": "http://commtrack.org/supply_point",
+        }
+        sql_doc = {
+            "doc_type": "XFormInstance",
+            "xmlns": "http://commtrack.org/supply_point",
+        }
+        diffs = [
+            FormJsonDiff(
+                diff_type='missing', path=('location_id',),
+                old_value='deadbeef', new_value=MISSING
+            )
+        ]
+        self._test_form_diff_filter(couch_doc, sql_doc, REAL_DIFFS + diffs)

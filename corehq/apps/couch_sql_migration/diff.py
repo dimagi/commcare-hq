@@ -40,6 +40,11 @@ def case_index_order(old_obj, new_obj, rule, diff):
     return _diff_case_index_order(old_obj, new_obj, diff)
 
 
+def is_supply_point(old_obj, new_obj, rule, diff):
+    from corehq.apps.commtrack.const import COMMTRACK_SUPPLY_POINT_XMLNS
+    return old_obj["xmlns"] == COMMTRACK_SUPPLY_POINT_XMLNS
+
+
 IGNORE_RULES = {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
@@ -69,6 +74,7 @@ IGNORE_RULES = {
         Ignore('type', 'xmlns', old=None, new=''),
         Ignore('type', 'initial_processing_complete', old=None, new=True),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
+        Ignore('missing', 'location_id', new=MISSING, check=is_supply_point),
 
         Ignore('diff', check=has_date_values),
         Ignore(check=is_text_xmlns),
