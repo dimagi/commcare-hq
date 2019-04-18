@@ -319,7 +319,12 @@ class DiffTestCases(SimpleTestCase):
         sql_case['indices'][0]['relationship'] = 'extension'
 
         expected_diffs = [
-            FormJsonDiff(diff_type='diff', path=('indices', '[*]', 'relationship'), old_value='child', new_value='extension')
+            FormJsonDiff(
+                diff_type='diff',
+                path=('indices', '[*]', 'relationship'),
+                old_value='child',
+                new_value='extension',
+            )
         ]
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
