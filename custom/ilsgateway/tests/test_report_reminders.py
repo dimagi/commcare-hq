@@ -10,7 +10,7 @@ from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_do
 from custom.ilsgateway.models import DeliveryGroups, SupplyPointStatus
 from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, REMINDER_MONTHLY_RANDR_SUMMARY, \
     REMINDER_MONTHLY_DELIVERY_SUMMARY, REMINDER_MONTHLY_SOH_SUMMARY
-from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_randr_summary, \
+from custom.ilsgateway.tanzania.reminders.reports import get_district_people, \
     construct_delivery_summary, construct_soh_summary
 from custom.ilsgateway.tests.handlers.utils import prepare_domain
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, create_products
