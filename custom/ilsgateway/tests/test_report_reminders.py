@@ -8,7 +8,7 @@ from django.utils import translation
 
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from custom.ilsgateway.models import DeliveryGroups, SupplyPointStatus
-from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, REMINDER_MONTHLY_RANDR_SUMMARY, \
+from custom.ilsgateway.tanzania.reminders import TEST_HANDLER_CONFIRM, \
     REMINDER_MONTHLY_DELIVERY_SUMMARY, REMINDER_MONTHLY_SOH_SUMMARY
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, \
     construct_delivery_summary, construct_soh_summary

@@ -14,8 +14,7 @@ from psycopg2._psycopg import DatabaseError
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import serial_task
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
-from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    REMINDER_MONTHLY_RANDR_SUMMARY
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
     construct_delivery_summary

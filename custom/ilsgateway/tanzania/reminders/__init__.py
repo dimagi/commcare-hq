@@ -122,10 +122,6 @@ INVALID_PRODUCT_CODE = _("Sorry, invalid product code %(product_code)s")
 
 
 # reminder reports
-REMINDER_MONTHLY_RANDR_SUMMARY = _(
-    "R&R - %(submitted)s/%(total)s submitted, %(not_submitted)s/%(total)s "
-    "did not submit, %(not_responding)s/%(total)s did not reply"
-)
 REMINDER_MONTHLY_SOH_SUMMARY = _(
     "SOH - %(submitted)s/%(total)s reported, %(not_responding)s/%(total)s "
     "did not reply"
