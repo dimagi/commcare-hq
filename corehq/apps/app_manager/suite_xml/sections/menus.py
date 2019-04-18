@@ -4,16 +4,14 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
+from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     LocalizedMenu,
     Menu,
-    Text,
-    XpathEnum,
 )
 from corehq.apps.app_manager.util import (
     is_usercase_in_use,
-    module_uses_name_enum,
     xpath_references_case,
     xpath_references_user_case,
 )
@@ -123,8 +121,8 @@ class MenuContributor(SuiteContributorByModule):
                     if self.app.enable_localized_menu_media:
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
-                            'menu_locale_id': self.get_menu_locale_id(module),
-                            'menu_enum_text': self.get_menu_enum_text(module),
+                            'menu_locale_id': get_module_locale_id(module),
+                            'menu_enum_text': get_module_enum_text(module),
                             'media_image': bool(len(module.all_image_paths())),
                             'media_audio': bool(len(module.all_audio_paths())),
                             'image_locale_id': id_strings.module_icon_locale(module),
@@ -144,13 +142,13 @@ class MenuContributor(SuiteContributorByModule):
                             # Mobile will combine this module with its parent
                             # Reference the parent's name to avoid ambiguity
                             locale_kwargs = {
-                                'locale_id': self.get_menu_locale_id(module.root_module),
-                                'enum_text': self.get_menu_enum_text(module.root_module),
+                                'locale_id': get_module_locale_id(module.root_module),
+                                'enum_text': get_module_enum_text(module.root_module),
                             }
                         else:
                             locale_kwargs = {
-                                'locale_id': self.get_menu_locale_id(module),
-                                'enum_text': self.get_menu_enum_text(module),
+                                'locale_id': get_module_locale_id(module),
+                                'enum_text': get_module_enum_text(module),
                             }
                         menu_kwargs.update({
                             'media_image': module.default_media_image,
@@ -180,25 +178,6 @@ class MenuContributor(SuiteContributorByModule):
             self._give_root_menu_grid_style(menus)
 
         return menus
-
-    @staticmethod
-    def get_menu_locale_id(module):
-        if not module_uses_name_enum(module):
-            return id_strings.module_locale(module)
-
-    @staticmethod
-    def get_menu_enum_text(module):
-        if not module_uses_name_enum(module):
-            return None
-
-        return Text(xpath=XpathEnum.build(
-            enum=module.name_enum,
-            template='if({key_as_condition}, {key_as_var_name}',
-            get_template_context=lambda item, i: {
-                'key_as_condition': item.key_as_condition(),
-                'key_as_var_name': item.ref_to_key_variable(i, 'display')
-            },
-            get_value=lambda key: id_strings.module_name_enum_variable(module, key)))
 
     @staticmethod
     def _schedule_filter_conditions(form, module, case):
