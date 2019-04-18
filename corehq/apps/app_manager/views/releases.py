@@ -51,7 +51,11 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_version,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.models import BuildProfile, LatestEnabledBuildProfiles
+from corehq.apps.app_manager.models import (
+    BuildProfile,
+    LatestEnabledBuildProfiles,
+    AppReleaseByLocation,
+)
 from corehq.apps.users.models import CommCareUser
 from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import reverse
@@ -230,8 +234,10 @@ def current_app_version(request, domain, app_id):
 def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
-        if LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists():
-            return json_response({'error': _('Please disable any enabled profiles to un-release this build.')})
+        if (LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists() or
+                AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()):
+            return json_response({'error': _('Please disable any enabled profiles/location restriction '
+                                             'to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
