@@ -271,6 +271,9 @@ class ICDSDataTableColumn(DataTablesColumn):
         ))
 
 
+PREVIOUS_PERIOD_ZERO_DATA = "Data in the previous reporting period was 0"
+
+
 def percent_increase(prop, data, prev_data):
     current = 0
     previous = 0
@@ -283,7 +286,7 @@ def percent_increase(prop, data, prev_data):
         tenths_of_promils = (((current or 0) - (previous or 0)) * 10000) / float(previous or 1)
         return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
-        return "Data in the previous reporting period was 0"
+        return PREVIOUS_PERIOD_ZERO_DATA
 
 
 def percent_diff(property, current_data, prev_data, all):
@@ -306,7 +309,18 @@ def percent_diff(property, current_data, prev_data, all):
         tenths_of_promils = ((current_percent - prev_percent) * 10000) / (prev_percent or 1.0)
         return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
-        return "Data in the previous reporting period was 0"
+        return PREVIOUS_PERIOD_ZERO_DATA
+
+
+def get_color_with_green_positive(val):
+    if isinstance(val, (int, float)):
+        if val > 0:
+            return 'green'
+        else:
+            return 'red'
+    else:
+        assert val == PREVIOUS_PERIOD_ZERO_DATA, val
+        return 'green'
 
 
 def get_value(data, prop):
