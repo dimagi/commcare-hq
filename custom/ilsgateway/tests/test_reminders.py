@@ -121,22 +121,3 @@ class TestReminders(TestCase):
         self.assertSetEqual(
             set(statuses.values_list('location_id', flat=True)), {self.facility.get_id, self.facility2.get_id}
         )
-
-    def test_supervision_reminder(self):
-        date = datetime(2015, 5, 1)
-        SupervisionReminder(TEST_DOMAIN, date).send()
-        self.assertEqual(SMS.objects.count(), 2)
-
-        statuses = SupplyPointStatus.objects.filter(status_type=SupplyPointStatusTypes.SUPERVISION_FACILITY)
-        self.assertEqual(statuses.count(), 2)
-
-        smses = SMS.objects.all()
-        self.assertEqual(smses.first().text, six.text_type(SUPERVISION_REMINDER))
-        self.assertSetEqual(
-            set(statuses.values_list('location_id', flat=True)), {self.facility.get_id, self.facility2.get_id}
-        )
-
-        now = datetime.utcnow()
-
-        SupervisionReminder(TEST_DOMAIN, date).send()
-        self.assertEqual(SMS.objects.filter(date__gte=now).count(), 0)
