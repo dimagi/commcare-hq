@@ -41,5 +41,5 @@ class SerializationTests(TestCase):
             self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))
 
         with self.assertNumQueries(1):
-            # lazy evuation of history
+            # lazy evaluation of history
             self.assertEqual(0, len(form_json['history']))
