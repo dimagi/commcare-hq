@@ -183,6 +183,7 @@ class ConfigurableReportTableManagerMixin(object):
                             override_table_name=legacy_table_name
                         )
                         table_names_for_diff.append(legacy_table_name)
+                        table_map[legacy_table_name] = sql_adapter
                     else:
                         # popultate metadata with the table schema
                         get_indicator_table(sql_adapter.config, metadata=diff_metadata)
