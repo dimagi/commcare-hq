@@ -121,7 +121,7 @@ class IndicatorAdapter(object):
 
     def _log_action(self, initiated_by, source, action, diffs=None, skip=False):
         from corehq.apps.userreports.models import DataSourceActionLog
-        if skip:
+        if skip or not self.config.data_source_id:
             return
 
         kwargs = {
