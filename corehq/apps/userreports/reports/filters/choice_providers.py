@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext
 from sqlalchemy import or_
 
@@ -11,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
@@ -160,9 +161,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         # this one's query_count, so leaving unimplemented for now
         raise NotImplementedError()
 
-    @property
+    @cached_property
     def _adapter(self):
-        return IndicatorSqlAdapter(self.report.config)
+        return get_indicator_adapter(self.report.config, load_source='choice_provider')
 
     @property
     def _sql_column(self):
@@ -178,7 +179,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
-            return [v[0] for v in query]
+            values = [v[0] for v in query]
+            self._adapter.track_load(len(values))
+            return values
         except ProgrammingError:
             return []
 
@@ -213,6 +216,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
             result = []
             for row in query:
                 for value in row:
+                    self._adapter.track_load()
                     if query_context and query_context.query.lower() not in value.lower():
                         continue
                     result.append(value)
