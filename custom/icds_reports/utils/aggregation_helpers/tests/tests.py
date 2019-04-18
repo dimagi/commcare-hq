@@ -120,7 +120,7 @@ ARGS = {
 def _get_helper_sql(helper_cls):
     mock_cursor = MockCursor()
     if helper_cls:
-        args = inspect.getfullargspec(helper_cls.__init__)
+        args = inspect.getargspec(helper_cls.__init__)
         arg_vals = [
             ARGS[arg] for arg in args.args[1:]  # skip 'self'
         ]
