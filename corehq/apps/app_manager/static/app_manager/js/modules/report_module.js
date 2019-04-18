@@ -351,6 +351,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     dataType: 'json',
                     data: {
                         name: JSON.stringify(self.moduleName),
+                        name_enum: $("#name-enum-mapping").find("[name='name_enum']").val(),    // TODO: make more knockout-y
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
                         multimedia: JSON.stringify(self.multimedia()),

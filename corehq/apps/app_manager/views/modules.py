@@ -930,8 +930,13 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
+
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
+
+    if 'name_enum' in params:
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     try:
         app.save()
