@@ -7,6 +7,8 @@ import os
 import re
 import traceback
 import sys
+import warnings
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import RequestContext
@@ -124,9 +126,10 @@ def json_handler(obj):
 
 
 def json_response(obj, status_code=200, **kwargs):
-    """
-    Deprecated. When possible use Django's built in JsonResponse
-    """
+    warnings.warn(
+        "json_response is deprecated.  Use django.http.JsonResponse instead.",
+        DeprecationWarning,
+    )
     if 'default' not in kwargs:
         kwargs['default'] = json_handler
     return HttpResponse(json.dumps(obj, **kwargs), status=status_code,
