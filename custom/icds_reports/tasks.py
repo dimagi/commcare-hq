@@ -1180,8 +1180,9 @@ def _bust_awc_cache():
     create_datadog_event('redis: delete dashboard keys', 'finish')
 
 
+# TODO create new queue
 @task
-def run_citus_experiment(fn, *args, **kwargs):
+def run_citus_experiment(fn, args, kwargs):
     experiment_context = {
         "function_name": fn.__name__,
         'args': args,
