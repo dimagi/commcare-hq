@@ -298,8 +298,6 @@ class LoadSaveProperty(JsonObject):
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
     children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
-    load_properties = ListProperty(LoadSaveProperty, exclude_if_none=True)
-    save_properties = ListProperty(LoadSaveProperty, exclude_if_none=True)
 
     def get_formatted_response(self):
         timezone = get_timezone_for_request()

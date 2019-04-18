@@ -37,34 +37,34 @@ class TestAppDiffs(SimpleTestCase):
     def test_add_module(self):
         self.factory2.new_basic_module('module_2', 'case')
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[1]['diff_state'], ADDED)
+        self.assertEqual(diff.second[1]['changes']['module'], ADDED)
         self.assertEqual(diff.second[1]['id'], self.app2.modules[1].unique_id)
 
     def test_remove_module(self):
         self.factory1.new_basic_module('module_2', 'case')
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[1]['diff_state'], REMOVED)
+        self.assertEqual(diff.first[1]['changes']['module'], REMOVED)
         self.assertEqual(diff.first[1]['id'], self.app1.modules[1].unique_id)
 
     def test_remove_then_add_module(self):
         self.factory1.new_basic_module('module_2', 'case')
         self.factory2.new_basic_module('module_3', 'case')
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[1]['diff_state'], REMOVED)
+        self.assertEqual(diff.first[1]['changes']['module'], REMOVED)
         self.assertEqual(diff.first[1]['id'], self.app1.modules[1].unique_id)
-        self.assertEqual(diff.second[1]['diff_state'], ADDED)
+        self.assertEqual(diff.second[1]['changes']['module'], ADDED)
         self.assertEqual(diff.second[1]['id'], self.app2.modules[1].unique_id)
 
     def test_add_form(self):
         self.factory2.new_form(self.app2.modules[0])
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][1]['diff_state'], ADDED)
+        self.assertEqual(diff.second[0]['forms'][1]['changes']['form'], ADDED)
         self.assertEqual(diff.second[0]['forms'][1]['name'], self.app2.modules[0].forms[1].name)
 
     def test_remove_form(self):
         self.factory1.new_form(self.app1.modules[0])
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][1]['diff_state'], REMOVED)
+        self.assertEqual(diff.first[0]['forms'][1]['changes']['form'], REMOVED)
 
     def _add_question(self, form, options=None):
         if options is None:
@@ -81,41 +81,36 @@ class TestAppDiffs(SimpleTestCase):
     def test_add_question(self):
         self._add_question(self.app2.modules[0].forms[0])
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], ADDED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
 
     def test_remove_question(self):
         self._add_question(self.app1.modules[0].forms[0])
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], REMOVED)
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
 
     def test_remove_then_add_question(self):
         self._add_question(self.app1.modules[0].forms[0], {'name': 'foo', 'label': 'foo'})
         self._add_question(self.app2.modules[0].forms[0], {'name': 'bar', 'label': 'bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], REMOVED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], ADDED)
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
 
     def test_change_question_label(self):
         self._add_question(self.app1.modules[0].forms[0], {'label': 'foo'})
         self._add_question(self.app2.modules[0].forms[0], {'label': 'bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_attribute'], 'label')
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'label')
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
 
     def test_add_question_display_condition(self):
-        self._add_question(self.app1.modules[0].forms[0], {'constraint': ''})
-        self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo = bar'})
+        self._add_question(self.app1.modules[0].forms[0], {'relevant': ''})
+        self._add_question(self.app2.modules[0].forms[0], {'relevant': 'foo = bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], ADDED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['relevant'], ADDED)
 
     def test_change_question_display_condition(self):
-        self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
-        self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
+        self._add_question(self.app1.modules[0].forms[0], {'relevant': 'foo = bar'})
+        self._add_question(self.app2.modules[0].forms[0], {'relevant': 'foo != bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_state'], CHANGED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['diff_attribute'], 'constraint')
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['relevant'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['relevant'], CHANGED)

@@ -6,6 +6,7 @@ import six
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     AppCaseMetadata,
+    LoadSaveProperty,
     FormQuestionResponse,
 )
 from corehq.apps.app_manager.exceptions import XFormException
@@ -15,6 +16,7 @@ from jsonobject import (
     DictProperty,
     JsonObject,
     ListProperty,
+    ObjectProperty,
     StringProperty,
 )
 
@@ -22,8 +24,45 @@ REMOVED = 'removed'
 ADDED = 'added'
 CHANGED = 'changed'
 
-INTERESTING_ATTRIBUTES = ('name', 'label', 'constraint', 'calculate',
-                          'comment', 'required', 'setvalue', 'relevant')
+DIFF_STATES = (REMOVED, ADDED, CHANGED)
+
+QUESTION_ATTRIBUTES = (
+    'label', 'type', 'value', 'options', 'calculate', 'relevant',
+    'required', 'comment', 'setvalue'
+)
+
+
+class _QuestionDiff(JsonObject):
+    question = StringProperty(choices=(ADDED, REMOVED))
+    label = StringProperty(choices=DIFF_STATES)
+    type = StringProperty(choices=DIFF_STATES)
+    value = StringProperty(choices=DIFF_STATES)
+    options = StringProperty(choices=DIFF_STATES)
+    calculate = StringProperty(choices=DIFF_STATES)
+    relevant = StringProperty(choices=DIFF_STATES)
+    required = StringProperty(choices=DIFF_STATES)
+    comment = StringProperty(choices=DIFF_STATES)
+    setvalue = StringProperty(choices=DIFF_STATES)
+
+
+class _FormDiff(JsonObject):
+    form = StringProperty(choices=(ADDED, REMOVED))
+    name = StringProperty(choices=DIFF_STATES)
+    short_comment = StringProperty(choices=DIFF_STATES)
+    form_filter = StringProperty(choices=DIFF_STATES)
+
+
+class _ModuleDiff(JsonObject):
+    module = StringProperty(choices=(ADDED, REMOVED))
+    name = StringProperty(choices=DIFF_STATES)
+    short_comment = StringProperty(choices=DIFF_STATES)
+    module_filter = StringProperty(choices=DIFF_STATES)
+
+
+class _FormMetadataQuestion(FormQuestionResponse):
+    load_properties = ListProperty(LoadSaveProperty)
+    save_properties = ListProperty(LoadSaveProperty)
+    changes = ObjectProperty(_QuestionDiff)
 
 
 class _FormMetadata(JsonObject):
@@ -32,8 +71,9 @@ class _FormMetadata(JsonObject):
     short_comment = StringProperty()
     action_type = StringProperty()
     form_filter = StringProperty()
-    questions = ListProperty(FormQuestionResponse)
+    questions = ListProperty(_FormMetadataQuestion)
     error = DictProperty()
+    changes = ObjectProperty(_FormDiff)
 
 
 class _ModuleMetadata(JsonObject):
@@ -44,6 +84,7 @@ class _ModuleMetadata(JsonObject):
     is_surveys = BooleanProperty()
     module_filter = StringProperty()
     forms = ListProperty(_FormMetadata)
+    changes = ObjectProperty(_ModuleDiff)
 
 
 class _AppSummaryFormDataGenerator(object):
@@ -125,7 +166,7 @@ class _AppSummaryFormDataGenerator(object):
         """Add an extra node with the root path of the save to case to attach case properties to
         """
         question_path = self._save_to_case_root_path(question)
-        response = FormQuestionResponse({
+        response = _FormMetadataQuestion(**{
             "label": question_path,
             "tag": question_path,
             "value": question_path,
@@ -144,7 +185,7 @@ class _AppSummaryFormDataGenerator(object):
         return response
 
     def _serialized_question(self, form_unique_id, question):
-        response = FormQuestionResponse(question)
+        response = _FormMetadataQuestion(question)
         response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
         response.save_properties = self._case_meta.get_save_properties(form_unique_id, question['value'])
         if self._is_save_to_case(question):
@@ -189,34 +230,34 @@ class AppDiffGenerator(object):
 
     def _mark_removed_items(self):
         for module in self.first:
-            if module['id'] not in self._second_ids:
-                module['diff_state'] = REMOVED
+            if module.id not in self._second_ids:
+                module.changes.module = REMOVED
             else:
                 self._mark_removed_forms(module['forms'])
 
     def _mark_removed_forms(self, forms):
         for form in forms:
             if form['id'] not in self._second_ids:
-                form['diff_state'] = REMOVED
+                form.changes.form = REMOVED
             else:
-                self._mark_removed_questions(form['id'], form.get('questions', []))
+                self._mark_removed_questions(form['id'], form.questions)
 
     def _mark_removed_questions(self, form_id, questions):
         for question in questions:
-            if question['value'] not in self._second_questions_by_id[form_id]:
-                question['diff_state'] = REMOVED
+            if question.value not in self._second_questions_by_id[form_id]:
+                question.changes.question = REMOVED
 
     def _mark_added_items(self):
         for module in self.second:
             if module['id'] not in self._first_ids:
-                module['diff_state'] = ADDED
+                module.changes.module = ADDED
             else:
                 self._mark_added_forms(module['forms'])
 
     def _mark_added_forms(self, forms):
         for form in forms:
             if form['id'] not in self._first_ids:
-                form['diff_state'] = ADDED
+                form.changes.form = ADDED
             else:
                 self._mark_added_questions(form['id'], form['questions'])
 
@@ -224,29 +265,20 @@ class AppDiffGenerator(object):
         for second_question in questions:
             question_path = second_question['value']
             if question_path not in self._first_questions_by_id[form_id]:
-                second_question['diff_state'] = ADDED
+                second_question.changes.question = ADDED
             else:
                 first_question = self._first_questions_by_id[form_id][question_path]
                 self._mark_changed_questions(first_question, second_question)
 
     def _mark_changed_questions(self, first_question, second_question):
-        for attribute in INTERESTING_ATTRIBUTES:
-            attribute_changed = first_question.get(attribute) != second_question.get(attribute)
-            attribute_added = second_question.get(attribute) and not first_question.get(attribute)
+        for attribute in QUESTION_ATTRIBUTES:
+            attribute_changed = first_question[attribute] != second_question[attribute]
+            attribute_added = second_question[attribute] and not first_question[attribute]
             if attribute_changed:
-                if 'attribute_diff' in first_question:
-                    first_question['attribute_diff'][attribute] = CHANGED
-                else:
-                    first_question['attribute_diff'] = {attribute: CHANGED}
-                if 'attribute_diff' in second_question:
-                    second_question['attribute_diff'][attribute] = CHANGED
-                else:
-                    second_question['attribute_diff'] = {attribute: CHANGED}
+                first_question.changes[attribute] = CHANGED
+                second_question.changes[attribute] = CHANGED
             if attribute_added:
-                if 'attribute_diff' in second_question:
-                    second_question['attribute_diff'][attribute] = ADDED
-                else:
-                    second_question['attribute_diff'] = {attribute: ADDED}
+                second_question.changes[attribute] = ADDED
 
 
 def get_app_diff(app1, app2):

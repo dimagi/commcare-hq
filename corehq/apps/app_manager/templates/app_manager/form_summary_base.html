@@ -21,7 +21,7 @@
 <!-- /ko -->
 
 <ul class="fa-ul" data-bind="foreach: modules">
-    <li data-bind="visible: isVisible, attr: { class: diffClass }">
+    <li data-bind="visible: isVisible, attr: { class: 'diff-' + changes.module }">
         <h4>
             <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                 <i data-bind="attr: { 'class': icon }"></i>
@@ -42,7 +42,7 @@
         </ul>
         <!-- /ko -->
         <ul class="fa-ul" data-bind="foreach: forms">
-            <li data-bind="visible: isVisible, attr: { class: diffClass }">
+            <li data-bind="visible: isVisible, attr: { class: 'diff-' + changes.form }">
                 <h5>
                     <a data-bind="ifnot: $root.readOnly, attr: { href: url }">
                         <i data-bind="attr: { 'class': icon }"></i>
@@ -63,7 +63,7 @@
                 </ul>
                 <!-- /ko -->
                 <ol data-bind="foreach: questions">
-                    <li data-bind="visible: isVisible, attr: { class: attributeDiff['label'] ? attributeDiff['label'] : '' }">
+                    <li data-bind="visible: isVisible, attr: { class: 'diff-' + changes.question }">
                         <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
                         <!-- ko ifnot: $root.readOnly -->
                         <a data-bind="attr: { 'href': $parent.url + hashtagValue }, text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
@@ -73,32 +73,32 @@
                         <span title="{% trans "This question is required"|escapejs %}">*</span>
                         <!-- /ko -->
                         <!-- ko if: comment -->
-                        <span data-bind="visible: $root.showComments, attr: { class: 'text-muted ' + (attributeDiff['comment'] ? attributeDiff['comment'] : '' ) }">
+                        <span data-bind="visible: $root.showComments, attr: { class: 'text-muted ' + ('diff-' + changes.comment) }">
                             &nbsp; <!-- ko text: comment --><!-- /ko -->
                         </span>
                         <!-- /ko -->
                         <!-- ko if:  calculate || relevant || constraint || setvalue || load_properties || save_properties  -->
                         <ul class="fa-ul">
                             <!-- ko if: calculate -->
-                            <li data-bind="visible: $root.showCalculations, attr: { class: attributeDiff['calculate'] ? attributeDiff['calculate'] : '' }">
+                            <li data-bind="visible: $root.showCalculations, attr: { class: 'diff-' + changes.calculate }">
                                 <i class = "fa-li fa text-muted fa-calculator"></i>
                                 <!-- ko text: calculate --><!-- /ko -->
                             </li>
                             <!-- /ko -->
                             <!-- ko if: relevant -->
-                            <li data-bind="visible: $root.showRelevance, attr: { class: attributeDiff['relevant'] ? attributeDiff['relevant'] : '' }" >
+                            <li data-bind="visible: $root.showRelevance, attr: { class: 'diff-' + changes.relevant }" >
                                 <i class = "fa-li fa text-muted fa-code-fork"></i>
                                 <!-- ko text: relevant --><!-- /ko -->
                             </li>
                             <!-- /ko -->
                             <!-- ko if: constraint -->
-                            <li data-bind="visible: $root.showConstraints, attr: { class: attributeDiff['constraint'] ? attributeDiff['constraint'] : '' }">
+                            <li data-bind="visible: $root.showConstraints, attr: { class: 'diff-' + changes.constraint }">
                                 <i class = "fa-li fa text-muted fa-ban"></i>
                                 <!-- ko text: constraint --><!-- /ko -->
                             </li>
                             <!-- /ko -->
                             <!-- ko if: setvalue -->
-                            <li data-bind="visible: $root.showDefaultValue, attr: { class: attributeDiff['setvalue'] ? attributeDiff['setvalue'] : '' }">
+                            <li data-bind="visible: $root.showDefaultValue, attr: { class: 'diff-' + changes.setvalue}">
                                 <i class = "fa-li fa text-muted fa-home"></i>
                                 <!-- ko text: setvalue --><!-- /ko -->
                             </li>
@@ -106,8 +106,8 @@
                             <!-- ko foreach: load_properties -->
                             <li data-bind="visible: $root.showCaseProperties">
                                 <i class = "fa fa-li text-muted fa-briefcase"></i>
-                                <span class="text-muted" data-bind="text:$data[0]"></span> -
-                                <!-- ko text: $data[1] --><!-- /ko -->
+                                <span class="text-muted" data-bind="text:$data.case_type"></span> -
+                                <!-- ko text: $data.property --><!-- /ko -->
                                 <span title="{% trans 'Load property' %}">
                                     <i class = "fa text-muted fa-arrow-right"></i>
                                     <i class = "fa text-muted fa-file"></i>
@@ -121,8 +121,8 @@
                                     <i class = "fa text-muted fa-arrow-right"></i>
                                     <i class = "fa text-muted fa-briefcase"></i>
                                 </span>
-                                <span class="text-muted" data-bind="text:$data[0]"></span> -
-                                <!-- ko text: $data[1] --><!-- /ko -->
+                                <span class="text-muted" data-bind="text:$data.case_type"></span> -
+                                <!-- ko text: $data.property --><!-- /ko -->
                             </li>
                             <!-- /ko -->
                         </ul>
