@@ -6,7 +6,6 @@ from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
 from corehq.util.translation import localize
 from custom.ilsgateway.slab.handlers.transfer import TransferHandler
 
-from custom.ilsgateway.tanzania.handlers.arrived import ArrivedHandler
 from custom.ilsgateway.tanzania.handlers.delivered import DeliveredHandler
 from custom.ilsgateway.tanzania.handlers.emg import EmergencyHandler
 from custom.ilsgateway.tanzania.handlers.help import HelpHandler
@@ -76,7 +75,6 @@ def handle(verified_contact, text, msg):
     }
 
     handlers_for_registered_users = {
-        ('arrived', 'aliwasili'): ArrivedHandler,
         ('help', 'msaada'): HelpHandler,
         ('language', 'lang', 'lugha'): LanguageHandler,
         ('stop', 'acha', 'hapo'): StopHandler,
