@@ -745,18 +745,15 @@ def update_form_translations(sheet, rows, missing_cols, app):
     # Currently operating under the assumption that every xForm has at least
     # one translation element, that each translation element has a text node
     # for each question and that each text node has a value node under it
-    template_translation_el = None
+
     # Get a translation element to be used as a template for new elements, starting with default
-    trans_el = itext.find("./{f}translation[@lang='%s']" % app.default_language)
-    if trans_el.exists():
-        template_translation_el = trans_el
-        if not template_translation_el:
-            for lang in app.langs:
-                trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
-                if trans_el.exists():
-                    template_translation_el = trans_el
-                    break
-    assert(template_translation_el is not None)
+    template_translation_el = itext.find("./{f}translation[@lang='%s']" % app.default_language)
+    if not template_translation_el.exists():
+        for lang in app.langs:
+            template_translation_el = itext.find("./{f}translation[@lang='%s']" % lang)
+            if template_translation_el.exists():
+                break
+    assert template_translation_el.exists()
     # Add missing translation elements
     for lang in app.langs:
         trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
