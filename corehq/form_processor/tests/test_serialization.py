@@ -30,16 +30,16 @@ class SerializationTests(TestCase):
         submit_form_locally(form_xml, domain=self.domain)
 
         form = FormAccessorSQL().get_form(form_id)
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=form.db):
             # 1 query to fetch the form.xml attachment. The rest are lazy
             form_json = form.to_json(include_attachments=True)
 
         form_xml = form.get_attachment_meta('form.xml')
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=form.db):
             # lazy evaluation of attachments list
             self.assertEqual(form_json['external_blobs']['form.xml']['id'], str(form_xml.key))
 
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1, using=form.db):
             # lazy evaluation of history
             self.assertEqual(0, len(form_json['history']))
