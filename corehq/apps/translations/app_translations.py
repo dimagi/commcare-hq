@@ -755,6 +755,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                 trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
                 if trans_el.exists():
                     template_translation_el = trans_el
+                    break
     assert(template_translation_el is not None)
     # Add missing translation elements
     for lang in app.langs:
