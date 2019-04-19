@@ -118,3 +118,5 @@ VALID_LEVELS_FOR_DUMP = [
     '2',  # district
     '3',  # block
 ]
+
+CITUS_MASTER = 'citus'

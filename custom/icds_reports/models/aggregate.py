@@ -12,7 +12,7 @@ from custom.icds_reports.const import (AGG_CCS_RECORD_BP_TABLE,
     AGG_COMP_FEEDING_TABLE, AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE, AGG_INFRASTRUCTURE_TABLE, AWW_INCENTIVE_TABLE,
                                        AGG_LS_AWC_VISIT_TABLE, AGG_LS_VHND_TABLE,
-                                       AGG_LS_BENEFICIARY_TABLE)
+                                       AGG_LS_BENEFICIARY_TABLE, CITUS_MASTER)
 from django.db import connections, models, transaction
 
 from custom.icds_reports.utils.aggregation_helpers.helpers import get_helper
@@ -45,8 +45,11 @@ from custom.icds_reports.utils.aggregation_helpers.monolith import (
 )
 
 
-def get_cursor(model):
-    db = db_for_read_write(model)
+def get_cursor(model, force_citus=False):
+    if force_citus:
+        db = CITUS_MASTER
+    else:
+        db = db_for_read_write(model)
     return connections[db].cursor()
 
 
@@ -67,13 +70,14 @@ class AggregateMixin(object):
 
     @classmethod
     def aggregate(cls, *args, **kwargs):
-        helper = cls._get_helper(*args, **kwargs)
-        with get_cursor(cls) as cursor, maybe_atomic(cls, cls._agg_atomic):
+        force_citus = kwargs.pop('force_citus', False)
+        helper = cls._get_helper(force_citus, *args, **kwargs)
+        with get_cursor(cls, force_citus) as cursor, maybe_atomic(cls, cls._agg_atomic):
             helper.aggregate(cursor)
 
     @classmethod
-    def _get_helper(cls, *args, **kwargs):
-        helper_cls = get_helper(cls._agg_helper_cls.helper_key)
+    def _get_helper(cls, force_citus, *args, **kwargs):
+        helper_cls = get_helper(cls._agg_helper_cls.helper_key, force_citus)
         return helper_cls(*args, **kwargs)
 
 
