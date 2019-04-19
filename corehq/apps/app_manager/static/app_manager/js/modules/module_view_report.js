@@ -29,7 +29,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             moduleNameEnum: initial_page_data('name_enum'),
         }));
 
-        $nameEnumContainer = $("#name-enum-mapping");
+        var $nameEnumContainer = $("#name-enum-mapping");
         if ($nameEnumContainer.length) {
             var options = {
                 lang: initial_page_data('current_language'),

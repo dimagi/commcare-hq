@@ -10,7 +10,6 @@ from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin
 from corehq.util.test_utils import flag_enabled
 
 
-
 @flag_enabled('APP_BUILDER_CONDITIONAL_NAMES')
 class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
@@ -27,7 +26,6 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.basic_form.name_enum = self.enum
 
     def test_module(self):
-        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -53,7 +51,6 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_module_with_media(self):
         self.basic_module.media_audio = {'en': 'jr://file/commcare/audio/en/module0.mp3'}
         self.basic_module.media_image = {'en': 'jr://file/commcare/image/module0_en.png'}
-        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -87,7 +84,6 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_report_module(self):
         self.report_module = self.factory.new_report_module('basic')
         self.report_module.name_enum = self.enum
-        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -110,7 +106,6 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_form(self):
-        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>
@@ -137,7 +132,6 @@ class SuiteNameEnumsTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_form_with_media(self):
         self.basic_form.media_audio = {'en': 'jr://file/commcare/audio/en/module0.mp3'}
         self.basic_form.media_image = {'en': 'jr://file/commcare/image/module0_en.png'}
-        suite = self.factory.app.create_suite()
         self.assertXmlPartialEqual(
             """
             <partial>

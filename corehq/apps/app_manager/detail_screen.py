@@ -381,7 +381,6 @@ class Enum(FormattedDetailColumn):
             return "if({xpath} = '{key}', ${key_as_var}, "
         raise ValueError('type must be in sort, display')
 
-
     def _xpath_template_context(self, type):
         return lambda item, i: {
             'key': item.key,
@@ -419,7 +418,6 @@ class ConditionalEnum(Enum):
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
 
-
     def _xpath_template_context(self, type):
         return lambda item, i: {
             'key_as_condition': item.key_as_condition(self.xpath),
@@ -456,7 +454,6 @@ class EnumImage(Enum):
 
     def _xpath_template(self, type):
         return "if({key_as_condition}, {key_as_var_name}"
-
 
     def _xpath_template_context(self, type):
         return lambda item, i: {

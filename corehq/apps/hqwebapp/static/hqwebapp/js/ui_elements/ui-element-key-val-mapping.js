@@ -55,17 +55,17 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
     *                 `value` of MapItem is a file-path to an icon or a simple string
     */
     var MapItem = function (item, index, mappingContext) {
-        var self = this;
-        this.key = ko.observable(item.key);
-        this.editing = ko.observable(false);
+        var self = {};
+        self.key = ko.observable(item.key);
+        self.editing = ko.observable(false);
 
-        this.cssId = ko.computed(function () {
-            return makeSafeForCSS(this.key()) || '_blank_';
-        }, this);
+        self.cssId = ko.computed(function () {
+            return makeSafeForCSS(self.key()) || '_blank_';
+        });
 
 
         // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
-        this.generateIconPath = function () {
+        self.generateIconPath = function () {
             var randomFourDigits = Math.floor(Math.random() * 9000) + 1000;
             var iconPrefix =  "jr://file/commcare/image/module" + mappingContext.module_id + "_list_icon_" + mappingContext.getPropertyName() + "_";
             return iconPrefix + randomFourDigits + ".png";
@@ -78,7 +78,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
-            this.iconManager = app_manager.appMenuMediaManager({
+            self.iconManager = app_manager.appMenuMediaManager({
                 ref: {
                     "path": actualPath,
                     "icon_type": "icon-picture",
@@ -93,11 +93,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             });
         }
 
-        this.toggleEditMode = function () {
-            this.editing(!this.editing());
+        self.toggleEditMode = function () {
+            self.editing(!self.editing());
         };
 
-        this.value = ko.computed(function () {
+        self.value = ko.computed(function () {
             // ko.observable for item.value
             var new_value = [];
             var langs = _.union(_(item.value).keys(), [mappingContext.lang]) ;
@@ -112,34 +112,46 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                 }
             });
             return _.object(new_value);
-        }, this);
+        });
 
-        this.key.subscribe(function (newValue) {
+        self.key.subscribe(function (newValue) {
             if (mappingContext.duplicatedItems.indexOf(newValue) === -1 && mappingContext._isItemDuplicated(newValue)) {
                 mappingContext.duplicatedItems.push(newValue);
             }
 
         });
 
-        this.key.subscribe(function (oldValue) {
+        self.key.subscribe(function (oldValue) {
             var index = mappingContext.duplicatedItems.indexOf(oldValue);
             if (index !== -1 && !mappingContext._isItemDuplicated(oldValue, 2)) {
                 mappingContext.duplicatedItems.remove(oldValue);
             }
         }, null, "beforeChange");
+
+        return self;
     };
 
     /**
-     * A MapList is an ordered list MapItem objects
+     * A MapList is an ordered list of MapItem objects
      */
     var MapList = function (options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['lang', 'langs', 'items', 'property_name'],
-                                                                  ['buttonText', 'keys_are_conditions', 'module_id', 'multimedia', 'values_are_icons']);
+        hqImport("hqwebapp/js/assert_properties").assert(options, [
+            'lang',
+            'langs',
+            'items',
+            'property_name',
+        ], [
+            'buttonText',
+            'keys_are_conditions',
+            'module_id',
+            'multimedia',
+            'values_are_icons',
+        ]);
         if (options.values_are_icons && !options.module_id) {
             throw new Error("Module ID must be provided if values are icons.");
         }
 
-        var self = this;
+        var self = {};
         self.lang = options.lang;
         self.langs = [options.lang].concat(options.langs);
         self.module_id = options.module_id;
@@ -157,7 +169,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         };
 
         self.labels = ko.computed(function () {
-            if (this.values_are_icons()) {
+            if (self.values_are_icons()) {
                 return {
                     placeholder: django.gettext('Calculation'),
                     duplicated: django.gettext('Calculation is duplicated'),
@@ -165,7 +177,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     badXML: django.gettext('Calculation contains an invalid character.'),
                 };
             }
-            else if (this.keys_are_conditions()) {
+            else if (self.keys_are_conditions()) {
                 return {
                     placeholder: django.gettext('Calculation'),
                     duplicated: django.gettext('Calculation is duplicated'),
@@ -181,7 +193,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     badXML: django.gettext('Key contains an invalid character.'),
                 };
             }
-        }, this);
+        });
 
         self.setItems = function (items) {
             self.items(_(items).map(function (item, i) {
@@ -263,12 +275,13 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     })),
                 };
             });
-
         };
+
+        return self;
     };
 
     module.new = function (options) {
-        var m = new MapList(options);
+        var m = MapList(options);
         m.edit = ko.observable(true);
         m.buttonText = options.buttonText || gettext("Edit"),
         m.values_are_icons = ko.observable(options.values_are_icons || false);
@@ -278,7 +291,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             // lets us create a sandbox for editing that you can cancel
             var $modalDiv = $(document.createElement("div"));
             $modalDiv.attr("data-bind", "template: 'key_value_mapping_modal'");
-            var copy = new MapList({
+            var copy = MapList({
                 lang: options.lang,
                 langs: options.langs,
                 module_id: options.module_id,
@@ -291,9 +304,9 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             $modalDiv.koApplyBindings({
                 modalTitle: ko.computed(function () {
                     return _.template(gettext('Edit mapping for <%= property %>'))({
-                        property: this.getPropertyName(),
+                        property: self.getPropertyName(),
                     });
-                }, this),
+                }),
                 mapList: copy,
                 save: function (data, e) {
                     if (copy.duplicatedItems().length > 0) {

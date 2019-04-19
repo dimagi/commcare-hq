@@ -69,7 +69,7 @@ hqDefine("app_manager/js/forms/form_view", function () {
         });
 
         // Settings > Logic
-        $nameEnumContainer = $('#name-enum-mapping');
+        var $nameEnumContainer = $('#name-enum-mapping');
         if ($nameEnumContainer.length) {
             var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping({
                 lang: initialPageData('current_language'),

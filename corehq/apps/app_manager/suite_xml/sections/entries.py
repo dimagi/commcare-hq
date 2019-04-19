@@ -10,8 +10,6 @@ from corehq.apps.app_manager.suite_xml.utils import (
     get_select_chain_meta,
     get_form_enum_text,
     get_form_locale_id,
-    get_module_enum_text,
-    get_module_locale_id,
 )
 from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
