@@ -250,8 +250,8 @@ hqDefine('app_manager/js/summary/models',[
     var initVersionsBox = function ($dropdown, initialValue) {
         widgets.initVersionDropdown($dropdown, {
             initialValue: initialValue,
-            width: "100px",
-            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest")}],
+            width: "150px",
+            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest saved")}],
         });
     };
 
