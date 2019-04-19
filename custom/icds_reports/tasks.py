@@ -64,6 +64,7 @@ from custom.icds_reports.const import (
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
 )
+from custom.icds_reports.experiment import DashboardQueryExperiment
 from custom.icds_reports.models import (
     AggAwc,
     AggCcsRecord,
@@ -308,7 +309,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
             _bust_awc_cache.si()
         ).delay()
-
 
 
 def _create_aggregate_functions(cursor):
@@ -1176,3 +1176,37 @@ def _bust_awc_cache():
     for key in reach_keys:
         cache.delete(key)
     create_datadog_event('redis: delete dashboard keys', 'finish')
+
+
+# TODO create new queue
+@task
+def run_citus_experiment_raw_sql(sql):
+    experiment_context = {
+        "function_name": sql,
+        'args': [],
+        'kwargs': [],
+    }
+    experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
+    with experiment.control() as control:
+        db_alias = get_icds_ucr_db_alias()
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(sql)
+            control.record(_dictfetchall(cursor))
+
+    with experiment.candidate() as candidate:
+        db_alias = 'citus'
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(sql)
+            candidate.record(_dictfetchall(cursor))
+
+    objects = experiment.run()
+    return objects
+
+
+def _dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
