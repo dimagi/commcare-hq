@@ -746,11 +746,15 @@ def update_form_translations(sheet, rows, missing_cols, app):
     # one translation element, that each translation element has a text node
     # for each question and that each text node has a value node under it
     template_translation_el = None
-    # Get a translation element to be used as a template for new elements
-    for lang in app.langs:
-        trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
-        if trans_el.exists():
-            template_translation_el = trans_el
+    # Get a translation element to be used as a template for new elements, starting with default
+    trans_el = itext.find("./{f}translation[@lang='%s']" % app.default_language)
+    if trans_el.exists():
+        template_translation_el = trans_el
+        if not template_translation_el:
+            for lang in app.langs:
+                trans_el = itext.find("./{f}translation[@lang='%s']" % lang)
+                if trans_el.exists():
+                    template_translation_el = trans_el
     assert(template_translation_el is not None)
     # Add missing translation elements
     for lang in app.langs:
