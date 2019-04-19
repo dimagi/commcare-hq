@@ -21,6 +21,7 @@ from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
 from couchexport.export import export_from_tables
+from gevent.pool import Group
 
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
@@ -47,7 +48,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
     DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
-    AWW_INCENTIVE_REPORT, THREE_MONTHS, LS_REPORT_EXPORT
+    AWW_INCENTIVE_REPORT, THREE_MONTHS, LS_REPORT_EXPORT, CITUS_MASTER
 from custom.icds_reports.models import (
     AggChildHealth,
     AggChildHealthMonthly,
@@ -161,13 +162,26 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         monthly_dates.append(first_day_next_month - relativedelta(days=1))
 
     monthly_dates.append(date)
-
     db_alias = get_icds_ucr_db_alias()
     if db_alias:
-        with connections[db_alias].cursor() as cursor:
-            _create_aggregate_functions(cursor)
+        test_citus = settings.DATABASES.get(CITUS_MASTER)
+        if test_citus:
+            g = Group()
+            with connections[db_alias].cursor() as cursor:
+                g.spawn(_create_aggregate_functions, cursor)
+            with connections[CITUS_MASTER].cursor() as cursor:
+                g.spawn(_create_aggregate_functions, cursor)
+            g.join()
+        else:
+            with connections[db_alias].cursor() as cursor:
+                _create_aggregate_functions(cursor)
 
-        _update_aggregate_locations_tables()
+        if test_citus:
+            g.spawn(_update_aggregate_locations_tables, True)
+            g.spawn(_update_aggregate_locations_tables, False)
+            g.join()
+        else:
+            _update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -296,10 +310,14 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables():
+def _update_aggregate_locations_tables(force_citus=False):
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with transaction.atomic(using=db_for_read_write(AwcLocation)):
+        if force_citus:
+            db = CITUS_MASTER
+        else:
+            db = db_for_read_write(AwcLocation)
+        with transaction.atomic(using=db):
             AwcLocation.aggregate()
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
     except IntegrityError:
@@ -338,8 +356,15 @@ def icds_aggregation_task(self, date, func_name):
         return
 
     celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
+
     try:
-        func(date)
+        if settings.DATABASES.get(CITUS_MASTER):
+            g = Group()
+            g.spawn(func, date, True)
+            g.spawn(func, date, False)
+            g.join()
+        else:
+            func(date)
     except Error as exc:
         notify_exception(
             None, message="Error occurred during ICDS aggregation",
@@ -386,7 +411,13 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
     celery_task_logger.info("Starting icds reports {} {} {}".format(state_id, date, func.__name__))
 
     try:
-        func(state_id, date)
+        if settings.DATABASES.get(CITUS_MASTER):
+            g = Group()
+            g.spawn(func, state_id, date, True)
+            g.spawn(func, state_id, date, False)
+            g.join()
+        else:
+            func(state_id, date)
     except Error as exc:
         notify_exception(
             None, message="Error occurred during ICDS aggregation",
@@ -404,67 +435,67 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
 
 
 @track_time
-def _aggregate_cf_forms(state_id, day):
-    AggregateComplementaryFeedingForms.aggregate(state_id, day)
+def _aggregate_cf_forms(state_id, day, citus=False):
+    AggregateComplementaryFeedingForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_ccs_cf_forms(state_id, day):
-    AggregateCcsRecordComplementaryFeedingForms.aggregate(state_id, day)
+def _aggregate_ccs_cf_forms(state_id, day, citus=False):
+    AggregateCcsRecordComplementaryFeedingForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_gm_forms(state_id, day):
-    AggregateGrowthMonitoringForms.aggregate(state_id, day)
+def _aggregate_gm_forms(state_id, day, citus=False):
+    AggregateGrowthMonitoringForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_df_forms(state_id, day):
-    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day)
+def _aggregate_df_forms(state_id, day, citus=False):
+    AggregateChildHealthDailyFeedingForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_child_health_pnc_forms(state_id, day):
-    AggregateChildHealthPostnatalCareForms.aggregate(state_id, day)
+def _aggregate_child_health_pnc_forms(state_id, day, citus=False):
+    AggregateChildHealthPostnatalCareForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_ccs_record_pnc_forms(state_id, day):
-    AggregateCcsRecordPostnatalCareForms.aggregate(state_id, day)
+def _aggregate_ccs_record_pnc_forms(state_id, day, citus=False):
+    AggregateCcsRecordPostnatalCareForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_child_health_thr_forms(state_id, day):
-    AggregateChildHealthTHRForms.aggregate(state_id, day)
+def _aggregate_child_health_thr_forms(state_id, day, citus=False):
+    AggregateChildHealthTHRForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_ccs_record_thr_forms(state_id, day):
-    AggregateCcsRecordTHRForms.aggregate(state_id, day)
+def _aggregate_ccs_record_thr_forms(state_id, day, citus=False):
+    AggregateCcsRecordTHRForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_awc_infra_forms(state_id, day):
-    AggregateAwcInfrastructureForms.aggregate(state_id, day)
+def _aggregate_awc_infra_forms(state_id, day, citus=False):
+    AggregateAwcInfrastructureForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_inactive_aww(day):
-    AggregateInactiveAWW.aggregate(day)
+def _aggregate_inactive_aww(day, citus=False):
+    AggregateInactiveAWW.aggregate(day, force_citus=citus)
 
 
 @track_time
-def _aggregate_delivery_forms(state_id, day):
-    AggregateCcsRecordDeliveryForms.aggregate(state_id, day)
+def _aggregate_delivery_forms(state_id, day, citus=False):
+    AggregateCcsRecordDeliveryForms.aggregate(state_id, day, force_citus=citus)
 
 
 @track_time
-def _aggregate_bp_forms(state_id, day):
-    AggregateBirthPreparednesForms.aggregate(state_id, day)
+def _aggregate_bp_forms(state_id, day, citus=False):
+    AggregateBirthPreparednesForms.aggregate(state_id, day, force_citus=citus)
 
 
-def _run_custom_sql_script(commands, day=None):
-    db_alias = get_icds_ucr_db_alias()
+def _run_custom_sql_script(commands, day=None, citus=False):
+    db_alias = CITUS_MASTER if citus else get_icds_ucr_db_alias()
     if not db_alias:
         return
 
@@ -475,121 +506,140 @@ def _run_custom_sql_script(commands, day=None):
 
 
 @track_time
-def aggregate_awc_daily(day):
-    with transaction.atomic(using=db_for_read_write(AggAwcDaily)):
-        AggAwcDaily.aggregate(force_to_date(day))
+def aggregate_awc_daily(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggAwcDaily)
+    with transaction.atomic(using=db):
+        AggAwcDaily.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _update_months_table(day):
-    _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
+def _update_months_table(day, citus=False):
+    _run_custom_sql_script(["SELECT update_months_table(%s)"], day, citus)
 
 
-def get_cursor(model, write=True):
-    db = db_for_read_write(model, write)
+def get_cursor(model, write=True, force_citus=False):
+    db = CITUS_MASTER if force_citus else db_for_read_write(model, write)
     return connections[db].cursor()
 
 
 @track_time
-def _child_health_monthly_table(state_ids, day):
-    helper = get_helper(ChildHealthMonthlyAggregationHelper.helper_key)(state_ids, force_to_date(day))
+def _child_health_monthly_table(state_ids, day, citus=False):
+    helper = ChildHealthMonthly._get_helper(citus, state_ids, force_to_date(day))
 
     celery_task_logger.info("Creating temporary table")
-    with get_cursor(ChildHealthMonthly) as cursor:
+    with get_cursor(ChildHealthMonthly, write=True, force_citus=citus) as cursor:
         cursor.execute(helper.drop_temporary_table())
         cursor.execute(helper.create_temporary_table())
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params)
+        _child_health_helper.delay(query=query, params=params, citus=citus)
         for query, params in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
 
     celery_task_logger.info("Inserting into child_health_monthly_table")
-    with transaction.atomic(using=db_for_read_write(ChildHealthMonthly)):
-        ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
+    db = CITUS_MASTER if force_citus else db_for_read_write(ChildHealthMonthly)
+    with transaction.atomic(using=db):
+        if not citus:
+            _run_custom_sql_script([
+                "SELECT create_new_table_for_month('child_health_monthly', %s)",
+            ], day)
+        ChildHealthMonthly.aggregate(state_ids, force_to_date(day), force_citus=citus)
 
     celery_task_logger.info("Dropping temporary table")
-    with get_cursor(ChildHealthMonthly) as cursor:
+    with get_cursor(ChildHealthMonthly, write=True, force_citus=citus) as cursor:
         cursor.execute(helper.drop_temporary_table())
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _child_health_helper(query, params):
+def _child_health_helper(query, params, citus=False):
     celery_task_logger.info("Running child_health_helper with %s", params)
-    with get_cursor(ChildHealthMonthly) as cursor:
+    with get_cursor(ChildHealthMonthly, write=True, force_citus=citus) as cursor:
         cursor.execute(query, params)
 
 
 @track_time
-def _ccs_record_monthly_table(day):
-    with transaction.atomic(using=db_for_read_write(CcsRecordMonthly)):
-        CcsRecordMonthly.aggregate(force_to_date(day))
+def _ccs_record_monthly_table(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(CcsRecordMonthly)
+    with transaction.atomic(using=db):
+        if not citus:
+            _run_custom_sql_script([
+                "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
+            ], day)
+        CcsRecordMonthly.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _daily_attendance_table(day):
-    DailyAttendance.aggregate(force_to_date(day))
+def _daily_attendance_table(day, citus=False):
+    DailyAttendance.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_child_health_table(day):
-    with transaction.atomic(using=db_for_read_write(AggChildHealth)):
+def _agg_child_health_table(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggChildHealth)
+    with transaction.atomic(using=db):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        ], day)
-        AggChildHealth.aggregate(force_to_date(day))
+        ], day, citus)
+        AggChildHealth.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_ccs_record_table(day):
-    with transaction.atomic(using=db_for_read_write(AggCcsRecord)):
+def _agg_ccs_record_table(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggCcsRecord)
+    with transaction.atomic(using=db):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
-        ], day)
-        AggCcsRecord.aggregate(force_to_date(day))
+        ], day, citus)
+        AggCcsRecord.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_awc_table(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
+def _agg_awc_table(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggAwc)
+    with transaction.atomic(using=db):
         _run_custom_sql_script([
             "SELECT create_new_aggregate_table_for_month('agg_awc', %s)"
         ], day)
-        AggAwc.aggregate(force_to_date(day))
+        AggAwc.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_ls_vhnd_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
-        AggregateLsVhndForm.aggregate(state_id, force_to_date(day))
+def _agg_ls_vhnd_form(state_id, day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggLs)
+    with transaction.atomic(using=db):
+        AggregateLsVhndForm.aggregate(state_id, force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_beneficiary_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
-        AggregateBeneficiaryForm.aggregate(state_id, force_to_date(day))
+def _agg_beneficiary_form(state_id, day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggLs)
+    with transaction.atomic(using=db):
+        AggregateBeneficiaryForm.aggregate(state_id, force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_ls_awc_mgt_form(state_id, day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
-        AggregateLsAWCVisitForm.aggregate(state_id, force_to_date(day))
+def _agg_ls_awc_mgt_form(state_id, day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggLs)
+    with transaction.atomic(using=db):
+        AggregateLsAWCVisitForm.aggregate(state_id, force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_ls_table(day):
-    with transaction.atomic(using=db_for_read_write(AggLs)):
-        AggLs.aggregate(force_to_date(day))
+def _agg_ls_table(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggLs)
+    with transaction.atomic(using=db):
+        AggLs.aggregate(force_to_date(day), force_citus=citus)
 
 
 @track_time
-def _agg_awc_table_weekly(day):
-    with transaction.atomic(using=db_for_read_write(AggAwc)):
-        AggAwc.weekly_aggregate(force_to_date(day))
+def _agg_awc_table_weekly(day, citus=False):
+    db = CITUS_MASTER if citus else db_for_read_write(AggAwc)
+    with transaction.atomic(using=db):
+        AggAwc.weekly_aggregate(force_to_date(day), force_citus=citus)
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
