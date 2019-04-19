@@ -29,25 +29,26 @@ hqDefine('reports/v2/js/datagrid', [
         self.data = options.dataModel;
         self.columns = ko.observableArray();
 
-        self.reportContext = ko.computed(function () {
-            return {
-                existingColumnNames: _.map(self.columns(), function (column) {
-                    return column.name();
-                }),
-            };
-        });
-
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
-            reportContext: self.reportContext,
         });
 
         self.init = function () {
-            self.data.init();
 
             _.each(options.initialColumns, function (data) {
                 self.columns.push(columns.columnModel(data));
             });
+
+            self.reportContext = ko.computed(function () {
+                return {
+                    existingColumnNames: _.map(self.columns(), function (column) {
+                        return column.name();
+                    }),
+                };
+            });
+
+            self.data.init(self.reportContext);
+            self.editColumnController.init(self.reportContext);
         };
 
         self.updateColumn = function (column) {

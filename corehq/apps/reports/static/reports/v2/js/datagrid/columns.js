@@ -29,12 +29,15 @@ hqDefine('reports/v2/js/datagrid/columns', [
         var self = {};
 
         self.endpoint = options.endpoint;
-        self.reportContext = options.reportContext;
         self.columnNameOptions = ko.observableArray();
 
         self.oldColumn = ko.observable();
         self.column = ko.observable();
         self.isNew = ko.observable();
+
+        self.init = function (reportContextObservable) {
+            self.reportContext = reportContextObservable;
+        };
 
         self.setNew = function () {
             self.loadOptions();
@@ -63,6 +66,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.loadOptions = function () {
+            if (!self.reportContext) {
+                throw new Error("Please call init() before calling loadOptions().");
+            }
+
             $.ajax({
                 url: self.endpoint.getUrl(),
                 method: 'post',

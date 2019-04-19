@@ -25,6 +25,10 @@ hqDefine('reports/v2/js/datagrid/data_models', [
         self.length = 50; // todo change number dynamically?
 
         self.loadRecords = function () {
+            if (!self.reportContext) {
+                throw new Error("Please call init() before calling loadRecords().");
+            }
+
             if (self.isDataLoading()) return;
 
             self.isDataLoading(true);
@@ -35,6 +39,7 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 data: {
                     length: self.length,
                     start: 0, // fix with pagination
+                    reportContext: JSON.stringify(self.reportContext()),
                 },
             })
                 .done(function (data) {
@@ -48,7 +53,12 @@ hqDefine('reports/v2/js/datagrid/data_models', [
                 });
         };
 
-        self.init = function () {
+        self.init = function (reportContextObservable) {
+            self.reportContext = reportContextObservable;
+            self.loadRecords();
+        };
+
+        self.refresh = function () {
             self.loadRecords();
         };
 
