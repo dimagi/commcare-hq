@@ -799,14 +799,33 @@ def update_form_translations(sheet, rows, missing_cols, app):
     def get_markdown_node(text_node_):
         return text_node_.find("./{f}value[@form='markdown']")
 
+    def get_all_value_nodes(text_node_):
+        empty_form_attr_value_nodes = []
+        default_form_attr_value_nodes = []
+        for n in text_node_.findall("./{f}value"):
+            if 'form' not in n.attrib:
+                empty_form_attr_value_nodes.append(n)
+            elif n.get('form') == 'default':
+                # invalid value for form attrib seen in forms
+                default_form_attr_value_nodes.append(n)
+        assert len(empty_form_attr_value_nodes) in [0, 1]
+        assert len(default_form_attr_value_nodes) in [0, 1]
+        return empty_form_attr_value_nodes, default_form_attr_value_nodes
+
+    def sanitize_invalid_value_node(value_node):
+        # migrate invalid values, http://manage.dimagi.com/default.asp?236239#BugEvent.1214824
+        value_node.attrib.pop('form', None)
+        return value_node
+
     def get_value_node(text_node_):
-        try:
-            return next(
-                n for n in text_node_.findall("./{f}value")
-                if 'form' not in n.attrib or n.get('form') == 'default'
-            )
-        except StopIteration:
-            return None
+        empty_form_attr_value_nodes, default_form_attr_value_nodes = get_all_value_nodes(text_node_)
+        if empty_form_attr_value_nodes:
+            if default_form_attr_value_nodes:
+                # Unexpected edge cases that needs to be raised if happens
+                raise XFormException(_("Found conflicting translations that needs to be resolved"))
+            return empty_form_attr_value_nodes[0]
+        if default_form_attr_value_nodes:
+            return sanitize_invalid_value_node(default_form_attr_value_nodes[0])
 
     def had_markdown(text_node_):
         """
