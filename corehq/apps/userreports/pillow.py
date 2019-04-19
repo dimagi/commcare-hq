@@ -147,7 +147,14 @@ class ConfigurableReportTableManagerMixin(object):
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
+        all_adapters = []
+        from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
         for adapter in adapters:
+            if type(adapter) == MultiDBSqlAdapter:
+                all_adapters.extend(adapter.all_adapters)
+            else:
+                all_adapters.append(adapter)
+        for adapter in all_adapters:
             try:
                 tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
             except BadSpecError:

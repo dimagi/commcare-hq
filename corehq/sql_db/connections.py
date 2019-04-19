@@ -243,9 +243,11 @@ signals.request_finished.connect(_close_connections)
 
 @unit_testing_only
 @contextmanager
-def override_engine(engine_id, connection_url):
+def override_engine(engine_id, connection_url, db_alias=None):
     original_url = connection_manager.get_connection_string(engine_id)
     connection_manager.db_connection_map[engine_id] = connection_url
+    if db_alias:
+        connection_manager.engine_id_django_db_map[engine_id] = db_alias
     try:
         yield
     finally:
