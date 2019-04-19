@@ -37,7 +37,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.isNew = ko.observable();
 
         self.setNew = function () {
-            self.reloadOptions();
+            self.loadOptions();
             self.oldColumn(undefined);
 
             if (self.isNew() && self.column()) {
@@ -50,7 +50,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.set = function (existingColumn) {
-            self.reloadOptions();
+            self.loadOptions();
             self.oldColumn(columnModel(existingColumn).unwrap());
             self.column(columnModel(existingColumn.unwrap()));
             self.isNew(false);
@@ -62,7 +62,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.isNew(false);
         };
 
-        self.reloadOptions = function () {
+        self.loadOptions = function () {
             $.ajax({
                 url: self.endpoint.getUrl(),
                 method: 'post',
