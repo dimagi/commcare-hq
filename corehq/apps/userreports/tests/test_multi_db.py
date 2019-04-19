@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import uuid
 from django.conf import settings
 from django.test import TestCase
-from mock import patch
 
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
