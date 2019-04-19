@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import base64
+from collections import OrderedDict
 
 from django.test import TestCase
 from django.test.client import Client
@@ -68,10 +69,10 @@ class TestMetadataDocument(TestCase, TestXmlMixin):
         correct_credentials = self._get_correct_credentials()
         with patch(
             'corehq.apps.api.odata.views.get_case_type_to_properties',
-            return_value={
-                'case_type_with_no_case_properties': [],
-                'case_type_with_case_properties': ['property_1', 'property_2'],
-            }
+            return_value=OrderedDict([
+                ('case_type_with_no_case_properties', []),
+                ('case_type_with_case_properties', ['property_1', 'property_2']),
+            ])
         ):
             response = self._execute_metadata_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
