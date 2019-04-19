@@ -58,7 +58,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None):
+                          file_attachments=None, bcc=None, smtp_exception_skip_list=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -67,7 +67,8 @@ def send_html_email_async(self, subject, recipient, html_content,
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc)
+                        file_attachments=file_attachments, bcc=bcc,
+                        smtp_exception_skip_list=smtp_exception_skip_list)
     except Exception as e:
         from corehq.util.python_compatibility import soft_assert_type_text
         if isinstance(recipient, six.string_types):
