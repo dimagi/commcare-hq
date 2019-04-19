@@ -118,3 +118,6 @@ VALID_LEVELS_FOR_DUMP = [
     '2',  # district
     '3',  # block
 ]
+
+ICDS_UCR_ENGINE_ID = 'icds-ucr'
+ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'

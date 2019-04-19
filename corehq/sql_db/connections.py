@@ -17,16 +17,7 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
-ICDS_UCR_ENGINE_ID = 'icds-ucr'
-ICDS_UCR_NON_DASHBOARD_ENGINE_ID = 'icds-ucr-non-dashboard'
 AAA_DB_ENGINE_ID = 'aaa-data'
-
-
-def get_icds_ucr_db_alias():
-    try:
-        return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
-    except KeyError:
-        return None
 
 
 def get_aaa_db_alias():

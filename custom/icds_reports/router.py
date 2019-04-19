@@ -1,10 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-from corehq.sql_db.connections import (
-    ICDS_UCR_ENGINE_ID,
-    connection_manager,
-    get_icds_ucr_db_alias,
-)
+from corehq.sql_db.connections import connection_manager
+from custom.icds_reports.const import ICDS_UCR_ENGINE_ID
 
 ICDS_REPORTS_APP = 'icds_reports'
 
@@ -44,3 +41,10 @@ def db_for_read_write(model, write=True):
         if not write:
             engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
+
+
+def get_icds_ucr_db_alias():
+    try:
+        return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+    except KeyError:
+        return None
