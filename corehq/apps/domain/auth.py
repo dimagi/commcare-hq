@@ -37,11 +37,7 @@ def _is_api_key_authentication(request):
         raise Http400("Bad HTTP_AUTHORIZATION header {}"
                       .format(authorization_header))
     else:
-        if username and api_key:
-            return True
-        else:
-            raise Http400("Bad HTTP_AUTHORIZATION header {}. Should be 'apikey <username>:<apikey>"
-                          .format(authorization_header))
+        return username and api_key
 
 
 def determine_authtype_from_header(request, default=DIGEST):
