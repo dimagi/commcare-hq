@@ -67,6 +67,9 @@ hqDefine('app_manager/js/summary/models',[
         self.getDiffClass = function (attribute) {
             return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
         };
+        self.getOptionsDiffClass = function (option) {
+            return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
+        };
 
         return self;
     };

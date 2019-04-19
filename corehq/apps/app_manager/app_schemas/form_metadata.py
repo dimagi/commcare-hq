@@ -28,7 +28,7 @@ DIFF_STATES = (REMOVED, ADDED, CHANGED)
 
 QUESTION_ATTRIBUTES = (
     'label', 'type', 'value', 'options', 'calculate', 'relevant',
-    'required', 'comment', 'setvalue'
+    'required', 'comment', 'setvalue', 'constraint'
 )
 
 
@@ -37,12 +37,13 @@ class _QuestionDiff(JsonObject):
     label = StringProperty(choices=DIFF_STATES)
     type = StringProperty(choices=DIFF_STATES)
     value = StringProperty(choices=DIFF_STATES)
-    options = StringProperty(choices=DIFF_STATES)
     calculate = StringProperty(choices=DIFF_STATES)
     relevant = StringProperty(choices=DIFF_STATES)
     required = StringProperty(choices=DIFF_STATES)
     comment = StringProperty(choices=DIFF_STATES)
     setvalue = StringProperty(choices=DIFF_STATES)
+    constraint = StringProperty(choices=DIFF_STATES)
+    options = DictProperty()    # {option: state}
 
 
 class _FormDiff(JsonObject):
@@ -272,13 +273,47 @@ class AppDiffGenerator(object):
 
     def _mark_changed_questions(self, first_question, second_question):
         for attribute in QUESTION_ATTRIBUTES:
-            attribute_changed = first_question[attribute] != second_question[attribute]
-            attribute_added = second_question[attribute] and not first_question[attribute]
-            if attribute_changed:
-                first_question.changes[attribute] = CHANGED
-                second_question.changes[attribute] = CHANGED
-            if attribute_added:
-                second_question.changes[attribute] = ADDED
+            if attribute == 'options':
+                self._mark_changed_options(first_question, second_question)
+            else:
+                self._mark_changed_attribute(first_question, second_question, attribute)
+
+    def _mark_changed_attribute(self, first_question, second_question, attribute):
+        attribute_changed = first_question[attribute] != second_question[attribute]
+        attribute_added = second_question[attribute] and not first_question[attribute]
+        attribute_removed = first_question[attribute] and not second_question[attribute]
+        if attribute_changed:
+            first_question.changes[attribute] = CHANGED
+            second_question.changes[attribute] = CHANGED
+        if attribute_added:
+            second_question.changes[attribute] = ADDED
+        if attribute_removed:
+            first_question.changes[attribute] = REMOVED
+
+    def _mark_changed_options(self, first_question, second_question):
+        first_option_values = {option.value for option in first_question.options}
+        second_option_values = {option.value for option in second_question.options}
+
+        removed_options = first_option_values - second_option_values
+        added_options = second_option_values - first_option_values
+
+        potentially_changed_options = first_option_values & second_option_values
+        first_options_by_value = {option.value: option.label for option in first_question.options}
+        second_options_by_value = {option.value: option.label for option in second_question.options}
+        changed_options = [
+            option for option in potentially_changed_options
+            if first_options_by_value[option] != second_options_by_value[option]
+        ]
+
+        for removed_option in removed_options:
+            first_question.changes['options'][removed_option] = REMOVED
+
+        for added_option in added_options:
+            second_question.changes['options'][added_option] = ADDED
+
+        for changed_option in changed_options:
+            first_question.changes['options'][changed_option] = CHANGED
+            second_question.changes['options'][changed_option] = CHANGED
 
 
 def get_app_diff(app1, app2):

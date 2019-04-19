@@ -131,9 +131,9 @@
                         </ul>
                         <!-- /ko -->
                         <!-- ko if: options.length -->
-                        <ol data-bind="foreach: options, css: getDiffClass('options') ">
-                            <li data-bind="visible: $root.showIds, text: value"></li>
-                            <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data)"></li>
+                        <ol data-bind="foreach: options ">
+                            <li data-bind="visible: $root.showIds, text: value, css: $parent.getOptionsDiffClass(value)"></li>
+                            <li data-bind="visible: $root.showLabels, text: $root.translateQuestion($data), css: $parent.getOptionsDiffClass(value)"></li>
                         </ol>
                         <!-- /ko -->
                     </li>
