@@ -64,10 +64,9 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
-        self.diffClass = options.diff_state ? 'diff-' + options.diff_state : '';
-        self.attributeDiff = _.mapObject(options.attribute_diff, function (value) {
-            return 'diff-' + value;
-        });
+        self.getDiffClass = function (attribute) {
+            return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
+        };
 
         return self;
     };
