@@ -444,15 +444,42 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        # Here's the queryset where I'd like the related model data
-        return queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+        queryset = queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+        if self.testing_changes:
+            # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
+            from django.db.models.expressions import F
+            from django.db.models.sql.constants import LOUTER
+            from django_cte import With
 
-        # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
-
-        # subevent = (MessagingSubEvent.objects
-        #             .get(parent__domain=self.domain,
-        #                  xforms_session__couch_id=message.xforms_session_couch_id))
-        # event = subevent.parent
+            session_event = With(
+                MessagingSubEvent.objects.filter(
+                    parent__domain=self.domain,
+                    parent_id__in=queryset.values('id'),
+                ).values(
+                    couch_id=F("xforms_session__couch_id"),
+                    source=F("parent__source"),
+                    source_id=F("parent__source_id"),
+                    session_content_type=F("parent__content_type"),
+                    session_form_name=F("parent__form_name"),
+                ),
+                name="session_event"
+            )
+            queryset = session_event.join(
+                queryset.with_cte(session_event),
+                xforms_session_couch_id=session_event.col.couch_id,
+                # Use secret parameter to do LEFT OUTER JOIN
+                # WARNING: may be automatically changed to an INNER JOIN if
+                # more filters are added to the queryset after this join.
+                # See also: https://github.com/dimagi/django-cte/issues/2
+                _join_type=LOUTER,
+            ).annotate(
+                session_source=session_event.col.source,
+                session_source_id=session_event.col.source_id,
+                session_content_type=session_event.col.session_content_type,
+                session_form_name=session_event.col.session_form_name,
+            )
+        #assert 0, str(queryset.query)  # uncomment to print the query
+        return queryset
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -498,25 +525,16 @@ class MessageLogReport(BaseCommConnectLogReport):
             ] if val != Ellipsis]
 
     def _get_message_event_display(self, message, content_cache):
-        # TODO event need only be this namedtuple:
-        # event = EventStub(
-        #     source=event.source,
-        #     source_id=event.source_id,
-        #     content_type=event.content_type,
-        #     form_name=event.form_name,
-        # )
         event = None
         if message.messaging_subevent:
             event = message.messaging_subevent.parent
-        elif message.xforms_session_couch_id:
-            try:
-                # This is the costly query I'd like to move to the queryset
-                subevent = (MessagingSubEvent.objects
-                            .get(parent__domain=self.domain,
-                                 xforms_session__couch_id=message.xforms_session_couch_id))
-                event = subevent.parent
-            except MessagingSubEvent.DoesNotExist:
-                pass
+        elif message.session_source_id is not None:
+            event = EventStub(
+                source=message.session_source,
+                source_id=message.session_source_id,
+                content_type=message.session_content_type,
+                form_name=message.session_form_name,
+            )
         if event:
             return get_event_display(self.domain, event, content_cache)
         return "-"
