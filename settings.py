@@ -1274,6 +1274,8 @@ if helper.is_testing():
 
 
 DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
+if 'custom.icds_reports.router.ICDSReportsRouter' not in DATABASE_ROUTERS:
+    DATABASE_ROUTERS.append('custom.icds_reports.router.ICDSReportsRouter')
 if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 

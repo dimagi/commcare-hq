@@ -46,7 +46,6 @@ from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -102,6 +101,7 @@ from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
 )
+from custom.icds_reports.router import db_for_read_write
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
