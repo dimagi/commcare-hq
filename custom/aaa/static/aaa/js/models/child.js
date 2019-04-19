@@ -123,7 +123,7 @@ hqDefine("aaa/js/models/child", [
         self.linkName = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'child');
-            url = url.replace('beneficiary_id', 1);
+            url = url.replace('beneficiary_id', self.id);
             url = url + '?month=' + postData.selectedMonth() + '&year=' + postData.selectedYear();
             return '<a href="' + url + '">' + self.name + ' (' + self.age()  + ')</a>';
         });
