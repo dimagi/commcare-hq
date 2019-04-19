@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+from custom.icds_reports.models.manager import CitusComparisonManager
+
 
 class AggAwcDailyView(models.Model):
     awc_id = models.TextField(primary_key=True)
@@ -49,6 +51,8 @@ class AggAwcDailyView(models.Model):
     num_launched_awcs = models.IntegerField(blank=True, null=True)
     cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
