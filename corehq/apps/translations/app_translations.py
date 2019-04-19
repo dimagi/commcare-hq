@@ -725,25 +725,20 @@ def update_form_translations(sheet, rows, missing_cols, app):
         return msgs
 
     def find_itext_node(xform):
-        try:
-            # find the bucket node that holds all translations.
-            # it has a bunch of nodes, one for each lang, which then
-            # has translations for all labels as a child node, example
-            # <itext>
-            #   <translation lang="en" default="">
-            #     <text id="name-label">
-            #       <value>Name2</value>
-            #       <value form="image">image_path</value>
-            #     </text>
-            #   </translation>
-            # </itext>
-            return xform.itext_node
-        except XFormException:
-            return None
+        # find the bucket node that holds all translations.
+        # it has a bunch of nodes, one for each lang, which then
+        # has translations for all labels as a child node, example
+        # <itext>
+        #   <translation lang="en" default="">
+        #     <text id="name-label">
+        #       <value>Name2</value>
+        #       <value form="image">image_path</value>
+        #     </text>
+        #   </translation>
+        # </itext>
+        return xform.itext_node
 
     itext = find_itext_node(xform)
-    if not itext:
-        return msgs
 
     # Make language nodes for each language if they don't yet exist
     #
