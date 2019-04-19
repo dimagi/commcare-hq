@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from django.test.testcases import SimpleTestCase
+from django.test.testcases import SimpleTestCase, TestCase
 
 from mock import MagicMock, patch
 
@@ -11,17 +11,13 @@ from corehq.apps.app_manager.app_schemas.form_metadata import (
     get_app_diff,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 
 
-@patch('corehq.apps.app_manager.app_schemas.app_case_metadata.get_case_property_description_dict',
-       MagicMock(return_value={}))
-class TestAppDiffs(SimpleTestCase):
-
+class _BaseTestAppDiffs(object):
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
-        is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
-        is_usercase_in_use_mock.return_value = False
+        super(_BaseTestAppDiffs, self).setUp()
 
         self.factory1 = AppFactory()
         self.app1 = self.factory1.app
@@ -31,8 +27,32 @@ class TestAppDiffs(SimpleTestCase):
         self.app2 = self.factory2.app
         self.factory2.new_basic_module('module_1', 'case')
 
+    def _add_question(self, form, options=None):
+        if options is None:
+            options = {'name': 'name', 'label': "Name"}
+        if 'name' not in options:
+            options['name'] = 'name'
+        if 'label' not in options:
+            options['label'] = "Name"
+
+        builder = XFormBuilder(form.name)
+        builder.new_question(**options)
+        form.source = builder.tostring(pretty_print=True).decode('utf-8')
+
+
+@patch('corehq.apps.app_manager.app_schemas.app_case_metadata.get_case_property_description_dict',
+       MagicMock(return_value={}))
+class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
+
+    def setUp(self):
+        super(TestAppDiffs, self).setUp()
+        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
+        is_usercase_in_use_mock.return_value = False
+
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
+        super(TestAppDiffs, self).tearDown()
 
     def test_add_module(self):
         self.factory2.new_basic_module('module_2', 'case')
@@ -78,18 +98,6 @@ class TestAppDiffs(SimpleTestCase):
         diff = get_app_diff(self.app1, self.app2)
         self.assertEqual(diff.first[0]['forms'][1]['changes']['form'], REMOVED)
 
-    def _add_question(self, form, options=None):
-        if options is None:
-            options = {'name': 'name', 'label': "Name"}
-        if 'name' not in options:
-            options['name'] = 'name'
-        if 'label' not in options:
-            options['label'] = "Name"
-
-        builder = XFormBuilder(form.name)
-        builder.new_question(**options)
-        form.source = builder.tostring(pretty_print=True).decode('utf-8')
-
     def test_add_question(self):
         self._add_question(self.app2.modules[0].forms[0])
         diff = get_app_diff(self.app1, self.app2)
@@ -114,15 +122,51 @@ class TestAppDiffs(SimpleTestCase):
         self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
         self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
 
-    def test_add_question_display_condition(self):
-        self._add_question(self.app1.modules[0].forms[0], {'relevant': ''})
-        self._add_question(self.app2.modules[0].forms[0], {'relevant': 'foo = bar'})
+    def test_add_question_constraint(self):
+        self._add_question(self.app1.modules[0].forms[0], {'constraint': ''})
+        self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo = bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['relevant'], ADDED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['constraint'], ADDED)
 
-    def test_change_question_display_condition(self):
-        self._add_question(self.app1.modules[0].forms[0], {'relevant': 'foo = bar'})
-        self._add_question(self.app2.modules[0].forms[0], {'relevant': 'foo != bar'})
+    def test_change_question_constraint(self):
+        self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
+        self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
         diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['relevant'], CHANGED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['relevant'], CHANGED)
+        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
+        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
+
+
+class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
+    def tearDown(self):
+        delete_all_apps()
+        super(TestAppDiffsWithDB, self).tearDown()
+
+    def test_remove_save_property(self):
+        self._add_question(self.app1.modules[0].forms[0])
+        self._add_question(self.app2.modules[0].forms[0])
+        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={'foo': '/data/name'})
+        self.app1.save()
+
+        diff = get_app_diff(self.app1, self.app2)
+        self.assertEqual(
+            diff.first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
+            REMOVED
+        )
+
+    def test_change_save_property(self):
+        self._add_question(self.app1.modules[0].forms[0])
+        self._add_question(self.app2.modules[0].forms[0])
+        self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={'foo': '/data/name'})
+        self.factory2.form_requires_case(self.app2.modules[0].forms[0], update={'bar': '/data/name'})
+        self.app1.save()
+        self.app2.save()
+
+        diff = get_app_diff(self.app1, self.app2)
+        self.assertEqual(
+            diff.first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
+            REMOVED,
+        )
+        self.assertEqual(
+            diff.second[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['bar'],
+            ADDED,
+        )

@@ -28,7 +28,8 @@ DIFF_STATES = (REMOVED, ADDED, CHANGED)
 
 QUESTION_ATTRIBUTES = (
     'label', 'type', 'value', 'options', 'calculate', 'relevant',
-    'required', 'comment', 'setvalue', 'constraint'
+    'required', 'comment', 'setvalue', 'constraint',
+    'load_properties', 'save_properties'
 )
 
 FORM_ATTRIBUTES = (
@@ -52,6 +53,8 @@ class _QuestionDiff(JsonObject):
     setvalue = StringProperty(choices=DIFF_STATES)
     constraint = StringProperty(choices=DIFF_STATES)
     options = DictProperty()    # {option: state}
+    load_properties = DictProperty()  # {case_type: {property: state}}
+    save_properties = DictProperty()  # {case_type: {property: state}}
 
 
 class _FormDiff(JsonObject):
@@ -291,6 +294,8 @@ class AppDiffGenerator(object):
         for attribute in QUESTION_ATTRIBUTES:
             if attribute == 'options':
                 self._mark_changed_options(first_question, second_question)
+            elif attribute in ('save_properties', 'load_properties'):
+                self._mark_changed_case_properties(first_question, second_question, attribute)
             else:
                 self._mark_changed_attribute(first_question, second_question, attribute)
 
@@ -334,6 +339,17 @@ class AppDiffGenerator(object):
         for changed_option in changed_options:
             first_question.changes['options'][changed_option] = CHANGED
             second_question.changes['options'][changed_option] = CHANGED
+
+    def _mark_changed_case_properties(self, first_question, second_question, attribute):
+        first_props = {(prop.case_type, prop.property) for prop in first_question[attribute]}
+        second_props = {(prop.case_type, prop.property) for prop in second_question[attribute]}
+        removed_properties = first_props - second_props
+        added_properties = second_props - first_props
+
+        for removed_property in removed_properties:
+            first_question.changes[attribute][removed_property[0]] = {removed_property[1]: REMOVED}
+        for added_property in added_properties:
+            second_question.changes[attribute][added_property[0]] = {added_property[1]: ADDED}
 
 
 def get_app_diff(app1, app2):

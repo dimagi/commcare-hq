@@ -107,7 +107,7 @@
                             </li>
                             <!-- /ko -->
                             <!-- ko foreach: load_properties -->
-                            <li data-bind="visible: $root.showCaseProperties">
+                            <li data-bind="visible: $root.showCaseProperties, css: $parent.getLoadSaveDiffClass('load_properties', $data.case_type, $data.property)">
                                 <i class = "fa fa-li text-muted fa-briefcase"></i>
                                 <span class="text-muted" data-bind="text:$data.case_type"></span> -
                                 <!-- ko text: $data.property --><!-- /ko -->
@@ -118,7 +118,7 @@
                             </li>
                             <!-- /ko -->
                             <!-- ko foreach: save_properties -->
-                            <li data-bind="visible: $root.showCaseProperties">
+                            <li data-bind="visible: $root.showCaseProperties, css: $parent.getLoadSaveDiffClass('save_properties', $data.case_type, $data.property)">
                                 <i class = "fa fa-li text-muted fa-file"></i>
                                 <span title="{% trans 'Save property' %}">
                                     <i class = "fa text-muted fa-arrow-right"></i>
