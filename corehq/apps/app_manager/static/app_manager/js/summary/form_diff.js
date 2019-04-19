@@ -96,7 +96,7 @@ hqDefine('app_manager/js/summary/form_diff',[
         });
 
 
-        var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent]);
+        var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent], true);
 
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initVersionsBox(

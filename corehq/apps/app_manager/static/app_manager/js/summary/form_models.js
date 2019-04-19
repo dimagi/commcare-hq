@@ -4,7 +4,7 @@ hqDefine('app_manager/js/summary/form_models',[
     'hqwebapp/js/assert_properties',
     'app_manager/js/summary/models',
 ], function (_, ko, assertProperties, models) {
-    var formSummaryControlModel = function (viewModels) {
+    var formSummaryControlModel = function (viewModels, startTogglesEnabled) {
         var self = {};
         _.extend(self, models.controlModel({
             visibleAppIds: _.pluck(viewModels, 'appId'),
@@ -54,32 +54,32 @@ hqDefine('app_manager/js/summary/form_models',[
             },
         }));
 
-        self.showCalculations = ko.observable(false);
+        self.showCalculations = ko.observable(startTogglesEnabled);
         self.toggleCalculations = function () {
             self.showCalculations(!self.showCalculations());
         };
 
-        self.showRelevance = ko.observable(false);
+        self.showRelevance = ko.observable(startTogglesEnabled);
         self.toggleRelevance = function () {
             self.showRelevance(!self.showRelevance());
         };
 
-        self.showConstraints = ko.observable(false);
+        self.showConstraints = ko.observable(startTogglesEnabled);
         self.toggleConstraints = function () {
             self.showConstraints(!self.showConstraints());
         };
 
-        self.showComments = ko.observable(false);
+        self.showComments = ko.observable(startTogglesEnabled);
         self.toggleComments = function () {
             self.showComments(!self.showComments());
         };
 
-        self.showDefaultValues = ko.observable(false);
+        self.showDefaultValues = ko.observable(startTogglesEnabled);
         self.toggleDefaultValues = function () {
             self.showDefaultValues(!self.showDefaultValues());
         };
 
-        self.showCaseProperties = ko.observable(false);
+        self.showCaseProperties = ko.observable(startTogglesEnabled);
         self.toggleCaseProperties = function () {
             self.showCaseProperties(!self.showCaseProperties());
         };
