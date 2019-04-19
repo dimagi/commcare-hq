@@ -211,6 +211,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
+    mirrored_engine_ids = DictProperty()
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -464,11 +465,22 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def validate_db_config(self):
+        if self.engine_id in self.mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in self.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
+        self.validate_db_config()
 
         # validate indicators and column uniqueness
         columns = [c.id for c in self.indicators.get_columns()]
@@ -753,8 +765,6 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
-    # List of engine_ids to be mirrored to by environment
-    mirrored_engine_ids = DictProperty()
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -823,16 +833,6 @@ class StaticDataSourceConfiguration(JsonObject):
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
         return DataSourceConfiguration.wrap(doc)
-
-    def validate_db_config(self):
-        if self.engine_id in self.mirrored_engine_ids:
-            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
-
-        for engine_id in self.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
-            if not connection_manager.engine_id_is_available(engine_id):
-                raise BadSpecError(
-                    "DB for engine_id {} is not availble".format(engine_id)
-                )
 
 
 class StaticReportConfiguration(JsonObject):
