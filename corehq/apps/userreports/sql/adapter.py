@@ -274,6 +274,7 @@ class MultiDBSqlAdapter(object):
         self.all_adapters = [self.main_adapter]  # include the main primary adapter
         engine_ids = []
         seen_dbs = [connection_manager.get_django_db_alias(self.main_adapter.engine_id)]
+        # different engine_ids could resolve to same DB, so filter them out
         for engine_id in self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
             db = connection_manager.get_django_db_alias(engine_id)
             if db not in seen_dbs:

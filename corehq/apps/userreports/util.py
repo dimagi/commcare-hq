@@ -135,16 +135,10 @@ def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
         MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
     requires_mirroring = config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
     if requires_mirroring:
-        if raise_errors:
-            adapter = ErrorRaisingMultiDBAdapter(config)
-        else:
-            adapter = MultiDBSqlAdapter(config)
+        adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
     else:
-        if raise_errors:
-            adapter = IndicatorSqlAdapter(config)
-        else:
-            adapter = ErrorRaisingIndicatorSqlAdapter(config)
-
+        adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    adapter = adapter_cls(config)
     track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
     return IndicatorAdapterLoadTracker(adapter, track_load)
 
