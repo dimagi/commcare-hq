@@ -918,7 +918,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     _update_translation_node(
                         new_translation,
                         get_value_node(text_node),
-                        {'form': 'default'},
+                        {},
                         delete_node=(not keep_value_node)
                     )
                 else:
