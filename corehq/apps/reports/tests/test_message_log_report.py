@@ -33,6 +33,7 @@ class MessageLogReportTest(TestCase):
     def test_event_column(self):
         self.make_simple_sms('message')
         self.make_case_rule_sms('Rule 2')
+        # This sms tests this particular condition
         self.make_survey_sms('Rule 3')
 
         for report_value, rule_name in zip(

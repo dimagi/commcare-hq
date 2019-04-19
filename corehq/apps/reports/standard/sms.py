@@ -50,6 +50,7 @@ from corehq.apps.reports.standard.message_event_display import (
     get_event_display,
     get_sms_status_display,
     get_status_display,
+    EventStub,
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
@@ -443,7 +444,15 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
+        # Here's the queryset where I'd like the related model data
         return queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+
+        # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
+
+        # subevent = (MessagingSubEvent.objects
+        #             .get(parent__domain=self.domain,
+        #                  xforms_session__couch_id=message.xforms_session_couch_id))
+        # event = subevent.parent
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
@@ -489,11 +498,19 @@ class MessageLogReport(BaseCommConnectLogReport):
             ] if val != Ellipsis]
 
     def _get_message_event_display(self, message, content_cache):
+        # TODO event need only be this namedtuple:
+        # event = EventStub(
+        #     source=event.source,
+        #     source_id=event.source_id,
+        #     content_type=event.content_type,
+        #     form_name=event.form_name,
+        # )
         event = None
         if message.messaging_subevent:
             event = message.messaging_subevent.parent
         elif message.xforms_session_couch_id:
             try:
+                # This is the costly query I'd like to move to the queryset
                 subevent = (MessagingSubEvent.objects
                             .get(parent__domain=self.domain,
                                  xforms_session__couch_id=message.xforms_session_couch_id))
