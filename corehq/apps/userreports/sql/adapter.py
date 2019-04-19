@@ -271,7 +271,7 @@ class MultiDBSqlAdapter(object):
         config.validate_db_config()
         self.config = config
         self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
-        self.mirrored_adapters = [self.main_adapter]  # include the main primary adapter
+        self.all_adapters = [self.main_adapter]  # include the main primary adapter
         engine_ids = []
         seen_dbs = [connection_manager.get_django_db_alias(self.main_adapter.engine_id)]
         for engine_id in self.config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
@@ -280,7 +280,7 @@ class MultiDBSqlAdapter(object):
                 engine_ids.append(engine_id)
             seen_dbs.append(db)
         for engine_id in engine_ids:
-            self.mirrored_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
+            self.all_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
 
     def handle_exception(self, doc, exception):
         self.main_adapter.handle_exception(doc, exception)
@@ -301,11 +301,11 @@ class MultiDBSqlAdapter(object):
         return self.main_adapter.get_query_object()
 
     def best_effort_save(self, doc, eval_context=None):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.best_effort_save(doc, eval_context)
 
     def save(self, doc, eval_context=None):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.save(doc, eval_context)
 
     def get_all_values(self, doc, eval_context=None):
@@ -319,38 +319,38 @@ class MultiDBSqlAdapter(object):
         return self.main_adapter.get_distinct_values(column, limit)
 
     def build_table(self):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.build_table()
 
     def rebuild_table(self):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.rebuild_table()
 
     def drop_table(self):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.drop_table()
 
     @unit_testing_only
     def clear_table(self):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.clear_table()
 
     def save_rows(self, rows):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.save_rows(rows)
 
     def bulk_save(self, docs):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.bulk_save(docs)
 
     def bulk_delete(self, doc_ids):
-        for adapter in self.mirrored_adapters:
+        for adapter in self.all_adapters:
             adapter.bulk_delete(doc_ids)
 
     def doc_exists(self, doc):
         return any([
             adapter.doc_exists(doc)
-            for adapter in self.mirrored_adapters
+            for adapter in self.all_adapters
         ])
 
 
