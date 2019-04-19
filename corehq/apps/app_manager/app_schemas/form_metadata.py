@@ -31,6 +31,14 @@ QUESTION_ATTRIBUTES = (
     'required', 'comment', 'setvalue', 'constraint'
 )
 
+FORM_ATTRIBUTES = (
+    'name', 'short_comment', 'form_filter'
+)
+
+MODULE_ATTRIBUTES = (
+    'name', 'short_comment', 'module_filter'
+)
+
 
 class _QuestionDiff(JsonObject):
     question = StringProperty(choices=(ADDED, REMOVED))
@@ -207,18 +215,22 @@ class AppDiffGenerator(object):
 
         self._populate_id_caches()
         self._mark_removed_items()
-        self._mark_added_items()
+        self._mark_added_modules()
 
     def _populate_id_caches(self):
         self._first_ids = set()
+        self._first_forms_by_id = {}
+        self._first_modules_by_id = {}
         self._first_questions_by_id = defaultdict(dict)
         self._second_ids = set()
         self._second_questions_by_id = defaultdict(dict)
 
         for module in self.first:
             self._first_ids.add(module['id'])
+            self._first_modules_by_id[module['id']] = module
             for form in module['forms']:
                 self._first_ids.add(form['id'])
+                self._first_forms_by_id[form['id']] = form
                 for question in form['questions']:
                     self._first_questions_by_id[form['id']][question['value']] = question
 
@@ -248,11 +260,13 @@ class AppDiffGenerator(object):
             if question.value not in self._second_questions_by_id[form_id]:
                 question.changes.question = REMOVED
 
-    def _mark_added_items(self):
+    def _mark_added_modules(self):
         for module in self.second:
             if module['id'] not in self._first_ids:
                 module.changes.module = ADDED
             else:
+                for attribute in MODULE_ATTRIBUTES:
+                    self._mark_changed_attribute(self._first_modules_by_id[module['id']], module, attribute)
                 self._mark_added_forms(module['forms'])
 
     def _mark_added_forms(self, forms):
@@ -260,6 +274,8 @@ class AppDiffGenerator(object):
             if form['id'] not in self._first_ids:
                 form.changes.form = ADDED
             else:
+                for attribute in FORM_ATTRIBUTES:
+                    self._mark_changed_attribute(self._first_forms_by_id[form['id']], form, attribute)
                 self._mark_added_questions(form['id'], form['questions'])
 
     def _mark_added_questions(self, form_id, questions):
@@ -278,17 +294,21 @@ class AppDiffGenerator(object):
             else:
                 self._mark_changed_attribute(first_question, second_question, attribute)
 
-    def _mark_changed_attribute(self, first_question, second_question, attribute):
-        attribute_changed = first_question[attribute] != second_question[attribute]
-        attribute_added = second_question[attribute] and not first_question[attribute]
-        attribute_removed = first_question[attribute] and not second_question[attribute]
-        if attribute_changed:
-            first_question.changes[attribute] = CHANGED
-            second_question.changes[attribute] = CHANGED
+    def _mark_changed_attribute(self, first_item, second_item, attribute):
+        is_translatable_property = (isinstance(first_item[attribute], dict)
+                                    and isinstance(second_item[attribute], dict))
+        translation_changed = (is_translatable_property
+                               and set(second_item[attribute].items()) - set(first_item[attribute].items()))
+        attribute_changed = first_item[attribute] != second_item[attribute]
+        attribute_added = second_item[attribute] and not first_item[attribute]
+        attribute_removed = first_item[attribute] and not second_item[attribute]
+        if attribute_changed or translation_changed:
+            first_item.changes[attribute] = CHANGED
+            second_item.changes[attribute] = CHANGED
         if attribute_added:
-            second_question.changes[attribute] = ADDED
+            second_item.changes[attribute] = ADDED
         if attribute_removed:
-            first_question.changes[attribute] = REMOVED
+            first_item.changes[attribute] = REMOVED
 
     def _mark_changed_options(self, first_question, second_question):
         first_option_values = {option.value for option in first_question.options}

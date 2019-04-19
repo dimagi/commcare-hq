@@ -61,6 +61,18 @@ class TestAppDiffs(SimpleTestCase):
         self.assertEqual(diff.second[0]['forms'][1]['changes']['form'], ADDED)
         self.assertEqual(diff.second[0]['forms'][1]['name'], self.app2.modules[0].forms[1].name)
 
+    def test_change_form_name(self):
+        self.app2.modules[0].forms[0].name['en'] = "a new name"
+        diff = get_app_diff(self.app1, self.app2)
+        self.assertEqual(diff.first[0]['forms'][0]['changes']['name'], CHANGED)
+        self.assertEqual(diff.first[0]['forms'][0]['changes']['name'], CHANGED)
+
+    def test_change_form_filter(self):
+        self.app2.modules[0].forms[0].form_filter = "foo = 'bar'"
+        diff = get_app_diff(self.app1, self.app2)
+        self.assertEqual(diff.first[0]['forms'][0]['changes']['form_filter'], CHANGED)
+        self.assertEqual(diff.first[0]['forms'][0]['changes']['form_filter'], CHANGED)
+
     def test_remove_form(self):
         self.factory1.new_form(self.app1.modules[0])
         diff = get_app_diff(self.app1, self.app2)
