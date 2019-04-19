@@ -823,6 +823,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             return empty_form_attr_value_nodes[0]
         if default_form_attr_value_nodes:
             return sanitize_invalid_value_node(default_form_attr_value_nodes[0])
+        return WrappedNode(None)
 
     def had_markdown(text_node_):
         """
@@ -838,7 +839,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
         builder that the value isn't Markdown.
         """
         value_node_ = get_value_node(text_node_)
-        if value_node_ is None:
+        if not value_node_.exists():
             return False
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
