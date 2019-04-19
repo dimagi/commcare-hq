@@ -201,11 +201,6 @@ class ConnectionManager(object):
     def _get_reporting_db_config(self):
         return getattr(settings, 'REPORTING_DATABASES', None)
 
-    def _add_django_db_from_settings_key(self, engine_id, db_alias_settings_key):
-        db_alias = self._get_db_alias_from_settings_key(db_alias_settings_key)
-        if db_alias:
-            self._add_django_db(engine_id, db_alias)
-
     def _add_django_db(self, engine_id, db_alias):
         self.engine_id_django_db_map[engine_id] = db_alias
         connection_string = self._connection_string_from_django(db_alias)
