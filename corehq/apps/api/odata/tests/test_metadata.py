@@ -14,6 +14,7 @@ from corehq import toggles
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
@@ -28,10 +29,6 @@ class TestMetadataDocument(TestCase, TestXmlMixin):
         cls.domain.save()
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
         cls.metadata_url = reverse('odata_meta', kwargs={'domain': cls.domain.name})
-
-    def tearDown(self):
-        toggles.ODATA.set(self.domain.name, False, toggles.NAMESPACE_DOMAIN)
-        super(TestMetadataDocument, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
@@ -53,8 +50,8 @@ class TestMetadataDocument(TestCase, TestXmlMixin):
         response = self._execute_metadata_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
+    @flag_enabled('ODATA')
     def test_no_case_types(self):
-        self._enable_odata_toggle_for_domain()
         correct_credentials = self._get_correct_credentials()
         with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
             response = self._execute_metadata_query(correct_credentials)
@@ -64,8 +61,8 @@ class TestMetadataDocument(TestCase, TestXmlMixin):
             self.get_xml('empty_metadata_document', override_path=PATH_TO_TEST_DATA)
         )
 
+    @flag_enabled('ODATA')
     def test_populated_metadata_document(self):
-        self._enable_odata_toggle_for_domain()
         correct_credentials = self._get_correct_credentials()
         with patch(
             'corehq.apps.api.odata.views.get_case_type_to_properties',
@@ -80,9 +77,6 @@ class TestMetadataDocument(TestCase, TestXmlMixin):
             response.content,
             self.get_xml('populated_metadata_document', override_path=PATH_TO_TEST_DATA)
         )
-
-    def _enable_odata_toggle_for_domain(self):
-        toggles.ODATA.set(self.domain.name, True, toggles.NAMESPACE_DOMAIN)
 
     def _execute_metadata_query(self, credentials):
         return self.client.get(self.metadata_url, HTTP_AUTHORIZATION='Basic ' + credentials)
