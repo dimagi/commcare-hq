@@ -9,6 +9,7 @@ from django.core.mail import send_mail, mail_admins
 from corehq.util.datadog.gauges import datadog_gauge_task
 from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 import six
 
 
@@ -67,7 +68,8 @@ def send_html_email_async(self, subject, recipient, html_content,
     try:
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc)
+                        file_attachments=file_attachments, bcc=bcc,
+                        smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
     except Exception as e:
         from corehq.util.python_compatibility import soft_assert_type_text
         if isinstance(recipient, six.string_types):
