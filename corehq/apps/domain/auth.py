@@ -29,8 +29,6 @@ FORMPLAYER = 'formplayer'
 
 def _is_api_key_authentication(request):
     authorization_header = request.META.get('HTTP_AUTHORIZATION', '')
-    if not authorization_header.lower().startswith('apikey '):
-        return False
 
     api_key_authentication = ApiKeyAuthentication()
     try:
