@@ -258,7 +258,7 @@ class RepeatRecordView(View):
         except XFormNotFound:
             return JsonResponse({
                 'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
-            }, status_code=404)
+            }, status=404)
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)

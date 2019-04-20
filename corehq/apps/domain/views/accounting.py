@@ -1570,7 +1570,7 @@ class BaseCardView(DomainAccountingSettings):
         error = ("Something went wrong while processing your request. "
                  "We're working quickly to resolve the issue. "
                  "Please try again in a few hours.")
-        return JsonResponse({'error': error}, status_code=500)
+        return JsonResponse({'error': error}, status=500)
 
     def _stripe_error(self, e):
         body = e.json_body

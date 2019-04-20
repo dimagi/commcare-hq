@@ -88,9 +88,9 @@ def system_ajax(request):
             tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status=500)
             else:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status=500)
 
         if not is_bigcouch():
             return JsonResponse(tasks)
@@ -138,7 +138,7 @@ def system_ajax(request):
                     timeout=3,
                 ).json()
             except Exception as ex:
-                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
+                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]

@@ -910,7 +910,7 @@ def rearrange(request, domain, app_id, key):
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
-            return JsonResponse({'error': error}, status_code=400)
+            return JsonResponse({'error': error}, status=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
@@ -920,7 +920,7 @@ def rearrange(request, domain, app_id, key):
             'The sidebar has been updated, so please try again.'
         )
         if ajax:
-            return JsonResponse(error, status_code=400)
+            return JsonResponse(error, status=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)

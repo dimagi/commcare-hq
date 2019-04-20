@@ -394,7 +394,7 @@ def check_lockout(fn):
 
         user = CouchUser.get_by_username(username)
         if user and user.is_locked_out() and user.supports_lockout():
-            return JsonResponse({"error": _("maximum password attempts exceeded")}, status_code=401)
+            return JsonResponse({"error": _("maximum password attempts exceeded")}, status=401)
         else:
             return fn(request, *args, **kwargs)
     return _inner

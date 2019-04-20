@@ -350,7 +350,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             return JsonResponse(
                 {'message': _("You can't enable a form as release notes without allowing it as "
                     "a release notes form <TODO messaging>")},
-                status_code=400
+                status=400
             )
     if should_edit('no_vellum'):
         form.no_vellum = request.POST['no_vellum'] == 'true'
@@ -390,7 +390,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except etree.XMLSyntaxError as error:
             return JsonResponse(
                 {'message': _("There was an issue with your custom instances: {}").format(error.message)},
-                status_code=400
+                status=400
             )
 
         form.custom_instances = [
@@ -412,7 +412,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except etree.XMLSyntaxError as error:
             return JsonResponse(
                 {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
-                status_code=400
+                status=400
             )
 
         existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
@@ -438,7 +438,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if error_message:
             return JsonResponse(
                 {'message': error_message},
-                status_code=400
+                status=400
             )
     handle_media_edits(request, form, should_edit, resp, lang)
 

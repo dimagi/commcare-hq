@@ -170,7 +170,7 @@ class OpenmrsImporterView(BaseProjectSettingsView):
             get_openmrs_importers_by_domain.clear(request.domain)
             return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
         except Exception as err:
-            return JsonResponse({'message': None, 'error': str(err)}, status_code=500)
+            return JsonResponse({'message': None, 'error': str(err)}, status=500)
 
     @property
     def page_context(self):
