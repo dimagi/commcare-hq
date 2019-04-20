@@ -734,9 +734,9 @@ class ReportPreview(BaseDomainView):
                 if response_data:
                     return JsonResponse(response_data)
             except BadBuilderConfigError as e:
-                return JsonResponse({'status': 'error', 'message': str(e)}, status_code=400)
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
-        return JsonResponse({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
+        return JsonResponse({'status': 'error', 'message': 'Invalid report configuration'}, status=400)
 
 
 def _assert_report_delete_privileges(request):
@@ -898,26 +898,26 @@ def evaluate_expression(request, domain):
             {"error": _("Data source with id {} not found in domain {}.").format(
                 data_source_id, domain
             )},
-            status_code=404,
+            status=404,
         )
     except DocumentNotFoundError:
         return JsonResponse(
             {"error": _("{} with id {} not found in domain {}.").format(
                 doc_type, doc_id, domain
             )},
-            status_code=404,
+            status=404,
         )
     except BadSpecError as e:
         return JsonResponse(
             {"error": _("Problem with expression: {}.").format(
                 e
             )},
-            status_code=400,
+            status=400,
         )
     except Exception as e:
         return JsonResponse(
             {"error": six.text_type(e)},
-            status_code=500,
+            status=500,
         )
 
 
@@ -973,7 +973,7 @@ def evaluate_data_source(request, domain):
         else:
             data['db_error'] = _("Error querying database for data.")
 
-    return JsonResponse(data=data)
+    return JsonResponse(data)
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):

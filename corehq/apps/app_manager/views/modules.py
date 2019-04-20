@@ -468,7 +468,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         if error_message:
             return JsonResponse(
                 {'message': error_message},
-                status_code=400
+                status=400
             )
 
     if should_edit("case_type"):

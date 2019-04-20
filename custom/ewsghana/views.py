@@ -240,7 +240,7 @@ def non_administrative_locations_for_select2(request, domain):
         except SQLLocation.DoesNotExist:
             return JsonResponse(
                 {'message': 'no location with id %s found' % id},
-                status_code=404,
+                status=404,
             )
         else:
             return JsonResponse(loc_to_payload(loc))

@@ -191,7 +191,7 @@ def handle_401_response(f):
                         return JsonResponse({
                             "error": error_code,
                             "default_response": message
-                        }, status_code=406)
+                        }, status=406)
 
         return response
     return _inner

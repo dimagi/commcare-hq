@@ -91,7 +91,7 @@ class DataSetMapView(BaseProjectSettingsView):
             get_dataset_maps.clear(request.domain)
             return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
         except Exception as err:
-            return JsonResponse({'error': str(err)}, status_code=500)
+            return JsonResponse({'error': str(err)}, status=500)
 
     @property
     def page_context(self):
@@ -106,7 +106,7 @@ class DataSetMapView(BaseProjectSettingsView):
 @require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
-    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status_code=202)
+    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status=202)
 
 
 class Dhis2ModelListViewHelper(object):

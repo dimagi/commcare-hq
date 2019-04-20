@@ -135,7 +135,7 @@ def import_build(request):
                 'error_message': six.text_type(e),
                 'error_type': six.text_type(type(e))
             }
-        }, status_code=400)
+        }, status=400)
 
     if build_number:
         # Strip and remove
@@ -147,7 +147,7 @@ def import_build(request):
         except ValueError:
             return JsonResponse({
                 'reason': 'build_number must be an int'
-            }, status_code=400)
+            }, status=400)
 
     session = requests.session()
 
@@ -169,7 +169,7 @@ def import_build(request):
                     'content': r.content,
                     'headers': r.headers,
                 }
-            }, status_code=400)
+            }, status=400)
         try:
             _, inferred_build_number = (
                 extract_build_info_from_filename(r.headers['content-disposition'])
@@ -184,7 +184,7 @@ def import_build(request):
             return JsonResponse({
                 'reason': "You didn't give us a build number "
                           "and we couldn't infer it"
-            }, status_code=400)
+            }, status=400)
 
         build = CommCareBuild.create_from_zip(
             io.BytesIO(r.content), version, build_number)
