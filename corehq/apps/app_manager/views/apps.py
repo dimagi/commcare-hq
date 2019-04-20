@@ -12,7 +12,7 @@ from wsgiref.util import FileWrapper
 
 from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.http import urlencode as django_urlencode
@@ -89,7 +89,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response, json_request
+from dimagi.utils.web import json_request
 from toggle.shortcuts import set_toggle
 import six
 from io import open
@@ -394,7 +394,7 @@ def get_apps_base_context(request, domain, app):
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
-    return json_response(app.export_json(dump_json=False))
+    return JsonResponse(app.export_json(dump_json=False))
 
 
 @require_can_edit_apps
@@ -703,7 +703,7 @@ def edit_app_langs(request, domain, app_id):
     replace_all(app.langs, langs)
     app.smart_lang_display = json.loads(request.body)['smart_lang_display']
     app.save()
-    return json_response(langs)
+    return JsonResponse(langs)
 
 
 @require_can_edit_apps
@@ -722,7 +722,7 @@ def edit_app_ui_translations(request, domain, app_id):
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
-    return json_response(response)
+    return JsonResponse(response)
 
 
 @require_GET
@@ -736,7 +736,7 @@ def get_app_ui_translations(request, domain):
         translations = {k: v for k, v in translations.items()
                         if not id_strings.is_custom_app_string(k)
                         and '=' not in k}
-    return json_response(translations)
+    return JsonResponse(translations)
 
 
 @no_conflict_require_POST
@@ -910,7 +910,7 @@ def rearrange(request, domain, app_id, key):
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
-            return json_response({'error': error}, status_code=400)
+            return JsonResponse({'error': error}, status_code=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
@@ -920,7 +920,7 @@ def rearrange(request, domain, app_id, key):
             'The sidebar has been updated, so please try again.'
         )
         if ajax:
-            return json_response(error, status_code=400)
+            return JsonResponse(error, status_code=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)

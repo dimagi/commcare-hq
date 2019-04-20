@@ -12,7 +12,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, JsonResponse
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -29,7 +29,6 @@ import re
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import make_form_readonly
-from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from soil.exceptions import TaskFailedError
@@ -774,17 +773,17 @@ def _modify_user_status(request, domain, user_id, is_active):
     user = CommCareUser.get_by_user_id(user_id, domain)
     if (not _can_edit_workers_location(request.couch_user, user)
             or (is_active and not can_add_extra_mobile_workers(request))):
-        return json_response({
+        return JsonResponse({
             'error': _("No Permission."),
         })
     if not is_active and user.user_location_id:
-        return json_response({
+        return JsonResponse({
             'error': _("This is a location user, archive or delete the "
                        "corresponding location to deactivate it."),
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    return json_response({
+    return JsonResponse({
         'success': True,
     })
 
@@ -833,7 +832,7 @@ def paginate_mobile_workers(request, domain):
             'date_registered': date_registered,
         })
 
-    return json_response({
+    return JsonResponse({
         'users': users,
         'total': users_data.total,
     })
@@ -850,7 +849,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        return self.render_json_response({
+        return self.render_JsonResponse({
             "status": status,
             "form_html": render_to_string(self.template_name, {
                 'form': self.new_commcare_user_form,
@@ -908,7 +907,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 initiate_sms_verification_workflow(user, phone_number)
 
             user_json = {'user_id': user._id, 'text': user.username_in_report}
-            return self.render_json_response({"status": "success",
+            return self.render_JsonResponse({"status": "success",
                                               "user": user_json})
         return self.render_form("failure")
 
@@ -1150,7 +1149,7 @@ def count_users(request, domain):
     else:
         return HttpResponseBadRequest("Invalid Request")
 
-    return json_response({
+    return JsonResponse({
         'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
     })
 

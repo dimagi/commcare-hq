@@ -25,7 +25,7 @@ from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import HttpResponseRedirect, HttpResponse, Http404, \
     HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
-    HttpResponseForbidden, HttpResponsePermanentRedirect
+    HttpResponseForbidden, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
@@ -59,7 +59,7 @@ from memoized import memoized
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
-from dimagi.utils.web import get_url_base, json_response, get_site_domain
+from dimagi.utils.web import get_url_base, get_site_domain
 from no_exceptions.exceptions import Http403
 from soil import DownloadBase
 from soil import views as soil_views
@@ -1096,7 +1096,7 @@ def quick_find(request):
         elif redirect and request.couch_user.is_superuser:
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_couch'), doc.get('_id')))
         else:
-            return json_response(doc_info)
+            return JsonResponse(doc_info)
 
     couch_dbs = [None] + settings.COUCH_SETTINGS_HELPER.extra_db_names
     for db_name in couch_dbs:

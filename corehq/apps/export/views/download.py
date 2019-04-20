@@ -7,9 +7,8 @@ from datetime import date
 
 from couchexport.writers import XlsLengthException
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
-    HttpResponseServerError
+    HttpResponseServerError, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
@@ -290,7 +289,7 @@ def prepare_custom_export(request, domain):
     try:
         filter_form = view_helper.get_filter_form(filter_form_data)
     except ExportFormValidationException:
-        return json_response({
+        return JsonResponse({
             'error': _("Form did not validate."),
         })
     export_filters = filter_form.get_export_filters(request, filter_form_data)
@@ -303,7 +302,7 @@ def prepare_custom_export(request, domain):
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
     except ExportAsyncException as e:
-        return json_response({
+        return JsonResponse({
             'error': six.text_type(e),
         })
 
@@ -323,14 +322,14 @@ def prepare_custom_export(request, domain):
             filename=filename,
         )
     except XlsLengthException:
-        return json_response({
+        return JsonResponse({
             'error': _('This file has more than 256 columns, which is not supported by xls. '
                        'Please change the output type to csv or xlsx to export this file.')
         })
 
     view_helper.send_preparation_analytics(export_instances, export_filters)
 
-    return json_response({
+    return JsonResponse({
         'success': True,
         'download_id': download.download_id,
     })
@@ -357,7 +356,7 @@ def poll_custom_export_download(request, domain):
     except TaskFailedError as e:
         notify_exception(request, "Export download failed",
                          details={'download_id': download_id, 'errors': e.errors})
-        return json_response({
+        return JsonResponse({
             'error': _("Download task failed to start."),
         })
     if context.get('is_ready', False):
@@ -368,7 +367,7 @@ def poll_custom_export_download(request, domain):
             ),
         })
     context['is_poll_successful'] = True
-    return json_response(context)
+    return JsonResponse(context)
 
 
 @location_safe
@@ -412,7 +411,7 @@ def prepare_form_multimedia(request, domain):
     try:
         filter_form = view_helper.get_filter_form(filter_form_data)
     except ExportFormValidationException:
-        return json_response({
+        return JsonResponse({
             'error': _("Please check that you've submitted all required filters."),
         })
 
@@ -422,7 +421,7 @@ def prepare_form_multimedia(request, domain):
     from corehq.apps.reports.tasks import build_form_multimedia_zip
     download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
-    return json_response({
+    return JsonResponse({
         'success': True,
         'download_id': download.download_id,
     })
@@ -447,7 +446,7 @@ def has_multimedia(request, domain):
             export_object.app_id,
             getattr(export_object, 'xmlns', '')
         )
-    return json_response({
+    return JsonResponse({
         'success': True,
         'hasMultimedia': has_multimedia,
     })

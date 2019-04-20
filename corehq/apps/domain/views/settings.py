@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, JsonResponse
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.contrib.auth.views import password_reset_confirm
@@ -43,7 +43,6 @@ from corehq.apps.domain.models import Domain, LICENSES
 from corehq.apps.domain.forms import ProjectSettingsForm
 from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
 from memoized import memoized
-from dimagi.utils.web import json_response
 
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -435,7 +434,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'fuzzy_properties': updated_fuzzies,
             'ignore_patterns': updated_ignore_patterns,
         })
-        return json_response(self.page_context)
+        return JsonResponse(self.page_context)
 
     @property
     def page_context(self):

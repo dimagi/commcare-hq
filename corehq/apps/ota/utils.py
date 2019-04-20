@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import six
 from couchdbkit import ResourceConflict
+from django.http import JsonResponse
 from django.utils.translation import ugettext as _
 
 from casexml.apps.case.xml import V2
@@ -13,7 +14,6 @@ from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from .exceptions import RestorePermissionDenied
 from .models import DemoUserRestore
 
@@ -188,7 +188,7 @@ def handle_401_response(f):
                 if username:
                     valid, message, error_code = ensure_active_user_by_username(username)
                     if not valid:
-                        return json_response({
+                        return JsonResponse({
                             "error": error_code,
                             "default_response": message
                         }, status_code=406)

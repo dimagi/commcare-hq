@@ -15,7 +15,7 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import HttpResponseRedirect, HttpResponse, Http404, JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -74,7 +74,6 @@ from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from memoized import memoized
-from dimagi.utils.web import json_response
 
 from corehq.apps.users.decorators import require_permission
 from six.moves import map
@@ -618,7 +617,7 @@ class BaseStripePaymentView(DomainAccountingSettings):
                 }
             }
 
-        return json_response(response)
+        return JsonResponse(response)
 
 
 class CreditsStripePaymentView(BaseStripePaymentView):
@@ -664,15 +663,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         if invalid_emails:
             message = (_('The following e-mail addresses contain invalid characters, or are missing required '
                          'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
-            return json_response({'error': {'message': message}})
+            return JsonResponse({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
             wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
         except Exception as e:
-            return json_response({'error': {'message': str(e)}})
+            return JsonResponse({'error': {'message': str(e)}})
 
-        return json_response({'success': True})
+        return JsonResponse({'success': True})
 
     @staticmethod
     def _get_items(request):
@@ -746,9 +745,9 @@ class WireInvoiceView(View):
         try:
             wire_invoice_factory.create_wire_invoice(balance)
         except Exception as e:
-            return json_response({'error': {'message', e}})
+            return JsonResponse({'error': {'message', e}})
 
-        return json_response({'success': True})
+        return JsonResponse({'success': True})
 
 
 class BillingStatementPdfView(View):
@@ -1554,7 +1553,7 @@ class EmailOnDowngradeView(View):
                 request.domain
             ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
         )
-        return json_response({'success': True})
+        return JsonResponse({'success': True})
 
 
 class BaseCardView(DomainAccountingSettings):
@@ -1571,12 +1570,12 @@ class BaseCardView(DomainAccountingSettings):
         error = ("Something went wrong while processing your request. "
                  "We're working quickly to resolve the issue. "
                  "Please try again in a few hours.")
-        return json_response({'error': error}, status_code=500)
+        return JsonResponse({'error': error}, status_code=500)
 
     def _stripe_error(self, e):
         body = e.json_body
         err = body['error']
-        return json_response({'error': err['message'],
+        return JsonResponse({'error': err['message'],
                               'cards': self.payment_method.all_cards_serialized(self.account)},
                              status_code=502)
 
@@ -1597,7 +1596,7 @@ class CardView(BaseCardView):
         except Exception as e:
             return self._generic_error()
 
-        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+        return JsonResponse({'cards': self.payment_method.all_cards_serialized(self.account)})
 
     def delete(self, request, domain, card_token):
         try:
@@ -1605,7 +1604,7 @@ class CardView(BaseCardView):
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
 
-        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+        return JsonResponse({'cards': self.payment_method.all_cards_serialized(self.account)})
 
 
 class CardsView(BaseCardView):
@@ -1613,7 +1612,7 @@ class CardsView(BaseCardView):
     url_name = "cards_view"
 
     def get(self, request, domain):
-        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+        return JsonResponse({'cards': self.payment_method.all_cards_serialized(self.account)})
 
     def post(self, request, domain):
         stripe_token = request.POST.get('token')
@@ -1625,4 +1624,4 @@ class CardsView(BaseCardView):
         except Exception as e:
             return self._generic_error()
 
-        return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
+        return JsonResponse({'cards': self.payment_method.all_cards_serialized(self.account)})

@@ -31,7 +31,6 @@ from corehq.apps.domain.auth import (
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
-from dimagi.utils.web import json_response
 
 from django_otp import match_token
 
@@ -395,7 +394,7 @@ def check_lockout(fn):
 
         user = CouchUser.get_by_username(username)
         if user and user.is_locked_out() and user.supports_lockout():
-            return json_response({"error": _("maximum password attempts exceeded")}, status_code=401)
+            return JsonResponse({"error": _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
     return _inner

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
@@ -21,7 +21,6 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from memoized import memoized
-from dimagi.utils.web import json_response
 from six.moves import range
 from six.moves import map
 
@@ -90,9 +89,9 @@ class DataSetMapView(BaseProjectSettingsView):
                     update_dataset_map(dataset_map, new_dataset_maps[j])
                     dataset_map.save()
             get_dataset_maps.clear(request.domain)
-            return json_response({'success': _('DHIS2 DataSet Maps saved')})
+            return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
         except Exception as err:
-            return json_response({'error': str(err)}, status_code=500)
+            return JsonResponse({'error': str(err)}, status_code=500)
 
     @property
     def page_context(self):
@@ -107,7 +106,7 @@ class DataSetMapView(BaseProjectSettingsView):
 @require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
-    return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
+    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status_code=202)
 
 
 class Dhis2ModelListViewHelper(object):
