@@ -849,7 +849,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        return self.render_JsonResponse({
+        return self.render_json_response({
             "status": status,
             "form_html": render_to_string(self.template_name, {
                 'form': self.new_commcare_user_form,
@@ -907,7 +907,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 initiate_sms_verification_workflow(user, phone_number)
 
             user_json = {'user_id': user._id, 'text': user.username_in_report}
-            return self.render_JsonResponse({"status": "success",
+            return self.render_json_response({"status": "success",
                                               "user": user_json})
         return self.render_form("failure")
 
