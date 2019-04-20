@@ -454,7 +454,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             session_event = With(
                 MessagingSubEvent.objects.filter(
                     parent__domain=self.domain,
-                    parent_id__in=queryset.values('id'),
+                    date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
                 ).values(
                     couch_id=F("xforms_session__couch_id"),
                     source=F("parent__source"),
