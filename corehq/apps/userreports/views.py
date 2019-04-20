@@ -45,7 +45,6 @@ from couchexport.shortcuts import export_response
 from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
@@ -657,7 +656,7 @@ class ConfigureReport(ReportBuilderView):
                     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
             self._delete_temp_data_source(report_data)
             send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
-            return json_response({
+            return JsonResponse({
                 'report_url': reverse(ConfigurableReportView.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
             })
@@ -684,7 +683,7 @@ def update_report_description(request, domain, report_id):
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     report.description = new_description
     report.save()
-    return json_response({})
+    return JsonResponse({})
 
 
 def _get_form_type(report_type):
@@ -733,11 +732,11 @@ class ReportPreview(BaseDomainView):
                 temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
                 response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
                 if response_data:
-                    return json_response(response_data)
+                    return JsonResponse(response_data)
             except BadBuilderConfigError as e:
-                return json_response({'status': 'error', 'message': str(e)}, status_code=400)
+                return JsonResponse({'status': 'error', 'message': str(e)}, status_code=400)
 
-        return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
+        return JsonResponse({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
 def _assert_report_delete_privileges(request):
@@ -850,7 +849,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
 def report_source_json(request, domain, report_id):
     config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return JsonResponse(config)
 
 
 class ExpressionDebuggerView(BaseUserConfigReportsView):
@@ -891,32 +890,32 @@ def evaluate_expression(request, domain):
             context=factory_context
         )
         result = parsed_expression(doc, EvaluationContext(doc))
-        return json_response({
+        return JsonResponse({
             "result": result,
         })
     except DataSourceConfigurationNotFoundError:
-        return json_response(
+        return JsonResponse(
             {"error": _("Data source with id {} not found in domain {}.").format(
                 data_source_id, domain
             )},
             status_code=404,
         )
     except DocumentNotFoundError:
-        return json_response(
+        return JsonResponse(
             {"error": _("{} with id {} not found in domain {}.").format(
                 doc_type, doc_id, domain
             )},
             status_code=404,
         )
     except BadSpecError as e:
-        return json_response(
+        return JsonResponse(
             {"error": _("Problem with expression: {}.").format(
                 e
             )},
             status_code=400,
         )
     except Exception as e:
-        return json_response(
+        return JsonResponse(
             {"error": six.text_type(e)},
             status_code=500,
         )
@@ -1238,7 +1237,7 @@ def build_data_source_in_place(request, domain, config_id):
 def data_source_json(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     config._doc.pop('_rev', None)
-    return json_response(config)
+    return JsonResponse(config)
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
@@ -1434,13 +1433,13 @@ def choice_list_api(request, domain, report_id, filter_id):
             page=int(request.GET.get('page', 1)) - 1,
             user=request.couch_user
         )
-        return json_response([
+        return JsonResponse([
             choice._asdict() for choice in
             report_filter.choice_provider.query(query_context)
         ])
     else:
         # mobile UCR hits this API for invalid filters. Just return no choices.
-        return json_response([])
+        return JsonResponse([])
 
 
 def _shared_context(domain):

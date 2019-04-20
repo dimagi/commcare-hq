@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.text import slugify
 from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
 from dimagi.ext.couchdbkit import Document
-from dimagi.utils.web import json_response
 from soil import FileDownload
 
 from corehq import toggles
@@ -39,7 +39,7 @@ def list_apps(request, domain):
                                              params={'app_id': app.get_id})
         }
     applications = Domain.get_by_name(domain).applications()
-    return json_response({
+    return JsonResponse({
         'status': 'success',
         'applications': list(map(app_to_json, applications)),
     })
@@ -58,7 +58,7 @@ def direct_ccz(request, domain):
     """
 
     def error(msg, code=400):
-        return json_response({'status': 'error', 'message': msg}, status_code=code)
+        return JsonResponse({'status': 'error', 'message': msg}, status_code=code)
 
     def get_app(app_id, version, latest):
         if version:
@@ -121,7 +121,7 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
             'lang': lang,
             'visit_scheduler_enabled': visit_scheduler_enabled,
         })
-        return json_response(
+        return JsonResponse(
             {'error_html': error_html},
             status_code=400,
         )
@@ -138,7 +138,7 @@ def get_direct_ccz(domain, app, lang, langs, version=None, include_multimedia=Fa
     )
 
     if errors is not None and errors['errors']:
-        return json_response(
+        return JsonResponse(
             errors,
             status_code=400,
         )

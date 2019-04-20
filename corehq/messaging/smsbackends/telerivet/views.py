@@ -15,10 +15,9 @@ from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSFo
 from corehq.messaging.smsbackends.telerivet.models import IncomingRequest, SQLTelerivetBackend
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.web import json_response
 from django.db import transaction
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -137,20 +136,20 @@ class TelerivetSetupView(BaseMessagingSectionView):
 def get_last_inbound_sms(request, domain):
     request_token = request.GET.get('request_token', None)
     if not request_token:
-        return json_response({'success': False})
+        return JsonResponse({'success': False})
 
     webhook_secret = TelerivetSetupView.get_cached_webhook_secret(request_token)
     if not webhook_secret:
-        return json_response({'success': False})
+        return JsonResponse({'success': False})
 
     result = IncomingRequest.get_last_sms_by_webhook_secret(webhook_secret)
     if result:
-        return json_response({
+        return JsonResponse({
             'success': True,
             'found': True,
         })
     else:
-        return json_response({
+        return JsonResponse({
             'success': True,
             'found': False,
         })
@@ -182,7 +181,7 @@ def send_sample_sms(request, domain):
     outgoing_sms_form_valid = outgoing_sms_form.is_valid()
     test_sms_form_valid = test_sms_form.is_valid()
     if not outgoing_sms_form_valid or not test_sms_form_valid:
-        return json_response({
+        return JsonResponse({
             'success': False,
             'api_key_error': TelerivetSetupView.get_error_message(outgoing_sms_form, 'api_key'),
             'project_id_error': TelerivetSetupView.get_error_message(outgoing_sms_form, 'project_id'),
@@ -201,7 +200,7 @@ def send_sample_sms(request, domain):
         text="This is a test SMS from CommCareHQ."
     )
     tmp_backend.send(sms)
-    return json_response({
+    return JsonResponse({
         'success': True,
     })
 
@@ -245,10 +244,10 @@ def create_backend(request, domain):
             backend.save()
             if request.POST.get('set_as_default') == FinalizeGatewaySetupForm.YES:
                 SQLMobileBackendMapping.set_default_domain_backend(domain, backend)
-            return json_response({'success': True})
+            return JsonResponse({'success': True})
 
     name_error = TelerivetSetupView.get_error_message(form, 'name')
-    return json_response({
+    return JsonResponse({
         'success': False,
         'name_error': name_error,
         'unexpected_error': None if name_error else TelerivetSetupView.unexpected_error,

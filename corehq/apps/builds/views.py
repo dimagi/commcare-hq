@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound, BadValueError
 from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponse, Http404
+from django.http import HttpResponseBadRequest, HttpResponse, Http404, JsonResponse
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.util.view_utils import json_error
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_request
 from dimagi.utils.couch.database import get_db
 
 from corehq.apps.api.models import require_api_user
@@ -129,7 +129,7 @@ def import_build(request):
     try:
         SemanticVersionProperty(required=True).validate(version)
     except BadValueError as e:
-        return json_response({
+        return JsonResponse({
             'reason': 'Badly formatted version',
             'info': {
                 'error_message': six.text_type(e),
@@ -145,7 +145,7 @@ def import_build(request):
         try:
             build_number = int(build_number)
         except ValueError:
-            return json_response({
+            return JsonResponse({
                 'reason': 'build_number must be an int'
             }, status_code=400)
 
@@ -162,7 +162,7 @@ def import_build(request):
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError:
-            return json_response({
+            return JsonResponse({
                 'reason': 'Fetching artifacts.zip failed',
                 'response': {
                     'status_code': r.status_code,
@@ -181,7 +181,7 @@ def import_build(request):
             build_number = inferred_build_number
 
         if not build_number:
-            return json_response({
+            return JsonResponse({
                 'reason': "You didn't give us a build number "
                           "and we couldn't infer it"
             }, status_code=400)
@@ -191,7 +191,7 @@ def import_build(request):
 
     else:
         build = CommCareBuild.create_without_artifacts(version, build_number)
-    return json_response({
+    return JsonResponse({
         'message': 'New CommCare build added',
         'info': {
             'version': version,

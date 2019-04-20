@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 
 from django.http import HttpResponse
-from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
+from django.http.response import HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -20,7 +20,6 @@ from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq import privileges
-from dimagi.utils.web import json_response
 
 from .models import ZapierSubscription
 
@@ -72,7 +71,7 @@ class SubscribeView(View):
             return HttpResponseBadRequest()
 
         # respond with the ID so that zapier can use it to unsubscribe
-        return json_response({'id': subscription.id})
+        return JsonResponse({'id': subscription.id})
 
 
 class UnsubscribeView(View):
