@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from datetime import date
-from unittest import skip
 
 from django.test.testcases import TestCase
 
@@ -14,7 +13,6 @@ from custom.aaa.dbaccessors import EligibleCoupleQueryHelper
 from custom.aaa.models import Child, Woman
 
 
-@skip
 class TestEligibleCoupleBeneficiarySections(TestCase):
     domain = 'reach-test'
 
