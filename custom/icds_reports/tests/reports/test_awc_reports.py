@@ -6,8 +6,6 @@ import json
 import datetime
 
 from datetime import date
-from unittest import skip
-
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TestCase
 from mock import mock
@@ -36,7 +34,6 @@ class FirstDayOfMayDate(date):
         return date(2017, 5, 1)
 
 
-@skip
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
