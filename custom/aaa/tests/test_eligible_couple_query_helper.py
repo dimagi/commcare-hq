@@ -87,7 +87,9 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
                     "create_eligible_couple": {
                         "create_eligible_couple": {
                             "case": {
-                                'fp_current_method': method,
+                                'update': {
+                                    'fp_current_method': method,
+                                }
                             },
                         },
                     },

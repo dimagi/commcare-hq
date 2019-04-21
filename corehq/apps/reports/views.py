@@ -28,6 +28,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.blobs import get_blob_db, NotFound, models
 import langcodes
 import pytz
 import re
@@ -412,9 +413,10 @@ class AddSavedReportConfigView(View):
     @property
     @memoized
     def config(self):
-        config = ReportConfig.get_or_create(
-            self.saved_report_config_form.cleaned_data['_id']
-        )
+        _id = self.saved_report_config_form.cleaned_data['_id']
+        if not _id:
+            _id = None  # make sure we pass None not a blank string
+        config = ReportConfig.get_or_create(_id)
         if config.owner_id:
             # in case a user maliciously tries to edit another user's config
             assert config.owner_id == self.user_id
@@ -2030,15 +2032,25 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
-    cache = get_redis_client()
+    db = get_blob_db()
+    report_not_found = HttpResponseNotFound(_("That report was not found. Please remember "
+                                              "that download links expire after 24 hours."))
 
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except models.BlobMeta.DoesNotExist:
+        return report_not_found
+    report_class = meta.properties["report_class"]
+
+    try:
+        report_file = db.get(export_hash)
+    except NotFound:
+        return report_not_found
+    with report_file:
         if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file)
+            file = ContentFile(report_file.read())
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
@@ -2048,9 +2060,6 @@ def export_report(request, domain, export_hash, format):
             return response
         else:
             return HttpResponseNotFound(_("We don't support this format"))
-    else:
-        return HttpResponseNotFound(_("That report was not found. Please remember"
-                                      " that download links expire after 24 hours."))
 
 
 @login_or_digest

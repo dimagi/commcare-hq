@@ -16,6 +16,7 @@ from custom.aaa.models import (
     Woman,
 )
 from dimagi.utils.dates import force_to_datetime
+from six.moves import zip
 
 
 class ChildQueryHelper(object):
@@ -228,7 +229,7 @@ class PregnantWomanQueryHelper(object):
         location_query = ''
         if location_filters:
             location_query = [
-                "{loc} = %({loc})s".format(loc=loc) for loc in location_filters.keys()
+                "woman.{loc} = %({loc})s".format(loc=loc) for loc in location_filters.keys()
             ]
             location_query = " AND ".join(location_query)
             location_query = location_query + " AND"

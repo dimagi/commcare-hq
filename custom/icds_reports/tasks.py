@@ -1,100 +1,138 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-from collections import namedtuple
-import csv342 as csv
-from datetime import date, datetime, timedelta
 import io
 import logging
 import os
+import re
 import tempfile
+import zipfile
+from collections import namedtuple
+from datetime import date, datetime, timedelta
+from io import BytesIO, open
 
-from celery import chain
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
-from io import BytesIO
-from couchexport.export import export_from_tables
 
-from corehq.apps.es.cases import CaseES, server_modified_range
-from corehq.apps.es.forms import FormES, submitted
+import csv342 as csv
+import six
+from celery import chain
+from celery.schedules import crontab
+from celery.task import periodic_task, task
+from dateutil.relativedelta import relativedelta
+from six.moves import range
+
+from couchexport.export import export_from_tables
+from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import force_to_date
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
-    get_primary_db_form_counts,
     get_primary_db_case_counts,
+    get_primary_db_form_counts,
 )
+from corehq.apps.es.cases import CaseES, server_modified_range
+from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_id_username_pairs_by_domain,
+)
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.datadog.utils import create_datadog_event
+from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
-from custom.icds_reports.const import DASHBOARD_DOMAIN, CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, \
-    DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
-    AWW_INCENTIVE_REPORT, THREE_MONTHS, LS_REPORT_EXPORT
+from custom.icds_reports.const import (
+    AWC_INFRASTRUCTURE_EXPORT,
+    AWW_INCENTIVE_REPORT,
+    BENEFICIARY_LIST_EXPORT,
+    CHILDREN_EXPORT,
+    DASHBOARD_DOMAIN,
+    DEMOGRAPHICS_EXPORT,
+    LS_REPORT_EXPORT,
+    PREGNANT_WOMEN_EXPORT,
+    SYSTEM_USAGE_EXPORT,
+    THREE_MONTHS,
+)
 from custom.icds_reports.models import (
+    AggAwc,
+    AggCcsRecord,
     AggChildHealth,
     AggChildHealthMonthly,
-    AggCcsRecord,
+    AggLs,
+    AggregateAwcInfrastructureForms,
     AggregateBirthPreparednesForms,
-    AggregateCcsRecordTHRForms,
+    AggregateCcsRecordComplementaryFeedingForms,
     AggregateCcsRecordDeliveryForms,
     AggregateCcsRecordPostnatalCareForms,
-    AggregateComplementaryFeedingForms,
-    AggregateGrowthMonitoringForms,
+    AggregateCcsRecordTHRForms,
     AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
-    AggregateAwcInfrastructureForms,
-    ChildHealthMonthly,
-    CcsRecordMonthly,
-    UcrTableNameMapping,
-    AggregateCcsRecordComplementaryFeedingForms,
-    AWWIncentiveReport,
-    AggLs,
-    AggAwc,
+    AggregateComplementaryFeedingForms,
+    AggregateGrowthMonitoringForms,
     AwcLocation,
+    AWWIncentiveReport,
+    CcsRecordMonthly,
+    ChildHealthMonthly,
+    ICDSAuditEntryRecord,
+    UcrTableNameMapping,
 )
-from custom.icds_reports.models.aggregate import AggregateInactiveAWW, AggAwcDaily, DailyAttendance,\
-    AggregateLsVhndForm, AggregateBeneficiaryForm, AggregateLsAWCVisitForm
+from custom.icds_reports.models.aggregate import (
+    AggAwcDaily,
+    AggregateBeneficiaryForm,
+    AggregateInactiveAWW,
+    AggregateLsAWCVisitForm,
+    AggregateLsVhndForm,
+    DailyAttendance,
+)
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.disha import build_dumps_for_month
-from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.reports.incentive import IncentiveReport
-from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.reports.issnip_monthly_register import (
+    ISSNIPMonthlyReport,
+)
+from custom.icds_reports.sqldata.exports.awc_infrastructure import (
+    AWCInfrastructureExport,
+)
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
-from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
-from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.lady_supervisor import (
+    LadySupervisorExport,
+)
+from custom.icds_reports.sqldata.exports.pregnant_women import (
+    PregnantWomenExport,
+)
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time, \
-    create_excel_file, create_aww_performance_excel_file, create_excel_file_in_openpyxl, \
-    create_lady_supervisor_excel_file
-from custom.icds_reports.utils.aggregation_helpers.monolith import ChildHealthMonthlyAggregationHelper
+from custom.icds_reports.utils import (
+    create_aww_performance_excel_file,
+    create_excel_file,
+    create_excel_file_in_openpyxl,
+    create_lady_supervisor_excel_file,
+    create_pdf_file,
+    icds_pre_release_features,
+    track_time,
+    zip_folder,
+)
+from custom.icds_reports.utils.aggregation_helpers.monolith import (
+    ChildHealthMonthlyAggregationHelper,
+)
 from custom.icds_reports.utils.aggregation_helpers.monolith.mbt import (
+    AwcMbtHelper,
     CcsMbtHelper,
     ChildHealthMbtHelper,
-    AwcMbtHelper
 )
-from dimagi.utils.chunked import chunked
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.logging import notify_exception
-import six
-from six.moves import range
-from io import open
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -103,16 +141,9 @@ UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format('dashboard-aggregation-script', 'dimagi.com')]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
-CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
-if settings.SERVER_ENVIRONMENT == 'india':
-    # Currently QA needs more monthly data, so these are different than on ICDS
-    # If this exists after July 1, ask Emord why these UCRs still exist
-    CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
-
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -274,9 +305,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
+            _bust_awc_cache.si(),
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
         ).delay()
-        _bust_awc_cache.delay()
+
 
 
 def _create_aggregate_functions(cursor):
@@ -603,7 +635,8 @@ def email_dashboad_team(aggregation_date):
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
-    _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+    if not settings.UNIT_TESTING:
+        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
@@ -617,18 +650,19 @@ def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
-        'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
         'static-icds-cas-static-child_cases_monthly_v2',
     ]
 
+    track_case_load = case_load_counter("find_stagnant_cases", domain)
     stagnant_cases = set()
-
     for config_id in config_ids:
         config, is_static = get_datasource_config(config_id, domain)
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, load_source='find_stagnant_cases')
         case_ids = _find_stagnant_cases(adapter)
+        num_cases = len(case_ids)
+        adapter.track_load(num_cases)
         celery_task_logger.info(
-            "Found {} stagnant cases in config {}".format(len(case_ids), config_id)
+            "Found {} stagnant cases in config {}".format(num_cases, config_id)
         )
         stagnant_cases = stagnant_cases.union(set(case_ids))
         celery_task_logger.info(
@@ -642,6 +676,7 @@ def recalculate_stagnant_cases():
         current_case_num += len(case_ids)
         cases = case_accessor.get_cases(list(case_ids))
         for case in cases:
+            track_case_load()
             publish_case_saved(case, send_post_save_signal=False)
         celery_task_logger.info(
             "Resaved {} / {} cases".format(current_case_num, num_stagnant_cases)
@@ -965,6 +1000,91 @@ def collect_inactive_awws():
     sync.store_file_in_blobdb(export_file)
     sync.save()
     celery_task_logger.info("Ended updating the Inactive AWW")
+
+
+@periodic_task(run_every=crontab(day_of_week='monday', hour=18, minute=30),
+               acks_late=True, queue='background_queue')
+def collect_inactive_dashboard_users():
+    celery_task_logger.info("Started updating the Inactive Dashboard users")
+
+    end_date = datetime.utcnow()
+    start_date_week = end_date - timedelta(days=7)
+    start_date_month = end_date - timedelta(days=30)
+
+    not_logged_in_week = get_dashboard_users_not_logged_in(start_date_week, end_date)
+    not_logged_in_month = get_dashboard_users_not_logged_in(start_date_month, end_date)
+
+    week_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+        start_date_week, end_date
+    )
+    month_file_name = 'dashboard_users_not_logged_in_{:%Y-%m-%d}_to_{:%Y-%m-%d}.csv'.format(
+        start_date_month, end_date
+    )
+    rows_not_logged_in_week = _get_inactive_dashboard_user_rows(not_logged_in_week)
+    rows_not_logged_in_month = _get_inactive_dashboard_user_rows(not_logged_in_month)
+
+    sync = IcdsFile(blob_id="inactive_dashboad_users_%s.zip" % date.today().strftime('%Y-%m-%d'),
+                    data_type='inactive_dashboard_users')
+
+    in_memory = BytesIO()
+    zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+
+    zip_file.writestr(week_file_name,
+                      '\n'.join(rows_not_logged_in_week)
+                      )
+    zip_file.writestr(month_file_name,
+                      '\n'.join(rows_not_logged_in_month)
+                      )
+
+    zip_file.close()
+
+    # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
+    # we read this to save file in blobdb
+    in_memory.seek(0)
+    sync.store_file_in_blobdb(in_memory)
+
+    sync.save()
+
+
+def _get_inactive_dashboard_user_rows(not_logged_in_week):
+    from corehq.apps.users.models import CommCareUser
+    rows = ['"Username","Location","State"']
+    for username in not_logged_in_week:
+        user = CommCareUser.get_by_username(username)
+        loc = user.sql_location
+        loc_name = loc.name.encode('ascii', 'replace').decode() if loc else ''
+        state = loc.get_ancestor_of_type('state') if loc else None
+        state_name = state.name.encode('ascii', 'replace').decode() if state else ''
+        rows.append('"{}","{}","{}"'.format(username, loc_name, state_name))
+
+    return rows
+
+
+def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
+
+    all_users = get_all_user_id_username_pairs_by_domain(domain, include_web_users=False,
+                                                         include_mobile_users=True)
+
+    dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
+    dashboard_usernames = {
+        uname
+        for id, uname in all_users
+        if dashboard_uname_rx.match(uname)
+    }
+
+    logged_in = ICDSAuditEntryRecord.objects.filter(
+        time_of_use__gte=start_date, time_of_use__lt=end_date
+    ).values_list('username', flat=True)
+
+    logged_in_dashboard_users = {
+        u
+        for u in logged_in
+        if dashboard_uname_rx.match(u)
+    }
+
+    not_logged_in = dashboard_usernames - logged_in_dashboard_users
+    return not_logged_in
+
 
 
 @periodic_task(run_every=crontab(day_of_week=5, hour=19, minute=0), acks_late=True, queue='icds_aggregation_queue')

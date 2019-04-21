@@ -489,8 +489,18 @@ class MessageLogReport(BaseCommConnectLogReport):
             ] if val != Ellipsis]
 
     def _get_message_event_display(self, message, content_cache):
+        event = None
         if message.messaging_subevent:
             event = message.messaging_subevent.parent
+        elif message.xforms_session_couch_id:
+            try:
+                subevent = (MessagingSubEvent.objects
+                            .get(parent__domain=self.domain,
+                                 xforms_session__couch_id=message.xforms_session_couch_id))
+                event = subevent.parent
+            except MessagingSubEvent.DoesNotExist:
+                pass
+        if event:
             return get_event_display(self.domain, event, content_cache)
         return "-"
 

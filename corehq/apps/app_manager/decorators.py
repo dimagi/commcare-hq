@@ -61,6 +61,7 @@ def safe_cached_download(f):
         domain = args[0] if len(args) > 0 else kwargs["domain"]
         app_id = args[1] if len(args) > 1 else kwargs["app_id"]
         latest = True if request.GET.get('latest') == 'true' else False
+        # target is used update to latest build/saved state/release of the app
         target = request.GET.get('target') or None
 
         # make endpoints that call the user fail hard
@@ -71,8 +72,9 @@ def safe_cached_download(f):
             request.GET.pop('username')
 
         latest_enabled_build = None
-        if latest and request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_enabled_build = get_latest_enabled_build_for_profile(domain, request.GET.get('profile'))
+        if latest and not target:
+            if request.GET.get('profile') and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
+                latest_enabled_build = get_latest_enabled_build_for_profile(domain, request.GET.get('profile'))
         try:
             if latest_enabled_build:
                 request.app = latest_enabled_build
