@@ -6,7 +6,6 @@ import six
 
 from corehq.util.python_compatibility import soft_assert_type_text
 
-
 class WisePillDeviceEvent(Document):
     """
     One DeviceEvent is created each time a device sends data that is 
