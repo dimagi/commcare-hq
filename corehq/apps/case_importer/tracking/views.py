@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseForbidden, \
-    StreamingHttpResponse, HttpResponseBadRequest
+    StreamingHttpResponse, HttpResponseBadRequest, JsonResponse
 
 from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
     get_case_ids_for_case_upload, get_form_ids_for_case_upload
@@ -13,7 +13,6 @@ from corehq.apps.case_importer.tracking.permissions import user_may_view_file_up
     user_may_update_comment
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response
 from io import open
 
 
@@ -39,7 +38,7 @@ def case_uploads(request, domain):
     case_uploads_json = [case_upload_to_user_json(case_upload_record, request)
                          for case_upload_record in case_upload_records]
 
-    return json_response(case_uploads_json)
+    return JsonResponse(case_uploads_json)
 
 
 @require_can_edit_data
@@ -61,7 +60,7 @@ def update_case_upload_comment(request, domain, upload_id):
 
     case_upload.comment = comment
     case_upload.save()
-    return json_response({})
+    return JsonResponse({})
 
 
 @require_can_edit_data

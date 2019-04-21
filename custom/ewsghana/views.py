@@ -4,7 +4,7 @@ import json
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.forms.formsets import formset_factory
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST, require_GET
@@ -32,7 +32,7 @@ from custom.ewsghana.reports.stock_levels_report import InventoryManagementData
 from custom.ewsghana.utils import make_url, has_input_stock_permissions, calculate_last_period, Msg
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
-from dimagi.utils.web import json_handler, json_response
+from dimagi.utils.web import json_handler
 from six.moves import map
 
 
@@ -238,12 +238,12 @@ def non_administrative_locations_for_select2(request, domain):
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
-            return json_response(
+            return JsonResponse(
                 {'message': 'no location with id %s found' % id},
-                status_code=404,
+                status=404,
             )
         else:
-            return json_response(loc_to_payload(loc))
+            return JsonResponse(loc_to_payload(loc))
 
     locs = []
     user = request.couch_user
@@ -258,7 +258,7 @@ def non_administrative_locations_for_select2(request, domain):
     if locs != [] and query:
         locs = locs.filter(name__icontains=query)
 
-    return json_response(list(map(loc_to_payload, locs[:10])))
+    return JsonResponse(list(map(loc_to_payload, locs[:10])))
 
 
 @location_safe

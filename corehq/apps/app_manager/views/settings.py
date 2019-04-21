@@ -4,7 +4,7 @@ import json
 from collections import defaultdict
 
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
@@ -15,7 +15,6 @@ from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.apps import edit_app_attr
 
-from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
@@ -43,7 +42,7 @@ def edit_commcare_settings(request, domain, app_id):
         response.update(
             json.loads(sub_response.content)
         )
-    return json_response(response)
+    return JsonResponse(response)
 
 
 @no_conflict_require_POST
@@ -73,7 +72,7 @@ def edit_commcare_profile(request, domain, app_id):
             changed[settings_type][name] = value
     response_json = {"status": "ok", "changed": changed}
     app.save(response_json)
-    return json_response(response_json)
+    return JsonResponse(response_json)
 
 
 @method_decorator(no_conflict_require_POST, name='dispatch')

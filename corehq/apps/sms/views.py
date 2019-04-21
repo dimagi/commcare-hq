@@ -8,7 +8,7 @@ import re
 import json
 from django.urls import reverse
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, Http404, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
@@ -97,7 +97,6 @@ from memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
@@ -1766,7 +1765,7 @@ def edit_sms_languages(request, domain):
 
         tdoc.langs = langs
         tdoc.save()
-        return json_response(langs)
+        return JsonResponse(langs)
 
 
 @domain_admin_required

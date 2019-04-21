@@ -18,7 +18,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop, ugettext as _
 
-from dimagi.utils.web import json_response
+from django.http import JsonResponse
 
 
 def _compare_submissions(x, y):
@@ -178,7 +178,7 @@ class ReprocessXFormErrorView(View):
 
         form_id = request.POST['form_id']
         if not form_id:
-            return json_response({
+            return JsonResponse({
                 'success': False,
                 'failure_reason': 'Missing "form_id"'
             })
@@ -186,11 +186,11 @@ class ReprocessXFormErrorView(View):
         try:
             reprocess_xform_error_by_id(form_id, domain=domain)
         except ReprocessingError as e:
-            return json_response({
+            return JsonResponse({
                 'success': False,
                 'failure_reason': str(e),
             })
         else:
-            return json_response({
+            return JsonResponse({
                 'success': True,
             })

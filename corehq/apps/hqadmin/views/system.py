@@ -10,6 +10,7 @@ import requests
 from django.conf import settings
 from django.http import (
     HttpResponse,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -25,7 +26,6 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from corehq.apps.hqadmin import service_checks, escheck
@@ -88,12 +88,12 @@ def system_ajax(request):
             tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
-                return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status=500)
             else:
-                return json_response({'error': "Unable to access CouchDB Tasks."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status=500)
 
         if not is_bigcouch():
-            return json_response(tasks)
+            return JsonResponse(tasks)
         else:
             # group tasks by design doc
             task_map = defaultdict(dict)
@@ -111,14 +111,14 @@ def system_ajax(request):
                     task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
-            return json_response(design_docs)
+            return JsonResponse(design_docs)
     elif type == "_stats":
-        return json_response({})
+        return JsonResponse({})
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
+        return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -126,7 +126,7 @@ def system_ajax(request):
             escheck.check_reportcase_es_index(interval=3),
             escheck.check_reportxform_es_index(interval=3)
         ]
-        return json_response(es_index_status)
+        return JsonResponse(es_index_status)
 
     if celery_monitoring:
         if type == "flower_poll":
@@ -138,7 +138,7 @@ def system_ajax(request):
                     timeout=3,
                 ).json()
             except Exception as ex:
-                return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
+                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
@@ -192,7 +192,7 @@ def pillow_operation_api(request):
         }
         if pillow_config:
             response.update(get_pillow_json(pillow_config))
-        return json_response(response)
+        return JsonResponse(response)
 
     if pillow:
         try:

@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
+    JsonResponse,
 )
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -32,7 +33,6 @@ from corehq.elastic import parse_args_for_es
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.django.management import export_as_csv_action
-from dimagi.utils.web import json_response
 
 
 @require_superuser
@@ -65,7 +65,7 @@ def stats_data(request):
     domains = get_project_spaces(facets=domain_params)
 
     try:
-        return json_response(get_stats_data(
+        return JsonResponse(get_stats_data(
             histo_type,
             domains,
             request.datespan,
@@ -107,7 +107,7 @@ def top_five_projects_by_country(request):
                     .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
         data = {country: projects, 'internal': internalMode}
 
-    return json_response(data)
+    return JsonResponse(data)
 
 
 class DownloadMALTView(BaseAdminSectionView):
