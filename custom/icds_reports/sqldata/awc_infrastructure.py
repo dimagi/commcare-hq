@@ -13,8 +13,6 @@ from custom.utils.utils import clean_IN_filter_value
 
 
 class AWCInfrastructureUCR(IcdsSqlData):
-    engine_id = 'icds-ucr'
-
     def __init__(self, config):
         self.awcs = config['awc_id']
         super(AWCInfrastructureUCR, self).__init__(config)

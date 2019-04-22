@@ -17,7 +17,6 @@ from custom.utils.utils import clean_IN_filter_value
 
 class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_awc_monthly'
-    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)

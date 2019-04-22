@@ -4,6 +4,8 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 
 
 class IcdsSqlData(SqlData):
+    engine_id = 'icds-ucr'
+
     def get_data(self, start=None, limit=None):
         from custom.icds_reports.tasks import run_citus_experiment_raw_sql
 
