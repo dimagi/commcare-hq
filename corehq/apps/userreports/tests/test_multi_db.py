@@ -151,9 +151,13 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, ds2_rows[0]['count'])
 
     def test_mirroring(self):
+        from corehq.apps.userreports.models import MirroredEngineIds
         ds3 = DataSourceConfiguration.wrap(get_sample_data_source().to_json())
         ds3.engine_id = "engine-1"
-        ds3.mirrored_engine_ids = {settings.SERVER_ENVIRONMENT: ['engine-2']}
+        ds3.mirrored_engine_ids = [MirroredEngineIds.wrap({
+            "server_environment": settings.SERVER_ENVIRONMENT,
+            "engine_ids": ['engine-2']
+        })]
         ds3.save()
         adapter = get_indicator_adapter(ds3)
         self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)

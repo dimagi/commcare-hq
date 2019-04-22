@@ -148,9 +148,8 @@ class ConfigurableReportTableManagerMixin(object):
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
         all_adapters = []
-        from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
         for adapter in adapters:
-            if type(adapter) == MultiDBSqlAdapter:
+            if getattr(adapter, 'all_adapters'):
                 all_adapters.extend(adapter.all_adapters)
             else:
                 all_adapters.append(adapter)

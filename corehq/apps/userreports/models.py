@@ -186,6 +186,11 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
+class MirroredEngineIds(DocumentSchema):
+    server_environment = StringProperty()
+    engine_ids = StringListProperty()
+
+
 @six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
@@ -211,7 +216,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
-    mirrored_engine_ids = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -465,11 +470,20 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def get_mirrored_engine_ids(self, server_env):
+        for env in self.mirrored_engine_ids:
+            if env.server_environment == server_env:
+                return env.engine_ids
+        return []
+
     def validate_db_config(self):
-        if self.engine_id in self.mirrored_engine_ids:
+        mirrored_engine_ids = self.get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT)
+        if not mirrored_engine_ids:
+            return
+        if self.engine_id in mirrored_engine_ids:
             raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
 
-        for engine_id in self.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, []):
+        for engine_id in mirrored_engine_ids:
             if not connection_manager.engine_id_is_available(engine_id):
                 raise BadSpecError(
                     "DB for engine_id {} is not availble".format(engine_id)

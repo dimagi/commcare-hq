@@ -133,7 +133,7 @@ def number_of_ucr_reports(domain):
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
         MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
-    requires_mirroring = config.mirrored_engine_ids.get(settings.SERVER_ENVIRONMENT, [])
+    requires_mirroring = config.get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT)
     if requires_mirroring:
         adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
     else:
