@@ -110,6 +110,8 @@ class DailyAttendanceView(models.Model):
     )
     image_name = models.TextField(blank=True, null=True, help_text="/form/photo_children_present")
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         app_label = 'icds_model'
         managed = False
@@ -200,6 +202,8 @@ class ChildHealthMonthlyView(models.Model):
     aww_phone_number = models.TextField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         app_label = 'icds_model'
         managed = False
@@ -241,6 +245,8 @@ class AggLsMonthly(models.Model):
         blank=True, null=True,
         help_text="number of AWCs that have at least one Household registration form"
     )
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -323,6 +329,8 @@ class ServiceDeliveryMonthly(models.Model):
         blank=True, null=True,
         help_text="Expected Home visits"
     )
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -550,6 +558,8 @@ class AggAwcMonthly(models.Model):
         help_text="last date an infrastrucutre form was submitted"
     )
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         app_label = 'icds_model'
         managed = False
@@ -581,6 +591,8 @@ class AWWIncentiveReportMonthly(models.Model):
     awc_num_open = models.SmallIntegerField(null=True)
     valid_visits = models.SmallIntegerField(null=True)
     expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -659,6 +671,8 @@ class AggCcsRecordMonthly(models.Model):
     counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
     valid_visits = models.SmallIntegerField(blank=True, null=True)
     expected_visits = models.SmallIntegerField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -744,6 +758,8 @@ class CcsRecordMonthlyView(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -925,6 +941,8 @@ class AggChildHealthMonthly(models.Model):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
+    objects = CitusComparisonManager()
+
     class Meta(object):
         app_label = 'icds_model'
         managed = False
@@ -955,6 +973,8 @@ class AwcLocationMonths(models.Model):
     month_display = models.TextField(blank=True, null=True)
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
@@ -1015,6 +1035,8 @@ class DishaIndicatorView(models.Model):
         max_digits=16, decimal_places=8, blank=True, null=True)
     stunting_moderate_percent = models.DecimalField(
         max_digits=16, decimal_places=8, blank=True, null=True)
+
+    objects = CitusComparisonManager()
 
     class Meta(object):
         app_label = 'icds_model'
