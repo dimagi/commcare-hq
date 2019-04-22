@@ -1050,7 +1050,7 @@ LEGACY_CHILD_MODULES = StaticToggle(
 
 APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
     'APP_BUILDER_CONDITIONAL_NAMES',
-    'Conditional, calculation-based  mapping for menu and form names',
+    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
