@@ -268,9 +268,9 @@ class MultiDBSqlAdapter(object):
     def __init__(self, config, override_table_name=None):
         self.config = config
         self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
-        self.all_adapters = [self.main_adapter]  # include the main primary adapter
+        self.all_adapters = []
         engine_ids = self.config.get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT) + \
-            [self.main_adapter.engine_id]
+            [self.main_adapter.engine_id]  # include the main primary adapter
         # different engine_ids could resolve to same DB, so filter them out
         engine_ids = connection_manager.filter_out_aliases(engine_ids)
         for engine_id in engine_ids:
