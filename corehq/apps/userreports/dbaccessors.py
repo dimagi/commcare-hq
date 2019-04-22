@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.util.test_utils import unit_testing_only
 
@@ -65,3 +67,15 @@ def get_all_report_configs():
 def delete_all_report_configs():
     from corehq.apps.userreports.models import ReportConfiguration
     delete_all_docs_by_doc_type(ReportConfiguration.get_db(), ('ReportConfiguration',))
+
+
+def delete_all_ucr_tables_for_domain(domain):
+    """
+    For a given domain, delete all the known UCR data source tables
+
+    This only deletes "known" data sources for the domain.
+    To identify "orphaned" tables, see the prune_old_datasources management command.
+    """
+    for config in get_datasources_for_domain(domain):
+        adapter = get_indicator_adapter(config)
+        adapter.drop_table()
