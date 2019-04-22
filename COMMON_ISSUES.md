@@ -3,7 +3,7 @@ Common issues
 
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
-  and change the line "local all all peer" to "local all all md5". 
+  and change the line "local all all peer" to "local all all md5".
 
 + When running `./manage.py sync_couch_views`:
    + First time running `sync_couch_views`
