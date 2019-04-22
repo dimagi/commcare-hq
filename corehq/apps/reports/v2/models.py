@@ -30,7 +30,7 @@ class BaseReport(object):
         self.domain = domain
 
     def _get_endpoint(self, endpoint_slug, endpoints):
-        slug_to_class = dict([(e.slug, e) for e in endpoints])
+        slug_to_class = {e.slug: e for e in endpoints}
         try:
             endpoint_class = slug_to_class[endpoint_slug]
             return endpoint_class(self.request, self.domain)
