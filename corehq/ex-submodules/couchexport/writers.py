@@ -445,7 +445,7 @@ class Excel2003ExportWriter(ExportWriter):
         # have to deal with primary ids
         for i, val in enumerate(row):
             if i >= MAX_XLS_COLUMNS:
-                raise XlsLengthException
+                raise XlsLengthException()
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 

@@ -5,7 +5,6 @@ import json
 import six
 from datetime import date
 
-from couchexport.writers import XlsLengthException
 from dimagi.utils.logging import notify_exception
 from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError, JsonResponse
@@ -312,20 +311,14 @@ def prepare_custom_export(request, domain):
     else:
         filename = "{} {}".format(export_instances[0].name, date.today().isoformat())
 
-    try:
-        download = get_export_download(
-            domain,
-            export_ids,
-            view_helper.model,
-            request.couch_user.username,
-            filters=export_filters,
-            filename=filename,
-        )
-    except XlsLengthException:
-        return JsonResponse({
-            'error': _('This file has more than 256 columns, which is not supported by xls. '
-                       'Please change the output type to csv or xlsx to export this file.')
-        })
+    download = get_export_download(
+        domain,
+        export_ids,
+        view_helper.model,
+        request.couch_user.username,
+        filters=export_filters,
+        filename=filename,
+    )
 
     view_helper.send_preparation_analytics(export_instances, export_filters)
 
@@ -354,11 +347,22 @@ def poll_custom_export_download(request, domain):
     try:
         context = get_download_context(download_id)
     except TaskFailedError as e:
-        notify_exception(request, "Export download failed",
-                         details={'download_id': download_id, 'errors': e.errors})
-        return JsonResponse({
-            'error': _("Download task failed to start."),
-        })
+        if e.exception_name == 'XlsLengthException':
+            return JsonResponse({
+                'error': _(
+                    'This file has more than 256 columns, which is not supported by xls. '
+                    'Please change the output type to csv or xlsx to export this file.')
+            })
+        else:
+            notify_exception(
+                request, "Export download failed",
+                details={'download_id': download_id, 'errors': e.errors,
+                         'exception_name': e.exception_name})
+
+            return JsonResponse({
+                'error': _("Download task failed to start."),
+            })
+
     if context.get('is_ready', False):
         context.update({
             'dropbox_url': reverse('dropbox_upload', args=(download_id,)),
