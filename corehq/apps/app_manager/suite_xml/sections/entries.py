@@ -6,7 +6,11 @@ from six.moves import zip_longest
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 
-from corehq.apps.app_manager.suite_xml.utils import get_select_chain_meta
+from corehq.apps.app_manager.suite_xml.utils import (
+    get_select_chain_meta,
+    get_form_enum_text,
+    get_form_locale_id,
+)
 from corehq.apps.app_manager.exceptions import (
     ParentModuleReferenceError,
     SuiteValidationError)
@@ -134,7 +138,8 @@ class EntriesHelper(object):
                 form_custom_icon = form.custom_icon
                 e.command = LocalizedCommand(
                     id=id_strings.form_command(form, module),
-                    menu_locale_id=id_strings.form_locale(form),
+                    menu_locale_id=get_form_locale_id(form),
+                    menu_enum_text=get_form_enum_text(form),
                     media_image=bool(len(form.all_image_paths())),
                     media_audio=bool(len(form.all_audio_paths())),
                     image_locale_id=id_strings.form_icon_locale(form),
@@ -148,7 +153,8 @@ class EntriesHelper(object):
             else:
                 e.command = Command(
                     id=id_strings.form_command(form, module),
-                    locale_id=id_strings.form_locale(form),
+                    locale_id=get_form_locale_id(form),
+                    enum_text=get_form_enum_text(form),
                     media_image=form.default_media_image,
                     media_audio=form.default_media_audio,
                 )
