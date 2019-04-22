@@ -43,7 +43,27 @@ hqDefine('reports/v2/js/datagrid/filters', [
         return self;
     };
 
+    var appliedColumnFilter = function (data) {
+        /**
+         * This will be the filter spec stored in the column model that will
+         * be sent to the backend.
+         * @type {{
+         *   filterName: "unique name identifying the filter",
+         *   choiceName: "unique name identifying the choice",
+         *   value: "value to be applied alongside the filter",
+         * }}
+         */
+        var self = {};
+
+        self.filterName = ko.observable(data.filterName);
+        self.choiceName = ko.observable(data.choiceName);
+        self.value = ko.observable(data.value);
+
+        return self;
+    };
+
     return {
         columnFilter: columnFilter,
+        appliedColumnFilter: appliedColumnFilter,
     };
 });

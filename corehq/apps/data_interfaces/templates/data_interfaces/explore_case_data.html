@@ -116,6 +116,67 @@ breadcrumbs todo
                        data-bind="textInput: name,
                                   datagridAutocomplete: $root.editColumnController.columnNameOptions" />
               </div>
+
+              <div class="form-group"
+                   data-bind="visible: showClause">
+                {% trans "Match" %}
+                <select data-bind="value: clause,
+                                   event: { change: $root.editColumnController.updateFilter }"
+                        class="form-control">
+                  <option value="all">
+                    {% trans "all of the" %}
+                  </option>
+                  <option value="any">
+                    {% trans "any of the" %}
+                  </option>
+                </select>
+                {% trans "following conditions:" %}
+              </div>
+
+              <!-- ko foreach: appliedFilters -->
+              <div class="row">
+                <div class="col-xs-2">
+                  <!-- ko if: $index() == 0 -->
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.availableFilterNames,
+                                     optionsText: function (val) {
+                                        return $root.editColumnController.filterTitleByName[val];
+                                     },
+                                     value: filterName,
+                                     event: { change: $root.editColumnController.updateFilterName }"></select>
+                  <!-- /ko -->
+                </div>
+                <div class="col-xs-4">
+                  <select class="form-control"
+                          data-bind="options: $root.editColumnController.availableChoiceNames,
+                                     optionsText: function (val) {
+                                        return $root.editColumnController.choiceTitleByName()[val];
+                                     },
+                                     value: choiceName,
+                                     event: { change: $root.editColumnController.updateFilter }"></select>
+                </div>
+                <div class="col-xs-4">
+                  <input type="text"
+                         class="form-control"
+                         data-bind="textInput: value,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+                </div>
+                <div class="col-xs-2">
+                  <button type="button"
+                          class="btn btn-danger"
+                          data-bind="click: $root.editColumnController.removeFilter">
+                    <i class="fa fa-remove"></i>
+                  </button>
+
+                 </div>
+              </div>
+              <!-- /ko -->
+              <button type="button"
+                      class="btn btn-default"
+                      data-bind="click: $root.editColumnController.addFilter,
+                                 visible: showAddFilter" >
+                {% trans "Add Filter" %}
+              </button>
             </div>
           </div>
           <div class="modal-footer">
