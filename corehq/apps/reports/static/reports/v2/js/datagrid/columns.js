@@ -50,7 +50,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
                         choiceName: filterData.choiceName(),
                         value: filterData.value() || '',
                     };
-                })
+                }),
             };
         });
 
