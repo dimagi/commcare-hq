@@ -38,7 +38,6 @@
          "datatype":"string",
          "type":"expression",
          "transform":{
-
          },
          "is_primary_key":false,
          "is_nullable":true,
