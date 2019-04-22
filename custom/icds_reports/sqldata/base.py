@@ -4,7 +4,7 @@ from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 
 
 class IcdsSqlData(SqlData):
-    pass
+    engine_id = 'icds-ucr'
 
 
 class ICDSDatabaseColumn(DatabaseColumn):

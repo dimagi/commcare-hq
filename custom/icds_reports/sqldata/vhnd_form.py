@@ -14,8 +14,6 @@ from custom.utils.utils import clean_IN_filter_value
 
 
 class VHNDFormUCR(IcdsSqlData):
-    engine_id = 'icds-ucr'
-
     def __init__(self, config):
         self.awcs = config['awc_id']
         super(VHNDFormUCR, self).__init__(config)

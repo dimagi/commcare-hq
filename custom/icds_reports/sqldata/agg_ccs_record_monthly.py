@@ -18,7 +18,6 @@ from custom.utils.utils import clean_IN_filter_value
 
 class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_ccs_record_monthly'
-    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
