@@ -19,6 +19,7 @@ class BaseReport(object):
     options_endpoints = ()
     formatters = ()
     columns = []
+    column_filters = []
 
     def __init__(self, request, domain):
         """
@@ -59,6 +60,7 @@ class BaseReport(object):
             'slug': self.slug,
             'endpoints': [e._asdict() for e in endpoints],
             'columns': [c._asdict() for c in self.columns],
+            'column_filters': [c.get_context() for c in self.column_filters],
         }
 
 
@@ -125,6 +127,17 @@ class BaseDataFormatter(object):
         self.request = request
 
     def get_context(self):
+        """
+        Override this to return a dict
+        :return: {}
+        """
+        raise NotImplementedError("please implement get_context")
+
+
+class BaseFilter(object):
+
+    @classmethod
+    def get_context(cls):
         """
         Override this to return a dict
         :return: {}
