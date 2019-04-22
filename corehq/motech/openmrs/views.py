@@ -29,7 +29,6 @@ from corehq.motech.requests import Requests
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.utils import b64_aes_encrypt
 from memoized import memoized
-from dimagi.utils.web import json_response
 from six.moves import map
 from six.moves import range
 
@@ -169,9 +168,9 @@ class OpenmrsImporterView(BaseProjectSettingsView):
                     openmrs_importer = OpenmrsImporter(domain=request.domain)
                     self._update_importer(openmrs_importer, new_openmrs_importers[j])
             get_openmrs_importers_by_domain.clear(request.domain)
-            return json_response({'message': _('OpenMRS Importers saved'), 'error': None})
+            return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
         except Exception as err:
-            return json_response({'message': None, 'error': str(err)}, status_code=500)
+            return JsonResponse({'message': None, 'error': str(err)}, status=500)
 
     @property
     def page_context(self):

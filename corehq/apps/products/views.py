@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from io import BytesIO
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, JsonResponse
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
 from corehq.util.files import file_extention_from_filename
 from couchexport.writers import Excel2007ExportWriter
@@ -17,7 +17,6 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
 from memoized import memoized
 from corehq.apps.products.tasks import import_products_async
@@ -48,7 +47,7 @@ def archive_product(request, domain, prod_id, archive=True):
     """
     product = Product.get(prod_id)
     product.archive()
-    return json_response({
+    return JsonResponse({
         'success': True,
         'message': _("Product '{product_name}' has successfully been {action}.").format(
             product_name=product.name,
@@ -77,7 +76,7 @@ def unarchive_product(request, domain, prod_id, archive=True):
             product_name=product.name,
             action="unarchived",
         )
-    return json_response({
+    return JsonResponse({
         'success': success,
         'message': message,
         'product_id': prod_id

@@ -9,10 +9,9 @@ from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -519,7 +518,7 @@ def get_exports_page(request, domain):
     limit = int(request.GET.get('limit', 5))
     my_exports = json.loads(request.GET.get('my_exports'))
     (exports, total) = helper.get_exports_page(page, limit, my_exports=my_exports)
-    return json_response({
+    return JsonResponse({
         'exports': exports,
         'total': total,
     })
@@ -532,7 +531,7 @@ def get_saved_export_progress(request, domain):
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
     export_instance_id = request.GET.get('export_instance_id')
-    return json_response({
+    return JsonResponse({
         'taskStatus': _get_task_status_json(export_instance_id),
     })
 
@@ -547,7 +546,7 @@ def toggle_saved_export_enabled(request, domain):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
     export_instance.save()
-    return json_response({
+    return JsonResponse({
         'success': True,
         'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
     })
@@ -564,12 +563,12 @@ def update_emailed_export_data(request, domain):
     try:
         rebuild_saved_export(export_instance_id, manual=True)
     except XlsLengthException:
-        return json_response({
+        return JsonResponse({
             'error': _('This file has more than 256 columns, which is not supported by xls. '
                        'Please change the output type to csv or xlsx in the export configuration page '
                        'to export this file.')
         })
-    return json_response({'success': True})
+    return JsonResponse({'success': True})
 
 
 @location_safe
@@ -633,11 +632,11 @@ def commit_filters(request, domain):
             export.filters = filters
             export.save()
             rebuild_saved_export(export_id, manual=True)
-        return json_response({
+        return JsonResponse({
             'success': True,
         })
     else:
-        return json_response({
+        return JsonResponse({
             'success': False,
             'error': _("Problem saving dashboard feed filters: Invalid form"),
         })
@@ -792,7 +791,7 @@ def get_app_data_drilldown_values(request, domain):
     else:
         response = rmi_helper.get_dual_model_rmi_response()
 
-    return json_response(response)
+    return JsonResponse(response)
 
 
 @require_POST
@@ -816,7 +815,7 @@ def submit_app_data_drilldown_form(request, domain):
         form_data
     )
     if not create_form.is_valid():
-        return json_response({
+        return JsonResponse({
             'success': False,
             'error': _("The form did not validate."),
         })
@@ -849,7 +848,7 @@ def submit_app_data_drilldown_form(request, domain):
     if app_id != ApplicationDataRMIHelper.UNKNOWN_SOURCE:
         url_params += '&app_id={}'.format(app_id)
 
-    return json_response({
+    return JsonResponse({
         'success': True,
         'url': reverse(cls.urlname, args=[domain]) + url_params,
     })
