@@ -674,7 +674,7 @@ class GenericReportView(object):
 
     @property
     @request_cache()
-    def JsonResponse(self):
+    def json_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the json version for the report, if available.
