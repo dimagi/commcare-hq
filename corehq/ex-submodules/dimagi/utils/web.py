@@ -121,6 +121,16 @@ def json_handler(obj):
         return json.JSONEncoder().default(obj)
 
 
+def json_response(obj, status_code=200, **kwargs):
+    """
+    Deprecated. When possible use Django's built in JsonResponse
+    """
+    if 'default' not in kwargs:
+        kwargs['default'] = json_handler
+    return HttpResponse(json.dumps(obj, **kwargs), status=status_code,
+                        content_type="application/json")
+
+
 def json_request(params, lenient=True, booleans_as_strings=False):
     d = {}
     for key, val in params.items():

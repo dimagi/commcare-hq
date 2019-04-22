@@ -9,7 +9,7 @@ import qrcode
 import six
 from django.conf import settings
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -56,6 +56,7 @@ from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS, MULTIPLE_APPS_UNLIMITE
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 
 
 @login_and_domain_required
@@ -81,7 +82,7 @@ def project_id_mapping(request, domain):
     users = CommCareUser.by_domain(domain)
     groups = Group.by_domain(domain)
 
-    return JsonResponse({
+    return json_response({
         'users': dict([(user.raw_username, user.user_id) for user in users]),
         'groups': dict([(group.name, group.get_id) for group in groups]),
     })

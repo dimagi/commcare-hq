@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -105,6 +105,7 @@ from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 
 
 def _is_exempt_from_location_safety(view_fn, *args, **kwargs):
@@ -630,7 +631,7 @@ def paginate_web_users(request, domain):
         }
     web_users_fmt = [_fmt_result(domain, u) for u in web_users]
 
-    return JsonResponse({
+    return json_response({
         'users': web_users_fmt,
         'total': total,
         'page': page,
@@ -684,7 +685,7 @@ def undo_remove_web_user(request, domain, record_id):
 @require_POST
 def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return JsonResponse({})
+        return json_response({})
     role_data = json.loads(request.body)
     role_data = dict(
         (p, role_data[p])
@@ -725,23 +726,23 @@ def post_user_role(request, domain):
     role.save()
     role.__setattr__('hasUsersAssigned',
                      True if len(role.ids_of_assigned_users) > 0 else False)
-    return JsonResponse(role)
+    return json_response(role)
 
 
 @domain_admin_required
 @require_POST
 def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
-        return JsonResponse({})
+        return json_response({})
     role_data = json.loads(request.body)
     try:
         role = UserRole.get(role_data["_id"])
     except ResourceNotFound:
-        return JsonResponse({})
+        return json_response({})
     copy_id = role._id
     role.delete()
     # return removed id in order to remove it from UI
-    return JsonResponse({"_id": copy_id})
+    return json_response({"_id": copy_id})
 
 
 class UserInvitationView(object):
@@ -911,9 +912,9 @@ def reinvite_web_user(request, domain):
         invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
-        return JsonResponse({'response': _("Invitation resent"), 'status': 'ok'})
+        return json_response({'response': _("Invitation resent"), 'status': 'ok'})
     except ResourceNotFound:
-        return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
+        return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
 
 @require_POST
@@ -923,7 +924,7 @@ def delete_invitation(request, domain):
     invitation_id = request.POST['id']
     invitation = Invitation.get(invitation_id)
     invitation.delete()
-    return JsonResponse({'status': 'ok'})
+    return json_response({'status': 'ok'})
 
 
 @require_POST
@@ -931,7 +932,7 @@ def delete_invitation(request, domain):
 @location_safe_for_ews_ils
 def delete_request(request, domain):
     DomainRequest.objects.get(id=request.POST['id']).delete()
-    return JsonResponse({'status': 'ok'})
+    return json_response({'status': 'ok'})
 
 
 class BaseManageWebUserView(BaseUserSettingsView):

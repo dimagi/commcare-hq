@@ -2,11 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseBadRequest
 
 from corehq.apps.app_manager.exceptions import (
     ScheduleError,
     ModuleNotFoundException)
+from dimagi.utils.web import json_response
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     FormSchedule,
@@ -42,7 +43,7 @@ def edit_schedule_phases(request, domain, app_id, module_unique_id):
 
     response_json = {}
     app.save(response_json)
-    return JsonResponse(response_json)
+    return json_response(response_json)
 
 
 @no_conflict_require_POST
@@ -73,7 +74,7 @@ def edit_visit_schedule(request, domain, app_id, form_unique_id):
 
     response_json = {}
     app.save(response_json)
-    return JsonResponse(response_json)
+    return json_response(response_json)
 
 
 def get_schedule_context(form):

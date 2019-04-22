@@ -60,6 +60,7 @@ from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from dimagi.utils.web import json_response
 from memoized import memoized
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -233,7 +234,7 @@ def download_multimedia_paths(request, domain, app_id):
 @require_POST
 def update_multimedia_paths(request, domain, app_id):
     if not request.FILES:
-        return JsonResponse({
+        return json_response({
             'error': _("Please choose an Excel file to import.")
         })
 
@@ -241,7 +242,7 @@ def update_multimedia_paths(request, domain, app_id):
 
     extension = os.path.splitext(handle.name)[1][1:].strip().lower()
     if extension not in ALLOWED_EXTENSIONS:
-        return JsonResponse({
+        return json_response({
             'error': _("Please choose a file with one of the following extensions: "
                        "{}").format(", ".join(ALLOWED_EXTENSIONS))
         })
@@ -253,7 +254,7 @@ def update_multimedia_paths(request, domain, app_id):
     try:
         open_spreadsheet_download_ref(f)
     except SpreadsheetFileExtError:
-        return JsonResponse({
+        return json_response({
             'error': _("File does not appear to be an Excel file. Please choose another file.")
         })
 
@@ -270,7 +271,7 @@ def update_multimedia_paths(request, domain, app_id):
 
     (errors, warnings) = validate_multimedia_paths_rows(app, rows)
     if len(errors):
-        return JsonResponse({
+        return json_response({
             'complete': 1,
             'errors': errors,
         })
@@ -294,7 +295,7 @@ def update_multimedia_paths(request, domain, app_id):
             warnings.append(_("Could not completely update path <code>{}</code>, "
                               "please check app for remaining references.").format(old_path))
 
-    return JsonResponse({
+    return json_response({
         'complete': 1,
         'successes': successes,
         'warnings': warnings,

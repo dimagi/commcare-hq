@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import io
 from collections import namedtuple
 
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
@@ -14,6 +14,7 @@ from six.moves import range
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
@@ -162,7 +163,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
 
     def get(self, request, *args, **kwargs):
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
-        return JsonResponse({
+        return json_response({
             'response': {
                 'form_data': {
                     'modules': modules,

@@ -5,7 +5,7 @@ import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
@@ -16,6 +16,7 @@ from django.views.decorators.http import require_http_methods
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import make_form_readonly
+from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -95,7 +96,7 @@ def lock_locations(func):
             messages.warning(request, message)
             if request.method == 'DELETE':
                 # handle delete_location view
-                return JsonResponse({'success': False, 'message': message})
+                return json_response({'success': False, 'message': message})
             else:
                 return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
@@ -603,7 +604,7 @@ class NewLocationView(BaseEditLocationView):
 def archive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.archive()
-    return JsonResponse({
+    return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
@@ -619,7 +620,7 @@ def archive_location(request, domain, loc_id):
 def delete_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.full_delete()
-    return JsonResponse({
+    return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
@@ -634,7 +635,7 @@ def location_lineage(request, domain, loc_id):
     for ancestor_idx in range(len(lineage)):
         lineage[ancestor_idx] = SQLLocation.objects.get_locations([lineage[ancestor_idx]])[0].to_json()
     lineage.insert(0, SQLLocation.objects.get_locations([loc_id])[0].to_json())
-    return JsonResponse({
+    return json_response({
         'lineage': lineage
     })
 
@@ -644,7 +645,7 @@ def location_lineage(request, domain, loc_id):
 def location_descendants_count(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     count = loc.get_descendants(include_self=True).count()
-    return JsonResponse({
+    return json_response({
         'count': count
     })
 
@@ -654,7 +655,7 @@ def location_descendants_count(request, domain, loc_id):
 def unarchive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.unarchive()
-    return JsonResponse({
+    return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
             location_name=loc.name,
@@ -1057,7 +1058,7 @@ def child_locations_for_select2(request, domain):
 
     # 10 results per page
     paginator = Paginator(locs, 10)
-    return JsonResponse({
+    return json_response({
         'results': list(map(loc_to_payload, paginator.page(page))),
         'total_count': paginator.count,
     })
