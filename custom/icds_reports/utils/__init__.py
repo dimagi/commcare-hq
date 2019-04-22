@@ -323,6 +323,17 @@ def get_color_with_green_positive(val):
         return 'green'
 
 
+def get_color_with_red_positive(val):
+    if isinstance(val, (int, float)):
+        if val > 0:
+            return 'red'
+        else:
+            return 'green'
+    else:
+        assert val == PREVIOUS_PERIOD_ZERO_DATA, val
+        return 'red'
+
+
 def get_value(data, prop):
     return (data[0][prop] or 0) if data else 0
 

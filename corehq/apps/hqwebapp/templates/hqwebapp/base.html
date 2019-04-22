@@ -329,7 +329,18 @@
         {% endif %}
 
         {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+        {% if enterprise_mode and allow_report_an_issue and not 500traceback or not enterprise_mode %}
+            {% include 'hqwebapp/includes/modal_report_issue.html' %}
+        {% else %}
+            <style>
+                a[href='#modalReportIssue'] {
+                      pointer-events: none;
+                      cursor: text;
+                      text-decoration: none;
+                      color: inherit;
+                }
+            </style>
+        {% endif %}
 
         {% if EULA_COMPLIANCE %}
             {% if request.couch_user and not request.couch_user.is_eula_signed %}

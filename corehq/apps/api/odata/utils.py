@@ -22,4 +22,4 @@ def get_case_type_to_properties(domain):
         for export_group_schema in case_export_schema.group_schemas[0].items:
             cleaned_case_property = export_group_schema.label.replace('_', '')
             case_type_to_properties[case_type].append(cleaned_case_property)
-    return case_type_to_properties
+    return dict(case_type_to_properties)

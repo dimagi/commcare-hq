@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 import pytz
 
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -13,7 +13,6 @@ from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
@@ -257,16 +256,16 @@ class RepeatRecordView(View):
         try:
             payload = record.get_payload()
         except XFormNotFound:
-            return json_response({
+            return JsonResponse({
                 'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
-            }, status_code=404)
+            }, status=404)
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
             payload = pformat_json(payload)
 
-        return json_response({
+        return JsonResponse({
             'payload': payload,
             'content_type': content_type,
         })
@@ -276,7 +275,7 @@ class RepeatRecordView(View):
         record_id = request.POST.get('record_id')
         record = self.get_record_or_404(request, domain, record_id)
         record.fire(force_send=True)
-        return json_response({
+        return JsonResponse({
             'success': record.succeeded,
             'failure_reason': record.failure_reason,
         })
