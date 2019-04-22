@@ -45,6 +45,9 @@ hqDefine('reports/v2/js/datagrid', [
                     existingColumnNames: _.map(self.columns(), function (column) {
                         return column.name();
                     }),
+                    columns: _.map(self.columns(), function (column) {
+                        return column.context();
+                    }),
                 };
             });
 
@@ -64,6 +67,9 @@ hqDefine('reports/v2/js/datagrid', [
             } else {
                 self.columns.push(columns.columnModel(column.unwrap()));
             }
+            if (self.editColumnController.hasFilterUpdate()) {
+                self.data.refresh();
+            }
             self.editColumnController.unset();
         };
 
@@ -75,6 +81,10 @@ hqDefine('reports/v2/js/datagrid', [
                 }
             });
             self.columns(replacementCols);
+            if (self.editColumnController.oldColumn().appliedFilters.length > 0) {
+                // refresh data if the deleted column had filters applied.
+                self.data.refresh();
+            }
             self.editColumnController.unset();
         };
 

@@ -40,6 +40,20 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return ko.mapping.toJS(self);
         };
 
+        self.context = ko.computed(function () {
+            return {
+                name: self.name(),
+                clause: self.clause(),
+                filters: _.map(self.appliedFilters(), function (filterData) {
+                    return {
+                        filterName: filterData.filterName(),
+                        choiceName: filterData.choiceName(),
+                        value: filterData.value() || '',
+                    };
+                })
+            };
+        });
+
         return self;
     };
 
