@@ -6,16 +6,17 @@ from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils import percent_num
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, SqlData):
+class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_ccs_record_monthly'
     engine_id = 'icds-ucr'
 
