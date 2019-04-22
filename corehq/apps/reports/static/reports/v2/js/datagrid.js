@@ -22,7 +22,7 @@ hqDefine('reports/v2/js/datagrid', [
     'use strict';
 
     var datagridController = function (options) {
-        assertProperties.assert(options, ['dataModel', 'columnEndpoint', 'initialColumns']);
+        assertProperties.assert(options, ['dataModel', 'columnEndpoint', 'initialColumns', 'availableFilters']);
 
         var self = {};
 
@@ -31,6 +31,7 @@ hqDefine('reports/v2/js/datagrid', [
 
         self.editColumnController = columns.editColumnController({
             endpoint: options.columnEndpoint,
+            availableFilters: options.availableFilters,
         });
 
         self.init = function () {
