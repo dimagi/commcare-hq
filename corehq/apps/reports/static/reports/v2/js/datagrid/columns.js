@@ -5,9 +5,13 @@
 hqDefine('reports/v2/js/datagrid/columns', [
     'jquery',
     'knockout',
+    'underscore',
+    'reports/v2/js/datagrid/filters',
 ], function (
     $,
-    ko
+    ko,
+    _,
+    filters
 ) {
     'use strict';
 
@@ -34,6 +38,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.oldColumn = ko.observable();
         self.column = ko.observable();
         self.isNew = ko.observable();
+
+        self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
+            return filters.columnFilter(data);
+        }));
 
         self.init = function (reportContextObservable) {
             self.reportContext = reportContextObservable;
