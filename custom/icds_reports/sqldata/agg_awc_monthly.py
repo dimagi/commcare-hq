@@ -1,21 +1,21 @@
 from __future__ import absolute_import, division
-
 from __future__ import unicode_literals
+
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import percent_num, person_has_aadhaar_column, person_is_beneficiary_column
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.utils.utils import clean_IN_filter_value
 
 
-class AggAWCMonthlyDataSource(ProgressReportMixIn, SqlData):
+class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-ucr'
 

@@ -6,13 +6,14 @@ from sqlagg.base import AliasColumn
 from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
 from sqlagg.sorting import OrderBy
 
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import person_has_aadhaar_column, person_is_beneficiary_column, percent, \
     phone_number_function
 
 
-class DemographicsChildHealth(ExportableMixin, SqlData):
+class DemographicsChildHealth(ExportableMixin, IcdsSqlData):
     engine_id = 'icds-ucr'
 
     table_name = 'agg_child_health_monthly'
@@ -87,7 +88,7 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         return columns + agg_columns
 
 
-class DemographicsAWCMonthly(ExportableMixin, SqlData):
+class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-ucr'
 
