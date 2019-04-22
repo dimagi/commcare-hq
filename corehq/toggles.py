@@ -1546,6 +1546,13 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
+ICDS_COMPARE_QUERIES_AGAINST_CITUS = DynamicallyPredictablyRandomToggle(
+    'icds_compare_queries_against_citus',
+    'ICDS: Compare quereies against citus',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
 MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",

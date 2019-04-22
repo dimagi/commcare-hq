@@ -1,6 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
+import uuid
+
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.toggles import ICDS_COMPARE_QUERIES_AGAINST_CITUS, NAMESPACE_OTHER
 
 
 class IcdsSqlData(SqlData):
@@ -10,7 +13,8 @@ class IcdsSqlData(SqlData):
         from custom.icds_reports.tasks import run_citus_experiment_raw_sql
 
         for query in self.get_sql_queries():
-            run_citus_experiment_raw_sql.delay(query)
+            if ICDS_COMPARE_QUERIES_AGAINST_CITUS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER):
+                run_citus_experiment_raw_sql.delay(query)
         return super(IcdsSqlData, self).get_data(start, limit)
 
 
