@@ -221,6 +221,17 @@ class ConnectionManager(object):
         if db_alias in settings.DATABASES:
             return db_alias
 
+    def filter_out_aliases(self, engine_ids):
+        # Filter out all but one of the multiple engine-ids that may map to same DB
+        unique_engine_ids = []
+        seen_dbs = []
+        for engine_id in engine_ids:
+            db = connection_manager.get_django_db_alias(engine_id)
+            if db not in seen_dbs:
+                unique_engine_ids.append(engine_id)
+            seen_dbs.append(db)
+        return unique_engine_ids
+
 
 connection_manager = ConnectionManager()
 Session = connection_manager.get_scoped_session(DEFAULT_ENGINE_ID)
