@@ -20,11 +20,11 @@ class AggregateSQLProfileAdmin(admin.ModelAdmin):
 @admin.register(CitusDashboardException)
 @admin.register(CitusDashboardDiff)
 class CitusDashboardAdmin(admin.ModelAdmin):
-    list_display = ('function_name', 'date_created')
-    list_filter = ('function_name',)
+    list_display = ('data_source', 'date_created')
+    list_filter = ('data_source',)
     ordering = ('-date_created',)
 
 
 @admin.register(CitusDashboardTiming)
 class CitusDashboardTimingAdmin(CitusDashboardAdmin):
-    list_display = ('function_name', 'control_duration', 'candidate_duration', 'date_created')
+    list_display = ('data_source', 'control_duration', 'candidate_duration', 'date_created')

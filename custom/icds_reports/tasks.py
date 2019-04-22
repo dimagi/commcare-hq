@@ -1182,8 +1182,6 @@ def _bust_awc_cache():
 def run_citus_experiment_raw_sql(sql):
     experiment_context = {
         "function_name": sql,
-        'args': [],
-        'kwargs': [],
     }
     experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
     with experiment.control() as control:

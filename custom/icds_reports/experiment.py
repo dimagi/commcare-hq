@@ -33,18 +33,16 @@ class DashboardQueryExperiment(laboratory.Experiment):
             candidate_exc[0], candidate_exc[1], candidate_exc[2]
         )
         CitusDashboardException.objects.create(
-            function_name=self.context['function_name'],
-            args=self.context['args'],
-            kwargs=self.context['kwargs'],
+            data_source=self.context['data_source'],
+            context=self.context,
             exception=formatted_exception
         )
 
     def log_diff(self, control_value, candidate_value):
         diff = json_delta.diff(control_value, candidate_value, verbose=False)
         CitusDashboardDiff.objects.create(
-            function_name=self.context['function_name'],
-            args=self.context['args'],
-            kwargs=self.context['kwargs'],
+            data_source=self.context['data_source'],
+            context=self.context,
             control=control_value,
             candidate=candidate_value,
             diff=diff
@@ -52,9 +50,8 @@ class DashboardQueryExperiment(laboratory.Experiment):
 
     def log_timing(self, control, candidate):
         CitusDashboardTiming.objects.create(
-            function_name=self.context['function_name'],
-            args=self.context['args'],
-            kwargs=self.context['kwargs'],
+            data_source=self.context['data_source'],
+            context=self.context,
             control_duration=control.duration,
             candidate_duration=candidate.duration
         )
