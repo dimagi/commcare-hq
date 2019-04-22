@@ -10,6 +10,7 @@ from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
 from corehq.apps.reports.v2.filters.xpath_column import (
     TextXpathColumnFilter,
     NumericXpathColumnFilter,
+    ColumnXpathExpressionBuilder,
 )
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
@@ -54,8 +55,16 @@ class ExploreCaseDataReport(BaseReport):
     def get_data_response(self, endpoint):
         query = self._get_base_query()
 
-        # todo think about filtering
-        # for f in self.get_filters():
-        #     query = f.get_filtered_query(query)
+        expressions = []
+        for columnn_context in endpoint.report_context.get('columns', []):
+            expression_builder = ColumnXpathExpressionBuilder(
+                columnn_context, self.column_filters
+            )
+            expression = expression_builder.get_expression()
+            if expression:
+                expressions.append(expression)
+        if expressions:
+            xpath_final = " and ".join(expressions)
+            query = query.xpath_query(self.domain, xpath_final)
 
         return endpoint.get_response(query, CaseDataFormatter)

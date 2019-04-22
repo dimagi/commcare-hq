@@ -5,9 +5,14 @@ from collections import namedtuple
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.reports.v2.models import BaseFilter
+from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
 
 
 ChoiceMeta = namedtuple('ChoiceMeta', 'title name operator')
+AppliedFilterContext = namedtuple(
+    'AppliedFilterContext',
+    'filter_name choice_name value'
+)
 
 
 class DataType(object):
@@ -96,3 +101,42 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
     def format_value(cls, value):
         return "'{}'".format(value) if value == '' else cls._get_number(value)
 
+
+class ColumnXpathExpressionBuilder(object):
+
+    def __init__(self, column_context, column_filters):
+        self.column_name = column_context['name']
+        self.clause = column_context.get('clause', Clause.ALL)
+        self.column_filters = column_filters
+        self.applied_filters = []
+        for filter_context in column_context.get('filters', []):
+            self.applied_filters.append(AppliedFilterContext(
+                filter_name=filter_context['filterName'],
+                choice_name=filter_context['choiceName'],
+                value=filter_context['value'],
+            ))
+
+    def _get_filter_by_name(self, filter_name):
+        name_to_class = {f.name: f for f in self.column_filters}
+        try:
+            column_filter = name_to_class[filter_name]
+            return column_filter
+        except (KeyError, NameError):
+            raise ColumnFilterNotFound(
+                "Could not find the column filter '{}'.".format(filter_name)
+            )
+
+    def get_expression(self):
+        parts = []
+        for context in self.applied_filters:
+            column_filter = self._get_filter_by_name(context.filter_name)
+            try:
+                parts.append(column_filter.get_expression(
+                    self.column_name,
+                    context.choice_name,
+                    context.value
+                ))
+            except ValueError:
+                continue  # fail silently
+        clause = " and " if self.clause == Clause.ALL else " or "
+        return "({})".format(clause.join(parts)) if parts else None
