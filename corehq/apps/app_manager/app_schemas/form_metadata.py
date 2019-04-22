@@ -62,6 +62,7 @@ class _FormDiff(JsonObject):
     name = StringProperty(choices=DIFF_STATES)
     short_comment = StringProperty(choices=DIFF_STATES)
     form_filter = StringProperty(choices=DIFF_STATES)
+    contains_changes = BooleanProperty(default=False)
 
 
 class _ModuleDiff(JsonObject):
@@ -69,9 +70,11 @@ class _ModuleDiff(JsonObject):
     name = StringProperty(choices=DIFF_STATES)
     short_comment = StringProperty(choices=DIFF_STATES)
     module_filter = StringProperty(choices=DIFF_STATES)
+    contains_changes = BooleanProperty(default=False)
 
 
 class _FormMetadataQuestion(FormQuestionResponse):
+    form_id = StringProperty()
     load_properties = ListProperty(LoadSaveProperty)
     save_properties = ListProperty(LoadSaveProperty)
     changes = ObjectProperty(_QuestionDiff)
@@ -79,6 +82,7 @@ class _FormMetadataQuestion(FormQuestionResponse):
 
 class _FormMetadata(JsonObject):
     id = StringProperty()
+    module_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     action_type = StringProperty()
@@ -124,7 +128,7 @@ class _AppSummaryFormDataGenerator(object):
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
             'module_filter': module.module_filter,
-            'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
+            'forms': [self._compile_form(module.unique_id, form) for form in self._get_pertinent_forms(module)],
         })
 
     def _get_pertinent_forms(self, module):
@@ -133,9 +137,10 @@ class _AppSummaryFormDataGenerator(object):
             return [form for form in module.get_forms() if not isinstance(form, ShadowForm)]
         return module.get_forms()
 
-    def _compile_form(self, form):
+    def _compile_form(self, module_id, form):
         form_meta = _FormMetadata(**{
             'id': form.unique_id,
+            'module_id': module_id,
             'name': form.name,
             'short_comment': form.short_comment,
             'action_type': form.get_action_type(),
@@ -179,6 +184,7 @@ class _AppSummaryFormDataGenerator(object):
         """
         question_path = self._save_to_case_root_path(question)
         response = _FormMetadataQuestion(**{
+            "form_id": form_unique_id,
             "label": question_path,
             "tag": question_path,
             "value": question_path,
@@ -198,6 +204,7 @@ class _AppSummaryFormDataGenerator(object):
 
     def _serialized_question(self, form_unique_id, question):
         response = _FormMetadataQuestion(question)
+        response.form_id = form_unique_id
         response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
         response.save_properties = self._case_meta.get_save_properties(form_unique_id, question['value'])
         if self._is_save_to_case(question):
@@ -218,88 +225,92 @@ class AppDiffGenerator(object):
 
         self._populate_id_caches()
         self._mark_removed_items()
-        self._mark_added_modules()
+        self._mark_retained_items()
 
     def _populate_id_caches(self):
-        self._first_ids = set()
-        self._first_forms_by_id = {}
-        self._first_modules_by_id = {}
+        self._first_by_id = {}
         self._first_questions_by_id = defaultdict(dict)
-        self._second_ids = set()
+        self._second_by_id = {}
         self._second_questions_by_id = defaultdict(dict)
 
         for module in self.first:
-            self._first_ids.add(module['id'])
-            self._first_modules_by_id[module['id']] = module
+            self._first_by_id[module['id']] = module
             for form in module['forms']:
-                self._first_ids.add(form['id'])
-                self._first_forms_by_id[form['id']] = form
+                self._first_by_id[form['id']] = form
                 for question in form['questions']:
                     self._first_questions_by_id[form['id']][question['value']] = question
 
         for module in self.second:
-            self._second_ids.add(module['id'])
+            self._second_by_id[module['id']] = module
             for form in module['forms']:
-                self._second_ids.add(form['id'])
+                self._second_by_id[form['id']] = form
                 for question in form['questions']:
                     self._second_questions_by_id[form['id']][question['value']] = question
 
+    def _mark_item_removed(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = REMOVED
+
+    def _mark_item_added(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = ADDED
+
+    def _mark_item_changed(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = CHANGED
+
+    def _set_contains_changes(self, item):
+        """For forms and modules, set contains_changes to True
+        For questions, set the form's contains_changes attribute to True
+
+        This is used for the "View Changed Items" filter in the UI
+        """
+        try:
+            for form in self._get_form_ancestors(item):
+                form.changes.contains_changes = True
+            item.changes.contains_changes = True
+        except AttributeError:
+            pass
+
+    def _get_form_ancestors(self, child):
+        ancestors = []
+        for tree in [self._first_by_id, self._second_by_id]:
+            try:
+                ancestors.append(tree[child['form_id']])
+            except KeyError:
+                continue
+        return ancestors
+
     def _mark_removed_items(self):
         for module in self.first:
-            if module.id not in self._second_ids:
-                module.changes.module = REMOVED
-            else:
-                self._mark_removed_forms(module['forms'])
+            if module['id'] not in self._second_by_id:
+                self._mark_item_removed(module, 'module')
+                continue
 
-    def _mark_removed_forms(self, forms):
-        for form in forms:
-            if form['id'] not in self._second_ids:
-                form.changes.form = REMOVED
-            else:
-                self._mark_removed_questions(form['id'], form.questions)
+            for form in module['forms']:
+                if form['id'] not in self._second_by_id:
+                    self._mark_item_removed(form, 'form')
+                    continue
 
-    def _mark_removed_questions(self, form_id, questions):
-        for question in questions:
-            if question.value not in self._second_questions_by_id[form_id]:
-                question.changes.question = REMOVED
+                for question in form['questions']:
+                    if question.value not in self._second_questions_by_id[form['id']]:
+                        self._mark_item_removed(question, 'question')
 
-    def _mark_added_modules(self):
-        for module in self.second:
-            if module['id'] not in self._first_ids:
-                module.changes.module = ADDED
-            else:
+    def _mark_retained_items(self):
+        """Looks through each module and form that was not removed in the second app
+        and marks changes and additions
+
+        """
+        for second_module in self.second:
+            try:
+                first_module = self._first_by_id[second_module['id']]
                 for attribute in MODULE_ATTRIBUTES:
-                    self._mark_changed_attribute(self._first_modules_by_id[module['id']], module, attribute)
-                self._mark_added_forms(module['forms'])
+                    self._mark_attribute(first_module, second_module, attribute)
+                self._mark_forms(second_module['forms'])
+            except KeyError:
+                self._mark_item_added(second_module, 'module')
 
-    def _mark_added_forms(self, forms):
-        for form in forms:
-            if form['id'] not in self._first_ids:
-                form.changes.form = ADDED
-            else:
-                for attribute in FORM_ATTRIBUTES:
-                    self._mark_changed_attribute(self._first_forms_by_id[form['id']], form, attribute)
-                self._mark_added_questions(form['id'], form['questions'])
-
-    def _mark_added_questions(self, form_id, questions):
-        for second_question in questions:
-            question_path = second_question['value']
-            if question_path not in self._first_questions_by_id[form_id]:
-                second_question.changes.question = ADDED
-            else:
-                first_question = self._first_questions_by_id[form_id][question_path]
-                self._mark_changed_questions(first_question, second_question)
-
-    def _mark_changed_questions(self, first_question, second_question):
-        for attribute in QUESTION_ATTRIBUTES:
-            if attribute == 'options':
-                self._mark_changed_options(first_question, second_question)
-            elif attribute in ('save_properties', 'load_properties'):
-                self._mark_changed_case_properties(first_question, second_question, attribute)
-            else:
-                self._mark_changed_attribute(first_question, second_question, attribute)
-
-    def _mark_changed_attribute(self, first_item, second_item, attribute):
+    def _mark_attribute(self, first_item, second_item, attribute):
         is_translatable_property = (isinstance(first_item[attribute], dict)
                                     and isinstance(second_item[attribute], dict))
         translation_changed = (is_translatable_property
@@ -308,14 +319,42 @@ class AppDiffGenerator(object):
         attribute_added = second_item[attribute] and not first_item[attribute]
         attribute_removed = first_item[attribute] and not second_item[attribute]
         if attribute_changed or translation_changed:
-            first_item.changes[attribute] = CHANGED
-            second_item.changes[attribute] = CHANGED
+            self._mark_item_changed(first_item, attribute)
+            self._mark_item_changed(second_item, attribute)
         if attribute_added:
-            second_item.changes[attribute] = ADDED
+            self._mark_item_added(second_item, attribute)
         if attribute_removed:
-            first_item.changes[attribute] = REMOVED
+            self._mark_item_removed(first_item, attribute)
 
-    def _mark_changed_options(self, first_question, second_question):
+    def _mark_forms(self, second_forms):
+        for second_form in second_forms:
+            try:
+                first_form = self._first_by_id[second_form['id']]
+                for attribute in FORM_ATTRIBUTES:
+                    self._mark_attribute(first_form, second_form, attribute)
+                self._mark_questions(second_form['id'], second_form['questions'])
+            except KeyError:
+                self._mark_item_added(second_form, 'form')
+
+    def _mark_questions(self, form_id, second_questions):
+        for second_question in second_questions:
+            try:
+                question_path = second_question['value']
+                first_question = self._first_questions_by_id[form_id][question_path]
+                self._mark_question_attributes(first_question, second_question)
+            except KeyError:
+                self._mark_item_added(second_question, 'question')
+
+    def _mark_question_attributes(self, first_question, second_question):
+        for attribute in QUESTION_ATTRIBUTES:
+            if attribute == 'options':
+                self._mark_options(first_question, second_question)
+            elif attribute in ('save_properties', 'load_properties'):
+                self._mark_case_properties(first_question, second_question, attribute)
+            else:
+                self._mark_attribute(first_question, second_question, attribute)
+
+    def _mark_options(self, first_question, second_question):
         first_option_values = {option.value for option in first_question.options}
         second_option_values = {option.value for option in second_question.options}
 
@@ -340,7 +379,11 @@ class AppDiffGenerator(object):
             first_question.changes['options'][changed_option] = CHANGED
             second_question.changes['options'][changed_option] = CHANGED
 
-    def _mark_changed_case_properties(self, first_question, second_question, attribute):
+        if removed_options or added_options or changed_options:
+            self._set_contains_changes(first_question)
+            self._set_contains_changes(second_question)
+
+    def _mark_case_properties(self, first_question, second_question, attribute):
         first_props = {(prop.case_type, prop.property) for prop in first_question[attribute]}
         second_props = {(prop.case_type, prop.property) for prop in second_question[attribute]}
         removed_properties = first_props - second_props
@@ -350,6 +393,10 @@ class AppDiffGenerator(object):
             first_question.changes[attribute][removed_property[0]] = {removed_property[1]: REMOVED}
         for added_property in added_properties:
             second_question.changes[attribute][added_property[0]] = {added_property[1]: ADDED}
+
+        if removed_properties or added_properties:
+            self._set_contains_changes(first_question)
+            self._set_contains_changes(second_question)
 
 
 def get_app_diff(app1, app2):

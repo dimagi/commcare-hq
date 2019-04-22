@@ -96,6 +96,17 @@
                                 </a>
                             </div>
                         </li>
+                        <!-- ko if: viewChanged -->
+                        <li role="presentation">
+                            <div class="appnav-item" data-bind="click: viewChangedOnly, css: { active: viewChangedOnlySelected }">
+                                <a class="appnav-link-full">
+                                    <i class="fa fa-refresh appnav-primary-icon"></i>
+                                    <span data-bind="text: viewChanged"></span>
+                                </a>
+                            </div>
+                        </li>
+                        <!-- /ko -->
+                        <li role="presentation" class="nav-divider"></li>
                         <!-- ko foreach: items -->
                             <li role="presentation">
                                 <div class="appnav-item" data-bind="click: $root.select, css: { active: isSelected }">

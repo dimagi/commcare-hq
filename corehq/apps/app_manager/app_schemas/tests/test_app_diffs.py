@@ -135,6 +135,19 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
         self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
         self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
 
+    def test_remove_form_sets_contains_changes(self):
+        self.factory1.new_form(self.app1.modules[0])
+        diff = get_app_diff(self.app1, self.app2)
+        self.assertTrue(diff.first[0]['forms'][1].changes.contains_changes)
+
+    def test_change_question_sets_contains_changes(self):
+        self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
+        self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
+        diff = get_app_diff(self.app1, self.app2)
+
+        self.assertTrue(diff.first[0]['forms'][0].changes.contains_changes)
+        self.assertTrue(diff.second[0]['forms'][0].changes.contains_changes)
+
 
 class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
     def tearDown(self):
