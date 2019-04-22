@@ -10,7 +10,7 @@ from lxml import etree
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import SuiteMixin
-from corehq.apps.translations.app_translations import escape_output_value
+from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
 
 
 class AppManagerTranslationsTest(TestCase, SuiteMixin):
@@ -32,7 +32,8 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
 
         ]
         for input, expected_output in test_cases:
-            self.assertEqual(expected_output, etree.tostring(escape_output_value(input)).decode('utf-8'))
+            escaped_input = BulkAppTranslationFormUpdater.escape_output_value(input)
+            self.assertEqual(expected_output, etree.tostring(escaped_input).decode('utf-8'))
 
     def test_language_names(self):
         app_json = self.get_json('app')
