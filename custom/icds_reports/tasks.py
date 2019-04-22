@@ -1178,8 +1178,7 @@ def _bust_awc_cache():
     create_datadog_event('redis: delete dashboard keys', 'finish')
 
 
-# TODO create new queue
-@task
+@task(queue='dashboard_comparison_queue')
 def run_citus_experiment_raw_sql(sql):
     experiment_context = {
         "function_name": sql,
