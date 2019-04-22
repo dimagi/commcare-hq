@@ -14,7 +14,7 @@ class IcdsSqlData(SqlData):
 
         for query in self.get_sql_queries():
             if ICDS_COMPARE_QUERIES_AGAINST_CITUS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER):
-                run_citus_experiment_raw_sql.delay(query)
+                run_citus_experiment_raw_sql.delay(query, data_source=self.__class__.__name__)
         return super(IcdsSqlData, self).get_data(start, limit)
 
 

@@ -1179,9 +1179,10 @@ def _bust_awc_cache():
 
 
 @task(queue='dashboard_comparison_queue')
-def run_citus_experiment_raw_sql(sql):
+def run_citus_experiment_raw_sql(sql, data_source="Unknown"):
     experiment_context = {
-        "function_name": sql,
+        "data_source": data_source,
+        "sql_query": sql,
     }
     experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
     with experiment.control() as control:
