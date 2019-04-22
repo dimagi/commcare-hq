@@ -684,7 +684,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
                 for email in emails:
                     body = render_full_report_notification(None, content, email, self).content
-                    send_html_email_async.delay(
+                    send_html_email_async(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,
                         file_attachments=excel_files,
