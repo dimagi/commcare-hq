@@ -1,0 +1,331 @@
+{
+   "domains":[
+      "fmoh-echis",
+      "fmoh-echis-staging",
+      "fmoh-echis-link-test"
+   ],
+   "server_environment":[
+      "production",
+      "echis"
+   ],
+   "report_id":"static-household_profile_report",
+   "data_source_table":"static-household_profile_data_source",
+   "config":{
+      "description":"",
+      "title":"Household Profile Report",
+      "filters":[
+         {
+            "datatype":"string",
+            "type":"dynamic_choice_list",
+            "show_all":true,
+            "slug":"health_post",
+            "field":"health_post_id",
+            "ancestor_expression":{
+
+            },
+            "choice_provider":{
+               "include_descendants":true,
+               "type":"location",
+               "show_full_path":false
+            },
+            "display":"Location"
+         },
+         {
+            "comment":null,
+            "datatype":"string",
+            "type":"dynamic_choice_list",
+            "show_all":true,
+            "slug":"gote_name",
+            "field":"gote_name",
+            "ancestor_expression":{
+
+            },
+            "choice_provider":{
+
+            },
+            "display":"Gote Name"
+         }
+      ],
+      "data_source_type":"standard",
+      "visible":true,
+      "configured_charts":[
+
+      ],
+      "aggregation_columns":[
+         "health_post_id",
+         "health_post_name"
+      ],
+  
+      "sort_expression":[
+
+      ],
+      "columns":[
+         {
+            "comment":null,
+            "field":"health_post_name",
+            "sortable":false,
+            "description":null,
+            "format":"default",
+            "css_class":null,
+            "visible":true,
+            "aggregation":"simple",
+            "column_id":"health_post_name",
+            "width":null,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"Health Post Name"
+         },
+         {
+            "comment":null,
+            "field":"health_post_id",
+            "sortable":false,
+            "description":null,
+            "format":"default",
+            "css_class":null,
+            "visible":false,
+            "aggregation":"simple",
+            "column_id":"health_post_id",
+            "width":null,
+            "transform":{
+
+            },
+            "calculate_total":false,
+            "type":"field",
+            "display":"Health Post Id"
+         },
+         {
+            "description":null,
+            "format":"both",
+            "denominator":{
+               "field":"household_count",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"household_count_separate_animal_house",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"household_count_separate_animal_house"
+            },
+            "numerator":{
+               "field":"no_of_separate_animal_house",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"no_of_separate_animal_house",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"no_of_separate_animal_house"
+            },
+            "transform":{
+
+            },
+            "column_id":"percent_of_hh_separate_animal_house",
+            "visible":true,
+            "calculate_total":false,
+            "type":"percent",
+            "display":"Proportion of Households with separate Animal House "
+         },
+         {
+            "description":null,
+            "format":"both",
+            "denominator":{
+               "field":"household_count",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"household_count_separate_kitchen",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"household_count_separate_kitchen"
+            },
+            "numerator":{
+               "field":"no_of_separate_kitchen",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"no_of_separate_kitchen",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"no_of_separate_kitchen"
+            },
+            "transform":{
+
+            },
+            "column_id":"percent_of_hh_separate_kitchen",
+            "visible":true,
+            "calculate_total":false,
+            "type":"percent",
+            "display":"Proportion of Households with Separate Kitchen"
+         },
+         {
+            "description":null,
+            "format":"both",
+            "denominator":{
+               "field":"household_count",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"household_count_solid_waste_mgmt",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"household_count_solid_waste_mgmt"
+            },
+            "numerator":{
+               "field":"no_of_solid_waste_mgmt",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"no_of_solid_waste_mgmt",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"no_of_solid_waste_mgmt"
+            },
+            "transform":{
+
+            },
+            "column_id":"percent_of_hh_solid_waste_mgmt",
+            "visible":true,
+            "calculate_total":false,
+            "type":"percent",
+            "display":"Proportion of Households with Solid Waste Management"
+         },
+         {
+            "description":null,
+            "format":"both",
+            "denominator":{
+               "field":"household_count",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"household_count_liquid_waste_mgmt",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"household_count_liquid_waste_mgmt"
+            },
+            "numerator":{
+               "field":"no_of_liquid_waste_mgmt",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"no_of_liquid_waste_mgmt",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"no_of_liquid_waste_mgmt"
+            },
+            "transform":{
+
+            },
+            "column_id":"percent_of_hh_liquid_waste_mgmt",
+            "visible":true,
+            "calculate_total":false,
+            "type":"percent",
+            "display":"Proportion of Households with Liquid Waste Management"
+         },
+         {
+            "description":null,
+            "format":"both",
+            "denominator":{
+               "field":"household_count",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"household_count_lltn",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"household_count_lltn"
+            },
+            "numerator":{
+               "field":"no_of_llitn_currently_available",
+               "sortable":false,
+               "description":null,
+               "width":null,
+               "css_class":null,
+               "format":"default",
+               "aggregation":"sum",
+               "column_id":"no_of_llitn_currently_available",
+               "visible":true,
+               "transform":{
+
+               },
+               "calculate_total":false,
+               "type":"field",
+               "display":"no_of_llitn_currently_available"
+            },
+            "transform":{
+
+            },
+            "column_id":"percent_of_hh_llitn_currently_available",
+            "visible":true,
+            "calculate_total":false,
+            "type":"percent",
+            "display":"Proportion of Households with LLITN"
+         }
+      ]
+   }
+}
