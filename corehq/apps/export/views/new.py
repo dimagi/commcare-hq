@@ -5,10 +5,11 @@ import json
 
 from couchdbkit import ResourceNotFound
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
-from django.http import HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -135,7 +136,7 @@ class BaseNewExportView(BaseProjectDataView):
                 # todo: this can probably be removed as soon as
                 # http://manage.dimagi.com/default.asp?157713 is resolved
                 notify_exception(request, 'problem saving an export! {}'.format(str(e)))
-                response = JsonResponse({
+                response = json_response({
                     'error': str(e) or type(e).__name__
                 })
                 response.status_code = 500
@@ -158,7 +159,7 @@ class BaseNewExportView(BaseProjectDataView):
             except ValueError:
                 url = self.export_home_url
             if self.is_async:
-                return JsonResponse({
+                return json_response({
                     'redirect': url,
                 })
             return HttpResponseRedirect(url)

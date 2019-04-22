@@ -6,6 +6,7 @@ import six
 from datetime import date
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.http import HttpResponseBadRequest, Http404, HttpResponse, \
     HttpResponseServerError, JsonResponse
 from django.urls import reverse
@@ -288,7 +289,7 @@ def prepare_custom_export(request, domain):
     try:
         filter_form = view_helper.get_filter_form(filter_form_data)
     except ExportFormValidationException:
-        return JsonResponse({
+        return json_response({
             'error': _("Form did not validate."),
         })
     export_filters = filter_form.get_export_filters(request, filter_form_data)
@@ -301,7 +302,7 @@ def prepare_custom_export(request, domain):
         _check_deid_permissions(permissions, export_instances)
         _check_export_size(domain, export_instances, export_filters)
     except ExportAsyncException as e:
-        return JsonResponse({
+        return json_response({
             'error': six.text_type(e),
         })
 
@@ -322,7 +323,7 @@ def prepare_custom_export(request, domain):
 
     view_helper.send_preparation_analytics(export_instances, export_filters)
 
-    return JsonResponse({
+    return json_response({
         'success': True,
         'download_id': download.download_id,
     })
@@ -371,7 +372,7 @@ def poll_custom_export_download(request, domain):
             ),
         })
     context['is_poll_successful'] = True
-    return JsonResponse(context)
+    return json_response(context)
 
 
 @location_safe
@@ -415,7 +416,7 @@ def prepare_form_multimedia(request, domain):
     try:
         filter_form = view_helper.get_filter_form(filter_form_data)
     except ExportFormValidationException:
-        return JsonResponse({
+        return json_response({
             'error': _("Please check that you've submitted all required filters."),
         })
 
@@ -425,7 +426,7 @@ def prepare_form_multimedia(request, domain):
     from corehq.apps.reports.tasks import build_form_multimedia_zip
     download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
 
-    return JsonResponse({
+    return json_response({
         'success': True,
         'download_id': download.download_id,
     })
@@ -450,7 +451,7 @@ def has_multimedia(request, domain):
             export_object.app_id,
             getattr(export_object, 'xmlns', '')
         )
-    return JsonResponse({
+    return json_response({
         'success': True,
         'hasMultimedia': has_multimedia,
     })

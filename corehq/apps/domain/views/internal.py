@@ -8,7 +8,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.urls import reverse
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -30,7 +30,7 @@ from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.domain.views.settings import BaseProjectSettingsView, BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.views import BasePageView
 from memoized import memoized
-from dimagi.utils.web import get_ip
+from dimagi.utils.web import get_ip, json_response
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 
@@ -402,7 +402,7 @@ def toggle_diff(request, domain):
                 if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
                 and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
         diff.sort(key=lambda x: x['label'])
-    return JsonResponse(diff)
+    return json_response(diff)
 
 
 @login_and_domain_required
@@ -416,4 +416,4 @@ def calculated_properties(request, domain):
         data = {"error": 'This tag does not exist'}
     else:
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}
-    return JsonResponse(data)
+    return json_response(data)

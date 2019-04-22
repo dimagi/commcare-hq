@@ -54,7 +54,7 @@ from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultim
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -466,9 +466,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit("custom_icon_form"):
         error_message = handle_custom_icon_edits(request, module, lang)
         if error_message:
-            return JsonResponse(
+            return json_response(
                 {'message': error_message},
-                status=400
+                status_code=400
             )
 
     if should_edit("case_type"):
@@ -888,7 +888,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     resp = {}
     app.save(resp)
-    return JsonResponse(resp)
+    return json_response(resp)
 
 
 @no_conflict_require_POST
@@ -937,7 +937,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     get_uuids_by_instance_id.clear(domain)
-    return JsonResponse('success')
+    return json_response('success')
 
 
 def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=True):
@@ -964,7 +964,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
         'lang': lang,
     })
     if ajax:
-        return JsonResponse({'error_html': response_html})
+        return json_response({'error_html': response_html})
     return HttpResponse(response_html)
 
 

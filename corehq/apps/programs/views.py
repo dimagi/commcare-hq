@@ -2,9 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 from couchdbkit import ResourceNotFound
-from django.http import HttpResponse, HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib import messages
 from memoized import memoized
+from dimagi.utils.web import json_response
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.urls import reverse
@@ -21,7 +22,7 @@ from six.moves import range
 def delete_program(request, domain, prog_id):
     program = Program.get(prog_id)
     program.delete()
-    return JsonResponse({
+    return json_response({
         'success': True,
         'message': _("Program '{program_name}' has successfully been deleted.").format(
             program_name=program.name,

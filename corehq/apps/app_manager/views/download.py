@@ -28,6 +28,7 @@ from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
+from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 import six
@@ -453,7 +454,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
         })
 
     if ajax:
-        return JsonResponse({
+        return json_response({
             'error_html': response_html,
         })
     else:

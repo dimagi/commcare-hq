@@ -85,6 +85,7 @@ from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime, json_format_date
+from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 from soil import DownloadBase
 
@@ -407,7 +408,7 @@ class AddSavedReportConfigView(View):
         ProjectReportsTab.clear_dropdown_cache(self.domain, request.couch_user.get_id)
         touch_saved_reports_views(request.couch_user, self.domain)
 
-        return JsonResponse(self.config)
+        return json_response(self.config)
 
     @property
     @memoized
@@ -1099,7 +1100,7 @@ def case_forms(request, domain, case_id):
     slice = list(reversed(case.xform_ids))[start_range:end_range]
     forms = FormAccessors(domain).get_forms(slice, ordered=True)
     timezone = get_timezone_for_user(request.couch_user, domain)
-    return JsonResponse([
+    return json_response([
         form_to_json(domain, form, timezone) for form in forms
     ])
 
@@ -1129,7 +1130,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
         change_json['form_url'] = reverse('render_form_data', args=[domain, change.transaction.form.form_id])
         changes.append(change_json)
 
-    return JsonResponse({
+    return json_response({
         'changes': changes,
         'last_transaction_checked': last_trasaction_checked,
     })
@@ -1214,7 +1215,7 @@ def case_property_names(request, domain, case_id):
     all_property_names = list(all_property_names)
     all_property_names.sort()
 
-    return JsonResponse(all_property_names)
+    return json_response(all_property_names)
 
 
 @require_case_view_permission

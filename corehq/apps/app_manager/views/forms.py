@@ -31,6 +31,7 @@ from unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -210,7 +211,7 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
-    return JsonResponse(response_json)
+    return json_response(response_json)
 
 
 @no_conflict_require_POST
@@ -239,7 +240,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
-    return JsonResponse(response_json)
+    return json_response(response_json)
 
 
 @csrf_exempt
@@ -347,10 +348,10 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit('enable_release_notes'):
         form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
         if not form.is_release_notes_form and form.enable_release_notes:
-            return JsonResponse(
+            return json_response(
                 {'message': _("You can't enable a form as release notes without allowing it as "
                     "a release notes form <TODO messaging>")},
-                status=400
+                status_code=400
             )
     if should_edit('no_vellum'):
         form.no_vellum = request.POST['no_vellum'] == 'true'
@@ -388,9 +389,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     )
                 )
         except etree.XMLSyntaxError as error:
-            return JsonResponse(
+            return json_response(
                 {'message': _("There was an issue with your custom instances: {}").format(error.message)},
-                status=400
+                status_code=400
             )
 
         form.custom_instances = [
@@ -410,9 +411,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     )
                 )
         except etree.XMLSyntaxError as error:
-            return JsonResponse(
+            return json_response(
                 {'message': _("There was an issue with your custom assertions: {}").format(error.message)},
-                status=400
+                status_code=400
             )
 
         existing_assertions = {assertion.test: assertion for assertion in form.custom_assertions}
@@ -436,9 +437,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("custom_icon_form"):
         error_message = handle_custom_icon_edits(request, form, lang)
         if error_message:
-            return JsonResponse(
+            return json_response(
                 {'message': error_message},
-                status=400
+                status_code=400
             )
     handle_media_edits(request, form, should_edit, resp, lang)
 
@@ -533,13 +534,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
-    return JsonResponse(response_json)
+    return json_response(response_json)
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
     form_xml = form.source
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
-        return JsonResponse({'status': 'conflict', 'xform': form_xml})
+        return json_response({'status': 'conflict', 'xform': form_xml})
     return None
 
 
@@ -582,7 +583,7 @@ def get_form_questions(request, domain, app_id):
     except FormNotFoundException:
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
-    return JsonResponse(xform_questions)
+    return json_response(xform_questions)
 
 
 def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_doc_types=('Application',)):
@@ -860,7 +861,7 @@ def get_form_datums(request, domain, app_id):
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ])
-    return JsonResponse(datums)
+    return json_response(datums)
 
 
 @require_GET
