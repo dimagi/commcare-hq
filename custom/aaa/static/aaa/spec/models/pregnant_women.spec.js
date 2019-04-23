@@ -206,6 +206,78 @@ describe('Pregnant women models', function () {
             });
             assert.equal(1, pregnantModel.pregnancyStatus());
         });
+
+        it('test personBloodGroup should return 0+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'o_pos',
+            });
+            assert.equal('0+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return A+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'a_pos',
+            });
+            assert.equal('A+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return B+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'b_pos',
+            });
+            assert.equal('B+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return AB+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'ab_pos',
+            });
+            assert.equal('AB+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return 0-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'o_neg',
+            });
+            assert.equal('0-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return A-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'a_neg',
+            });
+            assert.equal('A-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return B-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'b_neg',
+            });
+            assert.equal('B-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return AB-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'ab_neg',
+            });
+            assert.equal('AB-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return N/A', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: '',
+            });
+            assert.equal('N/A', pregnantModel.personBloodGroup());
+        });
     });
 
 });

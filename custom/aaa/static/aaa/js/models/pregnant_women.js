@@ -7,6 +7,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     'aaa/js/models/child',
     'aaa/js/models/person',
     'aaa/js/models/model_utils',
+    'aaa/js/utils/reach_utils',
 ], function (
     $,
     ko,
@@ -15,7 +16,8 @@ hqDefine("aaa/js/models/pregnant_women", [
     initialPageData,
     childUtils,
     personUtils,
-    modelUtils
+    modelUtils,
+    reachUtils
 ) {
     var pregnantWomenList = function (options, postData) {
         var self = {};
@@ -161,6 +163,13 @@ hqDefine("aaa/js/models/pregnant_women", [
             } else {
                 return 1;
             }
+        });
+
+        self.personBloodGroup = ko.computed(function () {
+            if (!reachUtils.BLOODGROUPS.hasOwnProperty(self.bloodGroup())) {
+                return 'N/A';
+            }
+            return reachUtils.BLOODGROUPS[self.bloodGroup()];
         });
 
         return self;
