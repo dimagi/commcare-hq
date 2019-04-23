@@ -1002,7 +1002,7 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(day_of_week='monday', hour=18, minute=30),
+@periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
 def collect_inactive_dashboard_users():
     celery_task_logger.info("Started updating the Inactive Dashboard users")
