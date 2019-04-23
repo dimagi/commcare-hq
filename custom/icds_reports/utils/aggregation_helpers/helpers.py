@@ -174,6 +174,6 @@ HELPERS_BY_KEY = all_helpers()
 
 def get_helper(key):
     pair = HELPERS_BY_KEY[key]
-    if getattr(settings, 'ICDS_USE_CITS', False) and pair.distributed:
+    if getattr(settings, 'ICDS_USE_CITUS', False) and pair.distributed:
         return pair.distributed
     return pair.monolith

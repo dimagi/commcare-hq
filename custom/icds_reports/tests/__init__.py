@@ -68,7 +68,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
-_use_citus = override_settings(ICDS_USE_CITS=True)
+_use_citus = override_settings(ICDS_USE_CITUS=True)
 
 
 def setUpModule():
@@ -202,7 +202,7 @@ def setUpModule():
 
 
 def _distribute_tables_for_citus(engine):
-    if not getattr(settings, 'ICDS_USE_CITS', False):
+    if not getattr(settings, 'ICDS_USE_CITUS', False):
         return
 
     # move to migrations
