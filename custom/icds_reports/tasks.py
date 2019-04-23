@@ -178,7 +178,8 @@ def run_move_ucr_data_into_aggregation_tables_task():
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
-    date = date or datetime.utcnow().date()
+    start_time = datetime.utcnow()
+    date = date or start_time.date()
     monthly_dates = []
 
     # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
@@ -305,10 +306,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'), aggregation_start_time=start_time),
             _bust_awc_cache.si()
         ).delay()
-
 
 
 def _create_aggregate_functions(cursor):
@@ -631,12 +631,18 @@ def _agg_awc_table_weekly(day):
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
-def email_dashboad_team(aggregation_date):
+def email_dashboad_team(aggregation_date, aggregation_start_time):
+    aggregation_start_time = aggregation_start_time + timedelta(hours=5, minutes=30)
+    aggregation_finish_time = datetime.utcnow() + timedelta(hours=5, minutes=30)
+
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
-        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT),
+                                    "Aggregation Started At : {} IST, "
+                                    "Completed At : {} IST".format(aggregation_start_time,
+                                                                   aggregation_finish_time ))
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
