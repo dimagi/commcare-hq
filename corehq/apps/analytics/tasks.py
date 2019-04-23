@@ -260,8 +260,6 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         return
 
     tracking_info = {
-        'created_account_in_hq': True,
-        'is_a_commcare_user': True,
         'lifecyclestage': 'lead',
     }
     env = get_instance_string()
@@ -284,6 +282,12 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         HUBSPOT_SIGNUP_FORM_ID, request,
         user=web_user, extra_fields=tracking_info
     )
+
+    direct_properties = {
+        'created_account_in_hq': True,
+        'is_a_commcare_user': True,
+    }
+    update_hubspot_properties_v2(web_user, direct_properties)
 
 
 @analytics_task(serializer='pickle', )
