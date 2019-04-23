@@ -195,16 +195,15 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
         data['blue'][date_in_miliseconds]['y'] += in_month
         data['blue'][date_in_miliseconds]['all'] += valid
 
-    top_locations = sorted(
-        [
-            dict(
-                loc_name=key,
-                percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in six.iteritems(best_worst)
-        ],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': (value['in_month'] * 100) / float(value['all'] or 1),
+        } for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -222,8 +221,8 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
