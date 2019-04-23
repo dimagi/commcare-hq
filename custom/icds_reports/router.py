@@ -15,11 +15,16 @@ class ICDSReportsRouter(object):
         return db_for_read_write(model, write=True)
 
     def allow_migrate(self, db, app_label, model=None, **hints):
-        if app_label != ICDS_REPORTS_APP:
-            return False
+        is_icds_app = (app_label == ICDS_REPORTS_APP)
+        if not is_icds_app:
+            # defer to other routers
+            return None
 
         db_alias = get_icds_ucr_db_alias()
-        return bool(db_alias and db_alias == db)
+        if db_alias == db:
+            return True
+
+        return False
 
     def allow_relation(self, obj1, obj2, **hints):
         app1, app2 = obj1._meta.app_label, obj2._meta.app_label
