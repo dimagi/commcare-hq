@@ -11,7 +11,6 @@ from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJs
 from .diffrule import Ignore
 
 
-
 load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [
         Ignore(path='_rev'),  # couch only
