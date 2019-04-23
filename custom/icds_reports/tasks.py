@@ -28,6 +28,8 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 
+from corehq import toggles
+
 from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_case_counts,
@@ -46,7 +48,7 @@ from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
-from corehq.sql_db.routers import db_for_read_write
+from corehq.sql_db.routers import db_for_read_write, force_citus_engine
 from corehq.util.datadog.utils import case_load_counter, create_datadog_event
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -174,10 +176,16 @@ SQL_FUNCTION_PATHS = [
                acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task():
     move_ucr_data_into_aggregation_tables.delay()
+    if toggles.PARALLEL_AGGREGATION.enabled(DASHBOARD_DOMAIN):
+        move_ucr_data_into_aggregation_tables.delay(force_citus=True)
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
-def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
+def move_ucr_data_into_aggregation_tables(date=None, intervals=2, force_citus=False):
+
+    if force_citus:
+        force_citus_engine()
+
     date = date or datetime.utcnow().date()
     monthly_dates = []
 

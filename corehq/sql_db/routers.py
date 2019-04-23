@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import threading
+
 from django.conf import settings
 from django.db import connections
 
@@ -23,6 +25,8 @@ SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
 AAA_APP = 'aaa'
+
+_thread_local = threading.local()
 
 
 class MultiDBRouter(object):
@@ -102,9 +106,12 @@ def db_for_read_write(model, write=True):
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
     elif app_label == ICDS_REPORTS_APP:
-        engine_id = ICDS_UCR_ENGINE_ID
-        if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
+        if getattr(_thread_local, 'force_citus', False):
+            engine_id = CITUS_MASTER
+        else:
+            engine_id = ICDS_UCR_ENGINE_ID
+            if not write:
+                engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     elif app_label == AAA_APP:
         engine_id = AAA_DB_ENGINE_ID
@@ -131,3 +138,7 @@ def db_for_read_write(model, write=True):
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+def force_citus_engine():
+    _thread_local.force_citus = True
