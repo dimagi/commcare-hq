@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
@@ -173,6 +174,10 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
+            if app.get_doc_type() == 'LinkedApplication':
+                if setting['id'] in app.SUPPORTED_SETTINGS:
+                    if setting['id'] not in app.linked_app_attrs:
+                        setting['is_inherited'] = True
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -809,16 +814,13 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None),
         ('location_fixture_restore', None),
     )
-    linked_app_attrs = [
-        'target_commcare_flavor',
-    ]
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
+            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })
