@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import zipfile
-import csv
-
 from django.test.testcases import TestCase
 
 import inspect
