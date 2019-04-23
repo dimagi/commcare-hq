@@ -20,11 +20,7 @@ class ICDSReportsRouter(object):
             # defer to other routers
             return None
 
-        db_alias = get_icds_ucr_db_alias()
-        if db_alias == db:
-            return True
-
-        return False
+        return db == get_icds_ucr_db_alias()
 
     def allow_relation(self, obj1, obj2, **hints):
         app1, app2 = obj1._meta.app_label, obj2._meta.app_label
