@@ -45,6 +45,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 import six
 from six.moves import range
+from io import open
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -541,12 +542,12 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = True
         elif replace.lower() == "false":
             replace = False
-        is_async = request.POST["async"]
-        is_async = is_async.lower() == "true"
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
             "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
+
+    is_async = request.POST.get("async", "").lower() == "true"
 
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(

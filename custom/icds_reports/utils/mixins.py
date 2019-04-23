@@ -36,7 +36,7 @@ FILTER_BY_LIST = {
 
 
 class ExportableMixin(object):
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config

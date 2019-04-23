@@ -44,6 +44,7 @@ from custom.aaa.utils import (
 )
 
 
+@location_safe
 class ReachDashboardView(TemplateView):
     @property
     def domain(self):
@@ -78,10 +79,15 @@ class ReachDashboardView(TemplateView):
         parent_ids = [loc.location_id for loc in user_locations_with_parents]
         kwargs['user_location_ids'] = parent_ids
         kwargs['is_details'] = False
+
+        selected_location = self.request.GET.get('selectedLocation', '')
+        if selected_location:
+            location = SQLLocation.objects.get(location_id=selected_location)
+            selected_hierarchy = [loc.location_id for loc in location.get_ancestors(include_self=True)]
+            kwargs['selected_location_ids'] = selected_hierarchy
         return super(ReachDashboardView, self).get_context_data(**kwargs)
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramOverviewReport(ReachDashboardView):
     template_name = 'aaa/reports/program_overview.html'
@@ -173,7 +179,6 @@ class ProgramOverviewReportAPI(View):
         ]})
 
 
-@location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class UnifiedBeneficiaryReport(ReachDashboardView):
     template_name = 'aaa/reports/unified_beneficiary.html'
