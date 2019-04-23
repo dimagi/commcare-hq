@@ -55,7 +55,7 @@ describe('Child models', function () {
             );
             assert.equal('1', childListModel.id);
             assert.equal('<a href="unified_beneficiary_details/child/1/?month=3&year=2019">test Name</a>', childListModel.name());
-            assert.equal('1 Yr 2 Mon', childListModel.age());
+            assert.equal('14 Yr', childListModel.age());
             assert.equal('Male', childListModel.gender());
             assert.equal('Yes', childListModel.lastImmunizationType());
             assert.equal('2019-03-01', childListModel.lastImmunizationDate());
