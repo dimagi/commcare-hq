@@ -321,7 +321,7 @@ def update_linked_app(app, user_id):
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    if master_version > app.version:
+    if app.version is None or master_version > app.version:
         try:
             latest_master_build = app.get_latest_master_release()
         except ActionNotPermitted:
