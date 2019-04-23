@@ -1179,22 +1179,23 @@ def _bust_awc_cache():
 
 
 @task(queue='dashboard_comparison_queue')
-def run_citus_experiment_raw_sql(sql, data_source="Unknown"):
+def run_citus_experiment_raw_sql(parameterized_sql, params, data_source="Unknown"):
     experiment_context = {
         "data_source": data_source,
-        "sql_query": sql,
+        "sql_query": parameterized_sql,
+        "params": params,
     }
     experiment = DashboardQueryExperiment(name="Dashboard Query Experiment", context=experiment_context)
     with experiment.control() as control:
         db_alias = get_icds_ucr_db_alias()
         with connections[db_alias].cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(parameterized_sql, params)
             control.record(_dictfetchall(cursor))
 
     with experiment.candidate() as candidate:
         db_alias = 'citus'
         with connections[db_alias].cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(parameterized_sql, params)
             candidate.record(_dictfetchall(cursor))
 
     objects = experiment.run()

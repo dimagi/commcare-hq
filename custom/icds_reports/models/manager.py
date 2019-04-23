@@ -12,7 +12,8 @@ class CitusComparisonQuerySet(QuerySet):
     def _fetch_all(self):
         from custom.icds_reports.tasks import run_citus_experiment_raw_sql
         if ICDS_COMPARE_QUERIES_AGAINST_CITUS.enabled(uuid.uuid4().hex, NAMESPACE_OTHER):
-            run_citus_experiment_raw_sql.delay(str(self.query), data_source=self.model.__name__)
+            query, params = self.query.sql_with_params()
+            run_citus_experiment_raw_sql.delay(query, params, data_source=self.model.__name__)
         super(CitusComparisonQuerySet, self)._fetch_all()
 
 
