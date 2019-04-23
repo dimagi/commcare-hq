@@ -898,8 +898,8 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
 
         from corehq.apps.app_manager.models import AdvancedOpenCaseAction, LoadUpdateAction
 
+        case_tags = list(self.form.actions.get_case_tags())
         for action in self.form.actions.get_subcase_actions():
-            case_tags = list(self.form.actions.get_case_tags())
             for case_index in action.case_indices:
                 if case_index.tag not in case_tags:
                     errors.append({'type': 'missing parent tag', 'case_tag': case_index.tag})
