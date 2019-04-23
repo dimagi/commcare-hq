@@ -51,7 +51,7 @@ class AggAwcDailyView(models.Model):
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_daily_view'
 
@@ -107,7 +107,7 @@ class DailyAttendanceView(models.Model):
     image_name = models.TextField(blank=True, null=True, help_text="/form/photo_children_present")
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'daily_attendance_view'
 
@@ -197,7 +197,7 @@ class ChildHealthMonthlyView(models.Model):
     mother_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'child_health_monthly_view'
 
@@ -239,7 +239,7 @@ class AggLsMonthly(models.Model):
     )
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ls_monthly'
 
@@ -321,7 +321,7 @@ class ServiceDeliveryMonthly(models.Model):
     )
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'service_delivery_monthly'
 
@@ -547,7 +547,7 @@ class AggAwcMonthly(models.Model):
     )
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_monthly'
 
@@ -579,7 +579,7 @@ class AWWIncentiveReportMonthly(models.Model):
     expected_visits = models.DecimalField(null=True, max_digits=64, decimal_places=2)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'aww_incentive_report_monthly'
 
@@ -657,7 +657,7 @@ class AggCcsRecordMonthly(models.Model):
     expected_visits = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ccs_record_monthly'
 
@@ -742,7 +742,7 @@ class CcsRecordMonthlyView(models.Model):
     resident = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'ccs_record_monthly_view'
 
@@ -922,7 +922,7 @@ class AggChildHealthMonthly(models.Model):
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_child_health_monthly'
 
@@ -953,7 +953,7 @@ class AwcLocationMonths(models.Model):
     contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'awc_location_months'
 
@@ -1013,6 +1013,6 @@ class DishaIndicatorView(models.Model):
         max_digits=16, decimal_places=8, blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'icds_disha_indicators'

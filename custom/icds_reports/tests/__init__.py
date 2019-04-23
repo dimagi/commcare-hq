@@ -179,12 +179,6 @@ def setUpModule():
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
-        except AssertionError as e:
-            # we always use soft assert to email when the aggregation has completed
-            if "Aggregation completed" not in str(e):
-                print(e)
-                tearDownModule()
-                raise
         except Exception as e:
             print(e)
             tearDownModule()
