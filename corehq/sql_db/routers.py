@@ -9,6 +9,7 @@ from django.db import connections
 from corehq.sql_db.connections import (
     AAA_DB_ENGINE_ID,
     ICDS_UCR_ENGINE_ID,
+    CITUS_MASTER,
     connection_manager,
     get_aaa_db_alias,
     get_icds_ucr_db_alias,

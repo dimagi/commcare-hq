@@ -1770,7 +1770,7 @@ IMPROVED_ASR_REPORT = StaticToggle(
 
 PARALLEL_AGGREGATION = StaticToggle(
     'parallel_agg'
-    'This makes the icds dashboard aggregation run on both distributed and monolith backends'
+    'This makes the icds dashboard aggregation run on both distributed and monolith backends',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
