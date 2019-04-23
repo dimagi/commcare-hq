@@ -684,10 +684,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
                 for email in emails:
                     body = render_full_report_notification(None, content, email, self).content
-                    send_html_email_async.delay(
+                    send_html_email_async(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,
-                        file_attachments=excel_files)
+                        file_attachments=excel_files,
+                        smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
             except Exception as er:
                 notify_exception(
                     None,

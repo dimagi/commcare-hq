@@ -62,22 +62,32 @@ class IncentiveReport(object):
                     AWC_NOT_LAUNCHED
                 ])
             else:
-                home_visit_percent = row['valid_visits'] / round(row['expected_visits']) if round(row['expected_visits']) else 1
-                weighing_efficiency = row['wer_weighed'] / row['wer_eligible'] if row['wer_eligible'] else 1
+                home_visit_percent = row['valid_visits'] / round(row['expected_visits']) if \
+                    round(row['expected_visits']) else 1
+                weighing_efficiency_percent = row['wer_weighed'] / row['wer_eligible'] if \
+                    row['wer_eligible'] else 1
                 if home_visit_percent > 1:
                     home_visit_percent = 1
+                home_visit_conducted = '{:.2%}'.format(home_visit_percent)
                 if row['awc_num_open'] is None:
                     num_open = DATA_NOT_ENTERED
                 else:
                     num_open = row['awc_num_open']
+                weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
+                eligible_for_incentive = 'Yes' if \
+                    weighing_efficiency_percent >= 0.6 and home_visit_percent >= 0.6 else 'No'
+                if row['valid_visits'] == 0 and row['expected_visits'] == 0:
+                    home_visit_conducted = "No expected home visits"
+                    weighing_efficiency = "No expected weight measurement"
+                    eligible_for_incentive = "Yes"
 
                 row_data.extend([
                     _format_infrastructure_data(row['aww_name']),
                     _format_infrastructure_data(row['contact_phone_number']),
-                    '{:.2%}'.format(home_visit_percent),
+                    home_visit_conducted,
                     num_open,
-                    '{:.2%}'.format(weighing_efficiency),
-                    'Yes' if weighing_efficiency >= 0.6 and home_visit_percent >= 0.6 else 'No'
+                    weighing_efficiency,
+                    eligible_for_incentive
                 ])
 
             excel_rows.append(row_data)

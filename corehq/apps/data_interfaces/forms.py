@@ -388,7 +388,7 @@ class CaseRuleCriteriaForm(forms.Form):
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
                 hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
                 Div(data_bind="template: {name: 'case-filters'}"),
-                css_id="rule-criteria",
+                css_id="rule-criteria-panel",
             ),
         )
 

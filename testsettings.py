@@ -131,7 +131,6 @@ REPORTING_DATABASES = {
     'ucr': 'default',
     'icds-ucr': 'icds-ucr',
     'icds-ucr-non-dashboard': 'icds-ucr',
-    'icds-test-ucr': 'icds-ucr',
     'aaa-data': 'default',
 }
 

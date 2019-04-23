@@ -45,6 +45,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 import six
 from six.moves import range
+from io import open
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
