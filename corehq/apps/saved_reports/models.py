@@ -450,10 +450,19 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return self.report_type == ConfigurableReportView.prefix
 
     @property
+    def is_support_translations(self):
+        if self.report_type == CustomProjectReportDispatcher.prefix:
+            return self.report.is_support_translations
+        else:
+            return self.is_configurable_report
+
+    @property
     @memoized
     def languages(self):
         if self.is_configurable_report:
             return frozenset(self.report.spec.get_languages())
+        elif self.is_support_translations:
+            return frozenset(self.report.languages)
         return frozenset()
 
     @property
