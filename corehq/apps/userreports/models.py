@@ -185,6 +185,9 @@ class AbstractUCRDataSource(object):
     def pk_columns(self):
         raise NotImplementedError()
 
+    def get_mirrored_engine_ids(self, _):
+        return []
+
 
 class MirroredEngineIds(DocumentSchema):
     server_environment = StringProperty()

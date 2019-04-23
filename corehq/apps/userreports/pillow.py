@@ -149,7 +149,7 @@ class ConfigurableReportTableManagerMixin(object):
         tables_by_engine = defaultdict(dict)
         all_adapters = []
         for adapter in adapters:
-            if getattr(adapter, 'all_adapters'):
+            if getattr(adapter, 'all_adapters', None):
                 all_adapters.extend(adapter.all_adapters)
             else:
                 all_adapters.append(adapter)
