@@ -158,7 +158,6 @@ class TestCleanWater(TestCase):
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
-
                 ],
                 "bottom_five": [
                     {'loc_name': 'st3', 'percent': 0.0},
