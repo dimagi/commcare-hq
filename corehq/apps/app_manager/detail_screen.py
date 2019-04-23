@@ -366,46 +366,40 @@ class Phone(FormattedDetailColumn):
 
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
-
     def _make_xpath(self, type):
-        if type == 'sort':
-            xpath_fragment_template = "if({xpath} = '{key}', {i}, "
-        elif type == 'display':
-            xpath_fragment_template = "if({xpath} = '{key}', ${key_as_var}, "
-        else:
-            raise ValueError('type must be in sort, display')
+        return sx.XpathEnum.build(
+            enum=self.column.enum,
+            template=self._xpath_template(type),
+            get_template_context=self._xpath_template_context(type),
+            get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
+                                                                              self.column, key))
 
-        parts = []
-        for i, item in enumerate(self.column.enum):
-            parts.append(
-                xpath_fragment_template.format(
-                    key=item.key,
-                    key_as_var=item.key_as_variable,
-                    xpath='$calculated_property' if self.column.useXpathExpression else self.xpath,
-                    i=i,
-                )
-            )
-        parts.append("''")
-        parts.append(")" * len(self.column.enum))
-        return ''.join(parts)
+    def _xpath_template(self, type):
+        if type == 'sort':
+            return "if({xpath} = '{key}', {i}, "
+        if type == 'display':
+            return "if({xpath} = '{key}', ${key_as_var}, "
+        raise ValueError('type must be in sort, display')
+
+    def _xpath_template_context(self, type):
+        return lambda item, i: {
+            'key': item.key,
+            'key_as_var': item.key_as_variable,
+            'xpath': '$calculated_property' if self.column.useXpathExpression else self.xpath,
+            'i': i,
+        }
 
     @property
     def xpath_function(self):
-        return self._make_xpath(type='display')
+        return self._make_xpath('display').function
 
     @property
     def sort_xpath_function(self):
-        return self._make_xpath(type='sort')
+        return self._make_xpath('sort').function
 
     @property
     def variables(self):
-        variables = super(Enum, self).variables
-        for item in self.column.enum:
-            v_key = item.key_as_variable
-            v_val = self.id_strings.detail_column_enum_variable(
-                self.module, self.detail_type, self.column, v_key)
-            variables[v_key] = v_val
-        return variables
+        return {v.name: v.value for v in self._make_xpath('display').variables}
 
 
 @register_format_type('conditional-enum')
@@ -421,20 +415,14 @@ class ConditionalEnum(Enum):
                 )
         return node
 
-    def _make_xpath(self, type):
-        xpath_template = "if({key_as_condition}, {key_as_var_name}"
-        parts = []
-        for i, item in enumerate(self.column.enum):
-            parts.append(
-                xpath_template.format(
-                    key_as_condition=item.key_as_condition(self.xpath),
-                    key_as_var_name=item.ref_to_key_variable(i, 'display')
-                )
-            )
+    def _xpath_template(self, type):
+        return "if({key_as_condition}, {key_as_var_name}"
 
-        parts.append("''")
-        parts.append(")" * (len(self.column.enum)))
-        return ''.join(parts)
+    def _xpath_template_context(self, type):
+        return lambda item, i: {
+            'key_as_condition': item.key_as_condition(self.xpath),
+            'key_as_var_name': item.ref_to_key_variable(i, 'display')
+        }
 
 
 @register_format_type('enum-image')
@@ -464,20 +452,14 @@ class EnumImage(Enum):
             return '13%'
         return str(width)
 
-    def _make_xpath(self, type):
-        parts = []
-        for i, item in enumerate(self.column.enum):
+    def _xpath_template(self, type):
+        return "if({key_as_condition}, {key_as_var_name}"
 
-            xpath_fragment_template = "if({key_as_condition}, {key_as_var_name}".format(
-                key_as_condition=item.key_as_condition(self.xpath),
-                key_as_var_name=item.ref_to_key_variable(i, type)
-            )
-
-            parts.append(xpath_fragment_template)
-
-        parts.append("''")
-        parts.append(")" * (len(self.column.enum)))
-        return ''.join(parts)
+    def _xpath_template_context(self, type):
+        return lambda item, i: {
+            'key_as_condition': item.key_as_condition(self.xpath),
+            'key_as_var_name': item.ref_to_key_variable(i, type)
+        }
 
 
 @register_format_type('late-flag')

@@ -201,9 +201,26 @@ def mobile_ucr_annotation(module, uuid, annotation_index):
     )
 
 
+@pattern('m%d.enum.%s')
+def module_name_enum_variable(module, key_as_var):
+    return "m{module.id}.enum.{key_as_var}".format(
+        module=module,
+        key_as_var=key_as_var,
+    )
+
+
 @pattern('modules.m%d')
 def module_locale(module):
     return "modules.m{module.id}".format(module=module)
+
+
+@pattern('m%df%d.enum.%s')
+def form_name_enum_variable(form, key_as_var):
+    return "m{module.id}f{form.id}.enum.{key_as_var}".format(
+        module=form.get_module(),
+        form=form,
+        key_as_var=key_as_var,
+    )
 
 
 @pattern('forms.m%df%d')

@@ -305,8 +305,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             icds_aggregation_task.delay(date=date.strftime('%Y-%m-%d'), func_name='_agg_awc_table_weekly')
         chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func_name='aggregate_awc_daily'),
-            _bust_awc_cache.si(),
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            _bust_awc_cache.si()
         ).delay()
 
 
@@ -1002,7 +1002,7 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task(run_every=crontab(day_of_week='monday', hour=18, minute=30),
+@periodic_task(run_every=crontab(day_of_week='monday', hour=0, minute=0),
                acks_late=True, queue='background_queue')
 def collect_inactive_dashboard_users():
     celery_task_logger.info("Started updating the Inactive Dashboard users")

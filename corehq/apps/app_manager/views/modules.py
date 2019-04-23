@@ -64,6 +64,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     DetailTab,
     FormActionCondition,
+    MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
@@ -107,6 +108,7 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
+        'name_enum': module.name_enum,
         'requires_case_details': module.requires_case_details(),
         'unique_id': module.unique_id,
     }
@@ -424,6 +426,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
+        "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
         "root_module_id": None,
@@ -470,6 +473,10 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
+
+    if should_edit("name_enum"):
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
@@ -923,8 +930,13 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
+
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
+
+    if 'name_enum' in params:
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     try:
         app.save()

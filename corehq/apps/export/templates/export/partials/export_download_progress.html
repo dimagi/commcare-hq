@@ -8,7 +8,7 @@
             <div class="row" data-bind="visible: showError">
                 <div class="col-sm-12">
                     <div data-bind="css: {'alert-warning': celeryError(), 'alert-danger': downloadError()}" class="alert">
-                        <i class="fa fa-cog fa-spin"></i>
+                        <i class="fa fa-spin"></i>
                         <strong data-bind="visible: celeryError, text: celeryError"></strong>
                         <strong data-bind="visible: downloadError, text: downloadError"></strong>
                         <p>

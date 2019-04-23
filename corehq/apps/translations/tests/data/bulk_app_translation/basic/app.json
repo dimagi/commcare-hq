@@ -125,7 +125,8 @@
         "en": "Cases"
       },
       "name": {
-        "en": "My & awesome module"
+        "en": "My & awesome module",
+        "es": "Mi cosa increíble"
       },
       "referral_list": {
         "doc_type": "CaseList",
