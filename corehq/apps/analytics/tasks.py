@@ -283,6 +283,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         user=web_user, extra_fields=tracking_info
     )
 
+    # For some reason the form submission will not update these, so doing it separately
     direct_properties = {
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
