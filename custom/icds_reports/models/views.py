@@ -55,7 +55,7 @@ class AggAwcDailyView(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_daily_view'
 
@@ -113,7 +113,7 @@ class DailyAttendanceView(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'daily_attendance_view'
 
@@ -205,7 +205,7 @@ class ChildHealthMonthlyView(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'child_health_monthly_view'
 
@@ -249,7 +249,7 @@ class AggLsMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ls_monthly'
 
@@ -333,7 +333,7 @@ class ServiceDeliveryMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'service_delivery_monthly'
 
@@ -561,7 +561,7 @@ class AggAwcMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_awc_monthly'
 
@@ -595,7 +595,7 @@ class AWWIncentiveReportMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'aww_incentive_report_monthly'
 
@@ -675,7 +675,7 @@ class AggCcsRecordMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_ccs_record_monthly'
 
@@ -762,7 +762,7 @@ class CcsRecordMonthlyView(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'ccs_record_monthly_view'
 
@@ -944,7 +944,7 @@ class AggChildHealthMonthly(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'agg_child_health_monthly'
 
@@ -977,7 +977,7 @@ class AwcLocationMonths(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'awc_location_months'
 
@@ -1039,6 +1039,6 @@ class DishaIndicatorView(models.Model):
     objects = CitusComparisonManager()
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         managed = False
         db_table = 'icds_disha_indicators'

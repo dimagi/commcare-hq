@@ -13,13 +13,13 @@ babel==2.6.0
 backports-abc==0.5        # via tornado
 backports.shutil-get-terminal-size==1.0.0  # via ipython
 billiard==3.5.0.4
-boto3==1.9.130
-botocore==1.12.130
+boto3==1.9.133
+botocore==1.12.133
 cairocffi==0.9.0
 cairosvg==1.0.22
 celery==4.1.1
 certifi==2019.3.9
-cffi==1.12.2
+cffi==1.12.3
 chardet==3.0.4
 cloudant==2.12.0
 commcaretranslationchecker==0.9.3.5
@@ -100,7 +100,7 @@ kafka-python==1.4.4
 kombu==4.2.2.post1
 laboratory==0.2.0
 lxml==4.3.3
-mako==1.0.8
+mako==1.0.9
 markdown==2.2.1
 markupsafe==1.1.1
 mock==2.0.0
@@ -112,9 +112,9 @@ pathlib2==2.3.3           # via ipython, pickleshare
 pbr==5.1.3
 pdfrw==0.4
 pexpect==4.7.0            # via ipython
-phonenumberslite==8.10.9
+phonenumberslite==8.10.10
 pickleshare==0.7.5        # via ipython
-pillow==5.4.1
+pillow==6.0.0
 ply==3.11
 polib==1.1.0
 prompt-toolkit==1.0.16    # via ipython
@@ -162,7 +162,7 @@ six==1.12.0
 smartypants==2.0.1
 socketpool==0.5.3
 sqlagg==0.12.0
-sqlalchemy==1.2.18
+sqlalchemy==1.2.19
 stripe==1.67.0
 suds-jurko==0.6
 text-unidecode==1.2
@@ -174,7 +174,7 @@ tropo-webapi-python==0.1.3
 twilio==6.5.1
 ua-parser==0.8.0
 unidecode==0.04.20
-urllib3==1.24.1
+urllib3==1.24.2
 user-agents==2.0
 uwsgi==2.0.18
 vine==1.3.0
