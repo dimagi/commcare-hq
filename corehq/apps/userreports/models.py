@@ -185,9 +185,6 @@ class AbstractUCRDataSource(object):
     def pk_columns(self):
         raise NotImplementedError()
 
-    def get_mirrored_engine_ids(self, _):
-        return []
-
 
 class MirroredEngineIds(DocumentSchema):
     server_environment = StringProperty()
@@ -219,7 +216,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
-    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
+    mirrored_engine_ids = ListProperty(default=[])
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -473,14 +470,8 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
-    def get_mirrored_engine_ids(self, server_env):
-        for env in self.mirrored_engine_ids:
-            if env.server_environment == server_env:
-                return env.engine_ids
-        return []
-
     def validate_db_config(self):
-        mirrored_engine_ids = self.get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT)
+        mirrored_engine_ids = self.mirrored_engine_ids
         if not mirrored_engine_ids:
             return
         if self.engine_id in mirrored_engine_ids:
@@ -782,6 +773,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -845,10 +837,18 @@ class StaticDataSourceConfiguration(JsonObject):
         return cls._get_datasource_config(wrapped, domain)
 
     @classmethod
+    def _get_mirrored_engine_ids(cls, server_env):
+        for env in cls.mirrored_engine_ids:
+            if env.server_environment == server_env:
+                return env.engine_ids
+        return []
+
+    @classmethod
     def _get_datasource_config(cls, static_config, domain):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
+        doc['mirrored_engine_ids'] = cls._get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT)
         return DataSourceConfiguration.wrap(doc)
 
 

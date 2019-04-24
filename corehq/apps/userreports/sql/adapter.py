@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import hashlib
 import logging
 
-from django.conf import settings
 from django.utils.translation import ugettext as _
 
 import psycopg2
@@ -269,7 +268,7 @@ class MultiDBSqlAdapter(object):
         self.config = config
         self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
         self.all_adapters = []
-        engine_ids = self.config.get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT) + \
+        engine_ids = self.config.mirrored_engine_ids + \
             [self.main_adapter.engine_id]  # include the main primary adapter
         # different engine_ids could resolve to same DB, so filter them out
         engine_ids = connection_manager.filter_out_aliases(engine_ids)
