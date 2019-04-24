@@ -58,7 +58,10 @@ class ExploreCaseDataReport(BaseReport):
         expressions = []
         for columnn_context in endpoint.report_context.get('columns', []):
             expression_builder = ColumnXpathExpressionBuilder(
-                columnn_context, self.column_filters
+                self.request,
+                self.domain,
+                columnn_context,
+                self.column_filters
             )
             expression = expression_builder.get_expression()
             if expression:
