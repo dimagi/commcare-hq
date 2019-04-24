@@ -19,9 +19,23 @@ hqDefine("aaa/js/models/eligible_couple", [
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.currentFamilyPlanningMethod = ko.observable(options.currentFamilyPlanningMethod);
         self.adoptionDateOfFamilyPlaning = ko.observable(options.adoptionDateOfFamilyPlaning);
+
+        self.age = ko.computed(function () {
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(new Date()).diff(moment(self.dob(), "YYYY-MM-DD"),'months',true));
+            if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
 
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');

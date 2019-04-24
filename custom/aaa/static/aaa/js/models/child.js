@@ -21,7 +21,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.gender = ko.observable(options.gender);
         self.lastImmunizationType = ko.observable(options.lastImmunizationType);
         self.lastImmunizationDate = ko.observable(options.lastImmunizationDate);
@@ -35,7 +35,10 @@ hqDefine("aaa/js/models/child", [
         });
 
         self.age = ko.computed(function () {
-            var age = parseInt(self.age());
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var age = Math.floor(moment(new Date()).diff(moment(self.dob(), "YYYY-MM-DD"),'months',true));
             if (age < 12) {
                 return age + " Mon";
             } else if (age % 12 === 0) {
