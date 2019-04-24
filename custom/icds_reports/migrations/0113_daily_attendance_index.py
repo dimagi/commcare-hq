@@ -19,7 +19,7 @@ def get_operations():
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0111_service_delivery_dashboard'),
+        ('icds_reports', '0112_aggawcdailyview_agglsmonthly_awwincentivereportmonthly_childhealthmonthlyview_servicedeliverymonthly'),
     ]
 
     operations = get_operations()
