@@ -28,7 +28,8 @@ from corehq.apps.app_manager.views.notifications import get_facility_for_form, n
 from corehq.apps.app_manager.exceptions import AppManagerException, \
     FormNotFoundException
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions
+from corehq.apps.app_manager.views.utils import back_to_main, bail, form_has_submissions, \
+    set_lang_cookie
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
@@ -161,7 +162,9 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
-    return render(request, "app_manager/form_designer.html", context)
+    response = render(request, "app_manager/form_designer.html", context)
+    set_lang_cookie(response, context['lang'])
+    return response
 
 
 @require_GET
