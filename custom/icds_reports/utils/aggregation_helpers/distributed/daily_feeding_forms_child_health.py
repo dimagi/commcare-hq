@@ -50,7 +50,7 @@ class DailyFeedingFormsChildHealthAggregationDistributedHelper(BaseICDSAggregati
             SUM(ucr.attended_child_ids) OVER w AS sum_attended_child_ids,
             SUM(ucr.lunch) OVER w AS lunch_count
           FROM "{ucr_tablename}" ucr INNER JOIN daily_attendance ON (
-            ucr.doc_id = daily_attendence.doc_id AND
+            ucr.doc_id = daily_attendance.doc_id AND
             ucr.supervisor_id = daily_attendance.supervisor_id AND
             daily_attendance.month=%(current_month_start)s
           )
