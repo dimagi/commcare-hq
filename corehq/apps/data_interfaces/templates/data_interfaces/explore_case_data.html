@@ -167,6 +167,13 @@ breadcrumbs todo
                          data-bind="textInput: value,
                                     visible: $root.editColumnController.isFilterNumeric,
                                     event: { change: $root.editColumnController.updateFilter }" />
+
+                  <input type="text"
+                         class="form-control"
+                         data-bind="value: value,
+                                    visible: $root.editColumnController.isFilterDate,
+                                    singleDatePicker: $root.editColumnController.isFilterDate,
+                                    event: { change: $root.editColumnController.updateFilter }" />
                 </div>
                 <div class="col-xs-2">
                   <button type="button"

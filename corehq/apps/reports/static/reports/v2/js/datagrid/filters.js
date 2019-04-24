@@ -29,6 +29,7 @@ hqDefine('reports/v2/js/datagrid/filters', [
          * @type {{
          *   title: "Human readable text",
          *   name: "unique name identifying the filter",
+         *   type: "text, numeric, date",
          *   choices: "list of choices",
          * }}
          */

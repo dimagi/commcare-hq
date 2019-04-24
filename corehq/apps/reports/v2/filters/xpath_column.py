@@ -1,9 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
 from collections import namedtuple
 
+import dateutil
+from memoized import memoized
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.reports.util import get_report_timezone
 from corehq.apps.reports.v2.models import BaseFilter
 from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
 
@@ -18,6 +23,7 @@ AppliedFilterContext = namedtuple(
 class DataType(object):
     TEXT = 'text'
     NUMERIC = 'numeric'
+    DATE = 'date'
 
 
 class Clause(object):
@@ -100,6 +106,50 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
 
     def format_value(self, value):
         return "'{}'".format(value) if value == '' else self._get_number(value)
+
+
+class DateXpathColumnFilter(BaseXpathColumnFilter):
+    title = ugettext_lazy("Date")
+    name = 'xpath_column_date'
+    data_type = DataType.DATE
+    choices = [
+        ChoiceMeta(ugettext_lazy("Date is"), 'date_is', '='),
+        ChoiceMeta(ugettext_lazy("Date is before"), 'date_before', '<'),
+        ChoiceMeta(ugettext_lazy("Date is after"), "date_after", '>'),
+    ]
+
+    @property
+    @memoized
+    def _timezone(self):
+        return get_report_timezone(self.request, self.domain)
+
+    def _adjust_to_utc(self, date):
+        localized = self._timezone.localize(date)
+        offset = localized.strftime("%z")
+        return date - datetime.timedelta(
+            hours=int(offset[0:3]),
+            minutes=int(offset[0] + offset[3:5])
+        )
+
+    def get_expression(self, property, choice_name, value):
+        if choice_name == 'date_is':
+            # This combined range has to be applied as using the '='
+            # operator will treat the value as a string match
+            value = self.format_value(value)
+            return "{property} <= {value} and {property} >= {value}".format(
+                property=property,
+                value=value,
+            )
+        return super(DateXpathColumnFilter, self).get_expression(
+            property, choice_name, value
+        )
+
+    def _format_date(self, value):
+        date_object = self._adjust_to_utc(dateutil.parser.parse(value))
+        return date_object.strftime("%Y-%m-%d")
+
+    def format_value(self, value):
+        return "'{}'".format(self._format_date(value))
 
 
 class ColumnXpathExpressionBuilder(object):

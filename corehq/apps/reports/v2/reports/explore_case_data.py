@@ -10,6 +10,7 @@ from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
 from corehq.apps.reports.v2.filters.xpath_column import (
     TextXpathColumnFilter,
     NumericXpathColumnFilter,
+    DateXpathColumnFilter,
     ColumnXpathExpressionBuilder,
 )
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
@@ -47,6 +48,7 @@ class ExploreCaseDataReport(BaseReport):
     column_filters = [
         TextXpathColumnFilter,
         NumericXpathColumnFilter,
+        DateXpathColumnFilter,
     ]
 
     def _get_base_query(self):

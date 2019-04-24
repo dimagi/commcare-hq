@@ -99,6 +99,10 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return self.selectedFilter().type() === 'text';
         });
 
+        self.isFilterDate = ko.computed(function () {
+            return self.selectedFilter().type() === 'date';
+        });
+
         self.isFilterNumeric = ko.computed(function () {
             return self.selectedFilter().type() === 'numeric';
         });
