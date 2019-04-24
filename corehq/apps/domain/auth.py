@@ -15,6 +15,8 @@ from corehq.util.hmac_request import validate_request_hmac
 from dimagi.utils.django.request import mutable_querydict
 from python_digest import parse_digest_credentials
 
+from no_exceptions.exceptions import Http400
+
 J2ME = 'j2me'
 ANDROID = 'android'
 
@@ -23,6 +25,19 @@ DIGEST = 'digest'
 NOAUTH = 'noauth'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
+
+
+def _is_api_key_authentication(request):
+    authorization_header = request.META.get('HTTP_AUTHORIZATION', '')
+
+    api_key_authentication = ApiKeyAuthentication()
+    try:
+        username, api_key = api_key_authentication.extract_credentials(request)
+    except ValueError:
+        raise Http400("Bad HTTP_AUTHORIZATION header {}"
+                      .format(authorization_header))
+    else:
+        return username and api_key
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -46,7 +61,7 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif all(ApiKeyAuthentication().extract_credentials(request)):
+    elif _is_api_key_authentication(request):
         return API_KEY
 
     if request.META.get('HTTP_X_MAC_DIGEST', None):

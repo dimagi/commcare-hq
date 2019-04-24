@@ -147,7 +147,13 @@ class ConfigurableReportTableManagerMixin(object):
 
     def _rebuild_sql_tables(self, adapters):
         tables_by_engine = defaultdict(dict)
+        all_adapters = []
         for adapter in adapters:
+            if getattr(adapter, 'all_adapters', None):
+                all_adapters.extend(adapter.all_adapters)
+            else:
+                all_adapters.append(adapter)
+        for adapter in all_adapters:
             try:
                 tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
             except BadSpecError:
@@ -275,8 +281,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                         except Exception as e:
                             change_exceptions.append((changes_by_id[doc["_id"]], e))
                         eval_context.reset_iteration()
-                elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
-                    # todo; just do it anyway and avoid lookups for each doc
+                else:
+                    # Delete regardless whether doc exists or not to avoid individual doc lookups
                     to_delete_by_adapter[adapter].append(doc['_id'])
 
         # bulk delete by adapter

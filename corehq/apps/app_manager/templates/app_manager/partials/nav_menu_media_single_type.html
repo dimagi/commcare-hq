@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <div id="{{ qualifier|default_if_none:"" }}media_{{ type }}">
-    <div class="form-group container-fluid">
+    <div class="form-group">
         <label class="control-label col-sm-2" for="menu_{{ type }}_path">{% trans label %}</label>
         <div class="col-sm-10 commcare-feature"
              data-since-version="1.3">

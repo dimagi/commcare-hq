@@ -21,6 +21,8 @@ from memoized import memoized
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
+        from corehq.apps.registration.views import track_domainless_new_user
+        track_domainless_new_user(request)
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()

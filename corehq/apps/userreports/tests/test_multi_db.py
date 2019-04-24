@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
     get_sample_report_config, doc_to_change
@@ -25,7 +26,7 @@ class UCRMultiDBTest(TestCase):
         db_conn_parts[-1] = cls.db2_name
         cls.db2_url = '/'.join(db_conn_parts)
 
-        cls.context_manager = connections.override_engine('engine-2', cls.db2_url)
+        cls.context_manager = connections.override_engine('engine-2', cls.db2_url, cls.db2_name)
         cls.context_manager.__enter__()
 
         # setup data sources
@@ -147,3 +148,21 @@ class UCRMultiDBTest(TestCase):
         ds2_rows = ConfigurableReportDataSource.from_spec(report_config_2).get_data()
         self.assertEqual(1, len(ds2_rows))
         self.assertEqual(1, ds2_rows[0]['count'])
+
+    def test_mirroring(self):
+        ds3 = DataSourceConfiguration.wrap(get_sample_data_source().to_json())
+        ds3.engine_id = "default"
+        ds3.mirrored_engine_ids = ['engine-2']
+        adapter = get_indicator_adapter(ds3)
+        self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)
+        self.assertEqual(len(adapter.all_adapters), 2)
+        for _adapter in adapter.all_adapters:
+            self.assertEqual(0, adapter.get_query_object().count())
+
+        pillow = get_case_pillow(ucr_configs=[ds3])
+        sample_doc, _ = get_sample_doc_and_indicators()
+        pillow.process_change(doc_to_change(sample_doc))
+
+        for _adapter in adapter.all_adapters:
+            self.assertEqual(1, adapter.get_query_object().count())
+
