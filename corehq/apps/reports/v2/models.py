@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from collections import namedtuple
+import abc
 
 from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
@@ -134,9 +135,11 @@ class BaseDataFormatter(object):
         raise NotImplementedError("please implement get_context")
 
 
-class BaseFilter(object):
+class BaseFilter:
+    __metaclass__ = abc.ABCMeta
 
     @classmethod
+    @abc.abstractmethod
     def get_context(cls):
         """
         Override this to return a dict
