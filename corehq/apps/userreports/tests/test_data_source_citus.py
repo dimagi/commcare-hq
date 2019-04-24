@@ -20,7 +20,6 @@ class DataSourceConfigurationCitusDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DataSourceConfigurationCitusDBTest, cls).setUpClass()
         cls.data_source = get_sample_data_source()
         cls.data_source.engine_id = 'icds-ucr'
         for indicator in cls.data_source.configured_indicators:
@@ -31,10 +30,13 @@ class DataSourceConfigurationCitusDBTest(TestCase):
             distribution_column="owner"
         )
         cls.data_source.sql_settings.primary_key = ['owner', 'doc_id']
-        cls.data_source.save()
         cls.adapter = get_indicator_adapter(cls.data_source)
         if not cls.adapter.session_helper.is_citus_db:
             raise SkipTest("Test only applicable when using CitusDB: {}".format(cls.adapter.session_helper.engine))
+
+        # SkipTest must come before this setup so that the database is only setup if the test is not skipped
+        super(DataSourceConfigurationCitusDBTest, cls).setUpClass()
+        cls.data_source.save()
         cls.adapter.build_table()
 
     def tearDown(self):
