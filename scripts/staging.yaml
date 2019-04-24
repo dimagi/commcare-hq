@@ -55,6 +55,7 @@ branches:
 #  - nh/cdc/one_domain  # Norman March 26  (Removed due to merge conflicts)
   - mk/release-location # MK March 26
   #- jls/reports-select2-v4  # Jenny April 9
-  - jls/conditional-module-and-form-names # Jenny April 18
+#  - jls/conditional-module-and-form-names # Jenny April 18
   - pv/phone-number-detect-country # Preethi April 22
+  - sk/lazy-case-json # SK April 24
 submodules: {}
