@@ -54,7 +54,7 @@ hqDefine("app_manager/js/forms/form_designer", function () {
                 $('#formdesigner').removeClass('loading');
                 $('#formdesigner .fd-content-left .fd-head-text').before(
                     $('#fd-hq-edit-formname-button').html()
-                );
+                ).text(initialPageData('form_name'));
             },
         });
         VELLUM_OPTIONS.core = _.extend(VELLUM_OPTIONS.core, {
