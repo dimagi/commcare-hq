@@ -39,11 +39,12 @@ class DataSourceConfigurationCitusDBTest(TestCase):
         cls.data_source.save()
         cls.adapter.build_table()
 
-    def tearDown(self):
-        self.adapter.session_helper.Session.remove()
-        self.adapter.drop_table()
-        self.data_source.delete()
-        super(DataSourceConfigurationCitusDBTest, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        cls.adapter.session_helper.Session.remove()
+        cls.adapter.drop_table()
+        cls.data_source.delete()
+        super(DataSourceConfigurationCitusDBTest, cls).tearDownClass()
 
     def _process_docs(self, docs):
         pillow = get_case_pillow(ucr_configs=[self.data_source])
