@@ -413,10 +413,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
+        'case_list-menu_item_use_default_image_for_all': None,
+        'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        'case_list_form_use_default_image_for_all': None,
+        'case_list_form_use_default_audio_for_all': None,
         "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
@@ -532,36 +536,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
-    if should_edit('case_list_form_media_image'):
-        new_path = process_media_attribute(
-            'case_list_form_media_image',
-            resp,
-            request.POST.get('case_list_form_media_image')
-        )
-        module.case_list_form.set_icon(lang, new_path)
-
-    if should_edit('case_list_form_media_audio'):
-        new_path = process_media_attribute(
-            'case_list_form_media_audio',
-            resp,
-            request.POST.get('case_list_form_media_audio')
-        )
-        module.case_list_form.set_audio(lang, new_path)
-
-    if should_edit('case_list-menu_item_media_image'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_image',
-            resp,
-            request.POST.get('case_list-menu_item_media_image')
-        )
-        module.case_list.set_icon(lang, val)
-    if should_edit('case_list-menu_item_media_audio'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_audio',
-            resp,
-            request.POST.get('case_list-menu_item_media_audio')
-        )
-        module.case_list.set_audio(lang, val)
 
     if should_edit("name"):
         name = request.POST.get("name", None)
@@ -596,6 +570,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.excluded_form_ids = excl
 
     handle_media_edits(request, module, should_edit, resp, lang)
+    handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
+    handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
+
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
