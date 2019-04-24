@@ -36,7 +36,13 @@ hqDefine("aaa/js/models/child", [
 
         self.age = ko.computed(function () {
             var age = parseInt(self.age());
-            return age + ' Yr';
+            if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
         });
 
         self.lastImmunizationType = ko.computed(function () {

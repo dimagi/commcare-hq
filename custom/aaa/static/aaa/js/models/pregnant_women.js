@@ -36,11 +36,6 @@ hqDefine("aaa/js/models/pregnant_women", [
             return '<a href="' + url + '">' + self.name() + '</a>';
         });
 
-        self.age = ko.computed(function () {
-            var age = parseInt(self.age());
-            return age + ' Yr';
-        });
-
         self.highRiskPregnancy = ko.computed(function () {
             return self.highRiskPregnancy() === 'yes' ? 'Yes' : 'No';
         });

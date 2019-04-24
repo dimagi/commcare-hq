@@ -23,11 +23,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.currentFamilyPlanningMethod = ko.observable(options.currentFamilyPlanningMethod);
         self.adoptionDateOfFamilyPlaning = ko.observable(options.adoptionDateOfFamilyPlaning);
 
-        self.age = ko.computed(function () {
-            var age = parseInt(self.age());
-            return age + ' Yr';
-        });
-
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'eligible_couple');
