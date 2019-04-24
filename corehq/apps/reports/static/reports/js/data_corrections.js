@@ -344,6 +344,7 @@ hqDefine("reports/js/data_corrections", [
                         select2Options = _.extend(select2Options, {
                             allowClear: true,
                             placeholder: gettext('Select a value'),
+                            dropdownParent: $modal,
                         });
                     }
                     $el.select2(select2Options);

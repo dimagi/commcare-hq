@@ -654,7 +654,7 @@ class RelatedLocationForm(forms.Form):
     def __init__(self, domain, location, *args, **kwargs):
         self.location = location
         self.related_location_ids = LocationRelation.from_locations([self.location])
-        kwargs['initial'] = {'related_locations': ','.join(self.related_location_ids)}
+        kwargs['initial'] = {'related_locations': self.related_location_ids}
         super(RelatedLocationForm, self).__init__(*args, **kwargs)
 
         self.fields['related_locations'].widget = LocationSelectWidget(

@@ -19,9 +19,10 @@ from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
+from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
-from xhtml2pdf import pisa
+from weasyprint import HTML, CSS
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -270,6 +271,9 @@ class ICDSDataTableColumn(DataTablesColumn):
         ))
 
 
+PREVIOUS_PERIOD_ZERO_DATA = "Data in the previous reporting period was 0"
+
+
 def percent_increase(prop, data, prev_data):
     current = 0
     previous = 0
@@ -282,7 +286,7 @@ def percent_increase(prop, data, prev_data):
         tenths_of_promils = (((current or 0) - (previous or 0)) * 10000) / float(previous or 1)
         return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
-        return "Data in the previous reporting period was 0"
+        return PREVIOUS_PERIOD_ZERO_DATA
 
 
 def percent_diff(property, current_data, prev_data, all):
@@ -305,7 +309,29 @@ def percent_diff(property, current_data, prev_data, all):
         tenths_of_promils = ((current_percent - prev_percent) * 10000) / (prev_percent or 1.0)
         return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
-        return "Data in the previous reporting period was 0"
+        return PREVIOUS_PERIOD_ZERO_DATA
+
+
+def get_color_with_green_positive(val):
+    if isinstance(val, (int, float)):
+        if val > 0:
+            return 'green'
+        else:
+            return 'red'
+    else:
+        assert val == PREVIOUS_PERIOD_ZERO_DATA, val
+        return 'green'
+
+
+def get_color_with_red_positive(val):
+    if isinstance(val, (int, float)):
+        if val > 0:
+            return 'red'
+        else:
+            return 'green'
+    else:
+        assert val == PREVIOUS_PERIOD_ZERO_DATA, val
+        return 'red'
 
 
 def get_value(data, prop):
@@ -657,10 +683,10 @@ def create_pdf_file(pdf_context):
         pdf_page = template.render(pdf_context)
     except Exception as ex:
         pdf_page = str(ex)
-    pisa.CreatePDF(
-        pdf_page,
-        dest=resultFile,
-        show_error_as_pdf=True)
+    base_url = os.path.join(settings.FILEPATH, 'custom', 'icds_reports', 'static')
+    resultFile.write(HTML(string=pdf_page, base_url=base_url).write_pdf(
+        stylesheets=[CSS(os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')), ])
+    )
     # we need to reset buffer position to the beginning after creating pdf, if not read() will return empty string
     # we read this to save file in blobdb
     resultFile.seek(0)

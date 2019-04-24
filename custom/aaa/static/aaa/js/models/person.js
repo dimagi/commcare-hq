@@ -18,7 +18,7 @@ hqDefine("aaa/js/models/person", [
         self.gender = data.sex;
         self.status = data.migration_status;
         self.dob = data.dob;
-        self.marriedAt = data.age_marriage;
+        self.marriedAt = data.age_marriage || 'N/A';
         self.aadhaarNo = data.has_aadhar_number;
 
         self.address = data.hh_address;
@@ -31,6 +31,9 @@ hqDefine("aaa/js/models/person", [
         self.bplOrApl = data.hh_bpl_apl;
 
         self.age = ko.computed(function () {
+            if (self.dob === 'N/A') {
+                return self.dob;
+            }
             var age = Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
             if (age < 12) {
                 return age + " Mon";
@@ -42,10 +45,16 @@ hqDefine("aaa/js/models/person", [
         });
 
         self.gender = ko.computed(function () {
+            if (self.gender === 'N/A') {
+                return self.gender;
+            }
             return self.gender === 'M' ? 'Male' : 'Female';
         });
 
         self.aadhaarNo = ko.computed(function () {
+            if (self.gender === 'N/A') {
+                return self.aadhaarNo;
+            }
             return self.aadhaarNo ? 'Yes' : 'No';
         });
 

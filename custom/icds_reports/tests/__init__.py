@@ -32,7 +32,6 @@ from six.moves import zip
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': get_table_name('icds-cas', 'static-awc_mgt_forms'),
-    'ccs_monthly': get_table_name('icds-cas', 'static-ccs_record_cases_monthly_tableau_v2'),
     "ccs_cases": get_table_name('icds-cas', 'static-ccs_record_cases'),
     'child_cases': get_table_name('icds-cas', 'static-child_health_cases'),
     'daily_feeding': get_table_name('icds-cas', 'static-daily_feeding_forms'),
@@ -180,12 +179,6 @@ def setUpModule():
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
-        except AssertionError as e:
-            # we always use soft assert to email when the aggregation has completed
-            if "Aggregation completed" not in str(e):
-                print(e)
-                tearDownModule()
-                raise
         except Exception as e:
             print(e)
             tearDownModule()

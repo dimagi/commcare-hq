@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import datetime
 
 from celery.task import periodic_task
+from django.conf import settings
 from django.core.cache import cache
 
 from corehq.util.datadog.gauges import datadog_gauge
@@ -39,6 +40,7 @@ class Heartbeat(object):
     def __init__(self, queue):
         self.queue = queue
         self._heartbeat_cache = HeartbeatCache(queue)
+        self.threshold = settings.CELERY_HEARTBEAT_THRESHOLDS[self.queue]
 
     def get_last_seen(self):
         value = self._heartbeat_cache.get()
@@ -72,6 +74,12 @@ class Heartbeat(object):
             blockage_duration.total_seconds(),
             tags=['celery_queue:{}'.format(self.queue)]
         )
+        if self.threshold:
+            datadog_gauge(
+                'commcare.celery.heartbeat.blockage_ok',
+                1 if blockage_duration.total_seconds() <= self.threshold else 0,
+                tags=['celery_queue:{}'.format(self.queue)]
+            )
         return blockage_duration
 
     @property

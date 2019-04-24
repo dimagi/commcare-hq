@@ -451,7 +451,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         property_name: self.field,
                         multimedia: self.screen.config.multimedia,
                         values_are_icons: self.original.format === 'enum-image',
-                        values_are_conditions: self.original.format === 'conditional-enum',
+                        keys_are_conditions: self.original.format === 'conditional-enum',
                     };
                     self.enum_extra = uiElement.key_value_mapping(o);
                 }());
@@ -536,7 +536,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         self.time_ago_extra.ui.detach();
                         if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             self.enum_extra.values_are_icons(this.val() === 'enum-image');
-                            self.enum_extra.values_are_conditions(this.val() === 'conditional-enum');
+                            self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
                             self.format.ui.parent().append(self.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button
@@ -707,7 +707,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     if (column.original.hasAutocomplete) {
                         column.field.setOptions(self.properties);
                         column.field.val(column.original.field);
-                        column.field.fire("change");    // set field.observableVal
+                        column.field.observableVal(column.original.field);
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, self.properties);
                     }
                     return column;

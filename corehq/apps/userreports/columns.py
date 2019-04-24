@@ -43,7 +43,7 @@ def get_distinct_values(data_source_configuration, column_config, expansion_limi
     :param expansion_limit:
     :return:
     """
-    adapter = get_indicator_adapter(data_source_configuration)
+    adapter = get_indicator_adapter(data_source_configuration, load_source='get_distinct_values')
     return adapter.get_distinct_values(column_config.field, expansion_limit)
 
 
