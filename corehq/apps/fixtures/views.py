@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -36,7 +36,7 @@ from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_url_base
+from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.decorators.view import get_file
 
 from copy import deepcopy
@@ -45,6 +45,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 import six
 from six.moves import range
+from io import open
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -74,7 +75,7 @@ def _to_kwargs(req):
 @require_can_edit_fixtures
 def tables(request, domain):
     if request.method == 'GET':
-        return JsonResponse(
+        return json_response(
             [strip_json(x) for x in
              sorted(FixtureDataType.by_domain(domain), key=lambda data_type: data_type.tag)]
         )
@@ -104,13 +105,13 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         assert(data_type.domain == domain)
 
         if request.method == 'GET':
-            return JsonResponse(strip_json(data_type))
+            return json_response(strip_json(data_type))
 
         elif request.method == 'DELETE':
             with CouchTransaction() as transaction:
                 data_type.recursive_delete(transaction)
             clear_fixture_cache(domain)
-            return JsonResponse({})
+            return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
 
@@ -138,7 +139,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             validation_errors.append(_("Table ID must be between 1 and 31 characters."))
 
         if validation_errors:
-            return JsonResponse({
+            return json_response({
                 'validation_errors': validation_errors,
                 'error_msg': _(
                     "Could not update table because field names were not "
@@ -155,7 +156,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 else:
                     data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
         clear_fixture_cache(domain)
-        return JsonResponse(strip_json(data_type))
+        return json_response(strip_json(data_type))
 
 
 def update_types(patches, domain, data_type_id, data_tag, is_global, transaction):
@@ -418,7 +419,7 @@ def upload_fixture_api(request, domain, **kwargs):
     """
 
     upload_fixture_api_response = _upload_fixture_api(request, domain)
-    return JsonResponse({'message': upload_fixture_api_response.message,
+    return json_response({'message': upload_fixture_api_response.message,
                           'code': upload_fixture_api_response.code})
 
 
@@ -439,7 +440,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
             'message': _("Upload did not complete. Reason: '{}'".format(e.message)),
             'error': True,
         }
-        return JsonResponse(response)
+        return json_response(response)
 
     if context.get('is_ready', False):
         response = {
@@ -457,7 +458,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
             'message': _("Task in progress. {}% complete").format(progress),
             'progress': progress,
         }
-    return JsonResponse(response)
+    return json_response(response)
 
 
 def _upload_fixture_api(request, domain):
@@ -561,4 +562,4 @@ def fixture_metadata(request, domain):
     """
     Returns list of fixtures and metadata needed for itemsets in vellum
     """
-    return JsonResponse(item_lists_by_domain(domain))
+    return json_response(item_lists_by_domain(domain))

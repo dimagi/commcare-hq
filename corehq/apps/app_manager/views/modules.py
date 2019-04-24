@@ -54,7 +54,7 @@ from corehq.apps.hqmedia.models import ApplicationMediaReference, CommCareMultim
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -64,6 +64,7 @@ from corehq.apps.app_manager.models import (
     DetailColumn,
     DetailTab,
     FormActionCondition,
+    MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
@@ -107,6 +108,7 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
+        'name_enum': module.name_enum,
         'requires_case_details': module.requires_case_details(),
         'unique_id': module.unique_id,
     }
@@ -411,10 +413,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
+        'case_list-menu_item_use_default_image_for_all': None,
+        'case_list-menu_item_use_default_audio_for_all': None,
         "case_list_form_id": None,
         "case_list_form_label": None,
         "case_list_form_media_audio": None,
         "case_list_form_media_image": None,
+        'case_list_form_use_default_image_for_all': None,
+        'case_list_form_use_default_audio_for_all': None,
         "case_list_post_form_workflow": None,
         "case_type": None,
         'comment': None,
@@ -424,6 +430,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
+        "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
         "root_module_id": None,
@@ -466,10 +473,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     if should_edit("custom_icon_form"):
         error_message = handle_custom_icon_edits(request, module, lang)
         if error_message:
-            return JsonResponse(
+            return json_response(
                 {'message': error_message},
-                status=400
+                status_code=400
             )
+
+    if should_edit("name_enum"):
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
@@ -525,36 +536,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.case_list_form.label[lang] = request.POST.get('case_list_form_label')
     if should_edit('case_list_post_form_workflow'):
         module.case_list_form.post_form_workflow = request.POST.get('case_list_post_form_workflow')
-    if should_edit('case_list_form_media_image'):
-        new_path = process_media_attribute(
-            'case_list_form_media_image',
-            resp,
-            request.POST.get('case_list_form_media_image')
-        )
-        module.case_list_form.set_icon(lang, new_path)
-
-    if should_edit('case_list_form_media_audio'):
-        new_path = process_media_attribute(
-            'case_list_form_media_audio',
-            resp,
-            request.POST.get('case_list_form_media_audio')
-        )
-        module.case_list_form.set_audio(lang, new_path)
-
-    if should_edit('case_list-menu_item_media_image'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_image',
-            resp,
-            request.POST.get('case_list-menu_item_media_image')
-        )
-        module.case_list.set_icon(lang, val)
-    if should_edit('case_list-menu_item_media_audio'):
-        val = process_media_attribute(
-            'case_list-menu_item_media_audio',
-            resp,
-            request.POST.get('case_list-menu_item_media_audio')
-        )
-        module.case_list.set_audio(lang, val)
 
     if should_edit("name"):
         name = request.POST.get("name", None)
@@ -589,6 +570,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module.excluded_form_ids = excl
 
     handle_media_edits(request, module, should_edit, resp, lang)
+    handle_media_edits(request, module.case_list_form, should_edit, resp, lang, prefix='case_list_form_')
+    handle_media_edits(request, module.case_list, should_edit, resp, lang, prefix='case_list-menu_item_')
+
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()
@@ -888,7 +872,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     resp = {}
     app.save(resp)
-    return JsonResponse(resp)
+    return json_response(resp)
 
 
 @no_conflict_require_POST
@@ -923,8 +907,13 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
+
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
+
+    if 'name_enum' in params:
+        name_enum = json.loads(request.POST.get("name_enum"))
+        module.name_enum = [MappingItem(i) for i in name_enum]
 
     try:
         app.save()
@@ -937,7 +926,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
     get_uuids_by_instance_id.clear(domain)
-    return JsonResponse('success')
+    return json_response('success')
 
 
 def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=True):
@@ -964,7 +953,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
         'lang': lang,
     })
     if ajax:
-        return JsonResponse({'error_html': response_html})
+        return json_response({'error_html': response_html})
     return HttpResponse(response_html)
 
 

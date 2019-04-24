@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 
 import pytz
 from couchexport.models import Format
-from dimagi.utils.web import get_url_base
+from dimagi.utils.web import json_response, get_url_base
 from django.contrib import messages
-from django.http import HttpResponseRedirect, Http404, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -189,13 +189,13 @@ class GenerateSchemaFromAllBuildsView(View):
         download_id = request.GET.get('download_id')
         download = DownloadBase.get(download_id)
         if download is None:
-            return JsonResponse({
+            return json_response({
                 'download_id': download_id,
                 'progress': None,
             })
 
         status = get_task_status(download.task)
-        return JsonResponse({
+        return json_response({
             'download_id': download_id,
             'success': status.success(),
             'failed': status.failed(),
@@ -215,7 +215,7 @@ class GenerateSchemaFromAllBuildsView(View):
             request.POST.get('identifier'),
         ))
         download.save()
-        return JsonResponse({
+        return json_response({
             'download_id': download.download_id
         })
 

@@ -22,7 +22,7 @@ from couchdbkit import ResourceConflict
 from casexml.apps.phone.fixtures import generator
 from corehq.apps.users.util import format_username
 from dimagi.utils.parsing import string_to_boolean
-from dimagi.utils.web import get_url_base
+from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
@@ -287,7 +287,7 @@ class LoginAsUsers(View):
         total_records = users_query.count()
         users_data = users_query.run()
 
-        return JsonResponse({
+        return json_response({
             'response': {
                 'itemList': list(map(self._format_user, users_data.hits)),
                 'total': users_data.total,
@@ -364,7 +364,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     delegation = request.GET.get('task-list') == 'true'
     session_helper = CaseSessionDataHelper(domain, request.couch_user, case_id, app, form, delegation=delegation)
-    return JsonResponse(session_helper.get_full_context(
+    return json_response(session_helper.get_full_context(
         root_context,
         session_extras
     ))
@@ -397,7 +397,7 @@ class ReadableQuestions(View):
             {'questions': readable_form}
         )
 
-        return JsonResponse({
+        return json_response({
             'form_data': rendered_readable_form,
             'form_questions': pretty_questions
         })
@@ -444,4 +444,4 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         except ResourceConflict:
             return HttpResponseConflict()
         else:
-            return JsonResponse({'_rev': old._rev})
+            return json_response({'_rev': old._rev})

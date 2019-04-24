@@ -11,6 +11,23 @@ from corehq.apps.userreports.specs import TypeProperty
 
 
 class AddDaysExpressionSpec(JsonObject):
+    """
+    Below is a simple example that demonstrates the structure. The
+    expression below will add 28 days to a property called "dob". The
+    date_expression and count_expression can be any valid expressions, or
+    simply constants.
+
+    .. code:: json
+
+       {
+           "type": "add_days",
+           "date_expression": {
+               "type": "property_name",
+               "property_name": "dob",
+           },
+           "count_expression": 28
+       }
+    """
     type = TypeProperty('add_days')
     date_expression = DefaultProperty(required=True)
     count_expression = DefaultProperty(required=True)
@@ -33,6 +50,26 @@ class AddDaysExpressionSpec(JsonObject):
 
 
 class AddMonthsExpressionSpec(JsonObject):
+    """
+    ``add_months`` offsets given date by given number of calendar months. If
+    offset results in an invalid day (for e.g. Feb 30, April 31), the day of
+    resulting date will be adjusted to last day of the resulting calendar
+    month.
+
+    The date_expression and months_expression can be any valid expressions,
+    or simply constants, including negative numbers.
+
+    .. code:: json
+
+       {
+           "type": "add_months",
+           "date_expression": {
+               "type": "property_name",
+               "property_name": "dob",
+           },
+           "months_expression": 28
+       }
+    """
     type = TypeProperty('add_months')
     date_expression = DefaultProperty(required=True)
     months_expression = DefaultProperty(required=True)
@@ -55,6 +92,23 @@ class AddMonthsExpressionSpec(JsonObject):
 
 
 class MonthStartDateExpressionSpec(JsonObject):
+    """
+    ``month_start_date`` returns date of first day in the month of given
+    date and ``month_end_date`` returns date of last day in the month of
+    given date.
+
+    The ``date_expression`` can be any valid expression, or simply constant
+
+    .. code:: json
+
+       {
+           "type": "month_start_date",
+           "date_expression": {
+               "type": "property_name",
+               "property_name": "dob",
+           },
+       }
+    """
     type = TypeProperty('month_start_date')
     date_expression = DefaultProperty(required=True)
 
@@ -90,6 +144,23 @@ class MonthEndDateExpressionSpec(JsonObject):
 
 
 class DiffDaysExpressionSpec(JsonObject):
+    """
+    ``diff_days`` returns number of days between dates specified by
+    ``from_date_expression`` and ``to_date_expression``. The
+    from_date_expression and to_date_expression can be any valid
+    expressions, or simply constants.
+
+    .. code:: json
+
+       {
+           "type": "diff_days",
+           "from_date_expression": {
+               "type": "property_name",
+               "property_name": "dob",
+           },
+           "to_date_expression": "2016-02-01"
+       }
+    """
     type = TypeProperty('diff_days')
     from_date_expression = DefaultProperty(required=True)
     to_date_expression = DefaultProperty(required=True)

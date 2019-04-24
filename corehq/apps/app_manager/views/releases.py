@@ -6,7 +6,7 @@ import uuid
 from math import ceil
 
 from django.db.models import Count
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django_prbac.utils import has_privilege
 from django.views.generic import View
@@ -24,6 +24,7 @@ from django.views.decorators.cache import cache_control
 
 import ghdiff
 from couchdbkit import ResourceNotFound, NoResultFound
+from dimagi.utils.web import json_response
 from dimagi.utils.couch.bulk import get_docs
 from phonelog.models import UserErrorEntry
 
@@ -149,7 +150,7 @@ def paginate_releases(request, domain, app_id):
 
     num_pages = int(ceil(total_apps / limit))
 
-    return JsonResponse({
+    return json_response({
         'apps': saved_apps,
         'pagination': {
             'total': total_apps,
@@ -216,7 +217,7 @@ def current_app_version(request, domain, app_id):
         raise Http404
     latest_build_version = get_latest_build_version(domain, app_id)
     latest_released_version = get_latest_released_app_version(domain, app_id)
-    return JsonResponse({
+    return json_response({
         'currentVersion': app_version,
         'latestBuild': latest_build_version,
         'latestReleasedBuild': latest_released_version if latest_released_version else None,
@@ -230,7 +231,7 @@ def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
         if LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id).exists():
-            return JsonResponse({'error': _('Please disable any enabled profiles to un-release this build.')})
+            return json_response({'error': _('Please disable any enabled profiles to un-release this build.')})
     ajax = request.POST.get('ajax') == 'true'
     saved_app = get_app(domain, saved_app_id)
     if saved_app.copy_of != app_id:
@@ -247,7 +248,7 @@ def release_build(request, domain, app_id, saved_app_id):
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:
-        return JsonResponse({
+        return json_response({
             'is_released': is_released,
             'latest_released_version': get_latest_released_app_version(domain, app_id)
         })
@@ -299,7 +300,7 @@ def save_copy(request, domain, app_id):
     )
     lang, langs = get_langs(request, app)
 
-    return JsonResponse({
+    return json_response({
         "saved_app": copy,
         "error_html": render_to_string("app_manager/partials/build_errors.html", {
             'request': request,
@@ -371,7 +372,7 @@ def delete_copy(request, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
     app.delete_copy(copy)
-    return JsonResponse({})
+    return json_response({})
 
 
 def odk_install(request, domain, app_id, with_media=False):
@@ -441,7 +442,7 @@ def update_build_comment(request, domain, app_id):
     build.build_comment = request.POST.get('comment')
     build.is_auto_generated = False
     build.save()
-    return JsonResponse({'status': 'success'})
+    return json_response({'status': 'success'})
 
 
 def _get_change_counts(html_diff):

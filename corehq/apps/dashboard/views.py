@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from django.http.response import Http404, JsonResponse
+from django.http.response import Http404
 from django.utils.translation import ugettext_noop, ugettext as _
 
 import math
@@ -28,6 +28,7 @@ from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.util.context_processors import commcare_hq_names
+from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 
 
@@ -68,14 +69,14 @@ def dashboard_tile(request, domain, slug):
     current_page = int(request.GET.get('currentPage', 1))
     items_per_page = int(request.GET.get('itemsPerPage', 5))
     items = list(tile.paginator.paginated_items(current_page, items_per_page))
-    return JsonResponse({'items': items})
+    return json_response({'items': items})
 
 
 @login_and_domain_required
 @location_safe
 def dashboard_tile_total(request, domain, slug):
     tile = _get_tile(request, slug)
-    return JsonResponse({'total': tile.paginator.total})
+    return json_response({'total': tile.paginator.total})
 
 
 @location_safe

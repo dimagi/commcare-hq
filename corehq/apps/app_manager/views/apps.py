@@ -12,7 +12,7 @@ from wsgiref.util import FileWrapper
 
 from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.http import urlencode as django_urlencode
@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
@@ -73,7 +74,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
-from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm, MultimediaTranslationsBulkUploadForm
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -89,7 +90,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request
+from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
 import six
 from io import open
@@ -173,6 +174,10 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
+            if app.get_doc_type() == 'LinkedApplication':
+                if setting['id'] in app.SUPPORTED_SETTINGS:
+                    if setting['id'] not in app.linked_app_attrs:
+                        setting['is_inherited'] = True
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -256,15 +261,8 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
-            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
-        },
-        'bulk_app_multimedia_upload': {
-            'action': reverse('upload_bulk_app_translations',   # TODO
-                              args=(app.domain, app.get_id)),
-            'download_url': reverse('download_bulk_multimedia_translations',
-                                    args=(app.domain, app.get_id)),
-            'adjective': _("multimedia"),
-            'plural_noun': _("multimedia references"),
+            'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
     })
     context.update({
@@ -276,12 +274,6 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-            app=app,
-        ),
-        'bulk_multimedia_translation_form': get_bulk_upload_form(
-            context,
-            context_key="bulk_app_multimedia_upload",
-            form_class=MultimediaTranslationsBulkUploadForm,
         ),
     })
     context.update({
@@ -394,7 +386,7 @@ def get_apps_base_context(request, domain, app):
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
-    return JsonResponse(app.export_json(dump_json=False))
+    return json_response(app.export_json(dump_json=False))
 
 
 @require_can_edit_apps
@@ -703,7 +695,7 @@ def edit_app_langs(request, domain, app_id):
     replace_all(app.langs, langs)
     app.smart_lang_display = json.loads(request.body)['smart_lang_display']
     app.save()
-    return JsonResponse(langs)
+    return json_response(langs)
 
 
 @require_can_edit_apps
@@ -722,7 +714,7 @@ def edit_app_ui_translations(request, domain, app_id):
     app.set_translations(lang, translations)
     response = {}
     app.save(response)
-    return JsonResponse(response)
+    return json_response(response)
 
 
 @require_GET
@@ -736,7 +728,7 @@ def get_app_ui_translations(request, domain):
         translations = {k: v for k, v in translations.items()
                         if not id_strings.is_custom_app_string(k)
                         and '=' not in k}
-    return JsonResponse(translations)
+    return json_response(translations)
 
 
 @no_conflict_require_POST
@@ -809,16 +801,13 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None),
         ('location_fixture_restore', None),
     )
-    linked_app_attrs = [
-        'target_commcare_flavor',
-    ]
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
+            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })
@@ -910,7 +899,7 @@ def rearrange(request, domain, app_id, key):
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
-            return JsonResponse({'error': error}, status=400)
+            return json_response({'error': error}, status_code=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
@@ -920,7 +909,7 @@ def rearrange(request, domain, app_id, key):
             'The sidebar has been updated, so please try again.'
         )
         if ajax:
-            return JsonResponse(error, status=400)
+            return json_response(error, status_code=400)
         messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
