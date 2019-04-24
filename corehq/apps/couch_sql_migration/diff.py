@@ -13,16 +13,16 @@ from .diffrule import Ignore
 
 load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [
-        Ignore(path='_rev'),  # couch only
-        Ignore(path='migrating_blobs_from_couch'),  # couch only
-        Ignore(path='#export_tag'),  # couch only
-        Ignore(path='computed_'),  # couch only
-        Ignore(path='state'),  # SQL only
-        Ignore(path='computed_modified_on_'),  # couch only
-        Ignore(path='deprecated_form_id', old=MISSING, new=None),  # SQL always has this
-        Ignore(path='path'),  # couch only
-        Ignore(path='user_id'),  # couch only
-        Ignore(path='external_blobs'),  # couch only
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='migrating_blobs_from_couch', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='state', old=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
+        Ignore(path='deprecated_form_id', old=MISSING, new=None),
+        Ignore(path='path', new=MISSING),
+        Ignore(path='user_id', new=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
         Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
         Ignore(path='problem', old=MISSING, new=None),
         Ignore(path='problem', old='', new=None),
@@ -60,23 +60,23 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('deprecated_date', 'edited_on'),
     ],
     'CommCareCase*': [
-        Ignore(path='_rev'),  # couch only
-        Ignore(path='initial_processing_complete'),  # couch only
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='initial_processing_complete', new=MISSING),
         Ignore(path=('actions', '[*]')),  # ignore case actions
-        Ignore(path='id'),  # SQL only
+        Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
-        Ignore(path='_attachments'),  # couch only
-        Ignore(path='external_blobs'),  # couch only
-        Ignore(path='#export_tag'),  # couch only
-        Ignore(path='computed_'),  # couch only
-        Ignore(path='version'),  # couch only
-        Ignore(path='deleted'),  # SQL only
-        Ignore(path='export_tag'),  # couch only
-        Ignore(path='computed_modified_on_'),  # couch only
+        Ignore(path='_attachments', new=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='version', new=MISSING),
+        Ignore(path='deleted', old=MISSING),
+        Ignore(path='export_tag', new=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
         Ignore(path='case_id'),  # legacy
         Ignore(path='@case_id'),  # legacy
-        Ignore(path='case_json'),  # SQL only
-        Ignore(path='modified_by'),  # SQL only
+        Ignore(path='case_json', old=MISSING),
+        Ignore(path='modified_by', old=MISSING),
         # legacy bug left cases with no owner_id
         Ignore('diff', 'owner_id', old=''),
         Ignore('type', 'owner_id', old=None),
@@ -102,12 +102,9 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
-        # SQL JSON has case_id field in indices which couch JSON doesn't
-        Ignore(path=('indices', '[*]', 'case_id')),
-        # SQL indices don't have doc_type
+        Ignore(path=('indices', '[*]', 'case_id'), old=MISSING),
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
-        # defaulted on SQL
-        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
+        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
 
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
@@ -131,17 +128,17 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
     'LedgerValue': [
-        Ignore(path='_id'),  # couch only
+        Ignore(path='_id', new=MISSING),
     ],
     'case_attachment': [
-        Ignore(path='_id'),  # couch only
-        Ignore(path='attachment_properties'),  # couch only
-        Ignore(path='attachment_from'),  # couch only
-        Ignore(path='attachment_src'),  # couch only
-        Ignore(path='content_type'),  # couch only
-        Ignore(path='server_mime'),  # couch only
-        Ignore(path='attachment_name'),  # couch only
-        Ignore(path='server_md5'),  # couch only
+        Ignore(path='_id', new=MISSING),
+        Ignore(path='attachment_properties', new=MISSING),
+        Ignore(path='attachment_from', new=MISSING),
+        Ignore(path='attachment_src', new=MISSING),
+        Ignore('diff', path='content_type'),  # was marked "couch only" but that fails a test
+        Ignore(path='server_mime', new=MISSING),
+        Ignore(path='attachment_name', new=MISSING),
+        Ignore(path='server_md5', new=MISSING),
         ignore_renamed('attachment_size', 'content_length'),
         ignore_renamed('identifier', 'name'),
     ]
