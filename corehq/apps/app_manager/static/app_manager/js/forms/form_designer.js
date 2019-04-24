@@ -52,8 +52,12 @@ hqDefine("app_manager/js/forms/form_designer", function () {
             },
             formLoadedCallback: function () {
                 $('#formdesigner').removeClass('loading');
+                // This code takes control of the top-left box with the form name.
                 $('#formdesigner .fd-content-left .fd-head-text').before(
+                    // We add an edit button that opens a modal:
                     $('#fd-hq-edit-formname-button').html()
+                // and we replace the form name Vellum put there
+                // with one that's translated to the app builder's currently selected language:
                 ).text(initialPageData('form_name'));
             },
         });
