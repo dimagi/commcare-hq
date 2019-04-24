@@ -836,18 +836,17 @@ class StaticDataSourceConfiguration(JsonObject):
         return cls._get_datasource_config(wrapped, domain)
 
     @classmethod
-    def _get_mirrored_engine_ids(cls, server_env):
-        for env in cls.mirrored_engine_ids:
-            if env.server_environment == server_env:
-                return env.engine_ids
-        return []
-
-    @classmethod
     def _get_datasource_config(cls, static_config, domain):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
-        doc['mirrored_engine_ids'] = cls._get_mirrored_engine_ids(settings.SERVER_ENVIRONMENT)
+
+        def _get_mirrored_engine_ids():
+            for env in static_config.mirrored_engine_ids:
+                if env.server_environment == settings.SERVER_ENVIRONMENT:
+                    return env.engine_ids
+            return []
+        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 
