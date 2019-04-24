@@ -105,7 +105,7 @@ class NumericXpathColumnFilter(BaseXpathColumnFilter):
             return float(value)
 
     def format_value(self, value):
-        return "'{}'".format(value) if value == '' else self._get_number(value)
+        return "''" if value == '' else self._get_number(value)
 
 
 class DateXpathColumnFilter(BaseXpathColumnFilter):
