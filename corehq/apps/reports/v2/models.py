@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
+
 from collections import namedtuple
+from abc import ABCMeta, abstractmethod
 
 from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
@@ -134,9 +137,10 @@ class BaseDataFormatter(object):
         raise NotImplementedError("please implement get_context")
 
 
-class BaseFilter(object):
+class BaseFilter(six.with_metaclass(ABCMeta)):
 
     @classmethod
+    @abstractmethod
     def get_context(cls):
         """
         Override this to return a dict
