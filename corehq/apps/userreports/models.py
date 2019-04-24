@@ -488,7 +488,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         # these two properties implicitly call other validation
         self._get_main_filter()
         self._get_deleted_filter()
-        self.validate_db_config()
 
         # validate indicators and column uniqueness
         columns = [c.id for c in self.indicators.get_columns()]

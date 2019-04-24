@@ -250,6 +250,7 @@ signals.request_finished.connect(_close_connections)
 @contextmanager
 def override_engine(engine_id, connection_url, db_alias=None):
     original_url = connection_manager.get_connection_string(engine_id)
+    original_alias = connection_manager.engine_id_django_db_map.get(engine_id, None)
     connection_manager.db_connection_map[engine_id] = connection_url
     if db_alias:
         connection_manager.engine_id_django_db_map[engine_id] = db_alias
@@ -257,6 +258,7 @@ def override_engine(engine_id, connection_url, db_alias=None):
         yield
     finally:
         connection_manager.db_connection_map[engine_id] = original_url
+        connection_manager.engine_id_django_db_map[engine_id] = original_alias
 
 
 def is_citus_db(connection):

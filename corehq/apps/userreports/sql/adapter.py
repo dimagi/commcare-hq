@@ -265,6 +265,7 @@ class MultiDBSqlAdapter(object):
     mirror_adapter_cls = IndicatorSqlAdapter
 
     def __init__(self, config, override_table_name=None):
+        config.validate_db_config()
         self.config = config
         self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
         self.all_adapters = []
@@ -278,9 +279,6 @@ class MultiDBSqlAdapter(object):
     def __getattr__(self, attr):
         return getattr(self.main_adapter, attr)
 
-    def handle_exception(self, doc, exception):
-        self.main_adapter.handle_exception(doc, exception)
-
     @property
     def table_id(self):
         return self.config.table_id
@@ -288,13 +286,6 @@ class MultiDBSqlAdapter(object):
     @property
     def display_name(self):
         return self.config.display_name
-
-    @memoized
-    def get_table(self):
-        return self.main_adapter.get_table()
-
-    def get_query_object(self):
-        return self.main_adapter.get_query_object()
 
     def best_effort_save(self, doc, eval_context=None):
         for adapter in self.all_adapters:

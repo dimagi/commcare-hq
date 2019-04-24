@@ -154,7 +154,6 @@ class UCRMultiDBTest(TestCase):
         ds3 = DataSourceConfiguration.wrap(get_sample_data_source().to_json())
         ds3.engine_id = "default"
         ds3.mirrored_engine_ids = ['engine-2']
-        ds3.save()
         adapter = get_indicator_adapter(ds3)
         self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)
         self.assertEqual(len(adapter.all_adapters), 2)
@@ -168,4 +167,3 @@ class UCRMultiDBTest(TestCase):
         for _adapter in adapter.all_adapters:
             self.assertEqual(1, adapter.get_query_object().count())
 
-        ds3.delete()
