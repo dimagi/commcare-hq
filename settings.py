@@ -1,14 +1,19 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import inspect
-from collections import defaultdict
 import importlib
+import inspect
+import json
 import os
-import six
+import warnings
+from collections import defaultdict
 
 from django.contrib import messages
+from django.core.serializers.json import DjangoJSONEncoder
+
+import kombu.serialization
+import six
+
 import settingshelper as helper
 
 DEBUG = True
@@ -534,8 +539,15 @@ CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
-CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
-CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
+kombu.serialization.register(
+    'django-json',
+    lambda obj: json.dumps(obj, cls=DjangoJSONEncoder),
+    json.loads,
+    content_type='application/json',
+)
+
+CELERY_TASK_SERIALIZER = 'django-json'
+CELERY_ACCEPT_CONTENT = ['django-json', 'json', 'pickle']
 
 # in seconds
 CELERY_HEARTBEAT_THRESHOLDS = {
@@ -934,7 +946,6 @@ _location = lambda x: os.path.join(FILEPATH, x)
 IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 if 'KAFKA_URL' in globals():
-    import warnings
     warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
 
     Please replace KAFKA_URL with KAFKA_BROKERS as follows:
@@ -1260,7 +1271,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
