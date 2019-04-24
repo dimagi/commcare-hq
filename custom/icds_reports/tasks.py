@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import re
+import pytz
 import tempfile
 import zipfile
 from collections import namedtuple
@@ -33,6 +34,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_case_counts,
     get_primary_db_form_counts,
 )
+
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -63,6 +65,7 @@ from custom.icds_reports.const import (
     PREGNANT_WOMEN_EXPORT,
     SYSTEM_USAGE_EXPORT,
     THREE_MONTHS,
+    INDIA_TIMEZONE
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -178,7 +181,7 @@ def run_move_ucr_data_into_aggregation_tables_task():
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=36 * 60 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
-    start_time = datetime.utcnow()
+    start_time = datetime.now(pytz.utc)
     date = date or start_time.date()
     monthly_dates = []
 
@@ -632,17 +635,17 @@ def _agg_awc_table_weekly(day):
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date, aggregation_start_time):
-    aggregation_start_time = aggregation_start_time + timedelta(hours=5, minutes=30)
-    aggregation_finish_time = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    aggregation_start_time = aggregation_start_time.astimezone(INDIA_TIMEZONE)
+    aggregation_finish_time = datetime.now(pytz.utc).astimezone(INDIA_TIMEZONE)
 
     if six.PY2 and isinstance(aggregation_date, bytes):
         aggregation_date = aggregation_date.decode('utf-8')
     # temporary soft assert to verify it's completing
     if not settings.UNIT_TESTING:
+        timings = "Aggregation Started At : {} IST, Completed At : {} IST".format(aggregation_start_time,
+                                                                                  aggregation_finish_time)
         _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT),
-                                    "Aggregation Started At : {} IST, "
-                                    "Completed At : {} IST".format(aggregation_start_time,
-                                                                   aggregation_finish_time ))
+                                    timings)
     celery_task_logger.info("Aggregation has completed")
     icds_data_validation.delay(aggregation_date)
 
