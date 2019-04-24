@@ -1627,7 +1627,6 @@ class AggregationScriptPage(BaseDomainView):
         return redirect(self.urlname, domain=self.domain)
 
 
-@location_safe
 class ICDSBugReportView(BugReportView):
     @property
     def recipients(self):
