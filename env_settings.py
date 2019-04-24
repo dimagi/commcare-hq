@@ -76,35 +76,6 @@ ES_META = {
         },
     },
 
-    'swiss': {
-        'hqusers': {
-            "settings": {
-                "number_of_shards": 2,
-                "number_of_replicas": 0,
-                "analysis": _get_analysis('default'),
-            },
-        },
-    },
-
-    'l10k': {
-        'hqusers': {
-            "settings": {
-                "number_of_shards": 2,
-                "number_of_replicas": 0,
-                "analysis": _get_analysis('default'),
-            },
-        },
-    },
-
-    'staging': {
-        'hqusers': {
-            "settings": {
-                "number_of_shards": 2,
-                "number_of_replicas": 0,
-                "analysis": _get_analysis('default'),
-            },
-        },
-    },
     'icds': {
         'hqusers': {
             "settings": {
