@@ -56,97 +56,97 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
 
     def test_add_module(self):
         self.factory2.new_basic_module('module_2', 'case')
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[1]['changes']['module'], ADDED)
-        self.assertEqual(diff.second[1]['id'], self.app2.modules[1].unique_id)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(second[1]['changes']['module'], ADDED)
+        self.assertEqual(second[1]['id'], self.app2.modules[1].unique_id)
 
     def test_remove_module(self):
         self.factory1.new_basic_module('module_2', 'case')
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[1]['changes']['module'], REMOVED)
-        self.assertEqual(diff.first[1]['id'], self.app1.modules[1].unique_id)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[1]['changes']['module'], REMOVED)
+        self.assertEqual(first[1]['id'], self.app1.modules[1].unique_id)
 
     def test_remove_then_add_module(self):
         self.factory1.new_basic_module('module_2', 'case')
         self.factory2.new_basic_module('module_3', 'case')
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[1]['changes']['module'], REMOVED)
-        self.assertEqual(diff.first[1]['id'], self.app1.modules[1].unique_id)
-        self.assertEqual(diff.second[1]['changes']['module'], ADDED)
-        self.assertEqual(diff.second[1]['id'], self.app2.modules[1].unique_id)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[1]['changes']['module'], REMOVED)
+        self.assertEqual(first[1]['id'], self.app1.modules[1].unique_id)
+        self.assertEqual(second[1]['changes']['module'], ADDED)
+        self.assertEqual(second[1]['id'], self.app2.modules[1].unique_id)
 
     def test_add_form(self):
         self.factory2.new_form(self.app2.modules[0])
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][1]['changes']['form'], ADDED)
-        self.assertEqual(diff.second[0]['forms'][1]['name'], self.app2.modules[0].forms[1].name)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(second[0]['forms'][1]['changes']['form'], ADDED)
+        self.assertEqual(second[0]['forms'][1]['name'], self.app2.modules[0].forms[1].name)
 
     def test_change_form_name(self):
         self.app2.modules[0].forms[0].name['en'] = "a new name"
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['changes']['name'], CHANGED)
-        self.assertEqual(diff.first[0]['forms'][0]['changes']['name'], CHANGED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['changes']['name'], CHANGED)
+        self.assertEqual(first[0]['forms'][0]['changes']['name'], CHANGED)
 
     def test_change_form_filter(self):
         self.app2.modules[0].forms[0].form_filter = "foo = 'bar'"
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['changes']['form_filter'], CHANGED)
-        self.assertEqual(diff.first[0]['forms'][0]['changes']['form_filter'], CHANGED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['changes']['form_filter'], CHANGED)
+        self.assertEqual(first[0]['forms'][0]['changes']['form_filter'], CHANGED)
 
     def test_remove_form(self):
         self.factory1.new_form(self.app1.modules[0])
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][1]['changes']['form'], REMOVED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][1]['changes']['form'], REMOVED)
 
     def test_add_question(self):
         self._add_question(self.app2.modules[0].forms[0])
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
 
     def test_remove_question(self):
         self._add_question(self.app1.modules[0].forms[0])
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
 
     def test_remove_then_add_question(self):
         self._add_question(self.app1.modules[0].forms[0], {'name': 'foo', 'label': 'foo'})
         self._add_question(self.app2.modules[0].forms[0], {'name': 'bar', 'label': 'bar'})
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['question'], REMOVED)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['question'], ADDED)
 
     def test_change_question_label(self):
         self._add_question(self.app1.modules[0].forms[0], {'label': 'foo'})
         self._add_question(self.app2.modules[0].forms[0], {'label': 'bar'})
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['label'], CHANGED)
 
     def test_add_question_constraint(self):
         self._add_question(self.app1.modules[0].forms[0], {'constraint': ''})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo = bar'})
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['constraint'], ADDED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['constraint'], ADDED)
 
     def test_change_question_constraint(self):
         self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertEqual(diff.first[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
-        self.assertEqual(diff.second[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertEqual(first[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
+        self.assertEqual(second[0]['forms'][0]['questions'][0]['changes']['constraint'], CHANGED)
 
     def test_remove_form_sets_contains_changes(self):
         self.factory1.new_form(self.app1.modules[0])
-        diff = get_app_diff(self.app1, self.app2)
-        self.assertTrue(diff.first[0]['forms'][1].changes.contains_changes)
+        first, second = get_app_diff(self.app1, self.app2)
+        self.assertTrue(first[0]['forms'][1].changes.contains_changes)
 
     def test_change_question_sets_contains_changes(self):
         self._add_question(self.app1.modules[0].forms[0], {'constraint': 'foo = bar'})
         self._add_question(self.app2.modules[0].forms[0], {'constraint': 'foo != bar'})
-        diff = get_app_diff(self.app1, self.app2)
+        first, second = get_app_diff(self.app1, self.app2)
 
-        self.assertTrue(diff.first[0]['forms'][0].changes.contains_changes)
-        self.assertTrue(diff.second[0]['forms'][0].changes.contains_changes)
+        self.assertTrue(first[0]['forms'][0].changes.contains_changes)
+        self.assertTrue(second[0]['forms'][0].changes.contains_changes)
 
 
 class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
@@ -160,9 +160,9 @@ class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
         self.factory1.form_requires_case(self.app1.modules[0].forms[0], update={'foo': '/data/name'})
         self.app1.save()
 
-        diff = get_app_diff(self.app1, self.app2)
+        first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(
-            diff.first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
+            first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
             REMOVED
         )
 
@@ -174,12 +174,12 @@ class TestAppDiffsWithDB(_BaseTestAppDiffs, TestCase):
         self.app1.save()
         self.app2.save()
 
-        diff = get_app_diff(self.app1, self.app2)
+        first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(
-            diff.first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
+            first[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['foo'],
             REMOVED,
         )
         self.assertEqual(
-            diff.second[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['bar'],
+            second[0]['forms'][0]['questions'][0]['changes']['save_properties']['case']['bar'],
             ADDED,
         )

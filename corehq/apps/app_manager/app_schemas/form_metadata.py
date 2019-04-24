@@ -218,21 +218,21 @@ def get_app_summary_formdata(domain, app, include_shadow_forms=True):
     return _AppSummaryFormDataGenerator(domain, app, include_shadow_forms).generate()
 
 
-class AppDiffGenerator(object):
+class _AppDiffGenerator(object):
     def __init__(self, app1, app2):
         self.first = get_app_summary_formdata(app1.domain, app1)[0]
         self.second = get_app_summary_formdata(app2.domain, app2)[0]
 
-        self._populate_id_caches()
-        self._mark_removed_items()
-        self._mark_retained_items()
-
-    def _populate_id_caches(self):
         self._first_by_id = {}
         self._first_questions_by_id = defaultdict(dict)
         self._second_by_id = {}
         self._second_questions_by_id = defaultdict(dict)
+        self._populate_id_caches()
 
+        self._mark_removed_items()
+        self._mark_retained_items()
+
+    def _populate_id_caches(self):
         for module in self.first:
             self._first_by_id[module['id']] = module
             for form in module['forms']:
@@ -247,41 +247,9 @@ class AppDiffGenerator(object):
                 for question in form['questions']:
                     self._second_questions_by_id[form['id']][question['value']] = question
 
-    def _mark_item_removed(self, item, key):
-        self._set_contains_changes(item)
-        item.changes[key] = REMOVED
-
-    def _mark_item_added(self, item, key):
-        self._set_contains_changes(item)
-        item.changes[key] = ADDED
-
-    def _mark_item_changed(self, item, key):
-        self._set_contains_changes(item)
-        item.changes[key] = CHANGED
-
-    def _set_contains_changes(self, item):
-        """For forms and modules, set contains_changes to True
-        For questions, set the form's contains_changes attribute to True
-
-        This is used for the "View Changed Items" filter in the UI
-        """
-        try:
-            for form in self._get_form_ancestors(item):
-                form.changes.contains_changes = True
-            item.changes.contains_changes = True
-        except AttributeError:
-            pass
-
-    def _get_form_ancestors(self, child):
-        ancestors = []
-        for tree in [self._first_by_id, self._second_by_id]:
-            try:
-                ancestors.append(tree[child['form_id']])
-            except KeyError:
-                continue
-        return ancestors
-
     def _mark_removed_items(self):
+        """Finds all removed modules, forms, and questions from the second app
+        """
         for module in self.first:
             if module['id'] not in self._second_by_id:
                 self._mark_item_removed(module, 'module')
@@ -398,6 +366,46 @@ class AppDiffGenerator(object):
             self._set_contains_changes(first_question)
             self._set_contains_changes(second_question)
 
+    def _mark_item_removed(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = REMOVED
+
+    def _mark_item_added(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = ADDED
+
+    def _mark_item_changed(self, item, key):
+        self._set_contains_changes(item)
+        item.changes[key] = CHANGED
+
+    def _set_contains_changes(self, item):
+        """For forms and modules, set contains_changes to True
+        For questions, set the form's contains_changes attribute to True
+
+        This is used for the "View Changed Items" filter in the UI
+        """
+        try:
+            for form in self._get_form_ancestors(item):
+                form.changes.contains_changes = True
+            item.changes.contains_changes = True
+        except AttributeError:
+            pass
+
+    def _get_form_ancestors(self, question):
+        """Returns forms from both apps with the same form_id.
+        If something other than a question is passed in, it will be ignored
+
+        """
+        ancestors = []
+        for tree in [self._first_by_id, self._second_by_id]:
+            try:
+                form_id = question['form_id']
+                ancestors.append(tree[form_id])
+            except KeyError:
+                continue
+        return ancestors
+
 
 def get_app_diff(app1, app2):
-    return AppDiffGenerator(app1, app2)
+    diff = _AppDiffGenerator(app1, app2)
+    return diff.first, diff.second
