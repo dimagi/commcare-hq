@@ -7,8 +7,42 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.util.test_utils import flag_disabled, flag_enabled
+from corehq.util.test_utils import flag_disabled, flag_enabled
+from custom.icds_reports.models import AggAwc
 from custom.icds_reports.utils import get_location_level
 from custom.icds_reports.views import FactSheetsReport
+
+
+class TestDjango(TestCase):
+    @flag_disabled('ICDS_COMPARE_QUERIES_AGAINST_CITUS')
+    @patch('custom.icds_reports.utils.tasks.call_citus_experiment')
+    def test_compare_not_called(self, experiment):
+        list(AggAwc.objects.values('awc_id'))
+        experiment.assert_not_called()
+
+    @flag_enabled('ICDS_COMPARE_QUERIES_AGAINST_CITUS')
+    @patch('custom.icds_reports.utils.tasks.call_citus_experiment')
+    def test_compare_called_no_filter(self, experiment):
+        list(AggAwc.objects.values('awc_id'))
+        self.assertEqual(len(experiment.call_args_list), 1)
+        call = experiment.call_args_list[0]
+        self.assertEqual(call[0][0], 'SELECT "agg_awc"."awc_id" FROM "agg_awc"')
+        self.assertEqual(call[0][1], [])
+        self.assertEqual(call[1]['data_source'], 'AggAwc')
+
+    @flag_enabled('ICDS_COMPARE_QUERIES_AGAINST_CITUS')
+    @patch('custom.icds_reports.utils.tasks.call_citus_experiment')
+    def test_compare_called_with_filter(self, experiment):
+        list(AggAwc.objects.filter(aggregation_level=4, supervisor_id='super').values('awc_id'))
+        self.assertEqual(len(experiment.call_args_list), 1)
+        call = experiment.call_args_list[0]
+        self.assertEqual(
+            call[0][0],
+            'SELECT "agg_awc"."awc_id" FROM "agg_awc" '
+            'WHERE ("agg_awc"."supervisor_id" = %s AND "agg_awc"."aggregation_level" = %s)'
+        )
+        self.assertEqual(call[0][1], ['super', 4])
+        self.assertEqual(call[1]['data_source'], 'AggAwc')
 
 
 class TestSqlData(TestCase):
