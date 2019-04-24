@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from copy import deepcopy
+
 
 def _get_analysis(*names):
     return {
@@ -21,6 +23,28 @@ ANALYZERS = {
         "type": "custom",
         "tokenizer": "keyword",
         "filter": ["lowercase"]
+    },
+}
+
+ES_ENV_SETTINGS = {
+    'production': {
+        'xforms': {
+            "number_of_replicas": Ellipsis,
+        },
+        'hqcases': {
+            "number_of_replicas": Ellipsis,
+        },
+        'hqusers': {
+            "number_of_shards": 2,
+            "number_of_replicas": 1,
+        },
+    },
+
+    'icds': {
+        'hqusers': {
+            "number_of_shards": 2,
+            "number_of_replicas": 1,
+        },
     },
 }
 
@@ -54,35 +78,15 @@ ES_META = {
             "analysis": _get_analysis('default'),
         },
     },
-
-    # Default settings for aliases per environment (overrides default settings for alias)
-    'production': {
-        'xforms': {
-            'settings': {
-                "analysis": _get_analysis('default', 'sortable_exact'),
-            },
-        },
-        'hqcases': {
-            'settings': {
-                "analysis": _get_analysis('default', 'sortable_exact'),
-            },
-        },
-        'hqusers': {
-            "settings": {
-                "number_of_shards": 2,
-                "number_of_replicas": 1,
-                "analysis": _get_analysis('default'),
-            },
-        },
-    },
-
-    'icds': {
-        'hqusers': {
-            "settings": {
-                "number_of_shards": 2,
-                "number_of_replicas": 1,
-                "analysis": _get_analysis('default'),
-            },
-        },
-    },
 }
+
+for env, indexes in ES_ENV_SETTINGS.items():
+    ES_META[env] = {}
+    for index, extra_settings in indexes.items():
+        meta = deepcopy(ES_META['default'])
+        meta.update(ES_META.get(index, {}))
+        meta['settings'].update(extra_settings)
+        for key, value in extra_settings.items():
+            if value is Ellipsis:
+                del meta['settings'][key]
+        ES_META[env][index] = meta
