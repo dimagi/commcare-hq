@@ -50,7 +50,7 @@
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
     {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
-    {% initial_page_data 'form_name' form.name|trans:app.langs %}
+    {% initial_page_data 'form_name' form.name|trans:langs %}
     {% initial_page_data 'form_comment' form.comment %}
     {% initial_page_data 'form_uses_cases' form.uses_cases %}
     {% initial_page_data 'is_registration_form' form.is_registration_form %}
