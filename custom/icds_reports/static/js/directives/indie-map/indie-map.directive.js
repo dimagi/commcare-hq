@@ -142,7 +142,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         }
                         html.push('<hr/></div>');
 
-                        var locName = 'National'
+                        var locName = 'National';
                         if (storageService.getKey('selectedLocation') !== void(0)) {
                             locName = storageService.getKey('selectedLocation')['name'];
                         }
