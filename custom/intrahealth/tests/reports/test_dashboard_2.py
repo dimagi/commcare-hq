@@ -143,7 +143,7 @@ class TestDashboard2(YeksiTestCase):
             ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
              'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
-        self.assertEqual(
+        self.assertCountEqual(
             rows,
             sorted([
                 [{'html': 'District Sud'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
