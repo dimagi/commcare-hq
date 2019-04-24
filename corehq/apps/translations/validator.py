@@ -36,12 +36,12 @@ class UploadedTranslationsValidator(object):
         self.expected_rows = None
         self.lang_prefix = lang_prefix
         self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
-        if lang_to_compare not in app.langs:
-            lang_to_compare = None
-        if lang_to_compare and lang_to_compare != self.app.default_language:
-            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
         self.default_language_column = self.lang_prefix + self.app.default_language
-        target_lang = lang_to_compare or self.app.default_language
+        if lang_to_compare in app.langs and lang_to_compare != self.app.default_language:
+            self.lang_cols_to_compare.append(self.lang_prefix + lang_to_compare)
+            target_lang = lang_to_compare
+        else:
+            target_lang = self.app.default_language
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, target_lang,
             self.lang_prefix)
