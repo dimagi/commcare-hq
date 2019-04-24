@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import zipfile
 import csv
+import io
 
 from django.test.testcases import TestCase
 from custom.icds_reports.tasks import collect_inactive_dashboard_users
@@ -19,7 +20,9 @@ class TestInactiveMobileUsers(TestCase):
         with sync.get_file_from_blobdb() as fileobj:
             zip = zipfile.ZipFile(fileobj, 'r')
             for zipped_file in zip.namelist():
-                csv_reader = csv.reader(zip.open(zipped_file))
+                items_file = zip.open(zipped_file)
+                items_file = io.TextIOWrapper(io.BytesIO(items_file.read()))
+                csv_reader = csv.reader(items_file)
                 data = list(csv_reader)
 
                 self.assertEqual([['Username', 'Location', 'State']], data)
@@ -33,7 +36,9 @@ class TestInactiveMobileUsers(TestCase):
         with sync.get_file_from_blobdb() as fileobj:
             zip = zipfile.ZipFile(fileobj, 'r')
             for zipped_file in zip.namelist():
-                csv_reader = csv.reader(zip.open(zipped_file), )
+                items_file = zip.open(zipped_file)
+                items_file = io.TextIOWrapper(io.BytesIO(items_file.read()))
+                csv_reader = csv.reader(items_file)
                 data = list(csv_reader)
                 sorted(data, key=lambda x: x[0])
                 self.assertEqual([['Username', 'Location', 'State'],

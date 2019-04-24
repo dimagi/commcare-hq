@@ -9,7 +9,6 @@ from custom.icds_reports.reports.service_delivery_dashboard import get_service_d
 class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
-        self.maxDiff=None
         data = get_service_delivery_data(
             0,
             10,
@@ -90,7 +89,6 @@ class TestServiceDelivery(TestCase):
         self.assertDictEqual(expected, data)
 
     def test_get_service_delivery_data_state_0_3(self):
-        self.maxDiff = None
         data = get_service_delivery_data(
             0,
             10,
@@ -173,9 +171,9 @@ class TestServiceDelivery(TestCase):
                     'children_3_5': 343,
                     'pse': '12.05 %',
                     'block_name': 'Data Not Entered',
-                    'sn': '2.61 %',
+                    'sn': '2.41 %',
                     'district_name': 'Data Not Entered',
-                    'lunch_count_21_days': 13,
+                    'lunch_count_21_days': 12,
                     'gm': '69.97 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 60,

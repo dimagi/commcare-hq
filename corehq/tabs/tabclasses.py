@@ -1916,14 +1916,18 @@ class AdminTab(UITab):
             ]
             system_operations = [
                 {'title': _('System Info'),
-                 'url': reverse('system_info')},
+                 'url': reverse('system_info'),
+                 'icon': 'fa fa-heartbeat'},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',))},
+                                args=('pillow_errors',)),
+                 'icon': 'fa fa-bed'},
                 {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname)},
+                 'url': reverse(RecentCouchChangesView.urlname),
+                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
-                 'url': reverse('branches_on_staging')},
+                 'url': reverse('branches_on_staging'),
+                 'icon': 'fa fa-tree'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

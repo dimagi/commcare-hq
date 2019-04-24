@@ -12,7 +12,7 @@ from custom.utils.utils import clean_IN_filter_value
 
 
 class AWCInfrastructureUCR(SqlData):
-    engine_id = 'icds-test-ucr'
+    engine_id = 'icds-ucr'
 
     def __init__(self, config):
         self.awcs = config['awc_id']

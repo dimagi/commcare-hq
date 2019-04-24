@@ -199,18 +199,18 @@ class TestAdhaar(TestCase):
             {
                 "location_type": "State",
                 "bottom_five": [
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
-                    {'loc_name': 'st3', 'percent': 0.0}
                 ],
                 "top_five": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
                     {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0}
                 ],
                 "chart_data": [
                     {
@@ -245,11 +245,11 @@ class TestAdhaar(TestCase):
                 "all_locations": [
                     {'loc_name': 'st1', 'percent': 24.774193548387096},
                     {'loc_name': 'st2', 'percent': 18.48739495798319},
+                    {'loc_name': 'st3', 'percent': 0.0},
                     {'loc_name': 'st4', 'percent': 0.0},
                     {'loc_name': 'st5', 'percent': 0.0},
                     {'loc_name': 'st6', 'percent': 0.0},
                     {'loc_name': 'st7', 'percent': 0.0},
-                    {'loc_name': 'st3', 'percent': 0.0}
                 ]
             }
         )

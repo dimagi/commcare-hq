@@ -1,3 +1,5 @@
+@form-text-indent: 20px;
+
 .form-container {
   background-color: white;
   .box-shadow(0 0 10px 2px rgba(0,0,0,.1));
@@ -7,7 +9,12 @@
 
   .page-header {
     padding-bottom: 30px;
+
+    h1 {
+      padding-left: @form-text-indent - 5px;
+    }
   }
+
   .loading {
     right: 20px;
   }
@@ -24,6 +31,15 @@
   .form-group {
     padding-left: 25px;
     padding-right: 20px;
+  }
+
+  .panel-body {
+    padding-left: @form-text-indent + 5px;
+    padding-right: @form-text-indent + 5px;
+  }
+
+  .gr-header legend {
+    padding-left: @form-text-indent + 3px;
   }
 
 }
@@ -88,4 +104,17 @@
     border: none;
   }
 
+}
+
+
+.question-container .gr .children {
+  .info.panel-default {
+    border: none;
+    background-color: transparent;
+    .box-shadow(none);
+
+    .panel-body {
+      padding-top: 6px;
+    }
+  }
 }
