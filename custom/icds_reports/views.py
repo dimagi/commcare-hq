@@ -1878,8 +1878,8 @@ class CasDataExportAPIView(View):
 
         query_month = date(year, month, 1)
         today = date.today()
-        current_month = today - relativedelta(months=1) if today.day <= 15 else today
-        if query_month > current_month:
+        available_month = today - relativedelta(months=2) if today.day <= 15 else today - relativedelta(months=1)
+        if query_month > available_month:
             return JsonResponse(self.message('invalid_month'), status=400)
 
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
