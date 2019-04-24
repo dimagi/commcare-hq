@@ -8,6 +8,7 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
     'hqwebapp/js/atwho',
     'atjs',
     'caretjs',
+    'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
     ko,
@@ -47,6 +48,21 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
 
         update: function (element, valueAccessor) {
             $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
+        },
+    };
+
+    ko.bindingHandlers.singleDatePicker = {
+        update: function (element, valueAccessor) {
+            var enable = ko.utils.unwrapObservable(valueAccessor());
+
+            if (enable) {
+                $(element).daterangepicker({
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                    },
+                    singleDatePicker: true,
+                });
+            }
         },
     };
 
