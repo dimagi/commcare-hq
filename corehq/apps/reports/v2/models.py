@@ -135,8 +135,7 @@ class BaseDataFormatter(object):
         raise NotImplementedError("please implement get_context")
 
 
-class BaseFilter:
-    __metaclass__ = abc.ABCMeta
+class BaseFilter(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractmethod
