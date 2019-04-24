@@ -52,13 +52,15 @@ ANALYZERS = {
     },
 }
 
+REMOVE_SETTING = None
+
 ES_ENV_SETTINGS = {
     'production': {
         'xforms': {
-            "number_of_replicas": Ellipsis,
+            "number_of_replicas": REMOVE_SETTING,
         },
         'hqcases': {
-            "number_of_replicas": Ellipsis,
+            "number_of_replicas": REMOVE_SETTING,
         },
         'hqusers': {
             "number_of_shards": 2,
@@ -128,11 +130,12 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         meta_settings.update(
             ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
-        for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT).get(self.alias, {}).items():
-            if value is Ellipsis:
-                del meta_settings['settings'][key]
-            else:
-                meta_settings['settings'][key] = value
+        for alias in ['default', self.alias]:
+            for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT).get(alias, {}).items():
+                if value is REMOVE_SETTING:
+                    del meta_settings['settings'][key]
+                else:
+                    meta_settings['settings'][key] = value
 
         return meta_settings
 
