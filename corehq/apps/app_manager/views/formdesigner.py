@@ -256,7 +256,7 @@ def _get_vellum_core_context(request, domain, app, module, form, lang):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': translate(form.name, lang, app.langs),
+        'formName': translate(form.name, app.langs[0], app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),
