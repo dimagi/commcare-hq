@@ -159,6 +159,13 @@ breadcrumbs todo
                   <input type="text"
                          class="form-control"
                          data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterText,
+                                    event: { change: $root.editColumnController.updateFilter }" />
+
+                  <input type="number"
+                         class="form-control"
+                         data-bind="textInput: value,
+                                    visible: $root.editColumnController.isFilterNumeric,
                                     event: { change: $root.editColumnController.updateFilter }" />
                 </div>
                 <div class="col-xs-2">

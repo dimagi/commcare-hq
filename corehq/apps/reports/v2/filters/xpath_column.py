@@ -56,6 +56,7 @@ class BaseXpathColumnFilter(BaseFilter):
         return {
             'title': cls.title,
             'name': cls.name,
+            'type': cls.data_type,
             'choices': [
                 {
                     'title': c.title,

@@ -36,6 +36,8 @@ hqDefine('reports/v2/js/datagrid/filters', [
 
         self.title = ko.observable(data.title);
         self.name = ko.observable(data.name);
+        self.type = ko.observable(data.type);
+
         self.choices = ko.observableArray(_.map(data.choices, function (choiceData) {
             return columnFilterChoice(choiceData);
         }));

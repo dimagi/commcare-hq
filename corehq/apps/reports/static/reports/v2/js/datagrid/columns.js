@@ -95,6 +95,14 @@ hqDefine('reports/v2/js/datagrid/columns', [
             return selected;
         });
 
+        self.isFilterText = ko.computed(function () {
+            return self.selectedFilter().type() === 'text';
+        });
+
+        self.isFilterNumeric = ko.computed(function () {
+            return self.selectedFilter().type() === 'numeric';
+        });
+
         self.availableChoiceNames = ko.computed(function () {
             return _.map(self.selectedFilter().choices(), function (choice) {
                 return choice.name();
