@@ -48,7 +48,6 @@ def _data_sources_by_engine_id():
         by_engine_id[ds_engine_id].append(ds)
 
     for ds in DataSourceConfiguration.all():
-        ds = DataSourceConfiguration.wrap(ds)
         ds_engine_id = ds['engine_id']
         by_engine_id[ds_engine_id].append(ds)
 
