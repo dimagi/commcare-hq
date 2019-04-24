@@ -87,9 +87,9 @@ hqDefine('app_manager/js/summary/models',[
         self.getOptionsDiffClass = function (option) {
             return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
         };
-        self.getLoadSaveDiffClass = function (attribute, case_type, case_property) {
-            if (self.changes[attribute][case_type] && self.changes[attribute][case_type][case_property]){
-                return 'diff-' + self.changes[attribute][case_type][case_property];
+        self.getLoadSaveDiffClass = function (attribute, caseType, caseProperty) {
+            if (self.changes[attribute][caseType] && self.changes[attribute][caseType][caseProperty]) {
+                return 'diff-' + self.changes[attribute][caseType][caseProperty];
             }
             return '';
         };

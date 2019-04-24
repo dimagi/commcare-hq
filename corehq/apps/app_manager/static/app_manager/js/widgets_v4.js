@@ -43,7 +43,7 @@ hqDefine("app_manager/js/widgets_v4", [
             },
             templateSelection: function (data) {
                 // Only show the version number when selected
-                if (initialPageData.get("latest_app_id") == data.id) {
+                if (initialPageData.get("latest_app_id") === data.id) {
                     return gettext("Latest saved");
                 }
                 return data.text.split(": ")[0];
