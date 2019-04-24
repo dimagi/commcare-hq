@@ -21,7 +21,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore(path='computed_modified_on_', new=MISSING),
         Ignore(path='deprecated_form_id', old=MISSING, new=None),
         Ignore(path='path', new=MISSING),
-        Ignore(path='user_id', new=MISSING),
+        Ignore(path='user_id', old=MISSING),
         Ignore(path='external_blobs', new=MISSING),
         Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
         Ignore(path='problem', old=MISSING, new=None),
