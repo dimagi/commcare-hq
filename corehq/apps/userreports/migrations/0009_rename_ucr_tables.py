@@ -21,11 +21,14 @@ latest version of CommCareHQ. To perform the migration you will need to do the f
 
     git checkout {commit}
 
+* Stop all UCR pillow processes
+
 * Run the following management commands:
 
     python manage.py rename_ucr_tables create-views --verbose --execute --noconfirm
 
     python manage.py rename_ucr_tables rename-tables --verbose --execute --noconfirm
+
 
 """.format(commit=GIT_COMMIT_WITH_MANAGEMENT_COMMAND)
 
