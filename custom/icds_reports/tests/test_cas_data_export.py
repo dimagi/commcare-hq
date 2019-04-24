@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 
-from unittest import skip
-
 from custom.icds_reports.queries import get_cas_data_blob_file
 
 import io
@@ -14,7 +12,6 @@ from custom.icds_reports.tests import OUTPUT_PATH, CSVTestCase
 from six.moves import zip
 
 
-@skip
 class TestLocationView(CSVTestCase):
     always_include_columns = {'awc_id', 'case_id'}
     # indicator numbers:

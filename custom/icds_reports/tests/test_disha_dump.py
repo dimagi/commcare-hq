@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
-from unittest import skip
-
 import mock
 
 from datetime import date
@@ -13,7 +11,6 @@ from corehq.util.files import TransientTempfile
 from custom.icds_reports.reports.disha import DishaDump
 
 
-@skip
 class DishaFileBuildTest(SimpleTestCase):
 
     @mock.patch('custom.icds_reports.reports.disha.DishaDump._get_rows')

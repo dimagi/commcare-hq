@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-from unittest import skip
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -12,7 +9,6 @@ from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_br
 from django.test import TestCase
 
 
-@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestExclusiveBreastfeeding(TestCase):
 

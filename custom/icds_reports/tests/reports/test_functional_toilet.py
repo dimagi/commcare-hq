@@ -2,9 +2,6 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-
-from unittest import skip
-
 from django.test.utils import override_settings
 
 from django.test import TestCase
@@ -15,7 +12,6 @@ from custom.icds_reports.reports.functional_toilet import get_functional_toilet_
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestFunctionalToilet(TestCase):
 

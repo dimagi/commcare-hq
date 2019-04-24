@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-from unittest import skip
-
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -13,7 +10,6 @@ from django.test import TestCase
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@skip
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
 
