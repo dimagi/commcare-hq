@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
-from corehq.apps.app_manager.views.utils import bail, encode_if_unicode, set_lang_cookie
+from corehq.apps.app_manager.views.utils import bail, set_lang_cookie
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
