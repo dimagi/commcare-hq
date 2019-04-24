@@ -266,7 +266,7 @@ def ignore_renamed(old_name, new_name):
         if diffname == old_name or diffname == new_name:
             old_value = old_obj.get(old_name, MISSING)
             new_value = new_obj.get(new_name, MISSING)
-            if old_value is not MISSING or new_value is not MISSING:
+            if old_value is not MISSING and new_value is not MISSING:
                 if old_value != new_value and not _both_dates(new_value, old_value):
                     raise ReplaceDiff(
                         path=(old_name, new_name),
