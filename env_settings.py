@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-from copy import deepcopy
-
 
 def _get_analysis(*names):
     return {
@@ -79,14 +77,3 @@ ES_META = {
         },
     },
 }
-
-for env, indexes in ES_ENV_SETTINGS.items():
-    ES_META[env] = {}
-    for index, extra_settings in indexes.items():
-        meta = deepcopy(ES_META['default'])
-        meta.update(ES_META.get(index, {}))
-        meta['settings'].update(extra_settings)
-        for key, value in extra_settings.items():
-            if value is Ellipsis:
-                del meta['settings'][key]
-        ES_META[env][index] = meta

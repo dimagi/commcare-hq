@@ -48,6 +48,12 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         meta_settings.update(
             settings.ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
+        for key, value in settings.ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT).get(self.alias, {}).items():
+            if value is Ellipsis:
+                del meta_settings['settings'][key]
+            else:
+                meta_settings['settings'][key] = value
+
         return meta_settings
 
     def to_json(self):
