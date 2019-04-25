@@ -259,14 +259,23 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
     def _get_markdown_node(self, text_node_):
         return text_node_.find("./{f}value[@form='markdown']")
 
+    @staticmethod
+    def _get_default_value_nodes(text_node_):
+        for value_node in text_node_.findall("./{f}value"):
+            if 'form' not in value_node.attrib:
+                yield value_node
+            elif value_node.get('form') == 'default':
+                # migrate invalid values, http://manage.dimagi.com/default.asp?236239#BugEvent.1214824
+                value_node.attrib.pop('form')
+                yield value_node
+
     def _get_value_node(self, text_node_):
-        try:
-            return next(
-                n for n in text_node_.findall("./{f}value")
-                if 'form' not in n.attrib or n.get('form') == 'default'
-            )
-        except StopIteration:
-            return WrappedNode(None)
+        default_value_nodes = list(self._get_default_value_nodes(text_node_))
+        if len(default_value_nodes) > 1:
+            raise XFormException(_("Found conflicting nodes for label {}").format(text_node_.get('id')))
+        if default_value_nodes:
+            return default_value_nodes[0]
+        return WrappedNode(None)
 
     def _had_markdown(self, text_node_):
         """
