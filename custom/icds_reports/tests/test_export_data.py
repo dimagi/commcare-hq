@@ -2104,7 +2104,8 @@ class TestExportData(TestCase):
         data = IncentiveReport(
             location='b2',
             month=datetime(2017,5,1),
-            aggregation_level=3
+            aggregation_level=3,
+            beta=False
         ).get_excel_data()
 
         expected = [
@@ -2136,6 +2137,62 @@ class TestExportData(TestCase):
                'No'],
               ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', 13, '90.48%',
                'No']]],
+            ['Export Info',
+                          [
+                              ['Generated at', india_now()],
+                              ['Grouped By', 'AWC'],
+                              ['Month', 5],
+                              ['Year', 2017],
+                              ['Disclaimer',
+                               'The information in the report is based on the self-reported '
+                               'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                               ' and is subject to timely data syncs.']
+                          ]
+             ]
+        ]
+        self.assertListEqual(
+            data,
+            expected
+        )
+
+
+    def test_aww_performance_export_2(self):
+        data = IncentiveReport(
+            location='b2',
+            month=datetime(2017,5,1),
+            aggregation_level=3,
+            beta=True
+        ).get_excel_data()
+
+        expected = [
+            ['AWW Performance Report',
+             [['State', 'District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+               'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
+               'Number of Days AWC was Open', 'AWH Eligible for Incentive'],
+              ['st1', 'd1', 'b2', 's4', 'a12', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a28', 'Data Not Entered', 'Data Not Entered', '0.00%', '0.00%',
+               'No', 5, 'No'],
+              ['st1', 'd1', 'b2', 's4', 'a4', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a36', 'Data Not Entered', 'Data Not Entered', '0.00%', '7.50%',
+               'No', 17, 'No'],
+              ['st1', 'd1', 'b2', 's4', 'a20', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's4', 'a44', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a27', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a11', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a19', 'Data Not Entered', 'Data Not Entered', '0.00%', '90.00%',
+               'No', 16, 'No'],
+              ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
+               'AWC not launched', 'AWC not launched', 'AWC not launched'],
+              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', '100.00%',
+               'No', 12, 'No'],
+              ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', '90.48%',
+               'No', 13, 'No']]],
             ['Export Info',
                           [
                               ['Generated at', india_now()],
