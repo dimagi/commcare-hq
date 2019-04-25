@@ -16,16 +16,17 @@ hqDefine('aaa/js/filters/beneficiary_type_filter', [
                 {id: 'child', name: 'Child'},
             ]);
 
-            self.selectedType = ko.observable();
-
-            params.disableSubmit(true);
-
-            self.selectedType.subscribe(function (newValue) {
-                params.disableSubmit(newValue === null);
-            });
+            self.selectedType = ko.observable(params.postData.selectedBeneficiaryType() || null);
+            self.showErrorMessage = ko.observable(false);
 
             params.filters[self.slug].applyFilter = function () {
                 params.postData.selectedBeneficiaryType(self.selectedType() || null);
+            };
+
+            params.filters[self.slug].verify = function () {
+                var isSelected = self.selectedType() !== void(0);
+                self.showErrorMessage(!isSelected);
+                return isSelected;
             };
 
             if (params.filters.hasOwnProperty(self.slug)) {

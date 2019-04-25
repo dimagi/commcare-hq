@@ -31,7 +31,13 @@
     {% initial_page_data 'langs' app_langs %}
     {% initial_page_data 'read_only' read_only %}
     {% initial_page_data 'VELLUM_TYPES' VELLUM_TYPES %}
-    {% registerurl 'current_app_version' domain app_id %}
+    {% initial_page_data 'app_id' app_id %}
+    {% initial_page_data 'latest_app_id' latest_app_id %}
+    {% initial_page_data 'app_version' app_version %}
+
+    {% registerurl 'current_app_version' domain latest_app_id %}
+    {% registerurl 'paginate_releases' domain latest_app_id %}
+
     <div class="container-fluid">
         <div class="row appmanager-content-row">
             <div id="hq-sidebar" class="appmanager-sidebar col-hq-sidebar nav-hq-sidebar appsummary-sidebar" role="navigation">
@@ -54,7 +60,7 @@
                         </li>
                         <li role="presentation" class="nav-divider"></li>
                         <li role="presentation">
-                            <div class="appnav-item{% if is_form_summary %} active{% endif %}">
+                            <div class="appnav-item{% if page_type == 'form_summary' %} active{% endif %}">
                                 <a href="{% url 'app_form_summary' domain app_id %}"
                                    class="appnav-title appnav-title-secondary appnav-responsive">
                                     <i class="fa fa-file-text-o appnav-primary-icon"></i>
@@ -68,7 +74,7 @@
                             </div>
                         </li>
                         <li role="presentation">
-                            <div class="appnav-item{% if is_case_summary %} active{% endif %}">
+                            <div class="appnav-item{% if page_type == 'case_summary' %} active{% endif %}">
                                 <a href="{% url 'app_case_summary' domain app_id %}"
                                    class="appnav-title appnav-title-secondary appnav-responsive">
                                     <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>

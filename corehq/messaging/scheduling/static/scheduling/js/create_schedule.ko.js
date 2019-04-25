@@ -4,7 +4,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler_v4',
     'jquery-ui/ui/datepicker',
-], function ($, ko, intialPageData, select2Handler) {
+], function ($, ko, initialPageData, select2Handler) {
     ko.bindingHandlers.useTimePicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).timepicker({
@@ -73,12 +73,12 @@ hqDefine("scheduling/js/create_schedule.ko", [
         var self = this;
 
         self.subject = new TranslationViewModel(
-            intialPageData.get("language_list"),
+            initialPageData.get("language_list"),
             initial_values.subject
         );
 
         self.message = new TranslationViewModel(
-            intialPageData.get("language_list"),
+            initialPageData.get("language_list"),
             initial_values.message
         );
 
@@ -121,7 +121,7 @@ hqDefine("scheduling/js/create_schedule.ko", [
         var initialCustomEventValue;
         self.event_id = id;
 
-        var customEventFormset = intialPageData.get("current_values").custom_event_formset;
+        var customEventFormset = initialPageData.get("current_values").custom_event_formset;
 
 
         if (id < customEventFormset.length) {
@@ -543,13 +543,13 @@ hqDefine("scheduling/js/create_schedule.ko", [
 
     $(function () {
         var scheduleViewModel = new CreateScheduleViewModel(
-            intialPageData.get("current_values"),
-            intialPageData.get("current_select2_user_recipients"),
-            intialPageData.get("current_select2_user_group_recipients"),
-            intialPageData.get("current_select2_user_organization_recipients"),
-            intialPageData.get("current_select2_location_types"),
-            intialPageData.get("current_select2_case_group_recipients"),
-            intialPageData.get("current_visit_scheduler_form")
+            initialPageData.get("current_values"),
+            initialPageData.get("current_select2_user_recipients"),
+            initialPageData.get("current_select2_user_group_recipients"),
+            initialPageData.get("current_select2_user_organization_recipients"),
+            initialPageData.get("current_select2_location_types"),
+            initialPageData.get("current_select2_case_group_recipients"),
+            initialPageData.get("current_visit_scheduler_form")
         );
         $('#create-schedule-form').koApplyBindings(scheduleViewModel);
         scheduleViewModel.init();

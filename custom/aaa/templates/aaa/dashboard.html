@@ -12,10 +12,14 @@
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'datatables-bootstrap3/BS3/assets/css/datatables.css' %}" />
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
+
     {% javascript_libraries underscore=True hq=True %}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/dataTables.buttons.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/buttons.bootstrap.js' %}"></script>
+    <script src="{% static 'datatables-buttons/js/buttons.html5.js' %}"></script>
     <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
 
     <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
@@ -53,9 +57,13 @@
         {% registerurl 'unified_beneficiary_details' domain 'details_type' 'beneficiary_id' %}
         {% registerurl 'unified_beneficiary_details_api' domain %}
         {% registerurl 'location_api' domain %}
+        {% registerurl 'aaa_export_data' domain %}
+        {% registerurl 'aaa_check_task_status' domain 'task_id' %}
+        {% registerurl 'aaa_download_file' domain 'file_id' %}
         {% initial_page_data 'user_role_type' user_role_type %}
         {% initial_page_data 'user_location_id' user_location_id %}
         {% initial_page_data 'user_location_ids' user_location_ids %}
+        {% initial_page_data 'selected_location_ids' selected_location_ids %}
         {% initial_page_data 'is_web_user' is_web_user %}
         {% initial_page_data 'is_details' is_details %}
     </div>

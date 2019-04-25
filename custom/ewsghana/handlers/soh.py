@@ -22,11 +22,10 @@ from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.handlers.helpers.formatter import EWSFormatter
 from custom.ewsghana.handlers.helpers.stock_and_receipt_parser import EWSStockAndReceiptParser, \
     ProductCodeException
-from custom.ewsghana.reminders import ERROR_MESSAGE
+from custom.ewsghana.reminders import ERROR_MESSAGE, SOH_HELP_MESSAGE
 from custom.ewsghana.tasks import send_soh_messages_task
 from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
-from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 from dimagi.utils.couch.database import iter_docs
 import six
 from six.moves import map

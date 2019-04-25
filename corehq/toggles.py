@@ -1048,6 +1048,13 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
+APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
+    'APP_BUILDER_CONDITIONAL_NAMES',
+    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1075,6 +1082,15 @@ USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
     'Use SMS with inactive contacts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+SMS_LOG_CHANGES = StaticToggle(
+    'sms_log_changes',
+    "Message Log Report: Test new additions",
+    TAG_CUSTOM,
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=("Include failed messages, show message status, show event. "
+                 "This feature flag exists to QA on real prod data."),
 )
 
 ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
@@ -1735,4 +1751,19 @@ DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
     'Enables the "variant" version of the Demo Workflow A/B test after login',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_USER],
+)
+
+
+PARALLEL_MPR_ASR_REPORT = StaticToggle(
+    'parallel_mpr_asr_report',
+    'Release parallel loading of MPR and ASR report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+IMPROVED_ASR_REPORT = StaticToggle(
+    'improved_asr_report',
+    'This makes ASR report use the new asr_2_3 UCR report',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

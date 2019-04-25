@@ -18,6 +18,7 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     delete_diff_db,
     get_diff_db,
     revert_form_attachment_meta_domain,
+    setup_logging,
 )
 from corehq.apps.couch_sql_migration.progress import (
     get_couch_sql_migration_status,
@@ -37,7 +38,7 @@ from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance, doc_types
 
-_logger = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger('main_couch_sql_datamigration')
 
 
 class Command(BaseCommand):
@@ -59,6 +60,10 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
+        parser.add_argument('--log-dir', help="""
+            Directory for couch2sql logs, which are not written if this is not
+            provided. Standard HQ logs will be used regardless of this setting.
+        """)
         parser.add_argument('--dry-run', action='store_true', default=False,
             help='''
                 Do migration in a way that will not be seen by
@@ -102,6 +107,7 @@ class Command(BaseCommand):
 
         dst_domain = options.pop('dest', None) or domain
 
+        setup_logging(options['log_dir'])
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
 
@@ -262,19 +268,17 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def _blow_away_migration(src_domain, dst_domain=None):
+def _blow_away_migration(domain, dst_domain=None):
     if dst_domain is None:
-        dst_domain = src_domain
-    if src_domain == dst_domain:
-        # If src_domain and dst_domain are different their backends don't change
-        assert not should_use_sql_backend(src_domain)
-    delete_diff_db(src_domain)
-
-    if src_domain != dst_domain:
-        revert_form_attachment_meta_domain(src_domain)
-        delete_attachments = True
-    else:
+        # If domain and dst_domain are different then their backends don't change
+        assert not should_use_sql_backend(domain)
         delete_attachments = False
+        dst_domain = domain
+    else:
+        revert_form_attachment_meta_domain(domain)
+        delete_attachments = True
+
+    delete_diff_db(domain)
 
     for doc_type in doc_types():
         sql_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_type(dst_domain, doc_type)
@@ -288,4 +292,4 @@ def _blow_away_migration(src_domain, dst_domain=None):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(dst_domain)
     CaseAccessorSQL.hard_delete_cases(dst_domain, sql_case_ids)
-    _logger.info("blew away migration for domain {}".format(src_domain))
+    log.info("blew away migration for domain {}\n".format(domain))

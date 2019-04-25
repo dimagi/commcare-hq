@@ -21,6 +21,14 @@ def _get_location(location_id, context):
         return None
 
 
+def _get_location_type_name(location_id, context):
+    location = _get_location(location_id, context)
+    if not location:
+        return None
+
+    return location.location_type.name
+
+
 class LocationTypeSpec(JsonObject):
     type = TypeProperty('location_type_name')
     location_id_expression = DictProperty(required=True)
@@ -33,10 +41,7 @@ class LocationTypeSpec(JsonObject):
         if not doc_id:
             return None
 
-        assert context.root_doc['domain']
-        location = _get_location(doc_id, context)
-        if location:
-            return location.location_type.name
+        return _get_location_type_name(doc_id, context)
 
 
 class LocationParentIdSpec(JsonObject):
@@ -68,10 +73,45 @@ def location_parent_id(spec, context):
 
 class AncestorLocationExpression(JsonObject):
     """
-    For a given location id and location type, this expression returns the ancestor of the location that is the
-    given type.
-    If no such location exists, return None.
-    e.g. (boston.location_id, "state") => massachusetts.to_json()
+    This is used to return a json object representing the ancestor of the
+    given type of the given location. For instance, if we had locations
+    configured with a hierarchy like ``country -> state -> county -> city``,
+    we could pass the location id of Cambridge and a location type of state
+    to this expression to get the Massachusetts location.
+
+    .. code:: json
+
+       {
+           "type": "ancestor_location",
+           "location_id": {
+               "type": "property_name",
+               "name": "owner_id"
+           },
+           "location_type": {
+               "type": "constant",
+               "constant": "state"
+           }
+       }
+
+    If no such location exists, returns null.
+
+    Optionally you can specifiy ``location_property`` to return a single property
+    of the location.
+
+    .. code:: json
+
+       {
+           "type": "ancestor_location",
+           "location_id": {
+               "type": "property_name",
+               "name": "owner_id"
+           },
+           "location_type": {
+               "type": "constant",
+               "constant": "state"
+           },
+           "location_property": "site_code"
+       }
     """
     type = TypeProperty("ancestor_location")
     location_id = DefaultProperty(required=True)

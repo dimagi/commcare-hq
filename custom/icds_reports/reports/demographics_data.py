@@ -13,7 +13,8 @@ from custom.icds_reports.messages import percent_aadhaar_seeded_beneficiaries_he
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import (
     percent_increase, percent_diff, get_value, apply_exclude,
-    person_has_aadhaar_column, person_is_beneficiary_column
+    person_has_aadhaar_column, person_is_beneficiary_column,
+    get_color_with_green_positive,
 )
 
 
@@ -74,10 +75,10 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
                     'percent': percent_increase('household', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'color': get_color_with_green_positive(percent_increase(
                         'household',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data)),
                     'value': get_value(data, 'household'),
                     'all': None,
                     'format': 'number',
@@ -93,11 +94,11 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         prev_data,
                         'all_persons'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_aadhaar',
                         data,
                         prev_data,
-                        'all_persons') > 0 else 'red',
+                        'all_persons')),
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -110,10 +111,10 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': percent_children_enrolled_help_text(),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'child_health',
                         data,
-                        prev_data, 'child_health_all') > 0 else 'red',
+                        prev_data, 'child_health_all')),
                     'value': get_value(data, 'child_health'),
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
@@ -124,12 +125,12 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
                     'help_text': percent_pregnant_women_enrolled_help_text(),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'ccs_pregnant',
                         data,
                         prev_data,
                         'ccs_pregnant_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
@@ -143,12 +144,12 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
                     'help_text': percent_lactating_women_enrolled_help_text(),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'css_lactating',
                         data,
                         prev_data,
                         'css_lactating_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
@@ -164,12 +165,12 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         prev_data,
                         'person_adolescent_all'
                     ),
-                    'color': 'green' if percent_diff(
+                    'color': get_color_with_green_positive(percent_diff(
                         'person_adolescent',
                         data,
                         prev_data,
                         'person_adolescent_all'
-                    ) > 0 else 'red',
+                    )),
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',

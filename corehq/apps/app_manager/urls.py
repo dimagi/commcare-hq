@@ -12,6 +12,7 @@ from corehq.apps.app_manager.views import (
     DownloadFormSummaryView,
     DownloadAppSummaryView,
     FormHasSubmissionsView,
+    FormSummaryDiffView,
     PromptSettingsUpdateView,
     view_app,
     multimedia_ajax, current_app_version, paginate_releases,
@@ -32,7 +33,6 @@ from corehq.apps.app_manager.views import (
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
 from corehq.apps.translations.views import (
     download_bulk_ui_translations, upload_bulk_ui_translations,
-    download_bulk_multimedia_translations,
     download_bulk_app_translations, upload_bulk_app_translations,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -44,8 +44,6 @@ app_urls = [
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
     url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
-    url(r'^languages/bulk_multimedia_translations/download/$', download_bulk_multimedia_translations,
-        name='download_bulk_multimedia_translations'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
@@ -95,6 +93,8 @@ urlpatterns = [
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
+    url(r'^compare/(?P<first_app_id>[\w-]+)..(?P<second_app_id>[\w-]+)',
+        FormSummaryDiffView.as_view(), name=FormSummaryDiffView.urlname),
     url(r'^schema/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),

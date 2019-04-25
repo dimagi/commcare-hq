@@ -42,6 +42,7 @@ from corehq.elastic import (
     get_es_new, ES_META)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.util.view_utils import absolute_reverse
+from corehq.blobs import CODES, get_blob_db
 
 from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
@@ -122,17 +123,14 @@ def apps_update_calculated_properties():
 def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
+    report.rendered_as = 'export'
 
-    # need to set request
     setattr(report.request, 'REQUEST', {})
-
     file = report.excel_response
     report_class = report.__class__.__module__ + '.' + report.__class__.__name__
-    hash_id = _store_excel_in_redis(report_class, file)
-
+    hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
-
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
 
@@ -145,14 +143,23 @@ def _send_email(user, report, hash_id, recipient):
     send_report_download_email(report.name, recipient, link)
 
 
-def _store_excel_in_redis(report_class, file):
-    hash_id = uuid.uuid4().hex
+def _store_excel_in_blobdb(report_class, file, domain):
 
-    r = get_redis_client()
-    r.set(hash_id, [report_class, file.getvalue()])
-    r.expire(hash_id, EXPIRE_TIME)
+    key = uuid.uuid4().hex
+    expired = 60 * 24 * 7  # 7 days
+    db = get_blob_db()
 
-    return hash_id
+    kw = {
+        "domain": domain,
+        "parent_id": key,
+        "type_code": CODES.tempfile,
+        "key": key,
+        "timeout": expired,
+        "properties": {"report_class": report_class}
+    }
+    file.seek(0)
+    db.put(file, **kw)
+    return key
 
 
 @task(serializer='pickle')

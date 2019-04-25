@@ -20,6 +20,7 @@ from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.sql_db.routers import db_for_read_write
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
@@ -36,7 +37,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     DateProperty
 )
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, MultipleResultsFound
 from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -1185,9 +1186,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user.delete()
         except User.DoesNotExist:
             pass
-        super(CouchUser, self).delete() # Call the "real" delete() method.
-        from .signals import couch_user_post_save
-        couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        super(CouchUser, self).delete()  # Call the "real" delete() method.
 
     def delete_phone_number(self, phone_number):
         for i in range(0, len(self.phone_numbers)):
@@ -1197,8 +1196,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         self.save()
         self.delete_phone_entry(phone_number)
 
-    def get_django_user(self):
-        return User.objects.get(username__iexact=self.username)
+    def get_django_user(self, use_primary_db=False):
+        queryset = User.objects
+        if use_primary_db:
+            queryset = queryset.using(db_for_read_write(User, write=True))
+        return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
@@ -1410,7 +1412,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             include_docs=True,
             reduce=False,
         )
-        result = view_result.one()
+        result = view_result.all()
+        if len(result) > 1:
+            raise MultipleResultsFound('"{}": {}'.format(
+                username, ', '.join([row['id'] for row in result])
+            ))
+        result = result[0] if result else None
         if result and result['doc'] and result['doc']['username'] == username:
             couch_user = cls.wrap_correctly(result['doc'])
             cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)

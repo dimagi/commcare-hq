@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import requests
 from django.test import SimpleTestCase, RequestFactory
+
+from no_exceptions.exceptions import Http400
 from ..auth import (
     J2ME,
     ANDROID,
@@ -196,3 +198,10 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
             'Authorization': 'ApiKey username:api_key'
         })
         self.assertEqual('api_key', determine_authtype_from_request(request))
+
+    def test_api_auth_bad_format(self):
+        request = self.get_django_request(headers={
+            'Authorization': 'ApiKey See LastPass'
+        })
+        with self.assertRaises(Http400):
+            determine_authtype_from_request(request)

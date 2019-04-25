@@ -189,7 +189,7 @@ class ExportWriter(object):
         for table_index, table in header_table:
             self.add_table(
                 table_index,
-                table[0],
+                list(table)[0],
                 table_title=table_titles.get(table_index)
             )
 
@@ -445,7 +445,7 @@ class Excel2003ExportWriter(ExportWriter):
         # have to deal with primary ids
         for i, val in enumerate(row):
             if i >= MAX_XLS_COLUMNS:
-                raise XlsLengthException
+                raise XlsLengthException()
             sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 

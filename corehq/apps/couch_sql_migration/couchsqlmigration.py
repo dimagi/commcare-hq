@@ -8,10 +8,11 @@ import csv
 import io
 import logging
 import os
+import sys
 import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import time
 
 import gevent
@@ -85,7 +86,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
-_logger = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger('main_couch_sql_datamigration')
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -94,6 +95,18 @@ UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 UNDO_CSV = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'couch_sql_migration', 'undo.csv')
 UNDO_SET_DOMAIN = 'set_domain'
 UNDO_CREATE = 'create'
+
+
+def setup_logging(log_dir):
+    if not log_dir:
+        return
+    time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    log_file = os.path.join(log_dir, "couch2sql-form-case-{}.log".format(time))
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(formatter)
+    logging.root.addHandler(handler)
+    log.info("command: %s", " ".join(sys.argv))
 
 
 def do_couch_to_sql_migration(src_domain, dst_domain=None, with_progress=True,
@@ -229,44 +242,37 @@ def update_xml(xml, path, old_value, new_value):
 class CouchSqlDomainMigrator(object):
     def __init__(self, src_domain, dst_domain, with_progress=True, debug=False, run_timestamp=None, dry_run=False):
         from corehq.apps.tzmigration.planning import DiffDB
-        self._assert_no_migration_restrictions(src_domain, dst_domain)
+
+        domain = dst_domain if src_domain == dst_domain else None
+        if domain:
+            self._check_for_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
         self.src_domain = src_domain
         self.dst_domain = dst_domain
+        self.domain = domain
         self.run_timestamp = run_timestamp or int(time())
         self.dry_run = dry_run
         db_filepath = get_diff_db_filepath(src_domain)
         self.diff_db = DiffDB.init(db_filepath)
+        if debug:
+            assert log.level <= logging.DEBUG, log.level
+            logging.root.setLevel(logging.DEBUG)
+            for handler in logging.root.handlers:
+                if handler.name in ["file", "console"]:
+                    handler.setLevel(logging.DEBUG)
 
         self.errors_with_normal_doc_type = []
         self.forms_that_touch_cases_without_actions = set()
         self._id_map = {}
         self._ignore_paths = defaultdict(list)
 
-    def log_debug(self, message):
-        _logger.debug(message)
-        if self.debug:
-            print('[DEBUG] {}'.format(message))
-
-    def log_error(self, message):
-        _logger.error(message)
-        print('[ERROR] {}'.format(message))
-
-    def log_warning(self, message):
-        _logger.warning(message)
-        print('[WARNING] {}'.format(message))
-
-    def log_info(self, message):
-        _logger.info(message)
-        print('[INFO] {}'.format(message))
-
     def migrate(self):
-        if self.src_domain == self.dst_domain:
-            self.log_info('migrating domain {}'.format(self.src_domain))
+        if self.domain:
+            log.info('migrating domain {}'.format(self.domain))
         else:
             self.log_info('migrating domain {} to {}'.format(self.src_domain, self.dst_domain))
-        self.log_info('run timestamp is {}'.format(self.run_timestamp))
+        log.info('run timestamp is {}'.format(self.run_timestamp))
 
         if self.src_domain != self.dst_domain:
             self._build_id_map()
@@ -284,7 +290,7 @@ class CouchSqlDomainMigrator(object):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
-        self.log_info('migrated domain {}'.format(self.src_domain))
+        log.info('migrated domain {}'.format(self.domain or self.src_domain))
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -300,19 +306,24 @@ class CouchSqlDomainMigrator(object):
         self.queues = PartiallyLockingQueue("form_id", max_size=10000)
 
         for change in self._with_progress(['XFormInstance'], changes):
-            self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
-            couch_form_json = change.get_document()
-            if couch_form_json.get('problem', None):
+            log.debug('Processing doc: {}({})'.format('XFormInstance', change.id))
+            form = change.get_document()
+            if form.get('problem', None):
                 self.errors_with_normal_doc_type.append(change.id)
                 continue
-            couch_form = XFormInstance.wrap(couch_form_json)
-            form_received = couch_form.received_on
-            assert last_received_on <= form_received
-            last_received_on = form_received
-            self._try_to_process_form(couch_form, pool)
-            self._try_to_process_queues(pool)
+            try:
+                wrapped_form = XFormInstance.wrap(form)
+                form_received = wrapped_form.received_on
+                assert last_received_on <= form_received
+                last_received_on = form_received
+                self._try_to_process_form(wrapped_form, pool)
+                self._try_to_process_queues(pool)
+            except Exception:
+                log.exception("Error migrating form %s", change.id)
 
         # finish up the queues once all changes have been iterated through
+        update_interval = timedelta(seconds=10)
+        next_check = datetime.now()
         while self.queues.has_next():
             couch_form = self.queues.get_next()
             if couch_form:
@@ -321,11 +332,13 @@ class CouchSqlDomainMigrator(object):
                 gevent.sleep(0.01)  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
-            if remaining_items % 10 == 0:
-                self.log_info('Waiting on {} docs'.format(remaining_items))
+            now = datetime.now()
+            if now > next_check:
+                log.info('Waiting on {} docs'.format(remaining_items))
+                next_check += update_interval
 
         while not pool.join(timeout=10):
-            self.log_info('Waiting on {} docs'.format(len(pool)))
+            log.info('Waiting on {} docs'.format(len(pool)))
 
         self._log_main_forms_processed_count()
 
@@ -354,16 +367,15 @@ class CouchSqlDomainMigrator(object):
 
         self._try_to_process_queues(pool)
 
-    def _migrate_form_and_associated_models_async(self, couch_form):
+    def _migrate_form_and_associated_models_async(self, wrapped_form):
         if self.src_domain == self.dst_domain:
             set_local_domain_sql_backend_override(self.src_domain)
         try:
-            self._migrate_form_and_associated_models(couch_form)
+            self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
-            self.log_error("Unable to migrate form: {}".format(couch_form.form_id))
-            raise
+            log.exception("Unable to migrate form: %s", wrapped_form.form_id)
         finally:
-            self.queues.release_lock_for_queue_obj(couch_form)
+            self.queues.release_lock_for_queue_obj(wrapped_form)
             self.processed_docs += 1
             self._log_main_forms_processed_count(throttled=True)
 
@@ -516,35 +528,38 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
         while not pool.join(timeout=10):
-            self.log_info('Waiting on {} docs'.format(len(pool)))
+            log.info('Waiting on {} docs'.format(len(pool)))
 
         self._log_unprocessed_forms_processed_count()
 
     def _migrate_unprocessed_form(self, couch_form_json):
-        self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
-        couch_form = _wrap_form(couch_form_json)
-        couch_form, form_xml = self._map_form_ids(couch_form)
-        form_id = couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
-        sql_form = XFormInstanceSQL(
-            form_id=form_id,
-            xmlns=couch_form.xmlns,
-            user_id=couch_form.user_id,
-        )
-        _copy_form_properties(self.dst_domain, sql_form, couch_form)
-        _migrate_form_attachments(self.src_domain, sql_form, couch_form,
-                                  incl_form_xml=form_xml is None, dry_run=self.dry_run)
-        if form_xml is not None:
-            attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
-            sql_form.attachments_list.append(attachment)
-        _migrate_form_operations(sql_form, couch_form)
+        log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
+        try:
+            couch_form = _wrap_form(couch_form_json)
+            couch_form, form_xml = self._map_form_ids(couch_form)
+            form_id = couch_form.form_id if self.src_domain == self.dst_domain else six.text_type(uuid.uuid4())
+            sql_form = XFormInstanceSQL(
+                form_id=form_id,
+                xmlns=couch_form.xmlns,
+                user_id=couch_form.user_id,
+            )
+            _copy_form_properties(self.dst_domain, sql_form, couch_form)
+            _migrate_form_attachments(self.src_domain, sql_form, couch_form,
+                                      incl_form_xml=form_xml is None, dry_run=self.dry_run)
+            if form_xml is not None:
+                attachment = Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+                sql_form.attachments_list.append(attachment)
+            _migrate_form_operations(sql_form, couch_form)
 
-        if couch_form.doc_type != 'SubmissionErrorLog':
-            self._save_diffs(couch_form, sql_form)
+            if couch_form.doc_type != 'SubmissionErrorLog':
+                self._save_diffs(couch_form, sql_form)
 
-        _save_migrated_models(sql_form)
+            _save_migrated_models(sql_form)
 
-        self.processed_docs += 1
-        self._log_unprocessed_forms_processed_count(throttled=True)
+            self.processed_docs += 1
+            self._log_unprocessed_forms_processed_count(throttled=True)
+        except Exception:
+            log.exception("Error migrating form %s", couch_form_json["_id"])
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
@@ -554,19 +569,19 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._copy_unprocessed_case, change)
 
         while not pool.join(timeout=10):
-            self.log_info('Waiting on {} docs'.format(len(pool)))
+            log.info('Waiting on {} docs'.format(len(pool)))
 
         self._log_unprocessed_cases_processed_count()
 
     def _copy_unprocessed_case(self, change):
-        src_couch_case = CommCareCase.wrap(change.get_document())
-        self.log_debug('Processing doc: {}({})'.format(src_couch_case['doc_type'], change.id))
+        couch_case = CommCareCase.wrap(change.get_document())
+        log.debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
         try:
-            first_action = src_couch_case.actions[0]
+            first_action = couch_case.actions[0]
         except IndexError:
             first_action = CommCareCaseAction()
 
-        dst_couch_case = self._map_case_ids(src_couch_case)
+        dst_couch_case = self._map_case_ids(couch_case)
         sql_case = CommCareCaseSQL(
             case_id=dst_couch_case.case_id,
             domain=self.src_domain,
@@ -619,13 +634,13 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._diff_cases, cases)
 
         while not pool.join(timeout=10):
-            self.log_info("Waiting on at most {} more docs".format(len(pool) * batch_size))
+            log.info("Waiting on at most {} more docs".format(len(pool) * batch_size))
 
         self._log_case_diff_count()
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
-        self.log_debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
+        log.debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
         case_ids = list(couch_cases)
         sql_cases = CaseAccessorSQL.get_cases(case_ids)
         for sql_case in sql_cases:
@@ -644,7 +659,7 @@ class CouchSqlDomainMigrator(object):
                     couch_case, diffs = self._rebuild_couch_case_and_re_diff(
                         couch_case, sql_case_json)
                 except Exception as err:
-                    self.log_warning('Case {} rebuild -> {}: {}'.format(
+                    log.warning('Case {} rebuild -> {}: {}'.format(
                         sql_case.case_id, type(err).__name__, err))
             if diffs:
                 self.diff_db.add_diffs(couch_case['doc_type'], sql_case.case_id, diffs)
@@ -684,7 +699,7 @@ class CouchSqlDomainMigrator(object):
             for state in StockState.objects.filter(case_id__in=case_ids)
         }
 
-        self.log_debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
+        log.debug('Calculating ledger diffs for {} cases'.format(len(case_ids)))
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
@@ -698,13 +713,19 @@ class CouchSqlDomainMigrator(object):
                 filter_ledger_diffs(diffs)
             )
 
-    def _assert_no_migration_restrictions(self, src_domain, dst_domain):
-        if src_domain == dst_domain:
-            assert should_use_sql_backend(src_domain)
-            assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(src_domain, NAMESPACE_DOMAIN)
-        assert not any(custom_report_domain == src_domain
-                       for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
-        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(src_domain)
+    def _check_for_migration_restrictions(self, domain_name):
+        if not should_use_sql_backend(domain_name):
+            msg = "does not have SQL backend enabled"
+        elif COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
+            msg = "is blacklisted"
+        elif any(custom_report_domain == domain_name
+                 for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys()):
+            msg = "has custom reports"
+        elif REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name):
+            msg = "has reminders migration in progress"
+        else:
+            return
+        raise MigrationRestricted("{} {}".format(domain_name, msg))
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
@@ -719,7 +740,7 @@ class CouchSqlDomainMigrator(object):
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
-            self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
+            log.info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
 
     def _log_processed_docs_count(self, tags, throttled=False):
@@ -1140,9 +1161,10 @@ def commit_migration(domain_name):
     clear_local_domain_sql_backend_override(domain_name)
     if not should_use_sql_backend(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
-        assert should_use_sql_backend(domain_name)
+        assert should_use_sql_backend(domain_name), \
+            "could not set use_sql_backend for domain %s (try again)" % domain_name
     datadog_counter("commcare.couch_sql_migration.total_committed")
-    _logger.info("committed migration for {}".format(domain_name))
+    log.info("committed migration for {}".format(domain_name))
 
 
 class PartiallyLockingQueue(object):
@@ -1333,4 +1355,8 @@ class PartiallyLockingQueue(object):
 
 
 class UnexpectedObjectException(Exception):
+    pass
+
+
+class MigrationRestricted(Exception):
     pass

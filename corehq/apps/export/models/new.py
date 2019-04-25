@@ -988,7 +988,7 @@ class ExportInstance(BlobMixin, Document):
         Get the pre-computed export for this instance.
         Only daily saved exports could have a pre-computed export.
         """
-        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream, return_bytes=True)
+        return self.fetch_attachment(DAILY_SAVED_EXPORT_ATTACHMENT_NAME, stream=stream)
 
     def copy_export(self):
         export_json = self.to_json()
@@ -1636,7 +1636,7 @@ class ExportDataSchema(Document):
     def record_update(self, app_id, app_version):
         self.last_app_versions[app_id] = max(
             self.last_app_versions.get(app_id, 0),
-            app_version,
+            app_version or 0,
         )
 
     @staticmethod
