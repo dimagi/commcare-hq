@@ -28,6 +28,10 @@ class CCZHostingLink(models.Model):
     def get_password(self):
         return b64_aes_decrypt(self.password)
 
+    def to_json(self):
+        from custom.icds.serializers import CCZHostingLinkSerializer
+        return CCZHostingLinkSerializer(self).data
+
 
 class CCZHosting(models.Model):
     link = models.ForeignKey(CCZHostingLink, on_delete=models.CASCADE)
