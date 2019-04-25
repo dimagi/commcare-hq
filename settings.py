@@ -176,7 +176,7 @@ PASSWORD_HASHERS = (
 
 ROOT_URLCONF = "urls"
 
-DEFAULT_APPS = (
+DEFAULT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -201,7 +201,7 @@ DEFAULT_APPS = (
     'statici18n',
     'raven.contrib.django.raven_compat',
     'django_user_agents',
-)
+]
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -210,7 +210,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap3',
 )
 
-HQ_APPS = (
+HQ_APPS = [
     'django_digest',
     'auditcare',
     'casexml.apps.case',
@@ -347,7 +347,6 @@ HQ_APPS = (
     'custom.apps.crs_reports',
     'custom.hope',
     'custom.ilsgateway',
-    'custom.zipline',
     'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
@@ -359,17 +358,24 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
-    'custom.icds',
-    'custom.icds_reports',
     'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
-    'custom.aaa',
-)
+]
+if os.environ.get('DEPLOY_ENV') in ('icds', None):
+    HQ_APPS += [
+        'custom.icds',
+        'custom.icds_reports',
+        'custom.aaa',
+    ]
+elif os.environ.get('DEPLOY_ENV') in ('production', None):
+    HQ_APPS += [
+        'custom.zipline',
+    ]
 
 # any built-in management commands we want to override should go in hqscripts
-INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = tuple(['hqscripts'] + DEFAULT_APPS + HQ_APPS)
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
