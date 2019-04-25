@@ -49,7 +49,7 @@ class ManageCCZHostingLink(BaseDomainView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.form.save()
-            return redirect(self.urlname, domain=self.domain)
+            return redirect(ManageCCZHostingLink.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
