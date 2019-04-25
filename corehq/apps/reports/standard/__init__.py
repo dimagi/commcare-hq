@@ -41,8 +41,11 @@ class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
     emailable = True
     is_public = False
-    is_support_translations = False
-    languages = []
+    languages = None
+
+    @classmethod
+    def support_translations(self):
+        return bool(self.languages)
 
 
 class CommCareUserMemoizer(object):

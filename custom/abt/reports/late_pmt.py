@@ -84,7 +84,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     report_title = "Late PMT"
     slug = 'late_pmt'
     name = "Late PMT"
-    is_support_translations = True
 
     languages = (
         'en',
