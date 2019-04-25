@@ -110,15 +110,17 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         #
         # Currently operating under the assumption that every xForm has at least
         # one translation element, that each translation element has a text node
-        # for each question and that each text node has a value node under it
-        template_translation_el = None
-        # Get a translation element to be used as a template for new elements
+        # for each question and that each text node has a value node under it.
+        # Get a translation element to be used as a template for new elements, preferably of default lang
+        default_lang = self.app.default_language
+        default_trans_el = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
+        if default_trans_el.exists():
+            return default_trans_el
         for lang in self.langs:
             trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
             if trans_el.exists():
-                template_translation_el = trans_el
-        assert(template_translation_el is not None)
-        return template_translation_el
+                return trans_el
+        raise Exception(_("Form has no translation node present to be used as a template."))
 
     def _add_missing_translation_elements_to_itext(self, template_translation_el):
         for lang in self.langs:
