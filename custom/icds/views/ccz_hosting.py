@@ -5,14 +5,18 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import (
     ugettext_lazy,
     ugettext_noop,
+    ugettext as _,
 )
 from django.utils.functional import cached_property
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.shortcuts import redirect
+from django.views.generic import TemplateView
 from django.contrib import messages
+from django.http import HttpResponse
 
 from corehq import toggles
+from corehq.apps.domain.auth import get_username_and_password_from_request
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_select2_v4
@@ -131,6 +135,33 @@ class ManageCCZHosting(BaseDomainView):
             else:
                 messages.error(request, error_message)
         return self.get(request, *args, **kwargs)
+
+
+class CCZHostingView(TemplateView):
+    urlname = "ccz_hosting"
+    page_title = ugettext_lazy("CCZ Hosting")
+    template_name = 'icds/ccz_hosting.html'
+
+    def get(self, request, *args, **kwargs):
+        self.identifier = kwargs.get('identifier')
+        try:
+            ccz_hosting = CCZHostingLink.objects.get(identifier=self.identifier)
+        except CCZHostingLink.DoesNotExist:
+            return HttpResponse(status=404)
+
+        uname, passwd = get_username_and_password_from_request(request)
+        if uname and passwd:
+            if uname == ccz_hosting.username and passwd == ccz_hosting.get_password:
+                return super(CCZHostingView, self).get(request, *args, **kwargs)
+        # User did not provide an authorization header or gave incorrect credentials.
+        response = HttpResponse(status=401)
+        response['WWW-Authenticate'] = 'Basic realm="%s"' % ''
+        return response
+
+    def get_context_data(self, **kwargs):
+        return {
+            'page_title': _("%s CommCare Files" % self.identifier.capitalize()),
+        }
 
 
 @login_and_domain_required
