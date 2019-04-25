@@ -18,6 +18,7 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from corehq.form_processor.utils.metadata import scrub_meta
+from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.python_compatibility import soft_assert_type_text
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -38,6 +39,8 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 
 
 def _json_diff(obj1, obj2, path, track_list_indices=True, ignore_paths=None):
+    obj1 = eval_lazy(obj1)
+    obj2 = eval_lazy(obj2)
     if isinstance(obj1, str):
         obj1 = six.text_type(obj1)
     if isinstance(obj2, str):
@@ -52,18 +55,22 @@ def _json_diff(obj1, obj2, path, track_list_indices=True, ignore_paths=None):
     elif type(obj1) != type(obj2):
         yield FormJsonDiff('type', path, obj1, obj2)
     elif isinstance(obj1, dict):
-        keys = set(obj1.keys()) | set(obj2.keys())
+        if not isinstance(obj2, dict):
+            # special case to deal with OrderedDicts
+            yield FormJsonDiff('type', path, obj1, obj2)
+        else:
+            keys = set(obj1.keys()) | set(obj2.keys())
 
-        def value_or_ellipsis(obj, key):
-            return obj.get(key, Ellipsis)
+            def value_or_ellipsis(obj, key):
+                return obj.get(key, Ellipsis)
 
-        for key in keys:
-            for result in _json_diff(value_or_ellipsis(obj1, key),
-                                     value_or_ellipsis(obj2, key),
-                                     path=path + (key,),
-                                     track_list_indices=track_list_indices,
-                                     ignore_paths=ignore_paths):
-                yield result
+            for key in keys:
+                for result in _json_diff(value_or_ellipsis(obj1, key),
+                                         value_or_ellipsis(obj2, key),
+                                         path=path + (key,),
+                                         track_list_indices=track_list_indices,
+                                         ignore_paths=ignore_paths):
+                    yield result
     elif isinstance(obj1, list):
 
         def value_or_ellipsis(obj, i):
