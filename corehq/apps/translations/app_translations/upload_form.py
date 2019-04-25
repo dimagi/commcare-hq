@@ -207,7 +207,6 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
                     new_translation,
                     text_node,
                     self._get_value_node(text_node),
-                    {'form': 'default'},
                     delete_node=(not keep_value_node)
                 )
             else:
