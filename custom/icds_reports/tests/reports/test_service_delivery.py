@@ -35,7 +35,7 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 0,
+                    'valid_visits': 4,
                     'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
@@ -43,7 +43,7 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'Data Not Entered',
-                    'home_visits': '0.00 %'
+                    'home_visits': '1.32 %'
                 },
                 {
                     'state_name': 'st2',
@@ -116,7 +116,7 @@ class TestServiceDelivery(TestCase):
                     'awc_name': 'Data Not Entered',
                     'num_awcs_conducted_cbe': 1,
                     'thr_given_21_days': 80,
-                    'valid_visits': 0,
+                    'valid_visits': 4,
                     'expected_visits': 304,
                     'thr': '28.67 %',
                     'num_launched_awcs': 9,
@@ -124,7 +124,7 @@ class TestServiceDelivery(TestCase):
                     'children_0_3': 143,
                     'gm_0_3': 83,
                     'district_name': 'd1',
-                    'home_visits': '0.00 %'
+                    'home_visits': '1.32 %'
                 }
             ],
             'ageSDD': '0_3',
@@ -171,9 +171,9 @@ class TestServiceDelivery(TestCase):
                     'children_3_5': 343,
                     'pse': '12.05 %',
                     'block_name': 'Data Not Entered',
-                    'sn': '2.61 %',
+                    'sn': '2.41 %',
                     'district_name': 'Data Not Entered',
-                    'lunch_count_21_days': 13,
+                    'lunch_count_21_days': 12,
                     'gm': '69.97 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 60,
