@@ -1,26 +1,35 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.http import HttpResponseRedirect
 from django.utils.translation import (
     ugettext_lazy,
+    ugettext_noop,
 )
 from django.utils.functional import cached_property
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.shortcuts import redirect
+from django.contrib import messages
 
 from corehq import toggles
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.domain.decorators import login_and_domain_required
 from custom.icds.forms import (
+    CCZHostingForm,
     CCZHostingLinkForm,
 )
-from custom.icds.models import CCZHostingLink
+from custom.icds.models import (
+    CCZHostingLink,
+    CCZHosting,
+)
 
 
 @location_safe
-@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+@method_decorator([toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageCCZHostingLink(BaseDomainView):
     urlname = "manage_ccz_hosting_links"
     page_title = ugettext_lazy("Manage CCZ Hosting Links")
@@ -68,3 +77,67 @@ class EditCCZHostingLink(ManageCCZHostingLink):
             'form': self.form,
             'domain': self.domain,
         }
+
+
+@location_safe
+@method_decorator([toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
+class ManageCCZHosting(BaseDomainView):
+    urlname = "manage_ccz_hosting"
+    page_title = ugettext_lazy("Manage CCZ Hosting")
+    template_name = 'icds/manage_ccz_hosting.html'
+    section_name = ugettext_noop('CCZ Hostings')
+
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(ManageCCZHosting, self).dispatch(request, *args, **kwargs)
+
+    @cached_property
+    def section_url(self):
+        return reverse(ManageCCZHosting.urlname, args=[self.domain])
+
+    @cached_property
+    def form(self):
+        return CCZHostingForm(
+            self.request,
+            self.domain,
+            data=self.request.POST if self.request.method == "POST" else None
+        )
+
+    def get_context_data(self, **kwargs):
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        if self.request.GET.get('link_id'):
+            ccz_hostings = CCZHosting.objects.filter(link_id=self.request.GET.get('link_id'))
+        else:
+            ccz_hostings = CCZHosting.objects.filter(link__domain=self.domain)
+        if self.request.GET.get('app_id'):
+            ccz_hostings = ccz_hostings.filter(app_id=self.request.GET.get('app_id'))
+        version = self.request.GET.get('version')
+        if version:
+            ccz_hostings = ccz_hostings.filter(version=self.request.GET.get('version'))
+        ccz_hostings = [h.to_json(app_names) for h in ccz_hostings]
+        return {
+            'form': self.form,
+            'domain': self.domain,
+            'ccz_hostings': ccz_hostings,
+            'selected_build_details': ({'id': version, 'text': version} if version else None),
+        }
+
+    @method_decorator(login_and_domain_required)
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            success, error_message = self.form.save()
+            if success:
+                return redirect(self.urlname, domain=self.domain)
+            else:
+                messages.error(request, error_message)
+        return self.get(request, *args, **kwargs)
+
+
+@login_and_domain_required
+def remove_ccz_hosting(request, domain, link_id):
+    try:
+        ccz_hosting_link = CCZHosting.objects.get(pk=link_id)
+        ccz_hosting_link.delete()
+    except CCZHosting.DoesNotExist:
+        pass
+    return HttpResponseRedirect(reverse(ManageCCZHosting.urlname, args=[domain]))

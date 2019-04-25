@@ -38,8 +38,23 @@ class CCZHosting(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
 
+    def to_json(self, app_names):
+        from custom.icds.serializers import CCZHostingSerializer
+        return CCZHostingSerializer(self, context={'app_names': app_names}).data
+
     def build_doc(self):
         return get_build_by_version(self.link.domain, self.app_id, self.version)
+
+    @classmethod
+    def update_version(cls, link_id, app_id, version):
+        try:
+            ccz_hosting = cls.objects.get(
+                link_id=link_id, app_id=app_id
+            )
+            ccz_hosting.version = version
+        except cls.DoesNotExist:
+            ccz_hosting = cls(link_id=link_id, app_id=app_id, version=version)
+        ccz_hosting.save()
 
     def clean(self):
         if not self.build_doc['is_released']:
