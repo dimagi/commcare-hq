@@ -81,7 +81,6 @@ class _FormMetadataQuestion(FormQuestionResponse):
 
 
 class _FormMetadata(JsonObject):
-    module_id = StringProperty()
     unique_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
@@ -137,9 +136,8 @@ class _AppSummaryFormDataGenerator(object):
             return [form for form in module.get_forms() if not isinstance(form, ShadowForm)]
         return module.get_forms()
 
-    def _compile_form(self, module_id, form):
+    def _compile_form(self, form):
         form_meta = _FormMetadata(**{
-            'module_id': module_id,
             'unique_id': form.unique_id,
             'name': form.name,
             'short_comment': form.short_comment,
