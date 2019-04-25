@@ -129,7 +129,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
             ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
         for alias in ['default', self.alias]:
-            for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT).get(alias, {}).items():
+            for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
                 else:
