@@ -62,11 +62,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         </itext>
         """
         if self.xform:
-            try:
-                return self.xform.itext_node
-            except XFormException:
-                # Can't do anything with this form
-                pass
+            return self.xform.itext_node
 
     def update(self, rows):
         try:
