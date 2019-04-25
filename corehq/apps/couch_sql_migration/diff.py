@@ -33,7 +33,6 @@ PARTIAL_DIFFS = {
     'CommCareCase*': [
         {'path': ('_rev',)},  # couch only
         {'path': ('initial_processing_complete',)},  # couch only
-        {'path': ('actions', '[*]')},  # ignore case actions
         {'path': ('id',)},  # SQL only
         {'path': ('@xmlns',)},  # legacy
         {'path': ('_attachments',)},  # couch only
@@ -171,6 +170,7 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
+    filtered_diffs = _filter_case_action_diffs(filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_renamed_fields(filtered_diffs, couch_case, sql_case)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
@@ -346,6 +346,14 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
                     remaining_diffs.append(FormJsonDiff(**diff_dict))
 
     return remaining_diffs
+
+
+def _filter_case_action_diffs(diffs):
+    """Ignore all case action diffs"""
+    return [
+        diff for diff in diffs
+        if diff.path[0] != 'actions'
+    ]
 
 
 def _filter_case_index_diffs(couch_case, sql_case, diffs):
