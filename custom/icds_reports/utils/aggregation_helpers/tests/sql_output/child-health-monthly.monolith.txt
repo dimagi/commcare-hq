@@ -1,6 +1,6 @@
 
         CREATE TABLE IF NOT EXISTS "child_health_monthly_2019-01-01" (
-            CHECK (month = DATE %(date)s),
+            CHECK (month = DATE %(date)s)
         ) INHERITS ("child_health_monthly")
         
 {"date": "2019-01-01"}
