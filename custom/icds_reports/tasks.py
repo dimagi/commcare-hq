@@ -755,7 +755,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = IncentiveReport(
             location=location,
             month=config['month'],
-            aggregation_level=aggregation_level
+            aggregation_level=aggregation_level,
+            beta=beta
         ).get_excel_data()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
