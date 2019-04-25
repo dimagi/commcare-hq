@@ -171,3 +171,7 @@ class SavedAppBuildException(AppManagerException):
 
 class MultimediaMissingError(AppManagerException):
     pass
+
+
+class BuildNotFoundException(AppManagerException):
+    pass
