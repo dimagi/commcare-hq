@@ -81,8 +81,8 @@ class _FormMetadataQuestion(FormQuestionResponse):
 
 
 class _FormMetadata(JsonObject):
-    id = StringProperty()
     module_id = StringProperty()
+    unique_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     action_type = StringProperty()
@@ -93,7 +93,7 @@ class _FormMetadata(JsonObject):
 
 
 class _ModuleMetadata(JsonObject):
-    id = StringProperty()
+    unique_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     module_type = StringProperty()
@@ -122,13 +122,13 @@ class _AppSummaryFormDataGenerator(object):
 
     def _compile_module(self, module):
         return _ModuleMetadata(**{
-            'id': module.unique_id,
+            'unique_id': module.unique_id,
             'name': module.name,
             'short_comment': module.short_comment,
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
             'module_filter': module.module_filter,
-            'forms': [self._compile_form(module.unique_id, form) for form in self._get_pertinent_forms(module)],
+            'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
         })
 
     def _get_pertinent_forms(self, module):
@@ -139,8 +139,8 @@ class _AppSummaryFormDataGenerator(object):
 
     def _compile_form(self, module_id, form):
         form_meta = _FormMetadata(**{
-            'id': form.unique_id,
             'module_id': module_id,
+            'unique_id': form.unique_id,
             'name': form.name,
             'short_comment': form.short_comment,
             'action_type': form.get_action_type(),
@@ -234,34 +234,34 @@ class _AppDiffGenerator(object):
 
     def _populate_id_caches(self):
         for module in self.first:
-            self._first_by_id[module['id']] = module
+            self._first_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._first_by_id[form['id']] = form
+                self._first_by_id[form['unique_id']] = form
                 for question in form['questions']:
-                    self._first_questions_by_form_id[form['id']][question['value']] = question
+                    self._first_questions_by_form_id[form['unique_id']][question['value']] = question
 
         for module in self.second:
-            self._second_by_id[module['id']] = module
+            self._second_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._second_by_id[form['id']] = form
+                self._second_by_id[form['unique_id']] = form
                 for question in form['questions']:
-                    self._second_questions_by_form_id[form['id']][question['value']] = question
+                    self._second_questions_by_form_id[form['unique_id']][question['value']] = question
 
     def _mark_removed_items(self):
         """Finds all removed modules, forms, and questions from the second app
         """
         for module in self.first:
-            if module['id'] not in self._second_by_id:
+            if module['unique_id'] not in self._second_by_id:
                 self._mark_item_removed(module, 'module')
                 continue
 
             for form in module['forms']:
-                if form['id'] not in self._second_by_id:
+                if form['unique_id'] not in self._second_by_id:
                     self._mark_item_removed(form, 'form')
                     continue
 
                 for question in form['questions']:
-                    if question.value not in self._second_questions_by_form_id[form['id']]:
+                    if question.value not in self._second_questions_by_form_id[form['unique_id']]:
                         self._mark_item_removed(question, 'question')
 
     def _mark_retained_items(self):
@@ -271,7 +271,7 @@ class _AppDiffGenerator(object):
         """
         for second_module in self.second:
             try:
-                first_module = self._first_by_id[second_module['id']]
+                first_module = self._first_by_id[second_module['unique_id']]
                 for attribute in MODULE_ATTRIBUTES:
                     self._mark_attribute(first_module, second_module, attribute)
                 self._mark_forms(second_module['forms'])
@@ -297,10 +297,10 @@ class _AppDiffGenerator(object):
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
             try:
-                first_form = self._first_by_id[second_form['id']]
+                first_form = self._first_by_id[second_form['unique_id']]
                 for attribute in FORM_ATTRIBUTES:
                     self._mark_attribute(first_form, second_form, attribute)
-                self._mark_questions(second_form['id'], second_form['questions'])
+                self._mark_questions(second_form['unique_id'], second_form['questions'])
             except KeyError:
                 self._mark_item_added(second_form, 'form')
 
