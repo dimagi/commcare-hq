@@ -7,13 +7,11 @@ hqDefine('icds/js/manage_ccz_hosting_links', [
     $,
     ko,
     _,
-    initialPageData,
-    assertProperties,
-    locationUtils
+    initialPageData
 ) {
     'use strict';
     $(function () {
-        var cczHostingLink = function(id, identifier) {
+        var cczHostingLink = function (id, identifier) {
             var self = {};
             self.identifier = identifier;
             self.editUrl = initialPageData.reverse("edit_ccz_hosting_link", id);
@@ -23,8 +21,8 @@ hqDefine('icds/js/manage_ccz_hosting_links', [
         var links = initialPageData.get("links");
         if ($("#links").length) {
             $("#links").koApplyBindings({
-                'links': _.map(links, function(link) { return cczHostingLink(link.id, link.identifier) })
+                'links': _.map(links, function (link) { return cczHostingLink(link.id, link.identifier); }),
             });
-        };
+        }
     });
 });
