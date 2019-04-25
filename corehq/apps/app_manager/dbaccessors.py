@@ -109,7 +109,7 @@ def get_latest_build_version(domain, app_id):
     return res['value']['version'] if res else None
 
 
-def get_build_doc_by_version(domain, app_id, version, return_doc=True):
+def get_build_by_version(domain, app_id, version, return_doc=True):
     from .models import Application
     kwargs = {}
     if return_doc:
@@ -474,7 +474,7 @@ def get_available_versions_for_app(domain, app_id):
 
 
 def get_version_build_id(domain, app_id, version):
-    build = get_build_doc_by_version(domain, app_id, version, return_doc=False)
+    build = get_build_by_version(domain, app_id, version, return_doc=False)
     if not build:
         raise Exception(_("Build for version requested not found"))
     return build['id']
