@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import re
-from collections import namedtuple
 
 from django.utils.translation import ugettext_lazy as _
 
