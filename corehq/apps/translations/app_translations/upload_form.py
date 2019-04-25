@@ -48,6 +48,19 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             return self.form.wrapped_xform()
 
     def _get_itext(self):
+        """
+        find the bucket node that holds all translations.
+        it has a bunch of nodes, one for each lang, which then
+        has translations for all labels as a child node, example
+        <itext>
+        <translation lang="en" default="">
+         <text id="name-label">
+           <value>Name2</value>
+           <value form="image">image_path</value>
+         </text>
+        </translation>
+        </itext>
+        """
         if self.xform:
             try:
                 return self.xform.itext_node
