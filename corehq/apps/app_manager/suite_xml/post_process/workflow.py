@@ -283,7 +283,10 @@ class EndOfFormNavigationWorkflow(object):
 
                 # since we want to go the 'previous' screen we need to drop the last
                 # datum
-                last = frame_children.pop()
+                while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+                    # keep removing last element until we hit a command
+                    # or a non-autoselect datum
+                    last = frame_children.pop()
                 while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
                     # keep removing last element until we hit a command
                     # or a non-autoselect datum
