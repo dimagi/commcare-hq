@@ -235,7 +235,7 @@ class PregnantWomanQueryHelper(object):
             SELECT
                 (woman.person_case_id) AS "id",
                 woman.name AS "name",
-                woman"."dob AS "dob",
+                woman.dob AS "dob",
                 EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
                 ccs_record.hrp AS "highRiskPregnancy",
                 ccs_record.num_anc_checkups AS "noOfAncCheckUps"

@@ -54,7 +54,7 @@ describe('Pregnant women models', function () {
             );
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/pregnant_women/1/?month=3&year=2019">test Name</a>', listView.name());
-            assert.equal('1 Yr 9 Mon', listView.age());
+            assert.equal('1 Yr 11 Mon', listView.age());
             assert.equal(6, listView.pregMonth());
             assert.equal('Yes', listView.highRiskPregnancy());
             assert.equal(5, listView.noOfAncCheckUps());

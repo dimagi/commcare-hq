@@ -32,8 +32,10 @@ hqDefine("aaa/js/models/pregnant_women", [
             if (self.dob() === 'N/A') {
                 return self.dob();
             }
-            var age = Math.floor(moment(new Date()).diff(moment(self.dob(), "YYYY-MM-DD"),'months',true));
-            if (age < 12) {
+            var selectedDate = new Date(postData.selectedYear(), postData.selectedMonth(), 1);
+            var age = Math.floor(moment(selectedDate).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );if (age < 12) {
                 return age + " Mon";
             } else if (age % 12 === 0) {
                 return Math.floor(age / 12) + " Yr";
