@@ -224,9 +224,9 @@ class _AppDiffGenerator(object):
         self.second = get_app_summary_formdata(app2.domain, app2)[0]
 
         self._first_by_id = {}
-        self._first_questions_by_id = defaultdict(dict)
+        self._first_questions_by_form_id = defaultdict(dict)
         self._second_by_id = {}
-        self._second_questions_by_id = defaultdict(dict)
+        self._second_questions_by_form_id = defaultdict(dict)
         self._populate_id_caches()
 
         self._mark_removed_items()
@@ -238,14 +238,14 @@ class _AppDiffGenerator(object):
             for form in module['forms']:
                 self._first_by_id[form['id']] = form
                 for question in form['questions']:
-                    self._first_questions_by_id[form['id']][question['value']] = question
+                    self._first_questions_by_form_id[form['id']][question['value']] = question
 
         for module in self.second:
             self._second_by_id[module['id']] = module
             for form in module['forms']:
                 self._second_by_id[form['id']] = form
                 for question in form['questions']:
-                    self._second_questions_by_id[form['id']][question['value']] = question
+                    self._second_questions_by_form_id[form['id']][question['value']] = question
 
     def _mark_removed_items(self):
         """Finds all removed modules, forms, and questions from the second app
@@ -261,7 +261,7 @@ class _AppDiffGenerator(object):
                     continue
 
                 for question in form['questions']:
-                    if question.value not in self._second_questions_by_id[form['id']]:
+                    if question.value not in self._second_questions_by_form_id[form['id']]:
                         self._mark_item_removed(question, 'question')
 
     def _mark_retained_items(self):
@@ -308,7 +308,7 @@ class _AppDiffGenerator(object):
         for second_question in second_questions:
             try:
                 question_path = second_question['value']
-                first_question = self._first_questions_by_id[form_id][question_path]
+                first_question = self._first_questions_by_form_id[form_id][question_path]
                 self._mark_question_attributes(first_question, second_question)
             except KeyError:
                 self._mark_item_added(second_question, 'question')
