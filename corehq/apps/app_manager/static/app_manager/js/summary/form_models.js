@@ -55,10 +55,9 @@ hqDefine('app_manager/js/summary/form_models',[
             onSelectChangesOnlyMenuItem: function () {
                 _.each(viewModels, function (viewModel) {
                     _.each(viewModel.modules, function (module) {
-                        module.isSelected(module.changes.contains_changes || _.find(module.forms, function (f) { return f.changes.contains_changes; }));
-                        _.each(module.forms, function (form) {
+                        module.isSelected(module.changes.contains_changes || _.find(module.forms, function (form) {
                             form.isSelected(form.changes.contains_changes);
-                        });
+                            return form.isSelected(); }));
                     });
                 });
             },
