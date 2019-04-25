@@ -57,7 +57,7 @@
               </span>
             </p>
           </div>
-          <div class="col-sm-2 control-label">
+          <div class="col-sm-4 control-label">
             <div class="pull-left">
               <span class="label label-danger" data-bind="text: $data.warning || $parents[1].warning, visible: !$data.valueIsLegal()"></span>
               <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
@@ -65,6 +65,7 @@
                 <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
                 <span data-bind="text: disabledMessage()"></span>
               </span>
+              <span class="help-block" data-bind="text: inheritanceMessage"></span>
             </div>
           </div>
         </div>

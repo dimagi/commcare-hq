@@ -283,11 +283,16 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
 
         data['pink'][date_in_miliseconds]['y'] += awcs
 
-    top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
-        key=lambda x: x['value'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'value': sum(value) / len(value)
+        }
+        for key, value in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_value_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['value'], reverse=True)
 
     return {
         "chart_data": [
@@ -305,8 +310,8 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                 "color": ChartColors.PINK
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_value_and_name,
+        "top_five": all_locations_sorted_by_value_and_name[:5],
+        "bottom_five": all_locations_sorted_by_value_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
