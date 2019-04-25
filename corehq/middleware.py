@@ -142,10 +142,12 @@ class TimeoutMiddleware(MiddlewareMixin):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
+                request.session.set_expiry(settings.SECURE_TIMEOUT * 60)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
             else:
                 request.session['secure_session'] = True
                 request.session['last_request'] = json_format_datetime(now)
+                request.session.set_expiry(settings.SECURE_TIMEOUT * 60)
                 return
         else:
             last_request = request.session.get('last_request')
@@ -154,6 +156,7 @@ class TimeoutMiddleware(MiddlewareMixin):
                 django_logout(request, template_name=settings.BASE_TEMPLATE)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
             request.session['last_request'] = json_format_datetime(now)
+            request.session.set_expiry(timeout * 60)
 
 
 def always_allow_browser_caching(fn):
