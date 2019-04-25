@@ -42,6 +42,7 @@ class CCZHosting(models.Model):
         from custom.icds.serializers import CCZHostingSerializer
         return CCZHostingSerializer(self, context={'app_names': app_names}).data
 
+    @property
     def build_doc(self):
         return get_build_by_version(self.link.domain, self.app_id, self.version)
 
