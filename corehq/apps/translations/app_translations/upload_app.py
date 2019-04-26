@@ -21,6 +21,9 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
+    is_legacy_form_sheet,
+    is_legacy_module_sheet,
+    get_legacy_name_map,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -63,6 +66,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     a function like django.contrib.messages.error, and the second is a string.
     """
     msgs = []
+    legacy_name_map = get_legacy_name_map(app)
     error = _check_for_workbook_error(app, workbook, expected_headers)
     if error:
         msgs.append((messages.error, error))
@@ -71,14 +75,16 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     processed_sheets = set()
     for sheet in workbook.worksheets:
         try:
-            _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
+            _check_for_sheet_error(app, sheet, expected_headers,
+                                   legacy_name_map=legacy_name_map, processed_sheets=processed_sheets)
         except BulkAppTranslationsException as e:
             msgs.append((messages.error, six.text_type(e)))
             continue
 
         processed_sheets.add(sheet.worksheet.title)
 
-        warnings = _check_for_sheet_warnings(app, sheet, expected_headers)
+        warnings = _check_for_sheet_warnings(app, sheet, expected_headers,
+                                             legacy_name_map=legacy_name_map)
         for warning in warnings:
             msgs.append((messages.warning, warning))
 
@@ -116,7 +122,7 @@ def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
         updater = BulkAppTranslationModulesAndFormsUpdater(app, lang=lang)
         return updater.update(rows)
 
-    if is_module_sheet(identifier):
+    if is_module_sheet(identifier) or is_legacy_module_sheet(identifier):
         try:
             updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
         except ModuleNotFoundException:
@@ -126,7 +132,7 @@ def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
             )]
         return updater.update(rows)
 
-    if is_form_sheet(identifier):
+    if is_form_sheet(identifier) or is_legacy_form_sheet(identifier):
         try:
             updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)
         except FormNotFoundException:
@@ -151,14 +157,14 @@ def _check_for_workbook_error(app, workbook, headers):
                  "please select a language.")
 
 
-def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
+def _check_for_sheet_error(app, sheet, headers, legacy_name_map, processed_sheets=Ellipsis):
     expected_sheets = {h[0]: h[1] for h in headers}
 
     if sheet.worksheet.title in processed_sheets:
         raise BulkAppTranslationsException(_('Sheet "%s" was repeated. Only the first occurrence has been '
                                              'processed.') % sheet.worksheet.title)
 
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = _get_expected_headers(sheet, expected_sheets, legacy_name_map)
     if expected_headers is None:
         raise BulkAppTranslationsException(_('Skipping sheet "%s", could not recognize title') %
                                            sheet.worksheet.title)
@@ -166,9 +172,9 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
     num_required_headers = 0
     if is_modules_and_forms_sheet(sheet.worksheet.title):
         num_required_headers = 1    # type
-    elif is_module_sheet(sheet.worksheet.title):
+    elif is_module_sheet(sheet.worksheet.title) or is_legacy_module_sheet(sheet.worksheet.title):
         num_required_headers = 2    # case property, list or detail
-    elif is_form_sheet(sheet.worksheet.title):
+    elif is_form_sheet(sheet.worksheet.title) or is_legacy_form_sheet(sheet.worksheet.title):
         num_required_headers = 1    # label
     elif is_single_sheet(sheet.worksheet.title):
         num_required_headers = 4    # menu or form, case property, list or detail, label
@@ -182,22 +188,24 @@ def _check_for_sheet_error(app, sheet, headers, processed_sheets=Ellipsis):
                                                  expected=", ".join(expected_required_headers)))
 
 
-def _get_expected_headers(sheet, expected_sheets):
+def _get_expected_headers(sheet, expected_sheets, legacy_name_map):
     if sheet.worksheet.title == LEGACY_MODULES_AND_FORMS_SHEET_NAME:
         expected_headers = expected_sheets.get(MODULES_AND_FORMS_SHEET_NAME, None)
-    elif is_module_sheet(sheet.worksheet.title) or is_form_sheet(sheet.worksheet.title):
-        expected_headers = expected_sheets.get(sheet.worksheet.title.replace("module", "menu"), None)
+    elif is_legacy_module_sheet(sheet.worksheet.title) or is_legacy_form_sheet(sheet.worksheet.title):
+        legacy_name = sheet.worksheet.title.replace("module", "menu")
+        sheet_name = legacy_name_map[legacy_name]
+        expected_headers = expected_sheets.get(sheet_name, None)
     else:
         expected_headers = expected_sheets.get(sheet.worksheet.title, None)
     return expected_headers
 
 
-def _check_for_sheet_warnings(app, sheet, headers):
+def _check_for_sheet_warnings(app, sheet, headers, legacy_name_map):
     warnings = []
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_headers = _get_expected_headers(sheet, expected_sheets)
+    expected_headers = _get_expected_headers(sheet, expected_sheets, legacy_name_map)
 
-    missing_cols = _get_missing_cols(app, sheet, headers)
+    missing_cols = _get_missing_cols(app, sheet, headers, legacy_name_map)
     extra_cols = set(sheet.headers) - set(expected_headers)
 
     # Backwards compatibility for old "filepath" header names
@@ -230,9 +238,9 @@ def _check_for_sheet_warnings(app, sheet, headers):
     return warnings
 
 
-def _get_missing_cols(app, sheet, headers):
+def _get_missing_cols(app, sheet, headers, legacy_name_map):
     expected_sheets = {h[0]: h[1] for h in headers}
-    expected_columns = _get_expected_headers(sheet, expected_sheets)
+    expected_columns = _get_expected_headers(sheet, expected_sheets, legacy_name_map)
     return set(expected_columns) - set(sheet.headers)
 
 
