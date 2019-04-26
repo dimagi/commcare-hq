@@ -228,6 +228,25 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         prop = metadata.get_type('parent').get_property('parent/doesnt_exist', allow_parent=True)
         self.assertIsNotNone(prop.short_details[0].error)
 
+    def test_calculate_conditions_no_errors(self):
+        """If you have a calculate condition in your case detail, you are on your own.
+        """
+        calculation = "instance('casedb')/casedb/case[@case_id = instance('commcaresession')]/session/case_id"
+        app = self.get_test_app()
+        app.modules[0].case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Calculate'},
+                model='case',
+                useXpathExpression=True,
+                field="instance('casedb')/casedb/case[@case_id = instance('commcaresession')]/session/case_id",
+                format='calculate',
+                case_tile_field='header'
+            ),
+        ]
+        metadata = app.get_case_metadata()
+        prop = metadata.get_type('parent').get_property(calculation, allow_parent=True)
+        self.assertIsNone(prop.short_details[0].error)
+
     def test_multiple_parents_case_lists(self):
         """If the case has multiple parents, and you reference a parent property in the
         case list, we can't tell which parent will be shown """
