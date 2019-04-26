@@ -269,6 +269,7 @@ def get_legacy_name_map(app, exclude_module=None, exclude_form=None):
 
     return name_map
 
+
 def get_module_legacy_sheet_name(module):
     """
     Returns "menuN" where N was its (1-based) index.
