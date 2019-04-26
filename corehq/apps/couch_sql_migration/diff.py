@@ -92,7 +92,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'name', old='', new=None),
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('missing', 'location_id', old=MISSING, new=None),
-        Ignore('missing', 'referrals', old=[], new=MISSING),
+        Ignore('missing', 'referrals', new=MISSING),
         Ignore('missing', 'location_', old=[], new=MISSING),
         Ignore('type', 'type', old=None, new=''),
         # this happens for cases where the creation form has been archived but the case still has other forms
