@@ -23,7 +23,7 @@ from corehq.apps.translations.app_translations.utils import (
 
 def get_bulk_app_single_sheet_by_name(app, lang):
     rows = []
-    for module_index, module in enumerate(app.modules):
+    for module in app.modules:
         prefix = [get_module_sheet_name(module)]
 
         # Name / menu media row
@@ -37,7 +37,7 @@ def get_bulk_app_single_sheet_by_name(app, lang):
             # Insert blank for label
             rows.append(prefix + list(row[:2]) + [''] + list(row[2:]))
 
-        for form_index, form in enumerate(module.forms):
+        for form in module.forms:
             # Leave blanks for case_property and list_or_detail
             prefix = [get_form_sheet_name(form), '', '']
 
@@ -66,7 +66,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
     # keys are the names of sheets, values are lists of tuples representing rows
     rows = OrderedDict({MODULES_AND_FORMS_SHEET_NAME: []})
 
-    for mod_index, module in enumerate(app.get_modules()):
+    for module in app.get_modules():
         if exclude_module is not None and exclude_module(module):
             continue
 
@@ -82,7 +82,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
 
         rows[module_sheet_name] = get_module_rows(app.langs, module)
 
-        for form_index, form in enumerate(module.get_forms()):
+        for form in module.get_forms():
             if exclude_form is not None and exclude_form(form):
                 continue
 
