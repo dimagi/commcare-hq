@@ -65,7 +65,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     };
 
     var isConfigurableMap = initialPageData.get('is_configurable_map');
-    var supportTranslations = initialPageData.get('support_translations');
+    var supportsTranslations = initialPageData.get('supports_translations');
     var languagesMap = initialPageData.get('languages_map');
     var languagesForSelect = initialPageData.get('languages_for_select');
     var isOwner = initialPageData.get('is_owner');
@@ -75,7 +75,7 @@ hqDefine("reports/js/edit_scheduled_report", [
             selectedConfigs, function (i) {return isConfigurableMap[i] === true;}
         );
         var showTranslation = showUcrElements || _.any(
-            selectedConfigs, function (i) {return supportTranslations[i] === true;}
+            selectedConfigs, function (i) {return supportsTranslations[i] === true;}
         );
 
         if (showTranslation) {

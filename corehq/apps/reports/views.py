@@ -668,7 +668,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return context
 
         is_configurable_map = {c._id: c.is_configurable_report for c in self.configs}
-        support_translations = {c._id: c.support_translations for c in self.configs}
+        supports_translations = {c._id: c.supports_translations for c in self.configs}
         languages_map = {c._id: list(c.languages | set(['en'])) for c in self.configs}
         languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
@@ -679,7 +679,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'monthly_day_options': [(i, i) for i in range(1, 32)],
             'form_action': _("Create a new") if self.is_new else _("Edit"),
             'is_configurable_map': is_configurable_map,
-            'support_translations': support_translations,
+            'supports_translations': supports_translations,
             'languages_map': languages_map,
             'languages_for_select': languages_for_select,
             'is_owner': self.is_new or self.request.couch_user._id == self.owner_id,

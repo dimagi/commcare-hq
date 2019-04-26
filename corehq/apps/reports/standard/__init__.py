@@ -44,8 +44,8 @@ class CustomProjectReport(ProjectReport):
     languages = None
 
     @classmethod
-    def support_translations(self):
-        return bool(self.languages)
+    def get_supports_translations(cls):
+        return bool(cls.languages)
 
 
 class CommCareUserMemoizer(object):
