@@ -48,7 +48,7 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
 
     if obj1 == obj2:
         return
-    elif Ellipsis in (obj1, obj2):
+    elif MISSING in (obj1, obj2):
         yield FormJsonDiff('missing', path, obj1, obj2)
     elif isinstance(obj1, dict):
         if not isinstance(obj2, dict):
@@ -57,12 +57,12 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
         else:
             keys = set(obj1.keys()) | set(obj2.keys())
 
-            def value_or_ellipsis(obj, key):
-                return obj.get(key, Ellipsis)
+            def value_or_missing(obj, key):
+                return obj.get(key, MISSING)
 
             for key in keys:
-                for result in _json_diff(value_or_ellipsis(obj1, key),
-                                         value_or_ellipsis(obj2, key),
+                for result in _json_diff(value_or_missing(obj1, key),
+                                         value_or_missing(obj2, key),
                                          path=path + (key,),
                                          track_list_indices=track_list_indices):
                     yield result
@@ -70,16 +70,16 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
         yield FormJsonDiff('type', path, obj1, obj2)
     elif isinstance(obj1, list):
 
-        def value_or_ellipsis(obj, i):
+        def value_or_missing(obj, i):
             try:
                 return obj[i]
             except IndexError:
-                return Ellipsis
+                return MISSING
 
         for i in range(max(len(obj1), len(obj2))):
             list_index = i if track_list_indices else '[*]'
-            for result in _json_diff(value_or_ellipsis(obj1, i),
-                                     value_or_ellipsis(obj2, i),
+            for result in _json_diff(value_or_missing(obj1, i),
+                                     value_or_missing(obj2, i),
                                      path=path + (list_index,),
                                      track_list_indices=track_list_indices):
                 yield result
@@ -216,3 +216,12 @@ def is_datetime_string(string):
         return False
     else:
         return True
+
+
+class MissingType(object):
+
+    def __repr__(self):
+        return "MISSING"
+
+
+MISSING = MissingType()

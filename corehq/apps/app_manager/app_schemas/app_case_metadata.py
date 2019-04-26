@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import re
-from collections import namedtuple
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -527,13 +526,15 @@ class AppCaseMetadata(JsonObject):
             root_case_type = USERCASE_TYPE
             field = field.split('user/')[1]
 
+        error = None
         try:
-            props = self.get_property_list(root_case_type, field)
+            if column.useXpathExpression:
+                props = [self.get_type(root_case_type).get_property(field, allow_parent=True)]
+            else:
+                props = self.get_property_list(root_case_type, field)
         except CaseMetaException as e:
             props = [self.add_property_error(root_case_type, field, form_id=None, message=None)]
             error = six.text_type(e)
-        else:
-            error = None
         for prop in props:
             prop.add_detail(detail_type, module_id, column.header, column.useXpathExpression, error)
 
