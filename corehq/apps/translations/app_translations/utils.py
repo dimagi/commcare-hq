@@ -137,8 +137,6 @@ def get_module_sheet_name(module):
     """
     Returns 'menu:UUID:slug'
 
-    Legacy: Used to return "menuN" where N was its (1-based) index.
-
     The UUID uniquely identifies the module even if it moves. The slug
     makes it readable by (English-reading) humans.
     """
@@ -148,8 +146,6 @@ def get_module_sheet_name(module):
 def get_form_sheet_name(form):
     """
     Returns 'form:UUID:slug'
-
-    Legacy: Used to return "menuM_formN" where N was its (1-based) index.
 
     The UUID uniquely identifies the form even if it moves. The slug
     makes it readable by humans.
@@ -169,18 +165,11 @@ def get_name_slug(module_or_form):
 
 
 def is_form_sheet(identifier):
-    return (
-        identifier.startswith('form:')
-        or ('module' in identifier or 'menu' in identifier) and 'form' in identifier  # Legacy
-    )
-
+    return identifier.startswith('form:')
 
 
 def is_module_sheet(identifier):
-    return (
-        identifier.startswith('menu:')
-        or ('module' in identifier or 'menu' in identifier) and 'form' not in identifier  # Legacy
-    )
+    return identifier.startswith('menu:')
 
 
 def is_modules_and_forms_sheet(identifier):
@@ -257,3 +246,54 @@ class BulkAppTranslationUpdater(object):
         a function like django.contrib.messages.error, and the second is a string.
         '''
         raise NotImplementedError()
+
+
+# TODO: (2019-04-26) Drop support for legacy names after all translations could possibly have been uploaded
+#
+def get_legacy_name_map(app, exclude_module=None, exclude_form=None):
+    """
+    Maps legacy module and form sheet names to current names
+    """
+    name_map = {}
+    for module in app.get_modules():
+        if exclude_module is not None and exclude_module(module):
+            continue
+        legacy_name = get_module_legacy_sheet_name(module)
+        name_map[legacy_name] = get_module_sheet_name(module)
+
+        for form in module.get_forms():
+            if exclude_form is not None and exclude_form(form):
+                continue
+            legacy_name = get_form_legacy_sheet_name(form)
+            name_map[legacy_name] = get_form_sheet_name(form)
+
+    return name_map
+
+def get_module_legacy_sheet_name(module):
+    """
+    Returns "menuN" where N was its (1-based) index.
+
+    Breaks if module is moved. Use get_module_sheet_name() instead.
+    """
+    return "menu{}".format(module.get_app().get_module_index(module.unique_id) + 1)
+
+
+def get_form_legacy_sheet_name(form):
+    """
+    Returns "menuM_formN" where N was its (1-based) index.
+
+    Breaks if form or module is moved. Use get_form_sheet_name() instead.
+    """
+    module = form.get_module()
+    return "_".join([
+        get_module_sheet_name(module),
+        "form{}".format(module.get_form_index(form.unique_id) + 1)
+    ])
+
+
+def is_legacy_form_sheet(identifier):
+    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+
+
+def is_legacy_module_sheet(identifier):
+    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
