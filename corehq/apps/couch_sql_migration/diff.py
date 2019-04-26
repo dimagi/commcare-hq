@@ -62,7 +62,6 @@ load_ignore_rules = memoized(lambda: {
     'CommCareCase*': [
         Ignore(path='_rev'),  # couch only
         Ignore(path='initial_processing_complete'),  # couch only
-        Ignore(path=('actions', '[*]')),  # ignore case actions
         Ignore(path='id'),  # SQL only
         Ignore(path='@xmlns'),  # legacy
         Ignore(path='_attachments'),  # couch only
@@ -108,6 +107,8 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
         # defaulted on SQL
         Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
+
+        Ignore(path=('actions', '[*]')),
 
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
