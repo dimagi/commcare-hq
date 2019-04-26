@@ -12,6 +12,7 @@
     "reach-dashboard-qa",
     "reach-test",
     "icds-cas",
+    "icds-cas-sandbox",
     "cas-lab"
   ],
   "server_environment": [
