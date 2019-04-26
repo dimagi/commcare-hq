@@ -101,8 +101,15 @@ hqDefine("reports/js/data_corrections", [
 
     // Controls the full modal UI
     var DataCorrectionsModel = function (options) {
-        assertProperties.assert(options, ['saveUrl', 'properties'],
-                                ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix', 'analyticsDescriptor', '$modal']);
+        assertProperties.assert(options, ['saveUrl', 'properties'],[
+            'propertyNames',
+            'propertyNamesUrl',
+            'displayProperties',
+            'propertyPrefix',
+            'propertySuffix',
+            'analyticsDescriptor',
+            '$modal'
+        ]);
         var self = {};
         self.$modal = options.$modal;
 
