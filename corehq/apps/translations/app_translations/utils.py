@@ -84,14 +84,14 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         )
     ])
 
-    for mod_index, module in enumerate(app.get_modules()):
+    for module in app.get_modules():
         if exclude_module is not None and exclude_module(module):
             continue
 
         sheet_name = get_module_sheet_name(module)
         headers.append([sheet_name, ['case_property', 'list_or_detail'] + default_lang_list])
 
-        for form_index, form in enumerate(module.get_forms()):
+        for form in module.get_forms():
             if form.form_type == 'shadow_form':
                 continue
             if exclude_form is not None and exclude_form(form):
