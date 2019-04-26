@@ -12,6 +12,9 @@ from corehq.apps.translations.app_translations.utils import (
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
+    get_legacy_name_map,
+    is_legacy_module_sheet,
+    is_legacy_form_sheet,
 )
 from corehq.apps.translations.generators import SKIP_TRANSFEX_STRING, AppTranslationsGenerator
 
@@ -34,6 +37,7 @@ class UploadedTranslationsValidator(object):
         self.uploaded_workbook = uploaded_workbook
         self.headers = None
         self.expected_rows = None
+        self.legacy_name_map = {}
         self.lang_prefix = lang_prefix
         self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
         self.default_language_column = self.lang_prefix + self.app.default_language
@@ -48,11 +52,10 @@ class UploadedTranslationsValidator(object):
 
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in get_bulk_app_sheet_headers(self.app)}
-        self.expected_rows = get_bulk_app_sheets_by_name(
-            self.app,
-            exclude_module=lambda module: SKIP_TRANSFEX_STRING in module.comment,
-            exclude_form=lambda form: SKIP_TRANSFEX_STRING in form.comment
-        )
+        exclude_module_func = lambda module: SKIP_TRANSFEX_STRING in module.comment  # noqa: E731
+        exclude_form_func = lambda form: SKIP_TRANSFEX_STRING in form.comment  # noqa: E731
+        self.expected_rows = get_bulk_app_sheets_by_name(self.app, exclude_module_func, exclude_form_func)
+        self.legacy_name_map = get_legacy_name_map(self.app, exclude_module_func, exclude_form_func)
 
     @memoized
     def _get_header_index(self, sheet_name, header):
@@ -108,9 +111,9 @@ class UploadedTranslationsValidator(object):
         self._generate_expected_headers_and_rows()
         for sheet in self.uploaded_workbook.worksheets:
             sheet_name = sheet.worksheet.title
-            # if sheet is not in the expected rows, ignore it. This can happen if the module/form sheet is excluded
-            # from transifex integration
-            if sheet_name not in self.expected_rows:
+            # if sheet is not expected, ignore it. This can happen if the module/form sheet is excluded from
+            # transifex integration
+            if sheet_name not in self.expected_rows and sheet_name not in self.legacy_name_map:
                 continue
 
             rows = get_unicode_dicts(sheet)
@@ -118,8 +121,12 @@ class UploadedTranslationsValidator(object):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
             elif is_module_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'module')
+            elif is_legacy_module_sheet(sheet.worksheet.title):
+                error_msgs = self._compare_sheet(self.legacy_name_map[sheet_name], rows, 'module')
             elif is_form_sheet(sheet.worksheet.title):
                 error_msgs = self._compare_sheet(sheet_name, rows, 'form')
+            elif is_legacy_form_sheet(sheet.worksheet.title):
+                error_msgs = self._compare_sheet(self.legacy_name_map[sheet_name], rows, 'form')
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
             if error_msgs:
