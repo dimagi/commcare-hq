@@ -4,6 +4,7 @@ from celery.task import task
 
 from soil import DownloadBase
 
+from corehq.apps.fixtures.download import prepare_fixture_download
 from corehq.apps.fixtures.upload import upload_fixture_file
 
 
@@ -26,7 +27,16 @@ def fixture_upload_async(domain, download_id, replace):
 
 @task(serializer='pickle')
 def fixture_download_async(prepare_download, *args, **kw):
+    # deprecated task. no longer called. to be removed after all tasks consumed
     task = fixture_download_async
     DownloadBase.set_progress(task, 0, 100)
     prepare_download(task=task, *args, **kw)
+    DownloadBase.set_progress(task, 100, 100)
+
+
+@task
+def async_fixture_download(table_ids, domain, download_id):
+    task = async_fixture_download
+    DownloadBase.set_progress(task, 0, 100)
+    prepare_fixture_download(table_ids, domain, task, download_id)
     DownloadBase.set_progress(task, 100, 100)
