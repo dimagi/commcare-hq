@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_unicode_dicts,
+    is_legacy_module_sheet,
+    get_module_by_legacy_identifier,
 )
 
 
@@ -23,17 +25,16 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         :param identifier: String like "menu1"
         '''
         super(BulkAppTranslationModuleUpdater, self).__init__(app, lang)
-        self.identifier = identifier
-        self.module = self._get_module_from_sheet_name()
+        if is_legacy_module_sheet(identifier):
+            self.module = get_module_by_legacy_identifier(app, identifier)
+        else:
+            unique_id = identifier.split(':')[1]
+            self.module = app.get_module_by_unique_id(unique_id)
 
         # These get populated by _get_condensed_rows
         self.condensed_rows = None
         self.case_list_form_label = None
         self.tab_headers = None
-
-    def _get_module_from_sheet_name(self):
-        module_index = int(self.identifier.replace("module", "").replace("menu", "")) - 1
-        return self.app.get_module(module_index)
 
     def update(self, rows):
         # The list might contain DetailColumn instances in them that have exactly

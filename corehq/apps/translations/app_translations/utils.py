@@ -297,3 +297,17 @@ def is_legacy_form_sheet(identifier):
 
 def is_legacy_module_sheet(identifier):
     return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+
+
+def get_module_by_legacy_identifier(app, identifier):
+    module_index = int(identifier.replace("menu", "").replace("module", "")) - 1
+    return app.get_module(module_index)
+
+
+def get_form_by_legacy_identifier(app, identifier):
+    identifying_parts = identifier.split('_')
+    if len(identifying_parts) != 2:
+        raise ValueError
+    module = get_module_by_legacy_identifier(app, identifying_parts[0])
+    form_index = int(identifying_parts[1].replace("form", "")) - 1
+    return module.get_form(form_index)

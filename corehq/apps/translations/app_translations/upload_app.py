@@ -24,6 +24,8 @@ from corehq.apps.translations.app_translations.utils import (
     is_legacy_form_sheet,
     is_legacy_module_sheet,
     get_legacy_name_map,
+    get_form_by_legacy_identifier,
+    get_module_by_legacy_identifier,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -249,15 +251,10 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
 
     def get_document_by_legacy_identifier(self, identifier):
-        identifying_parts = identifier.split('_')
-        if len(identifying_parts) not in (1, 2):
-            raise ValueError
-        module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
-        document = self.app.get_module(module_index)
-        if len(identifying_parts) == 2:
-            form_index = int(identifying_parts[1].replace("form", "")) - 1
-            document = document.get_form(form_index)
-        return document
+        if '_' in identifier:
+            return get_form_by_legacy_identifier(self.app, identifier)
+        else:
+            return get_module_by_legacy_identifier(self.app, identifier)
 
     def get_document_by_identifier(self, identifier):
         unique_id = identifier.split(':')[1]
