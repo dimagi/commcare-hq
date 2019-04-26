@@ -1,11 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.fixtures.upload import upload_fixture_file
-from soil import DownloadBase
+from __future__ import absolute_import, unicode_literals
+
 from celery.task import task
 
+from soil import DownloadBase
 
-@task(serializer='pickle')
+from corehq.apps.fixtures.upload import upload_fixture_file
+
+
+@task
 def fixture_upload_async(domain, download_id, replace):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
