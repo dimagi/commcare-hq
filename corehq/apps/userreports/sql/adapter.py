@@ -279,6 +279,7 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
                     validation_name='not_null_violation',
                     validation_text='A column in this doc violates an is_nullable constraint'
                 )
+                return
 
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 

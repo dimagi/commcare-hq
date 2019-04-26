@@ -1048,6 +1048,13 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
+APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
+    'APP_BUILDER_CONDITIONAL_NAMES',
+    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1081,7 +1088,7 @@ SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     "Message Log Report: Test new additions",
     TAG_CUSTOM,
-    [NAMESPACE_USER],
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
     description=("Include failed messages, show message status, show event. "
                  "This feature flag exists to QA on real prod data."),
 )
@@ -1702,6 +1709,13 @@ RESTRICT_APP_RELEASE = StaticToggle(
 RELEASE_BUILDS_PER_PROFILE = StaticToggle(
     'release_builds_per_profile',
     'Do not release builds for all app profiles by default. Then manage via Source files view',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+MANAGE_RELEASES_PER_LOCATION = StaticToggle(
+    'manage_releases_per_location',
+    'Manage releases per location',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

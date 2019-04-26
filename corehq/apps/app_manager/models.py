@@ -25,6 +25,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -43,6 +44,7 @@ from six.moves import filter, map, range
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 
+from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -85,6 +87,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+)
+from corehq.apps.app_manager.util import (
+    get_latest_app_release_by_location,
+    expire_get_latest_app_release_by_location_cache,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -927,6 +933,56 @@ class CaseReferences(DocumentSchema):
             yield CaseSaveReferenceWithPath.wrap(ref_copy)
 
 
+class MappingItem(DocumentSchema):
+    key = StringProperty()
+    # lang => localized string
+    value = DictProperty()
+
+    @property
+    def treat_as_expression(self):
+        """
+        Returns if whether the key can be treated as a valid expression that can be included in
+        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
+        """
+        special_chars = '{}()[]=<>."\'/'
+        return any(special_char in self.key for special_char in special_chars)
+
+    @property
+    def key_as_variable(self):
+        """
+        Return an xml variable name to represent this key.
+
+        If the key contains spaces or a condition-predicate of an if-clause,
+        return a hash of the key with "h" prepended.
+        If not, return the key with "k" prepended.
+
+        The prepended characters prevent the variable name from starting with a
+        numeral, which is illegal.
+        """
+        if re.search(r'\W', self.key) or self.treat_as_expression:
+            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
+        else:
+            return 'k{key}'.format(key=self.key)
+
+    def key_as_condition(self, property=None):
+        if self.treat_as_expression:
+            condition = dot_interpolate(self.key, property) if property else self.key
+            return "{condition}".format(condition=condition)
+        else:
+            return "{property} = '{key}'".format(
+                property=property,
+                key=self.key
+            )
+
+    def ref_to_key_variable(self, index, sort_or_display):
+        if sort_or_display == "sort":
+            key_as_var = "{}, ".format(index)
+        elif sort_or_display == "display":
+            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
+
+        return key_as_var
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -936,6 +992,7 @@ class FormBase(DocumentSchema):
     form_type = None
 
     name = DictProperty(six.text_type)
+    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1735,56 +1792,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         return case_relationships_by_child_type
 
 
-class MappingItem(DocumentSchema):
-    key = StringProperty()
-    # lang => localized string
-    value = DictProperty()
-
-    @property
-    def treat_as_expression(self):
-        """
-        Returns if whether the key can be treated as a valid expression that can be included in
-        condition-predicate of an if-clause for e.g. if(<expression>, value, ...)
-        """
-        special_chars = '{}()[]=<>."\'/'
-        return any(special_char in self.key for special_char in special_chars)
-
-    @property
-    def key_as_variable(self):
-        """
-        Return an xml variable name to represent this key.
-
-        If the key contains spaces or a condition-predicate of an if-clause,
-        return a hash of the key with "h" prepended.
-        If not, return the key with "k" prepended.
-
-        The prepended characters prevent the variable name from starting with a
-        numeral, which is illegal.
-        """
-        if re.search(r'\W', self.key) or self.treat_as_expression:
-            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
-        else:
-            return 'k{key}'.format(key=self.key)
-
-    def key_as_condition(self, property):
-        if self.treat_as_expression:
-            condition = dot_interpolate(self.key, property)
-            return "{condition}".format(condition=condition)
-        else:
-            return "{property} = '{key}'".format(
-                property=property,
-                key=self.key
-            )
-
-    def ref_to_key_variable(self, index, sort_or_display):
-        if sort_or_display == "sort":
-            key_as_var = "{}, ".format(index)
-        elif sort_or_display == "display":
-            key_as_var = "${var_name}, ".format(var_name=self.key_as_variable)
-
-        return key_as_var
-
-
 class GraphAnnotations(IndexedSchema):
     display_text = DictProperty()
     x = StringProperty()
@@ -2140,6 +2147,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
+    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -3541,13 +3549,15 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):
+        from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
         kwargs = {}
         if supports_module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
 
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
-            menu_locale_id=id_strings.module_locale(self),
+            menu_locale_id=get_module_locale_id(self),
+            menu_enum_text=get_module_enum_text(self),
             media_image=bool(len(self.all_image_paths())),
             media_audio=bool(len(self.all_audio_paths())),
             image_locale_id=id_strings.module_icon_locale(self),
@@ -5066,7 +5076,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         try:
             return self.modules[i].with_id(i % len(self.modules), self)
         except IndexError:
-            raise ModuleNotFoundException()
+            raise ModuleNotFoundException(_("Could not find module with index {}".format(i)))
 
     def get_module_by_unique_id(self, unique_id, error=''):
         def matches(module):
@@ -5524,6 +5534,8 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
+    SUPPORTED_SETTINGS = ['target_commcare_flavor']
+
     # if `uses_master_app_form_ids` is True, the form id might match the master's form id
     # from a bug years ago. These should be fixed when mobile can handle the change
     # https://manage.dimagi.com/default.asp?283410
@@ -5721,7 +5733,86 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
+class AppReleaseByLocation(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
+    build_id = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=False)
+    active = models.BooleanField(default=True)
+    activated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (("domain", "build_id", "location", "version"),)
+
+    def save(self, *args, **kwargs):
+        super(AppReleaseByLocation, self).save(*args, **kwargs)
+        expire_get_latest_app_release_by_location_cache(self)
+
+    @property
+    @memoized
+    def build(self):
+        return get_app(self.domain, self.build_id)
+
+    def clean(self):
+        if self.active:
+            if not self.build.is_released:
+                raise ValidationError({'version': _("Version not released. Please mark it as released to add "
+                                                    "restrictions.").format(self.build.version)})
+            enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
+                                                                 self.app_id)
+            if enabled_release and enabled_release.version > self.version:
+                raise ValidationError({'version': _("Higher version {} already enabled for this application and "
+                                                    "location").format(enabled_release.version)})
+
+    @classmethod
+    def update_status(cls, domain, app_id, build_id, location_id, version, active):
+        """
+        create a new object or just set the status of an existing one with provided
+        domain, app_id, build_id, location_id and version to the status passed
+        :param build_id: id of the build corresponding to the version
+        """
+        try:
+            release = AppReleaseByLocation.objects.get(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        except cls.DoesNotExist:
+            release = AppReleaseByLocation(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        release.activate() if active else release.deactivate()
+
+    def deactivate(self):
+        self.active = False
+        self.deactivated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def activate(self):
+        self.active = True
+        self.activated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def to_json(self):
+        return {
+            'location': self.location.get_path_display(),
+            'app': self.app_id,
+            'build_id': self.build_id,
+            'version': self.version,
+            'active': self.active,
+            'id': self._get_pk_val(),
+            'activated_on': (datetime.datetime.strftime(self.activated_on, '%Y-%m-%d  %H:%M:%S')
+                             if self.activated_on else None),
+            'deactivated_on': (datetime.datetime.strftime(self.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if self.deactivated_on else None),
+        }
+
+
 class LatestEnabledBuildProfiles(models.Model):
+    # ToDo: this would be deprecated after AppReleaseByLocation is released and
+    # this model's entries are migrated to the new location specific model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()

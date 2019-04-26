@@ -25,6 +25,7 @@ hqDefine('aaa/js/filters/location_filter', [
             self.userLocationIds = initialPageData.get('user_location_ids');
             self.isWebUser = initialPageData.get('is_web_user');
             self.userLocationId = initialPageData.get('user_location_id');
+            self.selectedLocationIds = initialPageData.get('selected_location_ids');
 
             self.ministryList = [
                 reachUtils.USERROLETYPES.MOHFW,
@@ -34,14 +35,14 @@ hqDefine('aaa/js/filters/location_filter', [
             self.selectedMinistry = ko.observable(self.userRoleType);
 
             self._initHierarchy = function () {
-                var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: self.userLocationIds[0], postData: params.postData, callback: params.callback});
-                var district = locationModel.locationModel({slug: 'district', name: 'District', parent: state, userLocationId: self.userLocationIds[1], postData: params.postData, callback: params.callback});
+                var state = locationModel.locationModel({slug: 'state', name: 'State', parent: '', userLocationId: self.userLocationIds[0], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[0]});
+                var district = locationModel.locationModel({slug: 'district', name: 'District', parent: state, userLocationId: self.userLocationIds[1], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[1]});
                 state.setChild(district);
                 if (self.selectedMinistry() === reachUtils.USERROLETYPES.MOHFW) {
-                    var taluka = locationModel.locationModel({slug: 'taluka', name: 'Taluka', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback});
-                    var phc = locationModel.locationModel({slug: 'phc', name: 'Primary Health Centre (PHC)', parent: taluka, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback});
-                    var sc = locationModel.locationModel({slug: 'sc', name: 'Sub-centre (SC)', parent: phc, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback});
-                    var village = locationModel.locationModel({slug: 'village', name: 'Village', parent: sc, userLocationId: self.userLocationIds[5], postData: params.postData, callback: params.callback});
+                    var taluka = locationModel.locationModel({slug: 'taluka', name: 'Taluka', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[2]});
+                    var phc = locationModel.locationModel({slug: 'phc', name: 'Primary Health Centre (PHC)', parent: taluka, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[3]});
+                    var sc = locationModel.locationModel({slug: 'sc', name: 'Sub-centre (SC)', parent: phc, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[4]});
+                    var village = locationModel.locationModel({slug: 'village', name: 'Village', parent: sc, userLocationId: self.userLocationIds[5], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[5]});
                     district.setChild((taluka));
                     taluka.setChild(phc);
                     phc.setChild(sc);
@@ -55,9 +56,9 @@ hqDefine('aaa/js/filters/location_filter', [
                         village,
                     ]);
                 } else {
-                    var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback});
-                    var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback});
-                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback});
+                    var block = locationModel.locationModel({slug: 'block', name: 'Block', parent: district, userLocationId: self.userLocationIds[2], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[2]});
+                    var supervisor = locationModel.locationModel({slug: 'supervisor', name: 'Sector (Project)', parent: block, userLocationId: self.userLocationIds[3], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[3]});
+                    var awc = locationModel.locationModel({slug: 'awc', name: 'AWC', parent: supervisor, userLocationId: self.userLocationIds[4], postData: params.postData, callback: params.callback, selectedLocation: self.selectedLocationIds[4]});
                     district.setChild((block));
                     block.setChild(supervisor);
                     supervisor.setChild(awc);

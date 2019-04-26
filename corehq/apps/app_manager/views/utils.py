@@ -115,6 +115,10 @@ def get_langs(request, app):
     return lang, langs
 
 
+def set_lang_cookie(response, lang):
+    response.set_cookie('lang', encode_if_unicode(lang))
+
+
 def bail(request, domain, app_id, not_found=""):
     if not_found:
         messages.error(request, 'Oops! We could not find that %s. Please try again' % not_found)
@@ -321,7 +325,7 @@ def update_linked_app(app, user_id):
             'Unable to pull latest master from remote CommCare HQ. Please try again later.'
         ))
 
-    if master_version > app.version:
+    if app.version is None or master_version > app.version:
         try:
             latest_master_build = app.get_latest_master_release()
         except ActionNotPermitted:

@@ -36,7 +36,7 @@ class ODataMetadataView(View):
     @method_decorator(toggles.ODATA.required_decorator())
     def get(self, request, domain):
         # template .items is evaluated as a dict lookup instead of a function, which messes with defaultdict
-        case_type_to_properties = dict(get_case_type_to_properties(domain))
+        case_type_to_properties = get_case_type_to_properties(domain)
         for case_type in case_type_to_properties:
             case_type_to_properties[case_type] = sorted(
                 {'casename', 'casetype', 'dateopened', 'ownerid', 'backendid'}

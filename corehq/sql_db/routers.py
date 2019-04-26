@@ -19,7 +19,6 @@ FORM_PROCESSOR_APP = 'form_processor'
 BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
-ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
@@ -102,15 +101,15 @@ def db_for_read_write(model, write=True):
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
-    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
+    elif app_label == ICDS_REPORTS_APP:
         engine_id = ICDS_UCR_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
+            engine_id = connection_manager.get_load_balanced_read_db_alias(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     elif app_label == AAA_APP:
         engine_id = AAA_DB_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alais(AAA_DB_ENGINE_ID)
+            engine_id = connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
 
     if not settings.USE_PARTITIONED_DATABASE:
@@ -125,7 +124,7 @@ def db_for_read_write(model, write=True):
     else:
         default_db = partition_config.get_main_db()
         if not write:
-            return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
+            return connection_manager.get_load_balanced_read_db_alias(app_label, default_db)
         return default_db
 
 

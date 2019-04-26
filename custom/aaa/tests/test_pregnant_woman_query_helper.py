@@ -115,6 +115,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             'domain': cls.domain,
             'doc_type': "CommCareCase",
             'type': 'person',
+            'owner_id': '-',
         })
         ccs_adapter = cls._init_table('reach-ccs_record_cases')
         ccs_adapter.save({
@@ -122,6 +123,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
             'domain': cls.domain,
             'doc_type': "CommCareCase",
             'type': 'ccs_record',
+            'owner_id': '-',
             'ifa_tablets_issued_pre': 48,
             'ifa_tablets_issued_post': 2,
         })
@@ -134,6 +136,7 @@ class TestPregnantWomanBeneficiarySections(TestCase):
                 'domain': cls.domain,
                 'doc_type': "CommCareCase",
                 'type': 'tasks',
+                'owner_id': '-',
                 "indices": [
                     {
                         "case_id": "tasks_case",
