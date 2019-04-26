@@ -204,7 +204,7 @@ hqDefine('app_manager/js/summary/models',[
     var moduleModel = function (module) {
         var self = contentItemModel(module);
 
-        self.url = initialPageData.reverse("view_module", self.id);
+        self.url = initialPageData.reverse("view_module", self.unique_id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
@@ -214,7 +214,7 @@ hqDefine('app_manager/js/summary/models',[
     var formModel = function (form) {
         var self = contentItemModel(form);
 
-        self.url = initialPageData.reverse("form_source", self.id);
+        self.url = initialPageData.reverse("form_source", self.unique_id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function (question) {
             return contentItemModel(_.defaults(question, {
