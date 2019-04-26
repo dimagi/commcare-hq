@@ -11,7 +11,8 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
     'app_manager/js/widgets_v4',       // version dropdown
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
+    'analytix/js/kissmetrix',
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
 
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
@@ -138,6 +139,7 @@ hqDefine('app_manager/js/summary/models',[
         });
         self.changeVersions = function () {
             if (self.firstAppId && self.secondAppId()) {
+                kissmetricsAnalytics.track.event("Compare App Versions: Change Version Using Dropdown");
                 window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
             } else {
                 window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());
