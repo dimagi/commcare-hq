@@ -560,7 +560,7 @@ class RepeatRecord(Document):
     payload_id = StringProperty()
 
     overall_tries = IntegerProperty(default=0)
-    max_possible_tries = IntegerProperty(default=3)
+    max_possible_tries = IntegerProperty(default=5)
 
     attempts = ListProperty(RepeatRecordAttempt)
 
@@ -665,11 +665,12 @@ class RepeatRecord(Document):
         window = timedelta(minutes=0)
         if self.last_checked:
             window = now - self.last_checked
-            window += (window // 2)  # window *= 1.5
+            window *= 3
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
+        # Retries will typically be after 1h, 3h, 9h, 27h, 81h -- 5d 3h total
 
         return RepeatRecordAttempt(
             cancelled=False,

@@ -14,9 +14,10 @@ hqDefine('app_manager/js/summary/models',[
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
 
     var menuItemModel = function (options) {
-        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors']);
+        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
             has_errors: false,
+            has_changes: false,
         }, options);
 
         self.isSelected = ko.observable(false);
@@ -28,7 +29,7 @@ hqDefine('app_manager/js/summary/models',[
     };
 
     var menuModel = function (options) {
-        assertProperties.assert(options, ['items', 'viewAllItems'], []);
+        assertProperties.assert(options, ['items', 'viewAllItems'], ['viewChanged']);
 
         var self = {};
 
@@ -36,12 +37,11 @@ hqDefine('app_manager/js/summary/models',[
         self.viewAllItems = options.viewAllItems;
 
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
-        self.viewAllSelected = ko.computed(function () {
-            return !self.selectedItemId();
-        });
+        self.selectedItemId.extend({ notify: 'always' });
 
         self.select = function (item) {
             self.selectedItemId(item.id);
+            self.viewChangedOnlySelected(false);
             _.each(self.items, function (i) {
                 i.isSelected(item.id === i.id);
                 _.each(i.subitems, function (s) {
@@ -52,6 +52,23 @@ hqDefine('app_manager/js/summary/models',[
         self.selectAll = function () {
             self.select('');
         };
+
+        self.viewChanged = options.viewChanged;
+        self.viewChangedOnlySelected = ko.observable(false);
+        self.viewChangedOnly = function () {
+            self.viewChangedOnlySelected(true);
+            _.each(self.items, function (i) {
+                i.isSelected(i.has_changes);
+                _.each(i.subitems, function (s) {
+                    s.isSelected(s.has_changes);
+                });
+            });
+        };
+
+        self.viewAllSelected = ko.computed(function () {
+            return !self.selectedItemId() && !self.viewChangedOnlySelected();
+        });
+
 
         return self;
     };
@@ -64,6 +81,18 @@ hqDefine('app_manager/js/summary/models',[
         self.isVisible = ko.computed(function () {
             return self.isSelected() && self.matchesQuery();
         });
+        self.getDiffClass = function (attribute) {
+            return self.changes[attribute] ? 'diff-' + self.changes[attribute] : '';
+        };
+        self.getOptionsDiffClass = function (option) {
+            return self.changes['options'][option] ? 'diff-' + self.changes['options'][option] : '';
+        };
+        self.getLoadSaveDiffClass = function (attribute, caseType, caseProperty) {
+            if (self.changes[attribute][caseType] && self.changes[attribute][caseType][caseProperty]) {
+                return 'diff-' + self.changes[attribute][caseType][caseProperty];
+            }
+            return '';
+        };
 
         return self;
     };
@@ -74,9 +103,13 @@ hqDefine('app_manager/js/summary/models',[
 
         // Connection to menu
         self.selectedItemId = ko.observable('');      // blank indicates "View All"
+        self.selectedItemId.extend({ notify: 'always' });
         self.selectedItemId.subscribe(function (selectedId) {
             options.onSelectMenuItem(selectedId);
         });
+        self.selectChangedOnly = function () {
+            options.onSelectChangesOnlyMenuItem();
+        };
 
         // Search box behavior
         self.query = ko.observable('');
@@ -171,7 +204,7 @@ hqDefine('app_manager/js/summary/models',[
     var moduleModel = function (module) {
         var self = contentItemModel(module);
 
-        self.url = initialPageData.reverse("view_module", self.id);
+        self.url = initialPageData.reverse("view_module", self.unique_id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
@@ -181,7 +214,7 @@ hqDefine('app_manager/js/summary/models',[
     var formModel = function (form) {
         var self = contentItemModel(form);
 
-        self.url = initialPageData.reverse("form_source", self.id);
+        self.url = initialPageData.reverse("form_source", self.unique_id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function (question) {
             return contentItemModel(_.defaults(question, {
@@ -198,6 +231,13 @@ hqDefine('app_manager/js/summary/models',[
                 contentInstance.selectedItemId(newValue);
             });
         });
+        menuInstance.viewChangedOnlySelected.subscribe(function (newValue) {
+            if (newValue) {
+                _.each(contentInstances, function (contentInstance) {
+                    contentInstance.selectChangedOnly();
+                });
+            }
+        });
         $("#hq-sidebar > nav").koApplyBindings(menuInstance);
     };
 
@@ -210,8 +250,8 @@ hqDefine('app_manager/js/summary/models',[
     var initVersionsBox = function ($dropdown, initialValue) {
         widgets.initVersionDropdown($dropdown, {
             initialValue: initialValue,
-            width: "100px",
-            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest")}],
+            width: "150px",
+            extraValues: [{id: initialPageData.get("latest_app_id"), text: gettext("Latest saved")}],
         });
     };
 

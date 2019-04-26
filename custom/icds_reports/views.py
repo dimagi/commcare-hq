@@ -1668,7 +1668,7 @@ class DownloadExportReport(View):
         file_format = self.request.GET.get('file_format', 'xlsx')
         content_type = Format.from_format(file_format)
         data_type = self.request.GET.get('data_type')
-        icds_file = IcdsFile.objects.get(blob_id=uuid)
+        icds_file = get_object_or_404(IcdsFile, blob_id=uuid)
         response = HttpResponse(
             icds_file.get_file_from_blobdb().read(),
             content_type=content_type.mimetype
@@ -1683,7 +1683,7 @@ class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
+        icds_file = get_object_or_404(IcdsFile, blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
             response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
@@ -1878,8 +1878,8 @@ class CasDataExportAPIView(View):
 
         query_month = date(year, month, 1)
         today = date.today()
-        current_month = today - relativedelta(months=1) if today.day <= 15 else today
-        if query_month > current_month:
+        available_month = today - relativedelta(months=2) if today.day <= 15 else today - relativedelta(months=1)
+        if query_month > available_month:
             return JsonResponse(self.message('invalid_month'), status=400)
 
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
