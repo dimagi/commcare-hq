@@ -15,7 +15,8 @@ NON_LOCATION_SAFE_VIEWS = [
     'BaseDomainView',
     'TemplateView',
     'BugReportView',
-    'RedirectView'
+    'RedirectView',
+    'ICDSBugReportView'
 ]
 
 
