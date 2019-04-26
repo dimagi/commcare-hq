@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, JsonResponse
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -405,6 +405,27 @@ class UploadFixtureAPIResponse(object):
     def code(self):
         return self.response_codes[self.status]
 
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+        }
+
+
+class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
+    def __init__(self, status, message, download_id, status_url):
+        super(AsyncUploadFixtureAPIResponse, self).__init__(status, message)
+        self.download_id = download_id
+        self.status_url = status_url
+
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+            'status_url': self.status_url,
+            'download_id': self.download_id,
+        }
+
 
 @csrf_exempt
 @require_POST
@@ -419,8 +440,7 @@ def upload_fixture_api(request, domain, **kwargs):
     """
 
     upload_fixture_api_response = _upload_fixture_api(request, domain)
-    return json_response({'message': upload_fixture_api_response.message,
-                          'code': upload_fixture_api_response.code})
+    return JsonResponse(upload_fixture_api_response.get_response())
 
 
 @csrf_exempt
@@ -489,16 +509,10 @@ def _upload_fixture_api(request, domain):
                     reverse('fixture_api_status', args=(domain, download_id))
                 )
 
-                curl_command = "curl -v --digest {} -u {}".format(
-                    status_url, request.user.username
+                return AsyncUploadFixtureAPIResponse(
+                    'success', _("File has been uploaded successfully and is queued for processing."),
+                    download_id, status_url
                 )
-
-                return UploadFixtureAPIResponse('success', {
-                    "download_id": download_id,
-                    "status_url": status_url,
-                    "curl_command": curl_command,
-                    "message": _("File has been uploaded successfully and is queued for processing.")
-                })
 
         try:
             validate_fixture_file_format(filename)
