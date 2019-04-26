@@ -248,6 +248,45 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
     def __init__(self, app, lang=None):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
 
+    def get_document_by_legacy_identifier(self, identifier):
+        identifying_parts = identifier.split('_')
+        if len(identifying_parts) not in (1, 2):
+            raise ValueError
+        module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
+        document = self.app.get_module(module_index)
+        if len(identifying_parts) == 2:
+            form_index = int(identifying_parts[1].replace("form", "")) - 1
+            document = document.get_form(form_index)
+        return document
+
+    def get_document_by_identifier(self, identifier):
+        unique_id = identifier.split(':')[1]
+        if is_module_sheet(identifier):
+            return self.app.get_module_by_unique_id(unique_id)
+        if is_form_sheet(identifier):
+            return self.app.get_form(unique_id)
+
+    def get_document(self, identifier):
+        message = None
+        try:
+            if is_legacy_module_sheet(identifier) or is_legacy_form_sheet(identifier):
+                document = self.get_document_by_legacy_identifier(identifier)
+            else:
+                document = self.get_document_by_identifier(identifier)
+        except (IndexError, ValueError) as err:
+            message = _('Did not recognize "%s", skipping row.') % identifier
+        except ModuleNotFoundException as err:
+            message = _('Invalid menu in row "%s", skipping row.') % identifier
+        except FormNotFoundException as err:
+            message = _('Invalid form in row "%s", skipping row.') % identifier
+        if message:
+            if six.PY2:
+                err.message = message
+                raise err
+            else:
+                raise err.__class__(message) from err
+        return document
+
     def update(self, rows):
         """
         This handles updating module/form names and menu media
@@ -255,35 +294,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            identifying_text = row.get('menu_or_form', row.get('sheet_name', ''))
-            identifying_parts = identifying_text.split('_')
-
-            if len(identifying_parts) not in (1, 2):
-                self.msgs.append((
-                    messages.error,
-                    _('Did not recognize "%s", skipping row.') % identifying_text
-                ))
-                continue
-
-            module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
+            identifier = row.get('menu_or_form', row.get('sheet_name', ''))
             try:
-                document = self.app.get_module(module_index)
-            except ModuleNotFoundException:
-                self.msgs.append((
-                    messages.error,
-                    _('Invalid menu in row "%s", skipping row.') % identifying_text
-                ))
+                document = self.get_document(identifier)
+            except (IndexError, ValueError, ModuleNotFoundException, FormNotFoundException) as err:
+                self.msgs.append((messages.error, str(err)))
                 continue
-            if len(identifying_parts) == 2:
-                form_index = int(identifying_parts[1].replace("form", "")) - 1
-                try:
-                    document = document.get_form(form_index)
-                except FormNotFoundException:
-                    self.msgs.append((
-                        messages.error,
-                        _('Invalid form in row "%s", skipping row.') % identifying_text
-                    ))
-                    continue
 
             self.update_translation_dict('default_', document.name, row)
 
