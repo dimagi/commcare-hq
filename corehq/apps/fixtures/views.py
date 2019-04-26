@@ -497,7 +497,7 @@ def _upload_fixture_api(request, domain):
                     "download_id": download_id,
                     "status_url": status_url,
                     "curl_command": curl_command,
-                    "message": _("File uploaded successfully.")
+                    "message": _("File has been uploaded successfully and is queued for processing.")
                 })
 
         try:
