@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import six
 from django.contrib import messages
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
@@ -133,23 +134,53 @@ def get_menu_row(languages, media_image, media_audio):
 
 
 def get_module_sheet_name(module):
-    return "menu{}".format(module.get_app().get_module_index(module.unique_id) + 1)
+    """
+    Returns 'menu:UUID:slug'
+
+    Legacy: Used to return "menuN" where N was its (1-based) index.
+
+    The UUID uniquely identifies the module even if it moves. The slug
+    makes it readable by (English-reading) humans.
+    """
+    return 'menu:{}:{}'.format(module.unique_id, get_name_slug(module))
 
 
 def get_form_sheet_name(form):
-    module = form.get_module()
-    return "_".join([
-        get_module_sheet_name(module),
-        "form{}".format(module.get_form_index(form.unique_id) + 1)
-    ])
+    """
+    Returns 'form:UUID:slug'
+
+    Legacy: Used to return "menuM_formN" where N was its (1-based) index.
+
+    The UUID uniquely identifies the form even if it moves. The slug
+    makes it readable by humans.
+    """
+    return 'form:{}:{}'.format(form.unique_id, get_name_slug(form))
+
+
+def get_name_slug(module_or_form):
+    name_dict = module_or_form.name
+    if 'en' in name_dict:
+        name = name_dict['en']
+    elif name_dict:
+        name = list(name_dict.values())[0]
+    else:
+        name = ''
+    return slugify(name)
 
 
 def is_form_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' in identifier
+    return (
+        identifier.startswith('form:')
+        or ('module' in identifier or 'menu' in identifier) and 'form' in identifier  # Legacy
+    )
+
 
 
 def is_module_sheet(identifier):
-    return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+    return (
+        identifier.startswith('menu:')
+        or ('module' in identifier or 'menu' in identifier) and 'form' not in identifier  # Legacy
+    )
 
 
 def is_modules_and_forms_sheet(identifier):
