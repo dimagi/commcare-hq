@@ -1636,7 +1636,7 @@ class ExportDataSchema(Document):
     def record_update(self, app_id, app_version):
         self.last_app_versions[app_id] = max(
             self.last_app_versions.get(app_id, 0),
-            app_version,
+            app_version or 0,
         )
 
     @staticmethod

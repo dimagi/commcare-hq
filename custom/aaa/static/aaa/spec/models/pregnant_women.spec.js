@@ -45,7 +45,7 @@ describe('Pregnant women models', function () {
                 {
                     id: '1',
                     name: 'test Name',
-                    age: 14,
+                    dob: '2017-04-11',
                     pregMonth: 6,
                     highRiskPregnancy: 'yes',
                     noOfAncCheckUps: 5,
@@ -54,7 +54,7 @@ describe('Pregnant women models', function () {
             );
             assert.equal('1', listView.id);
             assert.equal('<a href="unified_beneficiary_details/pregnant_women/1/?month=3&year=2019">test Name</a>', listView.name());
-            assert.equal(14, listView.age());
+            assert.equal('1 Yr 11 Mon', listView.age());
             assert.equal(6, listView.pregMonth());
             assert.equal('Yes', listView.highRiskPregnancy());
             assert.equal(5, listView.noOfAncCheckUps());
@@ -205,6 +205,78 @@ describe('Pregnant women models', function () {
                 edd: '2019-06-28',
             });
             assert.equal(1, pregnantModel.pregnancyStatus());
+        });
+
+        it('test personBloodGroup should return 0+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'o_pos',
+            });
+            assert.equal('0+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return A+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'a_pos',
+            });
+            assert.equal('A+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return B+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'b_pos',
+            });
+            assert.equal('B+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return AB+', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'ab_pos',
+            });
+            assert.equal('AB+', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return 0-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'o_neg',
+            });
+            assert.equal('0-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return A-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'a_neg',
+            });
+            assert.equal('A-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return B-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'b_neg',
+            });
+            assert.equal('B-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return AB-', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: 'ab_neg',
+            });
+            assert.equal('AB-', pregnantModel.personBloodGroup());
+        });
+
+        it('test personBloodGroup should return N/A', function () {
+            var pregnantModel = pregnantWomenModels.pregnantModel({});
+            pregnantModel.updateModel({
+                bloodGroup: '',
+            });
+            assert.equal('N/A', pregnantModel.personBloodGroup());
         });
     });
 
