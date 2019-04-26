@@ -65,7 +65,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
             try:
                 return self.xform.itext_node
             except XFormException:
-                # Can't do anything with this form
+                # Should be a blank form with no questions added so far, shouldn't need any update so skip.
                 pass
 
     def update(self, rows):
