@@ -13,6 +13,7 @@
     "reach-test",
     "icds-test",
     "icds-cas",
+    "icds-cas-sandbox",
     "cas-lab"
   ],
   "server_environment": [
