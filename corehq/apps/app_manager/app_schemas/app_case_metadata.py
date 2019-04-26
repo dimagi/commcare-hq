@@ -290,6 +290,11 @@ class FormQuestion(JsonObject):
         return vtype['editable']
 
 
+class LoadSaveProperty(JsonObject):
+    case_type = StringProperty()
+    property = StringProperty()
+
+
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()
     children = ListProperty(lambda: FormQuestionResponse, exclude_if_none=True)
@@ -442,9 +447,6 @@ class CaseTypeMeta(JsonObject):
         return self.save_properties.get(form_id, {}).get(path, [])
 
 
-LoadSaveProperty = namedtuple('LoadSaveProperty', 'case_type property')
-
-
 class AppCaseMetadata(JsonObject):
     case_types = ListProperty(CaseTypeMeta)  # case_type -> CaseTypeMeta
 
@@ -452,7 +454,7 @@ class AppCaseMetadata(JsonObject):
         """gets all case types with a list of properties which load into a form question
         """
         return [
-            LoadSaveProperty(case_type.name, prop)
+            LoadSaveProperty(case_type=case_type.name, property=prop)
             for case_type in self.case_types
             for prop in case_type.get_load_properties(form_id, path)
         ]
@@ -461,7 +463,7 @@ class AppCaseMetadata(JsonObject):
         """gets all case types with a list of properties which are saved from a form question
         """
         return [
-            LoadSaveProperty(case_type.name, prop)
+            LoadSaveProperty(case_type=case_type.name, property=prop)
             for case_type in self.case_types
             for prop in case_type.get_save_properties(form_id, path)
         ]

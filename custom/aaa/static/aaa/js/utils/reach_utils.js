@@ -97,11 +97,23 @@ hqDefine("aaa/js/utils/reach_utils", [
         name: 'All',
     };
 
+    var BLOODGROUPS = {
+        o_pos: "0+",
+        a_pos: "A+",
+        b_pos: "B+",
+        ab_pos: "AB+",
+        o_neg: "0-",
+        a_neg: "A-",
+        b_neg: "B-",
+        ab_neg: "AB-",
+    };
+
     return {
         reachUtils: reachUtils,
         postData: postData,
         localStorage: localStorage,
         USERROLETYPES: USERROLETYPES,
         DEFAULTLOCATION: DEFAULTLOCATION,
+        BLOODGROUPS: BLOODGROUPS,
     };
 });
