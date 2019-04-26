@@ -77,7 +77,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
-log = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger(__name__)
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
