@@ -135,7 +135,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore(path='attachment_properties', new=MISSING),
         Ignore(path='attachment_from', new=MISSING),
         Ignore(path='attachment_src', new=MISSING),
-        Ignore('diff', path='content_type'),  # was marked "couch only" but that fails a test
+        Ignore(path='content_type', old=MISSING),
         Ignore(path='server_mime', new=MISSING),
         Ignore(path='attachment_name', new=MISSING),
         Ignore(path='server_md5', new=MISSING),
