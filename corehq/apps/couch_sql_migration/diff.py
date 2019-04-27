@@ -128,7 +128,7 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
     'LedgerValue': [
-        Ignore(path='_id', new=MISSING),
+        Ignore(path='_id'),  # couch != SQL
     ],
     'case_attachment': [
         Ignore(path='_id', new=MISSING),
