@@ -211,7 +211,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         )
         async_restore_task_id = '0edecc20d89d6f4a09f2e992c0c24b5f'
         initial_sync_path = 'path/to/payload'
-        restore_config = self._restore_config(is_async=True)
+        self._restore_config(is_async=True)
         # pretend we have a task running
         async_restore_task_id_cache.set_value(async_restore_task_id)
         restore_payload_path_cache.set_value(initial_sync_path)
