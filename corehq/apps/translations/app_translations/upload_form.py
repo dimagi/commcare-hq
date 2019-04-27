@@ -116,7 +116,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         default_trans_el = self.itext.find("./{f}translation[@lang='%s']" % default_lang)
         if default_trans_el.exists():
             return default_trans_el
-        non_default_langs = list(self.app.langs)
+        non_default_langs = copy.copy(self.app.langs)
         non_default_langs.remove(default_lang)
         for lang in non_default_langs:
             trans_el = self.itext.find("./{f}translation[@lang='%s']" % lang)
