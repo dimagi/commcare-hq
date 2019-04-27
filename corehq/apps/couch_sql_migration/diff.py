@@ -131,11 +131,11 @@ load_ignore_rules = memoized(lambda: {
         Ignore(path='_id'),  # couch != SQL
     ],
     'case_attachment': [
-        Ignore(path='_id', new=MISSING),
         Ignore(path='attachment_properties', new=MISSING),
         Ignore(path='attachment_from', new=MISSING),
         Ignore(path='attachment_src', new=MISSING),
         Ignore(path='content_type', old=MISSING),
+        Ignore(path='doc_type', new=MISSING),
         Ignore(path='server_mime', new=MISSING),
         Ignore(path='attachment_name', new=MISSING),
         Ignore(path='server_md5', new=MISSING),
