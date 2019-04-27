@@ -279,17 +279,17 @@ class MigrationTestCase(BaseMigrationTestCase):
                 'property': 'edited value'
             }
         ).as_text()
-        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+        new_form = submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)[0]
+        deprecated_id = new_form.deprecated_form_id
 
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        def assertState():
+            self.assertEqual(self._get_form_ids(), [form_id])
+            self.assertEqual(self._get_form_ids('XFormDeprecated'), [deprecated_id])
+            self.assertEqual(self._get_case_ids(), [case_id])
 
+        assertState()
         self._do_migration_and_assert_flags(self.domain_name)
-
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        assertState()
         self._compare_diffs([])
 
     def test_old_form_metadata_migration(self):
