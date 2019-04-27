@@ -582,7 +582,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
     sql_form.edited_on = getattr(couch_form, 'edited_on', None)
     if couch_form.is_deprecated:
-        sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
+        sql_form.edited_on = getattr(couch_form, 'deprecated_date', sql_form.edited_on)
 
     if couch_form.is_submission_error_log:
         sql_form.xmlns = sql_form.xmlns or ''
