@@ -65,7 +65,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
     def aggregation_query(self):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1) - relativedelta(days=1)).strftime("'%Y-%m-%d'::date")
-        age_in_days = "({} - case_list.dob)::integer".format(end_month_string)
+        age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         open_in_month = ("({} - case_list.opened_on::date)::integer >= 0"
                          " AND (case_list.closed = 0"
@@ -221,7 +221,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
-            ('person_name', 'case_list.person_name'),
+            ('person_name', 'person_cases.name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
             ('mobile_number', 'person_cases.phone_number'),
@@ -236,7 +236,7 @@ class CcsRecordMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 'COALESCE(agg_delivery.valid_visits, 0)'
              ')'),
             ('opened_on', 'case_list.opened_on'),
-            ('dob', 'case_list.dob'),
+            ('dob', 'person_cases.dob'),
             ('closed', 'case_list.closed'),
             ('anc_abnormalities', 'agg_bp.anc_abnormalities'),
             ('home_visit_date', 'agg_bp.latest_time_end_processed'),
