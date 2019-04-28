@@ -401,11 +401,10 @@ class DiffTestCases(SimpleTestCase):
             'doc_type': 'CommCareCase',
             'case_attachments': {
                 'xyz': {
-                    '_id': 'ignored',
+                    'doc_type': 'ignored',
                     'attachment_properties': 'ignored',
                     'attachment_from': 'ignored',
                     'attachment_src': 'ignored',
-                    'content_type': 'ignored-couch',
                     'server_mime': 'ignored',
                     'attachment_name': 'ignored',
                     'server_md5': 'ignored',
