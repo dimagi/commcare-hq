@@ -11,7 +11,8 @@ hqDefine('app_manager/js/summary/models',[
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/layout',
     'app_manager/js/widgets_v4',       // version dropdown
-], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets) {
+    'analytix/js/kissmetrix',
+], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
 
     var menuItemModel = function (options) {
         assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
@@ -138,6 +139,7 @@ hqDefine('app_manager/js/summary/models',[
         });
         self.changeVersions = function () {
             if (self.firstAppId && self.secondAppId()) {
+                kissmetricsAnalytics.track.event("Compare App Versions: Change Version Using Dropdown");
                 window.location.href =  initialPageData.reverse(options.versionUrlName, self.firstAppId(), self.secondAppId());
             } else {
                 window.location.href = initialPageData.reverse(options.versionUrlName, self.firstAppId());
@@ -204,7 +206,7 @@ hqDefine('app_manager/js/summary/models',[
     var moduleModel = function (module) {
         var self = contentItemModel(module);
 
-        self.url = initialPageData.reverse("view_module", self.id);
+        self.url = initialPageData.reverse("view_module", self.unique_id);
         self.icon = utils.moduleIcon(self) + ' hq-icon';
         self.forms = _.map(self.forms, formModel);
 
@@ -214,7 +216,7 @@ hqDefine('app_manager/js/summary/models',[
     var formModel = function (form) {
         var self = contentItemModel(form);
 
-        self.url = initialPageData.reverse("form_source", self.id);
+        self.url = initialPageData.reverse("form_source", self.unique_id);
         self.icon = utils.formIcon(self) + ' hq-icon';
         self.questions = _.map(self.questions, function (question) {
             return contentItemModel(_.defaults(question, {
