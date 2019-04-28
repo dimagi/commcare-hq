@@ -81,6 +81,8 @@ def _diff_args(ignore_rule, diff_defaults):
 @softer_assert()
 class DiffTestCases(SimpleTestCase):
 
+    maxDiff = None
+
     def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected=REAL_DIFFS):
         filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)
@@ -410,8 +412,8 @@ class DiffTestCases(SimpleTestCase):
                     'server_md5': 'ignored',
                     'identifier': 'xyz',
                     'attachment_size': 123,
-                    'properties': 'value',
                     'unexpected': 'value',
+                    'properties': 'value',
                 },
             },
         }
