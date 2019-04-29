@@ -1992,30 +1992,6 @@
           "awc_id",
           "owner_id"
         ]
-      },
-      {
-        "column_ids": [
-          "awc_id",
-          "add"
-        ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "add"
-        ]
-      },
-      {
-        "column_ids": [
-          "block_id",
-          "add"
-        ]
-      },
-      {
-        "column_ids": [
-          "district_id",
-          "add"
-        ]
       }
     ],
     "disable_destructive_rebuild": true
