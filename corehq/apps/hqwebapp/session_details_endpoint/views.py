@@ -56,6 +56,7 @@ class SessionDetailsView(View):
         secure_session = session.get('secure_session')
         timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
         session.set_expiry(timeout * 60)
+        session.save()
 
         return JsonResponse({
             'username': user.username,
