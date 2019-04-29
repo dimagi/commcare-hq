@@ -277,11 +277,7 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         except FormNotFoundException as err:
             message = _('Invalid form in row "%s", skipping row.') % identifier
         if message:
-            if six.PY2:
-                err.message = message
-                raise err
-            else:
-                raise err.__class__(message) from err
+            raise err.__class__(message)
         return document
 
     def update(self, rows):
