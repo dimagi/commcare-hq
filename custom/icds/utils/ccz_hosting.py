@@ -13,12 +13,16 @@ class CCZHostingUtility:
         self.ccz_file_blob = None
         self._load_ccz_file()
 
-    def _load_ccz_file(self):
+    @cached_property
+    def icds_file_obj(self):
         try:
-            self.ccz_file_blob = IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)
-            self.ccz_file = self.ccz_file_blob.get_file_from_blobdb()
+            return IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)
         except IcdsFile.DoesNotExist:
-            pass
+            return None
+
+    def _load_ccz_file(self):
+        if self.icds_file_obj:
+            self.ccz_file_blob = IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)
 
     @cached_property
     def ccz_file_meta(self):

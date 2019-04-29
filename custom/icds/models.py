@@ -67,6 +67,7 @@ class CCZHosting(models.Model):
             ccz_hosting = cls.objects.get(
                 link_id=link_id, app_id=app_id
             )
+            ccz_hosting.delete_ccz()
             ccz_hosting.version = version
         except cls.DoesNotExist:
             ccz_hosting = cls(link_id=link_id, app_id=app_id, version=version)
@@ -83,3 +84,13 @@ class CCZHosting(models.Model):
         self.full_clean()
         super(CCZHosting, self).save(*args, **kwargs)
         setup_ccz_file_for_hosting.delay(self.pk)
+
+    def delete_ccz(self):
+        # if no other link is using this app version, delete the file reference
+        if not (CCZHosting.objects.filter(app_id=self.app_id, version=self.version)
+                .exclude(link=self.link).exists()):
+            self.utility.icds_file_obj.delete()
+
+    def delete(self, *args, **kwargs):
+        self.delete_ccz()
+        super(CCZHosting, self).delete(*args, **kwargs)
