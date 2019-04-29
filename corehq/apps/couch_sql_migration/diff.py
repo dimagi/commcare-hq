@@ -106,6 +106,8 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
         Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
 
+        Ignore(path=('actions', '[*]')),
+
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
