@@ -26,8 +26,7 @@ from corehq.apps.reports.v2.reports.explore_case_data import (
 )
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
-    InvalidExcelFileException
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
@@ -366,18 +365,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
-            return WorkbookJSONReader(bulk_file)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
-                                           newline=None))
-                raise BulkUploadCasesException(_("CommCare HQ no longer supports CSV upload. "
-                                                 "Please convert to Excel 2007 or higher (.xlsx) "
-                                                 "and try again."))
-            except UnicodeDecodeError:
-                raise BulkUploadCasesException(_("Unrecognized format"))
-        except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
+            return get_workbook(bulk_file)
+        except WorkbookJSONError as e:
+            raise BulkUploadCasesException(six.text_type(e))
 
     def _get_item_data(self, case):
         return {

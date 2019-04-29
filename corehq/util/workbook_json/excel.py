@@ -155,7 +155,6 @@ class IteratorJSONReader(object):
 
 def get_workbook(file_or_filename):
     workbook = None
-    error = None
 
     try:
         workbook = WorkbookJSONReader(file_or_filename)
@@ -168,6 +167,14 @@ def get_workbook(file_or_filename):
     except JSONReaderError as e:
         raise WorkbookJSONError(_(
             "Upload failed due to a problem with Excel columns. Error details: {}."
+        ).format(e))
+    except HeaderValueError as e:
+        raise WorkbookJSONError(_(
+            "Upload encountered a data type error: {}."
+        ).format(e))
+    except AttributeError:
+        raise WorkbookJSONError(_(
+            "Error processing Excel file: {}."
         ).format(e))
 
     return workbook

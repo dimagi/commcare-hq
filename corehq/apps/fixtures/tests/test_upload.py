@@ -96,9 +96,6 @@ validation_test_cases = [
         "Error in 'types' sheet for 'field 1', '100'. "
         "Field names should be strings, not numbers",
     ]),
-    ('not_excel_file', [
-        "Invalid file-format. Please upload a valid xlsx file.",
-    ]),
     ('no_types_sheet', [
         "Workbook does not contain a sheet called types",
     ]),
