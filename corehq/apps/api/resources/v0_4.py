@@ -266,6 +266,8 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
 
     def obj_get_list(self, bundle, domain, **kwargs):
         request_filters = {k: v for k, v in bundle.request.GET.items()}
+        request_filters.pop('username')
+        request_filters.pop('api_key')
         request_filters.update(kwargs)
         filters = v0_3.CaseListFilters(request_filters).filters
 
