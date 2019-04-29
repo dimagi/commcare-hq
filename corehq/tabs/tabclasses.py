@@ -691,8 +691,7 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain)
 
-            from corehq.apps.data_interfaces.views \
-                import ArchiveFormView, AutomaticUpdateRuleListView
+            from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
 
             if self.can_use_data_cleanup:
                 edit_section[0][1].append({
@@ -700,11 +699,6 @@ class ProjectDataTab(UITab):
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
                 })
 
-            if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
-                edit_section[0][1].append({
-                    'title': _(ArchiveFormView.page_title),
-                    'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
-                })
             items.extend(edit_section)
 
         if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
