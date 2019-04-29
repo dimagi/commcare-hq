@@ -24,7 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
 def get_bulk_app_single_sheet_by_name(app, lang):
     rows = []
     for module_index, module in enumerate(app.modules):
-        prefix = [get_module_sheet_name(module)]
+        prefix = [get_module_sheet_name(app, module)]
 
         # Name / menu media row
         # Leave blanks for case_property, list_or_detail, and label
@@ -39,7 +39,7 @@ def get_bulk_app_single_sheet_by_name(app, lang):
 
         for form_index, form in enumerate(module.forms):
             # Leave blanks for case_property and list_or_detail
-            prefix = [get_form_sheet_name(form), '', '']
+            prefix = [get_form_sheet_name(app, form), '', '']
 
             # Name / menu media row
             # Leave another blank for label
@@ -70,7 +70,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
 
-        module_sheet_name = get_module_sheet_name(module)
+        module_sheet_name = get_module_sheet_name(app, module)
         rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
             row_type="Menu",
             sheet_name=module_sheet_name,
@@ -86,7 +86,7 @@ def get_bulk_app_sheets_by_name(app, exclude_module=None, exclude_form=None):
             if exclude_form is not None and exclude_form(form):
                 continue
 
-            form_sheet_name = get_form_sheet_name(form)
+            form_sheet_name = get_form_sheet_name(app, form)
             rows[MODULES_AND_FORMS_SHEET_NAME].append(get_modules_and_forms_row(
                 row_type="Form",
                 sheet_name=form_sheet_name,

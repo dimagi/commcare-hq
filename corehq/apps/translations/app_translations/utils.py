@@ -89,7 +89,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
         if exclude_module is not None and exclude_module(module):
             continue
 
-        sheet_name = get_module_sheet_name(module)
+        sheet_name = get_module_sheet_name(app, module)
         headers.append([sheet_name, ['case_property', 'list_or_detail'] + default_lang_list])
 
         for form in module.get_forms():
@@ -98,7 +98,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
             if exclude_form is not None and exclude_form(form):
                 continue
 
-            sheet_name = get_form_sheet_name(form)
+            sheet_name = get_form_sheet_name(app, form)
             headers.append([
                 sheet_name,
                 ["label"] + lang_list
@@ -133,30 +133,30 @@ def get_menu_row(languages, media_image, media_audio):
     return languages + media_image + media_audio
 
 
-def get_module_sheet_name(module):
+def get_module_sheet_name(app, module):
     """
     Returns 'slug:m:UUID'
 
     The UUID uniquely identifies the module even if it moves. The slug
     makes it readable by (English-reading) humans.
     """
-    return '{slug}:m:{uuid}'.format(slug=get_name_slug(module), uuid=module.unique_id)
+    return '{slug}:m:{uuid}'.format(slug=get_name_slug(app, module), uuid=module.unique_id)
 
 
-def get_form_sheet_name(form):
+def get_form_sheet_name(app, form):
     """
     Returns 'slug:f:UUID'
 
     The UUID uniquely identifies the form even if it moves. The slug
     makes it readable by humans.
     """
-    return '{slug}:f:{uuid}'.format(slug=get_name_slug(form), uuid=form.unique_id)
+    return '{slug}:f:{uuid}'.format(slug=get_name_slug(app, form), uuid=form.unique_id)
 
 
-def get_name_slug(module_or_form):
+def get_name_slug(app, module_or_form):
     name_dict = module_or_form.name
-    if 'en' in name_dict:
-        name = name_dict['en']
+    if app.default_language in name_dict:
+        name = name_dict[app.default_language]
     elif name_dict:
         name = list(name_dict.values())[0]
     else:
@@ -270,13 +270,13 @@ def get_legacy_name_map(app, exclude_module=None, exclude_form=None):
         if exclude_module is not None and exclude_module(module):
             continue
         legacy_name = get_module_legacy_sheet_name(module)
-        name_map[legacy_name] = get_module_sheet_name(module)
+        name_map[legacy_name] = get_module_sheet_name(app, module)
 
         for form in module.get_forms():
             if exclude_form is not None and exclude_form(form):
                 continue
             legacy_name = get_form_legacy_sheet_name(form)
-            name_map[legacy_name] = get_form_sheet_name(form)
+            name_map[legacy_name] = get_form_sheet_name(app, form)
 
     return name_map
 
