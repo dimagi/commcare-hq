@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
+from mock import patch
 
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
@@ -159,7 +160,8 @@ class UCRMultiDBTest(TestCase):
         for _adapter in adapter.all_adapters:
             self.assertEqual(0, adapter.get_query_object().count())
 
-        pillow = get_case_pillow(ucr_configs=[ds3])
+        with patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'):
+            pillow = get_case_pillow(ucr_configs=[ds3])
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
 
