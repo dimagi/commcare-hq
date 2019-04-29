@@ -1,10 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import functools
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
+
 from six import string_types
+
+from corehq.util import eval_lazy
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
 import six
+
+
+def evaluate_lazy_args(func, *args):
+    args = [eval_lazy(arg) for arg in args]
+    return func(*args)
 
 
 class TransformedGetter(object):
@@ -166,7 +176,7 @@ def transform_from_datatype(datatype):
     Given a datatype, return a transform for that type.
     """
     identity = lambda x: x
-    return {
+    transform = {
         'date': transform_date,
         'datetime': transform_datetime,
         'decimal': transform_decimal,
@@ -175,13 +185,14 @@ def transform_from_datatype(datatype):
         'string': transform_unicode,
         'array': transform_array,
     }.get(datatype) or identity
+    return functools.partial(evaluate_lazy_args, transform)
 
 
 def getter_from_property_reference(spec):
     if spec.property_name:
         assert not spec.property_path, \
             'indicator {} has both a name and path specified! you must only pick one.'.format(spec.property_name)
-        return DictGetter(property_name=spec.property_name)
+        return functools.partial(evaluate_lazy_args, DictGetter(property_name=spec.property_name))
     else:
         assert spec.property_path, spec.property_name
-        return NestedDictGetter(property_path=spec.property_path)
+        return functools.partial(evaluate_lazy_args, NestedDictGetter(property_path=spec.property_path))
