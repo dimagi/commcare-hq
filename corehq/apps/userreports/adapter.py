@@ -134,7 +134,7 @@ class IndicatorAdapter(object):
         }
 
         try:
-            # make this atomic so that errors to affect outer transactions
+            # make this atomic so that errors don't affect outer transactions
             with transaction.atomic():
                 DataSourceActionLog.objects.create(**kwargs)
         except:  # noqa
