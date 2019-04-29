@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
+function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations,haveAccessToFeatures) {
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -33,28 +33,28 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         .withDOM('ltipr');
 
     vm.setDtColumns = function () {
-        var locationLevelName = 'State';
+         vm.locationLevelName = 'State';
         var locationLevelNameField = 'state_name';
         if (vm.dataAggregationLevel === 1) {
-            locationLevelName = 'State';
+            vm.locationLevelName = 'State';
             locationLevelNameField = 'state_name';
         } else if (vm.dataAggregationLevel === 2) {
-            locationLevelName = 'District';
+            vm.locationLevelName = 'District';
             locationLevelNameField = 'district_name';
         } else if (vm.dataAggregationLevel === 3) {
-            locationLevelName = 'Block';
+            vm.locationLevelName = 'Block';
             locationLevelNameField = 'block_name';
         } else if (vm.dataAggregationLevel === 4) {
-            locationLevelName = 'Sector';
+            vm.locationLevelName = 'Sector';
             locationLevelNameField = 'supervisor_name';
         } else {
-            locationLevelName = 'AWC';
+            vm.locationLevelName = 'AWC';
             locationLevelNameField = 'awc_name';
         }
         vm.dtColumns = [DTColumnBuilder.newColumn(
             locationLevelNameField
         ).withTitle(
-            locationLevelName
+            vm.locationLevelName
         ).renderWith(simpleRender(
             locationLevelNameField
         )).withClass('medium-col')];
@@ -141,6 +141,11 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
     function simpleRender(indicator) {
         return function simpleRenderer(data, type, full) {
+
+            if (haveAccessToFeatures && ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && full['num_launched_awcs'] === 0) {
+                return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+            }
+
             return '<div>' + (
                 full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered
             ) + '</div>';
@@ -148,27 +153,56 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
     function simpleYesNoRender(indicator) {
         return function simpleRenderer(data, type, full) {
-            return '<div>' + (
+
+            if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+                return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+            }
+            return  '<div>' + (
                 full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered
             ) + '</div>';
         };
     }
     function renderHomeVisits(data, type, full) {
+        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits);
     }
     function renderGrowthMonitoring03(data, type, full) {
+        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3);
     }
     function renderTakeHomeRation(data, type, full) {
+        if (haveAccessToFeatures && full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates);
     }
     function renderSupplementaryNutrition(data, type, full) {
+        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6);
     }
     function renderPreSchoolEducation(data, type, full) {
+        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6);
     }
     function renderGrowthMonitoring36(data, type, full) {
+        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
+            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+
+        }
         return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5);
     }
 
@@ -231,7 +265,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations','haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {
