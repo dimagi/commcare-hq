@@ -5,8 +5,7 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.db import connections
-from django.db.models import Case, F, Func, IntegerField, Sum, When
-from django.db.models.functions import ExtractYear, ExtractMonth
+from django.db.models import Case, IntegerField, Sum, When
 
 from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.models import (
@@ -27,9 +26,7 @@ class ChildQueryHelper(object):
 
     @classmethod
     def list(cls, domain, date_, location_filters, sort_column):
-        return Child.objects.annotate(
-            age=ExtractYear(Func(F('dob'), function='age')),
-        ).filter(
+        return Child.objects.filter(
             domain=domain,
             dob__range=(date_ - relativedelta(years=5), date_),
             **location_filters
@@ -38,10 +35,10 @@ class ChildQueryHelper(object):
                 'lastImmunizationType': 'last_immunization_type',
                 'lastImmunizationDate': 'last_immunization_date',
                 'gender': 'sex',
-                'id': 'person_case_id'
+                'id': 'person_case_id',
             }
         ).values(
-            'id', 'name', 'age', 'gender', 'lastImmunizationType', 'lastImmunizationDate'
+            'id', 'name', 'dob', 'gender', 'lastImmunizationType', 'lastImmunizationDate'
         ).order_by(sort_column)
 
     def infant_details(self):
@@ -238,7 +235,7 @@ class PregnantWomanQueryHelper(object):
             SELECT
                 (woman.person_case_id) AS "id",
                 woman.name AS "name",
-                EXTRACT('year' FROM age("woman"."dob")) AS "age",
+                woman.dob AS "dob",
                 EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
                 ccs_record.hrp AS "highRiskPregnancy",
                 ccs_record.num_anc_checkups AS "noOfAncCheckUps"
@@ -496,9 +493,7 @@ class EligibleCoupleQueryHelper(object):
     @classmethod
     def list(cls, domain, date_, location_filters, sort_column):
         return (
-            Woman.objects.annotate(
-                age=ExtractYear(Func(F('dob'), function='age')),
-            ).filter(
+            Woman.objects.filter(
                 domain=domain,
                 dob__range=(date_ - relativedelta(years=49), date_ - relativedelta(years=15)),
                 marital_status='married',
@@ -512,7 +507,7 @@ class EligibleCoupleQueryHelper(object):
                 where=["pregnant_ranges IS NULL OR NOT daterange(%s, %s) && any(pregnant_ranges)"],
                 params=[date_, date_ + relativedelta(months=1)]
             ).values(
-                'id', 'name', 'age',
+                'id', 'name', 'dob',
                 'currentFamilyPlanningMethod', 'adoptionDateOfFamilyPlaning'
             ).order_by(sort_column)
         )
