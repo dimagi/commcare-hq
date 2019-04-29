@@ -53,5 +53,9 @@ class IcdsFile(models.Model):
     def remove_file_from_blobdb(self):
         get_blob_db().delete(key=self.blob_id)
 
+    def delete(self, *args, **kwargs):
+        self.remove_file_from_blobdb()
+        super(IcdsFile, self).delete(*args, **kwargs)
+
     class Meta:
         app_label = 'icds_reports'
