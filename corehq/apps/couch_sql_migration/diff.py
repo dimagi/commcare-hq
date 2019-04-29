@@ -62,7 +62,7 @@ load_ignore_rules = memoized(lambda: {
     'CommCareCase*': [
         Ignore(path='_rev', new=MISSING),
         Ignore(path='initial_processing_complete', new=MISSING),
-        Ignore(path=('actions', '[*]')),  # ignore case actions
+        Ignore(check=is_case_actions),  # ignore case actions
         Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
         Ignore(path='_attachments', new=MISSING),
@@ -258,6 +258,10 @@ class ReplaceDiff(Exception):
         else:
             assert not kw, 'diffs and kw not allowed together'
             self.diffs = diffs
+
+
+def is_case_actions(old_obj, new_obj, rule, diff):
+    return diff.path[0] == "actions"
 
 
 def ignore_renamed(old_name, new_name):
