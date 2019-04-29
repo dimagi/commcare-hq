@@ -52,7 +52,7 @@ hqDefine("aaa/js/models/person", [
         });
 
         self.aadhaarNo = ko.computed(function () {
-            if (self.gender === 'N/A') {
+            if (self.aadhaarNo === 'N/A') {
                 return self.aadhaarNo;
             }
             return self.aadhaarNo ? 'Yes' : 'No';

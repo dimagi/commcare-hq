@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import open
 
 from django.conf import settings
@@ -279,17 +279,17 @@ class MigrationTestCase(BaseMigrationTestCase):
                 'property': 'edited value'
             }
         ).as_text()
-        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+        new_form = submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)[0]
+        deprecated_id = new_form.deprecated_form_id
 
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        def assertState():
+            self.assertEqual(self._get_form_ids(), [form_id])
+            self.assertEqual(self._get_form_ids('XFormDeprecated'), [deprecated_id])
+            self.assertEqual(self._get_case_ids(), [case_id])
 
+        assertState()
         self._do_migration_and_assert_flags(self.domain_name)
-
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        assertState()
         self._compare_diffs([])
 
     def test_old_form_metadata_migration(self):
@@ -325,6 +325,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         ))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)))
+        self._compare_diffs([])
+
+    def test_edited_deleted_form(self):
+        form = create_and_save_a_form(self.domain_name)
+        form.edited_on = datetime.utcnow() - timedelta(days=400)
+        form.save()
+        FormAccessors(self.domain.name).soft_delete_forms(
+            [form.form_id], datetime.utcnow(), 'test-deletion'
+        )
+        self.assertEqual(
+            get_doc_ids_in_domain_by_type(
+                form.domain, "XFormInstance-Deleted", XFormInstance.get_db()
+            ),
+            [form.form_id],
+        )
+        self._do_migration_and_assert_flags(form.domain)
+        self.assertEqual(
+            FormAccessorSQL.get_deleted_form_ids_in_domain(form.domain),
+            [form.form_id],
+        )
         self._compare_diffs([])
 
     def test_submission_error_log_migration(self):

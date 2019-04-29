@@ -25,6 +25,7 @@ from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, 
     CommCareCaseSQLRawDocSerializer
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
+from corehq.util.json import CommCareJSONEncoder
 
 
 class _Db(object):
@@ -97,7 +98,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
-                "doc": json.dumps(doc, indent=4, sort_keys=True),
+                "doc": json.dumps(doc, indent=4, sort_keys=True, cls=CommCareJSONEncoder),
                 "doc_type": doc.get('doc_type', getattr(db, 'doc_type', 'Unknown')),
                 "dbname": db.dbname,
             })

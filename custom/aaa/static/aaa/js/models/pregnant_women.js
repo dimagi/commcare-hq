@@ -7,6 +7,7 @@ hqDefine("aaa/js/models/pregnant_women", [
     'aaa/js/models/child',
     'aaa/js/models/person',
     'aaa/js/models/model_utils',
+    'aaa/js/utils/reach_utils',
 ], function (
     $,
     ko,
@@ -15,16 +16,33 @@ hqDefine("aaa/js/models/pregnant_women", [
     initialPageData,
     childUtils,
     personUtils,
-    modelUtils
+    modelUtils,
+    reachUtils
 ) {
     var pregnantWomenList = function (options, postData) {
         var self = {};
         self.id = options.id;
         self.name = ko.observable(options.name);
-        self.age = ko.observable(options.age);
+        self.dob = ko.observable(options.dob);
         self.pregMonth = ko.observable(options.pregMonth);
         self.highRiskPregnancy = ko.observable(options.highRiskPregnancy);
         self.noOfAncCheckUps = ko.observable(options.noOfAncCheckUps);
+
+        self.age = ko.computed(function () {
+            if (self.dob() === 'N/A') {
+                return self.dob();
+            }
+            var selectedDate = new Date(postData.selectedYear(), postData.selectedMonth(), 1);
+            var age = Math.floor(moment(selectedDate).diff(
+                moment(self.dob(), "YYYY-MM-DD"),'months',true)
+            );if (age < 12) {
+                return age + " Mon";
+            } else if (age % 12 === 0) {
+                return Math.floor(age / 12) + " Yr";
+            } else {
+                return Math.floor(age / 12) + " Yr " + age % 12 + " Mon";
+            }
+        });
 
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
@@ -161,6 +179,13 @@ hqDefine("aaa/js/models/pregnant_women", [
             } else {
                 return 1;
             }
+        });
+
+        self.personBloodGroup = ko.computed(function () {
+            if (!reachUtils.BLOODGROUPS.hasOwnProperty(self.bloodGroup())) {
+                return 'N/A';
+            }
+            return reachUtils.BLOODGROUPS[self.bloodGroup()];
         });
 
         return self;

@@ -120,7 +120,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         partition(orm_table)
         return orm_table
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_table_rebuild(initiated_by, source, skip_log)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -130,7 +131,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
+        self.log_table_build(initiated_by, source)
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
@@ -140,7 +142,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_table_drop(initiated_by, source, skip_log)
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
