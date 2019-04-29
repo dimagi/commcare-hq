@@ -1003,6 +1003,7 @@ class DownloadConditionalAlertView(BaseMessagingSectionView):
     urlname = 'download_conditional_alert'
     http_method_names = ['get']
 
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
@@ -1025,6 +1026,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
     page_title = ugettext_lazy("Upload Conditional Alerts")
     template_name = 'scheduling/upload_conditional_alerts.html'
 
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
         return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
