@@ -37,6 +37,7 @@ from corehq.motech.repeaters.repeater_generators import (
 from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
+from six.moves import range
 
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
