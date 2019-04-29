@@ -298,7 +298,7 @@ def get_form_legacy_sheet_name(form):
     """
     module = form.get_module()
     return "_".join([
-        get_module_sheet_name(module),
+        get_module_legacy_sheet_name(module),
         "form{}".format(module.get_form_index(form.unique_id) + 1)
     ])
 
