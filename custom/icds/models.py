@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import cached_property
-from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from corehq.motech.utils import b64_aes_decrypt
+from custom.icds.utils.ccz_hosting import CCZHostingUtility
 from custom.icds.validators import (
     LowercaseAlphanumbericValidator,
 )
@@ -38,9 +39,17 @@ class CCZHosting(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
 
+    @cached_property
+    def utility(self):
+        return CCZHostingUtility(self)
+
+    @cached_property
+    def domain(self):
+        return self.link.domain
+
     def to_json(self, app_names):
         from custom.icds.serializers import CCZHostingSerializer
-        return CCZHostingSerializer(self, context={'app_names': app_names}).data
+        return CCZHostingSerializer(self, context={'app_names': app_names, 'domain': self.link.domain}).data
 
     @cached_property
     def blob_id(self):

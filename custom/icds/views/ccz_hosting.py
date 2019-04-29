@@ -15,13 +15,18 @@ from django.views.generic import TemplateView
 from django.contrib import messages
 from django.http import HttpResponse
 
+from couchexport.models import Format
 from corehq import toggles
 from corehq.apps.domain.auth import get_username_and_password_from_request
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.domain.views import (
+    BaseDomainView,
+    DomainViewMixin,
+)
 from corehq.apps.hqwebapp.decorators import use_select2_v4
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.util.download import get_download_response
 from custom.icds.forms import (
     CCZHostingForm,
     CCZHostingLinkForm,
@@ -137,21 +142,25 @@ class ManageCCZHosting(BaseDomainView):
         return self.get(request, *args, **kwargs)
 
 
-class CCZHostingView(TemplateView):
+class CCZHostingView(DomainViewMixin, TemplateView):
     urlname = "ccz_hosting"
     page_title = ugettext_lazy("CCZ Hosting")
     template_name = 'icds/ccz_hosting.html'
 
+    @cached_property
+    def ccz_hosting_link(self):
+        return CCZHostingLink.objects.get(identifier=self.identifier)
+
     def get(self, request, *args, **kwargs):
         self.identifier = kwargs.get('identifier')
         try:
-            ccz_hosting = CCZHostingLink.objects.get(identifier=self.identifier)
+            ccz_hosting_link = self.ccz_hosting_link
         except CCZHostingLink.DoesNotExist:
             return HttpResponse(status=404)
 
         uname, passwd = get_username_and_password_from_request(request)
         if uname and passwd:
-            if uname == ccz_hosting.username and passwd == ccz_hosting.get_password:
+            if uname == ccz_hosting_link.username and passwd == ccz_hosting_link.get_password:
                 return super(CCZHostingView, self).get(request, *args, **kwargs)
         # User did not provide an authorization header or gave incorrect credentials.
         response = HttpResponse(status=401)
@@ -159,8 +168,10 @@ class CCZHostingView(TemplateView):
         return response
 
     def get_context_data(self, **kwargs):
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': _("%s CommCare Files" % self.identifier.capitalize()),
+            'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)]
         }
 
 
@@ -172,3 +183,15 @@ def remove_ccz_hosting(request, domain, link_id):
     except CCZHosting.DoesNotExist:
         pass
     return HttpResponseRedirect(reverse(ManageCCZHosting.urlname, args=[domain]))
+
+
+@location_safe
+def download_ccz(request, domain, hosting_id, blob_id):
+    ccz_hosting = CCZHosting.objects.get(pk=hosting_id)
+    assert ccz_hosting.blob_id == blob_id
+    file_size = ccz_hosting.utility.ccz_file_meta.content_length
+    file_name = ccz_hosting.utility.ccz_file_meta.name
+    content_format = Format('', Format.ZIP, '', True)
+    return get_download_response(ccz_hosting.utility.ccz_file, file_size, content_format, file_name,
+                                 request)
+

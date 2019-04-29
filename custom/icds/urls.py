@@ -8,6 +8,7 @@ from custom.icds.views.ccz_hosting import (
     EditCCZHostingLink,
     CCZHostingView,
     remove_ccz_hosting,
+    download_ccz,
 )
 
 urlpatterns = [
@@ -17,6 +18,8 @@ urlpatterns = [
         name=EditCCZHostingLink.urlname),
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/delete/', remove_ccz_hosting,
         name="remove_ccz_hosting"),
+    url(r'^ccz/hostings/(?P<hosting_id>[\w-]+)/download/(?P<blob_id>[\w-]+)/', download_ccz,
+        name="ccz_hosting_download_ccz"),
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/', ManageCCZHostingLink.as_view(),
         name=ManageCCZHostingLink.urlname),
     url(r'^ccz/hostings/(?P<identifier>[\w-]+)/', CCZHostingView.as_view(), name=CCZHostingView.urlname),

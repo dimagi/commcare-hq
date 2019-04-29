@@ -24,4 +24,6 @@ class CCZHostingSerializer(serializers.ModelSerializer):
         ret = super(CCZHostingSerializer, self).to_representation(instance)
         ret['app_name'] = self.context['app_names'][ret['app_id']]
         ret['link_name'] = self.instance.link.identifier
+        if self.instance.blob_id:
+            ret['ccz_details'] = self.instance.utility.ccz_details
         return ret

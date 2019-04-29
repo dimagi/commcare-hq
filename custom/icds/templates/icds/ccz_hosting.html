@@ -24,10 +24,9 @@
                 <h3>
                     <strong>{{ page_title }}</strong>
                 </h3>
-                <!---p>
-                <a href="/hindi_files/icds_cas_aww_application_hindi.zip">Set 1: ICDS-CAS AWW Application
-                    (APK+CCZ) [Hindi]</a>
-                </p--->
+                {% for ccz_hosting in ccz_hostings %}
+                    <a href="{{ ccz_hosting.ccz_details.download_url }}">{{ ccz_hosting.ccz_details.name }}</a>
+                {% endfor %}
             </div>
         </div>
         <div class="row">
