@@ -885,17 +885,17 @@ def rearrange(request, domain, app_id, key):
     """
     app = get_app(domain, app_id)
     ajax = json.loads(request.POST.get('ajax', 'false'))
-    i, j = (int(x) for x in (request.POST['to'], request.POST['from']))
+    from_index, to_index = (int(x) for x in (request.POST['from'], request.POST['to']))
     resp = {}
     module_id = None
 
     try:
         if "forms" == key:
-            to_module_id = int(request.POST['to_module_id'])
-            from_module_id = int(request.POST['from_module_id'])
-            app.rearrange_forms(to_module_id, from_module_id, i, j)
+            from_module_uid = request.POST['from_module_uid']
+            to_module_uid = request.POST['to_module_uid']
+            app.rearrange_forms(from_module_uid, to_module_uid, from_index, to_index)
         elif "modules" == key:
-            app.rearrange_modules(i, j)
+            app.rearrange_modules(from_index, to_index)
     except IncompatibleFormTypeException as e:
         error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
         if ajax:
@@ -917,6 +917,15 @@ def rearrange(request, domain, app_id, key):
         return HttpResponse(json.dumps(resp))
     else:
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def move_child_modules_after_parents(request, domain, app_id):
+    app = get_app(domain, app_id)
+    app.move_child_modules_after_parents()
+    app.save()
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 @require_GET
