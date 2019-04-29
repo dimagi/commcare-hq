@@ -252,12 +252,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
     def get_module_or_form(self, identifier):
         try:
             return get_module_or_form(self.app, identifier)
-        except (IndexError, ValueError) as err:
-            message = _('Did not recognize "%s", skipping row.') % identifier
         except ModuleNotFoundException as err:
             message = _('Invalid menu in row "%s", skipping row.') % identifier
         except FormNotFoundException as err:
             message = _('Invalid form in row "%s", skipping row.') % identifier
+        except (IndexError, ValueError) as err:
+            message = _('Did not recognize "%s", skipping row.') % identifier
         if message:
             raise err.__class__(message)
 
