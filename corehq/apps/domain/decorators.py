@@ -27,7 +27,7 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY,
     get_username_and_password_from_request, FORMPLAYER,
-    formplayer_auth, formplayer_as_user_auth)
+    formplayer_auth, formplayer_as_user_auth, basic_or_api_key)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -205,6 +205,10 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
@@ -291,6 +295,8 @@ login_or_api_key = login_or_api_key_ex()
 digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
+
+basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
 def two_factor_check(view_func, api_key):
