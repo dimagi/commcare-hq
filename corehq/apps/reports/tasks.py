@@ -120,7 +120,7 @@ def apps_update_calculated_properties():
 
 
 @task(serializer='pickle', ignore_result=True)
-def export_all_rows_task(ReportClass, report_state, recipient_list=None):
+def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject=None):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
     report.rendered_as = 'export'
@@ -132,15 +132,15 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None):
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient)
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject)
 
 
-def _send_email(user, report, hash_id, recipient):
+def _send_email(user, report, hash_id, recipient, subject=None):
     domain = report.domain or user.get_domains()[0]
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
-    send_report_download_email(report.name, recipient, link)
+    send_report_download_email(report.name, recipient, link, subject)
 
 
 def _store_excel_in_blobdb(report_class, file, domain):
