@@ -24,8 +24,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_legacy_form_sheet,
     is_legacy_module_sheet,
     get_legacy_name_map,
-    get_form_by_legacy_identifier,
-    get_module_by_legacy_identifier,
+    get_module_or_form,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -250,26 +249,9 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
     def __init__(self, app, lang=None):
         super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
 
-    def get_document_by_legacy_identifier(self, identifier):
-        if '_' in identifier:
-            return get_form_by_legacy_identifier(self.app, identifier)
-        else:
-            return get_module_by_legacy_identifier(self.app, identifier)
-
-    def get_document_by_identifier(self, identifier):
-        unique_id = identifier.split(':')[1]
-        if is_module_sheet(identifier):
-            return self.app.get_module_by_unique_id(unique_id)
-        if is_form_sheet(identifier):
-            return self.app.get_form(unique_id)
-
-    def get_document(self, identifier):
-        message = None
+    def get_module_or_form(self, identifier):
         try:
-            if is_legacy_module_sheet(identifier) or is_legacy_form_sheet(identifier):
-                document = self.get_document_by_legacy_identifier(identifier)
-            else:
-                document = self.get_document_by_identifier(identifier)
+            return get_module_or_form(self.app, identifier)
         except (IndexError, ValueError) as err:
             message = _('Did not recognize "%s", skipping row.') % identifier
         except ModuleNotFoundException as err:
@@ -278,7 +260,6 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
             message = _('Invalid form in row "%s", skipping row.') % identifier
         if message:
             raise err.__class__(message)
-        return document
 
     def update(self, rows):
         """
@@ -289,12 +270,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         for row in get_unicode_dicts(rows):
             identifier = row.get('menu_or_form', row.get('sheet_name', ''))
             try:
-                document = self.get_document(identifier)
+                module_or_form = self.get_module_or_form(identifier)
             except (IndexError, ValueError, ModuleNotFoundException, FormNotFoundException) as err:
-                self.msgs.append((messages.error, str(err)))
+                self.msgs.append((messages.error, six.text_type(err)))
                 continue
 
-            self.update_translation_dict('default_', document.name, row)
+            self.update_translation_dict('default_', module_or_form.name, row)
 
             # Update menu media
             # For backwards compatibility with previous code, accept old "filepath" header names
@@ -303,12 +284,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
                 if image_header not in row:
                     image_header = 'icon_filepath_%s' % lang
                 if image_header in row:
-                    document.set_icon(lang, row[image_header])
+                    module_or_form.set_icon(lang, row[image_header])
 
                 audio_header = 'audio_%s' % lang
                 if audio_header not in row:
                     audio_header = 'audio_filepath_%s' % lang
                 if audio_header in row:
-                    document.set_audio(lang, row[audio_header])
+                    module_or_form.set_audio(lang, row[audio_header])
 
         return self.msgs

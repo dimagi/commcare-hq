@@ -135,22 +135,22 @@ def get_menu_row(languages, media_image, media_audio):
 
 def get_module_sheet_name(module):
     """
-    Returns 'menu:UUID:slug'
+    Returns 'slug:m:UUID'
 
     The UUID uniquely identifies the module even if it moves. The slug
     makes it readable by (English-reading) humans.
     """
-    return 'menu:{}:{}'.format(module.unique_id, get_name_slug(module))
+    return '{slug}:m:{uuid}'.format(slug=get_name_slug(module), uuid=module.unique_id)
 
 
 def get_form_sheet_name(form):
     """
-    Returns 'form:UUID:slug'
+    Returns 'slug:f:UUID'
 
     The UUID uniquely identifies the form even if it moves. The slug
     makes it readable by humans.
     """
-    return 'form:{}:{}'.format(form.unique_id, get_name_slug(form))
+    return '{slug}:f:{uuid}'.format(slug=get_name_slug(form), uuid=form.unique_id)
 
 
 def get_name_slug(module_or_form):
@@ -165,11 +165,22 @@ def get_name_slug(module_or_form):
 
 
 def is_form_sheet(identifier):
-    return identifier.startswith('form:')
+    return ':f:' in identifier
 
 
 def is_module_sheet(identifier):
-    return identifier.startswith('menu:')
+    return ':m:' in identifier
+
+
+def get_module_or_form(app, identifier):
+    if is_legacy_module_sheet(identifier) or is_legacy_form_sheet(identifier):
+        return get_module_or_form_by_legacy_identifier(app, identifier)
+    slug, m_or_f, unique_id = identifier.split(':')
+    if m_or_f == 'm':
+        return app.get_module_by_unique_id(unique_id)
+    if m_or_f == 'f':
+        return app.get_form(unique_id)
+    raise ValueError('Unrecognized identifier format "{}"'.format(identifier))
 
 
 def is_modules_and_forms_sheet(identifier):
@@ -298,6 +309,13 @@ def is_legacy_form_sheet(identifier):
 
 def is_legacy_module_sheet(identifier):
     return ('module' in identifier or 'menu' in identifier) and 'form' not in identifier
+
+
+def get_module_or_form_by_legacy_identifier(app, identifier):
+    if '_' in identifier:
+        return get_form_by_legacy_identifier(app, identifier)
+    else:
+        return get_module_by_legacy_identifier(app, identifier)
 
 
 def get_module_by_legacy_identifier(app, identifier):
