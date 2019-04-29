@@ -42,6 +42,12 @@ class CCZHosting(models.Model):
         from custom.icds.serializers import CCZHostingSerializer
         return CCZHostingSerializer(self, context={'app_names': app_names}).data
 
+    @cached_property
+    def blob_id(self):
+        assert self.app_id
+        assert self.version
+        return "%s%s" % (self.app_id, self.version)
+
     @property
     def build_doc(self):
         return get_build_by_version(self.link.domain, self.app_id, self.version)
@@ -64,5 +70,7 @@ class CCZHosting(models.Model):
         super(CCZHosting, self).clean()
 
     def save(self, *args, **kwargs):
+        from custom.icds.tasks.ccz_hosting import setup_ccz_file_for_hosting
         self.full_clean()
         super(CCZHosting, self).save(*args, **kwargs)
+        setup_ccz_file_for_hosting.delay(self.pk)

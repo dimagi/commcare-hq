@@ -50,5 +50,8 @@ class IcdsFile(models.Model):
     def get_file_size(self):
         return get_blob_db().size(key=self.blob_id)
 
+    def remove_file_from_blobdb(self):
+        get_blob_db().delete(key=self.blob_id)
+
     class Meta:
         app_label = 'icds_reports'
