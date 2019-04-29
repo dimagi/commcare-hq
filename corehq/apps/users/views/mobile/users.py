@@ -914,7 +914,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):
-    template_name = 'users/upload_commcare_users.html'
+    template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
