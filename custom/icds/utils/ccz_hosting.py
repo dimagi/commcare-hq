@@ -34,4 +34,3 @@ class CCZHostingUtility:
                     self.ccz_hosting.domain, self.ccz_hosting.id, self.ccz_hosting.blob_id])
             }
         return {}
-
