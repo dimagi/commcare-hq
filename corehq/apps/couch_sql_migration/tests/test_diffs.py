@@ -81,6 +81,8 @@ def _diff_args(ignore_rule, diff_defaults):
 @softer_assert()
 class DiffTestCases(SimpleTestCase):
 
+    maxDiff = None
+
     def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected=REAL_DIFFS):
         filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)
@@ -257,7 +259,7 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs)
         self.assertEqual(filtered, [
             FormJsonDiff(
-                diff_type='complex', path=('hq_user_id', 'external_id'),
+                diff_type='missing', path=('hq_user_id',),
                 old_value='123', new_value=MISSING
             )
         ])
@@ -279,6 +281,20 @@ class DiffTestCases(SimpleTestCase):
         rename_date_diffs = json_diff(couch_case, sql_case)
         self.assertEqual(2, len(rename_date_diffs))
         filtered = filter_case_diffs(couch_case, sql_case, rename_date_diffs)
+        self.assertEqual(filtered, [])
+
+    def test_filter_modified_on(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'modified_on': '2015-03-23T14:36:53Z'
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'modified_on': '2015-03-23T14:36:53.073000Z'
+        }
+        date_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(1, len(date_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, date_diffs)
         self.assertEqual(filtered, [])
 
     def test_case_indices_order(self):
@@ -387,18 +403,17 @@ class DiffTestCases(SimpleTestCase):
             'doc_type': 'CommCareCase',
             'case_attachments': {
                 'xyz': {
-                    '_id': 'ignored',
+                    'doc_type': 'ignored',
                     'attachment_properties': 'ignored',
                     'attachment_from': 'ignored',
                     'attachment_src': 'ignored',
-                    'content_type': 'ignored-couch',
                     'server_mime': 'ignored',
                     'attachment_name': 'ignored',
                     'server_md5': 'ignored',
                     'identifier': 'xyz',
                     'attachment_size': 123,
-                    'properties': 'value',
                     'unexpected': 'value',
+                    'properties': 'value',
                 },
             },
         }

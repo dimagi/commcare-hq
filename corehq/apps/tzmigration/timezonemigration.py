@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import collections
 import os
 from copy import deepcopy
+from itertools import chain
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -50,12 +51,11 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
     elif type(obj1) != type(obj2):
         yield FormJsonDiff('type', path, obj1, obj2)
     elif isinstance(obj1, dict):
-        keys = set(obj1.keys()) | set(obj2.keys())
 
         def value_or_missing(obj, key):
             return obj.get(key, MISSING)
 
-        for key in keys:
+        for key in chain(obj1, (key for key in obj2 if key not in obj1)):
             for result in _json_diff(value_or_missing(obj1, key),
                                      value_or_missing(obj2, key),
                                      path=path + (key,),
