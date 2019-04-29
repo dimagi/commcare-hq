@@ -27,7 +27,8 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
+    RequirePermissionAuthenticationForOdata
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -964,6 +965,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         return add_odata_headers(response)
 
     class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = RequirePermissionAuthenticationForOdata(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
         max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing
