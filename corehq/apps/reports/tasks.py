@@ -132,7 +132,7 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
-        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject)
+        _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
