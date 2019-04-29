@@ -111,7 +111,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return renderHeaderTooltip('VHSND', 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.');
     }
     function renderTakeHomeRationTooltip() {
-        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women and 0-3 years old children enrolled for Anganwadi services, the percentage of pregnant women, lactating women and 0-3 years old children who were provided THR for at least 21 days in the current month.');
+        return renderHeaderTooltip('Take Home Ration', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
     }
     function renderCommunityBasedEventsTooltipAWC() {
         return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 1 CBE in the current month then Yes otherwise No.');
