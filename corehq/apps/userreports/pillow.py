@@ -183,6 +183,7 @@ class ConfigurableReportTableManagerMixin(object):
                             override_table_name=legacy_table_name
                         )
                         table_names_for_diff.append(legacy_table_name)
+                        table_map[legacy_table_name] = sql_adapter
                     else:
                         # popultate metadata with the table schema
                         get_indicator_table(sql_adapter.config, metadata=diff_metadata)
@@ -203,8 +204,14 @@ class ConfigurableReportTableManagerMixin(object):
                 else:
                     self.rebuild_table(sql_adapter)
 
-            pillow_logging.debug("[rebuild] Application migrations to tables: %s", tables_to_act_on.migrate)
-            migrate_tables(engine, diffs.raw, tables_to_act_on.migrate)
+            self.migrate_tables(engine, diffs.raw, tables_to_act_on.migrate, table_map)
+
+    def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
+        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
+        changes = migrate_tables(engine, diffs, table_names)
+        for table, diffs in changes.items():
+            adapter = adapters_by_table[table]
+            adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
     def rebuild_table(self, adapter):
         config = adapter.config
@@ -212,7 +219,7 @@ class ConfigurableReportTableManagerMixin(object):
             latest_rev = config.get_db().get_rev(config._id)
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
-            adapter.rebuild_table()
+            adapter.rebuild_table(source='pillowtop')
         else:
             rebuild_indicators.delay(adapter.config.get_id)
 
