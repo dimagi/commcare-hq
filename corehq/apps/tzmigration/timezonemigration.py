@@ -57,7 +57,6 @@ def _json_diff(obj1, obj2, path, track_list_indices=True):
             yield FormJsonDiff('type', path, obj1, obj2)
         else:
 
-
             def value_or_missing(obj, key):
                 return obj.get(key, MISSING)
 
