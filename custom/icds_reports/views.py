@@ -355,6 +355,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
         reversed_order = True if order_dir == 'desc' else False
 
         data = get_service_delivery_data(
+            domain,
             start,
             length,
             order_by_name_column,
@@ -363,6 +364,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
             year,
             month,
             age_sdd,
+            include_test
         )
         return JsonResponse(data=data)
 
