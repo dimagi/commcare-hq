@@ -568,7 +568,13 @@ class MessageLogReport(BaseCommConnectLogReport):
         """Extract event data from a message annotated via _add_sms_event_data"""
         event = None
         if message.messaging_subevent:
-            event = message.messaging_subevent.parent
+            event_obj = message.messaging_subevent.parent
+            event = EventStub(
+                source=event_obj.source,
+                source_id=event_obj.source_id,
+                content_type=event_obj.content_type,
+                form_name=event_obj.form_name,
+            )
         elif message.session_source_id is not None:
             event = EventStub(
                 source=message.session_source,
