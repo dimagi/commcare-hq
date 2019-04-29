@@ -54,6 +54,7 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -1061,4 +1062,43 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
         }]
 
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            worksheet = get_single_worksheet(request.FILES['bulk_upload_file'])
+        except WorkbookJSONError as e:
+            messages.error(request, six.text_type(e))
+            return self.get(request, *args, **kwargs)
+
+        success_count = 0
+        errors = []
+        for index, row in enumerate(worksheet):
+            index = index + 2   # one-indexed, plus header row
+            rule = None
+            try:
+                rule = AutomaticUpdateRule.objects.get(
+                    pk=row['id'],
+                    domain=self.domain,
+                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    deleted=False,
+                )
+            except AutomaticUpdateRule.DoesNotExist:
+                errors.append(str(index))
+            dirty = False
+            if rule:
+                if rule.name != row['name']:
+                    dirty = True
+                    rule.name = row['name']
+                if rule.case_type != row['case_type']:
+                    dirty = True
+                    rule.case_type = row['case_type']
+            if dirty:
+                rule.save()
+                success_count += 1
+
+        if errors:
+            messages.error(request, _("Could not find rules from the following rows: {errors}").format(
+                errors=", ".join(errors)))
+
+        if success_count:
+            messages.success(request, _("Updated {count} rule(s)").format(count=success_count))
+
+        return self.get(request, *args, **kwargs)
