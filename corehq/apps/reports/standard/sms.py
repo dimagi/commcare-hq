@@ -6,6 +6,8 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Q
+from django.db.models.expressions import F
+from django.db.models.sql.constants import LOUTER
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -15,6 +17,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import six
 from couchdbkit import ResourceNotFound
+from django_cte import With
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
@@ -47,10 +50,10 @@ from corehq.apps.reports.standard import (
     ProjectReportParametersMixin,
 )
 from corehq.apps.reports.standard.message_event_display import (
+    EventStub,
     get_event_display,
     get_sms_status_display,
     get_status_display,
-    EventStub,
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
@@ -444,41 +447,8 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        queryset = queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
         if self.testing_changes:
-            # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
-            from django.db.models.expressions import F
-            from django.db.models.sql.constants import LOUTER
-            from django_cte import With
-
-            session_event = With(
-                MessagingSubEvent.objects.filter(
-                    parent__domain=self.domain,
-                    date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
-                ).values(
-                    couch_id=F("xforms_session__couch_id"),
-                    source=F("parent__source"),
-                    source_id=F("parent__source_id"),
-                    session_content_type=F("parent__content_type"),
-                    session_form_name=F("parent__form_name"),
-                ),
-                name="session_event"
-            )
-            queryset = session_event.join(
-                queryset.with_cte(session_event),
-                xforms_session_couch_id=session_event.col.couch_id,
-                # Use secret parameter to do LEFT OUTER JOIN
-                # WARNING: may be automatically changed to an INNER JOIN if
-                # more filters are added to the queryset after this join.
-                # See also: https://github.com/dimagi/django-cte/issues/2
-                _join_type=LOUTER,
-            ).annotate(
-                session_source=session_event.col.source,
-                session_source_id=session_event.col.source_id,
-                session_content_type=session_event.col.session_content_type,
-                session_form_name=session_event.col.session_form_name,
-            )
-        #assert 0, str(queryset.query)  # uncomment to print the query
+            return self._add_sms_event_data(queryset)
         return queryset
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
@@ -524,21 +494,6 @@ class MessageLogReport(BaseCommConnectLogReport):
                 message.couch_id if include_log_id and self.include_metadata else Ellipsis,
             ] if val != Ellipsis]
 
-    def _get_message_event_display(self, message, content_cache):
-        event = None
-        if message.messaging_subevent:
-            event = message.messaging_subevent.parent
-        elif message.session_source_id is not None:
-            event = EventStub(
-                source=message.session_source,
-                source_id=message.session_source_id,
-                content_type=message.session_content_type,
-                form_name=message.session_form_name,
-            )
-        if event:
-            return get_event_display(self.domain, event, content_cache)
-        return "-"
-
     @property
     def rows(self):
         return self._get_rows(paginate=True, contact_info=False)
@@ -571,6 +526,59 @@ class MessageLogReport(BaseCommConnectLogReport):
             table[0].append(_("Message Log ID"))
             result[0][1] = table
         return result
+
+    def _add_sms_event_data(self, queryset):
+        """Adds information about the triggering event to a SMS queryset"""
+
+        # For many SMS entries, the requisite info is easy enough to get:
+        queryset = queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+
+        # That connection doesn't always exist, so we sometimes have to go:
+        # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
+        session_event = With(
+            MessagingSubEvent.objects.filter(
+                parent__domain=self.domain,
+                date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
+            ).values(
+                couch_id=F("xforms_session__couch_id"),
+                source=F("parent__source"),
+                source_id=F("parent__source_id"),
+                session_content_type=F("parent__content_type"),
+                session_form_name=F("parent__form_name"),
+            ),
+            name="session_event"
+        )
+        queryset = session_event.join(
+            queryset.with_cte(session_event),
+            xforms_session_couch_id=session_event.col.couch_id,
+            # Use secret parameter to do LEFT OUTER JOIN
+            # WARNING: may be automatically changed to an INNER JOIN if
+            # more filters are added to the queryset after this join.
+            # See also: https://github.com/dimagi/django-cte/issues/2
+            _join_type=LOUTER,
+        ).annotate(
+            session_source=session_event.col.source,
+            session_source_id=session_event.col.source_id,
+            session_content_type=session_event.col.session_content_type,
+            session_form_name=session_event.col.session_form_name,
+        )
+        return queryset
+
+    def _get_message_event_display(self, message, content_cache):
+        """Extract event data from a message annotated via _add_sms_event_data"""
+        event = None
+        if message.messaging_subevent:
+            event = message.messaging_subevent.parent
+        elif message.session_source_id is not None:
+            event = EventStub(
+                source=message.session_source,
+                source_id=message.session_source_id,
+                content_type=message.session_content_type,
+                form_name=message.session_form_name,
+            )
+        if event:
+            return get_event_display(self.domain, event, content_cache)
+        return "-"
 
 
 class BaseMessagingEventReport(BaseCommConnectLogReport):
