@@ -54,6 +54,7 @@ from corehq.messaging.scheduling.views import (
     ConditionalAlertListView,
     CreateConditionalAlertView,
     EditConditionalAlertView,
+    UploadConditionalAlertView,
 )
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
@@ -973,6 +974,10 @@ class MessagingTab(UITab):
                         {
                             'title': _("Edit"),
                             'urlname': EditConditionalAlertView.urlname,
+                        },
+                        {
+                            'title': UploadConditionalAlertView.page_title,
+                            'urlname': UploadConditionalAlertView.urlname,
                         },
                     ],
                 },

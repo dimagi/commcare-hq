@@ -27,6 +27,7 @@ from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2_v4, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -53,7 +54,11 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
+import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
@@ -992,3 +997,58 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                       "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
+
+
+class DownloadConditionalAlertView(BaseMessagingSectionView):
+    urlname = 'download_conditional_alert'
+    http_method_names = ['get']
+
+    @method_decorator(reminders_framework_permission)
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, domain):
+        title = _("Conditional Alerts")
+        headers = ((title, (_('id'), _('name'), _('case_type'))),)
+        rows = []
+
+        temp = io.BytesIO()
+        export_raw(headers, [(title, rows)], temp)
+        filename = '{title} - {domain}'.format(
+            domain=domain,
+            title=title)
+        return export_response(temp, Format.XLS_2007, filename)
+
+
+class UploadConditionalAlertView(BaseMessagingSectionView):
+    urlname = 'upload_conditional_alert'
+    page_title = ugettext_lazy("Upload Conditional Alerts")
+    template_name = 'scheduling/upload_conditional_alerts.html'
+
+    @method_decorator(reminders_framework_permission)
+    def dispatch(self, *args, **kwargs):
+        return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = {
+            'bulk_upload': {
+                "download_url": reverse("download_conditional_alert", args=(self.domain,)),
+                "adjective": _("conditional alert"),
+                "plural_noun": _("conditional alerts"),
+            },
+        }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': BroadcastListView.page_title,
+            'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        pass
