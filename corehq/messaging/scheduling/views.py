@@ -538,7 +538,24 @@ class EditScheduleView(CreateScheduleView):
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
-class ConditionalAlertListView(BaseMessagingSectionView):
+class ConditionalAlertBaseView(BaseMessagingSectionView):
+    @method_decorator(reminders_framework_permission)
+    def dispatch(self, *args, **kwargs):
+        return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
+
+    def get_conditional_alerts_queryset(self, query_string=''):
+        query = (
+            AutomaticUpdateRule
+            .objects
+            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
+        )
+        if query_string:
+            query = query.filter(name__icontains=query_string)
+        query = query.order_by('case_type', 'name', 'id')
+        return query
+
+
+class ConditionalAlertListView(ConditionalAlertBaseView):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
@@ -550,7 +567,6 @@ class ConditionalAlertListView(BaseMessagingSectionView):
     ACTION_RESTART = 'restart'
     ACTION_COPY = 'copy'
 
-    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
@@ -575,17 +591,6 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         context['limit_rule_restarts'] = self.limit_rule_restarts
         context['allow_copy'] = self.allow_copy
         return context
-
-    def get_conditional_alerts_queryset(self, query_string=''):
-        query = (
-            AutomaticUpdateRule
-            .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-        )
-        if query_string:
-            query = query.filter(name__icontains=query_string)
-        query = query.order_by('case_type', 'name', 'id')
-        return query
 
     def schedule_is_editable(self, schedule):
         return (
@@ -999,19 +1004,22 @@ class EditConditionalAlertView(CreateConditionalAlertView):
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
 
 
-class DownloadConditionalAlertView(BaseMessagingSectionView):
+class DownloadConditionalAlertView(ConditionalAlertBaseView):
     urlname = 'download_conditional_alert'
     http_method_names = ['get']
 
     @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
-    @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
         title = _("Conditional Alerts")
         headers = ((title, (_('id'), _('name'), _('case_type'))),)
-        rows = []
+        rows = [(
+            rule.pk,
+            rule.name,
+            rule.case_type,
+        ) for rule in self.get_conditional_alerts_queryset()]
 
         temp = io.BytesIO()
         export_raw(headers, [(title, rows)], temp)
