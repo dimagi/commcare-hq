@@ -25,7 +25,7 @@ class IcdsFile(models.Model):
     data_type = models.CharField(max_length=255)
     file_added = models.DateField(auto_now=True)
 
-    def store_file_in_blobdb(self, file, expired=EXPIRED):
+    def store_file_in_blobdb(self, file, expired=EXPIRED, name=None):
         db = get_blob_db()
         try:
             kw = {"meta": db.metadb.get(
@@ -38,8 +38,10 @@ class IcdsFile(models.Model):
                 "parent_id": 'IcdsFile',
                 "type_code": CODES.tempfile,
                 "key": self.blob_id,
-                "timeout": expired
+                "timeout": expired,
             }
+            if name:
+                kw["name"] = name
         db.put(file, **kw)
 
     def get_file_from_blobdb(self):
