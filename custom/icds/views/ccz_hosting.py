@@ -176,10 +176,10 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 
 
 @login_and_domain_required
-def remove_ccz_hosting(request, domain, link_id):
+def remove_ccz_hosting(request, domain, hosting_id):
     try:
-        ccz_hosting_link = CCZHosting.objects.get(pk=link_id)
-        ccz_hosting_link.delete()
+        ccz_hosting = CCZHosting.objects.get(pk=hosting_id)
+        ccz_hosting.delete()
     except CCZHosting.DoesNotExist:
         pass
     return HttpResponseRedirect(reverse(ManageCCZHosting.urlname, args=[domain]))
