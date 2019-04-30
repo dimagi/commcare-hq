@@ -139,7 +139,6 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                         old_data_item = FixtureDataItem.get(di['UID'])
                     else:
                         old_data_item = new_data_item
-                        pass
                     old_data_item.fields = item_fields
                     old_data_item.item_attributes = item_attributes
                     if old_data_item.domain != domain \
