@@ -7,7 +7,6 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.util.test_utils import flag_disabled, flag_enabled
-from corehq.util.test_utils import flag_disabled, flag_enabled
 from custom.icds_reports.models import AggAwc
 from custom.icds_reports.utils import get_location_level
 from custom.icds_reports.views import FactSheetsReport
