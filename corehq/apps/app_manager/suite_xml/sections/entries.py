@@ -140,8 +140,8 @@ class EntriesHelper(object):
                     id=id_strings.form_command(form, module),
                     menu_locale_id=get_form_locale_id(form),
                     menu_enum_text=get_form_enum_text(form),
-                    media_image=bool(len(form.all_image_paths())),
-                    media_audio=bool(len(form.all_audio_paths())),
+                    media_image=form.uses_image(),
+                    media_audio=form.uses_audio(),
                     image_locale_id=id_strings.form_icon_locale(form),
                     audio_locale_id=id_strings.form_audio_locale(form),
                     custom_icon_locale_id=(id_strings.form_custom_icon_locale(form, form_custom_icon.form)
@@ -191,8 +191,8 @@ class EntriesHelper(object):
                 e.command = LocalizedCommand(
                     id=id_strings.case_list_command(module),
                     menu_locale_id=id_strings.case_list_locale(module),
-                    media_image=bool(len(module.case_list.all_image_paths())),
-                    media_audio=bool(len(module.case_list.all_audio_paths())),
+                    media_image=module.uses_image(),
+                    media_audio=module.uses_audio(),
                     image_locale_id=id_strings.case_list_icon_locale(module),
                     audio_locale_id=id_strings.case_list_audio_locale(module),
                 )
