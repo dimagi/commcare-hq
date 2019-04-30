@@ -57,12 +57,12 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
     with CouchTransaction() as transaction:
         for table_number, table_def in enumerate(type_sheets):
             data_type, delete, err = _create_data_type(domain, table_def, replace, transaction)
-            if err:
-                return_val.errors.extend(err)
+            return_val.errors.extend(err)
             if delete:
                 continue
             transaction.save(data_type)
             data_types.append(data_type)
+
             data_items = list(workbook.get_data_sheet(data_type.tag))
             items_in_table = len(data_items)
             for sort_key, di in enumerate(data_items):
@@ -124,6 +124,14 @@ def clear_fixture_quickcache(domain, data_types):
 
 
 def _create_data_type(domain, table_def, replace, transaction):
+    """Processes a FixtureDataType from an _FixtureTableDefinition, which gets
+    its definition from one row in the "types" sheet in the uploaded excel sheet
+
+    Returns a tuple with
+      - (unsaved) FixtureDataType instance
+      - boolean flag to indiicate if the data type was deleted
+      - a list of errors
+    """
     errors = []
 
     new_data_type = FixtureDataType(
@@ -167,6 +175,10 @@ def _create_data_type(domain, table_def, replace, transaction):
 
 
 def _process_item_field(field, data_item):
+    """Processes field_list of a data item from fields in the uploaded excel sheet.
+
+    Returns FieldList
+    """
     # if field doesn't have properties
     if len(field.properties) == 0:
         return FieldList(
@@ -193,6 +205,13 @@ def _process_item_field(field, data_item):
 
 
 def _process_data_item(domain, replace, data_type, di, item_fields, item_attributes, sort_key):
+    """Processes a FixtureDataItem from its excel upload.
+
+    Returns a tuple with
+      - (unsaved) FixtureDataItem instance
+      - boolean flag to indiicate if the data item was deleted
+      - a list of errors
+    """
     delete = False
     errors = []
     new_data_item = FixtureDataItem(
@@ -225,6 +244,10 @@ def _process_data_item(domain, replace, data_type, di, item_fields, item_attribu
 
 
 def _process_group_ownership(di, old_data_item, group_memoizer, transaction):
+    """Removes groups from data items and add new ones based on the group column.
+
+    Note the removal does not happen within a context of the "transaction"
+    """
     errors = []
     old_groups = old_data_item.groups
     for group in old_groups:
@@ -244,6 +267,10 @@ def _process_group_ownership(di, old_data_item, group_memoizer, transaction):
 
 
 def _process_user_ownership(di, old_data_item, transaction):
+    """Removes users from data items and add new ones based on the user column.
+
+    Note the removal does not happen within a context of the "transaction"
+    """
     errors = []
     domain = old_data_item.domain
 
@@ -273,6 +300,10 @@ def _process_user_ownership(di, old_data_item, transaction):
 
 
 def _process_location_ownership(di, old_data_item, get_location, transaction):
+    """Removes locations from data items and add new ones based on the location column.
+
+    Note the removal does not happen within a context of the "transaction"
+    """
     errors = []
 
     old_locations = old_data_item.locations
