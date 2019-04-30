@@ -56,43 +56,11 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                 DownloadBase.set_progress(task, processed, 10 * total_tables)
 
         for table_number, table_def in enumerate(type_sheets):
-            tag = table_def.table_id
-            new_data_type = FixtureDataType(
-                domain=domain,
-                is_global=table_def.is_global,
-                tag=tag,
-                fields=table_def.fields,
-                item_attributes=table_def.item_attributes
-            )
-            try:
-                tagged_fdt = FixtureDataType.fixture_tag_exists(domain, tag)
-                if tagged_fdt:
-                    data_type = tagged_fdt
-                # support old usage with 'UID'
-                elif table_def.uid:
-                    data_type = FixtureDataType.get(table_def.uid)
-                else:
-                    data_type = new_data_type
-
-                if replace and data_type != new_data_type:
-                    data_type.recursive_delete(transaction)
-                    data_type = new_data_type
-
-                data_type.fields = table_def.fields
-                data_type.item_attributes = table_def.item_attributes
-                data_type.is_global = table_def.is_global
-                assert data_type.doc_type == FixtureDataType._doc_type
-                if data_type.domain != domain:
-                    data_type = new_data_type
-                    return_val.errors.append(
-                        _("'%(UID)s' is not a valid UID. But the new type is created.")
-                        % {'UID': table_def.uid}
-                    )
-                if table_def.delete:
-                    data_type.recursive_delete(transaction)
-                    continue
-            except (ResourceNotFound, KeyError):
-                data_type = new_data_type
+            data_type, delete, err = _create_data_type(domain, table_def, replace, transaction)
+            if err:
+                return_val.errors.extend(err)
+            if delete:
+                continue
             transaction.save(data_type)
             data_types.append(data_type)
             data_items = list(workbook.get_data_sheet(data_type.tag))
@@ -232,3 +200,46 @@ def clear_fixture_quickcache(domain, data_types):
     # the cache key that contains all types.
     global_type_ids = {dt.get_id for dt in FixtureDataType.by_domain(domain) if dt.is_global}
     get_fixture_items_for_data_types.clear(domain, global_type_ids)
+
+
+def _create_data_type(domain, table_def, replace, transaction):
+    errors = []
+
+    new_data_type = FixtureDataType(
+        domain=domain,
+        is_global=table_def.is_global,
+        tag=table_def.table_id,
+        fields=table_def.fields,
+        item_attributes=table_def.item_attributes
+    )
+    try:
+        existing_data_type = FixtureDataType.fixture_tag_exists(domain, new_data_type.tag)
+        if existing_data_type:
+            data_type = existing_data_type
+        # support old usage with 'UID'
+        elif table_def.uid:
+            data_type = FixtureDataType.get(table_def.uid)
+        else:
+            data_type = new_data_type
+
+        if replace and data_type != new_data_type:
+            data_type.recursive_delete(transaction)
+            data_type = new_data_type
+
+        data_type.fields = table_def.fields
+        data_type.item_attributes = table_def.item_attributes
+        data_type.is_global = table_def.is_global
+
+        if data_type.domain != domain:
+            data_type = new_data_type
+            errors.append(
+                _("'%(UID)s' is not a valid UID. But the new type is created.")
+                % {'UID': table_def.uid}
+            )
+        if table_def.delete:
+            data_type.recursive_delete(transaction)
+            return data_type, True
+    except (ResourceNotFound, KeyError):
+        data_type = new_data_type
+
+    return data_type, False, errors
