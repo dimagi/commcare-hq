@@ -2,9 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 
 from collections import namedtuple
 from abc import ABCMeta, abstractmethod
+
+from memoized import memoized
 
 from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
@@ -105,6 +108,11 @@ class BaseEndpoint(object):
     @property
     def data(self):
         return self.request.POST
+
+    @property
+    @memoized
+    def report_context(self):
+        return json.loads(self.data.get('reportContext', "{}"))
 
 
 class BaseOptionsEndpoint(BaseEndpoint):
