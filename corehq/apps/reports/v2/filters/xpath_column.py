@@ -8,6 +8,10 @@ import dateutil
 from memoized import memoized
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.case_search.const import (
+    SPECIAL_CASE_PROPERTIES,
+    CASE_COMPUTED_METADATA,
+)
 from corehq.apps.reports.util import get_report_timezone
 from corehq.apps.reports.v2.models import BaseFilter
 from corehq.apps.reports.v2.exceptions import ColumnFilterNotFound
@@ -118,12 +122,20 @@ class DateXpathColumnFilter(BaseXpathColumnFilter):
         ChoiceMeta(ugettext_lazy("Date is after"), "date_after", '>'),
     ]
 
+    def __init__(self, request, domain):
+        super(DateXpathColumnFilter, self).__init__(request, domain)
+        self.adjust_to_utc = False
+
     @property
     @memoized
     def _timezone(self):
         return get_report_timezone(self.request, self.domain)
 
     def _adjust_to_utc(self, date):
+        if not self.adjust_to_utc:
+            # only adjust date to UTC if compared to a calculated property
+            return date
+
         localized = self._timezone.localize(date)
         offset = localized.strftime("%z")
         return date - datetime.timedelta(
@@ -132,6 +144,10 @@ class DateXpathColumnFilter(BaseXpathColumnFilter):
         )
 
     def get_expression(self, property, choice_name, value):
+        server_properties = SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
+        if property in server_properties:
+            self.adjust_to_utc = True
+
         if choice_name == 'date_is':
             # This combined range has to be applied as using the '='
             # operator will treat the value as a string match
