@@ -26,7 +26,7 @@ class _FixtureWorkbook(object):
     def __init__(self, file_or_filename):
         try:
             self.workbook = excel_get_workbook(file_or_filename)
-        except WorkbookJSONError:
+        except WorkbookJSONError as e:
             raise FixtureUploadError([six.text_type(e)])
 
     def get_types_sheet(self):
