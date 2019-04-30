@@ -981,23 +981,28 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_single_sheet_rows(self):
         sheet = get_bulk_app_single_sheet_by_name(self.app, self.app.langs[0])[SINGLE_SHEET_NAME]
         self.assertListEqual(sheet, [
-            ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None,
+            ['menu1', '', '', '', 'Stethoscope', 'jr://file/commcare/image/module0.png', None, '',
              '58ce5c9cf6eda401526973773ef216e7980bc6cc'],
-            ['menu1', 'name', 'list', '', 'Name'], ['menu1', 'name', 'detail', '', 'Name'],
-            ['menu1_form1', '', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None,
+            ['menu1', 'name', 'list', '', 'Name'],
+            ['menu1', 'name', 'detail', '', 'Name'],
+
+            ['menu1_form1', '', '', '', 'Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None, '',
              'c480ace490edc870ae952765e8dfacec33c69fec'],
             ['menu1_form1', '', '', 'What_does_this_look_like-label', 'What does this look like?',
              'jr://file/commcare/image/data/What_does_this_look_like.png', '', '', ''],
             ['menu1_form1', '', '', 'no_media-label', 'No media', '', '', '', ''],
             ['menu1_form1', '', '', 'has_refs-label',
-             'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.',
-             '', '', '', ''],
-            ['menu2', '', '', '', 'Register Series', '', '', 'b9c25abe21054632a3623199debd7cfa'],
+             'Here is a ref <output value="/data/no_media"/> with some trailing text and "bad" &lt; xml.', '', '',
+             '', ''],
+
+            ['menu2', '', '', '', 'Register Series', '', '', '', 'b9c25abe21054632a3623199debd7cfa'],
             ['menu2', 'name', 'list', '', 'Name'],
             ['menu2', 'name', 'detail', '', 'Name'],
-            ['menu2_form1', '', '', '', 'Registration Form', None, None, '280b1b06d1b442b9bba863453ba30bc3'],
+
+            ['menu2_form1', '', '', '', 'Registration Form', None, None, '', '280b1b06d1b442b9bba863453ba30bc3'],
             ['menu2_form1', '', '', 'name_of_series-label', 'Name of series', '', '', '', ''],
-            ['menu3', '', '', '', 'Followup Series', '', '', '217e1c8de3dd46f98c7d2806bc19b580'],
+
+            ['menu3', '', '', '', 'Followup Series', '', '', '', '217e1c8de3dd46f98c7d2806bc19b580'],
             ['menu3', 'name', 'list', '', 'Name'],
             ['menu3', 'Tab 0', 'detail', '', 'Name'],
             ['menu3', 'Tab 1', 'detail', '', 'Graph'],
@@ -1009,28 +1014,34 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu3', 'x-name 0 (graph series config)', 'detail', '', 'xxx'],
             ['menu3', 'name 0 (graph series config)', 'detail', '', 'yyy'],
             ['menu3', 'graph annotation 1', 'detail', '', 'This is (2, 2)'],
-            ['menu3_form1', '', '', '', 'Add Point to Series', None, None, 'a01b55fd2c1a483492c1166029946249'],
+
+            ['menu3_form1', '', '', '', 'Add Point to Series', None, None, '', 'a01b55fd2c1a483492c1166029946249'],
             ['menu3_form1', '', '', 'x-label', 'x', '', '', '', ''],
             ['menu3_form1', '', '', 'y-label', 'y', '', '', '', ''],
-            ['menu4', '', '', '', 'Remove Point', '', '', '17195132472446ed94bd91ba19a2b379'],
+
+            ['menu4', '', '', '', 'Remove Point', '', '', '', '17195132472446ed94bd91ba19a2b379'],
             ['menu4', 'x', 'list', '', 'X'],
             ['menu4', 'y', 'list', '', 'Y'],
             ['menu4', 'x (ID Mapping Text)', 'detail', '', 'X Name'],
             ['menu4', '1 (ID Mapping Value)', 'detail', '', 'one'],
             ['menu4', '2 (ID Mapping Value)', 'detail', '', 'two'],
             ['menu4', '3 (ID Mapping Value)', 'detail', '', 'three'],
-            ['menu4_form1', '', '', '', 'Remove Point', None, None, '98458acd899b4d5f87df042a7585e8bb'],
+
+            ['menu4_form1', '', '', '', 'Remove Point', None, None, '', '98458acd899b4d5f87df042a7585e8bb'],
             ['menu4_form1', '', '', 'confirm_remove-label', 'Swipe to remove the point at '
              '(<output value="instance(\'casedb\')/casedb/case[@case_id = instance(\'commcaresession\')/'
              'session/data/case_id]/x"/>  ,<output value="instance(\'casedb\')/casedb/case[@case_id = '
              'instance(\'commcaresession\')/session/data/case_id]/y"/>).', '', '', '', ''],
-            ['menu5', '', '', '', 'Empty Reports Module', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
-            ['menu6', '', '', '', 'Advanced Module', None, None, '7f75ed4c15be44509591f41b3d80746e'],
+
+            ['menu5', '', '', '', 'Empty Reports Module', '', '', '', '703eb807ae584d1ba8bf9457d7ac7590'],
+
+            ['menu6', '', '', '', 'Advanced Module', None, None, '', '7f75ed4c15be44509591f41b3d80746e'],
             ['menu6', 'name', 'list', '', 'Name'],
             ['menu6', 'name', 'detail', '', 'Name'],
-            ['menu6_form1', '', '', '', 'Advanced Form', None, None, '2b9c856ba2ea4ec1ab8743af299c1627'],
+
+            ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
-            ['menu6_form2', '', '', '', 'Shadow Form', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
+            ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
 
 
 class RenameLangTest(SimpleTestCase):
