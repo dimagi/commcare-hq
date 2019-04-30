@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
+from corehq.apps.app_manager.exceptions import ModuleNotFoundException, FormNotFoundException
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.apps.translations.const import (
     LEGACY_MODULES_AND_FORMS_SHEET_NAME,
@@ -158,6 +159,28 @@ def is_modules_and_forms_sheet(identifier):
 
 def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
+
+
+def get_menu_or_form(app, identifying_text):
+    identifying_parts = identifying_text.split('_')
+
+    if len(identifying_parts) not in (1, 2):
+        raise ValueError(_('Did not recognize "%s", skipping row.') % identifying_text)
+
+    module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
+    try:
+        document = app.get_module(module_index)
+    except ModuleNotFoundException:
+        raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % identifying_text)
+
+    if len(identifying_parts) == 2:
+        form_index = int(identifying_parts[1].replace("form", "")) - 1
+        try:
+            document = document.get_form(form_index)
+        except FormNotFoundException:
+            raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % identifying_text)
+
+    return document
 
 
 def get_unicode_dicts(iterable):

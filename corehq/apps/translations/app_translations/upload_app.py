@@ -21,6 +21,7 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
+    get_menu_or_form,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -248,34 +249,11 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         self.msgs = []
         for row in get_unicode_dicts(rows):
             identifying_text = row.get('menu_or_form', row.get('sheet_name', ''))
-            identifying_parts = identifying_text.split('_')
-
-            if len(identifying_parts) not in (1, 2):
-                self.msgs.append((
-                    messages.error,
-                    _('Did not recognize "%s", skipping row.') % identifying_text
-                ))
-                continue
-
-            module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
             try:
-                document = self.app.get_module(module_index)
-            except ModuleNotFoundException:
-                self.msgs.append((
-                    messages.error,
-                    _('Invalid menu in row "%s", skipping row.') % identifying_text
-                ))
+                document = get_menu_or_form(self.app, identifying_text)
+            except (ModuleNotFoundException, FormNotFoundException, ValueError) as err:
+                self.msgs.append((messages.error, six.text_type(err)))
                 continue
-            if len(identifying_parts) == 2:
-                form_index = int(identifying_parts[1].replace("form", "")) - 1
-                try:
-                    document = document.get_form(form_index)
-                except FormNotFoundException:
-                    self.msgs.append((
-                        messages.error,
-                        _('Invalid form in row "%s", skipping row.') % identifying_text
-                    ))
-                    continue
 
             self.update_translation_dict('default_', document.name, row)
 
