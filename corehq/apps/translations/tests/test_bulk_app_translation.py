@@ -181,26 +181,6 @@ class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
         super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app,
             excel_headers, excel_data, expected_messages, lang)
 
-    def do_upload(self, name, expected_messages=None):
-        """
-        Upload the bulk app translation file at file_path + upload.xlsx
-
-        Note: Use upload_raw_excel_translations() instead. It allows easy modifications
-        and diffs of xlsx data.
-
-        """
-        if not expected_messages:
-            expected_messages = ["App Translations Updated!"]
-        with io.open(self.get_path(name, "xlsx"), 'rb') as f:
-            workbook = get_workbook(f)
-            assert workbook, messages
-            expected_headers = get_bulk_app_sheet_headers(self.app)
-            messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
-
-        self.assertListEqual(
-            [m[1] for m in messages], expected_messages
-        )
-
     def assert_question_label(self, text, module_id, form_id, language, question_path):
         """
         assert that the given text is equal to the label of the given question.
