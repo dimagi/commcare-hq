@@ -7,10 +7,16 @@ from corehq.apps.reports.v2.endpoints.case_properties import (
     CasePropertiesEndpoint
 )
 from corehq.apps.reports.v2.endpoints.datagrid import DatagridEndpoint
+from corehq.apps.reports.v2.filters.xpath_column import (
+    TextXpathColumnFilter,
+    NumericXpathColumnFilter,
+    DateXpathColumnFilter,
+    ColumnXpathExpressionBuilder,
+)
 from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
-    ColumnContext,
+    ColumnMeta,
 )
 from corehq.apps.es import CaseSearchES
 
@@ -27,16 +33,22 @@ class ExploreCaseDataReport(BaseReport):
     )
 
     columns = [
-        ColumnContext(
+        ColumnMeta(
             title=ugettext_lazy("Case Name"),
-            slug='case_name',
+            name='case_name',
             width=200,
         ),
-        ColumnContext(
+        ColumnMeta(
             title=ugettext_lazy("Case Type"),
-            slug='@case_type',
+            name='@case_type',
             width=200,
         ),
+    ]
+
+    column_filters = [
+        TextXpathColumnFilter,
+        NumericXpathColumnFilter,
+        DateXpathColumnFilter,
     ]
 
     def _get_base_query(self):
@@ -45,8 +57,19 @@ class ExploreCaseDataReport(BaseReport):
     def get_data_response(self, endpoint):
         query = self._get_base_query()
 
-        # todo think about filtering
-        # for f in self.get_filters():
-        #     query = f.get_filtered_query(query)
+        expressions = []
+        for column_context in endpoint.report_context.get('columns', []):
+            expression_builder = ColumnXpathExpressionBuilder(
+                self.request,
+                self.domain,
+                column_context,
+                self.column_filters
+            )
+            expression = expression_builder.get_expression()
+            if expression:
+                expressions.append(expression)
+        if expressions:
+            xpath_final = " and ".join(expressions)
+            query = query.xpath_query(self.domain, xpath_final)
 
         return endpoint.get_response(query, CaseDataFormatter)
