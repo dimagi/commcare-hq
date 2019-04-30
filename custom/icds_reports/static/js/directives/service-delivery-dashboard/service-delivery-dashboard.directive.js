@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations,haveAccessToFeatures) {
+function ServiceDeliveryDashboardController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures) {
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -215,7 +215,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
             return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5,'Weight measurement');
+        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
     }
 
     if (Object.keys($location.search()).length === 0) {
@@ -277,7 +277,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations','haveAccessToFeatures'];
+ServiceDeliveryDashboardController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
     return {
