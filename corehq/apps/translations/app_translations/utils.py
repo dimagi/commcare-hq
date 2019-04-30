@@ -167,11 +167,7 @@ def get_menu_or_form(app, identifying_text):
     if len(identifying_parts) not in (1, 2):
         raise ValueError(_('Did not recognize "%s", skipping row.') % identifying_text)
 
-    module_index = int(identifying_parts[0].replace("menu", "").replace("module", "")) - 1
-    try:
-        document = app.get_module(module_index)
-    except ModuleNotFoundException:
-        raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % identifying_text)
+    document = get_module_from_sheet_name(app, identifying_parts[0])
 
     if len(identifying_parts) == 2:
         form_index = int(identifying_parts[1].replace("form", "")) - 1
@@ -181,6 +177,14 @@ def get_menu_or_form(app, identifying_text):
             raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % identifying_text)
 
     return document
+
+
+def get_module_from_sheet_name(app, identifier):
+    module_index = int(identifier.replace("module", "").replace("menu", "")) - 1
+    try:
+        return app.get_module(module_index)
+    except ModuleNotFoundException:
+        raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % identifier)
 
 
 def get_unicode_dicts(iterable):
