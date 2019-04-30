@@ -97,7 +97,8 @@ validation_test_cases = [
         "Field names should be strings, not numbers",
     ]),
     ('not_excel_file', [
-        "Invalid file-format. Please upload a valid xlsx file.",
+        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. " \
+        "Error details: \"There is no item named '[Content_Types].xml' in the archive\".",
     ]),
     ('no_types_sheet', [
         "Workbook does not contain a sheet called types",
