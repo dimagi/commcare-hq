@@ -791,7 +791,30 @@ class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
     file_path = "data", "bulk_app_translation", "mismatched_ref"
 
     def test_unchanged_upload(self):
-        self.do_upload("upload")
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
+                                            'image_en', 'image_fra', 'audio_en', 'audio_fra', 'unique_id')),
+            ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
+            ('menu1_form1', ('label', 'default_en', 'default_fra', 'image_en', 'image_fra',
+                             'audio_en', 'audio_fra', 'video_en', 'video_fra')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME,
+             (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', 'ecdcc5bb280f043a23f39eca52369abaa9e49bf9'),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'e1af3f8e947dad9862a4d7c32f5490cfff9edfda'))),
+            ('menu1',
+             (('name', 'list', 'Name', ''),
+              ('name', 'detail', 'Name', ''))),
+            ('menu1_form1',
+             (('foo-label', 'foo', 'foo', '', '', '', '', '', ''),
+              ('question1/question2-label', 'question2', 'question2', '', '', '', '', '', ''),
+              ('question1/question2-item1-label', 'item1', 'item1', '', '', '', '', '', ''),
+              ('question1/question2-item2-label', 'item2', 'item2', '', '', '', '', '', ''),
+              ('question1-label', 'question1', 'question1', '', '', '', '', '', ''),
+              ('question1/question2-label2', 'bar', 'bar', '', '', '', '', '', ''))),
+        )
+
+        self.upload_raw_excel_translations(headers, data)
         self.assert_question_label("question2", 0, 0, "en", "/data/foo/question2")
 
 
