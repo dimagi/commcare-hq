@@ -33,28 +33,28 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         .withDOM('ltipr');
 
     vm.setDtColumns = function () {
-         vm.locationLevelName = 'State';
+         var locationLevelName = 'State';
         var locationLevelNameField = 'state_name';
         if (vm.dataAggregationLevel === 1) {
-            vm.locationLevelName = 'State';
+            locationLevelName = 'State';
             locationLevelNameField = 'state_name';
         } else if (vm.dataAggregationLevel === 2) {
-            vm.locationLevelName = 'District';
+            locationLevelName = 'District';
             locationLevelNameField = 'district_name';
         } else if (vm.dataAggregationLevel === 3) {
-            vm.locationLevelName = 'Block';
+            locationLevelName = 'Block';
             locationLevelNameField = 'block_name';
         } else if (vm.dataAggregationLevel === 4) {
-            vm.locationLevelName = 'Sector';
+            locationLevelName = 'Sector';
             locationLevelNameField = 'supervisor_name';
         } else {
-            vm.locationLevelName = 'AWC';
+            locationLevelName = 'AWC';
             locationLevelNameField = 'awc_name';
         }
         vm.dtColumns = [DTColumnBuilder.newColumn(
             locationLevelNameField
         ).withTitle(
-            vm.locationLevelName
+            locationLevelName
         ).renderWith(simpleRender(
             locationLevelNameField
         )).withClass('medium-col')];
@@ -96,7 +96,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
     }
     function renderNumLaunchedAwcsTooltip() {
-        return renderHeaderTooltip('Number of AWC', 'Total Number of Anganwadi Centers launched in the selected location.');
+        return renderHeaderTooltip('Number of AWCs launched', 'Total Number of Anganwadi Centers launched in the selected location.');
     }
     function renderHomeVisitsTooltip() {
         return renderHeaderTooltip('Home Visits', 'Of the total number of expected home visits, the percentage of home visits completed by AWW.');
@@ -129,21 +129,33 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         return renderHeaderTooltip('Growth Monitoring', 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>');
     }
 
-    function renderPercentageAndPartials(percentage, nominator, denominator) {
-        if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
-        if (percentage === vm.dataNotEntered) {
-            if (nominator === 0 && denominator === 0) {
-                return '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
-            }
-            return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
+    function isZeroNullUnassignedOrDataNotEntered(value) {
+        return value === 0 || value === null || value === void(0) || value === vm.dataNotEntered;
+    }
+
+    function renderPercentageAndPartials(percentage, nominator, denominator, indicator) {
+        if (isZeroNullUnassignedOrDataNotEntered(denominator) && haveAccessToFeatures) {
+            return '<div> No expected ' + indicator + ' </div>';
         }
+        else {
+            if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
+            if (percentage === vm.dataNotEntered) {
+                if (nominator === 0 && denominator === 0) {
+                    return '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+                }
+                return '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
+            }
+        }
+
         return '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator + ')</span></div>';
     }
+
+
     function simpleRender(indicator) {
         return function simpleRenderer(data, type, full) {
 
-            if (haveAccessToFeatures && ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && full['num_launched_awcs'] === 0) {
-                return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+            if (haveAccessToFeatures && ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+                return '<div>Not Launched</div>';
             }
 
             return '<div>' + (
@@ -154,8 +166,8 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     function simpleYesNoRender(indicator) {
         return function simpleRenderer(data, type, full) {
 
-            if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-                return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+            if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+                return '<div>Not Launched</div>';
 
             }
             return  '<div>' + (
@@ -164,46 +176,46 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         };
     }
     function renderHomeVisits(data, type, full) {
-        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits);
+        return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
     }
     function renderGrowthMonitoring03(data, type, full) {
-        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3);
+        return renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
     }
     function renderTakeHomeRation(data, type, full) {
-        if (haveAccessToFeatures && full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates);
+        return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
     }
     function renderSupplementaryNutrition(data, type, full) {
-        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6);
+        return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
     }
     function renderPreSchoolEducation(data, type, full) {
-        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6);
+        return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
     }
     function renderGrowthMonitoring36(data, type, full) {
-        if (haveAccessToFeatures &&  full['num_launched_awcs'] === 0) {
-            return '<div>' + vm.locationLevelName + ' Not Launched</div>';
+        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
+            return '<div>Not Launched</div>';
 
         }
-        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5);
+        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5,'Weight measurement');
     }
 
     if (Object.keys($location.search()).length === 0) {
