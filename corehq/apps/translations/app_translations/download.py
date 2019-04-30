@@ -28,9 +28,13 @@ def get_bulk_app_single_sheet_by_name(app, lang):
 
         # Name / menu media row
         # Leave blanks for case_property, list_or_detail, and label
-        rows.append(prefix + ['', '', ''] + get_menu_row([module.name.get(lang)],
-                                                         [module.icon_by_language(lang)],
-                                                         [module.audio_by_language(lang)]))
+        rows.append(
+            prefix + ['', '', ''] +
+            get_menu_row([module.name.get(lang)],
+                         [module.icon_by_language(lang)],
+                         [module.audio_by_language(lang)]) +
+            [module.unique_id]
+        )
 
         # Detail case properties, etc.
         for row in get_module_rows([lang], module):
@@ -43,13 +47,17 @@ def get_bulk_app_single_sheet_by_name(app, lang):
 
             # Name / menu media row
             # Leave another blank for label
-            rows.append(prefix + [''] + get_menu_row([form.name.get(lang)],
-                                                     [form.icon_by_language(lang)],
-                                                     [form.audio_by_language(lang)]))
+            rows.append(
+                prefix + [''] +
+                get_menu_row([form.name.get(lang)],
+                             [form.icon_by_language(lang)],
+                             [form.audio_by_language(lang)]) +
+                [form.unique_id]
+            )
 
             # Questions
             for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row)
+                rows.append(prefix + row + [''])
 
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 

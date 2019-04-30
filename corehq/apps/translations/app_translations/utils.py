@@ -68,7 +68,7 @@ def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form
             'case_property',        # modules only
             'list_or_detail',       # modules only
             'label',                # forms only
-        ) + tuple(lang_list)),)
+        ) + tuple(lang_list) + ('unique_id',)),)
 
     headers = []
 
