@@ -68,31 +68,10 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
             for sort_key, di in enumerate(data_items):
                 _update_progress(table_number, sort_key, items_in_table)
                 type_fields = data_type.fields
-                item_fields = {}
-                for field in type_fields:
-                    # if field doesn't have properties
-                    if len(field.properties) == 0:
-                        item_fields[field.field_name] = FieldList(
-                            field_list=[FixtureItemField(
-                                # using unicode here, to cast ints, and multi-language strings
-                                field_value=six.text_type(di['field'][field.field_name]),
-                                properties={}
-                            )]
-                        )
-                    else:
-                        field_list = []
-                        field_prop_combos = di['field'][field.field_name]
-                        prop_combo_len = len(field_prop_combos)
-                        prop_dict = di[field.field_name]
-                        for x in range(0, prop_combo_len):
-                            fix_item_field = FixtureItemField(
-                                field_value=six.text_type(field_prop_combos[x]),
-                                properties={prop: six.text_type(prop_dict[prop][x]) for prop in prop_dict}
-                            )
-                            field_list.append(fix_item_field)
-                        item_fields[field.field_name] = FieldList(
-                            field_list=field_list
-                        )
+                item_fields = {
+                    field.field_name: _process_fields(field, di)
+                    for field in type_fields
+                }
 
                 item_attributes = di.get('property', {})
                 new_data_item = FixtureDataItem(
@@ -243,3 +222,29 @@ def _create_data_type(domain, table_def, replace, transaction):
         data_type = new_data_type
 
     return data_type, False, errors
+
+
+def _process_fields(field, data_item):
+    # if field doesn't have properties
+    if len(field.properties) == 0:
+        return FieldList(
+            field_list=[FixtureItemField(
+                # using unicode here, to cast ints, and multi-language strings
+                field_value=six.text_type(data_item['field'][field.field_name]),
+                properties={}
+            )]
+        )
+
+    field_list = []
+    field_prop_combos = data_item['field'][field.field_name]
+    prop_combo_len = len(field_prop_combos)
+    prop_dict = data_item[field.field_name]
+    for x in range(0, prop_combo_len):
+        fix_item_field = FixtureItemField(
+            field_value=six.text_type(field_prop_combos[x]),
+            properties={prop: six.text_type(prop_dict[prop][x]) for prop in prop_dict}
+        )
+        field_list.append(fix_item_field)
+    return FieldList(
+        field_list=field_list
+    )
