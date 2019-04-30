@@ -83,51 +83,9 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                     continue
                 transaction.save(old_data_item)
 
-                old_groups = old_data_item.groups
-                for group in old_groups:
-                    old_data_item.remove_group(group)
-                old_users = old_data_item.users
-                for user in old_users:
-                    old_data_item.remove_user(user)
-                old_locations = old_data_item.locations
-                for location in old_locations:
-                    old_data_item.remove_location(location)
-
-                for group_name in di.get('group', []):
-                    group = group_memoizer.by_name(group_name)
-                    if group:
-                        old_data_item.add_group(group, transaction=transaction)
-                    else:
-                        return_val.errors.append(
-                            _("Unknown group: '%(name)s'. But the row is successfully added")
-                            % {'name': group_name}
-                        )
-
-                for raw_username in di.get('user', []):
-                    try:
-                        username = normalize_username(str(raw_username), domain)
-                    except ValidationError:
-                        return_val.errors.append(
-                            _("Invalid username: '%(name)s'. Row is not added")
-                            % {'name': raw_username}
-                        )
-                        continue
-                    user = CommCareUser.get_by_username(username)
-                    if user:
-                        old_data_item.add_user(user)
-                    else:
-                        return_val.errors.append(
-                            _("Unknown user: '%(name)s'. But the row is successfully added")
-                            % {'name': raw_username}
-                        )
-
-                for name in di.get('location', []):
-                    location_cache = get_location(name)
-                    if location_cache.is_error:
-                        return_val.errors.append(location_cache.message)
-                    else:
-                        old_data_item.add_location(location_cache.location,
-                                                   transaction=transaction)
+                err = _process_data_item_ownership(di, old_data_item, transaction, group_memoizer, get_location)
+                if err:
+                    return_val.errors.extend(err)
 
     clear_fixture_quickcache(domain, data_types)
     clear_fixture_cache(domain)
@@ -260,3 +218,53 @@ def _process_data_item(domain, replace, data_type, di, item_fields, item_attribu
         old_data_item = new_data_item
 
     return old_data_item, delete, errors
+
+def _process_data_item_ownership(di, old_data_item, transaction, group_memoizer, get_location):
+    errors = []
+    domain = old_data_item.domain
+    old_groups = old_data_item.groups
+    for group in old_groups:
+        old_data_item.remove_group(group)
+    old_users = old_data_item.users
+    for user in old_users:
+        old_data_item.remove_user(user)
+    old_locations = old_data_item.locations
+    for location in old_locations:
+        old_data_item.remove_location(location)
+
+    for group_name in di.get('group', []):
+        group = group_memoizer.by_name(group_name)
+        if group:
+            old_data_item.add_group(group, transaction=transaction)
+        else:
+            errors.append(
+                _("Unknown group: '%(name)s'. But the row is successfully added")
+                % {'name': group_name}
+            )
+
+    for raw_username in di.get('user', []):
+        try:
+            username = normalize_username(str(raw_username), domain)
+        except ValidationError:
+            errors.append(
+                _("Invalid username: '%(name)s'. Row is not added")
+                % {'name': raw_username}
+            )
+            continue
+        user = CommCareUser.get_by_username(username)
+        if user:
+            old_data_item.add_user(user)
+        else:
+            errors.append(
+                _("Unknown user: '%(name)s'. But the row is successfully added")
+                % {'name': raw_username}
+            )
+
+    for name in di.get('location', []):
+        location_cache = get_location(name)
+        if location_cache.is_error:
+            errors.append(location_cache.message)
+        else:
+            old_data_item.add_location(location_cache.location,
+                                       transaction=transaction)
+    return errors
