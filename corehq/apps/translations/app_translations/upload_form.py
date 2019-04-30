@@ -25,15 +25,19 @@ from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, identifier, lang=None):
+    def __init__(self, app, identifier, names_map, lang=None):
         '''
         :param identifier: String like "menu1_form2"
         '''
-        super(BulkAppTranslationFormUpdater, self).__init__(app, lang)
+        super(BulkAppTranslationFormUpdater, self).__init__(app, names_map, lang)
         self.identifier = identifier
 
         # These attributes depend on each other and therefore need to be created in this order
-        self.form = get_form_from_sheet_name(self.app, identifier)
+        if identifier in names_map:
+            unique_id = names_map[identifier]
+            self.form = app.get_form(unique_id)
+        else:
+            self.form = get_form_from_sheet_name(self.app, identifier)
         self.xform = self._get_xform()
         self.itext = self._get_itext()
 

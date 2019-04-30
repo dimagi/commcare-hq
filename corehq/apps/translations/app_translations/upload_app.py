@@ -71,6 +71,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
         return msgs
 
     processed_sheets = set()
+    sheet_name_to_unique_id = {}
     for sheet in workbook.worksheets:
         try:
             _check_for_sheet_error(app, sheet, expected_headers, processed_sheets=processed_sheets)
@@ -85,9 +86,9 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
             msgs.append((messages.warning, warning))
 
         if is_single_sheet(sheet.worksheet.title):
-            msgs.extend(_process_single_sheet(app, sheet, lang))
+            msgs.extend(_process_single_sheet(app, sheet, names_map=sheet_name_to_unique_id, lang=lang))
         else:
-            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet))
+            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet, names_map=sheet_name_to_unique_id))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -95,7 +96,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     return msgs
 
 
-def _process_single_sheet(app, sheet, lang=None):
+def _process_single_sheet(app, sheet, names_map, lang=None):
     msgs = []
     module_or_form = None
     module_or_form_rows = {}
@@ -112,23 +113,23 @@ def _process_single_sheet(app, sheet, lang=None):
             rows.append(row)
     module_or_form_rows[module_or_form] = rows
     msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
-                              modules_and_forms_rows, lang=lang))
+                              modules_and_forms_rows, names_map, lang=lang))
     for module_or_form, rows in six.iteritems(module_or_form_rows):
-        msgs.extend(_process_rows(app, module_or_form, rows, lang=lang))
+        msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     return msgs
 
 
-def _process_rows(app, sheet_name, rows, lang=None):
+def _process_rows(app, sheet_name, rows, names_map, lang=None):
     if not sheet_name or not rows:
         return []
 
     if is_modules_and_forms_sheet(sheet_name):
-        updater = BulkAppTranslationModulesAndFormsUpdater(app, lang=lang)
+        updater = BulkAppTranslationModulesAndFormsUpdater(app, names_map, lang=lang)
         return updater.update(rows)
 
     if is_module_sheet(sheet_name):
         try:
-            updater = BulkAppTranslationModuleUpdater(app, sheet_name, lang=lang)
+            updater = BulkAppTranslationModuleUpdater(app, sheet_name, names_map, lang=lang)
         except ModuleNotFoundException:
             return [(
                 messages.error,
@@ -138,7 +139,7 @@ def _process_rows(app, sheet_name, rows, lang=None):
 
     if is_form_sheet(sheet_name):
         try:
-            updater = BulkAppTranslationFormUpdater(app, sheet_name, lang=lang)
+            updater = BulkAppTranslationFormUpdater(app, sheet_name, names_map, lang=lang)
         except FormNotFoundException:
             return [(
                 messages.error,
@@ -247,8 +248,8 @@ def _get_missing_cols(app, sheet, headers):
 
 
 class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, lang=None):
-        super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
+    def __init__(self, app, names_map, lang=None):
+        super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, names_map, lang)
 
     def update(self, rows):
         """
@@ -259,6 +260,12 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         for row in get_unicode_dicts(rows):
             sheet_name = row.get('menu_or_form', row.get('sheet_name', ''))
             unique_id = row.get('unique_id')
+
+            if unique_id and sheet_name not in self.names_map:
+                self.names_map[sheet_name] = unique_id
+            elif not unique_id and sheet_name in self.names_map:
+                unique_id = self.names_map[sheet_name]
+
             try:
                 if unique_id:
                     document = get_menu_or_form_by_unique_id(self.app, unique_id, sheet_name)

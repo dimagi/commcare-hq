@@ -19,13 +19,17 @@ from corehq.apps.translations.app_translations.utils import (
 
 
 class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, identifier, lang=None):
+    def __init__(self, app, identifier, names_map, lang=None):
         '''
         :param identifier: String like "menu1"
         '''
-        super(BulkAppTranslationModuleUpdater, self).__init__(app, lang)
+        super(BulkAppTranslationModuleUpdater, self).__init__(app, names_map, lang)
         self.identifier = identifier
-        self.module = get_module_from_sheet_name(self.app, identifier)
+        if identifier in names_map:
+            unique_id = names_map[identifier]
+            self.module = app.get_module_by_unique_id(unique_id)
+        else:
+            self.module = get_module_from_sheet_name(self.app, identifier)
 
         # These get populated by _get_condensed_rows
         self.condensed_rows = None
