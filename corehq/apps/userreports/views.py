@@ -761,7 +761,7 @@ def delete_report(request, domain, report_id):
     else:
         if data_source.get_report_count() <= 1:
             # No other reports reference this data source.
-            data_source.deactivate()
+            data_source.deactivate(initiated_by=request.user.username)
 
     soft_delete(config)
     did_purge_something = purge_report_from_mobile_ucr(config)
@@ -1129,7 +1129,9 @@ def delete_data_source(request, domain, config_id):
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
     adapter = get_indicator_adapter(config)
-    adapter.drop_table()
+    username = request.user.username if request else None
+    skip = not request  # skip logging when we remove temporary tables
+    adapter.drop_table(initiated_by=username, source='delete_data_source', skip_log=skip)
     soft_delete(config)
     if request:
         messages.success(
@@ -1227,7 +1229,7 @@ def build_data_source_in_place(request, domain, config_id):
         )
     )
 
-    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

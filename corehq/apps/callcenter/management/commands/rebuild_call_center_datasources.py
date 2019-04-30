@@ -27,13 +27,17 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             help='Check ALL domains',
-        ),
+        )
         parser.add_argument(
             '--threshold',
             type=int,
             default=20,
             help='Threshold above which data source will be rebuilt (percentage difference between ES and UCR)',
-        ),
+        )
+        parser.add_argument(
+            '--initiated-by', required=True, action='store',
+            dest='initiated', help='Who initiated the rebuild'
+        )
 
     def handle(self, domains, **options):
         if not domains and not options['all']:
@@ -63,7 +67,9 @@ class Command(BaseCommand):
                     ))
                     try:
                         rebuild_indicators(
-                            StaticDataSourceConfiguration.get_doc_id(domain, TABLE_IDS[stat.name])
+                            StaticDataSourceConfiguration.get_doc_id(domain, TABLE_IDS[stat.name]),
+                            initiated_by=options['initiated'],
+                            source='rebuild_call_center_datasources'
                         )
                     except Exception as e:
                         sys.stderr.write("Error rebuilding data source '{}' in domain '{}':\n{}".format(

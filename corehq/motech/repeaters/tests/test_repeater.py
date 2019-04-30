@@ -37,6 +37,7 @@ from corehq.motech.repeaters.repeater_generators import (
 from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
+from six.moves import range
 
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -293,12 +294,10 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        repeat_record.overall_tries = 1
+        self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
-            repeat_record.fire()
-        self.assertEqual(2, repeat_record.overall_tries)
-        with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
-            repeat_record.fire()
+            for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
+                repeat_record.fire()
         self.assertEqual(True, repeat_record.cancelled)
         repeat_record.requeue()
         self.assertEqual(0, repeat_record.overall_tries)
