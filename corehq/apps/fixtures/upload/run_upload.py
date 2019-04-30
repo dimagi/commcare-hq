@@ -217,7 +217,7 @@ def _create_data_type(domain, table_def, replace, transaction):
             )
         if table_def.delete:
             data_type.recursive_delete(transaction)
-            return data_type, True
+            return data_type, True, errors
     except (ResourceNotFound, KeyError):
         data_type = new_data_type
 
