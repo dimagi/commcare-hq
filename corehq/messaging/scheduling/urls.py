@@ -3,13 +3,15 @@ from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.messaging.scheduling.views import (
-    MessagingDashboardView,
     BroadcastListView,
-    CreateScheduleView,
-    EditScheduleView,
     ConditionalAlertListView,
     CreateConditionalAlertView,
+    CreateScheduleView,
+    DownloadConditionalAlertView,
     EditConditionalAlertView,
+    EditScheduleView,
+    MessagingDashboardView,
+    UploadConditionalAlertView,
 )
 
 urlpatterns = [
@@ -22,4 +24,7 @@ urlpatterns = [
     url(r'^conditional/add/$', CreateConditionalAlertView.as_view(), name=CreateConditionalAlertView.urlname),
     url(r'^conditional/edit/(?P<rule_id>[\w-]+)/$', EditConditionalAlertView.as_view(),
         name=EditConditionalAlertView.urlname),
+    url(r'^conditional/download/$', DownloadConditionalAlertView.as_view(),
+        name=DownloadConditionalAlertView.urlname),
+    url(r'^conditional/upload/$', UploadConditionalAlertView.as_view(), name=UploadConditionalAlertView.urlname),
 ]
