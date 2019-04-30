@@ -240,6 +240,8 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
         _log_response('HS', data, response)
         response.raise_for_status()
 
+        # these must be submitted after the form to ensure
+        # the contact has been created in hubspot
         update_hubspot_properties_v2(webuser, extra_fields)
 
 
