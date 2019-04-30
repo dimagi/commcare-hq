@@ -69,7 +69,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                 _update_progress(table_number, sort_key, items_in_table)
                 type_fields = data_type.fields
                 item_fields = {
-                    field.field_name: _process_fields(field, di)
+                    field.field_name: _process_item_field(field, di)
                     for field in type_fields
                 }
 
@@ -224,7 +224,7 @@ def _create_data_type(domain, table_def, replace, transaction):
     return data_type, False, errors
 
 
-def _process_fields(field, data_item):
+def _process_item_field(field, data_item):
     # if field doesn't have properties
     if len(field.properties) == 0:
         return FieldList(
