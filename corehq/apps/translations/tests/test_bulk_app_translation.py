@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.utils import (
-    get_app_translation_workbook,
     get_bulk_app_sheet_headers,
     get_form_sheet_name,
     get_menu_row,
@@ -35,7 +34,7 @@ from corehq.apps.translations.app_translations.upload_form import BulkAppTransla
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -67,7 +66,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
             f.seek(0)
-            workbook, messages = get_app_translation_workbook(f)
+            workbook = get_workbook(f)
             assert workbook, messages
             expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
             messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
@@ -193,7 +192,7 @@ class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
         with io.open(self.get_path(name, "xlsx"), 'rb') as f:
-            workbook, messages = get_app_translation_workbook(f)
+            workbook = get_workbook(f)
             assert workbook, messages
             expected_headers = get_bulk_app_sheet_headers(self.app)
             messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
