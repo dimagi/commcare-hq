@@ -101,7 +101,8 @@ class ToManyDestModel(object):
 
 class ToManySourceResource(Resource):
     other_model_ids = fields.ListField(attribute='other_model_ids')
-    other_models = ToManyDocumentsField('corehq.apps.api.tests.ToManyDestResource', attribute='other_models')
+    other_models = ToManyDocumentsField('corehq.apps.api.tests.core_api.ToManyDestResource',
+                                        attribute='other_models')
 
     def __init__(self, objs):
         super(ToManySourceResource, self).__init__()
@@ -181,7 +182,8 @@ class ToManyDictDestModel(object):
 
 class ToManyDictSourceResource(Resource):
     other_model_ids = fields.ListField(attribute='other_model_ids')
-    other_models = ToManyDictField('corehq.apps.api.tests.ToManyDictDestResource', attribute='other_models')
+    other_models = ToManyDictField('corehq.apps.api.tests.core_api.ToManyDictDestResource',
+                                   attribute='other_models')
 
     def __init__(self, objs):
         super(ToManyDictSourceResource, self).__init__()
@@ -263,7 +265,8 @@ class ToOneDestModel(object):
 
 class ToOneSourceResource(Resource):
     other_model_id = fields.ListField(attribute='other_model_id')
-    other_model = ToOneDocumentField('corehq.apps.api.tests.ToOneDestResource', attribute='other_model')
+    other_model = ToOneDocumentField('corehq.apps.api.tests.core_api.ToOneDestResource',
+                                     attribute='other_model')
 
     def __init__(self, objs):
         super(ToOneSourceResource, self).__init__()
