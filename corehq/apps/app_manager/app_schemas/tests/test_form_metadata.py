@@ -15,10 +15,7 @@ from corehq.apps.app_manager.xform_builder import XFormBuilder
 
 
 class TestGetFormData(TestCase):
-
-    def test_form_data_with_case_properties(self):
-        factory = AppFactory()
-        app = factory.app
+    def _build_app_with_groups(self, factory):
         module1, form1 = factory.new_basic_module('open_case', 'household')
         form1_builder = XFormBuilder(form1.name)
 
@@ -29,7 +26,6 @@ class TestGetFormData(TestCase):
         form1_builder.new_group('demographics', 'Demographics')
         # question 2 (a question in a group)
         form1_builder.new_question('age', 'Age', group='demographics')
-
         # question 3 (a question that has a load property)
         form1_builder.new_question('polar_bears_seen', 'Number of polar bears seen')
 
@@ -40,7 +36,12 @@ class TestGetFormData(TestCase):
         }, preload={
             '/data/polar_bears_seen': 'polar_bears_seen',
         })
-        app.save()
+        factory.app.save()
+
+    def test_form_data_with_case_properties(self):
+        factory = AppFactory()
+        self._build_app_with_groups(factory)
+        app = factory.app
 
         modules, errors = get_app_summary_formdata(app.domain, app)
 
@@ -69,3 +70,11 @@ class TestGetFormData(TestCase):
 
         modules, errors = get_app_summary_formdata('domain', app)
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
+
+    def test_questions_with_groups(self):
+        factory = AppFactory()
+        self._build_app_with_groups(factory)
+        app = factory.app
+        modules, errors = get_app_summary_formdata(app.domain, app)
+        question_in_group = modules[0]['forms'][0]['questions'][1]['children'][0]
+        self.assertEqual(question_in_group.value, '/data/demographics/age')

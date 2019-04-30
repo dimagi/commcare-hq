@@ -144,18 +144,28 @@ class _AppSummaryFormDataGenerator(object):
             'form_filter': form.form_filter,
         })
         try:
-            form_meta.questions = [
-                question
-                for raw_question in form.get_questions(self.app.langs, include_triggers=True,
-                                                       include_groups=True, include_translations=True)
-                for question in self._get_question(form.unique_id, raw_question)
-            ]
+            form_meta.questions = self._sort_questions_by_group(form)
         except XFormException as exception:
             form_meta.error = {
                 'details': six.text_type(exception),
             }
             self.errors.append(form_meta)
         return form_meta
+
+    def _sort_questions_by_group(self, form):
+        questions_by_path = OrderedDict(
+            (question.value, question)
+            for raw_question in form.get_questions(self.app.langs, include_triggers=True,
+                                                   include_groups=True, include_translations=True)
+            for question in self._get_question(form.unique_id, raw_question)
+        )
+        for path, question in six.iteritems(questions_by_path):
+            parent = question.group or question.repeat
+            if parent:
+                questions_by_path[parent].children.append(question)
+
+        return [question for question in six.itervalues(questions_by_path)
+                if not question.group and not question.repeat]
 
     def _get_question(self, form_unique_id, question):
         if self._needs_save_to_case_root_node(question, form_unique_id):
