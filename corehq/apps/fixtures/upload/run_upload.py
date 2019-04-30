@@ -74,33 +74,13 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                 }
 
                 item_attributes = di.get('property', {})
-                new_data_item = FixtureDataItem(
-                    domain=domain,
-                    data_type_id=data_type.get_id,
-                    fields=item_fields,
-                    item_attributes=item_attributes,
-                    sort_key=sort_key
-                )
-                try:
-                    if di['UID'] and not replace:
-                        old_data_item = FixtureDataItem.get(di['UID'])
-                    else:
-                        old_data_item = new_data_item
-                    old_data_item.fields = item_fields
-                    old_data_item.item_attributes = item_attributes
-                    if old_data_item.domain != domain \
-                            or not old_data_item.data_type_id == data_type.get_id:
-                        old_data_item = new_data_item
-                        return_val.errors.append(
-                            _("'%(UID)s' is not a valid UID. But the new item is created.")
-                            % {'UID': di['UID']}
-                        )
-                    assert old_data_item.doc_type == FixtureDataItem._doc_type
-                    if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
-                        old_data_item.recursive_delete(transaction)
-                        continue
-                except (ResourceNotFound, KeyError):
-                    old_data_item = new_data_item
+                old_data_item, delete, err = _process_data_item(
+                    domain, replace, data_type, di, item_fields, item_attributes, sort_key)
+                if err:
+                    return_val.errors.extend(err)
+                if delete:
+                    old_data_item.recursive_delete(transaction)
+                    continue
                 transaction.save(old_data_item)
 
                 old_groups = old_data_item.groups
@@ -248,3 +228,35 @@ def _process_item_field(field, data_item):
     return FieldList(
         field_list=field_list
     )
+
+
+def _process_data_item(domain, replace, data_type, di, item_fields, item_attributes, sort_key):
+    delete = False
+    errors = []
+    new_data_item = FixtureDataItem(
+        domain=domain,
+        data_type_id=data_type.get_id,
+        fields=item_fields,
+        item_attributes=item_attributes,
+        sort_key=sort_key
+    )
+    try:
+        if di['UID'] and not replace:
+            old_data_item = FixtureDataItem.get(di['UID'])
+        else:
+            old_data_item = new_data_item
+        old_data_item.fields = item_fields
+        old_data_item.item_attributes = item_attributes
+        if (old_data_item.domain != domain
+                or not old_data_item.data_type_id == data_type.get_id):
+            old_data_item = new_data_item
+            errors.append(
+                _("'%(UID)s' is not a valid UID. But the new item is created.")
+                % {'UID': di['UID']}
+            )
+        if di[DELETE_HEADER] == "Y" or di[DELETE_HEADER] == "y":
+            delete = True
+    except (ResourceNotFound, KeyError):
+        old_data_item = new_data_item
+
+    return old_data_item, delete, errors
