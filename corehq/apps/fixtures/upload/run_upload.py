@@ -76,16 +76,20 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                 item_attributes = di.get('property', {})
                 old_data_item, delete, err = _process_data_item(
                     domain, replace, data_type, di, item_fields, item_attributes, sort_key)
-                if err:
-                    return_val.errors.extend(err)
+                return_val.errors.extend(err)
                 if delete:
                     old_data_item.recursive_delete(transaction)
                     continue
                 transaction.save(old_data_item)
 
-                err = _process_data_item_ownership(di, old_data_item, transaction, group_memoizer, get_location)
-                if err:
-                    return_val.errors.extend(err)
+                err = _process_group_ownership(di, old_data_item, group_memoizer, transaction)
+                return_val.errors.extend(err)
+
+                err = _process_user_ownership(di, old_data_item, transaction)
+                return_val.errors.extend(err)
+
+                err = _process_location_ownership(di, old_data_item, get_location, transaction)
+                return_val.errors.extend(err)
 
     clear_fixture_quickcache(domain, data_types)
     clear_fixture_cache(domain)
@@ -219,18 +223,12 @@ def _process_data_item(domain, replace, data_type, di, item_fields, item_attribu
 
     return old_data_item, delete, errors
 
-def _process_data_item_ownership(di, old_data_item, transaction, group_memoizer, get_location):
+
+def _process_group_ownership(di, old_data_item, group_memoizer, transaction):
     errors = []
-    domain = old_data_item.domain
     old_groups = old_data_item.groups
     for group in old_groups:
         old_data_item.remove_group(group)
-    old_users = old_data_item.users
-    for user in old_users:
-        old_data_item.remove_user(user)
-    old_locations = old_data_item.locations
-    for location in old_locations:
-        old_data_item.remove_location(location)
 
     for group_name in di.get('group', []):
         group = group_memoizer.by_name(group_name)
@@ -241,6 +239,17 @@ def _process_data_item_ownership(di, old_data_item, transaction, group_memoizer,
                 _("Unknown group: '%(name)s'. But the row is successfully added")
                 % {'name': group_name}
             )
+
+    return errors
+
+
+def _process_user_ownership(di, old_data_item, transaction):
+    errors = []
+    domain = old_data_item.domain
+
+    old_users = old_data_item.users
+    for user in old_users:
+        old_data_item.remove_user(user)
 
     for raw_username in di.get('user', []):
         try:
@@ -259,6 +268,16 @@ def _process_data_item_ownership(di, old_data_item, transaction, group_memoizer,
                 _("Unknown user: '%(name)s'. But the row is successfully added")
                 % {'name': raw_username}
             )
+
+    return errors
+
+
+def _process_location_ownership(di, old_data_item, get_location, transaction):
+    errors = []
+
+    old_locations = old_data_item.locations
+    for location in old_locations:
+        old_data_item.remove_location(location)
 
     for name in di.get('location', []):
         location_cache = get_location(name)
