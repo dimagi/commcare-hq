@@ -85,30 +85,36 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
             msgs.append((messages.warning, warning))
 
         if is_single_sheet(sheet.worksheet.title):
-            module_or_form = None
-            module_or_form_rows = {}
-            modules_and_forms_rows = []
-            rows = []
-            for row in sheet:
-                if not row['case_property'] and not row['list_or_detail'] and not row['label']:
-                    modules_and_forms_rows.append(row)
-                elif module_or_form != row['menu_or_form']:
-                    module_or_form_rows[module_or_form] = rows
-                    module_or_form = row['menu_or_form']
-                    rows = [row]
-                else:
-                    rows.append(row)
-            module_or_form_rows[module_or_form] = rows
-            msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
-                                      modules_and_forms_rows, lang=lang))
-            for module_or_form, rows in six.iteritems(module_or_form_rows):
-                msgs.extend(_process_rows(app, module_or_form, rows, lang=lang))
+            msgs.extend(_process_single_sheet(app, sheet, lang))
         else:
             msgs.extend(_process_rows(app, sheet.worksheet.title, sheet))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
     )
+    return msgs
+
+
+def _process_single_sheet(app, sheet, lang=None):
+    msgs = []
+    module_or_form = None
+    module_or_form_rows = {}
+    modules_and_forms_rows = []
+    rows = []
+    for row in sheet:
+        if not row['case_property'] and not row['list_or_detail'] and not row['label']:
+            modules_and_forms_rows.append(row)
+        elif module_or_form != row['menu_or_form']:
+            module_or_form_rows[module_or_form] = rows
+            module_or_form = row['menu_or_form']
+            rows = [row]
+        else:
+            rows.append(row)
+    module_or_form_rows[module_or_form] = rows
+    msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
+                              modules_and_forms_rows, lang=lang))
+    for module_or_form, rows in six.iteritems(module_or_form_rows):
+        msgs.extend(_process_rows(app, module_or_form, rows, lang=lang))
     return msgs
 
 
