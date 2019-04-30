@@ -800,7 +800,27 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
     file_path = "data", "bulk_app_translation", "form_modifications"
 
     def test_removing_form_translations(self):
-        self.do_upload("modifications")
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
+                                            'image_en', 'image_fra', 'audio_en', 'audio_fra', 'unique_id')),
+            ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
+            ('menu1_form1', ('label', 'default_en', 'default_fra', 'image_en', 'image_fra',
+                             'audio_en', 'audio_fra', 'video_en', 'video_fra')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME,
+             (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', '765f110eb62fd26240a6d8bcdccca91b246b96c9'),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'fffea2c32b7902a3efcb6b84c94e824820d11856'))),
+            ('menu1',
+             (('name', 'list', 'Name', ''),
+              ('name', 'detail', 'Name', ''))),
+            ('menu1_form1',
+             (('question1-label', '', 'french', '', 'jr://file/commcare/image/data/question1.png', '', '', '', ''),
+              ('question2-label', 'english', '', 'jr://file/commcare/image/data/question2.png', '', '', '', '', ''),
+              ('question3-label', '', '', '', '', '', '', '', ''))),
+        )
+
+        self.upload_raw_excel_translations(headers, data)
         form = self.app.get_module(0).get_form(0)
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
 
