@@ -101,8 +101,7 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
             msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
                                       modules_and_forms_rows, lang=lang))
         else:
-            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet,
-                                      sheet_name=sheet.worksheet.title))
+            msgs.extend(_process_rows(app, sheet.worksheet.title, sheet))
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))
@@ -110,37 +109,37 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
     return msgs
 
 
-def _process_rows(app, identifier, rows, sheet_name=None, lang=None):
-    if not identifier or not rows:
+def _process_rows(app, sheet_name, rows, lang=None):
+    if not sheet_name or not rows:
         return []
 
-    if is_modules_and_forms_sheet(identifier):
+    if is_modules_and_forms_sheet(sheet_name):
         updater = BulkAppTranslationModulesAndFormsUpdater(app, lang=lang)
         return updater.update(rows)
 
-    if is_module_sheet(identifier):
+    if is_module_sheet(sheet_name):
         try:
-            updater = BulkAppTranslationModuleUpdater(app, identifier, lang=lang)
+            updater = BulkAppTranslationModuleUpdater(app, sheet_name, lang=lang)
         except ModuleNotFoundException:
             return [(
                 messages.error,
-                _('Invalid menu in row "%s", skipping row.') % identifier
+                _('Invalid menu in row "%s", skipping row.') % sheet_name
             )]
         return updater.update(rows)
 
-    if is_form_sheet(identifier):
+    if is_form_sheet(sheet_name):
         try:
-            updater = BulkAppTranslationFormUpdater(app, identifier, lang=lang)
+            updater = BulkAppTranslationFormUpdater(app, sheet_name, lang=lang)
         except FormNotFoundException:
             return [(
                 messages.error,
-                _('Invalid form in row "%s", skipping row.') % identifier
+                _('Invalid form in row "%s", skipping row.') % sheet_name
             )]
         return updater.update(rows)
 
     return [(
         messages.error,
-        _('Did not recognize "%s", skipping row.') % identifier
+        _('Did not recognize "%s", skipping row.') % sheet_name
     )]
 
 
