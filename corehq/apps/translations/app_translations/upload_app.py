@@ -21,7 +21,8 @@ from corehq.apps.translations.app_translations.utils import (
     is_module_sheet,
     is_modules_and_forms_sheet,
     is_single_sheet,
-    get_menu_or_form,
+    get_menu_or_form_by_sheet_name,
+    get_menu_or_form_by_unique_id,
 )
 from corehq.apps.translations.const import LEGACY_MODULES_AND_FORMS_SHEET_NAME, MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
@@ -248,9 +249,13 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         """
         self.msgs = []
         for row in get_unicode_dicts(rows):
-            identifying_text = row.get('menu_or_form', row.get('sheet_name', ''))
+            sheet_name = row.get('menu_or_form', row.get('sheet_name', ''))
+            unique_id = row.get('unique_id')
             try:
-                document = get_menu_or_form(self.app, identifying_text)
+                if unique_id:
+                    document = get_menu_or_form_by_unique_id(self.app, unique_id, sheet_name)
+                else:
+                    document = get_menu_or_form_by_sheet_name(self.app, sheet_name)
             except (ModuleNotFoundException, FormNotFoundException, ValueError) as err:
                 self.msgs.append((messages.error, six.text_type(err)))
                 continue

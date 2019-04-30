@@ -161,11 +161,26 @@ def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
 
 
-def get_menu_or_form(app, identifier):
-    if '_' in identifier:
-        return get_form_from_sheet_name(app, identifier)
+def get_menu_or_form_by_sheet_name(app, sheet_name):
+    if '_' in sheet_name:
+        return get_form_from_sheet_name(app, sheet_name)
     else:
-        return get_module_from_sheet_name(app, identifier)
+        return get_module_from_sheet_name(app, sheet_name)
+
+
+def get_menu_or_form_by_unique_id(app, unique_id, sheet_name):
+    if is_form_sheet(sheet_name):
+        try:
+            return app.get_form(unique_id)
+        except FormNotFoundException:
+            raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % sheet_name)
+    elif is_module_sheet(sheet_name):
+        try:
+            return app.get_module_by_unique_id(unique_id)
+        except ModuleNotFoundException:
+            raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % sheet_name)
+    else:
+        raise ValueError(_('Did not recognize "%s", skipping row.') % sheet_name)
 
 
 def get_module_from_sheet_name(app, identifier):
