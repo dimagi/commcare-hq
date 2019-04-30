@@ -22,6 +22,7 @@ from corehq.util.test_utils import generate_cases, make_make_path
 _make_path = make_make_path(__file__)
 
 
+# (slug (or filename), [expected errors], file contents (None if excel file exists in repository))
 validation_test_cases = [
     ('duplicate_tag', [
         "Lookup-tables should have unique 'table_id'. "
