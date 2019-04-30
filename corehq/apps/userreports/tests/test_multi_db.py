@@ -157,14 +157,13 @@ class UCRMultiDBTest(TestCase):
         adapter = get_indicator_adapter(ds3)
         self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)
         self.assertEqual(len(adapter.all_adapters), 2)
-        for _adapter in adapter.all_adapters:
-            self.assertEqual(0, adapter.get_query_object().count())
+        for db_adapter in adapter.all_adapters:
+            self.assertEqual(0, db_adapter.get_query_object().count())
 
         with patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'):
             pillow = get_case_pillow(ucr_configs=[ds3])
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
 
-        for _adapter in adapter.all_adapters:
-            self.assertEqual(1, adapter.get_query_object().count())
-
+        for db_adapter in adapter.all_adapters:
+            self.assertEqual(1, db_adapter.get_query_object().count())
