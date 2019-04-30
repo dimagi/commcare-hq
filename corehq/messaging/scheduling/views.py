@@ -1070,8 +1070,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
         success_count = 0
         errors = []
-        for index, row in enumerate(worksheet):
-            index = index + 2   # one-indexed, plus header row
+        for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
             rule = None
             try:
                 rule = AutomaticUpdateRule.objects.get(
@@ -1081,7 +1080,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
                     deleted=False,
                 )
             except AutomaticUpdateRule.DoesNotExist:
-                errors.append(str(index))
+                errors.append(_("Row {index}, with rule id {id}").format(index=index, id=row['id']))
             dirty = False
             if rule:
                 if rule.name != row['name']:
