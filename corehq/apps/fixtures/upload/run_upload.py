@@ -45,16 +45,16 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
     get_location = get_memoized_location_getter(domain)
     data_types = []
 
+    type_sheets = workbook.get_all_type_sheets()
+    total_tables = len(type_sheets)
+    return_val.number_of_fixtures = total_tables
+
+    def _update_progress(table_count, item_count, items_in_table):
+        if task:
+            processed = table_count * 10 + (10 * item_count / items_in_table)
+            DownloadBase.set_progress(task, processed, 10 * total_tables)
+
     with CouchTransaction() as transaction:
-        type_sheets = workbook.get_all_type_sheets()
-        total_tables = len(type_sheets)
-        return_val.number_of_fixtures = total_tables
-
-        def _update_progress(table_count, item_count, items_in_table):
-            if task:
-                processed = table_count * 10 + (10 * item_count / items_in_table)
-                DownloadBase.set_progress(task, processed, 10 * total_tables)
-
         for table_number, table_def in enumerate(type_sheets):
             data_type, delete, err = _create_data_type(domain, table_def, replace, transaction)
             if err:
