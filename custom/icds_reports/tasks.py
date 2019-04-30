@@ -772,6 +772,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 block=SQLLocation.objects.get(
                     location_id=config['block_id'], domain=config['domain']
                 ).name if aggregation_level == 3 else None,
+                beta=beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
