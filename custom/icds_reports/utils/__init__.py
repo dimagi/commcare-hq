@@ -901,12 +901,12 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     # sheet title
     if beta:
         worksheet.merge_cells('B2:{0}2'.format(
-        "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
-    ))
+            "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
+        ))
     else:
         worksheet.merge_cells('B2:{0}2'.format(
-        "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
-    ))
+            "J" if aggregation_level == 3 else ("K" if aggregation_level == 2 else "L")
+        ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "AWW Performance Report for the month of {}".format(month)
@@ -920,8 +920,10 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
             header_cells.add("L3")
         if aggregation_level < 2:
             header_cells.add("M3")
-        date_description_cell_start = "I3" if aggregation_level == 3 else ("J3" if aggregation_level == 2 else "K3")
-        date_description_cell_finish = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
+        date_description_cell_start = "I3" if aggregation_level == 3 else \
+            ("J3" if aggregation_level == 2 else "K3")
+        date_description_cell_finish = "J3" if aggregation_level == 3 else \
+            ("K3" if aggregation_level == 2 else "L3")
         date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
 
     else:
@@ -930,8 +932,10 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
             header_cells.add("K3")
         if aggregation_level < 2:
             header_cells.add("L3")
-        date_description_cell_start = "H3" if aggregation_level == 3 else ("I3" if aggregation_level == 2 else "J3")
-        date_description_cell_finish = "I3" if aggregation_level == 3 else ("J3" if aggregation_level == 2 else "K3")
+        date_description_cell_start = "H3" if aggregation_level == 3 else \
+            ("I3" if aggregation_level == 2 else "J3")
+        date_description_cell_finish = "I3" if aggregation_level == 3 else \
+            ("J3" if aggregation_level == 2 else "K3")
         date_column = "J3" if aggregation_level == 3 else ("K3" if aggregation_level == 2 else "L3")
 
     for cell in header_cells:
