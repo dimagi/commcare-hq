@@ -15,7 +15,7 @@ hqDefine('app_manager/js/summary/models',[
 ], function ($, ko, _, utils, initialPageData, assertProperties, hqLayout, widgets, kissmetricsAnalytics) {
 
     var menuItemModel = function (options) {
-        assertProperties.assert(options, ['id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
+        assertProperties.assert(options, ['unique_id', 'name', 'icon'], ['subitems', 'has_errors', 'has_changes']);
         var self = _.extend({
             has_errors: false,
             has_changes: false,
@@ -41,12 +41,12 @@ hqDefine('app_manager/js/summary/models',[
         self.selectedItemId.extend({ notify: 'always' });
 
         self.select = function (item) {
-            self.selectedItemId(item.id);
+            self.selectedItemId(item.unique_id);
             self.viewChangedOnlySelected(false);
             _.each(self.items, function (i) {
-                i.isSelected(item.id === i.id);
+                i.isSelected(item.unique_id === i.unique_id);
                 _.each(i.subitems, function (s) {
-                    s.isSelected(item.id === s.id);
+                    s.isSelected(item.unique_id === s.unique_id);
                 });
             });
         };
