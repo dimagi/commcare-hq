@@ -69,6 +69,8 @@ class IncentiveReport(object):
                     AWC_NOT_LAUNCHED,
                     AWC_NOT_LAUNCHED
                 ])
+                if self.beta:
+                    row_data.append(AWC_NOT_LAUNCHED)
             else:
                 home_visit_percent = row['valid_visits'] / round(row['expected_visits']) if \
                     round(row['expected_visits']) else 1
