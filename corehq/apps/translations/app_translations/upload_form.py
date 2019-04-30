@@ -16,7 +16,11 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode
-from corehq.apps.translations.app_translations.utils import BulkAppTranslationUpdater, get_unicode_dicts
+from corehq.apps.translations.app_translations.utils import (
+    BulkAppTranslationUpdater,
+    get_unicode_dicts,
+    get_form_from_sheet_name,
+)
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
@@ -29,19 +33,13 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
         self.identifier = identifier
 
         # These attributes depend on each other and therefore need to be created in this order
-        self.form = self._get_form_from_sheet_name(self.identifier)
+        self.form = get_form_from_sheet_name(self.app, identifier)
         self.xform = self._get_xform()
         self.itext = self._get_itext()
 
         # These attributes get populated by update
         self.markdowns = None
         self.markdown_vetoes = None
-
-    def _get_form_from_sheet_name(self, sheet_name):
-        mod_text, form_text = sheet_name.split("_")
-        module_index = int(mod_text.replace("menu", "").replace("module", "")) - 1
-        form_index = int(form_text.replace("form", "")) - 1
-        return self.app.get_module(module_index).get_form(form_index)
 
     def _get_xform(self):
         if not isinstance(self.form, ShadowForm) and self.form.source:

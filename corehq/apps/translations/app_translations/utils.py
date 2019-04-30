@@ -161,22 +161,11 @@ def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
 
 
-def get_menu_or_form(app, identifying_text):
-    identifying_parts = identifying_text.split('_')
-
-    if len(identifying_parts) not in (1, 2):
-        raise ValueError(_('Did not recognize "%s", skipping row.') % identifying_text)
-
-    document = get_module_from_sheet_name(app, identifying_parts[0])
-
-    if len(identifying_parts) == 2:
-        form_index = int(identifying_parts[1].replace("form", "")) - 1
-        try:
-            document = document.get_form(form_index)
-        except FormNotFoundException:
-            raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % identifying_text)
-
-    return document
+def get_menu_or_form(app, identifier):
+    if '_' in identifier:
+        return get_form_from_sheet_name(app, identifier)
+    else:
+        return get_module_from_sheet_name(app, identifier)
 
 
 def get_module_from_sheet_name(app, identifier):
@@ -185,6 +174,19 @@ def get_module_from_sheet_name(app, identifier):
         return app.get_module(module_index)
     except ModuleNotFoundException:
         raise ModuleNotFoundException(_('Invalid menu in row "%s", skipping row.') % identifier)
+
+
+def get_form_from_sheet_name(app, identifier):
+    try:
+        mod_text, form_text = identifier.split("_")
+    except ValueError:
+        raise ValueError(_('Did not recognize "%s", skipping row.') % identifier)
+    module = get_module_from_sheet_name(app, mod_text)
+    form_index = int(form_text.replace("form", "")) - 1
+    try:
+        return module.get_form(form_index)
+    except FormNotFoundException:
+        raise FormNotFoundException(_('Invalid form in row "%s", skipping row.') % identifier)
 
 
 def get_unicode_dicts(iterable):
