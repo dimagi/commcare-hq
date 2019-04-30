@@ -33,12 +33,12 @@ class WorkbookJSONReaderTest(SimpleTestCase, TestFileMixin):
     def test_get_workbook_bad_file(self):
         bad_filepath = self.get_path('not_excel_file', 'xlsx')
         with self.assertRaises(WorkbookJSONError):
-            workbook = get_workbook(bad_filepath)
+            get_workbook(bad_filepath)
 
     def test_get_workbook_duplicate_columns(self):
         bad_filepath = self.get_path('duplicate_columns', 'xlsx')
         with self.assertRaises(WorkbookJSONError):
-            workbook = get_workbook(bad_filepath)
+            get_workbook(bad_filepath)
 
     def test_get_single_worksheet(self):
         formula_filepath = self.get_path('formula_sheet', 'xlsx')
@@ -53,4 +53,4 @@ class WorkbookJSONReaderTest(SimpleTestCase, TestFileMixin):
     def test_get_single_worksheet_missing(self):
         formula_filepath = self.get_path('formula_sheet', 'xlsx')
         with self.assertRaises(WorkbookJSONError):
-            worksheet = get_single_worksheet(formula_filepath, title='NotASheet')
+            get_single_worksheet(formula_filepath, title='NotASheet')
