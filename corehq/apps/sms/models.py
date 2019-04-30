@@ -10,7 +10,6 @@ from dimagi.ext.couchdbkit import *
 from datetime import datetime, timedelta
 from django.db import models, transaction, IntegrityError, connection
 from django.http import Http404
-from django_cte import CTEManager
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
@@ -264,8 +263,6 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
-
-    objects = CTEManager()
 
     def to_json(self):
         from corehq.apps.sms.serializers import SMSSerializer

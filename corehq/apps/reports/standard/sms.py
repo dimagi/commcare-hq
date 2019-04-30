@@ -5,9 +5,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
-from django.db.models.expressions import F
-from django.db.models.sql.constants import LOUTER
+from django.db.models import Count, Q, Subquery, OuterRef
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -17,7 +15,6 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 
 import six
 from couchdbkit import ResourceNotFound
-from django_cte import With
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
@@ -528,39 +525,22 @@ class MessageLogReport(BaseCommConnectLogReport):
         return result
 
     def _add_sms_event_data(self, queryset):
-        """Adds information about the triggering event to a SMS queryset"""
 
-        # For many SMS entries, the requisite info is easy enough to get:
+        def subquery_expression(field):
+            return Subquery(
+                MessagingSubEvent.objects.filter(
+                    parent__domain=self.domain,
+                    date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
+                    xforms_session__couch_id=OuterRef('xforms_session_couch_id'),
+                ).values(field)
+            )
+
         queryset = queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
-
-        # That connection doesn't always exist, so we sometimes have to go:
-        # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
-        session_event = With(
-            MessagingSubEvent.objects.filter(
-                parent__domain=self.domain,
-                date__range=(self.datespan.startdate_utc, self.datespan.enddate_utc),
-            ).values(
-                couch_id=F("xforms_session__couch_id"),
-                source=F("parent__source"),
-                source_id=F("parent__source_id"),
-                session_content_type=F("parent__content_type"),
-                session_form_name=F("parent__form_name"),
-            ),
-            name="session_event"
-        )
-        queryset = session_event.join(
-            queryset.with_cte(session_event),
-            xforms_session_couch_id=session_event.col.couch_id,
-            # Use secret parameter to do LEFT OUTER JOIN
-            # WARNING: may be automatically changed to an INNER JOIN if
-            # more filters are added to the queryset after this join.
-            # See also: https://github.com/dimagi/django-cte/issues/2
-            _join_type=LOUTER,
-        ).annotate(
-            session_source=session_event.col.source,
-            session_source_id=session_event.col.source_id,
-            session_content_type=session_event.col.session_content_type,
-            session_form_name=session_event.col.session_form_name,
+        queryset = queryset.annotate(
+            session_source=subquery_expression("parent__source"),
+            session_source_id=subquery_expression("parent__source_id"),
+            session_content_type=subquery_expression("parent__content_type"),
+            session_form_name=subquery_expression("parent__form_name"),
         )
         return queryset
 
