@@ -1,16 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
 import six
-
-from corehq.apps.app_manager.app_schemas.app_case_metadata import (
-    AppCaseMetadata,
-    LoadSaveProperty,
-    FormQuestionResponse,
-)
-from corehq.apps.app_manager.exceptions import XFormException
-
 from jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -19,6 +11,13 @@ from jsonobject import (
     ObjectProperty,
     StringProperty,
 )
+
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    AppCaseMetadata,
+    FormQuestionResponse,
+    LoadSaveProperty,
+)
+from corehq.apps.app_manager.exceptions import XFormException
 
 REMOVED = 'removed'
 ADDED = 'added'
