@@ -81,7 +81,7 @@ validation_test_cases = [
     ('has_no_field_column', [
         "Excel worksheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
-    ],  {
+    ], {
         'things': [('UID', 'Delete(Y/N)'), (None, 'N')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 'name')]
     }),
@@ -150,7 +150,7 @@ validation_test_cases = [
     }),
     ('wrong_field_property_combos', [
         "Number of values for field 'name' and attribute 'lang' should be same",
-    ],  {
+    ], {
         'things': [
             ('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang 1', 'field: name 2'),
             (None, 'N', 'apple', 'en', 'malum')
@@ -162,7 +162,7 @@ validation_test_cases = [
     }),
     ('has_no_column', [
         "Workbook 'types' has no column 'table_id'.",
-    ],  {
+    ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'is_global?', 'field 1'), ('N', 'yes', 'name')]}),
     ('neither_fields_nor_attributes', [
@@ -195,7 +195,7 @@ validation_test_cases = [
         "Field names should be strings, not numbers",
     ], {
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
-        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100L)]
+        'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
     }),
     ('not_excel_file', [
         "Invalid file-format. Please upload a valid xlsx file.",
@@ -216,7 +216,7 @@ validation_test_cases = [
     ('field_type_error', [
         "Fields with attributes should be numbered as 'field: name integer'"
     ], {
-        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name: lang 1'), (None, 'N', 1L, 1L)],
+        'things': [('UID', 'Delete(Y/N)', 'field: name', 'name: lang 1'), (None, 'N', 1, 1)],
         'types': [
             ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
             ('N', 'things', 'yes', 'name', 'lang')
@@ -225,7 +225,7 @@ validation_test_cases = [
     ('property_type_error', [
         "Attribute should be written as 'name: lang integer'"
     ], {
-        'things': [('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang'), (None, 'N', 1L, 1L)],
+        'things': [('UID', 'Delete(Y/N)', 'field: name 1', 'name: lang'), (None, 'N', 1, 1)],
         'types': [
             ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
             ('N', 'things', 'yes', 'name', 'lang')
