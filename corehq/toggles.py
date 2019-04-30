@@ -732,12 +732,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_ARCHIVE_FORMS = StaticToggle(
-    'bulk_archive_forms',
-    'Bulk archive forms with Excel',
-    TAG_SOLUTIONS
-)
-
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',

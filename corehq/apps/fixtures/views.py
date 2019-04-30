@@ -490,7 +490,7 @@ def _upload_fixture_api(request, domain):
     with excel_file as filename:
 
         if is_async:
-            with open(filename, 'r') as f:
+            with open(filename, 'rb') as f:
                 file_ref = expose_cached_download(
                     f.read(),
                     file_extension=file_extention_from_filename(filename),
