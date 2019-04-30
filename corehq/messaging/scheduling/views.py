@@ -27,6 +27,7 @@ from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2_v4, use_jquery_ui, use_timepicker, use_nvd3
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -53,7 +54,12 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
+from couchexport.export import export_raw
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
+import io
 import six
 from six.moves import range
 from six.moves.urllib.parse import quote_plus
@@ -533,7 +539,24 @@ class EditScheduleView(CreateScheduleView):
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
-class ConditionalAlertListView(BaseMessagingSectionView):
+class ConditionalAlertBaseView(BaseMessagingSectionView):
+    @method_decorator(reminders_framework_permission)
+    def dispatch(self, *args, **kwargs):
+        return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
+
+    def get_conditional_alerts_queryset(self, query_string=''):
+        query = (
+            AutomaticUpdateRule
+            .objects
+            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
+        )
+        if query_string:
+            query = query.filter(name__icontains=query_string)
+        query = query.order_by('case_type', 'name', 'id')
+        return query
+
+
+class ConditionalAlertListView(ConditionalAlertBaseView):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
     page_title = ugettext_lazy('Conditional Alerts')
@@ -545,7 +568,6 @@ class ConditionalAlertListView(BaseMessagingSectionView):
     ACTION_RESTART = 'restart'
     ACTION_COPY = 'copy'
 
-    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
@@ -570,17 +592,6 @@ class ConditionalAlertListView(BaseMessagingSectionView):
         context['limit_rule_restarts'] = self.limit_rule_restarts
         context['allow_copy'] = self.allow_copy
         return context
-
-    def get_conditional_alerts_queryset(self, query_string=''):
-        query = (
-            AutomaticUpdateRule
-            .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
-        )
-        if query_string:
-            query = query.filter(name__icontains=query_string)
-        query = query.order_by('case_type', 'name', 'id')
-        return query
 
     def schedule_is_editable(self, schedule):
         return (
@@ -992,3 +1003,101 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                       "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
+
+
+class DownloadConditionalAlertView(ConditionalAlertBaseView):
+    urlname = 'download_conditional_alert'
+    http_method_names = ['get']
+
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    def get(self, request, domain):
+        title = _("Conditional Alerts")
+        headers = ((title, (_('id'), _('name'), _('case_type'))),)
+        rows = [(
+            rule.pk,
+            rule.name,
+            rule.case_type,
+        ) for rule in self.get_conditional_alerts_queryset()]
+
+        temp = io.BytesIO()
+        export_raw(headers, [(title, rows)], temp)
+        filename = '{title} - {domain}'.format(
+            domain=domain,
+            title=title)
+        return export_response(temp, Format.XLS_2007, filename)
+
+
+class UploadConditionalAlertView(BaseMessagingSectionView):
+    urlname = 'upload_conditional_alert'
+    page_title = ugettext_lazy("Upload Conditional Alerts")
+    template_name = 'hqwebapp/bulk_upload.html'
+
+    @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
+    @method_decorator(reminders_framework_permission)
+    def dispatch(self, *args, **kwargs):
+        return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = {
+            'bulk_upload': {
+                "download_url": reverse("download_conditional_alert", args=(self.domain,)),
+                "adjective": _("conditional alert"),
+                "plural_noun": _("conditional alerts"),
+            },
+        }
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
+        return context
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': BroadcastListView.page_title,
+            'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+        }]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            worksheet = get_single_worksheet(request.FILES['bulk_upload_file'])
+        except WorkbookJSONError as e:
+            messages.error(request, six.text_type(e))
+            return self.get(request, *args, **kwargs)
+
+        success_count = 0
+        errors = []
+        for index, row in enumerate(worksheet, start=2):    # one-indexed, plus header row
+            rule = None
+            try:
+                rule = AutomaticUpdateRule.objects.get(
+                    pk=row['id'],
+                    domain=self.domain,
+                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    deleted=False,
+                )
+            except AutomaticUpdateRule.DoesNotExist:
+                errors.append(_("Row {index}, with rule id {id}").format(index=index, id=row['id']))
+            dirty = False
+            if rule:
+                if rule.name != row['name']:
+                    dirty = True
+                    rule.name = row['name']
+                if rule.case_type != row['case_type']:
+                    dirty = True
+                    rule.case_type = row['case_type']
+            if dirty:
+                rule.save()
+                success_count += 1
+
+        if errors:
+            messages.error(request, _("Could not find rules from the following rows: {errors}").format(
+                errors=", ".join(errors)))
+
+        if success_count:
+            messages.success(request, _("Updated {count} rule(s)").format(count=success_count))
+
+        return self.get(request, *args, **kwargs)

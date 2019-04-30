@@ -81,7 +81,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.soft_assert import soft_assert
-from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import get_single_worksheet
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
@@ -1799,8 +1799,7 @@ def download_sms_translations(request, domain):
 @get_file("bulk_upload_file")
 def upload_sms_translations(request, domain):
     try:
-        workbook = WorkbookJSONReader(request.file)
-        translations = workbook.get_worksheet(title='translations')
+        translations = get_single_worksheet(request.file, title='translations')
 
         with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
             msg_ids = sorted(_MESSAGES.keys())

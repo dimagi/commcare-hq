@@ -54,8 +54,7 @@ branches:
   #- jls/reports-select2-v4  # Jenny April 9
   - nh/cdc/one_domain+sk/lazy-case-json  # Norman April 25
   - nh/cdc/one_domain  # Norman March 26
-  - sk/lazy-case-json # SK April 24
   - je/inactivity-timeout # J$ April 26
-  - jls/kill-bulk-archive-forms # Jenny April 29
   - odata-apikey  # Nick April 29
+  - je/fixtures-json # J$ April 30
 submodules: {}
