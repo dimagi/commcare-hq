@@ -27,37 +27,70 @@ def get_bulk_app_single_sheet_by_name(app, lang):
         prefix = [get_module_sheet_name(module)]
 
         # Name / menu media row
-        # Leave blanks for case_property, list_or_detail, and label
         rows.append(
-            prefix + ['', '', ''] +
-            get_menu_row([module.name.get(lang)],
-                         [module.icon_by_language(lang)],
-                         [module.audio_by_language(lang)]) +
-            [module.unique_id]
+            prefix +
+            [
+                '',  # case_property
+                '',  # list_or_detail
+                '',  # label
+            ] +
+            get_menu_row(
+                [module.name.get(lang)],
+                [module.icon_by_language(lang)],
+                [module.audio_by_language(lang)]
+            ) +
+            [
+                '',  # video by language
+                module.unique_id,
+            ]
         )
 
         # Detail case properties, etc.
         for row in get_module_rows([lang], module):
-            # Insert blank for label
-            rows.append(prefix + list(row[:2]) + [''] + list(row[2:]))
+            rows.append(
+                prefix +
+                list(row[:2]) +
+                [''] +  # label
+                list(row[2:]) +
+                [
+                    '',  # image
+                    '',  # audio
+                    '',  # video
+                    '',  # unique_id
+                ]
+            )
 
         for form in module.forms:
-            # Leave blanks for case_property and list_or_detail
-            prefix = [get_form_sheet_name(form), '', '']
+            prefix = [get_form_sheet_name(form)]
 
             # Name / menu media row
-            # Leave another blank for label
             rows.append(
-                prefix + [''] +
+                prefix +
+                [
+                    '',  # case_property
+                    '',  # list_or_detail
+                    '',  # label
+                ] +
                 get_menu_row([form.name.get(lang)],
                              [form.icon_by_language(lang)],
                              [form.audio_by_language(lang)]) +
-                [form.unique_id]
+                [
+                    '',  # video by language
+                    form.unique_id,
+                ]
             )
 
             # Questions
             for row in get_form_question_rows([lang], form):
-                rows.append(prefix + row + [''])
+                rows.append(
+                    prefix +
+                    [
+                        '',  # case_property
+                        '',  # list_or_detail
+                    ] +
+                    row +
+                    ['']  # unique_id
+                )
 
     return OrderedDict({SINGLE_SHEET_NAME: rows})
 
