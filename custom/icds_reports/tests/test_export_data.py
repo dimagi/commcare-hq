@@ -2155,11 +2155,10 @@ class TestExportData(TestCase):
             expected
         )
 
-
     def test_aww_performance_export_2(self):
         data = IncentiveReport(
             location='b2',
-            month=datetime(2017,5,1),
+            month=datetime(2017, 5, 1),
             aggregation_level=3,
             beta=True
         ).get_excel_data()
@@ -2194,16 +2193,16 @@ class TestExportData(TestCase):
               ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', '90.48%',
                'No', 13, 'No']]],
             ['Export Info',
-                          [
-                              ['Generated at', india_now()],
-                              ['Grouped By', 'AWC'],
-                              ['Month', 5],
-                              ['Year', 2017],
-                              ['Disclaimer',
-                               'The information in the report is based on the self-reported '
-                               'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                               ' and is subject to timely data syncs.']
-                          ]
+                [
+                    ['Generated at', india_now()],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 5],
+                    ['Year', 2017],
+                    ['Disclaimer',
+                     'The information in the report is based on the self-reported '
+                     'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                     ' and is subject to timely data syncs.']
+                ]
              ]
         ]
         self.assertListEqual(
