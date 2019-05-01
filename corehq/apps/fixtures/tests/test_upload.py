@@ -197,6 +197,10 @@ validation_test_cases = [
         'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
         'types': [('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'), ('N', 'things', 'yes', 100)]
     }),
+    ('not_excel_file', [
+        "Upload failed! Please make sure you are using a valid Excel 2007 or later (.xlsx) file. " \
+        "Error details: \"There is no item named '[Content_Types].xml' in the archive\".",
+    ], None),
     ('no_types_sheet', [
         "Workbook does not contain a sheet called types",
     ], {'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')]}),
