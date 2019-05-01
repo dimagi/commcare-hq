@@ -915,11 +915,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
 
     # sheet header
     if beta:
-        header_cells = {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"}
+        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
         if aggregation_level < 3:
-            header_cells.add("L3")
+            header_cells.append("L3")
         if aggregation_level < 2:
-            header_cells.add("M3")
+            header_cells.append("M3")
         date_description_cell_start = "I3" if aggregation_level == 3 else \
             ("J3" if aggregation_level == 2 else "K3")
         date_description_cell_finish = "J3" if aggregation_level == 3 else \
@@ -927,11 +927,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         date_column = "K3" if aggregation_level == 3 else ("L3" if aggregation_level == 2 else "M3")
 
     else:
-        header_cells = {"B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"}
+        header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3"]
         if aggregation_level < 3:
-            header_cells.add("K3")
+            header_cells.append("K3")
         if aggregation_level < 2:
-            header_cells.add("L3")
+            header_cells.append("L3")
         date_description_cell_start = "H3" if aggregation_level == 3 else \
             ("I3" if aggregation_level == 2 else "J3")
         date_description_cell_finish = "I3" if aggregation_level == 3 else \
@@ -975,21 +975,19 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
             'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
             'Number of Days AWC was Open', 'AWH Eligible for Incentive'
         ])
-        columns = 'B C D E F G H I J K'
+        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
         if aggregation_level < 3:
-            columns += " L"
+            columns.append('L')
         if aggregation_level < 2:
-            columns += " M"
-        columns = columns.split()
+            columns.append('M')
     else:
         headers.extend(["Supervisor", "AWC", "AWW Name", "AWW Contact Number", "Home Visits Conducted",
                         "Number of Days AWC was Open", "Weighing Efficiency", "Eligible for Incentive"])
-        columns = 'B C D E F G H I J'
+        columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
         if aggregation_level < 3:
-            columns += " K"
+            columns.append('K')
         if aggregation_level < 2:
-            columns += " L"
-        columns = columns.split()
+            columns.append('L')
 
     table_header = {}
     for col, header in zip(columns, headers):
