@@ -242,8 +242,8 @@ class DetailContributor(SectionContributor):
             case_list_form = module.case_list_form
             action = LocalizedAction(
                 menu_locale_id=id_strings.case_list_form_locale(module),
-                media_image=module.uses_image(),
-                media_audio=module.uses_audio(),
+                media_image=case_list_form.uses_image(),
+                media_audio=case_list_form.uses_audio(),
                 image_locale_id=id_strings.case_list_form_icon_locale(module),
                 audio_locale_id=id_strings.case_list_form_audio_locale(module),
                 stack=Stack(),
