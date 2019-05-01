@@ -137,8 +137,10 @@ class IndicatorAdapter(object):
             # make this atomic so that errors don't affect outer transactions
             with transaction.atomic():
                 DataSourceActionLog.objects.create(**kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except:  # noqa
-            # blanket catchall to make sure errors here don't interfere with real workflows
+            # catchall to make sure errors here don't interfere with real workflows
             notify_exception(None, "Error saving UCR action log", details=kwargs)
 
 
