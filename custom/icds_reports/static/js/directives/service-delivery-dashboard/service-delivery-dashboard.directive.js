@@ -33,7 +33,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
         .withDOM('ltipr');
 
     vm.setDtColumns = function () {
-         var locationLevelName = 'State';
+        var locationLevelName = 'State';
         var locationLevelNameField = 'state_name';
         if (vm.dataAggregationLevel === 1) {
             locationLevelName = 'State';
@@ -55,33 +55,32 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
             locationLevelNameField
         ).withTitle(
             locationLevelName
-        ).renderWith(simpleRender(
-            locationLevelNameField
-        )).withClass('medium-col')];
+        ).renderWith(renderCellValue('raw', locationLevelNameField)
+        ).withClass('medium-col')];
         if (vm.dataAgeSDD === '0_3') {
             if (vm.dataAggregationLevel <= 4) {
                 vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(simpleRender('num_launched_awcs')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderHomeVisits).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderGrowthMonitoring03).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(simpleRender('num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(simpleRender('num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderTakeHomeRation).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_vhnd')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
             } else {
                 vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderHomeVisits).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderGrowthMonitoring03).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(simpleYesNoRender('num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(simpleYesNoRender('num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderTakeHomeRation).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(renderCellValue('BooleanRaw','num_awcs_conducted_cbe')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(renderCellValue('BooleanRaw','num_awcs_conducted_vhnd')).withClass('medium-col'),
+                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
                 ]);
             }
         } else {
             vm.dtColumns = vm.dtColumns.concat([
-                DTColumnBuilder.newColumn('sn').withTitle(renderSupplementaryNutritionTooltip()).renderWith(renderSupplementaryNutrition).withClass('medium-col'),
-                DTColumnBuilder.newColumn('pse').withTitle(renderPreSchoolEducationTooltip()).renderWith(renderPreSchoolEducation).withClass('medium-col'),
-                DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoring36Tooltip()).renderWith(renderGrowthMonitoring36).withClass('medium-col'),
+                DTColumnBuilder.newColumn('sn').withTitle(renderSupplementaryNutritionTooltip()).renderWith(renderCellValue('percentage','supNutrition')).withClass('medium-col'),
+                DTColumnBuilder.newColumn('pse').withTitle(renderPreSchoolEducationTooltip()).renderWith(renderCellValue('percentage','pse')).withClass('medium-col'),
+                DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoring36Tooltip()).renderWith(renderCellValue('percentage','gm36')).withClass('medium-col'),
             ]);
         }
     };
@@ -134,7 +133,7 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
 
     function renderPercentageAndPartials(percentage, nominator, denominator, indicator) {
-        if (isZeroNullUnassignedOrDataNotEntered(denominator) && haveAccessToFeatures) {
+        if (haveAccessToFeatures && isZeroNullUnassignedOrDataNotEntered(denominator)) {
             return '<div> No expected ' + indicator + ' </div>';
         }
         else {
@@ -151,72 +150,44 @@ function ServiceDeliveryDashboardController($scope, $http, $location, $routePara
     }
 
 
-    function simpleRender(indicator) {
-        return function simpleRenderer(data, type, full) {
+    function renderCellValue(CellType, indicator) {
+
+        return function (data, type, full) {
 
             if (haveAccessToFeatures && ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs'].indexOf(indicator) === -1 && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
                 return '<div>Not Launched</div>';
             }
 
-            return '<div>' + (
-                full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered
-            ) + '</div>';
-        };
-    }
-    function simpleYesNoRender(indicator) {
-        return function simpleRenderer(data, type, full) {
+            switch (CellType) {
+                case "raw": return simpleRender(full, indicator, 'raw');
+                case "booleanRaw": return simpleRender(full, indicator, 'booleanRaw');
+                case "percentage":
+                    switch (indicator) {
+                        case "homeVisits": return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
+                        case "gm03": return  renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
+                        case "gm36": return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
+                        case "thr": return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
+                        case "pse": return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
+                        case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
 
-            if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-                return '<div>Not Launched</div>';
-
+                    }
+                    break;
             }
-            return  '<div>' + (
-                full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered
-            ) + '</div>';
+
         };
-    }
-    function renderHomeVisits(data, type, full) {
-        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
 
-        }
-        return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
     }
-    function renderGrowthMonitoring03(data, type, full) {
-        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
 
+    function simpleRender(full, indicator, outputType) {
+        var output;
+        if (outputType === 'raw') {
+            output = full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered;
+        } else if (outputType === 'booleanRaw') {
+            output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
         }
-        return renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
+        return '<div>' + output + '</div>';
     }
-    function renderTakeHomeRation(data, type, full) {
-        if (haveAccessToFeatures && isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
 
-        }
-        return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
-    }
-    function renderSupplementaryNutrition(data, type, full) {
-        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
-
-        }
-        return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
-    }
-    function renderPreSchoolEducation(data, type, full) {
-        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
-
-        }
-        return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
-    }
-    function renderGrowthMonitoring36(data, type, full) {
-        if (haveAccessToFeatures &&  isZeroNullUnassignedOrDataNotEntered(full['num_launched_awcs'])) {
-            return '<div>Not Launched</div>';
-
-        }
-        return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
-    }
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
