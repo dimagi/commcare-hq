@@ -104,6 +104,7 @@ from corehq.messaging.scheduling.views import (
     EditScheduleView,
 )
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.itertools import merge
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
@@ -444,8 +445,6 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_types(queryset)
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
-        if self.testing_changes:
-            return self._add_sms_event_data(queryset)
         return queryset
 
     @property
@@ -485,12 +484,8 @@ class MessageLogReport(BaseCommConnectLogReport):
             table_cell = self._fmt_contact_link(couch_recipient, doc_info)
             return table_cell['raw'] if raw else table_cell['html']
 
-        data = self._get_queryset()
-        if paginate and self.pagination:
-            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
-
         content_cache = {}
-        for message in data:
+        for message in self._get_data(paginate):
             yield [val for val in [
                 get_timestamp(message.date),
                 get_contact_link(message.couch_recipient, message.couch_recipient_doc_type, raw=contact_info),
@@ -536,14 +531,32 @@ class MessageLogReport(BaseCommConnectLogReport):
             result[0][1] = table
         return result
 
-    def _add_sms_event_data(self, queryset):
+    def _get_data(self, paginate):
+        """Evaluates _get_queryset, but with performance optimizations"""
+        queryset = self._get_queryset()
+
+        if not self.testing_changes or paginate:
+            if paginate and self.pagination:
+                queryset = queryset[self.pagination.start:self.pagination.start + self.pagination.count]
+            return queryset
+
+        # There are two paths to getting event data, depending on whether the subevent is attached
+        # Split the queryset in half
+        qs1 = queryset.filter(messaging_subevent__isnull=False)
+        qs2 = queryset.filter(messaging_subevent__isnull=True)
+
+        # Pull in event info accordingly
+        qs1 = qs1.select_related('messaging_subevent', 'messaging_subevent__parent')
+        qs2 = self._add_session_event_data(qs2)
+
+        # zip together the querysets
+        def key(sms):
+            return getattr(sms, self._sort_column)
+        return merge(qs1.iterator(), qs2.iterator(), key=key, reverse=self._sort_descending)
+
+    def _add_session_event_data(self, queryset):
         """Adds information about the triggering event to a SMS queryset"""
-
-        # For many SMS entries, the requisite info is easy enough to get:
-        queryset = queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
-
-        # That connection doesn't always exist, so we sometimes have to go:
-        # SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
+        # This gets the event from SMS -> SQLXFormsSession -> MessagingSubEvent -> MessagingEvent
         session_event = With(
             MessagingSubEvent.objects.filter(
                 parent__domain=self.domain,
@@ -575,7 +588,7 @@ class MessageLogReport(BaseCommConnectLogReport):
         return queryset
 
     def _get_message_event_display(self, message, content_cache):
-        """Extract event data from a message annotated via _add_sms_event_data"""
+        """Extract event data from a message annotated via _get_data optimizations"""
         event = None
         if message.messaging_subevent:
             event_obj = message.messaging_subevent.parent

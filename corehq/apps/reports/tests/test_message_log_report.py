@@ -78,7 +78,7 @@ class MessageLogReportTest(TestCase):
         )
         report = MessageLogReport(request, domain=self.domain)
         headers = [h.html for h in report.headers.header]
-        for row in report.rows:
+        for row in report.export_rows:
             yield dict(zip(headers, row))
 
     def make_simple_sms(self, message, error_message=None):
