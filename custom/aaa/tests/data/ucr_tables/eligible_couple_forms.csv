@@ -1,2 +1,3 @@
 doc_id,inserted_at,repeat_iteration,user_id,timeend,received_on,person_case_id,eligible_couple_case_id,fp_current_method,fp_preferred_method
-fp_method,2019-02-03,0,some_user,2019-02-03,2019-01-03,ec_using_condoms,eligible_couple_case_1,condom,
+fp_method,2019-02-03,0,some_user,2019-02-03,2019-01-03,ec_using_condoms,eligible_couple_case_1,iud,
+fp_method_2,2019-02-04,0,some_user,2019-02-04,2019-02-04,ec_using_condoms,eligible_couple_case_1,condom,
