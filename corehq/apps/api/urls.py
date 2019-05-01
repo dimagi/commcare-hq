@@ -1,20 +1,36 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from corehq.apps.api.accounting import *
-from corehq.apps.api.domain_metadata import DomainMetadataResource, MaltResource, GIRResource
-from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
-from corehq.apps.api.domainapi import DomainAPI
-from corehq.apps.api.odata.views import ODataMetadataView, ODataServiceView
-from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
-from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms, DomainCases, DomainUsernames
-from corehq.apps.commtrack.resources.v0_1 import ProductResource
-from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
-from corehq.apps.locations import resources as locations
-from corehq.apps.sms.resources import v0_5 as sms_v0_5
+from __future__ import absolute_import, unicode_literals
+
 from django.conf.urls import include, url
 from django.http import HttpResponseNotFound
+
 from tastypie.api import Api
 
+from corehq.apps.api.accounting import *
+from corehq.apps.api.domain_metadata import (
+    DomainMetadataResource,
+    GIRResource,
+    MaltResource,
+)
+from corehq.apps.api.domainapi import DomainAPI
+from corehq.apps.api.object_fetch_api import (
+    CaseAttachmentAPI,
+    FormAttachmentAPI,
+)
+from corehq.apps.api.odata.views import ODataMetadataView, ODataServiceView
+from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
+from corehq.apps.api.resources.v0_5 import (
+    DomainCases,
+    DomainForms,
+    DomainUsernames,
+    UserDomainsResource,
+)
+from corehq.apps.commtrack.resources.v0_1 import ProductResource
+from corehq.apps.fixtures.resources.v0_1 import (
+    FixtureResource,
+    InternalFixtureResource,
+)
+from corehq.apps.locations import resources as locations
+from corehq.apps.sms.resources import v0_5 as sms_v0_5
 
 API_LIST = (
     ((0, 3), (
