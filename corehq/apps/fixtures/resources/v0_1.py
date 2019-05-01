@@ -1,9 +1,14 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
+from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.http import HttpAccepted
 from tastypie.resources import Resource
-from corehq.apps.api.resources import HqBaseResource, CouchResourceMixin
+
+from dimagi.utils.couch.bulk import CouchTransaction
+
+from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
@@ -102,8 +107,14 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
     def obj_get_list(self, bundle, domain, **kwargs):
         return list(FixtureDataType.by_domain(domain))
 
+    def obj_delete(self, bundle, **kwargs):
+        data_type = FixtureDataType.get(kwargs['pk'])
+        with CouchTransaction() as transaction:
+            data_type.recursive_delete(transaction)
+        return ImmediateHttpResponse(response=HttpAccepted())
+
     class Meta(CustomResourceMeta):
         object_class = FixtureDataType
+        detail_allowed_methods = ['get', 'delete']
         list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
         resource_name = 'lookup_table'
