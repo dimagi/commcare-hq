@@ -90,9 +90,13 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
-    InvalidExcelFileException
+from corehq.util.workbook_json.excel import (
+    enforce_string_type,
+    get_workbook,
+    StringTypeRequiredError,
+    WorkbookJSONError,
+    WorksheetNotFound,
+)
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 import six
@@ -914,7 +918,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
 
 
 class UploadCommCareUsers(BaseManageCommCareUserView):
-    template_name = 'users/upload_commcare_users.html'
+    template_name = 'hqwebapp/bulk_upload.html'
     urlname = 'upload_commcare_users'
     page_title = ugettext_noop("Bulk Upload Mobile Workers")
 
@@ -945,27 +949,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     def post(self, request, *args, **kwargs):
         """View's dispatch method automatically calls this"""
-        upload = request.FILES.get('bulk_upload_file')
         try:
-            self.workbook = WorkbookJSONReader(upload)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(upload.read().decode('ascii'),
-                                           newline=None))
-                return HttpResponseBadRequest(
-                    "CommCare HQ no longer supports CSV upload. "
-                    "Please convert to Excel 2007 or higher (.xlsx) "
-                    "and try again."
-                )
-            except UnicodeDecodeError:
-                return HttpResponseBadRequest("Unrecognized format")
-        except JSONReaderError as e:
-            messages.error(request,
-                           'Your upload was unsuccessful. %s' % six.text_type(e))
+            self.workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
-        except HeaderValueError as e:
-            return HttpResponseBadRequest("Upload encountered a data type error: %s"
-                                          % six.text_type(e))
 
         try:
             self.user_specs = self.workbook.get_worksheet(title='users')

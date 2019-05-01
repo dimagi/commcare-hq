@@ -6,35 +6,12 @@ import six
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.apps.translations.const import (
     LEGACY_MODULES_AND_FORMS_SHEET_NAME,
     MODULES_AND_FORMS_SHEET_NAME,
     SINGLE_SHEET_NAME,
 )
-from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
-    InvalidExcelFileException
-
-
-def get_app_translation_workbook(file_or_filename):
-    msgs = []
-    try:
-        workbook = WorkbookJSONReader(file_or_filename)
-    # todo: HeaderValueError does not belong here
-    except (HeaderValueError, InvalidExcelFileException) as e:
-        msgs.append(
-            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
-        )
-        return False, msgs
-    except JSONReaderError as e:
-        msgs.append(
-            (messages.error, _(
-                "App Translation Failed! There is an issue with Excel columns. Error details: {}."
-            ).format(e))
-        )
-        return False, msgs
-    return workbook, msgs
 
 
 def get_bulk_app_sheet_headers(app, lang=None, exclude_module=None, exclude_form=None):

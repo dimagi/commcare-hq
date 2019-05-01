@@ -1,23 +1,30 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-from couchdbkit import ResourceNotFound
+from __future__ import absolute_import, division, unicode_literals
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
-from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
-    FixtureDataItem
+import six
+from couchdbkit import ResourceNotFound
+from six.moves import range
+
+from dimagi.utils.couch.bulk import CouchTransaction
+from soil import DownloadBase
+
+from corehq.apps.fixtures.models import (
+    FieldList,
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureItemField,
+)
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
-from corehq.apps.fixtures.upload.location_cache import get_memoized_location_getter
+from corehq.apps.fixtures.upload.location_cache import (
+    get_memoized_location_getter,
+)
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from dimagi.utils.couch.bulk import CouchTransaction
-from soil import DownloadBase
-import six
-from six.moves import range
 
 
 def upload_fixture_file(domain, filename, replace, task=None):
