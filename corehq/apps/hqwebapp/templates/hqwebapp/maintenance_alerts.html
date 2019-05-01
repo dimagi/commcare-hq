@@ -14,7 +14,7 @@
         <h3 class="panel-title">
           {% trans 'Create Alert' %}
         </h3>
-      </div>{# .panel-heading #}
+      </div>
       <div class="panel-body">
         <p>
           {% blocktrans %}
@@ -41,8 +41,8 @@
                         class="form-control"
                         placeholder="Alert text..."
                         form="alertForm"></textarea>
-            </div>{# .col-sm-8 #}
-          </div>{# .form-group #}
+            </div>
+          </div>
           <div class="form-group">
             <label for="alert_text"
                    class="control-label col-sm-2">
@@ -55,7 +55,7 @@
                         placeholder="Affected domains (space separated). Leave blank to show to everyone."
                         form="alertForm" ></textarea>
             </div>
-          </div>{# .form-group #}
+          </div>
           <div class="form-actions">
             <div class="col-sm-offset-2">
               <button type="submit"
@@ -65,15 +65,15 @@
             </div>
           </div>
         </form>
-      </div>{# .panel-body #}
-    </div>{# .panel-default #}
+      </div>
+    </div>
 
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans "Available Alerts" %}
         </h3>
-      </div>{# .panel-heading #}
+      </div>
       <div class="panel-body">
         <table class="table table-striped">
           <thead>
@@ -132,8 +132,8 @@
             </tr>
           </tbody>
         </table>
-      </div>{# .panel-body #}
-    </div>{# .panel-default #}
+      </div>
+    </div>
 
-  </div>{# .ko-alert-container #}
+  </div>
 {% endblock %}

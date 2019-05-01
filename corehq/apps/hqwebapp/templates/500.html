@@ -13,7 +13,7 @@
   {% if not enterprise_mode %}
     <div class="col-sm-4">
       <p><img id="sad-danny" src="{% static 'hqwebapp/images/sad_danny.jpg' %}" alt="{% trans "Sad Danny is Sad" %}" /></p>
-    </div>{# .col-sm-4 #}
+    </div>
   {% endif %}
     <div class="{% if not enterprise_mode %}col-sm-8{% else %}col-sm-12{% endif %}">
       <div class="well">
@@ -28,7 +28,7 @@
             <button id="refresh" class="btn btn-primary">{% trans "Refresh Page" %}</button>
           </fieldset>
         </form>
-      </div>{# .well #}
+      </div>
 
       {% if not enterprise_mode %}
         <div class="well">
@@ -42,8 +42,8 @@
               {% endblocktrans %}<br/><br/>
               <a href="https://status.commcarehq.org/" class="btn btn-primary">{% trans "View Status Page" %}</a>
             </fieldset>
-          </div>{# .form #}
-        </div>{# .well #}
+          </div>
+        </div>
       {% endif %}
 
       {% if allow_report_an_issue %}
@@ -54,7 +54,7 @@
                 Been here before? Report an issue to help us get this problem fixed faster.
               {% endblocktrans %}
             </h4>
-          </div>{# .panel-heading #}
+          </div>
           <div class="panel-body">
             <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
               {% csrf_token %}
@@ -77,26 +77,26 @@
                   <label class="col-sm-3 control-label" for="bug-report-500-subject">{% trans "Short Description" %}</label>
                   <div class="col-sm-6">
                     <input type="text" class="form-control" name="subject" id="bug-report-500-subject">
-                  </div>{# .col-sm-6 #}
-                </div>{# .form-group #}
+                  </div>
+                </div>
                 <div class="form-group">
                   <label class="col-sm-3 control-label" for="bug-report-500-message">{% trans "Full Description" %}</label>
                   <div class="col-sm-6">
                     <textarea class="form-control" name="message" id="bug-report-500-message" rows="5"></textarea>
-                  </div>{# .col-sm-6 #}
-                </div>{# .form-group #}
+                  </div>
+                </div>
               </fieldset>
 
               <div class="form-actions">
                 <div class="col-sm-offset-3">
                   <button type="submit" class="btn btn-primary">{% trans "Submit Report" %}</button>
-                </div>{# .col-sm-offset-3 #}
-              </div>{# .form-actions #}
+                </div>
+              </div>
             </form>
-          </div>{# .panel-body #}
-        </div>{# .panel #}
+          </div>
+        </div>
       {% endif %}
       <br />
-    </div>{# .col-sm-8/12 #}
-  </div>{# .row #}
+    </div>
+  </div>
 {% endblock %}

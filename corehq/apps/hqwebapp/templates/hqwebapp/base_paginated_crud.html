@@ -28,8 +28,8 @@
         <div class="col-md-12">
           <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading" />
           {{ pagination.text.loading }}
-        </div>{# .col-md-12 #}
-      </div>{# .row #}
+        </div>
+      </div>
 
       <div class="hide"
            data-bind="fadeVisible: isAlertVisible,
@@ -39,8 +39,8 @@
         <div class="col-md-12">
           <div class="alert"
                data-bind="html: alertHtml"></div>
-        </div>{# .col-md-12 #}
-      </div>{# .hide #}
+        </div>
+      </div>
 
       <div class="hide"
            data-bind="fadeVisible: hasInitialLoadFinished,
@@ -52,8 +52,8 @@
              data-bind="visible: isPaginationActive">
           <div class="col-md-12">
             {% include 'hqwebapp/partials/pagination.html' %}
-          </div>{# .col-md-12 #}
-        </div>{# .row #}
+          </div>
+        </div>
 
         <div class="row">
           <div class="col-md-12">
@@ -73,7 +73,7 @@
                          class="alert alert-info"
                          style="margin: 0;">
                       {{ pagination.text.empty }}
-                    </div>{# .pagination-empty-notification #}
+                    </div>
                   </td>
                 </tr>
 
@@ -140,10 +140,10 @@
                 <!-- /ko -->
               </tbody>
             </table>
-          </div>{# .col-md-12 #}
-        </div>{# .row #}
+          </div>
+        </div>
 
-      </div>{# .hide #}
+      </div>
 
       <div class="row"
            data-bind="visible: isPaginationActive">
@@ -160,14 +160,14 @@
                 </option>
               {% endfor %}
             </select>
-          </div>{# .form-inline #}
-        </div>{# .col-md-4 #}
+          </div>
+        </div>
         <div class="col-md-8">
           {% include 'hqwebapp/partials/pagination.html' %}
-        </div>{# .col-md-8 #}
-      </div>{# .row #}
+        </div>
+      </div>
 
-    </div>{# .editable-paginated-list #}
+    </div>
   {% endblock %}
 
   {% block pagination_footer %}{% endblock %}

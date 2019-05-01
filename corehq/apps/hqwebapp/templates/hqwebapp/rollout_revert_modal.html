@@ -9,7 +9,7 @@
         {% blocktrans %}
           <div class="modal-header">
             <h4 class="modal-title">Turn Off {{ name }}</h4>
-          </div>{# .modal-header #}
+          </div>
           <div class="modal-body">
             <p class="lead">
               Are you sure you want to turn off {{ name }} for now?
@@ -19,16 +19,16 @@
                 <button class="btn btn-default btn-full-width" id="rollout-revert" data-slug="{{ slug }}">
                   Yes, turn off {{ name }}
                 </button>
-              </div>{# .col-sm-6 #}
+              </div>
               <div class="col-sm-6 text-center">
                 <button class="btn btn-primary btn-full-width" data-dismiss="modal">
                   Cancel
                 </button>
-              </div>{# .col-sm-6 #}
-            </div>{# .row #}
-          </div>{# .modal-body #}
+              </div>
+            </div>
+          </div>
         {% endblocktrans %}
-      </div>{# .modal-content #}
-    </div>{# .modal-dialog #}
-  </div>{# #rollout-rev-modal #}
+      </div>
+    </div>
+  </div>
 {% endwith %}

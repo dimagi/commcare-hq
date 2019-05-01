@@ -229,7 +229,7 @@
                       {% trans 'Schedule a Demo' %}
                     </a>
                   {% endif %}
-                </div>{# .nav-settings-bar #}
+                </div>
               </nav>
             {% endif %}
 
@@ -242,7 +242,7 @@
                   <div></div>
                 {% endif %}
               </a>
-            </div>{# .navbar-header #}
+            </div>
 
             {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
               <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
@@ -257,20 +257,20 @@
               <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
                 <div class="nav-settings-bar pull-right">
                   {% include 'hqwebapp/includes/global_navigation_bar.html' %}
-                </div>{# .nav-settings-bar #}
+                </div>
                 {% block tabs %}
                   {% format_main_menu %}
                 {% endblock %}
               </nav>
             {% endif %}
 
-          </div>{# .container-fluid #}
-        </div>{# .hq-navigation #}
+          </div>
+        </div>
       {% endblock navigation %}
       {% if request.project.is_snapshot %}
         <div class="alert alert-info">
           {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
-        </div>{# .alert #}
+        </div>
       {% endif %}
 
       <!--[if IE]>
@@ -289,7 +289,7 @@
               or <a href="http://www.mozilla.org/">Firefox</a>.
             {% endblocktrans %}
           </p>
-        </div>{# #unsupported-browser #}
+        </div>
       <![endif]-->
       {% block messages %}
         <div id="hq-messages-container"
@@ -301,7 +301,7 @@
                   <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
                     <a class="close" data-dismiss="alert" href="#">&times;</a>
                     {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                  </div>{# .alert #}
+                  </div>
                 {% endfor %}
               {% endif %}
               <div id="message-alerts"
@@ -312,13 +312,13 @@
                      data-dismiss="alert" href="#">&times;</a>
                   <span data-bind="html: message"></span>
                 </div>
-              </div>{# #message-alerts #}
-            </div>{# .col-sm-12 #}
-          </div>{# .row #}
-        </div>{# #hq-messages-container #}
+              </div>
+            </div>
+          </div>
+        </div>
       {% endblock messages %}
       {% block content %}{% endblock content %}
-    </div>{# .hq-container #}
+    </div>
 
     {# footer #}
     {% if not enterprise_mode %}
@@ -387,7 +387,7 @@
       {% block initial_page_data %}
         {# do not override this block, use initial_page_data template tag to populate #}
       {% endblock %}
-    </div>{# .initial-page-data #}
+    </div>
 
     {% registerurl 'notifications_service' %}   {# used by notifications_service.js below #}
     {% registerurl 'send_mobile_reminder' %}  {# used by mobile reminder popup below #}
@@ -396,7 +396,7 @@
       {% block registered_urls %}
         {# do not override this block, use registerurl template tag to populate #}
       {% endblock %}
-    </div>{# .commcarehq-urls #}
+    </div>
 
     {% include 'analytics/initial/all.html' %}
     {% include 'analytics/initial/drift.html' %}
@@ -405,13 +405,13 @@
       {% block initial_analytics_data %}
         {# do not override this block, use initial_analytics_data template tag to populate #}
       {% endblock %}
-    </div>{# .initial-analytics-data #}
+    </div>
 
     <div class="analytics-ab-tests hide">
       {% block analytics_ab_test %}
         {# do not override this block, use analytics_ab_test template tag to populate #}
       {% endblock %}
-    </div>{# .analytics-ab-tests #}
+    </div>
 
     {# javascript below this line #}
 

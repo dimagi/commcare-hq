@@ -31,20 +31,20 @@
             <div class="navbar-brand">
               <img src="{% static 'hqstyle/images/commcare-logo-mobile.png' %}"
                    alt="CommCare HQ Mobile" />
-            </div>{# .navbar-brand #}
+            </div>
             <div class="pull-right mobile-nav">
               {% block mobile-nav %}
               {% endblock %}
-            </div>{# .mobile-nav #}
-          </div>{# .navbar-header #}
-        </div>{# .container-fluid #}
+            </div>
+          </div>
+        </div>
       </nav>
     {% endblock %}
 
     <div class="container-fluid">
       {% block breadcrumbs %}{% endblock %}
       {% block content %}{% endblock %}
-    </div>{# .container-fluid #}
+    </div>
 
     <footer class="footer-mobile">
       <div class="container-fluid">
@@ -59,7 +59,7 @@
             </p>
           {% endblock %}
         {% endblock %}
-      </div>{# .container-fluid #}
+      </div>
     </footer>
 
     {% block js %}{% endblock %}
