@@ -419,12 +419,9 @@ class MessageLogReport(BaseCommConnectLogReport):
             return data.filter(location_id__in=location_ids)
 
         def order_by_col(data_):
-            col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
-            sort_col = self.request_params.get('iSortCol_0')
-            if sort_col is not None and sort_col < len(col_fields):
-                data_ = data_.order_by(col_fields[sort_col])
-                if self.request_params.get('sSortDir_0') == 'desc':
-                    data_ = data_.reverse()
+            data_ = data_.order_by(self._sort_column)
+            if self._sort_descending:
+                data_ = data_.reverse()
             return data_
 
         queryset = SMS.objects.filter(
@@ -450,6 +447,18 @@ class MessageLogReport(BaseCommConnectLogReport):
         if self.testing_changes:
             return self._add_sms_event_data(queryset)
         return queryset
+
+    @property
+    def _sort_column(self):
+        col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
+        sort_col = self.request_params.get('iSortCol_0')
+        if sort_col is None or sort_col < len(col_fields):
+            sort_col = 0
+        return col_fields[sort_col]
+
+    @property
+    def _sort_descending(self):
+        return self.request_params.get('sSortDir_0') == 'desc'
 
     def _get_rows(self, paginate=True, contact_info=False, include_log_id=False):
         message_log_options = getattr(settings, "MESSAGE_LOG_OPTIONS", {})
