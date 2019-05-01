@@ -159,7 +159,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def _update_known_properties(self, action):
         for name, value in action.get_known_properties().items():
-            if value:
+            if value is not None:
                 setattr(self.case, name, _convert_type_check_length(name, value))
 
     def _apply_create_action(self, case_update, create_action):
