@@ -191,8 +191,8 @@ class EntriesHelper(object):
                 e.command = LocalizedCommand(
                     id=id_strings.case_list_command(module),
                     menu_locale_id=id_strings.case_list_locale(module),
-                    media_image=module.uses_image(),
-                    media_audio=module.uses_audio(),
+                    media_image=module.case_list.uses_image(),
+                    media_audio=module.case_list.uses_audio(),
                     image_locale_id=id_strings.case_list_icon_locale(module),
                     audio_locale_id=id_strings.case_list_audio_locale(module),
                 )
