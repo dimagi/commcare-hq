@@ -28,6 +28,7 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import (
     FixtureResource,
     InternalFixtureResource,
+    LookupTableResource,
 )
 from corehq.apps.locations import resources as locations
 from corehq.apps.sms.resources import v0_5 as sms_v0_5
@@ -77,6 +78,7 @@ API_LIST = (
         sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCommCareCaseResource,
+        LookupTableResource,
     )),
 )
 

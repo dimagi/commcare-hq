@@ -76,3 +76,34 @@ class InternalFixtureResource(FixtureResource):
         object_class = FixtureDataItem
         resource_name = 'fixture_internal'
         limit = 0
+
+
+class LookupTableResource(CouchResourceMixin, HqBaseResource):
+    id = tp_f.CharField(attribute='get_id', readonly=True, unique=True)
+    is_global = tp_f.BooleanField(attribute='is_global')
+    tag = tp_f.CharField(attribute='tag')
+    fields = tp_f.ListField(attribute='fields')
+
+    # Intentionally leaving out item_attributes until I can figure out what they are
+    # item_attributes = tp_f.ListField(attribute='item_attributes')
+
+    def dehydrate_fields(self, bundle):
+        return [
+            {
+                'field_name': field.field_name,
+                'properties': field.properties,
+            }
+            for field in bundle.obj.fields
+        ]
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(FixtureDataType, kwargs['pk'], kwargs['domain'])
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return list(FixtureDataType.by_domain(domain))
+
+    class Meta(CustomResourceMeta):
+        object_class = FixtureDataType
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'lookup_table'

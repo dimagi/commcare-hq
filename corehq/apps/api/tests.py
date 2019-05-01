@@ -47,7 +47,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
-from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
+from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField
+from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource, LookupTableResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ewsghana.resources.v0_1 import EWSLocationResource
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -2071,3 +2072,58 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 username, password
             ).encode('utf-8')
         ).decode('utf-8')
+
+
+class TestLookupTableResource(APIResourceTest):
+    resource = LookupTableResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestLookupTableResource, cls).setUpClass()
+        cls.data_type = FixtureDataType(
+            domain=cls.domain.name,
+            tag="lookup_table",
+            fields=[
+                FixtureTypeField(
+                    field_name="fixture_property",
+                    properties=["lang", "name"]
+                )
+            ],
+            item_attributes=[]
+        )
+        cls.data_type.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.data_type.delete()
+        super(TestLookupTableResource, cls).tearDownClass()
+
+    def _data_type_json(self):
+        return {
+            "fields": [
+                {
+                    "field_name": "fixture_property",
+                    "properties": ["lang", "name"],
+                },
+            ],
+            "id": self.data_type._id,
+            "is_global": True,
+            "resource_uri": "",
+            "tag": "lookup_table"
+        }
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        fixture_data_types = json.loads(response.content)['objects']
+        self.assertEqual(len(fixture_data_types), 1)
+        self.assertEqual(fixture_data_types, self._data_type_json())
+
+    def test_get_single(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(self.data_type._id))
+        self.assertEqual(response.status_code, 200)
+
+        fixture_data_type = json.loads(response.content)
+        self.assertEqual(fixture_data_type, self._data_type_json())
