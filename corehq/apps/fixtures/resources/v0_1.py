@@ -202,6 +202,20 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             data_item.recursive_delete(transaction)
         return ImmediateHttpResponse(response=HttpAccepted())
 
+    def obj_create(self, bundle, request=None, **kwargs):
+        if 'data_type_id' not in bundle.data:
+            raise BadRequest("data_type_id must be specified")
+
+        try:
+            FixtureDataType.get(bundle.data['data_type_id'])
+        except ResourceNotFound:
+            raise NotFound('Lookup table not found')
+
+        bundle.obj = FixtureDataItem(bundle.data)
+        bundle.obj.domain = kwargs['domain']
+        bundle.obj.save()
+        return bundle
+
     class Meta(CustomResourceMeta):
         object_class = FixtureDataItem
         detail_allowed_methods = ['get', 'delete']
