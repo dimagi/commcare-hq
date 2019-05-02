@@ -97,15 +97,14 @@ def _track_on_hubspot(webuser, properties):
     """
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
+        data = {}
+        if properties:
+            data = {'properties': [{'property': k, 'value': v} for k, v in properties.items()]}
         _hubspot_post(
             url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 six.moves.urllib.parse.quote(webuser.get_email())
             ),
-            data=json.dumps(
-                {'properties': [
-                    {'property': k, 'value': v} for k, v in properties.items()
-                ]}
-            ),
+            data=json.dumps(data),
         )
 
 
