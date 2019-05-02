@@ -29,6 +29,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
     FixtureResource,
     InternalFixtureResource,
     LookupTableResource,
+    LookupTableItemResource,
 )
 from corehq.apps.locations import resources as locations
 from corehq.apps.sms.resources import v0_5 as sms_v0_5
@@ -79,6 +80,7 @@ API_LIST = (
         locations.v0_1.InternalLocationResource,
         v0_5.ODataCommCareCaseResource,
         LookupTableResource,
+        LookupTableItemResource,
     )),
 )
 

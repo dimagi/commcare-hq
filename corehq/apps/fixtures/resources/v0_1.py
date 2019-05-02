@@ -112,7 +112,11 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
         return list(FixtureDataType.by_domain(domain))
 
     def obj_delete(self, bundle, **kwargs):
-        data_type = FixtureDataType.get(kwargs['pk'])
+        try:
+            data_type = FixtureDataType.get(kwargs['pk'])
+        except ResourceNotFound:
+            raise NotFound('Lookup table not found')
+
         with CouchTransaction() as transaction:
             data_type.recursive_delete(transaction)
         return ImmediateHttpResponse(response=HttpAccepted())
@@ -162,3 +166,44 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
         resource_name = 'lookup_table'
+
+
+class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
+    id = tp_f.CharField(attribute='get_id', readonly=True, unique=True)
+    data_type_id = tp_f.CharField(attribute='data_type_id')
+    fields = tp_f.ListField(attribute='fields')
+
+    # Intentionally leaving out item_attributes until I can figure out what they are
+    # item_attributes = tp_f.ListField(attribute='item_attributes')
+
+    # It appears that sort_key is not included in any user facing UI. It is only defined as
+    # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing
+    # the sort key on new item creations
+    # sort_key = tp_f.ListField(attribute='sort_key')
+
+    def dehydrate_fields(self, bundle):
+        return {
+            field_name: field_list.to_api_json()
+            for field_name, field_list in bundle.obj.fields.items()
+        }
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(FixtureDataItem, kwargs['pk'], kwargs['domain'])
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return list(FixtureDataItem.by_domain(domain))
+
+    def obj_delete(self, bundle, **kwargs):
+        try:
+            data_item = FixtureDataItem.get(kwargs['pk'])
+        except ResourceNotFound:
+            raise NotFound('Lookup table item not found')
+        with CouchTransaction() as transaction:
+            data_item.recursive_delete(transaction)
+        return ImmediateHttpResponse(response=HttpAccepted())
+
+    class Meta(CustomResourceMeta):
+        object_class = FixtureDataItem
+        detail_allowed_methods = ['get', 'delete']
+        list_allowed_methods = ['get']
+        resource_name = 'lookup_table_item'
