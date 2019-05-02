@@ -451,7 +451,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     def _sort_column(self):
         col_fields = ['date', 'couch_recipient', 'phone_number', 'direction', 'text']
         sort_col = self.request_params.get('iSortCol_0')
-        if sort_col is None or sort_col < len(col_fields):
+        if sort_col is None or sort_col < 0 or sort_col >= len(col_fields):
             sort_col = 0
         return col_fields[sort_col]
 
