@@ -71,7 +71,7 @@
         
 {}
 
-        TRUNCATE TABLE "awc_location_local";
+        DELETE FROM "awc_location_local";
         CREATE TEMPORARY TABLE "tmp_awc_local" AS SELECT * FROM "awc_location";
         INSERT INTO "awc_location_local" SELECT * FROM "tmp_awc_local";
         DROP TABLE "tmp_awc_local";
