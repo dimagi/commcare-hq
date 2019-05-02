@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import uuid
-from unittest import skip
 
 from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
@@ -270,9 +269,10 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         questions = form.get_questions(['en'])
         self.assertEqual([], questions)
 
-    @skip('This test fails when there are no other questions in a repeat')
     def save_to_case_in_groups(self):
         """Ensure that save to case questions have the correct group and repeat context
+        when there are no other questions in that group
+
         """
         save_to_case_with_groups = self.app.new_form(
             self.app.get_module(0).id,
@@ -285,6 +285,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
         repeat_question = [q for q in questions if q['value'] == '/data/a_repeat/save_to_case_in_repeat/case'][0]
 
         self.assertEqual(group_question['group'], '/data/a_group')
-        self.assertNone(group_question['repeat'])
+        self.assertIsNone(group_question['repeat'])
+
         self.assertEqual(repeat_question['repeat'], '/data/a_repeat')
-        self.assertNone(repeat_question['group'])
+        self.assertEqual(repeat_question['group'], '/data/a_repeat')

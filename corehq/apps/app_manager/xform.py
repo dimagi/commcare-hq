@@ -1062,8 +1062,16 @@ class XForm(WrappedNode):
             excluded_paths.add(cnode.path)
             if cnode.repeat is not None:
                 repeat_contexts.add(cnode.repeat)
+            if cnode.data_type == 'Repeat':
+                # A repeat is a node inside of a `group`, so it part of both a
+                # repeat and a group context
+                repeat_contexts.add(cnode.path)
+                group_contexts.add(cnode.path)
             if cnode.group is not None:
                 group_contexts.add(cnode.group)
+            if cnode.data_type == 'Group':
+                group_contexts.add(cnode.path)
+
         repeat_contexts = sorted(repeat_contexts, reverse=True)
         group_contexts = sorted(group_contexts, reverse=True)
 
