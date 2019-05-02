@@ -1534,13 +1534,15 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 valid_media_paths.add(value)
         return valid_media_paths
 
-    def uses_image(self):
+    def uses_image(self, build_profile_id=None):
         app = self.get_app()
-        return bool(self.icon_app_string(app.langs[0], for_default=True))
+        langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+        return any([self.icon_app_string(lang) for lang in langs])
 
-    def uses_audio(self):
+    def uses_audio(self, build_profile_id=None):
         app = self.get_app()
-        return bool(self.audio_app_string(app.langs[0], for_default=True))
+        langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+        return any([self.audio_app_string(lang) for lang in langs])
 
     def all_image_paths(self, lang=None):
         return self._all_media_paths('media_image', lang=lang)
@@ -1548,7 +1550,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def all_audio_paths(self, lang=None):
         return self._all_media_paths('media_audio', lang=lang)
 
-    def icon_app_string(self, lang, for_default=False):
+    def icon_app_string(self, lang, for_default=False): # TODO: for_default should take a lang, not a bool
         """
         Return lang/app_strings.txt translation for given lang
         if a path exists for the lang
@@ -1563,7 +1565,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         if for_default:
             return self.icon_by_language(lang, strict=False)
 
-    def audio_app_string(self, lang, for_default=False):
+    def audio_app_string(self, lang, for_default=False):    # TODO: for_default should take a lang, not a bool
         """
             see note on self.icon_app_string
         """
@@ -3556,7 +3558,7 @@ class ReportModule(ModuleBase):
         from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
-    def get_menus(self, supports_module_filter=False):
+    def get_menus(self, supports_module_filter=False, build_profile_id=None):
         from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
         kwargs = {}
         if supports_module_filter:
@@ -3566,8 +3568,8 @@ class ReportModule(ModuleBase):
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
             menu_enum_text=get_module_enum_text(self),
-            media_image=self.uses_image(),
-            media_audio=self.uses_audio(),
+            media_image=self.uses_image(build_profile_id=build_profile_id),
+            media_audio=self.uses_audio(build_profile_id=build_profile_id),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
             **kwargs
