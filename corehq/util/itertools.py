@@ -23,8 +23,8 @@ def merge(generator1, generator2, key=None, reverse=False):
             (g1_item, g2_item, generator2),
             (g2_item, g1_item, generator1),
         ]:
-            if item == END:
-                if other_item != END:
+            if item is END:
+                if other_item is not END:
                     yield other_item
                     for x in other_generator:
                         yield x
