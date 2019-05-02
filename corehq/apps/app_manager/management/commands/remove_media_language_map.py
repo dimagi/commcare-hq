@@ -21,6 +21,7 @@ class Command(AppMigrationCommandBase):
 
     def migrate_app(self, app_doc):
         should_save = False
+        print "migrating app " + app_doc['_id']
         if 'media_language_map' in app_doc:
             data = app_doc.pop('media_language_map')
             should_save = data or self.options['overwrite_empties']
