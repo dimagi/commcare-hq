@@ -205,14 +205,13 @@ class BulkAppTranslationUpdater(object):
         Class to help translatea particular model (app, module, or form).
     '''
 
-    def __init__(self, app, names_map, lang=None):
+    def __init__(self, app, lang=None):
         '''
         :param lang: If present, translation is limited to this language. This should correspond to the sheet
             only containing headers of this language, but having the language available is handy.
         '''
         super(BulkAppTranslationUpdater, self).__init__()
         self.app = app
-        self.names_map = names_map
         self.langs = [lang] if lang else app.langs
         self.is_multi_sheet = not bool(lang)
 

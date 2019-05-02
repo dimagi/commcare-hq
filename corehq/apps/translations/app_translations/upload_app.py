@@ -128,8 +128,9 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
         return updater.update(rows)
 
     if is_module_sheet(sheet_name):
+        unique_id = names_map.get(sheet_name)
         try:
-            updater = BulkAppTranslationModuleUpdater(app, sheet_name, names_map, lang=lang)
+            updater = BulkAppTranslationModuleUpdater(app, sheet_name, unique_id, lang=lang)
         except ModuleNotFoundException:
             return [(
                 messages.error,
@@ -138,8 +139,9 @@ def _process_rows(app, sheet_name, rows, names_map, lang=None):
         return updater.update(rows)
 
     if is_form_sheet(sheet_name):
+        unique_id = names_map.get(sheet_name)
         try:
-            updater = BulkAppTranslationFormUpdater(app, sheet_name, names_map, lang=lang)
+            updater = BulkAppTranslationFormUpdater(app, sheet_name, unique_id, lang=lang)
         except FormNotFoundException:
             return [(
                 messages.error,
@@ -249,7 +251,8 @@ def _get_missing_cols(app, sheet, headers):
 
 class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
     def __init__(self, app, names_map, lang=None):
-        super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, names_map, lang)
+        super(BulkAppTranslationModulesAndFormsUpdater, self).__init__(app, lang)
+        self.sheet_name_to_unique_id = names_map
 
     def update(self, rows):
         """
@@ -259,12 +262,17 @@ class BulkAppTranslationModulesAndFormsUpdater(BulkAppTranslationUpdater):
         self.msgs = []
         for row in get_unicode_dicts(rows):
             sheet_name = row.get('menu_or_form', row.get('sheet_name', ''))
+            # The unique_id column is populated on the "Menus_and_forms" sheet in multi-sheet translation files,
+            # and in the "name / menu media" row in single-sheet translation files.
             unique_id = row.get('unique_id')
 
-            if unique_id and sheet_name not in self.names_map:
-                self.names_map[sheet_name] = unique_id
-            elif not unique_id and sheet_name in self.names_map:
-                unique_id = self.names_map[sheet_name]
+            if unique_id and sheet_name not in self.sheet_name_to_unique_id:
+                # If we have a value for unique_id, save it in self.sheet_name_to_unique_id so we can look it up
+                # for rows where the unique_id column is not populated.
+                self.sheet_name_to_unique_id[sheet_name] = unique_id
+            elif not unique_id and sheet_name in self.sheet_name_to_unique_id:
+                # If we don't have a value for unique_id, try to fetch it from self.sheet_name_to_unique_id
+                unique_id = self.sheet_name_to_unique_id[sheet_name]
 
             try:
                 if unique_id:

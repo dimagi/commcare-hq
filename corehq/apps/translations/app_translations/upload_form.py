@@ -25,19 +25,18 @@ from corehq.apps.translations.exceptions import BulkAppTranslationsException
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
-    def __init__(self, app, identifier, names_map, lang=None):
+    def __init__(self, app, sheet_name, unique_id=None, lang=None):
         '''
-        :param identifier: String like "menu1_form2"
+        :param sheet_name: String like "menu1_form2"
         '''
-        super(BulkAppTranslationFormUpdater, self).__init__(app, names_map, lang)
-        self.identifier = identifier
+        super(BulkAppTranslationFormUpdater, self).__init__(app, lang)
+        self.sheet_name = sheet_name
 
         # These attributes depend on each other and therefore need to be created in this order
-        if identifier in names_map:
-            unique_id = names_map[identifier]
+        if unique_id:
             self.form = app.get_form(unique_id)
         else:
-            self.form = get_form_from_sheet_name(self.app, identifier)
+            self.form = get_form_from_sheet_name(self.app, sheet_name)
         self.xform = self._get_xform()
         self.itext = self._get_itext()
 
@@ -105,7 +104,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
 
         save_xform(self.app, self.form, etree.tostring(self.xform.xml))
 
-        return [(t, _('Error in {identifier}: ').format(identifier=self.identifier) + m) for (t, m) in self.msgs]
+        return [(t, _('Error in {sheet}: {msg}').format(sheet=self.sheet_name, msg=m)) for (t, m) in self.msgs]
 
     def _get_template_translation_el(self):
         # Make language nodes for each language if they don't yet exist
