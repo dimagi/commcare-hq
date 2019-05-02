@@ -70,3 +70,8 @@
             )
         
 {}
+
+        DELETE FROM "awc_location_local";
+        INSERT INTO "awc_location_local" SELECT * FROM "awc_location";
+        
+{}
