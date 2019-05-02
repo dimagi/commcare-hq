@@ -59,7 +59,7 @@ class EmwfOptionsController(object):
         return len(self.get_all_static_options(query))
 
     def get_static_options(self, query, start, size):
-        return self.get_all_static_options(query)[start:start+size]
+        return self.get_all_static_options(query)[start:start + size]
 
     def group_es_query(self, query, group_type="reporting"):
         if group_type == "reporting":

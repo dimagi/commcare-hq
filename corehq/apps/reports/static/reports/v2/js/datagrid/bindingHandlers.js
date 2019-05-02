@@ -20,7 +20,7 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
     'use strict';
 
     ko.bindingHandlers.select2 = {
-        init: function (element, valueAccessor, allBindings) {
+        init: function (element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor()),
                 ajax = {};
 
@@ -33,7 +33,7 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
                     data: function (params) {
                         var data = {
                             search: params.term,
-                            page: params.page || 1
+                            page: params.page || 1,
                         };
                         if (_.isFunction(options.getData)) {
                             data = options.getData(data);

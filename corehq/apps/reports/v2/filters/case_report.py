@@ -48,4 +48,3 @@ class CaseOwnerReportFilter(BaseReportFilter):
         # otherwise only return explicit matches
         case_owners = get_case_owners(self.request, self.domain, self.value)
         return query.owner(case_owners)
-
