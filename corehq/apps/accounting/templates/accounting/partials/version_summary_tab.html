@@ -1,53 +1,53 @@
 <div>
-    {% for plan_version in plan_versions %}
-        <p><h3>{{ plan_version }}</h3></p>
-        <p><strong>Date Created:</strong> {{ plan_version.date_created }}</p>
-        <p>
-            <strong>Role:</strong> {{ plan_version.role }}
-        </p>
-        <p>
-            <strong>Products:</strong>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Monthly Fee</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ plan_version.product_rate }}</td>
-                        <td>{{ plan_version.product_rate.monthly_fee }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </p>
-        <p>
-            <strong>Features:</strong>
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Free limit</th>
-                        <th>Per excess fee</th>
-                        <th>Monthly fee</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for feature_rate in plan_version.feature_rates.all %}
-                        <tr>
-                            <td>{{ feature_rate.feature.name }}</td>
-                            <td>{{ feature_rate.feature.feature_type }}</td>
-                            <td>{{ feature_rate.monthly_limit }}</td>
-                            <td>{{ feature_rate.per_excess_fee }}</td>
-                            <td>{{ feature_rate.monthly_fee }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </p>
-    {% empty %}
-        <h3>No versions exist for this plan.</h3>
-    {% endfor %}
+  {% for plan_version in plan_versions %}
+    <p><h3>{{ plan_version }}</h3></p>
+    <p><strong>Date Created:</strong> {{ plan_version.date_created }}</p>
+    <p>
+      <strong>Role:</strong> {{ plan_version.role }}
+    </p>
+    <p>
+      <strong>Products:</strong>
+    <table class="table table-striped table-bordered">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Monthly Fee</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>{{ plan_version.product_rate }}</td>
+        <td>{{ plan_version.product_rate.monthly_fee }}</td>
+      </tr>
+      </tbody>
+    </table>
+    </p>
+    <p>
+      <strong>Features:</strong>
+    <table class="table table-striped table-bordered">
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Free limit</th>
+        <th>Per excess fee</th>
+        <th>Monthly fee</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for feature_rate in plan_version.feature_rates.all %}
+        <tr>
+          <td>{{ feature_rate.feature.name }}</td>
+          <td>{{ feature_rate.feature.feature_type }}</td>
+          <td>{{ feature_rate.monthly_limit }}</td>
+          <td>{{ feature_rate.per_excess_fee }}</td>
+          <td>{{ feature_rate.monthly_fee }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </p>
+  {% empty %}
+    <h3>No versions exist for this plan.</h3>
+  {% endfor %}
 </div>

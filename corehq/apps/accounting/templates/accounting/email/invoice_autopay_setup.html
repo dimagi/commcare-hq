@@ -1,58 +1,58 @@
 {% load i18n %}
 
 <p>
-    {% blocktrans %}
-        Dear {{ name }},
-    {% endblocktrans %}
+  {% blocktrans %}
+    Dear {{ name }},
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
-        You have recently elected to enroll in automatic payment for your CommCare invoices
-        with the following credentials
-    {% endblocktrans %}
+  {% blocktrans %}
+    You have recently elected to enroll in automatic payment for your CommCare invoices
+    with the following credentials
+  {% endblocktrans %}
 </p>
 
 <table cellpadding="2" border="1"  style="border-collapse:collapse;">
-    <tr>
-        <td>{% trans 'Username' %}</td>
-        <td>{{ email }}</td>
-    </tr>
-    <tr>
-        <td>{% trans 'Project Space' %}</td>
-        <td>{{ domain }}</td>
-    </tr>
-    <tr>
-        <td>{% trans 'Last 4 digits of Credit Card' %}</td>
-        <td>{{ last_4 }}</td>
-    </tr>
+  <tr>
+    <td>{% trans 'Username' %}</td>
+    <td>{{ email }}</td>
+  </tr>
+  <tr>
+    <td>{% trans 'Project Space' %}</td>
+    <td>{{ domain }}</td>
+  </tr>
+  <tr>
+    <td>{% trans 'Last 4 digits of Credit Card' %}</td>
+    <td>{{ last_4 }}</td>
+  </tr>
 </table>
 <p>
-    {% blocktrans %}
-        On the generation of your next invoice, your credit card will automatically be
-        charged on the invoice due date. You do not have to take any further action to
-        enable payment for invoices generated in the future.  To unenroll from auto pay
-        or to update your credit card information, navigate to the
-        <a href='{{ billing_info_url }}'>Billing Information page</a>.
-    {% endblocktrans %}
+  {% blocktrans %}
+    On the generation of your next invoice, your credit card will automatically be
+    charged on the invoice due date. You do not have to take any further action to
+    enable payment for invoices generated in the future.  To unenroll from auto pay
+    or to update your credit card information, navigate to the
+    <a href='{{ billing_info_url }}'>Billing Information page</a>.
+  {% endblocktrans %}
 </p>
 <p>
-    {% blocktrans %}
-        Thank you for using CommCare. If you have any questions, please don't hesitate to contact <a href="mailto:commcarehq-support@dimagi.com">commcarehq-support@dimagi.com</a>.
-    {% endblocktrans %}
+  {% blocktrans %}
+    Thank you for using CommCare. If you have any questions, please don't hesitate to contact <a href="mailto:commcarehq-support@dimagi.com">commcarehq-support@dimagi.com</a>.
+  {% endblocktrans %}
 </p>
 <p>
-    {% blocktrans %}
-        Best Regards,<br />
-        The CommCareHQ Team<br />
-        <a href="http://www.commcarehq.org/">www.commcarehq.org</a>
-    {% endblocktrans %}
+  {% blocktrans %}
+    Best Regards,<br />
+    The CommCareHQ Team<br />
+    <a href="http://www.commcarehq.org/">www.commcarehq.org</a>
+  {% endblocktrans %}
 </p>
 
 <p>
-    {% blocktrans %}
-        Email From:<br />
-        CommCare HQ and the corporation Dimagi, Inc.<br />
-        585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
-    {% endblocktrans %}
+  {% blocktrans %}
+    Email From:<br />
+    CommCare HQ and the corporation Dimagi, Inc.<br />
+    585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+  {% endblocktrans %}
 </p>
