@@ -58,22 +58,22 @@ class TestAppDiffs(_BaseTestAppDiffs, SimpleTestCase):
         self.factory2.new_basic_module('module_2', 'case')
         first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(second[1]['changes']['module'], ADDED)
-        self.assertEqual(second[1]['id'], self.app2.modules[1].unique_id)
+        self.assertEqual(second[1]['unique_id'], self.app2.modules[1].unique_id)
 
     def test_remove_module(self):
         self.factory1.new_basic_module('module_2', 'case')
         first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(first[1]['changes']['module'], REMOVED)
-        self.assertEqual(first[1]['id'], self.app1.modules[1].unique_id)
+        self.assertEqual(first[1]['unique_id'], self.app1.modules[1].unique_id)
 
     def test_remove_then_add_module(self):
         self.factory1.new_basic_module('module_2', 'case')
         self.factory2.new_basic_module('module_3', 'case')
         first, second = get_app_diff(self.app1, self.app2)
         self.assertEqual(first[1]['changes']['module'], REMOVED)
-        self.assertEqual(first[1]['id'], self.app1.modules[1].unique_id)
+        self.assertEqual(first[1]['unique_id'], self.app1.modules[1].unique_id)
         self.assertEqual(second[1]['changes']['module'], ADDED)
-        self.assertEqual(second[1]['id'], self.app2.modules[1].unique_id)
+        self.assertEqual(second[1]['unique_id'], self.app2.modules[1].unique_id)
 
     def test_add_form(self):
         self.factory2.new_form(self.app2.modules[0])

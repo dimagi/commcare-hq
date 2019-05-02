@@ -131,7 +131,7 @@
                 </ul>
             </li>
             <hr>
-            <li ng-class="{'active': $location.path().indexOf('/service_delivery_dashboard') !== -1}" ng-if="haveAccessToFeatures">
+            <li ng-class="{'active': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
                 <a class="row pointer" href="{$ goToStep('service_delivery_dashboard', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "Service Delivery Dashboard" %}</div>

@@ -51,5 +51,8 @@ hqDefine('reports/v2/js/context', [
         getColumns: function () {
             return initialPageData.get('report.columns');
         },
+        getColumnFilters: function () {
+            return initialPageData.get('report.columnFilters');
+        },
     };
 });

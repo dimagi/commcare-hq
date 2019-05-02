@@ -76,7 +76,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
-log = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger(__name__)
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -577,8 +577,8 @@ def _copy_form_properties(domain, sql_form, couch_form):
         sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
     sql_form.edited_on = getattr(couch_form, 'edited_on', None)
-    if couch_form.is_deprecated or couch_form.is_deleted:
-        sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
+    if couch_form.is_deprecated:
+        sql_form.edited_on = getattr(couch_form, 'deprecated_date', sql_form.edited_on)
 
     if couch_form.is_submission_error_log:
         sql_form.xmlns = sql_form.xmlns or ''

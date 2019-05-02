@@ -102,31 +102,49 @@ def get_tables_with_added_nullable_columns(diffs, table_names):
 
 
 def migrate_tables(engine, raw_diffs, table_names):
-    add_columns(engine, raw_diffs, table_names)
-    apply_index_changes(engine, raw_diffs, table_names)
+    column_changes = add_columns(engine, raw_diffs, table_names)
+    index_changes = apply_index_changes(engine, raw_diffs, table_names)
+
+    for table, changes in index_changes.items():
+        if table in column_changes:
+            column_changes[table].extend(changes)
+        else:
+            column_changes[table] = changes
+    return column_changes
 
 
 def add_columns(engine, raw_diffs, table_names):
+    changes = defaultdict(list)
     with engine.begin() as conn:
         ctx = get_migration_context(conn, table_names)
         op = Operations(ctx)
         columns = _get_columns_to_add(raw_diffs, table_names)
-
         for col in columns:
             table_name = col.table.name
             # the column has a reference to a table definition that already
             # has the column defined, so remove that and add the column
             col.table = None
+            changes[table_name].append({
+                'type': DiffTypes.ADD_COLUMN,
+                'value': col.name
+            })
             op.add_column(table_name, col)
+
+    return dict(changes)
 
 
 def apply_index_changes(engine, raw_diffs, table_names):
+    changes = defaultdict(list)
     indexes = _get_indexes_to_change(raw_diffs, table_names)
     remove_indexes = [index.index for index in indexes if index.action == DiffTypes.REMOVE_INDEX]
     add_indexes = [index.index for index in indexes if index.action == DiffTypes.ADD_INDEX]
 
     with engine.begin() as conn:
         for index in add_indexes:
+            changes[index.table.name].append({
+                'type': DiffTypes.ADD_INDEX,
+                'value': index.name
+            })
             index.create(conn)
 
     # don't remove indexes automatically because we want to be able to add them
@@ -134,6 +152,8 @@ def apply_index_changes(engine, raw_diffs, table_names):
     _assert = soft_assert(to="@".join(["jemord", "dimagi.com"]))
     for index in remove_indexes:
         _assert(False, "Index {} can be removed".format(index.name))
+
+    return dict(changes)
 
 
 def _get_columns_to_add(raw_diffs, table_names):

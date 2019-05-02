@@ -45,9 +45,9 @@ hqDefine('app_manager/js/summary/form_models',[
             onSelectMenuItem: function (selectedId) {
                 _.each(viewModels, function (viewModel) {
                     _.each(viewModel.modules, function (module) {
-                        module.isSelected(!selectedId || selectedId === module.id || _.find(module.forms, function (f) { return selectedId === f.id; }));
+                        module.isSelected(!selectedId || selectedId === module.unique_id || _.find(module.forms, function (f) { return selectedId === f.unique_id; }));
                         _.each(module.forms, function (form) {
-                            form.isSelected(!selectedId || selectedId === form.id || selectedId === module.id);
+                            form.isSelected(!selectedId || selectedId === form.unique_id || selectedId === module.unique_id);
                         });
                     });
                 });

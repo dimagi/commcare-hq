@@ -433,6 +433,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
 
     def test_use_default_media(self):
+        self.app.langs = ['en', 'hin']
+
         self.module.use_default_image_for_all = True
         self.module.use_default_audio_for_all = True
 
@@ -445,6 +447,32 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
+
+    def test_use_default_media_ignore_lang(self):
+        # When use_default_media is true and there's media in a non-default language but not the default language
+        self.app.langs = ['en', 'hin']
+
+        self.form.use_default_image_for_all = True
+        self.form.use_default_audio_for_all = True
+
+        self.form.set_icon('en', '')
+        self.form.set_audio('en', '')
+        self.form.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
+        self.form.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
+
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+
+        self.assertFalse('forms.m0f0.icon' in en_app_strings)
+        self.assertFalse('forms.m0f0.icon' in hin_app_strings)
+        self.assertFalse('forms.m0f0.audio' in en_app_strings)
+        self.assertFalse('forms.m0f0.audio' in hin_app_strings)
+
+        self.assertXmlPartialEqual(
+            self.XML_without_media("forms.m0f0"),
+            self.app.create_suite(),
+            "./entry/command[@id='m0-f0']/"
+        )
 
     def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())

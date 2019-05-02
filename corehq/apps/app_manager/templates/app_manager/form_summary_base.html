@@ -14,7 +14,7 @@
 <!-- ko foreach: errors -->
 <div class="alert alert-danger">
     <i class="fa fa-exclamation-circle"></i> {% trans "Error in form:" %}
-    <span data-bind="html: $root.moduleFormReference(id)"></span>
+    <span data-bind="html: $root.moduleFormReference(unique_id)"></span>
     <br/>
     <span data-bind="text: error.details"></span>
 </div>
@@ -115,7 +115,7 @@
                             </li>
                             <!-- /ko -->
                             <!-- ko if: setvalue -->
-                            <li data-bind="visible: $root.showDefaultValue">
+                            <li data-bind="visible: $root.showDefaultValues">
                                 <i class = "fa-li fa text-muted fa-home"></i>
                                 <span data-bind="text: setvalue, css: getDiffClass('setvalue')"></span>
                             </li>

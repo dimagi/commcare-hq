@@ -125,7 +125,6 @@ class AbnormalUsageAlert(object):
 
 
 support_email = "support@dimagi.com"
-slack_channel = "#support-alerts"
 
 
 @task(serializer='pickle', queue="email_queue")
@@ -145,13 +144,6 @@ def send_abnormal_usage_alert(alert):
         support_email,
         alert.message
     )
-
-    if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
-        requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
-            "channel": slack_channel,
-            "username": "Paranormal Usage Bot :ghost:",
-            "text": subject
-        }))
 
 
 def _mass_email_attachment(name, rows):
