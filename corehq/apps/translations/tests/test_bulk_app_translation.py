@@ -25,7 +25,7 @@ from corehq.apps.translations.app_translations.utils import (
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
-    get_form_question_rows,
+    get_form_question_label_name_media,
     get_module_case_list_form_rows,
     get_module_rows,
 )
@@ -958,7 +958,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                                           [form.audio_by_language(lang)]),
                              ['Stethoscope Form', 'jr://file/commcare/image/module0_form0.png', None])
 
-        self.assertListEqual(get_form_question_rows([lang], form), [
+        self.assertListEqual(get_form_question_label_name_media([lang], form), [
             ['What_does_this_look_like-label', 'What does this look like?',
              'jr://file/commcare/image/data/What_does_this_look_like.png', '', ''],
             ['no_media-label', 'No media',
