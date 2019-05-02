@@ -2147,3 +2147,22 @@ class TestLookupTableResource(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(data_type._id), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(1, len(FixtureDataType.by_domain(self.domain.name)))
+
+    def test_create(self):
+        lookup_table = {
+            "tag": "table_name",
+            "fields": [{
+                "field_name": "fieldA",
+                "properties": ["property1", "property2"]
+            }]
+        }
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint, json.dumps(lookup_table), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        data_type = FixtureDataType.by_domain_tag(self.domain.name, "table_name")
+        self.addCleanup(data_type.delete)
+        self.assertEqual(data_type.tag, "table_name")
+        self.assertEqual(len(data_type.fields), 1)
+        self.assertEqual(data_type.fields[0]['fieldname'], 'fieldA')
+        self.assertEqual(data_type.fields[0]['properties'], ['property1', 'property2'])

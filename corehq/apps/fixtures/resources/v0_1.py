@@ -113,8 +113,17 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
             data_type.recursive_delete(transaction)
         return ImmediateHttpResponse(response=HttpAccepted())
 
+    def obj_create(self, bundle, request=None, **kwargs):
+        if FixtureDataType.by_domain_tag(kwargs['domain'], bundle.data.get("tag")):
+            raise AssertionError("A lookup table with name %s already exists" % bundle.data.get("tag"))
+
+        bundle.obj = FixtureDataType(bundle.data)
+        bundle.obj.domain = kwargs['domain']
+        bundle.obj.save()
+        return bundle
+
     class Meta(CustomResourceMeta):
         object_class = FixtureDataType
         detail_allowed_methods = ['get', 'delete']
-        list_allowed_methods = ['get']
+        list_allowed_methods = ['get', 'post']
         resource_name = 'lookup_table'
