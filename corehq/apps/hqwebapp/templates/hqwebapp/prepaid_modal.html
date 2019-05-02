@@ -1,40 +1,48 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div class="modal" id="prepaid-modal" data-slug="prepaid_ending" data-domain="{{ domain }}">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header {% if prepaid_days_remaining <= 30 %}bg-danger text-danger{% endif %}">
-                <h4 class="modal-title">
-                    {% blocktrans count prepaid_weeks_remaining=prepaid_weeks_remaining %}
-                    Your prepaid subscription ends in 1 week!
-                    {% plural %}
-                    Your prepaid subscription ends in {{ prepaid_weeks_remaining }} weeks!
-                    {% endblocktrans %}
-                </h4>
-            </div>
-            <div class="modal-body">
-                <p>
-                    {% blocktrans %}
-                    Starting {{ prepaid_remaining_date }}, you will be billed ${{ monthly_fee }} per month for your
-                    CommCare {{ edition }} Edition plan.
-                    {% endblocktrans %}
-                </p>
-                <div class="row">
-                    <div class="col-sm-6 text-center flag-link">
-                        <a id="prepaid-link" href={% url 'domain_subscription_view' domain %}>
-                            <button class="btn btn-primary">
-                                {% trans "Add Credits or Modify Subscription" %}
-                            </button>
-                        </a>
-                    </div>
-                    <div id="prepaid-snooze" class="col-sm-6 text-center">
-                        <button class="btn btn-default">
-                            {% trans "Remind me later" %}
-                        </button>
-                    </div>
-                </div>
-            </div>
+<div id="prepaid-modal"
+     class="modal"
+     data-slug="prepaid_ending"
+     data-domain="{{ domain }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header {% if prepaid_days_remaining <= 30 %}bg-danger text-danger{% endif %}">
+        <h4 class="modal-title">
+          {% blocktrans count prepaid_weeks_remaining=prepaid_weeks_remaining %}
+            Your prepaid subscription ends in 1 week!
+          {% plural %}
+            Your prepaid subscription ends in {{ prepaid_weeks_remaining }} weeks!
+          {% endblocktrans %}
+        </h4>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          {% blocktrans %}
+            Starting {{ prepaid_remaining_date }}, you will be billed ${{ monthly_fee }} per month for your
+            CommCare {{ edition }} Edition plan.
+          {% endblocktrans %}
+        </p>
+        <div class="row">
+          <div class="col-sm-6 text-center flag-link">
+            <a id="prepaid-link"
+               href={% url 'domain_subscription_view' domain %}>
+              <button class="btn btn-primary">
+                {% trans "Add Credits or Modify Subscription" %}
+              </button>
+            </a>
+          </div>
+          <div id="prepaid-snooze"
+               class="col-sm-6 text-center">
+            <button class="btn btn-default">
+              {% trans "Remind me later" %}
+            </button>
+          </div>
         </div>
+      </div>
+
     </div>
+  </div>
 </div>

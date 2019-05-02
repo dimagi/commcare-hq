@@ -19,9 +19,9 @@ from django.views.generic.base import TemplateView
 
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
+from corehq.apps.fixtures.tasks import async_fixture_download, fixture_upload_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
+from corehq.apps.fixtures.download import prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     FixtureUploadError,
@@ -268,8 +268,7 @@ def download_item_lists(request, domain):
     """Asynchronously serve excel download for edit_lookup_tables
     """
     download = DownloadBase()
-    download.set_task(fixture_download_async.delay(
-        prepare_fixture_download,
+    download.set_task(async_fixture_download.delay(
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,

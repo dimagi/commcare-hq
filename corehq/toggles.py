@@ -1116,6 +1116,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     [NAMESPACE_USER],
 )
 
+BULK_CONDITIONAL_ALERTS = StaticToggle(
+    'bulk_conditional_alerts',
+    'Allow bulk download and upload of conditional alerts.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
 COPY_CONDITIONAL_ALERTS = StaticToggle(
     'copy_conditional_alerts',
     'Allow copying conditional alerts to another project (or within the same project).',
@@ -1171,14 +1178,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-
-NEW_REMINDERS_MIGRATOR = StaticToggle(
-    'new_reminders_migrator',
-    "Enables features to handle migrating domains to the new reminders framework",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
 )
 
 
