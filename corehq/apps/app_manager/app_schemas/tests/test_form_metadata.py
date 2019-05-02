@@ -49,11 +49,11 @@ class TestGetFormData(TestCase):
         self.assertEqual(q1_saves.case_type, 'household')
         self.assertEqual(q1_saves.property, 'name')
 
-        group_saves = modules[0]['forms'][0]['questions'][2]['save_properties'][0]
+        group_saves = modules[0]['forms'][0]['questions'][1]['children'][0]['save_properties'][0]
         self.assertEqual(group_saves.case_type, 'household')
         self.assertEqual(group_saves.property, 'age')
 
-        q3_loads = modules[0]['forms'][0]['questions'][3]['load_properties'][0]
+        q3_loads = modules[0]['forms'][0]['questions'][2]['load_properties'][0]
         self.assertEqual(q3_loads.case_type, 'household')
         self.assertEqual(q3_loads.property, 'polar_bears_seen')
 
