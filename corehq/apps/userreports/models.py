@@ -14,7 +14,7 @@ import six
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 from django.utils.translation import ugettext as _
 from django_bulk_update.helper import bulk_update as bulk_update_helper
@@ -66,7 +66,7 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -95,6 +95,26 @@ ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
         raise BadValueError("Invalid ID: '{}'".format(value))
+
+
+class DataSourceActionLog(models.Model):
+    BUILD = 'build'
+    MIGRATE = 'migrate'
+    REBUILD = 'rebuild'
+    DROP = 'drop'
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
+    initiated_by = models.CharField(max_length=126, null=True, blank=True)
+    action_source = models.CharField(max_length=126, null=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=32, choices=(
+        (BUILD, _('Build')),
+        (MIGRATE, _('Migrate')),
+        (REBUILD, _('Rebuild')),
+        (DROP, _('Drop')),
+    ), db_index=True, null=False)
+    migration_diffs = JSONField(null=True, blank=True)
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -186,6 +206,11 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
+class MirroredEngineIds(DocumentSchema):
+    server_environment = StringProperty()
+    engine_ids = StringListProperty()
+
+
 @six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
@@ -211,6 +236,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
+    mirrored_engine_ids = ListProperty(default=[])
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -464,6 +490,22 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
 
+    def validate_db_config(self):
+        mirrored_engine_ids = self.mirrored_engine_ids
+        if not mirrored_engine_ids:
+            return
+        if self.engine_id in mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in mirrored_engine_ids:
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
+        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
+            raise BadSpecError("No two engine_ids should point to the same database")
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -503,11 +545,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def is_static(self):
         return id_is_static(self._id)
 
-    def deactivate(self):
+    def deactivate(self, initiated_by=None):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            get_indicator_adapter(self).drop_table()
+            get_indicator_adapter(self).drop_table(initiated_by=initiated_by, source='deactivate-data-source')
 
     def get_case_type_or_xmlns_filter(self):
         """Returns a list of case types or xmlns from the filter of this data source.
@@ -753,6 +795,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -820,6 +863,13 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
+
+        def _get_mirrored_engine_ids():
+            for env in static_config.mirrored_engine_ids:
+                if env.server_environment == settings.SERVER_ENVIRONMENT:
+                    return env.engine_ids
+            return []
+        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 

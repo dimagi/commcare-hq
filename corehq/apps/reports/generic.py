@@ -19,7 +19,7 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import DatatablesParams
+from corehq.apps.reports.util import DatatablesParams, get_report_timezone
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
@@ -255,13 +255,7 @@ class GenericReportView(object):
     @property
     @memoized
     def timezone(self):
-        if not self.domain:
-            return pytz.utc
-        else:
-            try:
-                return get_timezone_for_user(self.request.couch_user, self.domain)
-            except AttributeError:
-                return get_timezone_for_user(None, self.domain)
+        return get_report_timezone(self.request, self.domain)
 
     @property
     @memoized

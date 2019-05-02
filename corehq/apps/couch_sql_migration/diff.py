@@ -13,16 +13,16 @@ from .diffrule import Ignore
 
 load_ignore_rules = memoized(lambda: {
     'XFormInstance*': [
-        Ignore(path='_rev'),  # couch only
-        Ignore(path='migrating_blobs_from_couch'),  # couch only
-        Ignore(path='#export_tag'),  # couch only
-        Ignore(path='computed_'),  # couch only
-        Ignore(path='state'),  # SQL only
-        Ignore(path='computed_modified_on_'),  # couch only
-        Ignore(path='deprecated_form_id', old=MISSING, new=None),  # SQL always has this
-        Ignore(path='path'),  # couch only
-        Ignore(path='user_id'),  # couch only
-        Ignore(path='external_blobs'),  # couch only
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='migrating_blobs_from_couch', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='state', old=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
+        Ignore(path='deprecated_form_id', old=MISSING, new=None),
+        Ignore(path='path', new=MISSING),
+        Ignore(path='user_id', old=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
         Ignore(type='type', path=('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')),
         Ignore(path='problem', old=MISSING, new=None),
         Ignore(path='problem', old='', new=None),
@@ -60,23 +60,23 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('deprecated_date', 'edited_on'),
     ],
     'CommCareCase*': [
-        Ignore(path='_rev'),  # couch only
-        Ignore(path='initial_processing_complete'),  # couch only
-        Ignore(path=('actions', '[*]')),  # ignore case actions
-        Ignore(path='id'),  # SQL only
+        Ignore(path='_rev', new=MISSING),
+        Ignore(path='initial_processing_complete', new=MISSING),
+        Ignore(check=is_case_actions),  # ignore case actions
+        Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
-        Ignore(path='_attachments'),  # couch only
-        Ignore(path='external_blobs'),  # couch only
-        Ignore(path='#export_tag'),  # couch only
-        Ignore(path='computed_'),  # couch only
-        Ignore(path='version'),  # couch only
-        Ignore(path='deleted'),  # SQL only
-        Ignore(path='export_tag'),  # couch only
-        Ignore(path='computed_modified_on_'),  # couch only
+        Ignore(path='_attachments', new=MISSING),
+        Ignore(path='external_blobs', new=MISSING),
+        Ignore(path='#export_tag', new=MISSING),
+        Ignore(path='computed_', new=MISSING),
+        Ignore(path='version', new=MISSING),
+        Ignore(path='deleted', old=MISSING),
+        Ignore(path='export_tag', new=MISSING),
+        Ignore(path='computed_modified_on_', new=MISSING),
         Ignore(path='case_id'),  # legacy
         Ignore(path='@case_id'),  # legacy
-        Ignore(path='case_json'),  # SQL only
-        Ignore(path='modified_by'),  # SQL only
+        Ignore(path='case_json', old=MISSING),
+        Ignore(path='modified_by', old=MISSING),
         # legacy bug left cases with no owner_id
         Ignore('diff', 'owner_id', old=''),
         Ignore('type', 'owner_id', old=None),
@@ -92,7 +92,7 @@ load_ignore_rules = memoized(lambda: {
         Ignore('type', 'name', old='', new=None),
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('missing', 'location_id', old=MISSING, new=None),
-        Ignore('missing', 'referrals', old=[], new=MISSING),
+        Ignore('missing', 'referrals', new=MISSING),
         Ignore('missing', 'location_', old=[], new=MISSING),
         Ignore('type', 'type', old=None, new=''),
         # this happens for cases where the creation form has been archived but the case still has other forms
@@ -102,12 +102,11 @@ load_ignore_rules = memoized(lambda: {
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
-        # SQL JSON has case_id field in indices which couch JSON doesn't
-        Ignore(path=('indices', '[*]', 'case_id')),
-        # SQL indices don't have doc_type
+        Ignore(path=('indices', '[*]', 'case_id'), old=MISSING),
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
-        # defaulted on SQL
-        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),
+        Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
+
+        Ignore(path=('actions', '[*]')),
 
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
@@ -131,17 +130,17 @@ load_ignore_rules = memoized(lambda: {
         ignore_renamed('-deletion_date', 'deleted_on'),
     ],
     'LedgerValue': [
-        Ignore(path='_id'),  # couch only
+        Ignore(path='_id'),  # couch != SQL
     ],
     'case_attachment': [
-        Ignore(path='_id'),  # couch only
-        Ignore(path='attachment_properties'),  # couch only
-        Ignore(path='attachment_from'),  # couch only
-        Ignore(path='attachment_src'),  # couch only
-        Ignore(path='content_type'),  # couch only
-        Ignore(path='server_mime'),  # couch only
-        Ignore(path='attachment_name'),  # couch only
-        Ignore(path='server_md5'),  # couch only
+        Ignore(path='attachment_properties', new=MISSING),
+        Ignore(path='attachment_from', new=MISSING),
+        Ignore(path='attachment_src', new=MISSING),
+        Ignore(path='content_type', old=MISSING),
+        Ignore(path='doc_type', new=MISSING),
+        Ignore(path='server_mime', new=MISSING),
+        Ignore(path='attachment_name', new=MISSING),
+        Ignore(path='server_md5', new=MISSING),
         ignore_renamed('attachment_size', 'content_length'),
         ignore_renamed('identifier', 'name'),
     ]
@@ -263,13 +262,17 @@ class ReplaceDiff(Exception):
             self.diffs = diffs
 
 
+def is_case_actions(old_obj, new_obj, rule, diff):
+    return diff.path[0] == "actions"
+
+
 def ignore_renamed(old_name, new_name):
     def is_renamed(old_obj, new_obj, rule, diff):
         diffname = diff.path[0]
         if diffname == old_name or diffname == new_name:
             old_value = old_obj.get(old_name, MISSING)
             new_value = new_obj.get(new_name, MISSING)
-            if old_value is not MISSING or new_value is not MISSING:
+            if old_value is not MISSING and new_value is not MISSING:
                 if old_value != new_value and not _both_dates(new_value, old_value):
                     raise ReplaceDiff(
                         path=(old_name, new_name),
@@ -332,6 +335,14 @@ def case_attachments(old_obj, new_obj, rule, original_diff):
     if diffs:
         raise ReplaceDiff(diffs)
     return True
+
+
+def _filter_case_action_diffs(diffs):
+    """Ignore all case action diffs"""
+    return [
+        diff for diff in diffs
+        if diff.path[0] != 'actions'
+    ]
 
 
 def case_index_order(old_obj, new_obj, rule, diff):
