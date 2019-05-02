@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
-from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpAccepted
 from tastypie.resources import Resource
 
@@ -12,7 +12,11 @@ from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import (
+    FixtureDataItem,
+    FixtureDataType,
+    FixtureTypeField,
+)
 from corehq.apps.users.models import Permissions
 
 
@@ -122,8 +126,39 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
         bundle.obj.save()
         return bundle
 
+    def obj_update(self, bundle, **kwargs):
+        if 'tag' not in bundle.data:
+            raise BadRequest("tag must be specified")
+
+        try:
+            bundle.obj = FixtureDataType.get(kwargs['pk'])
+        except ResourceNotFound:
+            raise NotFound('Lookup table not found')
+
+        if bundle.obj.domain != kwargs['domain']:
+            raise NotFound('Lookup table not found')
+
+        if bundle.obj.tag != bundle.data['tag']:
+            raise BadRequest("Lookup table tag cannot be changed")
+
+        save = False
+        if 'is_global' in bundle.data:
+            save = True
+            bundle.obj.is_global = bundle.data['is_global']
+
+        if 'fields' in bundle.data:
+            save = True
+            bundle.obj.fields = [
+                FixtureTypeField.wrap(field)
+                for field in bundle.data['fields']
+            ]
+
+        if save:
+            bundle.obj.save()
+        return bundle
+
     class Meta(CustomResourceMeta):
         object_class = FixtureDataType
-        detail_allowed_methods = ['get', 'delete']
+        detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
         resource_name = 'lookup_table'
