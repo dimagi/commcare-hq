@@ -9,6 +9,7 @@ hqDefine('reports/v2/js/datagrid', [
     'hqwebapp/js/assert_properties',
     'reports/v2/js/datagrid/data_models',
     'reports/v2/js/datagrid/columns',
+    'reports/v2/js/datagrid/reportFilters',
     'reports/v2/js/datagrid/bindingHandlers',  // for custom ko bindingHandlers
     'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
 ], function (
@@ -17,7 +18,8 @@ hqDefine('reports/v2/js/datagrid', [
     _,
     assertProperties,
     dataModels,
-    columns
+    columns,
+    reportFilters
 ) {
     'use strict';
 
@@ -27,6 +29,13 @@ hqDefine('reports/v2/js/datagrid', [
         var self = {};
 
         self.data = options.dataModel;
+        self.reportFilters = ko.observableArray(_.map(options.reportFilters, function (data) {
+            var newFilter = reportFilters.reportFilter(data);
+            newFilter.value.subscribe(function () {
+                self.data.refresh();
+            });
+            return newFilter;
+        }));
         self.columns = ko.observableArray();
 
         self.editColumnController = columns.editColumnController({
@@ -47,6 +56,9 @@ hqDefine('reports/v2/js/datagrid', [
                     }),
                     columns: _.map(self.columns(), function (column) {
                         return column.context();
+                    }),
+                    reportFilters: _.map(self.reportFilters(), function (reportFilter) {
+                        return reportFilter.context();
                     }),
                 };
             });
