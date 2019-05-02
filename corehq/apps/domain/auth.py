@@ -5,6 +5,7 @@ import re
 from functools import wraps
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 from tastypie.authentication import ApiKeyAuthentication
@@ -140,6 +141,28 @@ def basicauth(realm=''):
             # Either they did not provide an authorization header or
             # something in the authorization attempt failed. Send a 401
             # back to them to ask them to authenticate.
+            response = HttpResponse(status=401)
+            response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
+            return response
+        return wrapper
+    return real_decorator
+
+
+def basic_or_api_key(realm=''):
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            username, password = get_username_and_password_from_request(request)
+            if username and password:
+                user = authenticate(username=username, password=password)
+                if not user:
+                    # try api key auth
+                    try:
+                        user = User.objects.get(username=username, api_key__key=password)
+                    except (User.DoesNotExist, User.MultipleObjectsReturned):
+                        pass
+                if user is not None and user.is_active:
+                    request.user = user
+                    return view(request, *args, **kwargs)
             response = HttpResponse(status=401)
             response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
             return response
