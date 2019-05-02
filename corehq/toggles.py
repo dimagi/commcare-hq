@@ -732,12 +732,6 @@ LOCATION_TYPE_STOCK_RATES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-BULK_ARCHIVE_FORMS = StaticToggle(
-    'bulk_archive_forms',
-    'Bulk archive forms with Excel',
-    TAG_SOLUTIONS
-)
-
 TRANSFER_DOMAIN = StaticToggle(
     'transfer_domain',
     'Transfer domains to different users',
@@ -1120,6 +1114,13 @@ MESSAGE_LOG_METADATA = StaticToggle(
     'Include message id in Message Log export.',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+BULK_CONDITIONAL_ALERTS = StaticToggle(
+    'bulk_conditional_alerts',
+    'Allow bulk download and upload of conditional alerts.',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
 
 COPY_CONDITIONAL_ALERTS = StaticToggle(

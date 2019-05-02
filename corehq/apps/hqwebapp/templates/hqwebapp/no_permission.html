@@ -1,12 +1,18 @@
 {% extends base_template %}
-{% load i18n %}	
+{% load i18n %}
+
 {% block content %}
-<h2>{% trans "You do not have domain permissions." %}</h2>
-{% if request.user.is_authenticated %}
-<a href="/accounts/logout">Log out and sign in as a different user.</a>
-{% else %}
-<a href="/accounts/login">Log in to CommcareHQ</a>
-{% endif %}
-{% block org_content %}
-{%endblock%}
+
+  <h2>
+    {% trans "You do not have domain permissions." %}
+  </h2>
+
+  {% if request.user.is_authenticated %}
+    <a href="/accounts/logout">Log out and sign in as a different user.</a>
+  {% else %}
+    <a href="/accounts/login">Log in to CommcareHQ</a>
+  {% endif %}
+
+  {% block org_content %}{%endblock%}
+
 {%endblock%}

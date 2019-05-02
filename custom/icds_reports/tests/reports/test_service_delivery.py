@@ -10,6 +10,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_0_3(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             None,
@@ -90,6 +91,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_state_0_3(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             'district_name',
@@ -133,6 +135,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_3_6(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             None,
@@ -162,7 +165,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 },
                 {
                     'gm_3_5': 240,
@@ -177,7 +181,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '69.97 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 60,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11
                 },
                 {
                     'gm_3_5': 0,
@@ -192,7 +197,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '0.00 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 0,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                 }
             ],
             'ageSDD': '3_6',
@@ -201,6 +207,7 @@ class TestServiceDelivery(TestCase):
 
     def test_get_service_delivery_data_state_3_6(self):
         data = get_service_delivery_data(
+            'icds-cas',
             0,
             10,
             'district_name',
@@ -231,7 +238,8 @@ class TestServiceDelivery(TestCase):
                     'gm': '70.48 %',
                     'supervisor_name': 'Data Not Entered',
                     'pse_attended_21_days': 7,
-                    'awc_name': 'Data Not Entered'
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 9
                 }
             ],
             'ageSDD': '3_6',

@@ -62,7 +62,7 @@ load_ignore_rules = memoized(lambda: {
     'CommCareCase*': [
         Ignore(path='_rev', new=MISSING),
         Ignore(path='initial_processing_complete', new=MISSING),
-        Ignore(path=('actions', '[*]')),  # ignore case actions
+        Ignore(check=is_case_actions),  # ignore case actions
         Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
         Ignore(path='_attachments', new=MISSING),
@@ -105,6 +105,8 @@ load_ignore_rules = memoized(lambda: {
         Ignore(path=('indices', '[*]', 'case_id'), old=MISSING),
         Ignore('missing', ('indices', '[*]', 'doc_type'), old='CommCareCaseIndex', new=MISSING),
         Ignore('missing', ('indices', '[*]', 'relationship'), old=MISSING, new='child'),  # defaulted on SQL
+
+        Ignore(path=('actions', '[*]')),
 
         Ignore('diff', check=has_date_values),
         ignore_renamed('hq_user_id', 'external_id'),
@@ -260,6 +262,10 @@ class ReplaceDiff(Exception):
             self.diffs = diffs
 
 
+def is_case_actions(old_obj, new_obj, rule, diff):
+    return diff.path[0] == "actions"
+
+
 def ignore_renamed(old_name, new_name):
     def is_renamed(old_obj, new_obj, rule, diff):
         diffname = diff.path[0]
@@ -329,6 +335,14 @@ def case_attachments(old_obj, new_obj, rule, original_diff):
     if diffs:
         raise ReplaceDiff(diffs)
     return True
+
+
+def _filter_case_action_diffs(diffs):
+    """Ignore all case action diffs"""
+    return [
+        diff for diff in diffs
+        if diff.path[0] != 'actions'
+    ]
 
 
 def case_index_order(old_obj, new_obj, rule, diff):
