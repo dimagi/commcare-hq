@@ -13,6 +13,7 @@ from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_object_or_not_exist
 from corehq.apps.fixtures.models import (
+    FieldList,
     FixtureDataItem,
     FixtureDataType,
     FixtureTypeField,
@@ -216,8 +217,29 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         bundle.obj.save()
         return bundle
 
+    def obj_update(self, bundle, **kwargs):
+        if 'data_type_id' not in bundle.data:
+            raise BadRequest("data_type_id must be specified")
+
+        try:
+            bundle.obj = FixtureDataItem.get(kwargs['pk'])
+        except ResourceNotFound:
+            raise NotFound('Lookup table item not found')
+
+        if bundle.obj.domain != kwargs['domain']:
+            raise NotFound('Lookup table item not found')
+
+        if 'fields' in bundle.data:
+            bundle.obj.fields = {
+                field_name: FieldList.wrap(field_list)
+                for field_name, field_list in bundle.data['fields'].items()
+            }
+            bundle.obj.save()
+
+        return bundle
+
     class Meta(CustomResourceMeta):
         object_class = FixtureDataItem
-        detail_allowed_methods = ['get', 'delete']
-        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get', 'put', 'delete']
+        list_allowed_methods = ['get', 'post']
         resource_name = 'lookup_table_item'
