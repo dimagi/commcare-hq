@@ -195,7 +195,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
     def create_local_table(self):
         return """
-        TRUNCATE TABLE "{local_tablename}";
+        DELETE FROM "{local_tablename}";
         CREATE TEMPORARY TABLE "{tmp_local_tablename}" AS SELECT * FROM "{tablename}";
         INSERT INTO "{local_tablename}" SELECT * FROM "{tmp_local_tablename}";
         DROP TABLE "{tmp_local_tablename}";
