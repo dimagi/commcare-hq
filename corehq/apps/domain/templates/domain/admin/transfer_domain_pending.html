@@ -5,30 +5,30 @@
 
 
 {% block page_content %}
-    <div class="row">
-        <div class="col-sm-12">
-            <h4>
-                {% blocktrans with username=transfer.to_username %}
-                You have a pending transfer with {{ username }}
-                {% endblocktrans %}
-            </h4>
-        </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <h4>
+        {% blocktrans with username=transfer.to_username %}
+          You have a pending transfer with {{ username }}
+        {% endblocktrans %}
+      </h4>
     </div>
-    <div class="row">
-        <div class="col-sm-2">
-            <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
-                {% blocktrans %}
-                Resend Transfer Request
-                {% endblocktrans %}
-            </a>
-        </div>
-        <div class="col-sm-2">
-            <form action="{{ transfer.deactivate_url }}" method="POST">
-                {% csrf_token %}
-                <input class="btn btn-danger" type="submit" value="{% trans "Cancel Transfer" %}" />
-            </form>
-        </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2">
+      <a href="{% url 'transfer_domain_view' domain %}?resend=true" class="btn btn-primary">
+        {% blocktrans %}
+          Resend Transfer Request
+        {% endblocktrans %}
+      </a>
     </div>
+    <div class="col-sm-2">
+      <form action="{{ transfer.deactivate_url }}" method="POST">
+        {% csrf_token %}
+        <input class="btn btn-danger" type="submit" value="{% trans "Cancel Transfer" %}" />
+      </form>
+    </div>
+  </div>
 {% endblock %}
 
 
