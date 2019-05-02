@@ -190,20 +190,38 @@ class EmwfOptionsController(object):
                 (self.get_all_users_size, self.get_all_users),
             ]
 
-    def get_options(self):
-        page = int(self.request.GET.get('page', 1))
-        size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
-        start = size * (page - 1)
+    @property
+    @memoized
+    def page(self):
+        if self.request.method == 'POST':
+            return int(self.request.POST.get('page', 1))
+        return int(self.request.GET.get('page', 1))
+
+    @property
+    @memoized
+    def size(self):
+        if self.request.method == 'POST':
+            return int(self.request.POST.get('page_limit', DEFAULT_PAGE_LIMIT))
+        return int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
+
+    def get_options(self, show_more=False):
+        start = self.size * (self.page - 1)
         count, options = paginate_options(
             self.data_sources,
             self.search,
             start,
-            size
+            self.size
         )
-        return count, [
+        results = [
             {'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
             {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry
-            in options]
+            in options
+        ]
+
+        if show_more:
+            has_more = (self.page * self.size) < count
+            return has_more, results
+        return count, results
 
 
 class MobileWorkersOptionsController(EmwfOptionsController):
