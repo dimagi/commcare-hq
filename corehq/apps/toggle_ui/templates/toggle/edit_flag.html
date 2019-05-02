@@ -76,6 +76,34 @@
                 {% endif %}
             {% endif %}
 
+            {% if static_toggle.always_enabled %}
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    {% blocktrans %}
+                        This feature flag is <strong>always enabled</strong> for the following domains:
+                    {% endblocktrans %}
+                    <ul>
+                        {% for domain in static_toggle.always_enabled %}
+                            <li>{{ domain }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if static_toggle.always_disabled %}
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    {% blocktrans %}
+                        This feature flag is <strong>always disabled</strong> for the following domains:
+                    {% endblocktrans %}
+                    <ul>
+                        {% for domain in static_toggle.always_disabled %}
+                            <li>{{ domain }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             <hr/>
             <div id="toggle_editing_ko">
                 <div data-bind="saveButton: saveButton"></div>
