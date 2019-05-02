@@ -1534,6 +1534,14 @@ class NavMenuItemMediaMixin(DocumentSchema):
                 valid_media_paths.add(value)
         return valid_media_paths
 
+    def uses_image(self):
+        app = self.get_app()
+        return bool(self.icon_app_string(app.langs[0], for_default=True))
+
+    def uses_audio(self):
+        app = self.get_app()
+        return bool(self.audio_app_string(app.langs[0], for_default=True))
+
     def all_image_paths(self, lang=None):
         return self._all_media_paths('media_image', lang=lang)
 
@@ -3558,8 +3566,8 @@ class ReportModule(ModuleBase):
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
             menu_enum_text=get_module_enum_text(self),
-            media_image=bool(len(self.all_image_paths())),
-            media_audio=bool(len(self.all_audio_paths())),
+            media_image=self.uses_image(),
+            media_audio=self.uses_audio(),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
             **kwargs
