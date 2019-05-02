@@ -97,9 +97,26 @@ def process_bulk_app_translation_upload(app, workbook, expected_headers, lang=No
 
 
 def _process_single_sheet(app, sheet, names_map, lang=None):
+    """
+    A single-sheet translation file deals with only one language, and
+    fits all the items to be translated onto the same sheet. All items
+    share the same columns. If the column is not applicable to the row,
+    it is left empty.
+
+    :param app: The application being translated
+    :param sheet: The worksheet containing the translations
+    :param names_map: A map of sheet_name (like "menu1" or "menu1_form1") to
+                      module/form unique_id, used to fetch a module/form
+                      even if it has been moved since the worksheet was created
+    :param lang: The language that the app is being translated into
+    :return: A list of error messages or an empty list
+    """
     msgs = []
     module_or_form = None
+    # Rows pertaining to a module (e.g. case list / case detail) or a form
+    # (i.e. questions). Keyed on that module/form's identifier:
     module_or_form_rows = {}
+    # Rows about the app's modules and forms, like their names and unique IDs:
     modules_and_forms_rows = []
     rows = []
     for row in sheet:
@@ -112,14 +129,34 @@ def _process_single_sheet(app, sheet, names_map, lang=None):
         else:
             rows.append(row)
     module_or_form_rows[module_or_form] = rows
+    # Process modules_and_forms_rows first to populate names_map with their unique IDs
     msgs.extend(_process_rows(app, MODULES_AND_FORMS_SHEET_NAME,
                               modules_and_forms_rows, names_map, lang=lang))
+    # Then process the rows for the modules and the forms.
     for module_or_form, rows in six.iteritems(module_or_form_rows):
         msgs.extend(_process_rows(app, module_or_form, rows, names_map, lang=lang))
     return msgs
 
 
 def _process_rows(app, sheet_name, rows, names_map, lang=None):
+    """
+    Processes the rows of a worksheet of translations.
+
+    This is the complement of get_bulk_app_sheets_by_name() and
+    get_bulk_app_single_sheet_by_name(), from
+    corehq/apps/translations/app_translations/download.py, which creates
+    these worksheets and rows.
+
+    :param app: The application being translated
+    :param sheet_name: The tab name of the sheet being processed.
+                       e.g. "menu1", "menu1_form1", or "Menus_and_forms"
+    :param rows: The rows in the worksheet
+    :param names_map: A map of sheet_name to module/form unique_id, used
+                      to fetch a module/form even if it has been moved
+                      since the worksheet was created
+    :param lang: The language that the app is being translated into
+    :return: A list of error messages or an empty list
+    """
     if not sheet_name or not rows:
         return []
 
