@@ -62,7 +62,6 @@ from corehq.form_processor.utils.general import (
 from corehq.toggles import (
     COUCH_SQL_MIGRATION_BLACKLIST,
     NAMESPACE_DOMAIN,
-    REMINDERS_MIGRATION_IN_PROGRESS,
 )
 from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
@@ -445,8 +444,6 @@ class CouchSqlDomainMigrator(object):
         elif any(custom_report_domain == domain_name
                  for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys()):
             msg = "has custom reports"
-        elif REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name):
-            msg = "has reminders migration in progress"
         else:
             return
         raise MigrationRestricted("{} {}".format(domain_name, msg))
