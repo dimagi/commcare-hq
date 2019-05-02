@@ -535,8 +535,12 @@ class MessageLogReport(BaseCommConnectLogReport):
         """Evaluates _get_queryset, but with performance optimizations"""
         queryset = self._get_queryset()
 
-        if not self.testing_changes or paginate:
-            if paginate and self.pagination:
+        if paginate:
+            if self.testing_changes:
+                queryset = self._add_session_event_data(
+                    queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+                )
+            if self.pagination:
                 queryset = queryset[self.pagination.start:self.pagination.start + self.pagination.count]
             return queryset
 
@@ -598,7 +602,7 @@ class MessageLogReport(BaseCommConnectLogReport):
                 content_type=event_obj.content_type,
                 form_name=event_obj.form_name,
             )
-        elif message.session_source_id is not None:
+        elif getattr(message, 'session_source_id', None) is not None:
             event = EventStub(
                 source=message.session_source,
                 source_id=message.session_source_id,
