@@ -3,80 +3,80 @@
 {% load i18n %}
 
 {% block stylesheets %}{{ block.super }}
-    <style type="text/css">
-        .hqm-select-files-container {
-            display: inline-block;
-        }
-        .hqm-upload {
-            margin-right: 5px;
-        }
-    </style>
+  <style type="text/css">
+    .hqm-select-files-container {
+      display: inline-block;
+    }
+    .hqm-upload {
+      margin-right: 5px;
+    }
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-    {% initial_page_data 'uploaders' uploaders_js %}
+  {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+  {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+  {% initial_page_data 'uploaders' uploaders_js %}
 
-    <p class="lead">{{ current_page.page_name }}</p>
+  <p class="lead">{{ current_page.page_name }}</p>
 
-    <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
-        upload each file one-by-one.{% endblocktrans %}</p>
-    <p>{% blocktrans %}The bulk uploader will compare the file paths in your form with the file paths
-        in your zip to find a matching file.{% endblocktrans %}</p>
-    <p>{% blocktrans %}For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's
-        <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
-        <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
+  <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
+    upload each file one-by-one.{% endblocktrans %}</p>
+  <p>{% blocktrans %}The bulk uploader will compare the file paths in your form with the file paths
+    in your zip to find a matching file.{% endblocktrans %}</p>
+  <p>{% blocktrans %}For example, <code>jr://file/commcare/images/hin/image.jpg</code> and your zip's
+    <code>commcare/images/hin/image.jpg</code> file would match, but it would <strong>not</strong> match
+    <code>commcare/images/image.jpg</code>.{% endblocktrans %}</p>
 
-    {% for uploader in uploaders %}
+  {% for uploader in uploaders %}
     <div id="{{ uploader.slug }}">
-        <div class="alert alert-info hqm-not-supported hide">
-            <i class="fa fa-exclamation-triangle"></i>
-            {% blocktrans %}
-            Your browser does not support this uploader.
-            We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
-            {% endblocktrans %}
+      <div class="alert alert-info hqm-not-supported hide">
+        <i class="fa fa-exclamation-triangle"></i>
+        {% blocktrans %}
+          Your browser does not support this uploader.
+          We recommend <a href="https://www.google.com/intl/en/chrome/browser/">Google Chrome</a>.
+        {% endblocktrans %}
+      </div>
+      <div class="btn-toolbar">
+        <div class="hqm-select-files-container">
+          <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
         </div>
-        <div class="btn-toolbar">
-            <div class="hqm-select-files-container">
-                <button class="hqm-select btn btn-primary" role="button">{% trans 'Select Files' %}</button>
-            </div>
-            <a class="hqm-upload hqm-upload-confirm btn btn-primary disabled" data-toggle="modal">
-                <i class="fa fa-cloud-upload"></i> {% trans 'Begin Upload' %}
-            </a>
-        </div>
-        <h3>{% trans 'Bulk Upload File Queue' %}</h3>
-        <table class="table table-striped table-bordered hqm-upload-list">
-            <thead>
-                <tr>
-                    <th class="col-sm-2">{% trans 'Filename' %}</th>
-                    <th class="col-sm-1">{% trans 'Size' %}</th>
-                    <th class="col-sm-2">{% trans 'Upload Progress' %}</th>
-                    <th class="col-sm-2">{% trans 'Match Status' %}</th>
-                    <th class="col-sm-5">{% trans 'Details' %}</th>
-                </tr>
-            </thead>
-            <thead>
-            <tr>
-                <th class="text-muted" colspan="5"  style="text-align: center;">{% trans 'Queued Files' %}</th>
-            </tr>
-            </thead>
-            <tbody class="hqm-queue">
-                <tr class="hqm-empty">
-                    <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
-                </tr>
-            </tbody>
-            <tbody class="hqm-upload-processing">
-                <tr class="hqm-list-notice">
-                    <th colspan="5">{% trans 'Processing Upload' %}</th>
-                </tr>
-            </tbody>
-            <tbody class="hqm-uploaded-files">
-                <tr class="hqm-list-notice">
-                    <th colspan="5">{% trans 'Uploaded Files' %}</th>
-                </tr>
-            </tbody>
-        </table>
+        <a class="hqm-upload hqm-upload-confirm btn btn-primary disabled" data-toggle="modal">
+          <i class="fa fa-cloud-upload"></i> {% trans 'Begin Upload' %}
+        </a>
+      </div>
+      <h3>{% trans 'Bulk Upload File Queue' %}</h3>
+      <table class="table table-striped table-bordered hqm-upload-list">
+        <thead>
+        <tr>
+          <th class="col-sm-2">{% trans 'Filename' %}</th>
+          <th class="col-sm-1">{% trans 'Size' %}</th>
+          <th class="col-sm-2">{% trans 'Upload Progress' %}</th>
+          <th class="col-sm-2">{% trans 'Match Status' %}</th>
+          <th class="col-sm-5">{% trans 'Details' %}</th>
+        </tr>
+        </thead>
+        <thead>
+        <tr>
+          <th class="text-muted" colspan="5"  style="text-align: center;">{% trans 'Queued Files' %}</th>
+        </tr>
+        </thead>
+        <tbody class="hqm-queue">
+        <tr class="hqm-empty">
+          <td colspan="5">{% blocktrans %}Select files above to add to the queue.{% endblocktrans %}</td>
+        </tr>
+        </tbody>
+        <tbody class="hqm-upload-processing">
+        <tr class="hqm-list-notice">
+          <th colspan="5">{% trans 'Processing Upload' %}</th>
+        </tr>
+        </tbody>
+        <tbody class="hqm-uploaded-files">
+        <tr class="hqm-list-notice">
+          <th colspan="5">{% trans 'Uploaded Files' %}</th>
+        </tr>
+        </tbody>
+      </table>
     </div>
-    {% endfor %}
+  {% endfor %}
 {% endblock %}
