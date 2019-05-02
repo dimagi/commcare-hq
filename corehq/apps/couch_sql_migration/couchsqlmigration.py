@@ -62,7 +62,6 @@ from corehq.form_processor.utils.general import (
 from corehq.toggles import (
     COUCH_SQL_MIGRATION_BLACKLIST,
     NAMESPACE_DOMAIN,
-    REMINDERS_MIGRATION_IN_PROGRESS,
 )
 from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
@@ -443,11 +442,8 @@ class CouchSqlDomainMigrator(object):
             msgs.append("does not have SQL backend enabled")
         if COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
             msgs.append("is blacklisted")
-        if any(custom_report_domain == domain_name
-               for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys()):
+        if domain_name in settings.DOMAIN_MODULE_MAP:
             msgs.append("has custom reports")
-        if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name):
-            msgs.append("has reminders migration in progress")
         if msgs:
             raise MigrationRestricted("{}: {}".format(domain_name, "; ".join(msgs)))
 
