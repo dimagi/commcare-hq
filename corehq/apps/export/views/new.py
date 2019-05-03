@@ -256,6 +256,12 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
     urlname = 'new_form_faily_saved_export'
 
 
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class CreateODataCaseFeedView(CreateNewCustomCaseExportView):
+    urlname = 'new_odata_case_feed'
+    page_title = ugettext_lazy("Create OData Case Feed")
+
+
 class DeleteNewCustomExportView(BaseModifyNewCustomView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']

@@ -851,3 +851,12 @@ def submit_app_data_drilldown_form(request, domain):
         'success': True,
         'url': reverse(cls.urlname, args=[domain]) + url_params,
     })
+
+
+@method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
+class ODataFeedListView(CaseExportListView):
+    urlname = 'list_odata_feeds'
+    page_title = ugettext_lazy("OData Integration")
+    lead_text = ugettext_lazy('''
+        OData feeds allow you to directly connect CommCareHQ to BI tools.
+    ''')

@@ -516,18 +516,20 @@ class ProjectDataTab(UITab):
                 BulkDownloadNewFormExportView,
             )
             from corehq.apps.export.views.edit import (
-                EditNewCustomFormExportView,
-                EditNewCustomCaseExportView,
-                EditFormDailySavedExportView,
                 EditCaseDailySavedExportView,
-                EditFormFeedView,
                 EditCaseFeedView,
+                EditODataCaseFeedView,
+                EditFormDailySavedExportView,
+                EditFormFeedView,
+                EditNewCustomCaseExportView,
+                EditNewCustomFormExportView,
             )
             from corehq.apps.export.views.list import (
                 FormExportListView,
                 CaseExportListView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+                ODataFeedListView,
             )
             from corehq.apps.export.views.new import (
                 CreateNewCustomFormExportView,
@@ -536,6 +538,7 @@ class ProjectDataTab(UITab):
                 CreateNewDailySavedCaseExport,
                 CreateNewFormFeedView,
                 CreateNewCaseFeedView,
+                CreateODataCaseFeedView,
             )
             from corehq.apps.export.views.utils import (
                 DashboardFeedPaywall,
@@ -676,6 +679,23 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': True,
                     'subpages': []
                 })
+            if toggles.ODATA.enabled(self.domain):
+                subpages = [
+                    {
+                        'title': _(CreateODataCaseFeedView.page_title),
+                        'urlname': CreateODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataCaseFeedView.page_title),
+                        'urlname': EditODataCaseFeedView.urlname,
+                    },
+                ]
+                export_data_views.append({
+                        'title': _(ODataFeedListView.page_title),
+                        'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'subpages': subpages
+                    })
 
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
