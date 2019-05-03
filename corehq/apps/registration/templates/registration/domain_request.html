@@ -6,48 +6,48 @@
 {% block title %}New Project Space{% endblock title %}
 
 {% block content %}
-    <div class="container">
-        <h1>
-            {% if is_new_user %}
-                {% blocktrans %}
-                    Welcome to CommCare HQ!
-                {% endblocktrans %}
-            {% else %}
-                {% blocktrans %}
-                    Create a New Project Space
-                {% endblocktrans %}
-            {% endif %}
-        </h1>
-        <div class="help-block">
-            Please create a name for your project.
-            This will be used to create a project URL, and you will not be able to change it in the future.
-        </div>
-
-        {% block registration-content %}
-            <div>
-                {% if is_new_user %}
-                    <p>
-                        {% blocktrans with request.couch_user.first_name as first_name %}
-                            Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            Your CommCare HQ project will contain all form submissions from your CommCare
-                            mobile applications, as well as tools that help you easily create, deploy, and monitor
-                            your applications and workers.
-                        {% endblocktrans %}
-                    </p>
-                    <p>
-                        {% blocktrans %}
-                            Before you can view any of your own data from CommCare, you will need to create a
-                            project space.
-                        {% endblocktrans %}
-                    </p>
-                {% endif %}
-                {% crispy form %}
-            </div>
-    {% endblock %}
+  <div class="container">
+    <h1>
+      {% if is_new_user %}
+        {% blocktrans %}
+          Welcome to CommCare HQ!
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+          Create a New Project Space
+        {% endblocktrans %}
+      {% endif %}
+    </h1>
+    <div class="help-block">
+      Please create a name for your project.
+      This will be used to create a project URL, and you will not be able to change it in the future.
     </div>
+
+    {% block registration-content %}
+      <div>
+        {% if is_new_user %}
+          <p>
+            {% blocktrans with request.couch_user.first_name as first_name %}
+              Congratulations, {{ first_name }}&mdash;you've successfully joined CommCare HQ.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              Your CommCare HQ project will contain all form submissions from your CommCare
+              mobile applications, as well as tools that help you easily create, deploy, and monitor
+              your applications and workers.
+            {% endblocktrans %}
+          </p>
+          <p>
+            {% blocktrans %}
+              Before you can view any of your own data from CommCare, you will need to create a
+              project space.
+            {% endblocktrans %}
+          </p>
+        {% endif %}
+        {% crispy form %}
+      </div>
+    {% endblock %}
+  </div>
 
 {% endblock %}
