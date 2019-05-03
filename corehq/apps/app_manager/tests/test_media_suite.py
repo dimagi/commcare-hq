@@ -521,8 +521,6 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertIn('modules.m0.icon', locale_ids['en'])
         self.assertIn('modules.m0.audio', locale_ids['en'])
 
-        # TODO: the assertNotIn statements fail because create_default_app_strings calls create_app_strings
-        # with for_default=True instead of passing along the build profile id
         self.assertIn('modules.m0', locale_ids['hin'])
         self.assertNotIn('modules.m0.icon', locale_ids['hin'])
         self.assertNotIn('modules.m0.audio', locale_ids['hin'])
