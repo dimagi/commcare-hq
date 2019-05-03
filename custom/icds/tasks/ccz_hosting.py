@@ -23,7 +23,7 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
     # set up the file if not already present
     if not IcdsFile.objects.filter(blob_id=ccz_blob_id, data_type="ccz").exists():
         icds_file = IcdsFile(blob_id=ccz_blob_id, data_type="ccz")
-        ccz_file = create_ccz_files(build, None)
+        ccz_file = create_ccz_files(build, ccz_hosting.profile_id)
         ccz_file_name = "commcare_v%s.ccz" % version
         try:
             with open(ccz_file, 'rb') as ccz:
