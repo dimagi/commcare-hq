@@ -38,6 +38,8 @@ class CCZHosting(models.Model):
     link = models.ForeignKey(CCZHostingLink, on_delete=models.CASCADE)
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
+    profile_id = models.CharField(max_length=255, blank=True)
+
 
     @cached_property
     def utility(self):
@@ -55,9 +57,9 @@ class CCZHosting(models.Model):
     def blob_id(self):
         assert self.app_id
         assert self.version
-        return "%s%s" % (self.app_id, self.version)
+        return "%s%s%s" % (self.app_id, self.version, self.profile_id)
 
-    @property
+    @cached_property
     def build_doc(self):
         return get_build_by_version(self.link.domain, self.app_id, self.version)
 
@@ -72,6 +74,10 @@ class CCZHosting(models.Model):
         except cls.DoesNotExist:
             ccz_hosting = cls(link_id=link_id, app_id=app_id, version=version)
         ccz_hosting.save()
+    @cached_property
+    def build_profile(self):
+        if self.profile_id and self.build_doc:
+            return self.build_doc['build_profiles'].get(self.profile_id)
 
     def clean(self):
         if not self.build_doc['is_released']:
