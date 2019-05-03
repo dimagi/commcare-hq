@@ -58,20 +58,23 @@ hqDefine('app_manager/js/summary/form_diff',[
         var formSummaryMenu = models.menuModel({
             items: _.map(getModuleIntersection(), function (module) {
                 return models.menuItemModel({
-                    id: module.id,
+                    unique_id: module.unique_id,
                     name: utils.translateName(module.name, lang, langs),
                     icon: utils.moduleIcon(module),
+                    has_changes: module.changes.contains_changes,
                     has_errors: false,
                     subitems: _.map(module.forms, function (form) {
                         return models.menuItemModel({
-                            id: form.id,
+                            unique_id: form.unique_id,
                             name: utils.translateName(form.name, lang, langs),
                             icon: utils.formIcon(form),
+                            has_changes: form.changes.contains_changes,
                         });
                     }),
                 });
             }),
             viewAllItems: gettext("View All Forms"),
+            viewChanged: gettext("View Changed Items"),
         });
 
 
@@ -96,7 +99,7 @@ hqDefine('app_manager/js/summary/form_diff',[
         });
 
 
-        var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent]);
+        var formSummaryController = formModels.formSummaryControlModel([firstFormSummaryContent, secondFormSummaryContent], true);
 
         $("#form-summary-header").koApplyBindings(formSummaryController);
         models.initVersionsBox(

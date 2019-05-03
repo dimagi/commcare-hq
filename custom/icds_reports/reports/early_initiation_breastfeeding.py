@@ -129,11 +129,16 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         data_for_month['birth'] += birth
         data_for_month['y'] = data_for_month['birth'] / float(data_for_month['all'] or 1)
 
-    top_locations = sorted(
-        [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
-        key=lambda x: x['percent'],
-        reverse=True
-    )
+    all_locations = [
+        {
+            'loc_name': key,
+            'percent': val
+        }
+        for key, val in six.iteritems(best_worst)
+    ]
+    all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
+    all_locations_sorted_by_percent_and_name = sorted(
+        all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
 
     return {
         "chart_data": [
@@ -152,9 +157,9 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                 "color": ChartColors.BLUE
             }
         ],
-        "all_locations": top_locations,
-        "top_five": top_locations[:5],
-        "bottom_five": top_locations[-5:],
+        "all_locations": all_locations_sorted_by_percent_and_name,
+        "top_five": all_locations_sorted_by_percent_and_name[:5],
+        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 

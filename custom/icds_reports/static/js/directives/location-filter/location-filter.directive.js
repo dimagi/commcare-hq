@@ -329,6 +329,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = selectedLocation;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
+                storageService.setKey('selectedLocation', selectedLocation);
 
                 levelOfSelectedLocation -= 1;
 
@@ -371,6 +372,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                     ($location.path().indexOf('lady_supervisor') !== -1 && selectedLocationIndex() !== 3)) {
                     vm.open();
                 }
+                storageService.setKey('selectedLocation', {name: 'National'});
             });
         }
 
