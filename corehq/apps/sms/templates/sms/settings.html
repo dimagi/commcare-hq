@@ -6,26 +6,26 @@
 {% requirejs_main 'sms/js/settings' %}
 
 {% block stylesheets %}
-    <style>
-        .form-horizontal .form-group {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        .form-horizontal .form-group > div .row select {
-            margin-left: 0px;
-        }
-        .controls-multiple .row div {
-            padding-left: 0px;
-        }
-    </style>
+  <style>
+    .form-horizontal .form-group {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .form-horizontal .form-group > div .row select {
+      margin-left: 0px;
+    }
+    .controls-multiple .row div {
+      padding-left: 0px;
+    }
+  </style>
 {% endblock %}
 
 {% block page_content %}
-    <div id="sms-settings-form">
-        {% crispy form %}
-    </div>
+  <div id="sms-settings-form">
+    {% crispy form %}
+  </div>
 
-    {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
-    {% include "sms/partials/day_time_windows.html" with context=form.sms_conversation_times_widget_context only %}
-    {% initial_page_data 'current_values' form.current_values %}
+  {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
+  {% include "sms/partials/day_time_windows.html" with context=form.sms_conversation_times_widget_context only %}
+  {% initial_page_data 'current_values' form.current_values %}
 {% endblock %}

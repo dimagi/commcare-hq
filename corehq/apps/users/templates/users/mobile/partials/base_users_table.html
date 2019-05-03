@@ -5,20 +5,20 @@
 <td data-bind="fadeVisible: $parent.more_columns(), text: form_count"></td>
 <td data-bind="fadeVisible: $parent.more_columns(), text: case_count"></td>
 {% if show_case_sharing %}
-    <td data-bind="fadeVisible: $parent.more_columns()">
+  <td data-bind="fadeVisible: $parent.more_columns()">
                             <span data-bind="visible: (case_sharing_groups.length == 1)">
                                 <i class="fa fa-check"></i>
                                 <span data-bind="text: case_sharing_groups[0]"></span>
                             </span>
 
-        <div data-bind="visible: case_sharing_groups.length > 1">
-            <span class="label label-warning">Multiple Groups</span>
-            <ul data-bind="foreach: case_sharing_groups">
-                <li data-bind="text: $data"></li>
-            </ul>
-        </div>
-    </td>
+    <div data-bind="visible: case_sharing_groups.length > 1">
+      <span class="label label-warning">Multiple Groups</span>
+      <ul data-bind="foreach: case_sharing_groups">
+        <li data-bind="text: $data"></li>
+      </ul>
+    </div>
+  </td>
 {% endif %}
 <td data-bind="visible: !$parent.more_columns()">
-    <a href="#" data-bind="click: $parent.show_more_columns">...</a>
+  <a href="#" data-bind="click: $parent.show_more_columns">...</a>
 </td>
