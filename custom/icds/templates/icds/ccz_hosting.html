@@ -25,7 +25,9 @@
                     <strong>{{ page_title }}</strong>
                 </h3>
                 {% for ccz_hosting in ccz_hostings %}
+                <p>
                     <a href="{{ ccz_hosting.ccz_details.download_url }}">{{ ccz_hosting.ccz_details.name }}</a>
+                </p>
                 {% endfor %}
             </div>
         </div>
