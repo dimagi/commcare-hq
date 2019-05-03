@@ -20,6 +20,10 @@ class CCZHostingUtility:
         except IcdsFile.DoesNotExist:
             return None
 
+    def get_file(self):
+        if self.ccz_file_blob:
+            return self.ccz_file_blob.get_file_from_blobdb()
+
     def _load_ccz_file(self):
         if self.icds_file_obj:
             self.ccz_file_blob = IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)

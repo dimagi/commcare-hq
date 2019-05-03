@@ -194,5 +194,5 @@ def download_ccz(request, domain, hosting_id, blob_id):
     file_size = ccz_hosting.utility.ccz_file_meta.content_length
     file_name = ccz_hosting.utility.ccz_file_meta.name
     content_format = Format('', Format.ZIP, '', True)
-    return get_download_response(ccz_hosting.utility.ccz_file, file_size, content_format, file_name,
+    return get_download_response(ccz_hosting.utility.get_file(), file_size, content_format, file_name,
                                  request)
