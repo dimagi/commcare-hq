@@ -113,6 +113,8 @@ def get_latest_build_version(domain, app_id):
 def get_build_by_version(domain, app_id, version, return_doc=True):
     from .models import Application
     kwargs = {}
+    if version:
+        version = int(version)
     if return_doc:
         kwargs = {'include_docs': True, 'reduce': False}
     res = Application.get_db().view(
