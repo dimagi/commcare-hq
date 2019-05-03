@@ -70,6 +70,10 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
 
     @property
+    def mirrored_engine_ids(self):
+        return []
+
+    @property
     def data_source_id(self):
         return self.id
 

@@ -1181,23 +1181,6 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
-NEW_REMINDERS_MIGRATOR = StaticToggle(
-    'new_reminders_migrator',
-    "Enables features to handle migrating domains to the new reminders framework",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-
-REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
-    'reminders_migration_in_progress',
-    "Disables editing of reminders so that the migration to the new framework can happen.",
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
-)
-
-
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
