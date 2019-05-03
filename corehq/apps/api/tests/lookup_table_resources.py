@@ -93,7 +93,7 @@ class TestLookupTableResource(APIResourceTest):
         response = self._assert_auth_post_resource(
             self.list_endpoint, json.dumps(lookup_table), content_type='application/json')
         self.assertEqual(response.status_code, 201)
-        data_type = FixtureDataType.by_domain_tag(self.domain.name, "table_name")
+        data_type = FixtureDataType.by_domain_tag(self.domain.name, "table_name").first()
         self.addCleanup(data_type.delete)
         self.assertEqual(data_type.tag, "table_name")
         self.assertEqual(len(data_type.fields), 1)
