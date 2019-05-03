@@ -72,8 +72,12 @@ class IncentiveReport(object):
                 if self.beta:
                     row_data.append(AWC_NOT_LAUNCHED)
             else:
-                home_visit_percent = row['valid_visits'] / round(row['expected_visits']) if \
-                    round(row['expected_visits']) else 1
+                if self.month.year < 2019 or (self.month.year == 2019 and self.month.month < 3):
+                    func = int
+                else:
+                    func = round
+                home_visit_percent = row['valid_visits'] / func(row['expected_visits']) if \
+                    func(row['expected_visits']) else 1
                 weighing_efficiency_percent = row['wer_weighed'] / row['wer_eligible'] if \
                     row['wer_eligible'] else 1
                 if home_visit_percent > 1:
@@ -86,9 +90,13 @@ class IncentiveReport(object):
                 weighing_efficiency = '{:.2%}'.format(weighing_efficiency_percent)
                 eligible_for_incentive = 'Yes' if \
                     weighing_efficiency_percent >= 0.6 and home_visit_percent >= 0.6 else 'No'
-                if row['valid_visits'] == 0 and row['expected_visits'] == 0:
+                no_visits = row['valid_visits'] == 0 and row['expected_visits'] == 0
+                no_weights = row['wer_eligible'] == 0
+                if no_visits:
                     home_visit_conducted = "No expected home visits"
+                if no_weights:
                     weighing_efficiency = "No expected weight measurement"
+                if no_visits and no_weights:
                     eligible_for_incentive = "Yes"
 
                 if self.beta:
