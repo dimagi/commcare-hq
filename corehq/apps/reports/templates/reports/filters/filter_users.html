@@ -3,26 +3,26 @@
 {% load i18n %}
 
 {% block filter_content %}
-{% if show_user_filter %}
+  {% if show_user_filter %}
     <div id="{{ css_id }}"
          class="btn-group btn-group-separated report-filter-button-group report-filter-user-filter"
          data-toggle="buttons-checkbox"
          data-toggle-users="{{ toggle_users }}">
-	    {% for user in toggle_users %}
+      {% for user in toggle_users %}
         <button class="btn {% if user.show %} active{% else %} btn-default{% endif %} user-type-btn"
                 data-checkfilter="user-filter-{{ user.type }}"
                 data-ufilter="{{ user.type }}"
                 id="btn-user-filter-{{ user.type }}">
-			    {{ user.name }}
-		</button>
-		{% endfor %}
+          {{ user.name }}
+        </button>
+      {% endfor %}
     </div>
     {% for user in toggle_users %}
-       <input type="checkbox" name="{{ slug }}" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
+      <input type="checkbox" name="{{ slug }}" value="{{ user.type }}" class="hide" id="user-filter-{{ user.type }}" {% if user.show %}checked="checked"{% endif %}/>
     {% endfor %}
-{% else %}
+  {% else %}
     <div id="{{ css_id }}" class="btn-group" data-toggle="buttons-checkbox">
-        <button class="btn btn-primary">{% commcare_user %}s {% trans "Only" %}</button>
+      <button class="btn btn-primary">{% commcare_user %}s {% trans "Only" %}</button>
     </div>
-{% endif %}
+  {% endif %}
 {% endblock %}

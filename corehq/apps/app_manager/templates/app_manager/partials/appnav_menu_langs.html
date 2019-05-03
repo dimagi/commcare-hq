@@ -1,14 +1,14 @@
 {% load i18n %}
 
 <div id="langs" class="appnav-language-select">
-    <label for="app-language-select-nav">{% trans "Language" %}</label>
-    <select name="lang" class="form-control input-sm">
-        {% for lang in app_langs %}
-            <option value="{{ lang }}"
-                    {% if lang == langs.0 %}selected=""{% endif %}>
-                {% if lang == app_langs.0 %}*{% endif %}
-                {{ lang }}
-            </option>
-        {% endfor %}
-    </select>
+  <label for="app-language-select-nav">{% trans "Language" %}</label>
+  <select name="lang" class="form-control input-sm">
+    {% for lang in app_langs %}
+      <option value="{{ lang }}"
+              {% if lang == langs.0 %}selected=""{% endif %}>
+        {% if lang == app_langs.0 %}*{% endif %}
+        {{ lang }}
+      </option>
+    {% endfor %}
+  </select>
 </div>

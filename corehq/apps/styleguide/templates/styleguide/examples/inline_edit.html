@@ -1,5 +1,5 @@
 <div id="inline-edit-example">
-    <inline-edit data-apply-bindings="false" params="
+  <inline-edit data-apply-bindings="false" params="
         value: text,
         url: url,
         rows: 1,
@@ -9,19 +9,19 @@
 </div>
 
 <script>
-    $(function () {
-        var inlineEditExample = function () {
-            var self = {};
+  $(function () {
+    var inlineEditExample = function () {
+      var self = {};
 
-            self.text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+      self.text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
 
-            // This should be a real url, either hard-coded in the django template or registered with the
-            // registerurl template tag and then feteched here using initial_page_data.js's reverse.
-            self.url = '';
+      // This should be a real url, either hard-coded in the django template or registered with the
+      // registerurl template tag and then feteched here using initial_page_data.js's reverse.
+      self.url = '';
 
-            return self;
-        };
+      return self;
+    };
 
-        $("#inline-edit-example").koApplyBindings(inlineEditExample());
-    });
+    $("#inline-edit-example").koApplyBindings(inlineEditExample());
+  });
 </script>

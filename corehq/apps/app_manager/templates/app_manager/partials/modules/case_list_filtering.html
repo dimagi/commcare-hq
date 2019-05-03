@@ -3,23 +3,23 @@
 
 <div data-bind="with: filter">
 
-    <div class="form-group">
-        <button class="btn btn-default"
-                data-bind="visible: !showing(), click: function(data){data.showing(true);}">
-            <i class="fa fa-plus"></i>
-            {% trans "Add filter" %}
-        </button>
-    </div>
+  <div class="form-group">
+    <button class="btn btn-default"
+            data-bind="visible: !showing(), click: function(data){data.showing(true);}">
+      <i class="fa fa-plus"></i>
+      {% trans "Add filter" %}
+    </button>
+  </div>
 
-    <div data-bind="visible: showing">
-        <form class="form-horizontal">
-            <div class="form-group">
-                <label class="control-label {% css_label_class %}">
-                    {% trans "Filter" %}
-                    <span class="hq-help-template"
-                        data-title="{% trans "Filter" %}"
-                        data-content=
-                        "{% blocktrans %}
+  <div data-bind="visible: showing">
+    <form class="form-horizontal">
+      <div class="form-group">
+        <label class="control-label {% css_label_class %}">
+          {% trans "Filter" %}
+          <span class="hq-help-template"
+                data-title="{% trans "Filter" %}"
+                data-content=
+                  "{% blocktrans %}
                             This XPath expression specifies which cases
                             should appear in the case list. It can refer to
                             any case properties and should return true if a
@@ -30,20 +30,20 @@
                             include a &quot;/data/&quot; in front of the
                             case property).
                         {% endblocktrans %}"
-                    ></span>
-                </label>
-                <div class="{% css_field_class %}">
+          ></span>
+        </label>
+        <div class="{% css_field_class %}">
                     <textarea placeholder="Filter expression" class="ui-autocomplete-input form-control vertical-resize"
-                           data-bind="value: filterText"
+                              data-bind="value: filterText"
                     ></textarea>
-                    <br>
-                    <button class="btn btn-danger" data-bind="click: function(data){showing(false);}">
-                        <i class="fa fa-remove"></i>
-                        {% trans "Remove filter" %}
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
+          <br>
+          <button class="btn btn-danger" data-bind="click: function(data){showing(false);}">
+            <i class="fa fa-remove"></i>
+            {% trans "Remove filter" %}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 
 </div>

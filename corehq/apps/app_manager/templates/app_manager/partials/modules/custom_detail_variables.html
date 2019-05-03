@@ -2,22 +2,22 @@
 
 <div data-bind="with: {{screen}}.customVariablesViewModel">
   <div class="panel panel-appmanager" data-bind="visible: enabled">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          {% trans "Custom Detail Variables" %}
-        </h4>
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "Custom Detail Variables" %}
+      </h4>
+    </div>
+    <div class="panel-body">
+      <p>{% trans "Add custom variables to the variables node." %}</p>
+      <div class="row">
+        <div class="col-sm-8">
+          <textarea class="form-control"
+                    data-bind="value: xml"
+                    placeholder="<variable-name function='some(xpath_expression)' />"
+                    spellcheck="false">
+          </textarea>
+        </div>
       </div>
-      <div class="panel-body">
-          <p>{% trans "Add custom variables to the variables node." %}</p>
-          <div class="row">
-              <div class="col-sm-8">
-                  <textarea class="form-control"
-                            data-bind="value: xml"
-                            placeholder="<variable-name function='some(xpath_expression)' />"
-                            spellcheck="false">
-                  </textarea>
-              </div>
-          </div>
-      </div>
+    </div>
   </div>
 </div>

@@ -8,8 +8,8 @@
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block js %}
-    {{ block.super }}
-    {% compress js %}
+  {{ block.super }}
+  {% compress js %}
     <script src="{% static 'hqwebapp/js/select2_knockout_bindings_v4.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
@@ -19,17 +19,17 @@
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
-    {% endcompress %}
+  {% endcompress %}
 {% endblock %}
 
 {% block breadcrumbs %}
-    {% if app %}
+  {% if app %}
     <li>
-        <a href="{% url "view_app" domain app.id %}">
-            <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
-        </a>
+      <a href="{% url "view_app" domain app.id %}">
+        <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
+      </a>
     </li>
-    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block page_navigation %}
@@ -45,7 +45,7 @@
 
       {% if app.get_doc_type == 'Application' %}
         {% if not app.is_remote_app and app.langs|length > 1%}
-            {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
+          {% include 'app_manager/partials/appnav_menu_langs.html' with app_langs=app.langs langs=langs %}
         {% endif %}
 
         {% include 'app_manager/partials/menu/appnav_menu.html' %}
@@ -55,16 +55,16 @@
   {% if show_ui_notification_to_hide_translations %}
     {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
       <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-         data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
-         role="alert">
+           data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
+           role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <span aria-hidden="true">&times;</span>
         </button>
         <p class="lead">{% trans 'New setting to hide translations' %}</p>
         <p>
-            {% blocktrans %}
-                Working with multiple languages but want to just focus on app building?
-            {% endblocktrans %}
+          {% blocktrans %}
+            Working with multiple languages but want to just focus on app building?
+          {% endblocktrans %}
         </p>
         <p>
           <a class="btn btn-primary-dark"
@@ -82,139 +82,139 @@
 {% endblock %}
 
 {% block app-content %}
-    {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
-    {% initial_page_data 'app_subset' app_subset %}
-    {% initial_page_data 'formdesigner' formdesigner %}
-    {% initial_page_data 'add_ons' add_ons %}
-    {% initial_page_data 'add_ons_layout' add_ons_layout %}
-    {% registerurl 'current_app_version' domain app.id %}
-    {% registerurl "new_form" domain app.id "---" %}
-    {% block pre_form_content %}{% endblock %}
-    {% block form-view %}{% endblock %}
-    <script type="text/html" id="js-popover-template-add-item">
-      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
-    </script>
+  {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
+  {% initial_page_data 'app_subset' app_subset %}
+  {% initial_page_data 'formdesigner' formdesigner %}
+  {% initial_page_data 'add_ons' add_ons %}
+  {% initial_page_data 'add_ons_layout' add_ons_layout %}
+  {% registerurl 'current_app_version' domain app.id %}
+  {% registerurl "new_form" domain app.id "---" %}
+  {% block pre_form_content %}{% endblock %}
+  {% block form-view %}{% endblock %}
+  <script type="text/html" id="js-popover-template-add-item">
+    <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
+  </script>
 
-    <script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
-      <div>
+  <script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
+    <div>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="survey">
+          <i class="fa fa-file-o"></i> {% trans "Surveys" %}
+          <p>{% blocktrans %}Collect data once.{% endblocktrans %}</p>
+        </button>
+      </div>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option new-module" data-type="case">
+          <i class="fa fa-bars"></i> {% trans "Case List" %}
+          <p>{% blocktrans %}Track items over time.{% endblocktrans %}</p>
+        </button>
+      </div>
+      {% if show_biometric %}
         <div class="pull-left">
-          <button type="button" class="popover-additem-option new-module" data-type="survey">
-            <i class="fa fa-file-o"></i> {% trans "Surveys" %}
-            <p>{% blocktrans %}Collect data once.{% endblocktrans %}</p>
+          <button type="button" class="popover-additem-option new-module" data-type="biometrics">
+            <i class="fcc fcc-app-biometrics"></i> {% trans "Biometrics" %}
+            <p>{% blocktrans %}Identify clients by fingerprint.{% endblocktrans %}</p>
           </button>
         </div>
+      {% endif %}
+      {% if show_advanced %}
         <div class="pull-left">
-          <button type="button" class="popover-additem-option new-module" data-type="case">
-            <i class="fa fa-bars"></i> {% trans "Case List" %}
-            <p>{% blocktrans %}Track items over time.{% endblocktrans %}</p>
+          <button type="button" class="popover-additem-option new-module" data-type="advanced">
+            <i class="fa fa-flask"></i> {% trans "Advanced Menu" %}
+            <p>{% blocktrans %}Complex case management.{% endblocktrans %}</p>
           </button>
         </div>
-        {% if show_biometric %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module" data-type="biometrics">
-              <i class="fcc fcc-app-biometrics"></i> {% trans "Biometrics" %}
-              <p>{% blocktrans %}Identify clients by fingerprint.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
-        {% if show_advanced %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module" data-type="advanced">
-              <i class="fa fa-flask"></i> {% trans "Advanced Menu" %}
-              <p>{% blocktrans %}Complex case management.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
-        {% if show_report_modules %}
-          <div class="pull-left">
-              <button type="button" class="popover-additem-option new-module" data-type="report" {% if disable_report_modules %} disabled {% endif %}>
-                  <i class="fa {% if disable_report_modules %}fa-ban{% else %}fa-bar-chart{% endif %}"></i>
-                  {% trans "Report Menu" %}
-                  {% if disable_report_modules %}
-                      <p>{% blocktrans %}Mobile reports are disabled because this is a linked domain.{% endblocktrans %}</p>
-                  {% else %}
-                      <p>{% blocktrans %}Worker performance.{% endblocktrans %}</p>
-                  {% endif %}
-              </button>
-          </div>
-        {% endif %}
-        {% if show_shadow_modules %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module" data-type="shadow">
-              <i class="fa fa-moon-o"></i> {% trans "Shadow Menu" %}
-              <p>{% blocktrans %}Mimic another menu.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
-        {% if show_training_modules %}
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module" data-type="training">
-              <i class="fa fa-graduation-cap"></i> {% trans "Training" %}
-              <p>{% blocktrans %}Content for training users.{% endblocktrans %}</p>
-            </button>
-          </div>
-        {% endif %}
-      </div>
-    </script>
+      {% endif %}
+      {% if show_report_modules %}
+        <div class="pull-left">
+          <button type="button" class="popover-additem-option new-module" data-type="report" {% if disable_report_modules %} disabled {% endif %}>
+            <i class="fa {% if disable_report_modules %}fa-ban{% else %}fa-bar-chart{% endif %}"></i>
+            {% trans "Report Menu" %}
+            {% if disable_report_modules %}
+              <p>{% blocktrans %}Mobile reports are disabled because this is a linked domain.{% endblocktrans %}</p>
+            {% else %}
+              <p>{% blocktrans %}Worker performance.{% endblocktrans %}</p>
+            {% endif %}
+          </button>
+        </div>
+      {% endif %}
+      {% if show_shadow_modules %}
+        <div class="pull-left">
+          <button type="button" class="popover-additem-option new-module" data-type="shadow">
+            <i class="fa fa-moon-o"></i> {% trans "Shadow Menu" %}
+            <p>{% blocktrans %}Mimic another menu.{% endblocktrans %}</p>
+          </button>
+        </div>
+      {% endif %}
+      {% if show_training_modules %}
+        <div class="pull-left">
+          <button type="button" class="popover-additem-option new-module" data-type="training">
+            <i class="fa fa-graduation-cap"></i> {% trans "Training" %}
+            <p>{% blocktrans %}Content for training users.{% endblocktrans %}</p>
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </script>
 
-    <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
-      <div data-module-unique-id="<%= moduleUniqueId %>">
-          <% if (showSurvey) { %>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-case-action="none" data-type="survey" data-form-type="form">
-                      <i class="fa fa-file-o"></i> {% trans "Survey" %}
-                  </button>
-              </div>
-          <% } %>
-          <% if (showTraining) { %>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-case-action="none" data-type="lesson" data-form-type="form">
-                      <i class="fa fa-file-o"></i> {% trans "Lesson" %}
-                  </button>
-              </div>
-          <% } %>
-          <% if (showCaseForms) { %>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-case-action="update" data-type="followup" data-form-type="form">
-                    <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
-                  </button>
-              </div>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-case-action="open" data-type="followup" data-form-type="form">
-                    <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
-                  </button>
-              </div>
-          <% } %>
-          <% if (showAdvanced) { %>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-type="advanced" data-form-type="form">
-                    <i class="fa fa-file-o"></i> {% trans "Form" %}
-                  </button>
-              </div>
-          <% } %>
-          <% if (showShadow) { %>
-              <div class="pull-left">
-                <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                        data-case-action="update" data-type="shadow" data-form-type="shadow">
-                  <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
-                </button>
-              </div>
-          <% } %>
-          <form method="post" class="hide" action="<%= newFormUrl %>">
-              {% csrf_token %}
-              <input type="hidden" name="case_action" />
-              <input type="hidden" name="form_type" />
-          </form>
+  <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
+    <div data-module-unique-id="<%= moduleUniqueId %>">
+      <% if (showSurvey) { %>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-case-action="none" data-type="survey" data-form-type="form">
+          <i class="fa fa-file-o"></i> {% trans "Survey" %}
+        </button>
       </div>
-    </script>
+      <% } %>
+      <% if (showTraining) { %>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-case-action="none" data-type="lesson" data-form-type="form">
+          <i class="fa fa-file-o"></i> {% trans "Lesson" %}
+        </button>
+      </div>
+      <% } %>
+      <% if (showCaseForms) { %>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-case-action="update" data-type="followup" data-form-type="form">
+          <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+        </button>
+      </div>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-case-action="open" data-type="followup" data-form-type="form">
+          <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
+        </button>
+      </div>
+      <% } %>
+      <% if (showAdvanced) { %>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-type="advanced" data-form-type="form">
+          <i class="fa fa-file-o"></i> {% trans "Form" %}
+        </button>
+      </div>
+      <% } %>
+      <% if (showShadow) { %>
+      <div class="pull-left">
+        <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                data-case-action="update" data-type="shadow" data-form-type="shadow">
+          <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
+        </button>
+      </div>
+      <% } %>
+      <form method="post" class="hide" action="<%= newFormUrl %>">
+        {% csrf_token %}
+        <input type="hidden" name="case_action" />
+        <input type="hidden" name="form_type" />
+      </form>
+    </div>
+  </script>
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-    {% include "hqwebapp/rollout_revert_modal.html" %}
-    {% include 'app_manager/partials/confirm_delete_app.html' %}
+  {% include "hqwebapp/rollout_revert_modal.html" %}
+  {% include 'app_manager/partials/confirm_delete_app.html' %}
 {% endblock %}
