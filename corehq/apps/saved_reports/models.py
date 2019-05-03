@@ -639,7 +639,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
         if self.language:
             fallback_language = self.language
         else:
-            fallback_language =  user_languages.get(self.owner_email, 'en')
+            fallback_language = user_languages.get(self.owner_email, 'en')
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
