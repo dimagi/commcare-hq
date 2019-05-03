@@ -124,7 +124,7 @@ LOGGING = {
 if 'icds-ucr' not in DATABASES:
     DATABASES['icds-ucr'] = deepcopy(DATABASES['default'])
     # use a different name otherwise migrations don't get run
-    DATABASES['icds-ucr']['NAME'] = 'commcare-icds-ucr'
+    DATABASES['icds-ucr']['NAME'] = 'commcarehq_icds_ucr'
     del DATABASES['icds-ucr']['TEST']['NAME']  # gets set by `helper.assign_test_db_names`
 
 helper.assign_test_db_names(DATABASES)
