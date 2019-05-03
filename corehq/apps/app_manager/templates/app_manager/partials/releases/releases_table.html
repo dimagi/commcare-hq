@@ -199,7 +199,10 @@
                 data-bind="
                              openModal: 'revert-build-modal-template',
                              visible: version() !== $root.currentAppVersion(),
-                             css: {hide: false}">{% trans "Revert to this Version" %}</button>
+                             css: {hide: false}">
+          <i class="fa fa-recycle"></i>
+          {% trans "Revert to this Version" %}
+        </button>
         <span class="pull-right">
           <a class="btn"
              data-bind="
