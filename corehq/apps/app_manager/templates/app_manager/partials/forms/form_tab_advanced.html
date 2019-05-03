@@ -2,18 +2,18 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
-    {% if allow_form_copy%}
-        <div class="panel panel-appmanager">
-            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
-                {% csrf_token %}
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">
-                        {% trans "Copy Form" %}
-                    </h4>
-                </div>
-                <div class="panel-body">
-                    {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
-                    <span id="app-module-selection">
+  {% if allow_form_copy%}
+    <div class="panel panel-appmanager">
+      <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
+        {% csrf_token %}
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">
+            {% trans "Copy Form" %}
+          </h4>
+        </div>
+        <div class="panel-body">
+          {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
+            <span id="app-module-selection">
                         <select name="to_app_id"
                                 class='form-control'
                                 style="min-width: 150px;"
@@ -21,7 +21,7 @@
                                            optionsText: 'name',
                                            optionsValue: 'id',
                                            value: selectedAppId"></select>
-                        <!-- ko with: selectedApp -->
+              <!-- ko with: selectedApp -->
                         <select name="to_module_id"
                                 class='form-control'
                                 style="min-width: 150px;"
@@ -29,47 +29,47 @@
                                            optionsText: 'name',
                                            optionsValue: 'id',
                                            value: selectedModuleId"></select>
-                        <!-- /ko -->
+              <!-- /ko -->
                     </span>
-                    {% else %}
-                    <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
-                        <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-                        {% endfor %}</select>
-                    {% endif %}
-                    <button class='btn btn-default' type="submit">
-                        <i class="fa fa-copy"></i>
-                        {% trans "Copy" %}
-                    </button>
-                </div>
-            </form>
+          {% else %}
+            <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
+              <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
+            {% endfor %}</select>
+          {% endif %}
+          <button class='btn btn-default' type="submit">
+            <i class="fa fa-copy"></i>
+            {% trans "Copy" %}
+          </button>
         </div>
-        {% csrf_token %}
-        <fieldset>
-
-        </fieldset>
-    {% endif %}
-    <div class="panel panel-appmanager">
-        <div class="panel-heading">
-            <h4 class="panel-title panel-title-nolink">
-                {% trans "XForm" %}
-            </h4>
-        </div>
-        <div class="panel-body">
-            <ul class="nav nav-pills nav-stacked">
-                <li>
-                    <a href="#upload-xform" data-toggle="modal">
-                        <i class="fa fa-arrow-up"></i>
-                        {% trans "Upload" %}
-                    </a>
-                </li>
-                <li>
-                    <a {% if not form.source %}class="disabled"{% endif %}
-                       href="{% url "get_xform_source" domain app.id form.unique_id %}">
-                        <i class="fa fa-arrow-down"></i>
-                        {% trans "Download" %}
-                    </a>
-                </li>
-            </ul>
-        </div>
+      </form>
     </div>
+    {% csrf_token %}
+    <fieldset>
+
+    </fieldset>
+  {% endif %}
+  <div class="panel panel-appmanager">
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "XForm" %}
+      </h4>
+    </div>
+    <div class="panel-body">
+      <ul class="nav nav-pills nav-stacked">
+        <li>
+          <a href="#upload-xform" data-toggle="modal">
+            <i class="fa fa-arrow-up"></i>
+            {% trans "Upload" %}
+          </a>
+        </li>
+        <li>
+          <a {% if not form.source %}class="disabled"{% endif %}
+             href="{% url "get_xform_source" domain app.id form.unique_id %}">
+            <i class="fa fa-arrow-down"></i>
+            {% trans "Download" %}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>

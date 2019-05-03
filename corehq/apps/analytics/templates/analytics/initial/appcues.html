@@ -1,10 +1,10 @@
 {% load hq_shared_tags %}
 
 {% if ANALYTICS_CONFIG.DEBUG %}
-    {# Developer is working on analytics #}
-    {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
+  {# Developer is working on analytics #}
+  {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
 {% elif is_saas_environment and request.couch_user.days_since_created < 31 %}
-    {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
+  {% initial_analytics_data 'appcues.apiId' ANALYTICS_IDS.APPCUES_ID %}
 {% endif %}
 
 {% initial_analytics_data 'appcues.username' request.couch_user.username %}

@@ -11,15 +11,15 @@
 
   {% if less_debug %}
     <link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'app_manager/less/summary.debug.less' %}" />
+          rel="stylesheet"
+          media="all"
+          href="{% static 'app_manager/less/summary.debug.less' %}" />
   {% else %}
     {% compress css %}
-    <link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'app_manager/less/summary.less' %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'app_manager/less/summary.less' %}" />
     {% endcompress %}
   {% endif %}
 
@@ -51,8 +51,8 @@
             <li role="presentation">
               <div class="appnav-item">
                 <a href="{% url 'download_app_summary' domain app_id %}?lang={{ lang }}"
-                  class="appnav-link-full track-usage-link"
-                  data-category="App Summary" data-action="Download" data-label="Full Summary">
+                   class="appnav-link-full track-usage-link"
+                   data-category="App Summary" data-action="Download" data-label="Full Summary">
                   <i class="fa fa-download appnav-primary-icon"></i>
                   <span>{% trans "High Level Summary" %}</span>
                 </a>
@@ -62,13 +62,13 @@
             <li role="presentation">
               <div class="appnav-item{% if page_type == 'form_summary' %} active{% endif %}">
                 <a href="{% url 'app_form_summary' domain app_id %}"
-                  class="appnav-title appnav-title-secondary appnav-responsive">
+                   class="appnav-title appnav-title-secondary appnav-responsive">
                   <i class="fa fa-file-text-o appnav-primary-icon"></i>
                   <span>{% trans "Form Summary" %}</span>
                 </a>
                 <a class="appnav-secondary track-usage-link"
-                  href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}"
-                  data-category="App Summary" data-action="Download" data-label="Form Summary">
+                   href="{% url "download_form_summary" domain app_id %}?lang={{ lang }}"
+                   data-category="App Summary" data-action="Download" data-label="Form Summary">
                   <i class="fa fa-download"></i>
                 </a>
               </div>
@@ -76,13 +76,13 @@
             <li role="presentation">
               <div class="appnav-item{% if page_type == 'case_summary' %} active{% endif %}">
                 <a href="{% url 'app_case_summary' domain app_id %}"
-                  class="appnav-title appnav-title-secondary appnav-responsive">
+                   class="appnav-title appnav-title-secondary appnav-responsive">
                   <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
                   <span>{% trans "Case Summary" %}</span>
                 </a>
                 <a class="appnav-secondary track-usage-link"
-                  href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}"
-                  data-category="App Summary" data-action="Download" data-label="Case Summary">
+                   href="{% url "download_case_summary" domain app_id %}?lang={{ lang }}"
+                   data-category="App Summary" data-action="Download" data-label="Case Summary">
                   <i class="fa fa-download"></i>
                 </a>
               </div>

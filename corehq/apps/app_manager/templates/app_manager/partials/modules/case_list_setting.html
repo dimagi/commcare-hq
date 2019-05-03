@@ -4,35 +4,35 @@
 
 {% if add_ons.case_list_menu_item %}
 
-    <div class="form-group">
-        <label class="{% css_label_class %} control-label">
-            {% trans LABEL %}
-            <span class="hq-help-template"
-                  data-title="{% trans LABEL %}"
-                  data-content="{% trans DESC %}"
-            ></span>
-        </label>
-        <div class="{% css_field_class %}">
-            <select class="form-control case-list-setting-show" type="text" data-slug="{{ SLUG }}" name="{{ SLUG }}-show">
-                <option value="false" {% if not case_list.show %}selected{% endif %}>Don't Show</option>
-                <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
-            </select>
-        </div>
+  <div class="form-group">
+    <label class="{% css_label_class %} control-label">
+      {% trans LABEL %}
+      <span class="hq-help-template"
+            data-title="{% trans LABEL %}"
+            data-content="{% trans DESC %}"
+      ></span>
+    </label>
+    <div class="{% css_field_class %}">
+      <select class="form-control case-list-setting-show" type="text" data-slug="{{ SLUG }}" name="{{ SLUG }}-show">
+        <option value="false" {% if not case_list.show %}selected{% endif %}>Don't Show</option>
+        <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
+      </select>
     </div>
-    <div class="form-group case-list-setting-label" data-slug="{{ SLUG }}">
-        <label class="{% css_label_class %} control-label">
-            {% trans "Label for Case List Menu Item" %}
-        </label>
-        <div class="{% css_field_class %}">
-            {% input_trans case_list.label langs %}
-            <span class="help-block hide" id="case_list_label_error">
+  </div>
+  <div class="form-group case-list-setting-label" data-slug="{{ SLUG }}">
+    <label class="{% css_label_class %} control-label">
+      {% trans "Label for Case List Menu Item" %}
+    </label>
+    <div class="{% css_field_class %}">
+      {% input_trans case_list.label langs %}
+      <span class="help-block hide" id="case_list_label_error">
                 {% trans "Case list menu item requires a label" %}
             </span>
-        </div>
     </div>
+  </div>
 
-    <div class="case-list-setting-media" data-slug="{{ SLUG }}">
-        {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
-    </div>
+  <div class="case-list-setting-media" data-slug="{{ SLUG }}">
+    {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
+  </div>
 
 {% endif %}
