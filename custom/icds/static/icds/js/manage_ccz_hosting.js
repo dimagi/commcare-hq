@@ -12,18 +12,20 @@ hqDefine('icds/js/manage_ccz_hosting', [
 ) {
     'use strict';
     $(function () {
-        var cczHosting = function (id, link, appName, version) {
+        var cczHosting = function (id, link, appName, version, profileName) {
             var self = {};
             self.link = link;
             self.appName = appName;
             self.version = version;
+            self.profileName = profileName;
             self.url = initialPageData.reverse("remove_ccz_hosting", id);
             return self;
         };
         var cczHostingsView = function (hostings) {
             var self = {};
             self.hostings = _.map(hostings, function (hosting) {
-                return cczHosting(hosting.id, hosting.link_name, hosting.app_name, hosting.version);
+                return cczHosting(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
+                    hosting.profile_name);
             });
             self.search = function () {
                 var linkId = $("#link-id-select").val();

@@ -34,6 +34,7 @@
                     <tr>
                         <th class="col-sm-2">{% trans 'Link' %}</th>
                         <th class="col-sm-2">{% trans 'Application' %}</th>
+                        <th class="col-sm-2">{% trans 'Profile' %}</th>
                         <th class="col-sm-2">{% trans 'Version' %}</th>
                         <th class="col-sm-2">{% trans 'Action' %}</th>
                     </tr>
@@ -42,6 +43,7 @@
                     <tr>
                         <td data-bind="text: link"></td>
                         <td data-bind="text: appName"></td>
+                        <td data-bind="text: profileName"></td>
                         <td data-bind="text: version"></td>
                         <td>
                             <a data-bind="attr: { href: url}">{% trans 'Remove' %}</a>
