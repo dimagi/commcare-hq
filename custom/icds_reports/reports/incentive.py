@@ -61,7 +61,7 @@ class IncentiveReport(object):
                     AWC_NOT_LAUNCHED
                 ])
             else:
-                if self.month.year < 2019 or (self.month.year == 2019 and self.month.month < 4):
+                if self.month.year < 2019 or (self.month.year == 2019 and self.month.month < 3):
                     func = int
                 else:
                     func = round
