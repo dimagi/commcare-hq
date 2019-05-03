@@ -51,7 +51,6 @@ name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
   #- jls/reports-select2-v4  # Jenny April 9
-  - nh/cdc/one_domain+sk/lazy-case-json  # Norman April 25
   - nh/cdc/one_domain  # Norman March 26
   - odata-apikey  # Nick April 29
   - sr-ucr-mirror # Sravan May 1
