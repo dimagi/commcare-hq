@@ -67,6 +67,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
             )
         else:
             return dict(
+                num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs'),
                 state_name=get_value_or_data_not_entered(row_data, 'state_name'),
                 district_name=get_value_or_data_not_entered(row_data, 'district_name'),
                 block_name=get_value_or_data_not_entered(row_data, 'block_name'),

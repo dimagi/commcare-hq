@@ -31,7 +31,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.decorators import reminders_framework_permission
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
@@ -286,7 +285,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -400,7 +399,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
     @use_select2_v4
@@ -540,7 +539,7 @@ class EditScheduleView(CreateScheduleView):
 
 
 class ConditionalAlertBaseView(BaseMessagingSectionView):
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertBaseView, self).dispatch(*args, **kwargs)
 
@@ -767,7 +766,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
     @use_select2_v4
@@ -807,10 +806,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return context
 
     @cached_property
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
-
-    @cached_property
     def schedule_form(self):
         args = [
             self.domain,
@@ -825,7 +820,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         return ConditionalAlertScheduleForm(
             *args,
-            new_reminders_migrator=self.new_reminders_migrator,
             is_system_admin=self.is_system_admin
         )
 
@@ -898,11 +892,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            if not (
-                self.new_reminders_migrator and
-                self.schedule_form.cleaned_data['skip_running_rule_post_save']
-            ):
-                initiate_messaging_rule_run(rule.domain, rule.pk)
+            initiate_messaging_rule_run(rule.domain, rule.pk)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -1036,7 +1026,7 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
     template_name = 'hqwebapp/bulk_upload.html'
 
     @method_decorator(toggles.BULK_CONDITIONAL_ALERTS.required_decorator())
-    @method_decorator(reminders_framework_permission)
+    @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     def dispatch(self, *args, **kwargs):
         return super(UploadConditionalAlertView, self).dispatch(*args, **kwargs)
 
