@@ -171,6 +171,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             }, indent=4)
             files = itertools.chain(files, [('manifest.json', manifest)])
 
+        file_cache = {}
         with open(fpath, 'wb') as tmp:
             with zipfile.ZipFile(tmp, "w") as z:
                 progress = initial_progress
@@ -181,24 +182,13 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     z.writestr(path, data, file_compression)
                     progress += file_progress / file_count
                     DownloadBase.set_progress(build_application_zip, progress, 100)
+                    if extension not in MULTIMEDIA_EXTENSIONS:
+                        file_cache[path] = data
 
-        # Integrity check that all media files present in media_suite.xml were added to the zip
-        if include_multimedia_files and include_index_files and toggles.CAUTIOUS_MULTIMEDIA.enabled(app.domain):
-            with open(fpath, 'rb') as tmp:
-                with zipfile.ZipFile(tmp, "r") as z:
-                    media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
-                    if len(media_suites) != 1:
-                        message = _('Could not identify media_suite.xml in CCZ')
-                        errors.append(message)
-                    else:
-                        with z.open(media_suites[0]) as media_suite:
-                            from corehq.apps.app_manager.xform import parse_xml
-                            parsed = parse_xml(media_suite.read())
-                            resources = {node.text for node in
-                                         parsed.findall("media/resource/location[@authority='local']")}
-                            names = z.namelist()
-                            missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
-                            errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
+        errors.extend(_check_ccz_locale_id_integrity(file_cache))
+
+        if include_index_files and include_multimedia_files:
+            errors.extend(_check_ccz_multimedia_integrity(app.domain, fpath))
 
         if errors:
             os.remove(fpath)
@@ -227,3 +217,49 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
 
     DownloadBase.set_progress(build_application_zip, 100, 100)
+
+
+def _check_ccz_locale_id_integrity(file_cache):
+    for path in ('default/app_strings.txt', 'suite.xml'):
+        if path not in file_cache:
+            return [_("Could not find {path} in CCZ").format(path)]
+
+    app_strings_ids = {
+        line.decode("utf-8").split('=')[0]
+        for line in file_cache['default/app_strings.txt'].splitlines()
+    }
+
+    from corehq.apps.app_manager.xform import parse_xml
+    parsed = parse_xml(file_cache['suite.xml'])
+    suite_ids = {locale.get("id") for locale in parsed.iter("locale")}
+
+    return [
+        _("Locale ID {id} present in suite.xml but not in default app strings.").format(id=id)
+        for id in (suite_ids - app_strings_ids) if id
+    ]
+
+
+# Check that all media files present in media_suite.xml were added to the zip
+def _check_ccz_multimedia_integrity(domain, fpath):
+    if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
+        return []
+
+    errors = []
+
+    with open(fpath, 'rb') as tmp:
+        with zipfile.ZipFile(tmp, "r") as z:
+            media_suites = [f for f in z.namelist() if re.search(r'\bmedia_suite.xml\b', f)]
+            if len(media_suites) != 1:
+                message = _('Could not find media_suite.xml in CCZ')
+                errors.append(message)
+            else:
+                with z.open(media_suites[0]) as media_suite:
+                    from corehq.apps.app_manager.xform import parse_xml
+                    parsed = parse_xml(media_suite.read())
+                    resources = {node.text for node in
+                                 parsed.findall("media/resource/location[@authority='local']")}
+                    names = z.namelist()
+                    missing = [r for r in resources if re.sub(r'^\.\/', '', r) not in names]
+                    errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
+
+    return errors
