@@ -58,10 +58,11 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
         yield id, value
 
+    ccz_langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
+    langs = [lang] + ccz_langs
     if for_default:
         # include language code names and current language
-        langs = app.build_profiles[build_profile_id].langs if build_profile_id else app.langs
-        for lc in langs:
+        for lc in ccz_langs:
             name = langcodes.get_name(lc) or lc
             if not name:
                 continue

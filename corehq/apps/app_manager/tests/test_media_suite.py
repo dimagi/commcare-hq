@@ -479,8 +479,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         # Test that suite includes only media relevant to the profile
 
         app = Application.new_app('domain', "my app")
-        module = app.add_module(Module.new_module("Module 1", None))
-        form = app.new_form(0, "Form 1", None)
+        app.add_module(Module.new_module("Module 1", None))
+        app.new_form(0, "Form 1", None)
         app.build_spec = BuildSpec.from_string('2.21.0/latest')
         app.build_profiles = OrderedDict({
             'en': BuildProfile(langs=['en'], name='en-profile'),
