@@ -95,16 +95,18 @@
 
 <script type="text/html" id="form-question">
   <li data-bind="visible: isVisible, css: getDiffClass('question') ">
-    <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
-    <!-- ko ifnot: $root.readOnly -->
-    <a data-bind="attr: { 'href': $parent.url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
-    <!-- /ko  -->
-    <!-- ko if: $root.readOnly -->
-    <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('label')"></span>
-    <!-- /ko -->
-    <!-- ko if: required -->
-    <sup class="text-muted" data-bind="css: getDiffClass('required')">{% trans "required" %}</sup>
-    <!-- /ko -->
+    <span data-bind="css: getDiffClass('type')">
+      <i data-bind="attr: { 'class': $root.questionIcon($data), 'title': type }"></i>
+      <!-- ko ifnot: $root.readOnly -->
+      <a data-bind="attr: { 'href': $parent.url + hashtagValue }, css: getDiffClass('label'), text: $root.showIds() ? value :  $root.translateQuestion($data)" target="_blank"></a>
+      <!-- /ko  -->
+      <!-- ko if: $root.readOnly -->
+      <span data-bind="text: $root.showIds() ? value :  $root.translateQuestion($data), css: getDiffClass('label')"></span>
+      <!-- /ko -->
+      <!-- ko if: required -->
+      <sup class="text-muted" data-bind="css: getDiffClass('required')">{% trans "required" %}</sup>
+      <!-- /ko -->
+    </span>
     <!-- ko if: children -->
     <ol data-bind="foreach: children">
       <!-- ko template: {name: 'form-question'}--><!-- /ko -->
