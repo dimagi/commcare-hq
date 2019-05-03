@@ -9,37 +9,37 @@
 {% include 'app_manager/partials/modules/custom_detail_variables.html' with screen='longScreen'%}
 
 <div class="panel panel-appmanager">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Display Properties" %}
-            <span class="hq-help-template"
-                data-title="{% trans "Case Detail" %}"
-                data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
-            ></span>
-        </h4>
-    </div>
-    <div class="panel-body" data-bind="with: longScreen">
-        {% include 'app_manager/partials/modules/case_list_properties.html' %}
-    </div>
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      {% trans "Display Properties" %}
+      <span class="hq-help-template"
+            data-title="{% trans "Case Detail" %}"
+            data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
+      ></span>
+    </h4>
+  </div>
+  <div class="panel-body" data-bind="with: longScreen">
+    {% include 'app_manager/partials/modules/case_list_properties.html' %}
+  </div>
 </div>
 
 {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
 <div class="btn-group">
 
-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
-        <i class="fa fa-plus"></i>
-        {% trans "Add Tab" %}
+  <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+    <i class="fa fa-plus"></i>
+    {% trans "Add Tab" %}
+  </button>
+
+  {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      <span class="caret"></span>
     </button>
- 
-    {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
-        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li data-bind="click: function() { longScreen.addTab(false); }"><a>{% trans "Add Tab" %}</a></li>
-            <li data-bind="click: function() { longScreen.addTab(true); }"><a>{% trans "Add Data Tab" %}</a></li>
-        </ul>
-    {% endif %}
+    <ul class="dropdown-menu">
+      <li data-bind="click: function() { longScreen.addTab(false); }"><a>{% trans "Add Tab" %}</a></li>
+      <li data-bind="click: function() { longScreen.addTab(true); }"><a>{% trans "Add Data Tab" %}</a></li>
+    </ul>
+  {% endif %}
 
 </div>
 
@@ -49,26 +49,26 @@
 </span>
 
 {% if detail.type == 'case' %}
-{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
-{% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
-<div class="spacer"></div>
-<div class="panel panel-appmanager">
-  <div class="panel-heading">
-    <h4 class="panel-title panel-title-nolink">
-      {% trans "Sorting" %}
-    </h4>
-  </div>
-  <div class="panel-body">
-    <div data-bind="with: longScreen">
-        <label>
+  {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
+  {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+    <div class="spacer"></div>
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+          {% trans "Sorting" %}
+        </h4>
+      </div>
+      <div class="panel-body">
+        <div data-bind="with: longScreen">
+          <label>
             <input data-bind="checked: sortNodesetColumns" type="checkbox">
             <span>
                 {% trans "Sort entries in the Nodeset tabs" %}
             </span>
-        </label>
-        <span class="hq-help-template"
-              data-title="{% trans "Sort Nodeset Entries" %}"
-              data-content=
+          </label>
+          <span class="hq-help-template"
+                data-title="{% trans "Sort Nodeset Entries" %}"
+                data-content=
                   "{% blocktrans %}
                       This makes 'Search Only' fields added under
                       nodesets to be used for sorting. This
@@ -79,52 +79,52 @@
                       etc.
                   {% endblocktrans %}" >
         </span>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-{% endif %}
+  {% endif %}
 {% endif %}
 
 {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
-<br><br>
-<div class="panel panel-appmanager">
+  <br><br>
+  <div class="panel panel-appmanager">
     <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">{% trans "Printing" %}</h4>
+      <h4 class="panel-title panel-title-nolink">{% trans "Printing" %}</h4>
     </div>
     <div class="panel-body">
-        {% if app.enable_detail_print %}
-            <div class="form-group" data-bind="with: printTemplateReference">
-                <label class="{% css_label_class %} control-label">
-                    {% trans "Document Template" %}
-                </label>
-                <div class="{% css_field_class %}">
-                    <a class="btn btn-default existing-media"
-                       data-bind="visible: url(), attr: {href: url()}"
-                       target="_blank"
-                       data-toggle="tooltip"
-                       data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
-                    <button type="button" class="btn btn-default" data-toggle="modal"
-                            data-target="#module_{{ module.unique_id }}_detail_print"
-                            data-bind="
+      {% if app.enable_detail_print %}
+        <div class="form-group" data-bind="with: printTemplateReference">
+          <label class="{% css_label_class %} control-label">
+            {% trans "Document Template" %}
+          </label>
+          <div class="{% css_field_class %}">
+            <a class="btn btn-default existing-media"
+               data-bind="visible: url(), attr: {href: url()}"
+               target="_blank"
+               data-toggle="tooltip"
+               data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
+            <button type="button" class="btn btn-default" data-toggle="modal"
+                    data-target="#module_{{ module.unique_id }}_detail_print"
+                    data-bind="
                                 attr: { 'data-hqmediapath': path },
                                 event: { mediaUploadComplete: uploadComplete },
                             ">
-                        <i class="fa fa-cloud-upload"></i>
-                        <span data-bind="{visible: !url()}">{% trans "Upload HTML" %}</span>
-                        <span data-bind="{visible: url()}">{% trans "Replace HTML" %}</span>
-                    </button>
-                    <a class="btn btn-danger"
-                       data-bind="
+              <i class="fa fa-cloud-upload"></i>
+              <span data-bind="{visible: !url()}">{% trans "Upload HTML" %}</span>
+              <span data-bind="{visible: url()}">{% trans "Replace HTML" %}</span>
+            </button>
+            <a class="btn btn-danger"
+               data-bind="
                             click: removePrintTemplate,
                             visible: url(),
                     ">
-                        <i class="fa fa-remove"></i>
-                    </a>
-                </div>
-            </div>
-        {% else %}
-            <div class="alert alert-warning">{% trans "Printing the case detail is not supported on this version of CommCare" %}</div>
-        {% endif %}
+              <i class="fa fa-remove"></i>
+            </a>
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-warning">{% trans "Printing the case detail is not supported on this version of CommCare" %}</div>
+      {% endif %}
     </div>
-</div>
+  </div>
 {% endif %}

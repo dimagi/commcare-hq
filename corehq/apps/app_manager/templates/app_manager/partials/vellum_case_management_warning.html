@@ -1,11 +1,11 @@
 {% load i18n %}
 {% if not app.vellum_case_management and not app.is_remote_app %}
-    <div class="alert alert-danger">
-        {% blocktrans %}
-            This application uses an outdated form of case management and may behave unexpectedly.
-            <br />
-            Please click the <i class="fa fa-question-circle nav-main-icon"></i> above
-            and Report an Issue if you wish to continue to work with this application.
-        {% endblocktrans %}
-    </div>
+  <div class="alert alert-danger">
+    {% blocktrans %}
+      This application uses an outdated form of case management and may behave unexpectedly.
+      <br />
+      Please click the <i class="fa fa-question-circle nav-main-icon"></i> above
+      and Report an Issue if you wish to continue to work with this application.
+    {% endblocktrans %}
+  </div>
 {% endif %}

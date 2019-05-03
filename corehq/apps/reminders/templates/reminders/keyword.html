@@ -6,47 +6,47 @@
 {% requirejs_main 'reminders/js/reminders.keywords.ko' %}
 
 {% block page_content %}
-    {% initial_page_data 'current_values' form.current_values %}
-    <div id="keywords-form">
-        {% crispy form %}
-    </div>
+  {% initial_page_data 'current_values' form.current_values %}
+  <div id="keywords-form">
+    {% crispy form %}
+  </div>
 
-    <script type="text/html" id="ko-template-named-args">
-        <table class="table table-bordered table-striped col-md-6 col-lg-6">
-            <thead>
-                <tr>
-                    <th>{% trans "Name" %}</th>
-                    <th>{% trans "XPath" %}</th>
-                    <th>{% trans "Action" %}</th>
-                </tr>
-            </thead>
-            <tbody data-bind="foreach: namedArgs">
-                <tr>
-                    <td><input type="text"
-                               class="form-control"
-                               placeholder="{% trans 'Name' %}"
-                               data-bind="value: name,
-                                          attr: {name: ('named_args.' + $index() + '.name')},
-                                          valueUpdate: 'afterkeydown',
-                                          event: {keyup : $parent.updateExampleStructuredSMS}
-                                          " /></td>
-                    <td><input type="text"
-                               class="form-control"
-                               placeholder="{% trans 'XPath' %}"
-                               data-bind="value: xpath,
-                                          attr: {name : ('named_args.' + $index() + '.xpath')}
-                                          " /></td>
-                    <td><button type="button"
-                                class="btn btn-danger"
-                                data-bind="click: $parent.removeNamedArg">
-                        <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
-                </tr>
-            </tbody>
-        </table>
-        <button class="btn btn-primary pull-left"
-                type="button"
-                data-bind="click: addNamedArg">
-            <i class="fa fa-plus"></i> {% trans 'Add Named Answer' %}
-        </button>
-    </script>
+  <script type="text/html" id="ko-template-named-args">
+    <table class="table table-bordered table-striped col-md-6 col-lg-6">
+      <thead>
+      <tr>
+        <th>{% trans "Name" %}</th>
+        <th>{% trans "XPath" %}</th>
+        <th>{% trans "Action" %}</th>
+      </tr>
+      </thead>
+      <tbody data-bind="foreach: namedArgs">
+      <tr>
+        <td><input type="text"
+                   class="form-control"
+                   placeholder="{% trans 'Name' %}"
+                   data-bind="value: name,
+                              attr: {name: ('named_args.' + $index() + '.name')},
+                              valueUpdate: 'afterkeydown',
+                              event: {keyup : $parent.updateExampleStructuredSMS}
+                              " /></td>
+        <td><input type="text"
+                   class="form-control"
+                   placeholder="{% trans 'XPath' %}"
+                   data-bind="value: xpath,
+                              attr: {name : ('named_args.' + $index() + '.xpath')}
+                              " /></td>
+        <td><button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $parent.removeNamedArg">
+          <i class="fa fa-remove"></i> {% trans "Remove" %}</button></td>
+      </tr>
+      </tbody>
+    </table>
+    <button class="btn btn-primary pull-left"
+            type="button"
+            data-bind="click: addNamedArg">
+      <i class="fa fa-plus"></i> {% trans 'Add Named Answer' %}
+    </button>
+  </script>
 {% endblock %}

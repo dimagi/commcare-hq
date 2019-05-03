@@ -7,7 +7,21 @@
 {% endcompress %}
 <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
 
-  {% if less_debug %}
+{% if less_debug %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/font-workflow.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+{% else %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
@@ -15,24 +29,10 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+          href="{% static 'app_manager/less/app_manager.less' %}" />
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
-    {% else %}
-    {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/font-workflow.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/app_manager.less' %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'app_manager/less/preview_app.less' %}"/>
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'app_manager/less/preview_app.less' %}"/>
+  {% endcompress %}
+{% endif %}

@@ -1,71 +1,71 @@
 <section class="hq-styleguide-article">
-    <h1 id="pages-class-based">Class-Based Views</h1>
-    <p class="lead">
-        Ultimately all views are based on django's <code>TemplateView</code> class,
-        if the view has a user-facing UI.
-    </p>
-    <p>
-        If not, then inheriting from a simple
-        <code>View</code> will probably be enough.
-    </p>
+  <h1 id="pages-class-based">Class-Based Views</h1>
+  <p class="lead">
+    Ultimately all views are based on django's <code>TemplateView</code> class,
+    if the view has a user-facing UI.
+  </p>
+  <p>
+    If not, then inheriting from a simple
+    <code>View</code> will probably be enough.
+  </p>
 
-    <h2>The <code>BaseDomainView</code></h2>
-    <p>
-        If your view has something to do with the <code>domain</code>, then
-        it will probably inherit from this view.
-    </p>
-    <p>
-        What benefits do you have from using this view?
-    </p>
-    <ul>
-        <li>The permission <code>login_and_domain_required</code> is already in effect established.</li>
-        <li>
-            <code>self.domain</code> (the name of the domain) is already available as an instance variable for your class and is
-            automatically inserted into the template's context.
-        </li>
-        <li>
-            <code>self.domain_object</code> is already available as an instance variable (the <code>Domain</code>
-            instance with the domain name given by <code>self.domain</code>.
-        </li>
-        <li>
-            The <code>self.page_url</code> property is already avaiable, provided that your page doesn't
-            require other args beyond <code>domain</code>. If it does (for instance if your url looks like
-            <code>/a/[domain]/my/page/[unique-id]</code>, then you'll have to re-implement
-            <code>self.page_url</code> with the required arguments.
-        </li>
-    </ul>
-    <p>
-        Here is an example of a class inheriting from the <code>BaseDomainView</code>.
-    </p>
-    <pre>class MyView(BaseDomainView):
+  <h2>The <code>BaseDomainView</code></h2>
+  <p>
+    If your view has something to do with the <code>domain</code>, then
+    it will probably inherit from this view.
+  </p>
+  <p>
+    What benefits do you have from using this view?
+  </p>
+  <ul>
+    <li>The permission <code>login_and_domain_required</code> is already in effect established.</li>
+    <li>
+      <code>self.domain</code> (the name of the domain) is already available as an instance variable for your class and is
+      automatically inserted into the template's context.
+    </li>
+    <li>
+      <code>self.domain_object</code> is already available as an instance variable (the <code>Domain</code>
+      instance with the domain name given by <code>self.domain</code>.
+    </li>
+    <li>
+      The <code>self.page_url</code> property is already avaiable, provided that your page doesn't
+      require other args beyond <code>domain</code>. If it does (for instance if your url looks like
+      <code>/a/[domain]/my/page/[unique-id]</code>, then you'll have to re-implement
+      <code>self.page_url</code> with the required arguments.
+    </li>
+  </ul>
+  <p>
+    Here is an example of a class inheriting from the <code>BaseDomainView</code>.
+  </p>
+  <pre>class MyView(BaseDomainView):
     urlname = 'my_view'</pre>
-    <p>
-        (Required) <code>urlname</code> will be the string referenced when you do the url mapping for
-        this view in it's application's <code>urls.py</code>.<br />(e.g.
-        <code>url(r'^myview/$', MyView.as_view(), name=MyView.urlname)</code>.
-    </p>
-    <pre>   template_name = 'all_the_views/my_view.html'
+  <p>
+    (Required) <code>urlname</code> will be the string referenced when you do the url mapping for
+    this view in it's application's <code>urls.py</code>.<br />(e.g.
+    <code>url(r'^myview/$', MyView.as_view(), name=MyView.urlname)</code>.
+  </p>
+  <pre>   template_name = 'all_the_views/my_view.html'
     page_title = ugettext_lazy("My View")
     section_title = ugettext_lazy("All the Views")
 
     @property
     def section_url(self):
         return reverse(MySectionPageRoot.urlnale, args=[self.domain])</pre>
-    <p>
-        (Required) <code>section_title</code> and <code>section_url</code> are the title and url
-        for the "tab" or major content area that the view is inside. For instance, Settings,
-        Users, Data, Reports, etc. (See
-        <a href="#creating-base-section">Creating a Base View for my Section</a> for best
-        practices on abstracting this out so that every View in the same Section doesn't have to
-        define this each time).
-    </p>
+  <p>
+    (Required) <code>section_title</code> and <code>section_url</code> are the title and url
+    for the "tab" or major content area that the view is inside. For instance, Settings,
+    Users, Data, Reports, etc. (See
+    <a href="#creating-base-section">Creating a Base View for my Section</a> for best
+    practices on abstracting this out so that every View in the same Section doesn't have to
+    define this each time).
+  </p>
 
-    <p>
-        Both the <code>section_url</code> and <code>page_title</code> are used in rendering
-        the page's breadcrumbs (it's the first crumb).
-    </p>
+  <p>
+    Both the <code>section_url</code> and <code>page_title</code> are used in rendering
+    the page's breadcrumbs (it's the first crumb).
+  </p>
 
-<pre>    @property
+  <pre>    @property
     def parent_pages(self):
         return [
             {
@@ -74,33 +74,33 @@
             }
         ]</pre>
 
-    <p>
-        (Optional) This is what shows up as the hierarchy in the Breadcrumbs for the page, and is
-        what's in between the first crumb (the section) and the last crumb (the current page).
-    </p>
+  <p>
+    (Optional) This is what shows up as the hierarchy in the Breadcrumbs for the page, and is
+    what's in between the first crumb (the section) and the last crumb (the current page).
+  </p>
 
-<pre>    @property
+  <pre>    @property
     def page_name(self):
         return "{domain}'s {page_title}".format(
             domain=self.domain,
             page_title=self.page_title,
         )</pre>
-    <p>
-        (Optional) <code>page_name</code> by default returns <code>page_title</code>. It's a
-        way of adding request-specific context to the <code>page_title</code>, but still having
-        access to the <code>page_title</code> from a class level for general referencing of the page.
-    </p>
-    <pre>    @property
+  <p>
+    (Optional) <code>page_name</code> by default returns <code>page_title</code>. It's a
+    way of adding request-specific context to the <code>page_title</code>, but still having
+    access to the <code>page_title</code> from a class level for general referencing of the page.
+  </p>
+  <pre>    @property
     def page_context(self):
         return {
             'form': MyForm(),
         }</pre>
-    <p>
-        (Optional) While <code>page_context</code> is optional, it's very likely you'll implement it,
-        as that's where you return all the variables specific to that page. If you are starting to create
-        a hierarchy where you're then adding to the <code>page_context</code> via.
-    </p>
-    <pre>    # note, this is an example of what NOT to do
+  <p>
+    (Optional) While <code>page_context</code> is optional, it's very likely you'll implement it,
+    as that's where you return all the variables specific to that page. If you are starting to create
+    a hierarchy where you're then adding to the <code>page_context</code> via.
+  </p>
+  <pre>    # note, this is an example of what NOT to do
     @property
     def page_context(self):
         context = super(MyView, self).page_context
@@ -108,20 +108,20 @@
             'form': MyForm(),
         })
         return context</pre>
-    <p>
-        Then, first, ask why you need that specific hierarchy. Perhaps you want to just inherit from
-        a Base Section view? Second, this should never happen with <code>page_context</code>. That's what
-        <code>main_context</code> is for, as that covers the context for more than one page (or in the
-        next example, a whole section).
-    </p>
-    <h2 id="creating-base-section">Creating a Base View for My Section</h2>
-    <p>
-        The best practice is to create a Base Section View for all of the views
-        that will be part of that section (or tab) so that <code>section_title</code>
-        <code>section_url</code> and any section-specific context can be added to the
-        <code>main_context</code>.
-    </p>
-    <pre>class BaseMySectionView(BaseDomainView):
+  <p>
+    Then, first, ask why you need that specific hierarchy. Perhaps you want to just inherit from
+    a Base Section view? Second, this should never happen with <code>page_context</code>. That's what
+    <code>main_context</code> is for, as that covers the context for more than one page (or in the
+    next example, a whole section).
+  </p>
+  <h2 id="creating-base-section">Creating a Base View for My Section</h2>
+  <p>
+    The best practice is to create a Base Section View for all of the views
+    that will be part of that section (or tab) so that <code>section_title</code>
+    <code>section_url</code> and any section-specific context can be added to the
+    <code>main_context</code>.
+  </p>
+  <pre>class BaseMySectionView(BaseDomainView):
     section_name = "My Section"
 
     @property
@@ -135,12 +135,12 @@
             'my_section_emoji': "bears",
         })
         return context</pre>
-    <p>
-        <code>main_context</code> here is optional but a good place to insert any section-specific
-        template contexts in.
-    </p>
+  <p>
+    <code>main_context</code> here is optional but a good place to insert any section-specific
+    template contexts in.
+  </p>
 
-    <pre>
+  <pre>
     def dispatch(self, request, *args, **kwargs):
         return super(MyView, self).dispatch(request, *args, **kwargs)</pre>
 </section>

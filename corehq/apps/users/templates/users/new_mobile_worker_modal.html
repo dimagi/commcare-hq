@@ -3,16 +3,16 @@
 {% load crispy_forms_tags %}
 
 <div class="modal-body">
-{% crispy form %}
-{% if data_fields_form.fields %}
+  {% crispy form %}
+  {% if data_fields_form.fields %}
     {% crispy data_fields_form %}
-{% endif %}
+  {% endif %}
 </div>
 <div class="modal-footer">
   <button id="submit_mobile_worker"
-         class="btn btn-primary disable-on-submit"
-         type="submit"
-         name="create">
-      {% trans 'Create Mobile Worker' %}
+          class="btn btn-primary disable-on-submit"
+          type="submit"
+          name="create">
+    {% trans 'Create Mobile Worker' %}
   </button>
 </div>

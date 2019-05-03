@@ -2,49 +2,49 @@
 {% load i18n %}
 
 {% block page_content %}
-    <form method="get" class="form form-horizontal" action="{% url "callcenter_ucr_check" %}">
-        <div class="form-group">
-            <label class="col-xs-2 control-label" for="domain">{% trans "Domain name" %}</label>
-            <div class="col-xs-4">
-                <input type="text" name="domain" class="form-control" placeholder="ALL Domains" value="{{ domain }}">
-            </div>
-        </div>
-        <div class="form-actions">
-            <div class="col-xs-offset-2 col-xs-4">
-                <button type="submit" class="btn btn-primary">
-                    {% trans 'Check' %}
-                </button>
-            </div>
-        </div>
-    </form>
+  <form method="get" class="form form-horizontal" action="{% url "callcenter_ucr_check" %}">
+    <div class="form-group">
+      <label class="col-xs-2 control-label" for="domain">{% trans "Domain name" %}</label>
+      <div class="col-xs-4">
+        <input type="text" name="domain" class="form-control" placeholder="ALL Domains" value="{{ domain }}">
+      </div>
+    </div>
+    <div class="form-actions">
+      <div class="col-xs-offset-2 col-xs-4">
+        <button type="submit" class="btn btn-primary">
+          {% trans 'Check' %}
+        </button>
+      </div>
+    </div>
+  </form>
 
-    <table class="table">
+  <table class="table">
     <tr>
-        <th>{% trans "Domain Name" %}</th>
-        <th>{% trans "Forms" %}</th>
-        <th>{% trans "Cases" %}</th>
-        <th>{% trans "Case actions" %}</th>
+      <th>{% trans "Domain Name" %}</th>
+      <th>{% trans "Forms" %}</th>
+      <th>{% trans "Cases" %}</th>
+      <th>{% trans "Case actions" %}</th>
     </tr>
     {% for domain in data %}
-        <tr>
-            <td>{{ domain.name }}</td>
-            {% if domain.error %}
-            <td colspan="3" class="alert alert-danger">{{ domain.error }}</td>
-            {% else %}
-            {% for stats in domain.iter_data_source_stats %}
+      <tr>
+        <td>{{ domain.name }}</td>
+        {% if domain.error %}
+          <td colspan="3" class="alert alert-danger">{{ domain.error }}</td>
+        {% else %}
+          {% for stats in domain.iter_data_source_stats %}
             <td>
-                <div class="progress">
-                  <div class="progress-bar progress-bar-{{ stats.es_css_class }}" style="width: {{ stats.es_percent }}%">
-                    ES: {{ stats.es_percent }} ({{ stats.es_count }})
-                  </div>
-                  <div class="progress-bar progress-bar-{{ stats.ucr_css_class }}" style="width: {{ stats.ucr_percent }}%">
-                    UCR: {{ stats.ucr_percent }} ({{ stats.ucr_count }})
-                  </div>
+              <div class="progress">
+                <div class="progress-bar progress-bar-{{ stats.es_css_class }}" style="width: {{ stats.es_percent }}%">
+                  ES: {{ stats.es_percent }} ({{ stats.es_count }})
                 </div>
+                <div class="progress-bar progress-bar-{{ stats.ucr_css_class }}" style="width: {{ stats.ucr_percent }}%">
+                  UCR: {{ stats.ucr_percent }} ({{ stats.ucr_count }})
+                </div>
+              </div>
             </td>
-            {% endfor %}
-            {% endif %}
-        </tr>
+          {% endfor %}
+        {% endif %}
+      </tr>
     {% endfor %}
-    </table>
+  </table>
 {% endblock %}

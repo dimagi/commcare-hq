@@ -3,47 +3,47 @@
 {% load i18n %}
 
 {% if needs_to_downgrade_locations %}
-    <div>
-        <p>
-            {% trans "This project no longer has access to the Organization feature." %}
-            <a href="{% url "downgrade_locations" domain %}">
-                {% trans "Click here to fix this." %}
-            </a>
-        </p>
-    </div>
+  <div>
+    <p>
+      {% trans "This project no longer has access to the Organization feature." %}
+      <a href="{% url "downgrade_locations" domain %}">
+        {% trans "Click here to fix this." %}
+      </a>
+    </p>
+  </div>
 {% else %}
-    <form class="form-horizontal" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
-        {% if not are_groups %}
-        <p>
-            {% trans "No groups created yet." %}
-            {% if can_create_groups %}
-            {% blocktrans %}
+  <form class="form-horizontal" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
+    {% if not are_groups %}
+      <p>
+        {% trans "No groups created yet." %}
+        {% if can_create_groups %}
+          {% blocktrans %}
             Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
-            {% endblocktrans %}
-            {% endif %}
-        </p>
-        {% else %}
-            {% if request.is_view_only %}
-                <div class="form form-horizontal">
-                    <legend>
-                        {% trans "Group Memberships" %}
-                    </legend>
-                    <div class="form-group">
-                        <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
-                            {% trans "Group Membership" %}
-                        </label>
-                        <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
-                            <ul>
-                                {% for group in group_names %}
-                                    <li>{{ group }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                {% crispy group_form %}
-            {% endif %}
+          {% endblocktrans %}
         {% endif %}
-    </form>
+      </p>
+    {% else %}
+      {% if request.is_view_only %}
+        <div class="form form-horizontal">
+          <legend>
+            {% trans "Group Memberships" %}
+          </legend>
+          <div class="form-group">
+            <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+              {% trans "Group Membership" %}
+            </label>
+            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
+              <ul>
+                {% for group in group_names %}
+                  <li>{{ group }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        {% crispy group_form %}
+      {% endif %}
+    {% endif %}
+  </form>
 {% endif %}

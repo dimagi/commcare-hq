@@ -6,78 +6,78 @@
 {% requirejs_main "accounting/js/software_plan_version_handler" %}
 
 {% block page_content %}
-    {% initial_page_data 'role' plan_version_form.role_dict %}
-    {% initial_page_data 'feature_rates' plan_version_form.feature_rates_dict %}
-    {% initial_page_data 'product_rates' plan_version_form.product_rates_dict %}
-    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
-        <li><a href="#plan_info" data-toggle="tab">{% trans "Plan Information" %}</a></li>
-        <li><a href="#roles" data-toggle="tab">{% trans "Roles and Features" %}</a></li>
-        <li><a href="#versions" data-toggle="tab">{% trans "Version Summary" %}</a></li>
-    </ul>
+  {% initial_page_data 'role' plan_version_form.role_dict %}
+  {% initial_page_data 'feature_rates' plan_version_form.feature_rates_dict %}
+  {% initial_page_data 'product_rates' plan_version_form.product_rates_dict %}
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
+    <li><a href="#plan_info" data-toggle="tab">{% trans "Plan Information" %}</a></li>
+    <li><a href="#roles" data-toggle="tab">{% trans "Roles and Features" %}</a></li>
+    <li><a href="#versions" data-toggle="tab">{% trans "Version Summary" %}</a></li>
+  </ul>
 
-    <div class="tab-content tab-padded">
-        <div class="tab-pane" id="plan_info">
-            {{ block.super }}
-        </div>
-
-        <div class="tab-pane" id="roles">
-            {% crispy plan_version_form %}
-        </div>
-
-        <div class="tab-pane" id="versions">
-            {% include 'accounting/partials/version_summary_tab.html' %}
-        </div>
+  <div class="tab-content tab-padded">
+    <div class="tab-pane" id="plan_info">
+      {{ block.super }}
     </div>
 
-    <script type="text/html" id="feature-rate-form-template">
-        <div class="well">
-            <div class="pull-right">
-                <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.featureRates.removeRate}">
-                    <i class="fa fa-remove"></i>
-                </button>
-            </div>
-            {% crispy feature_rate_form %}
-        </div>
-    </script>
+    <div class="tab-pane" id="roles">
+      {% crispy plan_version_form %}
+    </div>
 
-    <script type="text/html" id="product-rate-form-template">
-        <div class="well">
-            <div class="pull-right">
-                <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.productRates.removeRate}">
-                    <i class="fa fa-remove"></i>
-                </button>
-            </div>
-            {% crispy product_rate_form %}
-        </div>
-    </script>
+    <div class="tab-pane" id="versions">
+      {% include 'accounting/partials/version_summary_tab.html' %}
+    </div>
+  </div>
 
-    <script type="text/html" id="select-role-type-template">
-        <label class="radio">
-            <input type="radio" data-bind="checked: roleType" name="role_type" value="existing">
-            Use Existing Role
-        </label>
-        <label class="radio">
-            <input type="radio" data-bind="checked: roleType" name="role_type" value="new">
-            Create New Role
-        </label>
-    </script>
+  <script type="text/html" id="feature-rate-form-template">
+    <div class="well">
+      <div class="pull-right">
+        <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.featureRates.removeRate}">
+          <i class="fa fa-remove"></i>
+        </button>
+      </div>
+      {% crispy feature_rate_form %}
+    </div>
+  </script>
 
-    <script type="text/html" id="selected-role-privileges-template">
-        <div class="alert alert-info" style="margin-top: 20px;">
-            <h4>Included Privileges</h4>
-            <ul data-bind="foreach: privileges">
-                <li data-bind="text: name"></li>
-            </ul>
-            <p data-bind="visible:hasNoPrivileges">
-                There are no privileges for this role.
-            </p>
-        </div>
-    </script>
+  <script type="text/html" id="product-rate-form-template">
+    <div class="well">
+      <div class="pull-right">
+        <button type="button" class="btn btn-danger" data-bind="event: {click: $parent.productRates.removeRate}">
+          <i class="fa fa-remove"></i>
+        </button>
+      </div>
+      {% crispy product_rate_form %}
+    </div>
+  </script>
 
-    <script type="text/html" id="privileges-match-role-template">
-        <div class="alert alert-info" style="margin-top: 20px;">
-            <p>These privileges match the existing set for the <strong data-bind="text: role().name"></strong> role.</p>
-            <p data-bind="text: role().description"></p>
-        </div>
-    </script>
+  <script type="text/html" id="select-role-type-template">
+    <label class="radio">
+      <input type="radio" data-bind="checked: roleType" name="role_type" value="existing">
+      Use Existing Role
+    </label>
+    <label class="radio">
+      <input type="radio" data-bind="checked: roleType" name="role_type" value="new">
+      Create New Role
+    </label>
+  </script>
+
+  <script type="text/html" id="selected-role-privileges-template">
+    <div class="alert alert-info" style="margin-top: 20px;">
+      <h4>Included Privileges</h4>
+      <ul data-bind="foreach: privileges">
+        <li data-bind="text: name"></li>
+      </ul>
+      <p data-bind="visible:hasNoPrivileges">
+        There are no privileges for this role.
+      </p>
+    </div>
+  </script>
+
+  <script type="text/html" id="privileges-match-role-template">
+    <div class="alert alert-info" style="margin-top: 20px;">
+      <p>These privileges match the existing set for the <strong data-bind="text: role().name"></strong> role.</p>
+      <p data-bind="text: role().description"></p>
+    </div>
+  </script>
 {% endblock %}

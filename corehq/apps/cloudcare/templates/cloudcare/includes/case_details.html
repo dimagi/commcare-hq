@@ -1,60 +1,60 @@
 {% load i18n %}
 
 <script type="text/template" id="template-crumbs">
-    <% if (childCase || parentCase ){ %>
-    <div class="accordion-group">
-        <div class="accordion-heading accordion-toggle collapsed" data-toggle="collapse" href="#details-list">
-            <ul class='breadcrumb'>
-                <i class="icon-double-angle-down"></i>
-                <li>{% trans "Selected Case:" %}</li>
-                    <% if (parentCase){ %>
-                    <li <% if (childCase == null){ %> class="active" <% } %>>
-                            <%= parentCase.text %>
-                        <% if (parentCase && childCase) { %>
-                        <span class="divider">/</span>
-                        <% } %>
-                    </li>
-                    <% } %>
-                <% if (childCase) { %>
-                <li class="active"><%= childCase.text %></li>
-                <% } %>
-            </ul>
-        </div>
-        <div id="details-list" class="accordion-body collapse">
-            <% if (parentCase) { %>
-            <table class="table table-striped datatable">
-                <thead>
-                    <tr><th colspan="2">{% trans "Case Details for parent: " %}<%= parentCase.text %></th></tr>
-                </thead>
-                <tbody>
-                    <% _.each(parentCase.properties,function(field){ %>
-                        <tr>
-                            <th class="span5"><%= field.key %></th>
-                            <td><%= field.value %></td>
-                        </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-            <% if (parentCase && childCase) { %>
-                <br class="divider"></br>
-            <% } %>
-            <% } %>
-            <% if (childCase) { %>
-            <table class="table table-striped datatable">
-                <thead>
-                    <tr><th colspan="2">{% trans "Case Details for: " %}<%= childCase.text %></th></tr>
-                </thead>
-                <tbody>
-                    <% _.each(childCase.properties,function(field){ %>
-                        <tr>
-                            <th class="span5"><%= field.key %></th>
-                            <td><%= field.value %></td>
-                        </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-            <% } %>
-        </div>
+  <% if (childCase || parentCase ){ %>
+  <div class="accordion-group">
+    <div class="accordion-heading accordion-toggle collapsed" data-toggle="collapse" href="#details-list">
+      <ul class='breadcrumb'>
+        <i class="icon-double-angle-down"></i>
+        <li>{% trans "Selected Case:" %}</li>
+        <% if (parentCase){ %>
+        <li <% if (childCase == null){ %> class="active" <% } %>>
+        <%= parentCase.text %>
+        <% if (parentCase && childCase) { %>
+        <span class="divider">/</span>
+        <% } %>
+        </li>
+        <% } %>
+        <% if (childCase) { %>
+        <li class="active"><%= childCase.text %></li>
+        <% } %>
+      </ul>
     </div>
-    <% } %>
+    <div id="details-list" class="accordion-body collapse">
+      <% if (parentCase) { %>
+      <table class="table table-striped datatable">
+        <thead>
+        <tr><th colspan="2">{% trans "Case Details for parent: " %}<%= parentCase.text %></th></tr>
+        </thead>
+        <tbody>
+        <% _.each(parentCase.properties,function(field){ %>
+        <tr>
+          <th class="span5"><%= field.key %></th>
+          <td><%= field.value %></td>
+        </tr>
+        <% }); %>
+        </tbody>
+      </table>
+      <% if (parentCase && childCase) { %>
+      <br class="divider"></br>
+      <% } %>
+      <% } %>
+      <% if (childCase) { %>
+      <table class="table table-striped datatable">
+        <thead>
+        <tr><th colspan="2">{% trans "Case Details for: " %}<%= childCase.text %></th></tr>
+        </thead>
+        <tbody>
+        <% _.each(childCase.properties,function(field){ %>
+        <tr>
+          <th class="span5"><%= field.key %></th>
+          <td><%= field.value %></td>
+        </tr>
+        <% }); %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
 </script>

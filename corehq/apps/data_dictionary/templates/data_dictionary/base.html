@@ -5,98 +5,98 @@
 {% requirejs_main "data_dictionary/js/data_dictionary" %}
 
 {% block page_navigation %}
-    <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
-    <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
-        <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
-            <a href="#" data-bind="text: $data.name, click: $root.goToCaseType"></a>
-        </li>
-    </ul>
+  <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
+  <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
+    <li data-bind="css: { active: $data.name == $root.activeCaseType() }">
+      <a href="#" data-bind="text: $data.name, click: $root.goToCaseType"></a>
+    </li>
+  </ul>
 {% endblock %}
 
 {% block page_content %}
-    {% registerurl 'data_dictionary_json' domain %}
-    {% registerurl 'update_case_property' domain %}
-    {% initial_page_data 'typeChoices' question_types %}
-    <div data-bind="saveButton: saveButton"></div>
-    <div class="row">
-        <div class="col-md-10">
-            <h3 data-bind="text: $root.activeCaseType()"></h3>
-            <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
-                 <i class="fa fa-cloud-download"></i>
-                {% trans "Export to Excel" %}
-            </a>
-            <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
-                <i class="fa fa-cloud-upload"></i>
-                {% trans "Import from Excel" %}
-            </a>
-            <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
-            <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
-            <table id="data-dictionary-table" class="table">
-                <thead>
-                    <th></th>
-                    <th>{% trans "Case Property" %}</th>
-                    <th>{% trans "Data Type" %}</th>
-                    <th>{% trans "Description" %}</th>
-                    <th></th>
-                </thead>
-                <tbody data-bind="sortable: casePropertyList">
-                    <!-- ko if: isGroup -->
-                    <tr class="active">
-                        <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
-                        <td data-bind="text: name ? name : 'No Group'"></td>
-                        <td>{% trans "Case Property Group" %}</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <!-- /ko -->
-                    <!-- ko if: !isGroup -->
-                    <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
-                        <td class="sortable-handle">
-                            <i class="fa fa-arrows-v"></i>
-                        </td>
-                        <td data-bind="text: name"></td>
-                        <td>
-                            <select class ="form-control"
-                                    data-bind="
+  {% registerurl 'data_dictionary_json' domain %}
+  {% registerurl 'update_case_property' domain %}
+  {% initial_page_data 'typeChoices' question_types %}
+  <div data-bind="saveButton: saveButton"></div>
+  <div class="row">
+    <div class="col-md-10">
+      <h3 data-bind="text: $root.activeCaseType()"></h3>
+      <a class="btn btn-info" id="download-dict" href="{% url "export_data_dictionary" domain %}">
+        <i class="fa fa-cloud-download"></i>
+        {% trans "Export to Excel" %}
+      </a>
+      <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
+        <i class="fa fa-cloud-upload"></i>
+        {% trans "Import from Excel" %}
+      </a>
+      <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
+      <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
+      <table id="data-dictionary-table" class="table">
+        <thead>
+        <th></th>
+        <th>{% trans "Case Property" %}</th>
+        <th>{% trans "Data Type" %}</th>
+        <th>{% trans "Description" %}</th>
+        <th></th>
+        </thead>
+        <tbody data-bind="sortable: casePropertyList">
+        <!-- ko if: isGroup -->
+        <tr class="active">
+          <td><i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }, click: $root.toggleGroup"></i></td>
+          <td data-bind="text: name ? name : 'No Group'"></td>
+          <td>{% trans "Case Property Group" %}</td>
+          <td></td>
+          <td></td>
+        </tr>
+        <!-- /ko -->
+        <!-- ko if: !isGroup -->
+        <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
+          <td class="sortable-handle">
+            <i class="fa fa-arrows-v"></i>
+          </td>
+          <td data-bind="text: name"></td>
+          <td>
+            <select class ="form-control"
+                    data-bind="
                                 options: $root.availableDataTypes,
                                 optionsCaption: 'Select a data type',
                                 optionsText: 'display',
                                 optionsValue: 'value',
                                 value: dataType,
                             "></select>
-                        </td>
-                        <td>
+          </td>
+          <td>
                             <textarea class="form-control vertical-resize" data-bind="
                               value: $data.description,
                               rows: 1,
                               placeholder: '{% trans "Click here to add a description" %}',
                             "></textarea>
-                        </td>
-                        <!-- ko if: !deprecated() -->
-                        <td><button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button></td>
-                        <!-- /ko -->
-                        <!-- ko if: deprecated() -->
-                        <td><button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button></td>
-                        <!-- /ko -->
-                    </tr>
-                    <!-- /ko -->
-                </tbody>
-            </table>
-            <form class="form-inline">
-                <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-                <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add Case Property" %}
-                </button>
-            </form>
-            <br />
-            <form class="form-inline">
-                <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-                <button class="btn btn-default" data-bind="click: $root.newGroup">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add Case Property Group" %}
-                </button>
-            </form>
-        </div>
+          </td>
+          <!-- ko if: !deprecated() -->
+          <td><button data-bind="click: deprecateProperty" class="btn btn-danger btn-sm">{% trans "Deprecate Property" %}</button></td>
+          <!-- /ko -->
+          <!-- ko if: deprecated() -->
+          <td><button data-bind="click: restoreProperty" class="btn btn-default btn-sm">{% trans "Restore Property" %}</button></td>
+          <!-- /ko -->
+        </tr>
+        <!-- /ko -->
+        </tbody>
+      </table>
+      <form class="form-inline">
+        <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
+        <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Case Property" %}
+        </button>
+      </form>
+      <br />
+      <form class="form-inline">
+        <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
+        <button class="btn btn-default" data-bind="click: $root.newGroup">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Case Property Group" %}
+        </button>
+      </form>
     </div>
+  </div>
 {% endblock %}
