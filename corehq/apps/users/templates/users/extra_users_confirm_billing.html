@@ -4,22 +4,22 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
+  <script src="{% static 'accounting/js/widgets.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    <div class="alert alert-info">
-        <h3>{% trans 'Notice of Additional Monthly Charges for Mobile Workers' %}</h3>
-        <p>
-            {% with request.plan.user_limit as u_limit %}
-            {% blocktrans with request.plan.user_fee as u_fee %}
-            For each Mobile Worker above your monthly limit of {{ u_limit }}, you will be charged
-            a fee of {{ u_fee }} per Mobile Worker per month.
-            {% endblocktrans %}
-            {% endwith %}
-        </p>
-    </div>
-    <div id="billing-info">
-        {% crispy billing_info_form %}
-    </div>
+  <div class="alert alert-info">
+    <h3>{% trans 'Notice of Additional Monthly Charges for Mobile Workers' %}</h3>
+    <p>
+      {% with request.plan.user_limit as u_limit %}
+        {% blocktrans with request.plan.user_fee as u_fee %}
+          For each Mobile Worker above your monthly limit of {{ u_limit }}, you will be charged
+          a fee of {{ u_fee }} per Mobile Worker per month.
+        {% endblocktrans %}
+      {% endwith %}
+    </p>
+  </div>
+  <div id="billing-info">
+    {% crispy billing_info_form %}
+  </div>
 {% endblock %}
