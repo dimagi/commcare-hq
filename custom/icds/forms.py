@@ -100,8 +100,9 @@ class CCZHostingForm(forms.Form):
 
     def save(self):
         try:
-            CCZHosting.update_version(self.cleaned_data['link_id'], self.cleaned_data['app_id'],
-                                      self.cleaned_data['version'])
+            CCZHosting.objects.create(
+                link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
+                version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'])
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
