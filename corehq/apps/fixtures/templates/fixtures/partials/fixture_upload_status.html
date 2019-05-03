@@ -1,33 +1,33 @@
 {% extends "hqwebapp/partials/download_status.html" %}
 {% load i18n %}
 {% block results %}
-{% if result.success %}
+  {% if result.success %}
     <div class="alert alert-success">
-        <h3>{% trans "Lookup table upload has finished" %}</h3>
-        <p>{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}</p>
+      <h3>{% trans "Lookup table upload has finished" %}</h3>
+      <p>{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}</p>
     </div>
     {% if result.errors %}
-        <div class="alert alert-danger">
+      <div class="alert alert-danger">
         <h3>{% trans "However, we ran into the following problems:" %}</h3>
-            {% for e in result.errors %}
-            <p>{{ e }}</p>
-            {% endfor %}
-        </div>
+        {% for e in result.errors %}
+          <p>{{ e }}</p>
+        {% endfor %}
+      </div>
     {% endif %}
     {% if result.messages %}
-        <div class="alert alert-info">
+      <div class="alert alert-info">
         <h3>{% trans "Additional information:" %}</h3>
-            {% for msg in result.messages %}
-            <p>{{ msg }}</p>
-            {% endfor %}
-        </div>
+        {% for msg in result.messages %}
+          <p>{{ msg }}</p>
+        {% endfor %}
+      </div>
     {% endif %}
-{% else %}
+  {% else %}
     <div class="alert alert-danger">
-        <h3>{% trans "Upload failed! Details:" %}</h3>
-            {% for e in result.errors %}
-            <p>{{ e }}</p>
-            {% endfor %}
-        </div>
-{% endif %}
+      <h3>{% trans "Upload failed! Details:" %}</h3>
+      {% for e in result.errors %}
+        <p>{{ e }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
 {% endblock results %}

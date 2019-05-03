@@ -2,104 +2,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>CommCare HQ Form Feed</title>
-	{% compress css %}
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}" />
-    {% endcompress %}
-    <style>
-        .chart-wrapper, .map-wrapper {
-            display: inline-block;
-            width: 49%;
-        }
-        .chart-wrapper {
-            float:left;
-        }
-        #map {
-            height: 500px;
-        }
-        .map-info {
-            padding: 6px 8px;
-            background: white;
-            background: rgba(255,255,255,0.8);
-            border-radius: 5px;
-        }
-        .info {
-            padding: 6px 8px;
-            font: 14px/16px Arial, Helvetica, sans-serif;
-            background: white;
-            background: rgba(255,255,255,0.8);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            border-radius: 5px;
-        }
-        .info h4 {
-            margin: 0 0 5px;
-            color: #777;
-        }
-        .legend {
-            line-height: 18px;
-            color: #555;
-            width: 80px; /*might want to make this a min-width for when the max number grows very large*/
-        }
-        .legend i {
-            width: 18px;
-            height: 18px;
-            float: left;
-            margin-right: 8px;
-            opacity: 0.7;
-        }
-        .legend p {
-            margin-bottom: 0;
-        }
-        #map svg {
-            height: inherit;
-            width: inherit;
-        }
-        .padding {
-            height: 5px;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CommCare HQ Form Feed</title>
+  {% compress css %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}" />
+  {% endcompress %}
+  <style>
+    .chart-wrapper, .map-wrapper {
+      display: inline-block;
+      width: 49%;
+    }
+    .chart-wrapper {
+      float:left;
+    }
+    #map {
+      height: 500px;
+    }
+    .map-info {
+      padding: 6px 8px;
+      background: white;
+      background: rgba(255,255,255,0.8);
+      border-radius: 5px;
+    }
+    .info {
+      padding: 6px 8px;
+      font: 14px/16px Arial, Helvetica, sans-serif;
+      background: white;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      border-radius: 5px;
+    }
+    .info h4 {
+      margin: 0 0 5px;
+      color: #777;
+    }
+    .legend {
+      line-height: 18px;
+      color: #555;
+      width: 80px; /*might want to make this a min-width for when the max number grows very large*/
+    }
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+    .legend p {
+      margin-bottom: 0;
+    }
+    #map svg {
+      height: inherit;
+      width: inherit;
+    }
+    .padding {
+      height: 5px;
+    }
+  </style>
 </head>
 <body
-    data-uri="{{ WEBSOCKET_URI }}"
-    data-heartbeat-message="{{ WS4REDIS_HEARTBEAT }}"
-    data-tvmode="{{ tvmode|JSON }}"
-    data-token="{{ MAPBOX_ACCESS_TOKEN }}"
+  data-uri="{{ WEBSOCKET_URI }}"
+  data-heartbeat-message="{{ WS4REDIS_HEARTBEAT }}"
+  data-tvmode="{{ tvmode|JSON }}"
+  data-token="{{ MAPBOX_ACCESS_TOKEN }}"
 >
-	<div class="container-fluid">
-		{% block main_content %}
-            <h1>Incoming Forms <small>This should update in real time.</small></h1>
-            <div>
-                <div class="chart-wrapper">
-                    {% if not tvmode %}<h3>By Domain</h3>{% endif %}
-                    <div id="chart">
-                        <svg style='height:500px'></svg>
-                    </div>
-                </div>
-                <div class="map-wrapper">
-                    {% if not tvmode %}<h3>By Country</h3>{% endif %}
-                    <div id="map"></div>
-                </div>
-            </div>
-            <div id="controls" class="pull-right">Simulate:
-                <button id="controlButton" type="button" class="btn btn-default btn-xs">
-                    <span class="fa fa-play"></span>
-                </button>
-            </div>
-		{% endblock main_content %}
-	</div>
-    {% javascript_libraries %}
-    {% compress js %}
-        <script src="{% static 'd3/d3.min.js' %}"></script>
-        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-        <script src="{% static 'js/ws4redis.js' %}"></script>
-        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        <script src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
-    {% endcompress %}
+<div class="container-fluid">
+  {% block main_content %}
+    <h1>Incoming Forms <small>This should update in real time.</small></h1>
+    <div>
+      <div class="chart-wrapper">
+        {% if not tvmode %}<h3>By Domain</h3>{% endif %}
+        <div id="chart">
+          <svg style='height:500px'></svg>
+        </div>
+      </div>
+      <div class="map-wrapper">
+        {% if not tvmode %}<h3>By Country</h3>{% endif %}
+        <div id="map"></div>
+      </div>
+    </div>
+    <div id="controls" class="pull-right">Simulate:
+      <button id="controlButton" type="button" class="btn btn-default btn-xs">
+        <span class="fa fa-play"></span>
+      </button>
+    </div>
+  {% endblock main_content %}
+</div>
+{% javascript_libraries %}
+{% compress js %}
+  <script src="{% static 'd3/d3.min.js' %}"></script>
+  <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+  <script src="{% static 'js/ws4redis.js' %}"></script>
+  <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+  <script src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
+{% endcompress %}
 </body>
 </html>

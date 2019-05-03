@@ -4,34 +4,34 @@
 {% load i18n %}
 
 {% block reportcontent %}
-    <div id="data-interfaces-archive-forms">
-        <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
-            {% blocktrans %}
-                Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
-            {% endblocktrans %}
-        </p>
-        <form method="post"
-              action="{% url 'xform_management' domain %}"
-              enctype="multipart/form-data">
-                {% csrf_token %}
-            {% if total_xForms > 0 %}
-                <div id ="form_options" class="well form-inline" style="marging: 1em">
-                    <div>
-                        <button id="submitForms" disabled="true" class="btn {{ mode.button_class }}">{{ mode.button_text }}</button>
-                        <label class="checkbox" >
-                            <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
-                            {% blocktrans %}Select all {{ total_xForms }} forms{% endblocktrans %}
-                        </label>
-                    </div>
-                    <div id="count_indicator">
+  <div id="data-interfaces-archive-forms">
+    <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
+      {% blocktrans %}
+        Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
+      {% endblocktrans %}
+    </p>
+    <form method="post"
+          action="{% url 'xform_management' domain %}"
+          enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if total_xForms > 0 %}
+        <div id ="form_options" class="well form-inline" style="marging: 1em">
+          <div>
+            <button id="submitForms" disabled="true" class="btn {{ mode.button_class }}">{{ mode.button_text }}</button>
+            <label class="checkbox" >
+              <input type="checkbox" name="select_all" value="{{ form_query_string|urlencode }}" style="margin-left: 1em;">
+              {% blocktrans %}Select all {{ total_xForms }} forms{% endblocktrans %}
+            </label>
+          </div>
+          <div id="count_indicator">
                         <span class="label label-default">
                         {% blocktrans %}(<span class="selectedCount ">0</span> forms selected){% endblocktrans %}
                         </span>
-                    </div>
-                    <input type="hidden" name="mode" value="{{ mode.mode_name }}">
-                </div>
-            {% endif %}
-            {{ block.super }}
-        </form>
-    </div>
+          </div>
+          <input type="hidden" name="mode" value="{{ mode.mode_name }}">
+        </div>
+      {% endif %}
+      {{ block.super }}
+    </form>
+  </div>
 {% endblock %}
