@@ -51,6 +51,8 @@ class CCZHostingForm(forms.Form):
     link_id = forms.ChoiceField(label=ugettext_lazy("Link"), choices=(), required=False)
     app_id = forms.ChoiceField(label=ugettext_lazy("Application"), choices=(), required=False)
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
+    profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
+                                 required=False, widget=Select(choices=[]))
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -66,6 +68,7 @@ class CCZHostingForm(forms.Form):
             crispy.Field('link_id', css_class="hqwebapp-select2", id="link-id-select"),
             crispy.Field('app_id', css_class="hqwebapp-select2", id='app-id-search-select'),
             crispy.Field('version', id='version-input'),
+            crispy.Field('profile_id', id='app-profile-id-input'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),

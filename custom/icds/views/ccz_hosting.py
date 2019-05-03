@@ -123,6 +123,8 @@ class ManageCCZHosting(BaseDomainView):
         version = self.request.GET.get('version')
         if version:
             ccz_hostings = ccz_hostings.filter(version=self.request.GET.get('version'))
+        if self.request.GET.get('profile_id'):
+            ccz_hostings = ccz_hostings.filter(profile_id=self.request.GET.get('profile_id'))
         ccz_hostings = [h.to_json(app_names) for h in ccz_hostings]
         return {
             'form': self.form,
