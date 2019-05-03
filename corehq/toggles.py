@@ -1780,5 +1780,5 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
     'Allow project to configure ccz hosting',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER, NAMESPACE_DOMAIN]
 )
