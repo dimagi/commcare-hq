@@ -14,15 +14,11 @@ from psycopg2._psycopg import DatabaseError
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.decorators import serial_task
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
-from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
-    REMINDER_MONTHLY_RANDR_SUMMARY
+from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY
 from custom.ilsgateway.tanzania.reminders.delivery import DeliveryReminder
-from custom.ilsgateway.tanzania.reminders.randr import RandrReminder
 from custom.ilsgateway.tanzania.reminders.reports import get_district_people, construct_soh_summary, \
-    construct_delivery_summary, construct_randr_summary
-from custom.ilsgateway.tanzania.reminders.soh_thank_you import SOHThankYouReminder
+    construct_delivery_summary
 from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
-from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tanzania.warehouse.updater import populate_report_data, default_start_date, \
     process_facility_warehouse_data, process_non_facility_warehouse_data
 from custom.ilsgateway.utils import send_for_day, send_for_all_domains, send_translated_message
@@ -79,58 +75,6 @@ def second_district_delivery_task():
                queue="logistics_reminder_queue")
 def third_district_delivery_task():
     district_delivery_partial(28)
-
-
-facility_randr_partial = partial(send_for_day, cutoff=5, reminder_class=RandrReminder, location_type='FACILITY')
-district_randr_partial = partial(send_for_day, cutoff=13, reminder_class=RandrReminder, location_type='DISTRICT')
-
-
-@periodic_task(run_every=crontab(day_of_month="3-5", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_facility():
-    """Last business day before or on 5th day of the Submission month, 8:00am"""
-    facility_randr_partial(5)
-
-
-@periodic_task(run_every=crontab(day_of_month="8-10", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_facility():
-    """Last business day before or on 10th day of the submission month, 8:00am"""
-    facility_randr_partial(10)
-
-
-@periodic_task(run_every=crontab(day_of_month="10-12", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def third_facility():
-    """Last business day before or on 12th day of the submission month, 8:00am"""
-    facility_randr_partial(12)
-
-
-@periodic_task(run_every=crontab(day_of_month="11-13", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def first_district():
-    district_randr_partial(13)
-
-
-@periodic_task(run_every=crontab(day_of_month="13-15", hour=5, minute=0),
-               queue="logistics_reminder_queue")
-def second_district():
-    district_randr_partial(15)
-
-
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=11, minute=0),
-               queue="logistics_reminder_queue")
-def third_district():
-    district_randr_partial(17)
-
-
-@periodic_task(run_every=crontab(day_of_month="26-31", hour=11, minute=15),
-               queue="logistics_reminder_queue")
-def supervision_task():
-    now = datetime.utcnow()
-    last_business_day = get_business_day_of_month(month=now.month, year=now.year, count=-1)
-    if now.day == last_business_day.day:
-        send_for_all_domains(last_business_day, SupervisionReminder)
 
 
 def get_last_and_nth_business_day(date, n):
@@ -199,41 +143,6 @@ def delivery_summary_task():
             send_translated_message(
                 user, REMINDER_MONTHLY_DELIVERY_SUMMARY, **construct_delivery_summary(user.location)
             )
-
-
-@periodic_task(run_every=crontab(day_of_month="15-17", hour=13, minute=0),
-               queue="logistics_reminder_queue")
-def randr_summary_task():
-    """
-        on 17th day of month or before if it's not a business day @ 3pm Tanzania time
-    """
-
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=17)
-    if now.day != business_day.day:
-        return
-
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        for user in get_district_people(domain):
-            send_translated_message(
-                user, REMINDER_MONTHLY_RANDR_SUMMARY, **construct_randr_summary(user.location)
-            )
-
-
-@periodic_task(run_every=crontab(day_of_month="18-20", hour=14, minute=0),
-               queue="logistics_reminder_queue")
-def soh_thank_you_task():
-    """
-    Last business day before the 20th at 4:00 PM Tanzania time
-    """
-    now = datetime.utcnow()
-    business_day = get_business_day_of_month_before(month=now.month, year=now.year, day=20)
-    if now.day != business_day.day:
-        return
-
-    last_month = datetime(now.year, now.month, 1) - timedelta(days=1)
-    for domain in ILSGatewayConfig.get_all_enabled_domains():
-        SOHThankYouReminder(domain=domain, date=last_month).send()
 
 
 @periodic_task(run_every=crontab(day_of_month="6-10", hour=8, minute=0),

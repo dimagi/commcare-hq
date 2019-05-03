@@ -1,21 +1,28 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from io import open
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.core.management import call_command
-from django.test import TestCase
-from django.test import override_settings
 from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
+
+from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
+from couchforms.models import XFormInstance
+
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db, PartiallyLockingQueue
+from corehq.apps.couch_sql_migration.couchsqlmigration import (
+    MigrationRestricted,
+    PartiallyLockingQueue,
+    get_diff_db,
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -25,30 +32,53 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+    LedgerAccessorSQL,
+)
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
+from corehq.form_processor.utils.general import (
+    clear_local_domain_sql_backend_override,
+)
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.test_utils import (
-    create_and_save_a_form, create_and_save_a_case, set_parent_case,
-    trap_extra_setup, TestFileMixin,
-    softer_assert)
-from couchforms.models import XFormInstance
-from corehq.util.test_utils import patch_datadog, flag_enabled
-from io import open
+    TestFileMixin,
+    create_and_save_a_case,
+    create_and_save_a_form,
+    flag_enabled,
+    patch_datadog,
+    set_parent_case,
+    softer_assert,
+    trap_extra_setup,
+)
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
     file_path = 'data',
     root = os.path.dirname(__file__)
 
-    def setUp(self):
-        super(BaseMigrationTestCase, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(BaseMigrationTestCase, cls).setUpClass()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
-            self.s3db = TemporaryS3BlobDB(config)
-            assert get_blob_db() is self.s3db, (get_blob_db(), self.s3db)
+            cls.s3db = TemporaryS3BlobDB(config)
+            assert get_blob_db() is cls.s3db, (get_blob_db(), cls.s3db)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.s3db.close()
+        super(BaseMigrationTestCase, cls).tearDownClass()
+
+    def setUp(self):
+        super(BaseMigrationTestCase, self).setUp()
 
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain_name = uuid.uuid4().hex
@@ -84,12 +114,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 class MigrationTestCase(BaseMigrationTestCase):
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(MigrationRestricted):
             self._do_migration("up-nrhm")
 
     def test_basic_form_migration(self):
@@ -249,17 +279,17 @@ class MigrationTestCase(BaseMigrationTestCase):
                 'property': 'edited value'
             }
         ).as_text()
-        submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
+        new_form = submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)[0]
+        deprecated_id = new_form.deprecated_form_id
 
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        def assertState():
+            self.assertEqual(self._get_form_ids(), [form_id])
+            self.assertEqual(self._get_form_ids('XFormDeprecated'), [deprecated_id])
+            self.assertEqual(self._get_case_ids(), [case_id])
 
+        assertState()
         self._do_migration_and_assert_flags(self.domain_name)
-
-        self.assertEqual(1, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_form_ids('XFormDeprecated')))
-        self.assertEqual(1, len(self._get_case_ids()))
+        assertState()
         self._compare_diffs([])
 
     def test_old_form_metadata_migration(self):
@@ -295,6 +325,26 @@ class MigrationTestCase(BaseMigrationTestCase):
         ))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(1, len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)))
+        self._compare_diffs([])
+
+    def test_edited_deleted_form(self):
+        form = create_and_save_a_form(self.domain_name)
+        form.edited_on = datetime.utcnow() - timedelta(days=400)
+        form.save()
+        FormAccessors(self.domain.name).soft_delete_forms(
+            [form.form_id], datetime.utcnow(), 'test-deletion'
+        )
+        self.assertEqual(
+            get_doc_ids_in_domain_by_type(
+                form.domain, "XFormInstance-Deleted", XFormInstance.get_db()
+            ),
+            [form.form_id],
+        )
+        self._do_migration_and_assert_flags(form.domain)
+        self.assertEqual(
+            FormAccessorSQL.get_deleted_form_ids_in_domain(form.domain),
+            [form.form_id],
+        )
         self._compare_diffs([])
 
     def test_submission_error_log_migration(self):

@@ -3,46 +3,46 @@
 
 {% if add_ons.display_conditions %}
 
-<div class="form-group">
+  <div class="form-group">
     <label class="control-label col-sm-2">
-        {% trans "Display Condition" %}
-        <span class="hq-help-template"
-              data-title="{% trans "Display Condition" %}"
-              data-content="{% blocktrans %}The form will not appear in the menu unless this condition is met. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help Site</a>.{% endblocktrans %}"
-        ></span>
+      {% trans "Display Condition" %}
+      <span class="hq-help-template"
+            data-title="{% trans "Display Condition" %}"
+            data-content="{% blocktrans %}The form will not appear in the menu unless this condition is met. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions'>Help Site</a>.{% endblocktrans %}"
+      ></span>
     </label>
     <div id="form-filter" class="col-sm-4 row">
-        <div data-bind="css: {'has-error': !allowed()}">
+      <div data-bind="css: {'has-error': !allowed()}">
             <textarea name="form_filter" class="form-control" data-bind="
                     xpathValidator: {text: formFilter, allowCaseHashtags: true,
                                      errorHtml: $('#formFilterXpathErrorHtml').html()}
             "></textarea>
-            <div class="help-block" data-bind="visible: !allowed()">
+        <div class="help-block" data-bind="visible: !allowed()">
                 <span data-bind="visible: caseReferenceNotAllowed">
                     {% blocktrans %}
-                    To use display conditions which reference a case, <br/>
-                        (1) the <strong>Menu Mode</strong> setting must be set to
-                            <em>Display menu and then forms</em> <br/>
-                        (2) all the forms in the case list must update or close a case, which means registration
-                            forms must go in a separate case list, or if your project uses user properties, your
-                            display condition may use user properties.
+                      To use display conditions which reference a case, <br/>
+                      (1) the <strong>Menu Mode</strong> setting must be set to
+                      <em>Display menu and then forms</em> <br/>
+                      (2) all the forms in the case list must update or close a case, which means registration
+                      forms must go in a separate case list, or if your project uses user properties, your
+                      display condition may use user properties.
                     {% endblocktrans %}
                 </span>
-                <span data-bind="visible: userCaseReferenceNotAllowed">
+          <span data-bind="visible: userCaseReferenceNotAllowed">
                     {% blocktrans %}
-                    To use display conditions which reference a user property, user properties must be
-                    enabled for your project.
+                      To use display conditions which reference a user property, user properties must be
+                      enabled for your project.
                     {% endblocktrans %}
                 </span>
-            </div>
         </div>
-        <span class="hide" id="formFilterXpathErrorHtml">
+      </div>
+      <span class="hide" id="formFilterXpathErrorHtml">
         {% blocktrans %}
-            There is something wrong with the logic in the Form Display Condition.
-            Check to make sure your parentheses match and you are referencing case properties correctly.
+          There is something wrong with the logic in the Form Display Condition.
+          Check to make sure your parentheses match and you are referencing case properties correctly.
         {% endblocktrans %}
         </span>
     </div>
-</div>
+  </div>
 
 {% endif %}

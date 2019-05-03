@@ -10,7 +10,7 @@ from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import \
     get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.util.workbook_json.excel import WorkbookJSONReader, WorksheetNotFound
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError, WorksheetNotFound
 from couchexport.export import export_raw_to_writer
 import six
 from six.moves import range
@@ -23,7 +23,12 @@ def process_ui_translation_upload(app, trans_file):
     # Use this to pass warnings without failing hard
     warnings = []
 
-    workbook = WorkbookJSONReader(trans_file)
+    try:
+        workbook = get_workbook(trans_file)
+    except WorkbookJSONError as e:
+        error_properties.append(six.text_type(e))
+        return trans_dict, error_properties, warnings
+
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
     try:
         translations = workbook.get_worksheet(title='translations')

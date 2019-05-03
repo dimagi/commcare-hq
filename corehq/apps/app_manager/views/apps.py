@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
+    LinkedApplication,
     Module,
     ModuleNotFoundException,
     app_template_dir,
@@ -73,7 +74,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
-from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm, MultimediaTranslationsBulkUploadForm
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -173,6 +174,10 @@ def get_app_view_context(request, app):
             disable_if_true = setting.get('disable_if_true')
             if disable_if_true and getattr(app, setting['id']):
                 continue
+            if app.get_doc_type() == 'LinkedApplication':
+                if setting['id'] in app.SUPPORTED_SETTINGS:
+                    if setting['id'] not in app.linked_app_attrs:
+                        setting['is_inherited'] = True
             new_settings.append(setting)
         section['settings'] = new_settings
 
@@ -256,15 +261,8 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
-            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
-        },
-        'bulk_app_multimedia_upload': {
-            'action': reverse('upload_bulk_app_translations',   # TODO
-                              args=(app.domain, app.get_id)),
-            'download_url': reverse('download_bulk_multimedia_translations',
-                                    args=(app.domain, app.get_id)),
-            'adjective': _("multimedia"),
-            'plural_noun': _("multimedia references"),
+            'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
     })
     context.update({
@@ -276,12 +274,6 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload",
             form_class=AppTranslationsBulkUploadForm,
-            app=app,
-        ),
-        'bulk_multimedia_translation_form': get_bulk_upload_form(
-            context,
-            context_key="bulk_app_multimedia_upload",
-            form_class=MultimediaTranslationsBulkUploadForm,
         ),
     })
     context.update({
@@ -809,16 +801,13 @@ def edit_app_attr(request, domain, app_id, attr):
         ('mobile_ucr_restore_version', None),
         ('location_fixture_restore', None),
     )
-    linked_app_attrs = [
-        'target_commcare_flavor',
-    ]
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
             value = hq_settings[attribute]
             if transformation:
                 value = transformation(value)
             setattr(app, attribute, value)
-            if hasattr(app, 'linked_app_attrs') and attribute in linked_app_attrs:
+            if app.get_doc_type() == 'LinkedApplication' and attribute in app.SUPPORTED_SETTINGS:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })

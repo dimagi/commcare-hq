@@ -3,16 +3,16 @@
 {% load i18n %}
 
 {% block report_description %}
-    {# TODO: I could probably put this in the parent template... #}
-    {% if report.spec.description %}<p class="lead">{{ report.spec.description }}</p>{% endif %}
+  {# TODO: I could probably put this in the parent template... #}
+  {% if report.spec.description %}<p class="lead">{{ report.spec.description }}</p>{% endif %}
 {% endblock %}
 
 {% block report_filters %}
-    <fieldset>
-        <legend>{% trans "Report Filters" %}</legend>
-        <input type="hidden" name="format" value="json"/>
-        {% for filter in report.filters %}
-            {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
-        {% endfor %}
-    </fieldset>
+  <fieldset>
+    <legend>{% trans "Report Filters" %}</legend>
+    <input type="hidden" name="format" value="json"/>
+    {% for filter in report.filters %}
+      {% include filter.template with filter=filter context_=filter_context|dict_lookup:filter.css_id %}
+    {% endfor %}
+  </fieldset>
 {% endblock %}

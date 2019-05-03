@@ -8,3 +8,7 @@ class ReportNotFoundError(Exception):
 
 class EndpointNotFoundError(Exception):
     pass
+
+
+class ColumnFilterNotFound(Exception):
+    pass

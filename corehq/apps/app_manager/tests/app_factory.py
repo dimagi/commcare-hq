@@ -4,7 +4,7 @@ import uuid
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
-    AutoSelectCase, CaseIndex, PreloadAction, ShadowModule
+    AutoSelectCase, CaseIndex, PreloadAction, ReportModule, ShadowModule
 import six
 
 
@@ -69,6 +69,9 @@ class AppFactory(object):
         module.source_module_id = source_module.unique_id
         self.slugs[module.unique_id] = slug
         return (module, self.new_form(module)) if with_form else module
+
+    def new_report_module(self, slug, parent_module=None):
+        return self.new_module(ReportModule, slug, None, with_form=False, parent_module=parent_module)
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]

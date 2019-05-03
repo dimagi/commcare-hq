@@ -1,8 +1,9 @@
 describe('Beneficiary Type Filter', function () {
-    var beneficiaryFilter;
+    var beneficiaryFilter, reachUtils;
 
     beforeEach(function () {
         beneficiaryFilter = hqImport('aaa/js/filters/beneficiary_type_filter');
+        reachUtils = hqImport('aaa/js/utils/reach_utils');
     });
 
     it('test template', function () {
@@ -14,7 +15,7 @@ describe('Beneficiary Type Filter', function () {
             filters: {
                 'beneficiary-type-filter': {},
             },
-            postData: {},
+            postData: reachUtils.postData({}),
         });
         assert.equal(model.slug, 'beneficiary-type-filter');
         var expectedTypes = [

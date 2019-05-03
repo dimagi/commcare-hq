@@ -5,13 +5,15 @@ import json
 import mock
 
 from datetime import date
-from django.test.testcases import SimpleTestCase
 from io import open
+
+from django.test import TestCase
+
 from corehq.util.files import TransientTempfile
 from custom.icds_reports.reports.disha import DishaDump
 
 
-class DishaFileBuildTest(SimpleTestCase):
+class DishaFileBuildTest(TestCase):
 
     @mock.patch('custom.icds_reports.reports.disha.DishaDump._get_rows')
     def test_file_content(self, disha_get_rows_mock):

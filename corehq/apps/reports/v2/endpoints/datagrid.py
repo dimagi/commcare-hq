@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import json
+
 from corehq.apps.reports.v2.models import BaseDataEndpoint
 
 
@@ -22,6 +24,10 @@ class DatagridEndpoint(BaseDataEndpoint):
     @property
     def order(self):
         return int(self.data.get('order', 1))
+
+    @property
+    def report_context(self):
+        return json.loads(self.data.get('reportContext', "{}"))
 
     def get_response(self, query, formatter):
         total = query.count()

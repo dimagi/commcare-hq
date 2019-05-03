@@ -450,10 +450,19 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         return self.report_type == ConfigurableReportView.prefix
 
     @property
+    def supports_translations(self):
+        if self.report_type == CustomProjectReportDispatcher.prefix:
+            return self.report.get_supports_translations()
+        else:
+            return self.is_configurable_report
+
+    @property
     @memoized
     def languages(self):
         if self.is_configurable_report:
             return frozenset(self.report.spec.get_languages())
+        elif self.supports_translations:
+            return frozenset(self.report.languages)
         return frozenset()
 
     @property
@@ -496,7 +505,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
     config_ids = StringListProperty()
     send_to_owner = BooleanProperty()
     attach_excel = BooleanProperty()
-    # language is only used if some of the config_ids refer to UCRs.
+    # language is only used if some of the config_ids refer to UCRs or custom reports
     language = StringProperty()
     email_subject = StringProperty(default=DEFAULT_REPORT_NOTIF_SUBJECT)
 
@@ -627,7 +636,8 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for user in get_user_docs_by_username(self.all_recipient_emails)
             if 'username' in user and 'language' in user
         }
-        fallback_language = user_languages.get(self.owner_email, 'en')
+        default = self.language if self.language else 'en'
+        fallback_language = user_languages.get(self.owner_email, default)
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
@@ -684,10 +694,11 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
                 for email in emails:
                     body = render_full_report_notification(None, content, email, self).content
-                    send_html_email_async.delay(
+                    send_html_email_async(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,
-                        file_attachments=excel_files)
+                        file_attachments=excel_files,
+                        smtp_exception_skip_list=LARGE_FILE_SIZE_ERROR_CODES)
             except Exception as er:
                 notify_exception(
                     None,
@@ -708,7 +719,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                         mock_request.user = self.owner.get_django_user()
                         mock_request.domain = self.domain
                         mock_request.couch_user.current_domain = self.domain
-                        mock_request.couch_user.language = 'lang (PV - fix this)'
+                        mock_request.couch_user.language = self.language
                         mock_request.method = 'GET'
                         mock_request.bypass_two_factor = True
 
@@ -731,7 +742,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                                         'context': {},
                                         'request_params': json_request(request_data['GET'])}
 
-                        export_all_rows_task(report_config.report, full_request)
+                        export_all_rows_task(report_config.report, full_request, emails, title)
 
     def remove_recipient(self, email):
         try:

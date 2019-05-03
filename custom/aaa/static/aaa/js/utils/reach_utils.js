@@ -52,6 +52,20 @@ hqDefine("aaa/js/utils/reach_utils", [
 
     var postData = function (options) {
         var self  = {};
+
+        var paramsString = window.location.href.split("?")[1];
+        if (paramsString !== void(0)) {
+            var paramValues = paramsString.split("&");
+            var params = {};
+
+            _.each(paramValues, function (param) {
+                var paramValue = param.split("=");
+                params[paramValue[0]] = paramValue[1];
+            });
+
+            options = params;
+        }
+
         var userLocationId = initialPageData.get('user_location_id');
         self.selectedYear = ko.observable(options.selectedYear || moment().year());
         self.selectedMonth = ko.observable(options.selectedMonth || moment().month() + 1);
@@ -83,11 +97,23 @@ hqDefine("aaa/js/utils/reach_utils", [
         name: 'All',
     };
 
+    var BLOODGROUPS = {
+        o_pos: "0+",
+        a_pos: "A+",
+        b_pos: "B+",
+        ab_pos: "AB+",
+        o_neg: "0-",
+        a_neg: "A-",
+        b_neg: "B-",
+        ab_neg: "AB-",
+    };
+
     return {
         reachUtils: reachUtils,
         postData: postData,
         localStorage: localStorage,
         USERROLETYPES: USERROLETYPES,
         DEFAULTLOCATION: DEFAULTLOCATION,
+        BLOODGROUPS: BLOODGROUPS,
     };
 });

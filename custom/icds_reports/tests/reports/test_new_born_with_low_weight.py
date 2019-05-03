@@ -223,10 +223,10 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['bottom_five'],
             [
+                {'loc_name': 'st4', 'percent': 0.0},
+                {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st1', 'percent': 50.0}
             ]
         )
@@ -243,11 +243,11 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['top_five'],
             [
+                {'loc_name': 'st2', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
-                {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 0.0}
             ]
         )
 
@@ -263,7 +263,6 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertEquals(len(data['chart_data']), 1)
 
     def test_chart_data(self):
-        self.maxDiff=None
         data = get_newborn_with_low_birth_weight_chart(
             'icds-cas',
             config={
@@ -321,12 +320,12 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['all_locations'],
             [
+                {'loc_name': 'st2', 'percent': 0.0},
+                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st4', 'percent': 0.0},
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 0.0},
-                {'loc_name': 'st3', 'percent': 0.0},
                 {'loc_name': 'st1', 'percent': 50.0}
             ]
         )

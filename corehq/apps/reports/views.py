@@ -28,6 +28,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.python_compatibility import soft_assert_type_text
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from corehq.blobs import get_blob_db, NotFound, models
 import langcodes
 import pytz
 import re
@@ -667,6 +668,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             return context
 
         is_configurable_map = {c._id: c.is_configurable_report for c in self.configs}
+        supports_translations = {c._id: c.supports_translations for c in self.configs}
         languages_map = {c._id: list(c.languages | set(['en'])) for c in self.configs}
         languages_for_select = {tup[0]: tup for tup in langcodes.get_all_langs_for_select()}
 
@@ -677,6 +679,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'monthly_day_options': [(i, i) for i in range(1, 32)],
             'form_action': _("Create a new") if self.is_new else _("Edit"),
             'is_configurable_map': is_configurable_map,
+            'supports_translations': supports_translations,
             'languages_map': languages_map,
             'languages_for_select': languages_for_select,
             'is_owner': self.is_new or self.request.couch_user._id == self.owner_id,
@@ -2031,15 +2034,25 @@ def _is_location_safe_report_class(view_fn, request, domain, export_hash, format
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
-    cache = get_redis_client()
+    db = get_blob_db()
+    report_not_found = HttpResponseNotFound(_("That report was not found. Please remember "
+                                              "that download links expire after 24 hours."))
 
-    content = cache.get(export_hash)
-    if content is not None:
-        report_class, report_file = content
+    try:
+        meta = db.metadb.get(parent_id=export_hash, key=export_hash)
+    except models.BlobMeta.DoesNotExist:
+        return report_not_found
+    report_class = meta.properties["report_class"]
+
+    try:
+        report_file = db.get(export_hash)
+    except NotFound:
+        return report_not_found
+    with report_file:
         if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file)
+            file = ContentFile(report_file.read())
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
@@ -2049,9 +2062,6 @@ def export_report(request, domain, export_hash, format):
             return response
         else:
             return HttpResponseNotFound(_("We don't support this format"))
-    else:
-        return HttpResponseNotFound(_("That report was not found. Please remember"
-                                      " that download links expire after 24 hours."))
 
 
 @login_or_digest

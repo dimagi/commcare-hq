@@ -11,26 +11,26 @@
   {% endif %}
 
   {% if at_report_limit and not existing_report %}
-      {% block at_report_limit_warning %}
-          <div class="helpbubble helpbubble-primary helpbubble-no-arrow">
-                <h2>
-                    {% blocktrans %}
-                        You have reached your report limit of {{ max_allowed_reports }} reports.
-                    {% endblocktrans %}
-                </h2>
-                <p class="lead">
-                    {% blocktrans %}
-                    If you would like to create more, delete one of your existing reports.
-                    {% endblocktrans %}
-                </p>
-                <p class="alert alert-info">
-                    <i class="fa fa-info-circle"></i>
-                    {% blocktrans %}
-                    For even more reports please contact our team at <strong>{{ support_email }}</strong>.
-                    {% endblocktrans %}
-                </p>
-            </div>
-      {% endblock %}
+    {% block at_report_limit_warning %}
+      <div class="helpbubble helpbubble-primary helpbubble-no-arrow">
+        <h2>
+          {% blocktrans %}
+            You have reached your report limit of {{ max_allowed_reports }} reports.
+          {% endblocktrans %}
+        </h2>
+        <p class="lead">
+          {% blocktrans %}
+            If you would like to create more, delete one of your existing reports.
+          {% endblocktrans %}
+        </p>
+        <p class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          {% blocktrans %}
+            For even more reports please contact our team at <strong>{{ support_email }}</strong>.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endblock %}
   {% endif %}
 
 {% endblock %}

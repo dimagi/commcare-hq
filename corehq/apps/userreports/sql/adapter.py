@@ -1,12 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import hashlib
 import logging
 
+from django.utils.translation import ugettext as _
+
+import psycopg2
 import sqlalchemy
 from architect import install
-from django.utils.translation import ugettext as _
 from memoized import memoized
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,11 +15,13 @@ from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
-    ColumnNotFoundError, TableRebuildError, translate_programming_error)
+    ColumnNotFoundError,
+    TableRebuildError,
+    translate_programming_error,
+)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.sql.util import view_exists
-from corehq.apps.userreports.util import get_table_name, get_legacy_table_name
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
@@ -35,9 +38,9 @@ def get_metadata(engine_id):
 
 class IndicatorSqlAdapter(IndicatorAdapter):
 
-    def __init__(self, config, override_table_name=None):
+    def __init__(self, config, override_table_name=None, engine_id=None):
         super(IndicatorSqlAdapter, self).__init__(config)
-        self.engine_id = get_engine_id(config)
+        self.engine_id = engine_id or get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.session_context = self.session_helper.session_context
         self.engine = self.session_helper.engine
@@ -117,10 +120,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         partition(orm_table)
         return orm_table
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_table_rebuild(initiated_by, source, skip_log)
         self.session_helper.Session.remove()
         try:
-            self._drop_legacy_table_and_view()
             rebuild_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -128,10 +131,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def build_table(self):
+    def build_table(self, initiated_by=None, source=None):
+        self.log_table_build(initiated_by, source)
         self.session_helper.Session.remove()
         try:
-            self._drop_legacy_table_and_view()
             build_table(self.engine, self.get_table())
             self._apply_sql_addons()
         except ProgrammingError as e:
@@ -139,10 +142,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         finally:
             self.session_helper.Session.commit()
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
+        self.log_table_drop(initiated_by, source, skip_log)
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
-        self._drop_legacy_table_and_view()
         with self.engine.begin() as connection:
             table = self.get_table()
             if self.config.sql_settings.partition_config:
@@ -150,18 +153,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             else:
                 table.drop(connection, checkfirst=True)
             get_metadata(self.engine_id).remove(table)
-
-    def _drop_legacy_table_and_view(self):
-        legacy_table_name = get_legacy_table_name(self.config.domain, self.config.table_id)
-        view_name = get_table_name(self.config.domain, self.config.table_id)
-        with self.engine.begin() as connection:
-            if view_exists(connection, view_name):
-                # Can't use `DROP VIEW IF EXISTS` since PG raises an error if there
-                # is a table with the same name
-                connection.execute("""
-                    DROP VIEW "{view}";
-                    DROP TABLE "{table}" CASCADE
-                """.format(view=view_name, table=legacy_table_name))
 
     @unit_testing_only
     def clear_table(self):
@@ -256,13 +247,110 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             return session.query(query.exists()).scalar()
 
 
+class MultiDBSqlAdapter(object):
+
+    mirror_adapter_cls = IndicatorSqlAdapter
+
+    def __init__(self, config, override_table_name=None):
+        config.validate_db_config()
+        self.config = config
+        self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
+        self.all_adapters = [self.main_adapter]
+        engine_ids = self.config.mirrored_engine_ids
+        for engine_id in engine_ids:
+            self.all_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
+
+    def __getattr__(self, attr):
+        return getattr(self.main_adapter, attr)
+
+    @property
+    def table_id(self):
+        return self.config.table_id
+
+    @property
+    def display_name(self):
+        return self.config.display_name
+
+    def best_effort_save(self, doc, eval_context=None):
+        for adapter in self.all_adapters:
+            adapter.best_effort_save(doc, eval_context)
+
+    def save(self, doc, eval_context=None):
+        for adapter in self.all_adapters:
+            adapter.save(doc, eval_context)
+
+    def get_all_values(self, doc, eval_context=None):
+        return self.config.get_all_values(doc, eval_context)
+
+    @property
+    def run_asynchronous(self):
+        return self.config.asynchronous
+
+    def get_distinct_values(self, column, limit):
+        return self.main_adapter.get_distinct_values(column, limit)
+
+    def build_table(self):
+        for adapter in self.all_adapters:
+            adapter.build_table()
+
+    def rebuild_table(self):
+        for adapter in self.all_adapters:
+            adapter.rebuild_table()
+
+    def drop_table(self):
+        for adapter in self.all_adapters:
+            adapter.drop_table()
+
+    @unit_testing_only
+    def clear_table(self):
+        for adapter in self.all_adapters:
+            adapter.clear_table()
+
+    def save_rows(self, rows):
+        for adapter in self.all_adapters:
+            adapter.save_rows(rows)
+
+    def bulk_save(self, docs):
+        for adapter in self.all_adapters:
+            adapter.bulk_save(docs)
+
+    def bulk_delete(self, doc_ids):
+        for adapter in self.all_adapters:
+            adapter.bulk_delete(doc_ids)
+
+    def doc_exists(self, doc):
+        return any([
+            adapter.doc_exists(doc)
+            for adapter in self.all_adapters
+        ])
+
+
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
     def handle_exception(self, doc, exception):
         ex = translate_programming_error(exception)
-        if ex:
+        if ex is not None:
             raise ex
+
+        orig_exception = getattr(exception, 'orig')
+        if orig_exception and isinstance(orig_exception, psycopg2.IntegrityError):
+            if orig_exception.pgcode == psycopg2.errorcodes.NOT_NULL_VIOLATION:
+                from corehq.apps.userreports.models import InvalidUCRData
+                InvalidUCRData.objects.create(
+                    doc_id=doc['_id'],
+                    doc_type=doc['doc_type'],
+                    domain=doc['domain'],
+                    indicator_config_id=self.config._id,
+                    validation_name='not_null_violation',
+                    validation_text='A column in this doc violates an is_nullable constraint'
+                )
+                return
+
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
+
+
+class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
+    mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
 def get_indicator_table(indicator_config, metadata, override_table_name=None):

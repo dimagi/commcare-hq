@@ -2,210 +2,210 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="visit-scheduler">
-    {% if form.source %}
-        <form class="form-horizontal">
-            <div class="clearfix">
-                <div data-bind="saveButton: saveButton"></div>
-                <div class="has-error pull-right">
+  {% if form.source %}
+    <form class="form-horizontal">
+      <div class="clearfix">
+        <div data-bind="saveButton: saveButton"></div>
+        <div class="has-error pull-right">
                     <span class="help-block error-text" style="display:none; margin-right: 5px;" id="form-errors">
                         {% trans 'There were errors saving. Please fix the errors below.'%}
                     </span>
-                </div>
-            </div>
-            <!--ko with: formSchedule -->
-            <fieldset>
-                <legend>{% trans "Form Settings" %}</legend>
-                <div class="form-group">
-                    <label class="control-label col-sm-2">
-                        {% trans "This form has a schedule" %}
-                        <span class="hq-help-template"
-                                  data-title="{% trans 'Schedule Phase' %}"
-                                  data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
+        </div>
+      </div>
+      <!--ko with: formSchedule -->
+      <fieldset>
+        <legend>{% trans "Form Settings" %}</legend>
+        <div class="form-group">
+          <label class="control-label col-sm-2">
+            {% trans "This form has a schedule" %}
+            <span class="hq-help-template"
+                  data-title="{% trans 'Schedule Phase' %}"
+                  data-content="{% trans 'Forms that do not have a schedule are always shown' %}">
                         </span>
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="checkbox" data-bind="checked: scheduleEnabled" />
-                    </div>
-                </div>
-                <div class="form-group" data-bind="visible: scheduleEnabled">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Form Abbreviation" %}
-                    </label>
-                    <div class="col-sm-4">
-                        <input type="text" class="form-control" id="schedule_form_id"
-                               required data-bind="value: schedule_form_id">
-                        <span class="help-block error-text" style="display:none">
+          </label>
+          <div class="col-sm-4">
+            <input type="checkbox" data-bind="checked: scheduleEnabled" />
+          </div>
+        </div>
+        <div class="form-group" data-bind="visible: scheduleEnabled">
+          <label class="col-sm-2 control-label">
+            {% trans "Form Abbreviation" %}
+          </label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" id="schedule_form_id"
+                   required data-bind="value: schedule_form_id">
+            <span class="help-block error-text" style="display:none">
                             {% trans 'This field is required' %}
                         </span>
-                    </div>
-                </div>
-                <div class="form-group" data-bind="visible: scheduleEnabled">
-                    <label class="col-sm-2 control-label">
-                        {% trans "Schedule Phase" %}
-                        {% url "view_module" domain app.id module.unique_id as module_url %}
-                        <span class="hq-help-template"
-                              data-title="{% trans 'Schedule Phase' %}"
-                              data-content={% blocktrans %}
-                                  "The phase this form is part of. Make phases on the <a href='{{ module_url }}'>case list settings page</a>"
-                              {% endblocktrans %}>
+          </div>
+        </div>
+        <div class="form-group" data-bind="visible: scheduleEnabled">
+          <label class="col-sm-2 control-label">
+            {% trans "Schedule Phase" %}
+            {% url "view_module" domain app.id module.unique_id as module_url %}
+            <span class="hq-help-template"
+                  data-title="{% trans 'Schedule Phase' %}"
+                  data-content={% blocktrans %}
+                    "The phase this form is part of. Make phases on the <a href='{{ module_url }}'>case list settings page</a>"
+                  {% endblocktrans %}>
                         </span>
-                    </label>
-                    <div class="col-sm-4">
-                        <select id="achor" class="form-control" required
-                                data-bind="options: all_schedule_phase_anchors,
+          </label>
+          <div class="col-sm-4">
+            <select id="achor" class="form-control" required
+                    data-bind="options: all_schedule_phase_anchors,
                                            optionsCaption: '{% trans "Please select a phase..." %}',
                                            value: phase.anchor">
-                        </select>
-                        <span class="help-block error-text" style="display:none">
+            </select>
+            <span class="help-block error-text" style="display:none">
                             {% trans 'This field is required'%}
                         </span>
-                    </div>
-                </div>
-            </fieldset>
-            <div id="scheduler" data-bind="visible: scheduleEnabled">
-                <fieldset>
-                    <legend>{% trans "Form Relevancy Window" %}</legend>
-                    <div class="container-fluid">
-                        <div class="form-inline">
-                            <label>{% trans "Show this form " %}</label>
-                            <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
-                            <span class="help-block error-text" style="display:none">
+          </div>
+        </div>
+      </fieldset>
+      <div id="scheduler" data-bind="visible: scheduleEnabled">
+        <fieldset>
+          <legend>{% trans "Form Relevancy Window" %}</legend>
+          <div class="container-fluid">
+            <div class="form-inline">
+              <label>{% trans "Show this form " %}</label>
+              <input type="number" min="0" required class="form-control" data-bind="numericValue: relevancy.starts"/>
+              <span class="help-block error-text" style="display:none">
                                 {% trans 'This field is required'%}
                             </span>
-                            <label>{% trans "days" %}</label>
-                            <select data-bind="value: relevancy.starts_type" class="form-control">
-                                <option value="before">{% trans "before the anchor date" %}</option>
-                                <option value="after">{% trans "after the anchor date" %}</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="spacer"></div>
-                    <div class="container-fluid">
-                        <div class="form-inline">
-                            <label>
-                                <input type="checkbox"
-                                       data-bind="checked: relevancy.enableFormExpiry,
+              <label>{% trans "days" %}</label>
+              <select data-bind="value: relevancy.starts_type" class="form-control">
+                <option value="before">{% trans "before the anchor date" %}</option>
+                <option value="after">{% trans "after the anchor date" %}</option>
+              </select>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="container-fluid">
+            <div class="form-inline">
+              <label>
+                <input type="checkbox"
+                       data-bind="checked: relevancy.enableFormExpiry,
                                                   enable: allowExpiry">
-                                {% trans "Hide this form " %}
-                            </label>
-                            <input type="number" required class="form-control"
-                                   data-bind="numericValue: relevancy.expires,
+                {% trans "Hide this form " %}
+              </label>
+              <input type="number" required class="form-control"
+                     data-bind="numericValue: relevancy.expires,
                                               enable: (relevancy.enableFormExpiry() && allowExpiry())"/>
-                            <span class="help-block error-text" style="display:none">
+              <span class="help-block error-text" style="display:none">
                                 {% trans 'This field is required'%}
                             </span>
-                            <label>{% trans "days" %}</label>
-                            <select class="form-control"
-                                    data-bind="value: relevancy.expires_type,
+              <label>{% trans "days" %}</label>
+              <select class="form-control"
+                      data-bind="value: relevancy.expires_type,
                                                enable: (relevancy.enableFormExpiry() && allowExpiry())">
-                                <option value="before">{% trans "before the anchor date" %}</option>
-                                <option value="after">{% trans "after the anchor date" %}</option>
-                            </select>
-                            <span class="label label-info" data-bind="visible: !allowExpiry()">
+                <option value="before">{% trans "before the anchor date" %}</option>
+                <option value="after">{% trans "after the anchor date" %}</option>
+              </select>
+              <span class="label label-info" data-bind="visible: !allowExpiry()">
                                 {% trans "Forms can only be hidden if there are no transition or termination conditions" %}
                             </span>
-                        </div>
-                    </div>
-                </fieldset>
-                <fieldset>
-                    <legend>{% trans "Transitions" %}</legend>
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox" data-bind="checked: transition">
-                                {% trans "Transition to the next phase" %}
-                            </label>
-                            <div data-bind="template: {
+            </div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>{% trans "Transitions" %}</legend>
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: transition">
+                {% trans "Transition to the next phase" %}
+              </label>
+              <div data-bind="template: {
                                             name: 'case-config:condition',
                                             data: {condition: transition_condition, config: $data},
                                             }"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox"  data-bind="checked: terminate">
-                                {% trans "Terminate the schedule" %}
-                            </label>
-                            <div data-bind="template: {
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox"  data-bind="checked: terminate">
+                {% trans "Terminate the schedule" %}
+              </label>
+              <div data-bind="template: {
                                             name: 'case-config:condition',
                                             data: {condition: termination_condition, config: $data},
                                             }"></div>
-                        </div>
-                    </div>
-                </fieldset>
+            </div>
+          </div>
+        </fieldset>
 
-                <fieldset>
-                    <legend>{% trans "Visit Schedule" %}</legend>
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label>
-                                <input type="checkbox"  data-bind="checked: allow_unscheduled">
-                                {% trans "Allow unscheduled visits" %}
-                            </label>
-                        </div>
-                    </div>
-                    <div data-bind="foreach: {data: visits, afterRender: $parent.applyGlobalEventHandlers}">
-                        <fieldset class="nested-fieldset">
-                            <legend>
-                                <a href="#" data-bind="click: $parent.removeVisit">
-                                    <i class="fa fa-remove"></i>
-                                </a>
-                                <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
-                                {% trans "Visit" %}
-                                <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
-                            </legend>
-                            <div class="form-group">
-                                <div class="form-inline">
-                                    {% trans "Due" %}
-                                    <input type="number" required class="form-control" data-bind="numericValue: due"/>
-                                    <span class="help-block error-text" style="display:none">
+        <fieldset>
+          <legend>{% trans "Visit Schedule" %}</legend>
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox"  data-bind="checked: allow_unscheduled">
+                {% trans "Allow unscheduled visits" %}
+              </label>
+            </div>
+          </div>
+          <div data-bind="foreach: {data: visits, afterRender: $parent.applyGlobalEventHandlers}">
+            <fieldset class="nested-fieldset">
+              <legend>
+                <a href="#" data-bind="click: $parent.removeVisit">
+                  <i class="fa fa-remove"></i>
+                </a>
+                <span data-bind="visible: type() === 'repeats'">{% trans "Repeat" %}</span>
+                {% trans "Visit" %}
+                <span data-bind="text: $index() + 1, visible: type() !== 'repeats'""/>
+              </legend>
+              <div class="form-group">
+                <div class="form-inline">
+                  {% trans "Due" %}
+                  <input type="number" required class="form-control" data-bind="numericValue: due"/>
+                  <span class="help-block error-text" style="display:none">
                                         {% trans 'This field is required'%}
                                     </span>
-                                    {% trans "days" %}
-                                    <select data-bind="value: type" class="form-control">
-                                        <option value="before">{% trans "before the anchor date" %}</option>
-                                        <option value="after">{% trans "after the anchor date" %}</option>
-                                        <option value="repeats"
-                                                data-bind="disable: $index() !== ($parent.visits().length - 1)">
-                                            {% trans "after the last visit" %}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="form-inline">
-                                    {% trans "Visit can be made up to" %}
-                                    <input type="number" required class="form-control"
-                                           data-bind="numericValue: starts"/>
-                                    <span class="help-block error-text" style="display:none">
+                  {% trans "days" %}
+                  <select data-bind="value: type" class="form-control">
+                    <option value="before">{% trans "before the anchor date" %}</option>
+                    <option value="after">{% trans "after the anchor date" %}</option>
+                    <option value="repeats"
+                            data-bind="disable: $index() !== ($parent.visits().length - 1)">
+                      {% trans "after the last visit" %}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="form-inline">
+                  {% trans "Visit can be made up to" %}
+                  <input type="number" required class="form-control"
+                         data-bind="numericValue: starts"/>
+                  <span class="help-block error-text" style="display:none">
                                         {% trans 'This field is required'%}
                                     </span>
-                                    {% trans "days early and" %}
-                                    <input type="number" class="form-control" data-bind="numericValue: expires"/>
-                                    {% trans "days late" %}
-                                </div>
-                            </div>
-                        </fieldset>
-                    </div>
-                    <div class="form-group container-fluid">
+                  {% trans "days early and" %}
+                  <input type="number" class="form-control" data-bind="numericValue: expires"/>
+                  {% trans "days late" %}
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="form-group container-fluid">
                         <span class="help-block error-text" style="display:none">
                             {% trans 'Please add at least one visit' %}
                         </span>
-                        <button id="add-visit" class="btn btn-default"
-                                data-bind="click: addVisit,
+            <button id="add-visit" class="btn btn-default"
+                    data-bind="click: addVisit,
                                            disable: hasRepeatVisit()">
-                            <i class="fa fa-plus"></i>
-                            {% trans "Add Visit" %}
-                        </button>
-                    </div>
-                </fieldset>
-            </div>
-            <!--/ko-->
-        </form>
-    {% else %}
-        <p class="alert alert-warning">
-            {% trans "You have not created a form yet. Create a form in order to view and edit schedules." %}
-        </p>
-    {% endif %}
+              <i class="fa fa-plus"></i>
+              {% trans "Add Visit" %}
+            </button>
+          </div>
+        </fieldset>
+      </div>
+      <!--/ko-->
+    </form>
+  {% else %}
+    <p class="alert alert-warning">
+      {% trans "You have not created a form yet. Create a form in order to view and edit schedules." %}
+    </p>
+  {% endif %}
 </div>

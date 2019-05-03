@@ -19,6 +19,7 @@ from corehq.apps.accounting.utils import domain_has_privilege, domain_is_on_tria
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.utils import user_has_custom_top_menu
+from corehq.apps.domain.views.releases import ManageReleases
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
     DeviceLogSoftAssertReport, UserAuditReport
@@ -53,6 +54,7 @@ from corehq.messaging.scheduling.views import (
     ConditionalAlertListView,
     CreateConditionalAlertView,
     EditConditionalAlertView,
+    UploadConditionalAlertView,
 )
 from corehq.apps.styleguide.views import MainStyleGuideView
 from corehq.messaging.util import show_messaging_dashboard
@@ -690,8 +692,7 @@ class ProjectDataTab(UITab):
             edit_section = EditDataInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain)
 
-            from corehq.apps.data_interfaces.views \
-                import ArchiveFormView, AutomaticUpdateRuleListView
+            from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
 
             if self.can_use_data_cleanup:
                 edit_section[0][1].append({
@@ -699,11 +700,6 @@ class ProjectDataTab(UITab):
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
                 })
 
-            if toggles.BULK_ARCHIVE_FORMS.enabled(self._request.user.username):
-                edit_section[0][1].append({
-                    'title': _(ArchiveFormView.page_title),
-                    'url': reverse(ArchiveFormView.urlname, args=[self.domain]),
-                })
             items.extend(edit_section)
 
         if toggles.EXPLORE_CASE_DATA.enabled(self.domain):
@@ -830,6 +826,11 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
+            ))
+        if toggles.MANAGE_RELEASES_PER_LOCATION.enabled_for_request(self._request):
+            submenu_context.append(dropdown_dict(
+                _('Manage Releases'),
+                url=(reverse(ManageReleases.urlname, args=[self.domain])),
             ))
         return submenu_context
 
@@ -973,6 +974,10 @@ class MessagingTab(UITab):
                         {
                             'title': _("Edit"),
                             'urlname': EditConditionalAlertView.urlname,
+                        },
+                        {
+                            'title': UploadConditionalAlertView.page_title,
+                            'urlname': UploadConditionalAlertView.urlname,
                         },
                     ],
                 },
@@ -1910,14 +1915,18 @@ class AdminTab(UITab):
             ]
             system_operations = [
                 {'title': _('System Info'),
-                 'url': reverse('system_info')},
+                 'url': reverse('system_info'),
+                 'icon': 'fa fa-heartbeat'},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
-                                args=('pillow_errors',))},
+                                args=('pillow_errors',)),
+                 'icon': 'fa fa-bed'},
                 {'title': RecentCouchChangesView.page_title,
-                 'url': reverse(RecentCouchChangesView.urlname)},
+                 'url': reverse(RecentCouchChangesView.urlname),
+                 'icon': 'fa fa-newspaper-o'},
                 {'title': _('Branches on Staging'),
-                 'url': reverse('branches_on_staging')},
+                 'url': reverse('branches_on_staging'),
+                 'icon': 'fa fa-tree'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

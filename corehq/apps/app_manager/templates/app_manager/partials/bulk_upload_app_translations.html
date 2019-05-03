@@ -1,0 +1,21 @@
+{% extends "hqwebapp/partials/bulk_upload.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block prerequisites %}
+  {% if request|toggle_enabled:'BULK_UPDATE_MULTIMEDIA_PATHS' %}
+    <li>
+      <p>
+        {% trans "Select a language." %}
+      </p>
+      <p>
+        <select class="form-control hqwebapp-select2" data-bind="value: lang">
+          <option value="">{% trans "All" %}</option>
+          {% for lang in langs %}
+            <option>{{ lang }}</option>
+          {% endfor %}
+        </select>
+      </p>
+    </li>
+  {% endif %}
+{% endblock %}
