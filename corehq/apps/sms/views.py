@@ -72,7 +72,6 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.decorators import require_privilege_but_override_for_migrator
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -131,14 +130,6 @@ class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
     @cached_property
-    def reminders_migration_in_progress(self):
-        return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
-
-    @cached_property
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
-
-    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
@@ -157,7 +148,7 @@ class BaseMessagingSectionView(BaseDomainView):
             ).plan.name
         return False
 
-    @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
@@ -1869,7 +1860,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.request.POST,
                 cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer,
-                new_reminders_migrator=self.new_reminders_migrator,
             )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
@@ -1934,7 +1924,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 initial=initial,
                 cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer,
-                new_reminders_migrator=self.new_reminders_migrator,
             )
         return form
 
