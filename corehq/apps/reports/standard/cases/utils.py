@@ -109,7 +109,7 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
                               .doc_type("Group")
                               .filter(
                 filters.term("_id", selected_reporting_group_ids))
-                             .fields(["users"]))
+                              .fields(["users"]))
             user_lists = [group["users"] for group in report_group_q.run().hits]
             selected_reporting_group_users = list(set().union(*user_lists))
 
