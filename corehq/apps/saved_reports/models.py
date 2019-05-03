@@ -636,8 +636,10 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             for user in get_user_docs_by_username(self.all_recipient_emails)
             if 'username' in user and 'language' in user
         }
-        default = self.language if self.language else 'en'
-        fallback_language = user_languages.get(self.owner_email, default)
+        if self.language:
+            fallback_language = self.language
+        else:
+            fallback_language = user_languages.get(self.owner_email, 'en')
 
         recipients = defaultdict(list)
         for email in self.all_recipient_emails:
