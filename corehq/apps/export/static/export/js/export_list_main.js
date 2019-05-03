@@ -24,6 +24,7 @@ hqDefine("export/js/export_list_main", [
                     is_daily_saved_export: initialPageData.get('is_daily_saved_export', true),
                     is_feed: initialPageData.get('is_feed', true),
                     is_deid: initialPageData.get('is_deid', true),
+                    is_odata: initialPageData.get('is_odata', true),
                     model_type: initialPageData.get('model_type', true),
                 },
             }));

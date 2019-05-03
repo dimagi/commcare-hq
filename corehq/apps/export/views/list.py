@@ -807,6 +807,7 @@ def submit_app_data_drilldown_form(request, domain):
     form_data = json.loads(request.POST.get('form_data'))
     is_daily_saved_export = json.loads(request.POST.get('is_daily_saved_export'))
     is_feed = json.loads(request.POST.get('is_feed'))
+    is_odata = json.loads(request.POST.get('is_odata'))
 
     create_form = CreateExportTagForm(
         permissions.has_form_export_permissions,
@@ -826,9 +827,13 @@ def submit_app_data_drilldown_form(request, domain):
         CreateNewDailySavedCaseExport,
         CreateNewDailySavedFormExport,
         CreateNewFormFeedView,
+        CreateODataCaseFeedView,
     )
 
-    if is_daily_saved_export:
+    if is_odata:
+        export_tag = create_form.cleaned_data['case_type']
+        cls = CreateODataCaseFeedView
+    elif is_daily_saved_export:
         if create_form.cleaned_data['model_type'] == "case":
             export_tag = create_form.cleaned_data['case_type']
             cls = CreateNewCaseFeedView if is_feed else CreateNewDailySavedCaseExport
@@ -860,3 +865,9 @@ class ODataFeedListView(CaseExportListView):
     lead_text = ugettext_lazy('''
         OData feeds allow you to directly connect CommCareHQ to BI tools.
     ''')
+
+    @property
+    def page_context(self):
+        context = super(ODataFeedListView, self).page_context
+        context['is_odata'] = True
+        return context
