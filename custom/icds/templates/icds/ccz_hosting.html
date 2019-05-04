@@ -14,6 +14,9 @@
           padding: 40px 15px;
           text-align: center;
         }
+        .underlined {
+            text-decoration: underline;
+        }
     </style>
   </head>
   <body>
@@ -29,6 +32,16 @@
                     <a href="{{ ccz_hosting.ccz_details.download_url }}">{{ ccz_hosting.ccz_details.name }}</a>
                 </p>
                 {% endfor %}
+                {% if supporting_files %}
+                    <p class="file-titles font-weight-bold underlined">
+                        Supporting Files
+                    </p>
+                    {% for name, download_url in supporting_files.items %}
+                    <p>
+                        <a href="{{ download_url }}">{{ name }}</a>
+                    </p>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
         <div class="row">

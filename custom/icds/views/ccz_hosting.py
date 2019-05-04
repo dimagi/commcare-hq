@@ -39,6 +39,7 @@ from custom.icds.models import (
     CCZHostingLink,
     CCZHosting,
 )
+from custom.icds_reports.models.helper import IcdsFile
 
 
 @location_safe
@@ -188,12 +189,19 @@ class CCZHostingView(DomainViewMixin, TemplateView):
     def _page_title(self):
         return self.ccz_hosting_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
 
+    def _get_supporting_files(self):
+        return {
+            file_name: reverse('ccz_hosting_download_supporting_files', args=[self.domain, blob_id])
+            for file_name, blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(self.domain, {}).items()
+        }
+
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': self._page_title,
             'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
+            'supporting_files': self._get_supporting_files(),
         }
 
 
@@ -223,3 +231,14 @@ def download_ccz(request, domain, hosting_id, blob_id):
     content_format = Format('', Format.ZIP, '', True)
     return get_download_response(ccz_hosting.utility.get_file(), file_size, content_format, file_name,
                                  request)
+
+
+@location_safe
+def download_ccz_supporting_files(request, domain, blob_id):
+    assert blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(domain, {}).values()
+    file_ref = IcdsFile.objects.get(blob_id=blob_id)
+    _file = file_ref.get_file_from_blobdb()
+    content_format = Format('', Format.ZIP, '', True)
+    return get_download_response(_file, file_ref.get_file_size(), content_format,
+                                 file_ref.get_file_meta.name, request)
+
