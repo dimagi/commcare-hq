@@ -75,7 +75,7 @@ class CCZHostingForm(forms.Form):
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
                     crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
-                    Submit('submit', ugettext_lazy("Save"))
+                    Submit('submit', ugettext_lazy("Create"))
                 )
             )
         )
@@ -87,11 +87,32 @@ class CCZHostingForm(forms.Form):
         return choices
 
     def link_choices(self):
-        return [(link.id, link) for link in CCZHostingLink.objects.filter(domain=self.domain)]
+        choices = [(None, _('Select Link'))]
+        for link in CCZHostingLink.objects.filter(domain=self.domain):
+            choices.append((link.id, link))
+        return choices
 
     def version_build_id(self):
         return get_version_build_id(self.domain, self.cleaned_data['app_id'],
                                     self.cleaned_data['version'])
+
+    def clean_link_id(self):
+        link_id = self.cleaned_data.get('link_id')
+        if not link_id:
+            self.add_error('link_id', _("Please select link"))
+        return link_id
+
+    def clean_app_id(self):
+        app_id = self.cleaned_data.get('app_id')
+        if not app_id:
+            self.add_error('app_id', _("Please select application"))
+        return app_id
+
+    def clean_version(self):
+        version = self.cleaned_data.get('version')
+        if not version:
+            self.add_error('version', _("Please select version"))
+        return version
 
     def clean(self):
         if self.cleaned_data.get('app_id') and self.cleaned_data.get('version'):

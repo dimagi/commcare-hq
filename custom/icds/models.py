@@ -64,7 +64,8 @@ class CCZHosting(models.Model):
 
     @cached_property
     def build_doc(self):
-        return get_build_by_version(self.link.domain, self.app_id, self.version)
+        if self.link_id and self.app_id and self.version:
+            return get_build_by_version(self.link.domain, self.app_id, self.version)
 
     @cached_property
     def build_profile(self):
