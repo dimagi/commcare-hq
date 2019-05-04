@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.urls import reverse
 from django.utils.functional import cached_property
-from corehq.blobs import get_blob_db
+
 from custom.icds_reports.models.helper import IcdsFile
 
 

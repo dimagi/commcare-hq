@@ -241,4 +241,3 @@ def download_ccz_supporting_files(request, domain, blob_id):
     content_format = Format('', Format.ZIP, '', True)
     return get_download_response(_file, file_ref.get_file_size(), content_format,
                                  file_ref.get_file_meta.name, request)
-
