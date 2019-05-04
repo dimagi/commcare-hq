@@ -65,7 +65,7 @@ hqDefine("app_manager/js/widgets_v4", [
             $select.on('change.select2', function () {
                 // https://stackoverflow.com/a/32115793
                 // clear all options manually since it's not getting deleted in this version of select2
-                $('#app-profile-id-input').html('').select2({ data: {id: null, text: null } });
+                $('#app-profile-id-input').html('').select2({data: {id: null, text: null }});
                 $('#app-profile-id-input').val(null).trigger('change');
             });
         };
