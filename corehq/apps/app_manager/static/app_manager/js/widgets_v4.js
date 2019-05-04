@@ -58,7 +58,8 @@ hqDefine("app_manager/js/widgets_v4", [
             $select.on('select2:select', function (e) {
                 var buildProfiles = _.map(e.params.data.buildProfiles, function(details, profile_id) {
                     return { id: profile_id, text: details.name }}
-                )
+                );
+                buildProfiles = Array.prototype.concat({id: '', text: gettext("Select profile")}, buildProfiles);
                 $('#app-profile-id-input').select2({data: buildProfiles});
             });
             $select.on('change.select2', function () {
@@ -74,7 +75,11 @@ hqDefine("app_manager/js/widgets_v4", [
             var option = new Option(options.initialValue.text, options.initialValue.id, true, true);
             $select.append(option).trigger('change');
             $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
-        }
+        };
+        var appProfileInitialValue = initialPageData.get('appProfileInitialValue');
+        if (!_.isEmpty(appProfileInitialValue)) {
+            $('#app-profile-id-input').select2({data: appProfileInitialValue});
+        };
     };
 
     $(function () {

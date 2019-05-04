@@ -19,7 +19,10 @@ from django.conf import settings
 from couchexport.models import Format
 from corehq import toggles
 from corehq.apps.domain.auth import get_username_and_password_from_request
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_brief_apps_in_domain,
+    get_build_by_version,
+)
 from corehq.apps.domain.views import (
     BaseDomainView,
     DomainViewMixin,
@@ -113,6 +116,16 @@ class ManageCCZHosting(BaseDomainView):
             data=self.request.POST if self.request.method == "POST" else None
         )
 
+    def _get_initial_app_profile_details(self, version):
+        selected_profile_id = self.request.GET.get('profile_id')
+        build_doc = get_build_by_version(self.domain, self.request.GET.get('app_id'), version)
+        if selected_profile_id and build_doc:
+            return [{
+                'id': _id,
+                'text': details['name'],
+                'selected': selected_profile_id == _id
+            } for _id, details in build_doc['build_profiles'].items()]
+
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         if self.request.GET.get('link_id'):
@@ -132,6 +145,7 @@ class ManageCCZHosting(BaseDomainView):
             'domain': self.domain,
             'ccz_hostings': ccz_hostings,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
+            'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
 
     @method_decorator(login_and_domain_required)
