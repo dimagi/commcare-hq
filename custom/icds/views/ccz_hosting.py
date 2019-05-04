@@ -14,6 +14,7 @@ from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.http import HttpResponse
+from django.conf import settings
 
 from couchexport.models import Format
 from corehq import toggles
@@ -173,7 +174,8 @@ class CCZHostingView(DomainViewMixin, TemplateView):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': _("%s CommCare Files" % self.identifier.capitalize()),
-            'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)]
+            'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
+            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
         }
 
 
