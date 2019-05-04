@@ -37,7 +37,7 @@ class CCZHostingUtility:
     def ccz_details(self):
         if self.ccz_file_blob:
             return {
-                'name': self.ccz_file_meta.name,
+                'name': self.ccz_hosting.file_name or self.ccz_file_meta.name,
                 'download_url': reverse('ccz_hosting_download_ccz', args=[
                     self.ccz_hosting.domain, self.ccz_hosting.id, self.ccz_hosting.blob_id])
             }

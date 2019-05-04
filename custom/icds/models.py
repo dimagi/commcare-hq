@@ -39,6 +39,7 @@ class CCZHosting(models.Model):
     app_id = models.CharField(max_length=255, null=False)
     version = models.IntegerField(null=False)
     profile_id = models.CharField(max_length=255, blank=True)
+    file_name = models.CharField(max_length=255, blank=True)
 
     class Meta:
         unique_together = ('link', 'app_id', 'version', 'profile_id')

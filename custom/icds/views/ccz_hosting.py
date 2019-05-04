@@ -192,7 +192,14 @@ def download_ccz(request, domain, hosting_id, blob_id):
     ccz_hosting = CCZHosting.objects.get(pk=hosting_id)
     assert ccz_hosting.blob_id == blob_id
     file_size = ccz_hosting.utility.ccz_file_meta.content_length
-    file_name = ccz_hosting.utility.ccz_file_meta.name
+    # check for file name of the ccz hosting object first because
+    # the file meta might be coming from CCZ stored for another ccz hosting instance
+    # since we don't re-store already present CCZs
+    file_name = ccz_hosting.file_name
+    if file_name and not file_name.endswith('.ccz'):
+        file_name = file_name + '.ccz'
+    else:
+        file_name = ccz_hosting.utility.ccz_file_meta.name
     content_format = Format('', Format.ZIP, '', True)
     return get_download_response(ccz_hosting.utility.get_file(), file_size, content_format, file_name,
                                  request)

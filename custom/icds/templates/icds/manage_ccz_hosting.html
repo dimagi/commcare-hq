@@ -36,6 +36,7 @@
                         <th class="col-sm-2">{% trans 'Application' %}</th>
                         <th class="col-sm-2">{% trans 'Profile' %}</th>
                         <th class="col-sm-2">{% trans 'Version' %}</th>
+                        <th class="col-sm-2">{% trans 'CCZ Name' %}</th>
                         <th class="col-sm-2">{% trans 'Action' %}</th>
                     </tr>
                 </thead>
@@ -45,6 +46,7 @@
                         <td data-bind="text: appName"></td>
                         <td data-bind="text: profileName"></td>
                         <td data-bind="text: version"></td>
+                        <td data-bind="text: fileName"></td>
                         <td>
                             <a data-bind="attr: { href: url}">{% trans 'Remove' %}</a>
                         </td>

@@ -53,6 +53,7 @@ class CCZHostingForm(forms.Form):
     version = forms.IntegerField(label=ugettext_lazy('Version'), required=False, widget=Select(choices=[]))
     profile_id = forms.CharField(label=ugettext_lazy('Application Profile'),
                                  required=False, widget=Select(choices=[]))
+    file_name = forms.CharField(label=ugettext_lazy("CCZ File Name"), required=False)
 
     def __init__(self, request, domain, *args, **kwargs):
         self.domain = domain
@@ -69,6 +70,7 @@ class CCZHostingForm(forms.Form):
             crispy.Field('app_id', css_class="hqwebapp-select2", id='app-id-search-select'),
             crispy.Field('version', id='version-input'),
             crispy.Field('profile_id', id='app-profile-id-input'),
+            crispy.Field('file_name'),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
                     crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
@@ -102,7 +104,9 @@ class CCZHostingForm(forms.Form):
         try:
             CCZHosting.objects.create(
                 link_id=self.cleaned_data['link_id'], app_id=self.cleaned_data['app_id'],
-                version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'])
+                version=self.cleaned_data['version'], profile_id=self.cleaned_data['profile_id'],
+                file_name=self.cleaned_data['file_name']
+            )
         except ValidationError as e:
             return False, ','.join(e.messages)
         return True, None
