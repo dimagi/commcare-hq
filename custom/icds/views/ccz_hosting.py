@@ -170,10 +170,14 @@ class CCZHostingView(DomainViewMixin, TemplateView):
         response['WWW-Authenticate'] = 'Basic realm="%s"' % ''
         return response
 
+    @property
+    def _page_title(self):
+        return self.ccz_hosting_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
+
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
-            'page_title': _("%s CommCare Files" % self.identifier.capitalize()),
+            'page_title': self._page_title,
             'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
         }

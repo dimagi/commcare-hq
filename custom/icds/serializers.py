@@ -12,7 +12,7 @@ from custom.icds.models import (
 class CCZHostingLinkSerializer(serializers.ModelSerializer):
     class Meta(object):
         model = CCZHostingLink
-        fields = ['identifier', 'username', 'id']
+        fields = ['identifier', 'username', 'id', 'page_title']
 
 
 class CCZHostingSerializer(serializers.ModelSerializer):

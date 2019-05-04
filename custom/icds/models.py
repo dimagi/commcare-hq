@@ -21,6 +21,7 @@ class CCZHostingLink(models.Model):
     # b64_aes_encrypt'ed raw password is stored in DB
     password = models.CharField(null=False, max_length=255)
     domain = models.CharField(null=False, max_length=255)
+    page_title = models.CharField(blank=True, max_length=255)
 
     def __str__(self):
         return self.identifier
