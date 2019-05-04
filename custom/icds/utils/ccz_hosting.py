@@ -30,8 +30,8 @@ class CCZHostingUtility:
 
     @cached_property
     def ccz_file_meta(self):
-        db = get_blob_db()
-        return db.metadb.get(key=self.ccz_hosting.blob_id, parent_id='IcdsFile')
+        if self.ccz_file_blob:
+            return self.ccz_file_blob.get_file_meta
 
     @property
     def ccz_details(self):

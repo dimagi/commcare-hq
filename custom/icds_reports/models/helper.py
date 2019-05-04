@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.db import models
+from django.utils.functional import cached_property
 
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -49,6 +50,11 @@ class IcdsFile(models.Model):
 
     def get_file_size(self):
         return get_blob_db().size(key=self.blob_id)
+
+    @cached_property
+    def get_file_meta(self):
+        db = get_blob_db()
+        return db.metadb.get(key=self.blob_id, parent_id='IcdsFile')
 
     def remove_file_from_blobdb(self):
         get_blob_db().delete(key=self.blob_id)
