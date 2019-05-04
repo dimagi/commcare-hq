@@ -57,8 +57,8 @@ hqDefine("app_manager/js/widgets_v4", [
         if ($('#app-profile-id-input').length) {
             $select.on('select2:select', function (e) {
                 var buildProfiles = _.map(e.params.data.buildProfiles, function (details, profileId) {
-                    return { id: profileId, text: details.name }};
-                );
+                    return { id: profileId, text: details.name };
+                });
                 buildProfiles = Array.prototype.concat({id: '', text: gettext("Select profile")}, buildProfiles);
                 $('#app-profile-id-input').select2({data: buildProfiles});
             });
