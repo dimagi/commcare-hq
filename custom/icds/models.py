@@ -74,6 +74,12 @@ class CCZHosting(models.Model):
             return self.build_doc['build_profiles'].get(self.profile_id)
 
     def clean(self):
+        if not self.build_doc:
+            raise ValidationError({
+                'version': _("Build not found for app {} and version {}.").format(
+                    self.app_id, self.version
+                )
+            })
         if not self.build_doc['is_released']:
             raise ValidationError({
                 'version': _("Version not released. Please mark it as released.")})
