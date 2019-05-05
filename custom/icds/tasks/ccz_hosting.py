@@ -19,9 +19,9 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
         return
     version = ccz_hosting.version
     ccz_blob_id = ccz_hosting.blob_id
-    build = wrap_app(get_build_by_version(ccz_hosting.link.domain, ccz_hosting.app_id, version))
     # set up the file if not already present
     if not IcdsFile.objects.filter(blob_id=ccz_blob_id, data_type="ccz").exists():
+        build = wrap_app(get_build_by_version(ccz_hosting.link.domain, ccz_hosting.app_id, version))
         icds_file = IcdsFile(blob_id=ccz_blob_id, data_type="ccz")
         ccz_file = create_ccz_files(build, ccz_hosting.profile_id)
         ccz_file_name = ccz_hosting.file_name or "%s-v%s.ccz" % (build.name, version)
