@@ -55,7 +55,7 @@ class CCZHosting(models.Model):
 
     def to_json(self, app_names):
         from custom.icds.serializers import CCZHostingSerializer
-        return CCZHostingSerializer(self, context={'app_names': app_names, 'domain': self.link.domain}).data
+        return CCZHostingSerializer(self, context={'app_names': app_names}).data
 
     @cached_property
     def blob_id(self):
