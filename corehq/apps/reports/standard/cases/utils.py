@@ -105,11 +105,12 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
         # Get user ids for each user in specified reporting groups
         selected_reporting_group_users = []
         if selected_reporting_group_ids:
-            report_group_q = (HQESQuery(index="groups").domain(domain)
-                              .doc_type("Group")
-                              .filter(
-                filters.term("_id", selected_reporting_group_ids))
-                              .fields(["users"]))
+            report_group_q = (
+                HQESQuery(index="groups").domain(domain).doc_type("Group").filter(
+                    filters.term(
+                        "_id", selected_reporting_group_ids
+                    )).fields(["users"])
+            )
             user_lists = [group["users"] for group in report_group_q.run().hits]
             selected_reporting_group_users = list(set().union(*user_lists))
 
