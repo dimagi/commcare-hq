@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 import itertools
 import re
+from collections import Counter
+
 from six.moves import zip
 
 from django.contrib import messages
@@ -159,10 +161,20 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             (long_details, detail_rows, _("case detail")),
         ]:
             if len(expected_list) != len(received_list):
-                # if a field is not referenced twice in a case list or detail, then
-                # we can perform a partial upload using field (case property) as a key
-                number_fields = len({detail.field for detail in expected_list})
-                if number_fields == len(expected_list) and toggles.ICDS.enabled(self.app.domain):
+                # if a field is not referenced twice in a case list or
+                # detail, or duplicated fields are not included in the
+                # upload, then we can perform a partial upload using
+                # field (case property) as a key
+                expected_fields = [detail.field for detail in expected_list]
+                field_counter = Counter(expected_fields)
+                duplicated_fields = [field for field, count in field_counter.items() if count > 1]
+                if (
+                    toggles.ICDS.enabled(self.app.domain) and
+                    (
+                        not duplicated_fields or
+                        all(received_field not in duplicated_fields for received_field in received_list)
+                    )
+                ):
                     partial_upload = True
                     continue
                 self.msgs.append((messages.error, _("Expected {expected_count} {list_or_detail} properties "
