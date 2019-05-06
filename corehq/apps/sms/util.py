@@ -318,3 +318,10 @@ def get_or_create_translation_doc(domain):
             tdoc.save()
 
         return tdoc
+
+
+def get_language_list(domain):
+    tdoc = get_or_create_translation_doc(domain)
+    result = set(tdoc.langs)
+    result.discard('*')
+    return list(result)

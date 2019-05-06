@@ -24,6 +24,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
+from corehq.apps.sms.util import get_language_list
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, use_timepicker, use_nvd3
@@ -1024,16 +1025,22 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
         return super(DownloadConditionalAlertView, self).dispatch(*args, **kwargs)
 
     def get(self, request, domain):
-        title = _("Conditional Alerts")
-        headers = ((title, (_('id'), _('name'), _('case_type'))),)
+        common_headers = ['id', 'name', 'case_type']
+        translated_sheet_name = 'translated'
+        untranslated_sheet_name = 'not translated'
 
+        langs = get_language_list(self.domain)
+        headers = ((translated_sheet_name, common_headers + ['message_' + lang for lang in langs]),
+                   (untranslated_sheet_name, common_headers + ['message']))
         rows = get_conditional_alert_rows(self.domain)
 
         temp = io.BytesIO()
-        export_raw(headers, [(title, rows)], temp)
-        filename = '{title} - {domain}'.format(
-            domain=domain,
-            title=title)
+        export_raw(
+            headers, [
+                (translated_sheet_name, rows),
+                (untranslated_sheet_name, rows),
+            ], temp)
+        filename = 'Conditional Alerts - {domain}'.format(domain=domain)
         return export_response(temp, Format.XLS_2007, filename)
 
 
