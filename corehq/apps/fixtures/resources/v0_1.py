@@ -180,7 +180,7 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
     # It appears that sort_key is not included in any user facing UI. It is only defined as
     # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing
     # the sort key on new item creations
-    # sort_key = tp_f.ListField(attribute='sort_key')
+    sort_key = tp_f.IntegerField(attribute='sort_key')
 
     def dehydrate_fields(self, bundle):
         return {
@@ -207,13 +207,17 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         if 'data_type_id' not in bundle.data:
             raise BadRequest("data_type_id must be specified")
 
+        data_type_id = bundle.data['data_type_id']
+
         try:
-            FixtureDataType.get(bundle.data['data_type_id'])
+            FixtureDataType.get(data_type_id)
         except ResourceNotFound:
             raise NotFound('Lookup table not found')
 
+        number_items = len(FixtureDataItem.by_data_type(kwargs['domain'], data_type_id))
         bundle.obj = FixtureDataItem(bundle.data)
         bundle.obj.domain = kwargs['domain']
+        bundle.obj.sort_key = number_items + 1
         bundle.obj.save()
         return bundle
 

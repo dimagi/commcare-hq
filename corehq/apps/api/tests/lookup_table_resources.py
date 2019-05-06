@@ -183,7 +183,7 @@ class TestLookupTableItemResource(APIResourceTest):
             },
             "resource_uri": "",
             "item_attributes": {},
-            # "sort_key": sort_key,
+            "sort_key": sort_key,
         }
 
     def test_get_list(self):
