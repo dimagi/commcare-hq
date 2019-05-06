@@ -185,7 +185,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if extension not in MULTIMEDIA_EXTENSIONS:
                         file_cache[path] = data
 
-        errors.extend(_check_ccz_locale_id_integrity(file_cache))
+        errors.extend(_find_missing_locale_ids_in_ccz(file_cache))
 
         if include_index_files and include_multimedia_files:
             errors.extend(_check_ccz_multimedia_integrity(app.domain, fpath))
@@ -219,11 +219,13 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     DownloadBase.set_progress(build_application_zip, 100, 100)
 
 
-def _check_ccz_locale_id_integrity(file_cache):
-    for path in ('default/app_strings.txt', 'suite.xml'):
-        if path not in file_cache:
-            return [_("Could not find {path} in CCZ").format(path)]
+def _find_missing_locale_ids_in_ccz(file_cache):
+    for file_path in ('default/app_strings.txt', 'suite.xml'):
+        if file_path not in file_cache:
+            return [_("Could not find {file_path} in CCZ").format(file_path)]
 
+    # Each line of an app_strings.txt file is of the format "name.of.key=value of key"
+    # decode is necessary because Application._make_language_files calls .encode('utf-8')
     app_strings_ids = {
         line.decode("utf-8").split('=')[0]
         for line in file_cache['default/app_strings.txt'].splitlines()
