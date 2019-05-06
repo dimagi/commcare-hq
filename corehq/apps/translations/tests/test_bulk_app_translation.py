@@ -11,7 +11,7 @@ from couchexport.models import Format
 from django.test import SimpleTestCase
 from six.moves import zip
 
-from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.utils import (
@@ -1086,26 +1086,3 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
             ['menu6_form1', '', '', '', 'Advanced Form', None, None, '', '2b9c856ba2ea4ec1ab8743af299c1627'],
             ['menu6_form1', '', '', 'this_form_does_nothing-label', 'This form does nothing.', '', '', '', ''],
             ['menu6_form2', '', '', '', 'Shadow Form', '', '', '', 'c42e1a50123c43f2bd1e364f5fa61379']])
-
-
-class RenameLangTest(SimpleTestCase):
-
-    def test_rename_lang_empty_form(self):
-        app = Application.new_app('domain', "Untitled Application")
-        module = app.add_module(Module.new_module('module', None))
-        form1 = app.new_form(module.id, "Untitled Form", None)
-        form1.source = '<source>'
-
-        # form with no source
-        form2 = app.new_form(module.id, "Empty form", None)
-
-        app.rename_lang('en', 'fra')
-
-        self.assertNotIn('en', module.name)
-        self.assertIn('fra', module.name)
-
-        self.assertNotIn('en', form1.name)
-        self.assertIn('fra', form1.name)
-
-        self.assertNotIn('en', form2.name)
-        self.assertIn('fra', form2.name)
