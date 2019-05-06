@@ -1,48 +1,48 @@
 {% load i18n %}
 {% if published %}
-<form class="form-horizontal" action="{% url "domain_clear_published" domain %}" method="POST">
-{% csrf_token %}
-<div class="row-fluid">
-    <div class="col-sm-4"><h3>{% trans 'This project has been published' %}</h3></div>
-    <div class="col-sm-8">
+  <form class="form-horizontal" action="{% url "domain_clear_published" domain %}" method="POST">
+    {% csrf_token %}
+    <div class="row-fluid">
+      <div class="col-sm-4"><h3>{% trans 'This project has been published' %}</h3></div>
+      <div class="col-sm-8">
         <h3><button class="btn btn-danger" type="submit">{% trans 'Unpublish' %}</button></h3>
+      </div>
     </div>
-</div>
-</form>
+  </form>
 
-<dl class="dl-horizontal">
+  <dl class="dl-horizontal">
 {% else %}
-    <dl class="dl-horizontal">
-        <dt><h4>{% trans 'Most Recent Version' %}</h4></dt>
-        <dd>
-            <form method="get" action="{% url "domain_create_snapshot" domain %}">
-                {% csrf_token %}
-                <a class="btn btn-primary"
-                   data-action="{% url "domain_set_published" domain version.name %}"
-                   data-toggle="modal" data-target="#contentDistributionAgreement"
-                   href="#contentDistributionAgreement"
-                   data-version = "{{ version.name }}"
-                   id="project-publish"
-                >
-                    Publish
-                </a>
-                <button type="submit" class="btn btn-primary">{% trans 'Edit' %}</button>
-            </form>
-        </dd>
+  <dl class="dl-horizontal">
+  <dt><h4>{% trans 'Most Recent Version' %}</h4></dt>
+  <dd>
+    <form method="get" action="{% url "domain_create_snapshot" domain %}">
+      {% csrf_token %}
+      <a class="btn btn-primary"
+         data-action="{% url "domain_set_published" domain version.name %}"
+         data-toggle="modal" data-target="#contentDistributionAgreement"
+         href="#contentDistributionAgreement"
+         data-version = "{{ version.name }}"
+         id="project-publish"
+      >
+        Publish
+      </a>
+      <button type="submit" class="btn btn-primary">{% trans 'Edit' %}</button>
+    </form>
+  </dd>
 {% endif %}
 
-    <dt>{% trans 'Published on' %}</dt>
-    <dd>{{ version.snapshot_time }}</dd>
-    <dt>{% trans 'License' %}</dt>
-    <dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
-    <dt>{% trans 'Status' %}</dt>
-    <dd>{% if version.is_approved %}{% trans 'Approved' %}{% else %}{% trans 'Not yet approved' %}{% endif %}</dd>
-    <dd>
-        <a href="{% url "project_info" version.name %}"
-           id="view-on-exchange"
-           data-version = "{{ version.name }}"
-        >
-            {% trans 'View on exchange' %}
-        </a>
-    </dd>
+<dt>{% trans 'Published on' %}</dt>
+<dd>{{ version.snapshot_time }}</dd>
+<dt>{% trans 'License' %}</dt>
+<dd><a href="{{ project.get_license_url }}">{{ project.get_license_display }}</a> </dd>
+<dt>{% trans 'Status' %}</dt>
+<dd>{% if version.is_approved %}{% trans 'Approved' %}{% else %}{% trans 'Not yet approved' %}{% endif %}</dd>
+<dd>
+  <a href="{% url "project_info" version.name %}"
+     id="view-on-exchange"
+     data-version = "{{ version.name }}"
+  >
+    {% trans 'View on exchange' %}
+  </a>
+</dd>
 </dl>

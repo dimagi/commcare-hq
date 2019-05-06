@@ -4,24 +4,24 @@
 {% load i18n %}
 
 {% block reporttable %}
-{% if not report.needs_filters %}
+  {% if not report.needs_filters %}
     <form action="{% url "pillow_errors" %}" method="post">
     {% csrf_token %}
     <div class="pull-right form form-inline" style="padding: 5px 10px;">
-        <select class="form-control" name="action">
-            <option value="">{% trans "Select Action..." %}</option>
-            <option value="delete">{% trans "Delete" %}</option>
-            <option value="reset">{% trans "Reset Attempts" %}</option>
-        </select>
-        <label class="checkbox">
-            <input id="check_all" type="checkbox" name="check_all">
-            {% trans "Select All" %}
-        </label>
-        <button type="submit" class="btn btn-default">{% trans "Go" %}</button>
+      <select class="form-control" name="action">
+        <option value="">{% trans "Select Action..." %}</option>
+        <option value="delete">{% trans "Delete" %}</option>
+        <option value="reset">{% trans "Reset Attempts" %}</option>
+      </select>
+      <label class="checkbox">
+        <input id="check_all" type="checkbox" name="check_all">
+        {% trans "Select All" %}
+      </label>
+      <button type="submit" class="btn btn-default">{% trans "Go" %}</button>
     </div>
-{% endif %}
+  {% endif %}
 {{ block.super }}
 {% if not report.needs_filters %}
-</form>
+  </form>
 {% endif %}
 {% endblock %}

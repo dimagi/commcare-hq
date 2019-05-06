@@ -5,16 +5,16 @@
   <i class="fa fa-info-circle"></i>
   {% url 'domain_subscription_view' domain as url_sub %}
   {% with num_trial_days_remaining|pluralize as days_plural %}
-  {% blocktrans %}
-    You have <a href="{{ url_sub }}" id="cta-trial-days-remaining">{{ num_trial_days_remaining }}
-    day{{ days_plural }} remaining</a> in
-    your CommCare Trial.
-    Have questions?
-  {% endblocktrans %}
+    {% blocktrans %}
+      You have <a href="{{ url_sub }}" id="cta-trial-days-remaining">{{ num_trial_days_remaining }}
+      day{{ days_plural }} remaining</a> in
+      your CommCare Trial.
+      Have questions?
+    {% endblocktrans %}
     &nbsp;&nbsp;&nbsp;
-  <a href="#cta-form-get-demo"
-     class="btn btn-purple"
-     id="cta-trial-tour-button"
-     data-toggle="modal">{% trans 'Get A Tour' %}</a>
+    <a href="#cta-form-get-demo"
+       class="btn btn-purple"
+       id="cta-trial-tour-button"
+       data-toggle="modal">{% trans 'Get A Tour' %}</a>
   {% endwith %}
 </div>

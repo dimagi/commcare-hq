@@ -1,17 +1,17 @@
 <section class="hq-styleguide-article">
-    <h1 id="pages-functional">Functional Views</h1>
-    <p class="lead">
-        When using functional views, "fake" the same context that class-based views generate.
-    </p>
-    <p>
-        Manually mimic the context provided by <a
-        href='https://github.com/dimagi/commcare-hq/blob/354d2d84004f1350f408b015a93c8455bfe8e4c4/corehq/apps/hqwebapp/views.py#L753'
-        target='_blank'>BasePageView.main_context</a> and rendered by <a
-        href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/templates/hqwebapp/base_section.html'
-        target='_blank'>hqwebapp/base_section.html</a>. This is an area where we could use better standards /
-        shared code.
-    </p>
-    <pre>context.update({
+  <h1 id="pages-functional">Functional Views</h1>
+  <p class="lead">
+    When using functional views, "fake" the same context that class-based views generate.
+  </p>
+  <p>
+    Manually mimic the context provided by <a
+    href='https://github.com/dimagi/commcare-hq/blob/354d2d84004f1350f408b015a93c8455bfe8e4c4/corehq/apps/hqwebapp/views.py#L753'
+    target='_blank'>BasePageView.main_context</a> and rendered by <a
+    href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/templates/hqwebapp/base_section.html'
+    target='_blank'>hqwebapp/base_section.html</a>. This is an area where we could use better standards /
+    shared code.
+  </p>
+  <pre>context.update({
     'current_page': {
         'title': page_name,
         'page_name': page_name,

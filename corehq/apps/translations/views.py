@@ -14,16 +14,12 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
-from corehq.apps.translations.app_translations.utils import (
-    get_app_translation_workbook,
-    get_bulk_app_sheet_headers,
-)
+from corehq.apps.translations.app_translations.utils import get_bulk_app_sheet_headers
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -33,7 +29,7 @@ from corehq.apps.translations.app_translations.upload_app import (
     validate_bulk_app_translation_upload,
 )
 from corehq.apps.translations.utils import update_app_translations_from_trans_dict
-from corehq.util.workbook_json.excel import InvalidExcelFileException
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
 
 
 @no_conflict_require_POST
@@ -66,8 +62,6 @@ def upload_bulk_ui_translations(request, domain, app_id):
                 message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
                                         warnings)
                 messages.warning(request, message, extra_tags='html')
-    except InvalidExcelFileException as e:
-        messages.error(request, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))
@@ -112,10 +106,16 @@ def download_bulk_app_translations(request, domain, app_id):
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
-    validate = request.POST.get('validate') if lang else False
+    validate = request.POST.get('validate')
 
     app = get_app(domain, app_id)
-    workbook, msgs = get_app_translation_workbook(request.file)
+    workbook = None
+    msgs = []
+    try:
+        workbook = get_workbook(request.file)
+    except WorkbookJSONError as e:
+        messages.error(request, six.text_type(e))
+
     if workbook:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
@@ -123,6 +123,7 @@ def upload_bulk_app_translations(request, domain, app_id):
             headers = get_bulk_app_sheet_headers(app, lang=lang)
             msgs = process_bulk_app_translation_upload(app, workbook, headers, lang=lang)
             app.save()
+
     for msg in msgs:
         # Add the messages to the request object.
         # msg[0] should be a function like django.contrib.messages.error .

@@ -3,50 +3,50 @@
 
 
 <div id="release-notes-setting">
-    <div class="form-group">
-        <label class="control-label col-sm-2">
-        {% trans "Make this my app’s Post-Update form" %}
-        <!-- ko if: is_allowed_to_be_release_notes_form -->
-        <span class="hq-help-template"
-              data-title="{% trans "Post-Update form" %}"
-              data-content="{% blocktrans %}Users will be entered directly into this form when logging back into CommCare immediately after updating their CommCare app. You can use this to give users information on what has changed in a new app version{% endblocktrans %}"
-        ></span>
-        <!-- /ko -->
-        <!-- ko ifnot: is_allowed_to_be_release_notes_form -->
-        <span class="hq-help-template"
-              data-title="{% trans "Post-Update form" %}"
-              data-content="{% blocktrans %}You have already set another form as this app’s Post-Update form{% endblocktrans %}"
-        ></span>
-        <!-- /ko -->
-        </label>
-        <div class="col-sm-8">
-            <input type="checkbox"
-                data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
+  <div class="form-group">
+    <label class="control-label col-sm-2">
+      {% trans "Make this my app’s Post-Update form" %}
+      <!-- ko if: is_allowed_to_be_release_notes_form -->
+      <span class="hq-help-template"
+            data-title="{% trans "Post-Update form" %}"
+            data-content="{% blocktrans %}Users will be entered directly into this form when logging back into CommCare immediately after updating their CommCare app. You can use this to give users information on what has changed in a new app version{% endblocktrans %}"
+      ></span>
+      <!-- /ko -->
+      <!-- ko ifnot: is_allowed_to_be_release_notes_form -->
+      <span class="hq-help-template"
+            data-title="{% trans "Post-Update form" %}"
+            data-content="{% blocktrans %}You have already set another form as this app’s Post-Update form{% endblocktrans %}"
+      ></span>
+      <!-- /ko -->
+    </label>
+    <div class="col-sm-8">
+      <input type="checkbox"
+             data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
                 value: is_release_notes_form,
                 enable: is_allowed_to_be_release_notes_form"
-                value="true"
-           />
-           <input type="hidden" name="is_release_notes_form"
-                  data-bind="value: is_release_notes_form"/>
-        </div>
+             value="true"
+      />
+      <input type="hidden" name="is_release_notes_form"
+             data-bind="value: is_release_notes_form"/>
     </div>
-    <div class="form-group" data-bind="visible: is_release_notes_form">
-        <label class="control-label col-sm-2">
-        {% trans "Enable the Post-Update form for this release" %}
-        <span class="hq-help-template"
-              data-title="{% trans "Enable this" %}"
-              data-content="{% blocktrans %}You can disable the Post-Update form if it is not necessary for the current app release, but you don’t want to delete it{% endblocktrans %}"
-        ></span>
-        </label>
-        <div class="col-sm-8">
-            <input type="checkbox"
-                class="col-sm-8" 
-                data-bind="checked: enable_release_notes,
+  </div>
+  <div class="form-group" data-bind="visible: is_release_notes_form">
+    <label class="control-label col-sm-2">
+      {% trans "Enable the Post-Update form for this release" %}
+      <span class="hq-help-template"
+            data-title="{% trans "Enable this" %}"
+            data-content="{% blocktrans %}You can disable the Post-Update form if it is not necessary for the current app release, but you don’t want to delete it{% endblocktrans %}"
+      ></span>
+    </label>
+    <div class="col-sm-8">
+      <input type="checkbox"
+             class="col-sm-8"
+             data-bind="checked: enable_release_notes,
                 enable: is_allowed_to_be_release_notes_form,
                 value: enable_release_notes",
-                value="true" />
-            <input type="hidden" name="enable_release_notes"
-                   data-bind="value: enable_release_notes"/>
-        </div>
+             value="true" />
+      <input type="hidden" name="enable_release_notes"
+             data-bind="value: enable_release_notes"/>
     </div>
+  </div>
 </div>

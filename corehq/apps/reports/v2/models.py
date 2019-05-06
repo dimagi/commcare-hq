@@ -1,13 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
+
 from collections import namedtuple
+from abc import ABCMeta, abstractmethod
 
 from corehq.apps.reports.v2.exceptions import EndpointNotFoundError
 
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
-ColumnContext = namedtuple('ColumnContext', 'title slug width')
+ColumnMeta = namedtuple('ColumnMeta', 'title name width')
 
 
 class BaseReport(object):
@@ -19,6 +22,7 @@ class BaseReport(object):
     options_endpoints = ()
     formatters = ()
     columns = []
+    column_filters = []
 
     def __init__(self, request, domain):
         """
@@ -29,7 +33,7 @@ class BaseReport(object):
         self.domain = domain
 
     def _get_endpoint(self, endpoint_slug, endpoints):
-        slug_to_class = dict([(e.slug, e) for e in endpoints])
+        slug_to_class = {e.slug: e for e in endpoints}
         try:
             endpoint_class = slug_to_class[endpoint_slug]
             return endpoint_class(self.request, self.domain)
@@ -59,6 +63,7 @@ class BaseReport(object):
             'slug': self.slug,
             'endpoints': [e._asdict() for e in endpoints],
             'columns': [c._asdict() for c in self.columns],
+            'column_filters': [c.get_context() for c in self.column_filters],
         }
 
 
@@ -125,6 +130,18 @@ class BaseDataFormatter(object):
         self.request = request
 
     def get_context(self):
+        """
+        Override this to return a dict
+        :return: {}
+        """
+        raise NotImplementedError("please implement get_context")
+
+
+class BaseFilter(six.with_metaclass(ABCMeta)):
+
+    @classmethod
+    @abstractmethod
+    def get_context(cls):
         """
         Override this to return a dict
         :return: {}

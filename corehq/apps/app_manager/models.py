@@ -25,6 +25,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -43,6 +44,7 @@ from six.moves import filter, map, range
 from six.moves.urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 
+from corehq.apps.locations.models import SQLLocation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -85,6 +87,10 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_latest_build_doc,
     get_latest_released_app_doc,
+)
+from corehq.apps.app_manager.util import (
+    get_latest_app_release_by_location,
+    expire_get_latest_app_release_by_location_cache,
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -1527,6 +1533,14 @@ class NavMenuItemMediaMixin(DocumentSchema):
             if value and (lang is None or key == lang):
                 valid_media_paths.add(value)
         return valid_media_paths
+
+    def uses_image(self):
+        app = self.get_app()
+        return bool(self.icon_app_string(app.langs[0], for_default=True))
+
+    def uses_audio(self):
+        app = self.get_app()
+        return bool(self.audio_app_string(app.langs[0], for_default=True))
 
     def all_image_paths(self, lang=None):
         return self._all_media_paths('media_image', lang=lang)
@@ -3552,8 +3566,8 @@ class ReportModule(ModuleBase):
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
             menu_enum_text=get_module_enum_text(self),
-            media_image=bool(len(self.all_image_paths())),
-            media_audio=bool(len(self.all_audio_paths())),
+            media_image=self.uses_image(),
+            media_audio=self.uses_audio(),
             image_locale_id=id_strings.module_icon_locale(self),
             audio_locale_id=id_strings.module_audio_locale(self),
             **kwargs
@@ -4660,6 +4674,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     @classmethod
     def wrap(cls, data):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
+        data.pop('media_language_map', None)
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
@@ -5727,7 +5742,86 @@ class GlobalAppConfig(Document):
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
 
+class AppReleaseByLocation(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    location = models.ForeignKey(SQLLocation, on_delete=models.CASCADE, to_field='location_id')
+    build_id = models.CharField(max_length=255, null=False)
+    version = models.IntegerField(null=False)
+    active = models.BooleanField(default=True)
+    activated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (("domain", "build_id", "location", "version"),)
+
+    def save(self, *args, **kwargs):
+        super(AppReleaseByLocation, self).save(*args, **kwargs)
+        expire_get_latest_app_release_by_location_cache(self)
+
+    @property
+    @memoized
+    def build(self):
+        return get_app(self.domain, self.build_id)
+
+    def clean(self):
+        if self.active:
+            if not self.build.is_released:
+                raise ValidationError({'version': _("Version not released. Please mark it as released to add "
+                                                    "restrictions.").format(self.build.version)})
+            enabled_release = get_latest_app_release_by_location(self.domain, self.location.location_id,
+                                                                 self.app_id)
+            if enabled_release and enabled_release.version > self.version:
+                raise ValidationError({'version': _("Higher version {} already enabled for this application and "
+                                                    "location").format(enabled_release.version)})
+
+    @classmethod
+    def update_status(cls, domain, app_id, build_id, location_id, version, active):
+        """
+        create a new object or just set the status of an existing one with provided
+        domain, app_id, build_id, location_id and version to the status passed
+        :param build_id: id of the build corresponding to the version
+        """
+        try:
+            release = AppReleaseByLocation.objects.get(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        except cls.DoesNotExist:
+            release = AppReleaseByLocation(
+                domain=domain, app_id=app_id, build_id=build_id, location_id=location_id, version=version
+            )
+        release.activate() if active else release.deactivate()
+
+    def deactivate(self):
+        self.active = False
+        self.deactivated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def activate(self):
+        self.active = True
+        self.activated_on = datetime.datetime.utcnow()
+        self.full_clean()
+        self.save()
+
+    def to_json(self):
+        return {
+            'location': self.location.get_path_display(),
+            'app': self.app_id,
+            'build_id': self.build_id,
+            'version': self.version,
+            'active': self.active,
+            'id': self._get_pk_val(),
+            'activated_on': (datetime.datetime.strftime(self.activated_on, '%Y-%m-%d  %H:%M:%S')
+                             if self.activated_on else None),
+            'deactivated_on': (datetime.datetime.strftime(self.deactivated_on, '%Y-%m-%d %H:%M:%S')
+                               if self.deactivated_on else None),
+        }
+
+
 class LatestEnabledBuildProfiles(models.Model):
+    # ToDo: this would be deprecated after AppReleaseByLocation is released and
+    # this model's entries are migrated to the new location specific model
     app_id = models.CharField(max_length=255)
     build_profile_id = models.CharField(max_length=255)
     version = models.IntegerField()

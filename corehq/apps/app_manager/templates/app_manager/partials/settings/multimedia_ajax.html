@@ -6,10 +6,10 @@
     </div>
     <div class="panel-body">
       <p>
-          <a id="open_checker" target="_blank" href="{% url "hqmedia_references" domain app.get_id %}">
-              {% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}
-              <i class="fa fa-external-link"></i>
-          </a>
+        <a id="open_checker" target="_blank" href="{% url "hqmedia_references" domain app.get_id %}">
+          {% blocktrans %}View, upload, and download your application's multimedia{% endblocktrans %}
+          <i class="fa fa-external-link"></i>
+        </a>
       </p>
     </div>
   </div>
@@ -25,5 +25,5 @@
   </div>
 
 {% else %}
-    <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
+  <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}

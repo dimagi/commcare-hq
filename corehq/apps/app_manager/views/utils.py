@@ -115,6 +115,10 @@ def get_langs(request, app):
     return lang, langs
 
 
+def set_lang_cookie(response, lang):
+    response.set_cookie('lang', encode_if_unicode(lang))
+
+
 def bail(request, domain, app_id, not_found=""):
     if not_found:
         messages.error(request, 'Oops! We could not find that %s. Please try again' % not_found)

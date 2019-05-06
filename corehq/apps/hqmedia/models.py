@@ -17,7 +17,6 @@ from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.python_compatibility import soft_assert_type_text
-from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -880,15 +879,11 @@ class ApplicationMediaMixin(Document, MediaMixin):
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths() | self.logo_paths
-        deleted_media = []
-        allow_deletion = not toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain)
         for path in paths:
             if path not in permitted_paths:
                 map_item = self.multimedia_map[path]
-                deleted_media.append((path, map_item, None))
-                if allow_deletion:
-                    map_changed = True
-                    del self.multimedia_map[path]
+                map_changed = True
+                del self.multimedia_map[path]
 
         if map_changed:
             self.save()
@@ -928,8 +923,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
         multimedia_map_for_build = self.multimedia_map_for_build(build_profile=build_profile)
         expected_ids = [map_item.multimedia_id for map_item in multimedia_map_for_build.values()]
         raw_docs = dict((d["_id"], d) for d in iter_docs(CommCareMultimedia.get_db(), expected_ids))
-        retry_successes = []
-        retry_failures = []
         for path, map_item in multimedia_map_for_build.items():
             media_item = raw_docs.get(map_item.multimedia_id)
             if media_item:
@@ -940,10 +933,8 @@ class ApplicationMediaMixin(Document, MediaMixin):
                 media = CommCareMultimedia.get_doc_class(map_item.media_type)
                 try:
                     media = media.get(map_item.multimedia_id)
-                    retry_successes.append(map_item)
                     yield path, media
                 except ResourceNotFound as e:
-                    retry_failures.append(map_item)
                     if toggles.CAUTIOUS_MULTIMEDIA.enabled(self.domain):
                         raise e
 

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
-from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS
+from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS, NUM_OF_DAYS_AWC_WAS_OPEN
 from custom.icds_reports.utils import phone_number_function
 
 
@@ -39,7 +39,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             DatabaseColumn(
-                'Number of days AWC was open in the given month',
+                NUM_OF_DAYS_AWC_WAS_OPEN,
                 SumColumn('awc_days_open'),
                 format_fn=lambda x: (x or 0) if self.loc_level > 4 else "Not Applicable",
                 slug='num_awc_open'

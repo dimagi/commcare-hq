@@ -15,7 +15,7 @@
     </p>
     <div id="messaging_dashboard" class="container-fluid">
         <div data-bind="visible: !bindingApplied()">
-            <img src="/static/hqwebapp/images/ajax-loader.gif" />
+            <i class="fa fa-spin fa-spinner"></i>
             <span>{% trans "Loading..." %}</span>
         </div>
         {# Prevent flicker by hiding and using bindingApplied to make visible #}

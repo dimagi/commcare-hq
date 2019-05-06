@@ -1,15 +1,15 @@
 <tr>
-<td>{{ commit.date }}
+  <td>{{ commit.date }}
     {% if forloop.first %}
-            <span class="label label-success">Running</span>
+      <span class="label label-success">Running</span>
     {% endif %}
     <br>
     <small>
-        <a href="{{ commit.commit_url }}">View</a> | <a href="{{ commit.compare_master }}">Compare</a>
+      <a href="{{ commit.commit_url }}">View</a> | <a href="{{ commit.compare_master }}">Compare</a>
     </small>
-</td>
-<td> {{ commit.author }}</td>
-<td>
+  </td>
+  <td> {{ commit.author }}</td>
+  <td>
     <pre>{% if commit.subject %}<strong>{{ commit.subject }}</strong><br>{% endif %}{{ commit.message }}</pre>
-</td>
+  </td>
 </tr>

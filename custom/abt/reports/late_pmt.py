@@ -85,6 +85,12 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     slug = 'late_pmt'
     name = "Late PMT"
 
+    languages = (
+        'en',
+        'fra',
+        'por'
+    )
+
     fields = [
         DatespanFilter,
         UsernameFilter,

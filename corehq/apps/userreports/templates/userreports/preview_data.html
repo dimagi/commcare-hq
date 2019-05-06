@@ -3,20 +3,20 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
+  <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
 {% endblock %}
 
 {% block page_actions %}
-    {% registerurl 'configurable_data_source_status' domain data_source.get_id %}
-    {% initial_page_data 'is_static_data_source' data_source.config.is_static %}
+  {% registerurl 'configurable_data_source_status' domain data_source.get_id %}
+  {% initial_page_data 'is_static_data_source' data_source.config.is_static %}
 {% endblock %}
 
 {% block page_content %}
 
-{% if not data_source.config.is_static %}
+  {% if not data_source.config.is_static %}
     {% include 'userreports/partials/build_in_progress_warning.html' %}
-{% endif %}
+  {% endif %}
 
-<h1>{% blocktrans with display_name=data_source.display_name %}Preview table: {{ display_name }} ({{ total_rows }} total rows){% endblocktrans %}</h1>
-{% include 'userreports/partials/basic_data_table.html' %}
+  <h1>{% blocktrans with display_name=data_source.display_name %}Preview table: {{ display_name }} ({{ total_rows }} total rows){% endblocktrans %}</h1>
+  {% include 'userreports/partials/basic_data_table.html' %}
 {% endblock %}

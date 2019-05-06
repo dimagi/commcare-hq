@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, JsonResponse
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -19,9 +19,9 @@ from django.views.generic.base import TemplateView
 
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
+from corehq.apps.fixtures.tasks import async_fixture_download, fixture_upload_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
-from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
+from corehq.apps.fixtures.download import prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
     FixtureUploadError,
@@ -268,8 +268,7 @@ def download_item_lists(request, domain):
     """Asynchronously serve excel download for edit_lookup_tables
     """
     download = DownloadBase()
-    download.set_task(fixture_download_async.delay(
-        prepare_fixture_download,
+    download.set_task(async_fixture_download.delay(
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
@@ -405,6 +404,27 @@ class UploadFixtureAPIResponse(object):
     def code(self):
         return self.response_codes[self.status]
 
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+        }
+
+
+class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
+    def __init__(self, status, message, download_id, status_url):
+        super(AsyncUploadFixtureAPIResponse, self).__init__(status, message)
+        self.download_id = download_id
+        self.status_url = status_url
+
+    def get_response(self):
+        return {
+            'message': self.message,
+            'code': self.code,
+            'status_url': self.status_url,
+            'download_id': self.download_id,
+        }
+
 
 @csrf_exempt
 @require_POST
@@ -419,8 +439,7 @@ def upload_fixture_api(request, domain, **kwargs):
     """
 
     upload_fixture_api_response = _upload_fixture_api(request, domain)
-    return json_response({'message': upload_fixture_api_response.message,
-                          'code': upload_fixture_api_response.code})
+    return JsonResponse(upload_fixture_api_response.get_response())
 
 
 @csrf_exempt
@@ -470,7 +489,7 @@ def _upload_fixture_api(request, domain):
     with excel_file as filename:
 
         if is_async:
-            with open(filename, 'r') as f:
+            with open(filename, 'rb') as f:
                 file_ref = expose_cached_download(
                     f.read(),
                     file_extension=file_extention_from_filename(filename),
@@ -489,16 +508,10 @@ def _upload_fixture_api(request, domain):
                     reverse('fixture_api_status', args=(domain, download_id))
                 )
 
-                curl_command = "curl -v --digest {} -u {}".format(
-                    status_url, request.user.username
+                return AsyncUploadFixtureAPIResponse(
+                    'success', _("File has been uploaded successfully and is queued for processing."),
+                    download_id, status_url
                 )
-
-                return UploadFixtureAPIResponse('success', {
-                    "download_id": download_id,
-                    "status_url": status_url,
-                    "curl_command": curl_command,
-                    "message": _("File uploaded successfully.")
-                })
 
         try:
             validate_fixture_file_format(filename)

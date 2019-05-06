@@ -1,8 +1,8 @@
 {% load i18n %}
 <div class="alert alert-info alert-full hq-report-time-notice{% if hide %} hide{% endif %}">
-    <strong>
-        {% trans "The current date and time is" %}
-        {% if timezone %}{{ timezone_now }} {{ timezone }}{% else %}{{ now }} GMT{% endif %}.
-    </strong>
-    ({% trans "All dates are in" %} {% if timezone %}{{ timezone }}{% else %}GMT{% endif %}.)
+  <strong>
+    {% trans "The current date and time is" %}
+    {% if timezone %}{{ timezone_now }} {{ timezone }}{% else %}{{ now }} GMT{% endif %}.
+  </strong>
+  ({% trans "All dates are in" %} {% if timezone %}{{ timezone }}{% else %}GMT{% endif %}.)
 </div>

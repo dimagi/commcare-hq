@@ -3,34 +3,34 @@
 {% load i18n %}
 
 {% block title %}
-    {% blocktrans with first_version=first.app_version second_version=second.app_version%}
-        Changes - Version {{ first_version }} vs. Version {{ second_version }}
-    {% endblocktrans %}
+  {% blocktrans with first_version=first.app_version second_version=second.app_version%}
+    Changes - Version {{ first_version }} vs. Version {{ second_version }}
+  {% endblocktrans %}
 {% endblock %}
 
 {% requirejs_main "app_manager/js/summary/form_diff" %}
 
 {% block content_extra %}
-    {% registerurl 'form_source' domain app_id '---' %}
-    {% registerurl 'view_module' domain app_id '---' %}
+  {% registerurl 'form_source' domain app_id '---' %}
+  {% registerurl 'view_module' domain app_id '---' %}
 
-    {% include 'app_manager/partials/form_summary_header.html'%}
-    <div class="row" id="form-summary-diff">
-        <div class="col-sm-6 ko-template scrollable" id="first-app-summary">
-            {% initial_page_data 'first.errors' first.errors %}
-            {% initial_page_data 'first.modules' first.modules %}
-            {% initial_page_data 'first.app_id' first.app_id %}
-            {% initial_page_data 'first.app_version' first.app_version %}
-            {% initial_page_data 'first.read_only' first.read_only %}
-            {% include 'app_manager/form_summary_base.html' with modules=first.modules errors=first.errors app_version=first.app_version%}
-        </div>
-        <div class="col-sm-6 ko-template scrollable" id="second-app-summary">
-            {% initial_page_data 'second.errors' second.errors %}
-            {% initial_page_data 'second.modules' second.modules %}
-            {% initial_page_data 'second.app_id' second.app_id %}
-            {% initial_page_data 'second.app_version' second.app_version %}
-            {% initial_page_data 'second.read_only' second.read_only %}
-            {% include 'app_manager/form_summary_base.html' with modules=second.modules errors=second.errors app_version=second.app_version%}
-        </div>
+  {% include 'app_manager/partials/form_summary_header.html'%}
+  <div class="row" id="form-summary-diff">
+    <div class="col-sm-6 ko-template scrollable" id="first-app-summary">
+      {% initial_page_data 'first.errors' first.errors %}
+      {% initial_page_data 'first.modules' first.modules %}
+      {% initial_page_data 'first.app_id' first.app_id %}
+      {% initial_page_data 'first.app_version' first.app_version %}
+      {% initial_page_data 'first.read_only' first.read_only %}
+      {% include 'app_manager/form_summary_base.html' with modules=first.modules errors=first.errors app_version=first.app_version%}
     </div>
+    <div class="col-sm-6 ko-template scrollable" id="second-app-summary">
+      {% initial_page_data 'second.errors' second.errors %}
+      {% initial_page_data 'second.modules' second.modules %}
+      {% initial_page_data 'second.app_id' second.app_id %}
+      {% initial_page_data 'second.app_version' second.app_version %}
+      {% initial_page_data 'second.read_only' second.read_only %}
+      {% include 'app_manager/form_summary_base.html' with modules=second.modules errors=second.errors app_version=second.app_version%}
+    </div>
+  </div>
 {% endblock content_extra %}

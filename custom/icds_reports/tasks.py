@@ -739,7 +739,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             show_test=include_test
         ).get_excel_data(
             location,
-            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta
+            system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
+            system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
         )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
@@ -764,7 +765,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = IncentiveReport(
             location=location,
             month=config['month'],
-            aggregation_level=aggregation_level
+            aggregation_level=aggregation_level,
+            beta=beta
         ).get_excel_data()
         if file_format == 'xlsx':
             cache_key = create_aww_performance_excel_file(
@@ -780,6 +782,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 block=SQLLocation.objects.get(
                     location_id=config['block_id'], domain=config['domain']
                 ).name if aggregation_level == 3 else None,
+                beta=beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)

@@ -2,20 +2,20 @@
 {% load hq_shared_tags %}
 
 <div class="form-group" xmlns="http://www.w3.org/1999/html">
-    <label class="control-label col-sm-2">
-        {% trans "Shadow source" %}
-        <span class="hq-help-template"
-              data-content="{% blocktrans %}The form which this form will shadow{% endblocktrans %}"
-        ></span>
-    </label>
-    <div id="shadow-parent" class="col-sm-4">
-        <select data-bind="value: shadow_parent" class="form-control">
-            <option value=""></option>
-            {% for key, display in form.get_shadow_parent_options %}
-                <option value="{{ key }}">{{ display }}</option>
-            {% endfor %}
-        </select>
+  <label class="control-label col-sm-2">
+    {% trans "Shadow source" %}
+    <span class="hq-help-template"
+          data-content="{% blocktrans %}The form which this form will shadow{% endblocktrans %}"
+    ></span>
+  </label>
+  <div id="shadow-parent" class="col-sm-4">
+    <select data-bind="value: shadow_parent" class="form-control">
+      <option value=""></option>
+      {% for key, display in form.get_shadow_parent_options %}
+        <option value="{{ key }}">{{ display }}</option>
+      {% endfor %}
+    </select>
 
-        <input type="hidden" name="shadow_parent" data-bind="value: shadow_parent"/>
-    </div>
+    <input type="hidden" name="shadow_parent" data-bind="value: shadow_parent"/>
+  </div>
 </div>

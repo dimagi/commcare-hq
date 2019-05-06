@@ -2,52 +2,52 @@
 {% load i18n %}
 
 <script id="grid-template" type="text/template">
-    <div class="page-header page-header-apps">
-      <h1 class="page-title">{% trans "Applications" %}</h1>
+  <div class="page-header page-header-apps">
+    <h1 class="page-title">{% trans "Applications" %}</h1>
+  </div>
+
+  <div class="row">
+    <div class="js-application-container">
+
+    </div>
+    <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+      <div class="js-incomplete-sessions-item appicon appicon-incomplete">
+        <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
+        <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3>{% trans "Incomplete Forms" %}</h3>
+        </div>
+      </div>
     </div>
 
-    <div class="row">
-        <div class="js-application-container">
-
+    <div class=" grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+      <div class="js-sync-item appicon appicon-sync">
+        <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3>{% trans "Sync" %}</h3>
         </div>
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-incomplete-sessions-item appicon appicon-incomplete">
-            <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
-            <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Incomplete Forms" %}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div class=" grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-sync-item appicon appicon-sync">
-            <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Sync" %}</h3>
-            </div>
-          </div>
-        </div>
-
-        {% if request|can_use_restore_as %}
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-restore-as-item appicon appicon-restore-as">
-            <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Login as" %}</h3>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-settings appicon appicon-settings">
-            <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Settings" %}</h3>
-            </div>
-          </div>
-        </div>
+      </div>
     </div>
+
+    {% if request|can_use_restore_as %}
+      <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+        <div class="js-restore-as-item appicon appicon-restore-as">
+          <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3>{% trans "Login as" %}</h3>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+      <div class="js-settings appicon appicon-settings">
+        <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3>{% trans "Settings" %}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
 </script>
 
 <script id="single-app-template" type="text/template">
@@ -56,35 +56,35 @@
   </ol>
   <div class="container container-appicons">
     <div class="row">
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-start-app appicon appicon-start">
-            <i class="ff ff-start-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
-            <i class="ff ff-start-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Start" %}</h3>
-            </div>
+      <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+        <div class="js-start-app appicon appicon-start">
+          <i class="ff ff-start-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
+          <i class="ff ff-start-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3>{% trans "Start" %}</h3>
           </div>
         </div>
-        <% if (showIncompleteForms()) { %>
-        <div class=" grid-item col-xs-6 col-sm-4 formplayer-request">
-          <div class="js-incomplete-sessions-item appicon appicon-incomplete">
-            <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
-            <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Incomplete Forms" %}</h3>
-            </div>
+      </div>
+      <% if (showIncompleteForms()) { %>
+      <div class=" grid-item col-xs-6 col-sm-4 formplayer-request">
+        <div class="js-incomplete-sessions-item appicon appicon-incomplete">
+          <i class="ff ff-incomplete-bg appicon-icon appicon-icon-bg" aria-hidden="true"></i>
+          <i class="ff ff-incomplete-fg appicon-icon appicon-icon-fg" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3>{% trans "Incomplete Forms" %}</h3>
           </div>
         </div>
-        <% } %>
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-sync-item appicon appicon-sync">
-            <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Sync" %}</h3>
-            </div>
+      </div>
+      <% } %>
+      <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+        <div class="js-sync-item appicon appicon-sync">
+          <i class="ff ff-sync appicon-icon" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3>{% trans "Sync" %}</h3>
           </div>
         </div>
-        {% if request|can_use_restore_as %}
+      </div>
+      {% if request|can_use_restore_as %}
         <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
           <div class="js-restore-as-item appicon appicon-restore-as">
             <i class="fa fa-user appicon-icon" aria-hidden="true"></i>
@@ -93,15 +93,15 @@
             </div>
           </div>
         </div>
-        {% endif %}
-        <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
-          <div class="js-settings appicon appicon-settings">
-            <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
-            <div class="appicon-title">
-              <h3>{% trans "Settings" %}</h3>
-            </div>
+      {% endif %}
+      <div class="grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request">
+        <div class="js-settings appicon appicon-settings">
+          <i class="fa fa-gear appicon-icon" aria-hidden="true"></i>
+          <div class="appicon-title">
+            <h3>{% trans "Settings" %}</h3>
           </div>
         </div>
+      </div>
     </div>
   </div>
 </script>
@@ -110,15 +110,15 @@
 <script id="landing-page-app-template" type="text/template">
   <div class="container">
     <div class="spacer"></div>
-      <div class="col-xs-6 col-sm-4 col-xs-offset-3 col-sm-offset-4">
-        <div class="appicon appicon-default js-start-app">
-          <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
-          <div class="appicon-title">
-            <h3><%= appName %></h3>
-          </div>
+    <div class="col-xs-6 col-sm-4 col-xs-offset-3 col-sm-offset-4">
+      <div class="appicon appicon-default js-start-app">
+        <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
+        <div class="appicon-title">
+          <h3><%= appName %></h3>
         </div>
       </div>
     </div>
+  </div>
   </div>
 </script>
 

@@ -12,55 +12,55 @@
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
 
     <style type="text/css">
-        /* Override bootstrap's .progress styles for the Mocha progress widget. */
-        #mocha-stats .progress {
-            height: auto;
-            background-color: transparent;
-            box-shadow: none;
-        }
+      /* Override bootstrap's .progress styles for the Mocha progress widget. */
+      #mocha-stats .progress {
+        height: auto;
+        background-color: transparent;
+        box-shadow: none;
+      }
     </style>
 
     <script src="{% static 'mocha/mocha.js' %}"></script>
     <script src="{% static 'chai/chai.js' %}"></script>
     <script src="{% static 'sinon/index.js' %}"></script>
     <script>
-        mocha.setup('bdd')
-        window.assert = chai.assert
+      mocha.setup('bdd')
+      window.assert = chai.assert
 
-        function gettext(str) {
-            return str;
-        }
+      function gettext(str) {
+        return str;
+      }
     </script>
 
     <!-- Core Libraries -->
     {% block core_libraries %}
-        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
+      {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
     {% endblock %}
 
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
     <script>
-        hqImport('analytix/js/google').track.event = sinon.spy();
-        hqImport('analytix/js/google').track.click = sinon.spy();
-        hqImport('analytix/js/kissmetrix').track.event = sinon.spy();
+      hqImport('analytix/js/google').track.event = sinon.spy();
+      hqImport('analytix/js/google').track.click = sinon.spy();
+      hqImport('analytix/js/kissmetrix').track.event = sinon.spy();
     </script>
   </head>
   <body>
-      <div class="initial-analytics-data hide"></div>
-      <div class="analytics-ab-tests hide"></div>
-      <!-- HTML Fixtures -->
-      <div id="mocha"></div>
-      <div id="mocha-fixtures" style="display:none">
+    <div class="initial-analytics-data hide"></div>
+    <div class="analytics-ab-tests hide"></div>
+    <!-- HTML Fixtures -->
+    <div id="mocha"></div>
+    <div id="mocha-fixtures" style="display:none">
       {% block fixtures %}{% endblock %}
-      </div>
-      <div id="mocha-sandbox"></div>
-      {% block mocha_tests %}{% endblock %}
-      <script charset="utf-8">
-  	      // Only tests run in real browser, injected script run if options.run == true
-	      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-	          mocha.run();
-	      }
-      </script>
+    </div>
+    <div id="mocha-sandbox"></div>
+    {% block mocha_tests %}{% endblock %}
+    <script charset="utf-8">
+      // Only tests run in real browser, injected script run if options.run == true
+      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+        mocha.run();
+      }
+    </script>
   </body>
 </html>
