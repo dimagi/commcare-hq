@@ -22,6 +22,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os.path import abspath, dirname, exists, join
 
 import sh
+import six
 from gitutils import get_git
 from six.moves import input
 
@@ -233,10 +234,9 @@ def get_version(vellum_tar):
 
 
 def byte_stream(stream):
-    # In Python 3 get a stream that accepts bytes (`sys.stdout.buffer`).
-    # In Python 2 output streams do not have a "buffer" attribute.
+    # Get a stream that accepts bytes
     # https://github.com/amoffat/sh/issues/242
-    return getattr(stream, "buffer", stream)
+    return stream if six.PY2 else stream.buffer
 
 
 if __name__ == '__main__':
