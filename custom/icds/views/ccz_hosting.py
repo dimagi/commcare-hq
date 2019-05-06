@@ -118,14 +118,17 @@ class ManageCCZHosting(BaseDomainView):
         )
 
     def _get_initial_app_profile_details(self, version):
-        selected_profile_id = self.request.GET.get('profile_id')
-        build_doc = get_build_by_version(self.domain, self.request.GET.get('app_id'), version)
-        if selected_profile_id and build_doc:
-            return [{
-                'id': _id,
-                'text': details['name'],
-                'selected': selected_profile_id == _id
-            } for _id, details in build_doc['build_profiles'].items()]
+        app_id = self.request.GET.get('app_id')
+        selected_profile_id = self.request.GET.get('profile_id', '')
+        # only when performing search populate these initial values
+        if app_id and version:
+            build_doc = get_build_by_version(self.domain, self.request.GET.get('app_id'), version)
+            if build_doc:
+                return [{
+                    'id': _id,
+                    'text': details['name'],
+                    'selected': selected_profile_id == _id
+                } for _id, details in build_doc['build_profiles'].items()]
 
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
