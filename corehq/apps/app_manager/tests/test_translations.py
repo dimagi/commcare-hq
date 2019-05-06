@@ -9,7 +9,7 @@ import commcare_translations
 from django.test import TestCase
 from lxml import etree
 
-from corehq.apps.app_manager.models import Application, BuildProfile
+from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin
 from corehq.apps.translations.app_translations.upload_form import BulkAppTranslationFormUpdater
