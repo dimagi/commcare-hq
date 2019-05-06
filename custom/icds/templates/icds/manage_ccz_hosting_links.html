@@ -1,0 +1,44 @@
+{% extends 'hqwebapp/two_column.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "icds/js/manage_ccz_hosting_links" %}
+
+{% block page_content %}
+{% initial_page_data 'links' links %}
+{% registerurl 'edit_ccz_hosting_link' domain '---' %}
+{% registerurl 'ccz_hosting' domain '---' %}
+
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{% trans "Manage CCZ Hosting Links" %}</h1>
+        </div>
+    </div>
+    <div class="row">
+        {% if links %}
+        <div class="col-sm-4" id="links">
+            <h3>Links</h3>
+            <ul data-bind="foreach: links">
+                <li>
+                    <a data-bind="attr: { href: editUrl}, text: identifier"></a>
+                    <a data-bind="attr: { href: pageUrl}">
+                        <span class="fa fa-arrow-right"></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-sm-8">
+        {% else %}
+        <div class="col-sm-12">
+        {% endif %}
+            <div class="panel panel-modern-gray panel-form-only">
+                <div class="panel-body">
+                    {% crispy form %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
