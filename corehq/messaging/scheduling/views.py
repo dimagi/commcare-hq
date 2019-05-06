@@ -37,6 +37,7 @@ from corehq.messaging.scheduling.forms import (
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
     ConditionalAlertScheduleForm,
+    ContentForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -1032,27 +1033,36 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
         langs = get_language_list(self.domain)
         headers = ((translated_sheet_name, common_headers + ['message_' + lang for lang in langs]),
                    (untranslated_sheet_name, common_headers + ['message']))
-        rows = get_conditional_alert_rows(self.domain)
+
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, langs)
 
         temp = io.BytesIO()
         export_raw(
             headers, [
-                (translated_sheet_name, rows),
-                (untranslated_sheet_name, rows),
+                (translated_sheet_name, translated_rows),
+                (untranslated_sheet_name, untranslated_rows),
             ], temp)
         filename = 'Conditional Alerts - {domain}'.format(domain=domain)
         return export_response(temp, Format.XLS_2007, filename)
 
 
-def get_conditional_alert_rows(domain):
-    rows = []
+def get_conditional_alert_rows(domain, langs):
+    translated_rows = []
+    untranslated_rows = []
 
     for rule in ConditionalAlertBaseView.get_conditional_alerts_queryset_by_domain(domain):
         if not isinstance(_get_rule_content(rule), SMSContent):
             continue
-        rows.append([rule.pk, rule.name, rule.case_type])
+        common_columns = [rule.pk, rule.name, rule.case_type]
+        message = ContentForm.compute_initial(
+            rule.get_messaging_rule_schedule().memoized_events[0].content
+        ).get('message', {})
+        if '*' in message or len(message) == 0:
+            untranslated_rows.append(common_columns + [message.get('*', '')])
+        else:
+            translated_rows.append(common_columns + [message.get(lang, '') for lang in langs])
 
-    return rows
+    return (translated_rows, untranslated_rows)
 
 
 class UploadConditionalAlertView(BaseMessagingSectionView):
