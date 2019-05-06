@@ -12,6 +12,7 @@
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
 {% registerurl "paginate_releases" domain '---' %}
 {% registerurl "remove_ccz_hosting" domain '---' %}
+{% registerurl "ccz_hosting" domain '---' %}
 <div class="container" id="manage-ccz-hostings">
     <div class="row">
         <div class="page-header">
@@ -43,7 +44,9 @@
                 </thead>
                 <tbody data-bind="foreach: hostings">
                     <tr>
-                        <td data-bind="text: link"></td>
+                        <td>
+                          <a data-bind="attr: { href: viewUrl}, text: link"></a>
+                        </td>
                         <td data-bind="text: appName"></td>
                         <td data-bind="text: profileName"></td>
                         <td data-bind="text: version"></td>

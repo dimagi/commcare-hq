@@ -20,6 +20,7 @@ hqDefine('icds/js/manage_ccz_hosting', [
             self.profileName = profileName;
             self.fileName = fileName;
             self.url = initialPageData.reverse("remove_ccz_hosting", id);
+            self.viewUrl = initialPageData.reverse("ccz_hosting", link);
             return self;
         };
         var cczHostingsView = function (hostings) {
