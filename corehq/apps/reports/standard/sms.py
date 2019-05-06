@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -442,7 +442,12 @@ class MessageLogReport(BaseCommConnectLogReport):
         queryset = filter_by_location(queryset)
         queryset = order_by_col(queryset)
         if self.testing_changes:
-            return queryset.select_related('messaging_subevent', 'messaging_subevent__parent')
+            return queryset.annotate(
+                event_source=F("messaging_subevent__parent__source"),
+                event_source_id=F("messaging_subevent__parent__source_id"),
+                event_content_type=F("messaging_subevent__parent__content_type"),
+                event_form_name=F("messaging_subevent__parent__form_name"),
+            )
         return queryset
 
     @property
@@ -547,14 +552,26 @@ class MessageLogReport(BaseCommConnectLogReport):
         subevents = (MessagingSubEvent.objects
                      .filter(parent__domain=self.domain,
                              xforms_session__couch_id__in=session_ids)
-                     .select_related('parent'))
-        return {subevent.xforms_session.couch_id: subevent.parent for subevent in subevents}
+                     .values_list(
+                         'xforms_session__couch_id',
+                         'parent__source',
+                         'parent__source_id',
+                         'parent__content_type',
+                         'parent__form_name',
+                     ))
+        return {session_id: EventStub(source, source_id, content_type, form_name)
+                for session_id, source, source_id, content_type, form_name in subevents}
 
     def _get_event_display(self, message, events, content_cache):
         """Extract event data from a message annotated via _get_data optimizations"""
         event = None
         if message.messaging_subevent:
-            event = message.messaging_subevent.parent
+            event = EventStub(
+                message.event_source,
+                message.event_source_id,
+                message.event_content_type,
+                message.event_form_name,
+            )
         elif message.xforms_session_couch_id:
             event = events.get(message.xforms_session_couch_id, None)
         if event:
