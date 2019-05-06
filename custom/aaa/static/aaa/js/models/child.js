@@ -66,7 +66,7 @@ hqDefine("aaa/js/models/child", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'gender()', name: 'gender', title: 'Gender'},
             {data: 'lastImmunizationType()', name: 'lastImmunizationType', title: 'Last Immunization Type'},
             {data: 'lastImmunizationDate()', name: 'lastImmunizationDate', title: 'Last Immunization Date'},
