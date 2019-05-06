@@ -181,8 +181,8 @@ class TestLookupTableItemResource(APIResourceTest):
                     ]
                 }
             },
-            "resource_uri": ""
-            # "item_attributes": [],
+            "resource_uri": "",
+            "item_attributes": {},
             # "sort_key": sort_key,
         }
 
@@ -246,6 +246,9 @@ class TestLookupTableItemResource(APIResourceTest):
                     ]
                 }
             },
+            "item_attributes": {
+                "attribute1": "cool_attr_value",
+            }
         }
 
         response = self._assert_auth_post_resource(
@@ -256,3 +259,4 @@ class TestLookupTableItemResource(APIResourceTest):
         self.assertEqual(len(data_item.fields), 1)
         self.assertEqual(data_item.fields['state_name'].field_list[0].field_value, 'Massachusetts')
         self.assertEqual(data_item.fields['state_name'].field_list[0].properties, {"lang": "en"})
+        self.assertEqual(data_item.item_attributes, {"attribute1": "cool_attr_value"})

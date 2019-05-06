@@ -174,10 +174,8 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
 class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
     id = tp_f.CharField(attribute='get_id', readonly=True, unique=True)
     data_type_id = tp_f.CharField(attribute='data_type_id')
-    fields = tp_f.ListField(attribute='fields')
-
-    # Intentionally leaving out item_attributes until I can figure out what they are
-    # item_attributes = tp_f.ListField(attribute='item_attributes')
+    fields = tp_f.DictField(attribute='fields')
+    item_attributes = tp_f.DictField(attribute='item_attributes')
 
     # It appears that sort_key is not included in any user facing UI. It is only defined as
     # the order of rows in the excel file when uploaded. We'll keep this behavior by incrementing
@@ -231,11 +229,19 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         if bundle.obj.domain != kwargs['domain']:
             raise NotFound('Lookup table item not found')
 
+        save = False
         if 'fields' in bundle.data:
+            save = True
             bundle.obj.fields = {
                 field_name: FieldList.wrap(field_list)
                 for field_name, field_list in bundle.data['fields'].items()
             }
+
+        if 'item_attributes' in bundle.data:
+            save = True
+            bundle.obj.item_attributes = bundle.data['item_attributes']
+
+        if save:
             bundle.obj.save()
 
         return bundle
