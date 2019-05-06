@@ -93,9 +93,7 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
     is_global = tp_f.BooleanField(attribute='is_global')
     tag = tp_f.CharField(attribute='tag')
     fields = tp_f.ListField(attribute='fields')
-
-    # Intentionally leaving out item_attributes until I can figure out what they are
-    # item_attributes = tp_f.ListField(attribute='item_attributes')
+    item_attributes = tp_f.ListField(attribute='item_attributes')
 
     def dehydrate_fields(self, bundle):
         return [
@@ -157,6 +155,10 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
                 FixtureTypeField.wrap(field)
                 for field in bundle.data['fields']
             ]
+
+        if 'item_attributes' in bundle.data:
+            save = True
+            bundle.obj.item_attributes = bundle.data['item_attributes']
 
         if save:
             bundle.obj.save()

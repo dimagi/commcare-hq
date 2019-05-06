@@ -11,11 +11,10 @@ class TestLookupTableResource(APIResourceTest):
     resource = LookupTableResource
     api_name = 'v0.5'
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestLookupTableResource, cls).setUpClass()
-        cls.data_type = FixtureDataType(
-            domain=cls.domain.name,
+    def setUp(self):
+        super(TestLookupTableResource, self).setUp()
+        self.data_type = FixtureDataType(
+            domain=self.domain.name,
             tag="lookup_table",
             fields=[
                 FixtureTypeField(
@@ -25,12 +24,11 @@ class TestLookupTableResource(APIResourceTest):
             ],
             item_attributes=[]
         )
-        cls.data_type.save()
+        self.data_type.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.data_type.delete()
-        super(TestLookupTableResource, cls).tearDownClass()
+    def tearDown(self):
+        self.data_type.delete()
+        super(TestLookupTableResource, self).tearDown()
 
     def _data_type_json(self):
         return {
@@ -40,6 +38,7 @@ class TestLookupTableResource(APIResourceTest):
                     "properties": ["lang", "name"],
                 },
             ],
+            "item_attributes": [],
             "id": self.data_type._id,
             "is_global": False,
             "resource_uri": "",
@@ -99,3 +98,19 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(len(data_type.fields), 1)
         self.assertEqual(data_type.fields[0].field_name, 'fieldA')
         self.assertEqual(data_type.fields[0].properties, ['property1', 'property2'])
+
+    def test_update(self):
+        lookup_table = {
+            "tag": "lookup_table",
+            "item_attributes": ["X"]
+        }
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(self.data_type._id), json.dumps(lookup_table), method="PUT")
+        data_type = FixtureDataType.get(self.data_type._id)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(data_type.tag, "lookup_table")
+        self.assertEqual(len(data_type.fields), 1)
+        self.assertEqual(data_type.fields[0].field_name, 'fixture_property')
+        self.assertEqual(data_type.fields[0].properties, ['lang', 'name'])
+        self.assertEqual(data_type.item_attributes, ['X'])
