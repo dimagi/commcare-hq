@@ -117,27 +117,3 @@ def get_docs(db, keys, **query_params):
         raise
     except (HTTPError, JSONDecodeError) as e:
         raise BulkFetchException(e)
-
-
-def wrapped_docs(cls, keys):
-    docs = get_docs(cls.get_db(), keys)
-    for doc in docs:
-        yield cls.wrap(doc)
-
-
-def soft_delete_docs(all_docs, cls, doc_type=None):
-    """
-    Adds the '-Deleted' suffix to all the docs passed in.
-    docs - the docs to soft delete, should be dictionary (json) and not objects
-    cls - the class of the docs
-    doc_type - doc type of the docs, defaults to cls.__name__
-    """
-    doc_type = doc_type or cls.__name__
-    for docs in chunked(all_docs, 50):
-        docs_to_save = []
-        for doc in docs:
-            if doc.get('doc_type', '') != doc_type:
-                continue
-            doc['doc_type'] += DELETED_SUFFIX
-            docs_to_save.append(doc)
-        cls.get_db().bulk_save(docs_to_save)
