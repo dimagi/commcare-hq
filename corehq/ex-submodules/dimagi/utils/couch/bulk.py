@@ -17,6 +17,16 @@ class BulkFetchException(Exception):
 
 class CouchTransaction(object):
     """
+    Do not use this class. There is no such thing as a transaction in CouchDB.
+    This class can fail during delete, leaving only some rows deleted.
+    This class can fail after delete and before saves, leaving everything deleted.
+    This class can fail during save, leaving some rows saved, some not.
+    This class can fail after save but before post commit actions, leaving your code in an uncertain state.
+    There is no cleanup behavior here other than throwing an exception in any of these.
+    The exception does not give you enough information to recover.
+
+    https://docs.couchdb.org/en/stable/api/database/bulk-api.html?highlight=_bulk_docs#api-db-bulk-docs-semantics
+
     Helper for saving up a bunch of saves and deletes of couch docs
     and then committing them all at once with a few bulk operations
 
