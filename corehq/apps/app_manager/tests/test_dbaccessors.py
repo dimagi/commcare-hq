@@ -9,7 +9,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_apps_in_domain,
     get_brief_apps_in_domain,
-    get_build_doc_by_version,
+    get_build_by_version,
     get_built_app_ids_for_app_id,
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
@@ -265,7 +265,7 @@ class TestAppGetters(TestCase):
         self.assertEqual(app_doc['version'], 3)
 
     def test_get_specific_version(self):
-        app_doc = get_build_doc_by_version(self.domain, self.app_id, version=2)
+        app_doc = get_build_by_version(self.domain, self.app_id, version=2)
         self.assertEqual(app_doc['version'], 2)
 
     def test_get_apps_by_id(self):
