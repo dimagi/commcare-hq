@@ -195,6 +195,12 @@ class CCZHostingView(DomainViewMixin, TemplateView):
             for file_name, blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(self.domain, {}).items()
         }
 
+    def _get_supporting_docs(self):
+        return {
+            file_name: reverse('ccz_hosting_download_supporting_files', args=[self.domain, blob_id])
+            for file_name, blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_DOCS.get(self.domain, {}).items()
+        }
+
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
@@ -202,6 +208,7 @@ class CCZHostingView(DomainViewMixin, TemplateView):
             'ccz_hostings': [h.to_json(app_names) for h in CCZHosting.objects.filter(link=self.ccz_hosting_link)],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_files': self._get_supporting_files(),
+            'supporting_docs': self._get_supporting_docs(),
         }
 
 

@@ -17,6 +17,15 @@
         .underlined {
             text-decoration: underline;
         }
+        #supporting-doc-row {
+            margin-top:60px;
+        }
+        #footer {
+            margin-top:20px;
+        }
+        .mb-40 {
+            margin-bottom:40px;
+        }
     </style>
   </head>
   <body>
@@ -24,33 +33,50 @@
         <div class="row">
             <div class="col-sm-1"></div>
             <div class="col-sm-9">
-                <h3 class="text-center underlined">
+                <h3 class="text-center underlined mb-40">
                     <strong>{{ page_title }}</strong>
                 </h3>
                 {% if ccz_hostings %}
-                    <p class="file-titles font-weight-bold underlined">
-                        CCZ Files
-                    </p>
-                    {% for ccz_hosting in ccz_hostings %}
-                    <p>
-                        <a href="{{ ccz_hosting.ccz_details.download_url }}">{{ ccz_hosting.ccz_details.name }}</a>
-                    </p>
-                    {% endfor %}
+                    <div class="mb-40">
+                        <p class="file-titles font-weight-bold underlined">
+                            CCZ Files
+                        </p>
+                        {% for ccz_hosting in ccz_hostings %}
+                        <p>
+                            <a href="{{ ccz_hosting.ccz_details.download_url }}">{{ ccz_hosting.ccz_details.name }}</a>
+                        </p>
+                        {% endfor %}
+                    </div>
                 {% endif %}
                 {% if supporting_files %}
-                    <p class="file-titles font-weight-bold underlined">
-                        Supporting Files
-                    </p>
-                    {% for name, download_url in supporting_files.items %}
-                    <p>
-                        <a href="{{ download_url }}">{{ name }}</a>
-                    </p>
-                    {% endfor %}
+                    <div class="mb-40">
+                        <p class="file-titles font-weight-bold underlined">
+                            Supporting Files
+                        </p>
+                        {% for name, download_url in supporting_files.items %}
+                        <p>
+                            <a href="{{ download_url }}">{{ name }}</a>
+                        </p>
+                        {% endfor %}
+                    </div>
                 {% endif %}
             </div>
         </div>
-        <br/><br/>
-        <div class="row">
+        {% if supporting_docs %}
+            <div class="row" id="supporting-doc-row">
+                <div class="col-sm-1"></div>
+                <div class="col-sm-9 text-center">
+                    <ul class="list-inline">
+                    {% for name, download_url in supporting_docs.items %}
+                        <li class="list-inline-item">
+                            <a href="{{ download_url }}">{{ name }}</a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+        <div class="row" id="footer">
             <div class="col-sm-1"></div>
             <div class="col-sm-9">
                 {% if icds_env %}

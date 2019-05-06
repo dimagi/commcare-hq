@@ -899,6 +899,7 @@ CCZ_FILE_HOSTING_SUPPORTING_FILES = {
     # domain: { 'file name in listing': 'blob id' }
     # 'mkangia-domain': {'Terms of Service / Licensing': '01c3f9ced57f477ea1c826e48bca7eed'}
 }
+CCZ_FILE_HOSTING_SUPPORTING_DOCS = {}
 
 try:
     # try to see if there's an environmental variable set for local_settings
