@@ -68,8 +68,22 @@ class ManageCCZHostingLink(BaseDomainView):
             'domain': self.domain,
         }
 
+    def delete(self):
+        link_id = self.kwargs.get('link_id')
+        if link_id:
+            try:
+                ccz_hosting_link = CCZHostingLink.objects.get(pk=link_id)
+            except CCZHostingLink.DoesNotExist:
+                pass
+            else:
+                ccz_hosting_link.delete()
+                messages.success(self.request, _("Successfully removed link and all associated ccz hosting."))
+
     @method_decorator(login_and_domain_required)
     def post(self, request, *args, **kwargs):
+        if self.request.POST.get('delete'):
+            self.delete()
+            return redirect(ManageCCZHostingLink.urlname, domain=self.domain)
         if self.form.is_valid():
             self.form.save()
             return redirect(ManageCCZHostingLink.urlname, domain=self.domain)
