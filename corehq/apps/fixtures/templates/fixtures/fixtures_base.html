@@ -5,30 +5,30 @@
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
 
 {% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+  <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+    <li>
+      <a href="{% url 'data_interfaces_default' domain %}"><strong>{% trans "Data" %}</strong></a>
+    </li>
+    <li>
+      <a href="{{ report.url_root }}">{% trans report.section_name|default:"Lookup Tables" %}</a>
+    </li>
+    {% if report.breadcrumbs %}
+      {% for crumb in report.breadcrumbs %}
         <li>
-            <a href="{% url 'data_interfaces_default' domain %}"><strong>{% trans "Data" %}</strong></a>
+          <a href="{{ crumb.link }}">{{ crumb.title }}</a>
         </li>
-        <li>
-            <a href="{{ report.url_root }}">{% trans report.section_name|default:"Lookup Tables" %}</a>
-        </li>
-        {% if report.breadcrumbs %}
-            {% for crumb in report.breadcrumbs %}
-                <li>
-                    <a href="{{ crumb.link }}">{{ crumb.title }}</a>
-                </li>
-            {% endfor %}
-        {% endif %}
-        <li class="active">
-            {% trans report.title|safe %}
-        </li>
-    </ol>
+      {% endfor %}
+    {% endif %}
+    <li class="active">
+      {% trans report.title|safe %}
+    </li>
+  </ol>
 {% endblock %}
 
 {% block page_content %}
-    <div id="report-content">
+  <div id="report-content">
     {% block reportcontent %}
     {% endblock %}
-    </div>
+  </div>
 {% endblock %}
 

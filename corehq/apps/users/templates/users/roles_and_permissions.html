@@ -5,258 +5,258 @@
 
 {% requirejs_main 'users/js/roles_and_permissions' %}
 {% block page_content %}
-    {% registerurl "post_user_role" domain %}
-    {% registerurl "delete_user_role" domain %}
-    {% initial_page_data "user_roles" user_roles %}
-    {% initial_page_data "can_edit_roles" can_edit_roles %}
-    {% initial_page_data "default_role" default_role %}
-    {% initial_page_data "report_list" report_list %}
-    {% initial_page_data "web_apps_list" web_apps_list %}
-    {% initial_page_data "apps_list" apps_list %}
-    {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
-    {% initial_page_data "is_location_safety_exempt" is_location_safety_exempt %}
-    {% initial_page_data "landing_page_choices" landing_page_choices %}
+  {% registerurl "post_user_role" domain %}
+  {% registerurl "delete_user_role" domain %}
+  {% initial_page_data "user_roles" user_roles %}
+  {% initial_page_data "can_edit_roles" can_edit_roles %}
+  {% initial_page_data "default_role" default_role %}
+  {% initial_page_data "report_list" report_list %}
+  {% initial_page_data "web_apps_list" web_apps_list %}
+  {% initial_page_data "apps_list" apps_list %}
+  {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
+  {% initial_page_data "is_location_safety_exempt" is_location_safety_exempt %}
+  {% initial_page_data "landing_page_choices" landing_page_choices %}
 
-    <p class="lead">
-      {% if can_edit_roles %}
-        {% blocktrans %}
-            Manage roles and permissions or add new custom roles.
-        {% endblocktrans %}
-      {% else %}
-        {% blocktrans %}
-            View roles and permissions.
-        {% endblocktrans %}
-      {% endif %}
-    </p>
-
-    <p>
-      <i class="fa fa-info-circle"></i>
+  <p class="lead">
+    {% if can_edit_roles %}
       {% blocktrans %}
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
-           target="_blank">Learn more</a> about how roles &amp; permissions are used.
+        Manage roles and permissions or add new custom roles.
       {% endblocktrans %}
-    </p>
-
-    {% if not can_edit_roles and is_domain_admin %}
-        {% url "domain_select_plan" domain as subscription_url %}
-        <div class="alert alert-info">
-            <p>
-                <i class="fa fa-info-circle"></i>
-                {% blocktrans %}
-                    Would you like to edit roles and add new,
-                    custom roles?
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% blocktrans %}
-                    <strong><a href="{{ subscription_url }}">Upgrade to CommCare Standard</a></strong>
-                    to activate
-                    <strong>Advanced Role-Based Access</strong>.
-                {% endblocktrans %}
-            </p>
-        </div>
+    {% else %}
+      {% blocktrans %}
+        View roles and permissions.
+      {% endblocktrans %}
     {% endif %}
+  </p>
 
-    <div class="panel panel-default ko-template" id="user-roles-table">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {% trans 'Roles' %}
-            </h3>
-        </div>
-        <div class="panel-body">
-            <table class="table table-striped table-responsive">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th class="text-center">
-                          {% trans "Web Users" %}
-                        </th>
-                        <th class="text-center">
-                          {% trans "Mobile Workers" %}
-                        </th>
-                        <th class="text-center">
-                          {% trans "Groups" %}
-                        </th>
-                        <th class="text-center">
-                          {% trans "Locations" %}
-                        </th>
-                        <th class="text-center">
-                          {% trans "Data" %}
-                        </th>
-                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                            <th class="text-center">
-                              {% trans "Shared Exports" %}
-                            </th>
-                        {% endif %}
-                        <th class="text-center">
-                          {% trans "Apps" %}
-                        </th>
-                        {% if show_integration %}
-                        <th class="text-center">
-                          {% trans "Integration" %}
-                        </th>
-                        {% endif %}
-                        <th class="text-center">
-                          {% trans "Reports" %}
-                        </th>
-                        <th class="text-center">
-                          {% trans "Subscription Info" %}
-                        </th>
-                        <th>{% trans "Actions" %}</th>
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: userRoles">
-                    <tr>
-                        <th>
-                            <span data-bind="visible: name, text: name"></span>
-                            <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
-                        </th>
-                        <td class="text-center">
-                            <div data-bind="visible: permissions.access_all_locations || $root.isLocationSafetyExempt,
+  <p>
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+      <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+         target="_blank">Learn more</a> about how roles &amp; permissions are used.
+    {% endblocktrans %}
+  </p>
+
+  {% if not can_edit_roles and is_domain_admin %}
+    {% url "domain_select_plan" domain as subscription_url %}
+    <div class="alert alert-info">
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          Would you like to edit roles and add new,
+          custom roles?
+        {% endblocktrans %}
+      </p>
+      <p>
+        {% blocktrans %}
+          <strong><a href="{{ subscription_url }}">Upgrade to CommCare Standard</a></strong>
+          to activate
+          <strong>Advanced Role-Based Access</strong>.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% endif %}
+
+  <div class="panel panel-default ko-template" id="user-roles-table">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        {% trans 'Roles' %}
+      </h3>
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped table-responsive">
+        <thead>
+        <tr>
+          <th></th>
+          <th class="text-center">
+            {% trans "Web Users" %}
+          </th>
+          <th class="text-center">
+            {% trans "Mobile Workers" %}
+          </th>
+          <th class="text-center">
+            {% trans "Groups" %}
+          </th>
+          <th class="text-center">
+            {% trans "Locations" %}
+          </th>
+          <th class="text-center">
+            {% trans "Data" %}
+          </th>
+          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            <th class="text-center">
+              {% trans "Shared Exports" %}
+            </th>
+          {% endif %}
+          <th class="text-center">
+            {% trans "Apps" %}
+          </th>
+          {% if show_integration %}
+            <th class="text-center">
+              {% trans "Integration" %}
+            </th>
+          {% endif %}
+          <th class="text-center">
+            {% trans "Reports" %}
+          </th>
+          <th class="text-center">
+            {% trans "Subscription Info" %}
+          </th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+        </thead>
+        <tbody data-bind="foreach: userRoles">
+        <tr>
+          <th>
+            <span data-bind="visible: name, text: name"></span>
+            <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+          </th>
+          <td class="text-center">
+            <div data-bind="visible: permissions.access_all_locations || $root.isLocationSafetyExempt,
                                             permissionIcon: {
                                               edit: permissions.edit_web_users,
                                               view: permissions.view_web_users
                                             }"></div>
-                        </td>
-                        <td class="text-center">
-                            <div data-bind="permissionIcon: {
+          </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
                                               edit: permissions.edit_commcare_users,
                                               view: permissions.view_commcare_users
                                             }"></div>
-                        </td>
-                        <td class="text-center">
-                            <div data-bind="visible: permissions.access_all_locations,
+          </td>
+          <td class="text-center">
+            <div data-bind="visible: permissions.access_all_locations,
                                             permissionIcon: {
                                               edit: permissions.edit_groups,
                                               view: permissions.view_groups
                                             }"></div>
-                        </td>
-                        <td class="text-center">
-                            <div data-bind="permissionIcon: {
+          </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
                                               edit: permissions.edit_locations,
                                               view: permissions.view_locations
                                             }"></div>
-                        </td>
-                        <td class="text-center">
-                            <div data-bind="permissionIcon: {
+          </td>
+          <td class="text-center">
+            <div data-bind="permissionIcon: {
                                               edit: permissions.edit_data
                                             }"></div>
-                        </td>
-                        {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
-                            <td class="text-center">
-                                <div data-bind="permissionIcon: {
+          </td>
+          {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            <td class="text-center">
+              <div data-bind="permissionIcon: {
                                                 edit: permissions.edit_shared_exports
                                               }"></div>
-                            </td>
-                        {% endif %}
-                        <td class="text-center">
-                            <div data-bind="visible: permissions.access_all_locations,
+            </td>
+          {% endif %}
+          <td class="text-center">
+            <div data-bind="visible: permissions.access_all_locations,
                                             permissionIcon: {
                                               edit: permissions.edit_apps
                                             }"></div>
-                        </td>
-                        {% if show_integration %}
-                            <td class="text-center">
-                                <div data-bind="permissionIcon: {
+          </td>
+          {% if show_integration %}
+            <td class="text-center">
+              <div data-bind="permissionIcon: {
                                                   manage: permissions.edit_motech
                                                 }"></div>
-                            </td>
-                        {% endif %}
-                        <td class="text-center">
-                            <div data-bind="visible: reportPermissions.all(),
+            </td>
+          {% endif %}
+          <td class="text-center">
+            <div data-bind="visible: reportPermissions.all(),
                                             permissionIcon: {
                                                 manage: true
                                             }"></div>
-                            <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
-                                <strong>{% trans "Only" %}</strong><br/>
-                                <span data-bind="foreach: reportPermissions.specific">
+            <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
+              <strong>{% trans "Only" %}</strong><br/>
+              <span data-bind="foreach: reportPermissions.specific">
                                     <span class="label label-default" data-bind="html: name, visible: value"></span><br data-bind="visible: value" />
                                 </span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <div data-bind="visible: permissions.access_all_locations,
+            </div>
+          </td>
+          <td class="text-center">
+            <div data-bind="visible: permissions.access_all_locations,
                                             permissionIcon: {
                                               manage: permissions.edit_billing
                                             }"></div>
-                        </td>
-                        <td>
-                            <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
+          </td>
+          <td>
+            <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
                                 <span data-bind="visible: !$root.allowEdit">
                                     {% trans "View Details" %}
                                 </span>
-                                <span data-bind="visible: $root.allowEdit">
+              <span data-bind="visible: $root.allowEdit">
                                     <i class="fa fa-edit"></i>
                                     {% trans "Edit Role" %}
                                 </span>
-                            </button>
-                            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned && $root.allowEdit, click: $data._id ? $root.setRoleBeingDeleted : null">
-                                <i class="fa fa-trash"></i>
-                                {% trans "Delete Role" %}
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            {% if can_edit_roles %}
-                <button class="btn btn-default"
-                        data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">
-                    <i class="fa fa-plus"></i>
-                    {% trans "Add Role" %}
+            </button>
+            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned && $root.allowEdit, click: $data._id ? $root.setRoleBeingDeleted : null">
+              <i class="fa fa-trash"></i>
+              {% trans "Delete Role" %}
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      {% if can_edit_roles %}
+        <button class="btn btn-default"
+                data-bind="click: function () {$root.setRoleBeingEdited($root.defaultRole)}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Role" %}
+        </button>
+        <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
+          <div data-bind="with: roleBeingDeleted"
+               class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button"
+                        class="close"
+                        data-bind="click: $root.unsetRoleBeingDeleted">
+                  <span aria-hidden="true">&times;</span>
+                  <span class="sr-only">{% trans "Close" %}</span>
                 </button>
-                <div data-bind="modal: roleBeingDeleted" tabindex="-1" role="dialog">
-                    <div data-bind="with: roleBeingDeleted"
-                         class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button"
-                                        class="close"
-                                        data-bind="click: $root.unsetRoleBeingDeleted">
-                                    <span aria-hidden="true">&times;</span>
-                                    <span class="sr-only">{% trans "Close" %}</span>
-                                </button>
-                                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
-                            </div>
-                            <div class="modal-body">
-                                <h4 data-bind="text: modalConfirmation"></h4>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button"
-                                        class="btn btn-default"
-                                        data-bind="click: $root.unsetRoleBeingDeleted">
-                                    {% trans "Cancel" %}
-                                </button>
-                                <div data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-          {% endif %}
-          {% include 'users/partials/edit_role_modal.html' %}
+                <h4 class="modal-title" data-bind="text: modalTitle"></h4>
+              </div>
+              <div class="modal-body">
+                <h4 data-bind="text: modalConfirmation"></h4>
+              </div>
+              <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-default"
+                        data-bind="click: $root.unsetRoleBeingDeleted">
+                  {% trans "Cancel" %}
+                </button>
+                <div data-bind="deleteButton: $root.modalDeleteButton.state, saveOptions: $root.modalDeleteButton.saveOptions"></div>
+              </div>
+            </div>
+          </div>
         </div>
+      {% endif %}
+      {% include 'users/partials/edit_role_modal.html' %}
     </div>
+  </div>
 
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-<div id="modal-deletion" class="modal fade">
+  <div id="modal-deletion" class="modal fade">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button"
-                        class="close"
-                        data-bind="click: $root.unsetRoleBeingDeleted">
-                    <span aria-hidden="true">&times;</span>
-                    <span class="sr-only">{% trans "Close" %}</span>
-                </button>
-                <h4 class="modal-title"></h4>
-            </div>
-            <div class="modal-body"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button"
+                  class="close"
+                  data-bind="click: $root.unsetRoleBeingDeleted">
+            <span aria-hidden="true">&times;</span>
+            <span class="sr-only">{% trans "Close" %}</span>
+          </button>
+          <h4 class="modal-title"></h4>
         </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+          <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

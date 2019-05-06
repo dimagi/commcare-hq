@@ -2,25 +2,25 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    {% if errors_only %}
-        <div class="checkbox">
-            <label for="{{ errors_css_id }}">
-                <input type="checkbox"
-                    id="{{ errors_css_id }}"
-                    value="True"
-                    name="{{ errors_only_slug }}"
-                    checked="checked" /> Showing Errors Only
-            </label>
-        </div>
-    {% endif %}
-    <select multiple="multiple"
-            style="height:300px;{% if errors_only %} margin-top: 10px;{% endif %}"
-            class="form-control{% if errors_only %} hide{% endif %} report-filter-logtag"
-            {% if not errors_only %}name="{{ slug }}"{% endif %}
-            data-default-on='{{ default_on|JSON }}'
-            data-errors-only='{{ errors_only|JSON }}'>
-        {% for tag in logtags %}
-            <option{% if tag.show %} selected="selected"{% endif %}>{{ tag.name }}</option>
-        {% endfor %}
-    </select>
+  {% if errors_only %}
+    <div class="checkbox">
+      <label for="{{ errors_css_id }}">
+        <input type="checkbox"
+               id="{{ errors_css_id }}"
+               value="True"
+               name="{{ errors_only_slug }}"
+               checked="checked" /> Showing Errors Only
+      </label>
+    </div>
+  {% endif %}
+  <select multiple="multiple"
+          style="height:300px;{% if errors_only %} margin-top: 10px;{% endif %}"
+          class="form-control{% if errors_only %} hide{% endif %} report-filter-logtag"
+          {% if not errors_only %}name="{{ slug }}"{% endif %}
+          data-default-on='{{ default_on|JSON }}'
+          data-errors-only='{{ errors_only|JSON }}'>
+    {% for tag in logtags %}
+      <option{% if tag.show %} selected="selected"{% endif %}>{{ tag.name }}</option>
+    {% endfor %}
+  </select>
 {% endblock %}
