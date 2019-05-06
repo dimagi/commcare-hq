@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from collections import OrderedDict
+import json
 
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -9,21 +9,18 @@ from django.urls import reverse
 from mock import patch
 
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
-PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
+class TestServiceDocument(TestCase, OdataTestMixin):
 
-class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
-
-    view_urlname = 'odata_meta'
+    view_urlname = 'odata_service'
 
     @classmethod
     def setUpClass(cls):
-        super(TestMetadataDocument, cls).setUpClass()
+        super(TestServiceDocument, cls).setUpClass()
         cls.client = Client()
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
@@ -33,7 +30,7 @@ class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.web_user.delete()
-        super(TestMetadataDocument, cls).tearDownClass()
+        super(TestServiceDocument, cls).tearDownClass()
 
     def test_no_credentials(self):
         response = self.client.get(self.view_url)
@@ -63,27 +60,30 @@ class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
     @flag_enabled('ODATA')
     def test_no_case_types(self):
         correct_credentials = self._get_correct_credentials()
-        with patch('corehq.apps.api.odata.views.get_case_type_to_properties', return_value={}):
+        with patch('corehq.apps.api.odata.views.get_case_types_for_domain_es', return_value=set()):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
-        self.assertXmlEqual(
-            response.content,
-            self.get_xml('empty_metadata_document', override_path=PATH_TO_TEST_DATA)
+        self.assertEqual(
+            json.loads(response.content.decode('utf-8')),
+            {"@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata", "value": []}
         )
 
     @flag_enabled('ODATA')
-    def test_populated_metadata_document(self):
+    def test_with_case_types(self):
         correct_credentials = self._get_correct_credentials()
         with patch(
-            'corehq.apps.api.odata.views.get_case_type_to_properties',
-            return_value=OrderedDict([
-                ('case_type_with_no_case_properties', []),
-                ('case_type_with_case_properties', ['property_1', 'property_2']),
-            ])
+            'corehq.apps.api.odata.views.get_case_types_for_domain_es',
+            return_value=['case_type_1', 'case_type_2'],  # return ordered iterable for deterministic test
         ):
             response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 200)
-        self.assertXmlEqual(
-            response.content,
-            self.get_xml('populated_metadata_document', override_path=PATH_TO_TEST_DATA)
+        self.assertEqual(
+            json.loads(response.content.decode('utf-8')),
+            {
+                "@odata.context": "http://localhost:8000/a/test_domain/api/v0.5/odata/Cases/$metadata",
+                "value": [
+                    {'kind': 'EntitySet', 'name': 'case_type_1', 'url': 'case_type_1'},
+                    {'kind': 'EntitySet', 'name': 'case_type_2', 'url': 'case_type_2'},
+                ],
+            }
         )
