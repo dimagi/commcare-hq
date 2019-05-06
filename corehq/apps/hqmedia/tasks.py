@@ -220,9 +220,11 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
 
 def _find_missing_locale_ids_in_ccz(file_cache):
-    for file_path in ('default/app_strings.txt', 'suite.xml'):
-        if file_path not in file_cache:
-            return [_("Could not find {file_path} in CCZ").format(file_path)]
+    errors = [
+        _("Could not find {file_path} in CCZ").format(file_path)
+        for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
+    if errors:
+        return errors
 
     # Each line of an app_strings.txt file is of the format "name.of.key=value of key"
     # decode is necessary because Application._make_language_files calls .encode('utf-8')
