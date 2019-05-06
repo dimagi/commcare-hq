@@ -97,5 +97,5 @@ class TestLookupTableResource(APIResourceTest):
         self.addCleanup(data_type.delete)
         self.assertEqual(data_type.tag, "table_name")
         self.assertEqual(len(data_type.fields), 1)
-        self.assertEqual(data_type.fields[0]['fieldname'], 'fieldA')
-        self.assertEqual(data_type.fields[0]['properties'], ['property1', 'property2'])
+        self.assertEqual(data_type.fields[0].field_name, 'fieldA')
+        self.assertEqual(data_type.fields[0].properties, ['property1', 'property2'])
