@@ -34,7 +34,7 @@ from django.db import transaction
 class BaseModifySubscriptionHandler(object):
 
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
-        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain)
+        self.domain = domain if isinstance(domain, Domain) else Domain.get_by_name(domain, strict=True)
         if self.domain is None:
             # This fails down the line anyway
             # and failing now gives a much better traceback
