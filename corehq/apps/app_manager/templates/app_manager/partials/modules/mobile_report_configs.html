@@ -2,151 +2,151 @@
 {% load i18n %}
 
 {% block stylesheets %}
-<style type="text/css">
+  <style type="text/css">
     #report-list th .hq-help {
-        line-height: 13px;
+      line-height: 13px;
     }
-</style>
+  </style>
 {% endblock %}
 
 <ul class="nav nav-tabs sticky-tabs">
-    <li><a href="#settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-    <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
+  <li><a href="#settings" data-toggle="tab">{% trans "Settings" %}</a></li>
+  <li><a href="#reports" data-toggle="tab">{% trans "Reports" %}</a></li>
 </ul>
 
 <div class="spacer"></div>
 
 <div class="save-button-holder clearfix">
-    <div data-bind="saveButton: saveButton" id="save-button"></div>
+  <div data-bind="saveButton: saveButton" id="save-button"></div>
 </div>
 
 <div class="tab-content">
-    <div class="tab-pane" id="settings">
-        <div class="form-horizontal">
-            <fieldset>
-                <div class="panel panel-appmanager">
-                    <div class="panel-body">
-                        {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
-                            <div class="form-group">
-                                <label class="{% css_label_class %} control-label">
-                                    {% trans "Name Mapping" %}
-                                </label>
-                                <div class="{% css_field_class %}" id="name-enum-mapping"></div>
-                            </div>
-                        {% endif %}
-                        {% include "app_manager/partials/modules/module_filter.html" with ko_value="currentModuleFilter" %}
-                        {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
-                    </div>
-                </div>
-            </fieldset>
+  <div class="tab-pane" id="settings">
+    <div class="form-horizontal">
+      <fieldset>
+        <div class="panel panel-appmanager">
+          <div class="panel-body">
+            {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
+              <div class="form-group">
+                <label class="{% css_label_class %} control-label">
+                  {% trans "Name Mapping" %}
+                </label>
+                <div class="{% css_field_class %}" id="name-enum-mapping"></div>
+              </div>
+            {% endif %}
+            {% include "app_manager/partials/modules/module_filter.html" with ko_value="currentModuleFilter" %}
+            {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+          </div>
         </div>
+      </fieldset>
     </div>
+  </div>
 
-    <div class="tab-pane" id="reports">
-        <fieldset>
-            <table class="table" id="report-list">
-                <thead>
-                    <tr class="row">
-                        <th></th>
-                        <th>{% trans "Report" %}</th>
-                        <th>{% trans "Display Text" %}</th>
-                        <th>{% trans "Description" %}</th>
-                        <th data-bind="visible: $root.supportSyncDelay">
-                            {% trans "Sync Delay (in hours)" %}
-                            <span class="hq-help-template"
-                                data-title="Sync Delay"
-                                data-content="Hours to delay before sending new report data to mobile devices. Final value is MAX(domain delay, report delay)."
-                                data-placement="left"
-                            ></span>
-                        </th>
+  <div class="tab-pane" id="reports">
+    <fieldset>
+      <table class="table" id="report-list">
+        <thead>
+        <tr class="row">
+          <th></th>
+          <th>{% trans "Report" %}</th>
+          <th>{% trans "Display Text" %}</th>
+          <th>{% trans "Description" %}</th>
+          <th data-bind="visible: $root.supportSyncDelay">
+            {% trans "Sync Delay (in hours)" %}
+            <span class="hq-help-template"
+                  data-title="Sync Delay"
+                  data-content="Hours to delay before sending new report data to mobile devices. Final value is MAX(domain delay, report delay)."
+                  data-placement="left"
+            ></span>
+          </th>
 
-                        <th>
-                            {% trans "Data Table" %}
-                            <span class="hq-help-template"
-                                data-title="Data Table"
-                                data-content="If checked, the phone will show a tab with a summary table containing the data for this report."
-                                data-placement="left"
-                            ></span>
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody data-bind="sortable: { data: reports, as: 'report' }">
-                    <tr class="row"
-                        data-bind="attr: {'data-order': _sortableOrder}">
-                        <td>
-                            <i class="grip sortable-handle fa fa-arrows-v"></i>
-                        </td>
-                        <td>
-                            <select class="form-control"
-                                    data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
-                            </select>
-                            <a href="#" data-bind="click: toggleCodes">
-                                <i class="fa fa-exclamation-circle"></i>
-                                <span data-bind="visible: !showCodes()">{% trans "Display codes" %}</span>
-                                <span data-bind="visible: showCodes">{% trans "Hide codes" %}</span>
-                            </a>
-                            <div data-bind="visible: showCodes">
-                                <label>{% trans "UUID:" %}</label>
-                                <span data-bind="text: uuid"></span>
-                                <div class="form-inline"
-                                     data-bind="css: { 'has-error': $root.validateSlug(instanceId()) },
+          <th>
+            {% trans "Data Table" %}
+            <span class="hq-help-template"
+                  data-title="Data Table"
+                  data-content="If checked, the phone will show a tab with a summary table containing the data for this report."
+                  data-placement="left"
+            ></span>
+          </th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody data-bind="sortable: { data: reports, as: 'report' }">
+        <tr class="row"
+            data-bind="attr: {'data-order': _sortableOrder}">
+          <td>
+            <i class="grip sortable-handle fa fa-arrows-v"></i>
+          </td>
+          <td>
+            <select class="form-control"
+                    data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
+            </select>
+            <a href="#" data-bind="click: toggleCodes">
+              <i class="fa fa-exclamation-circle"></i>
+              <span data-bind="visible: !showCodes()">{% trans "Display codes" %}</span>
+              <span data-bind="visible: showCodes">{% trans "Hide codes" %}</span>
+            </a>
+            <div data-bind="visible: showCodes">
+              <label>{% trans "UUID:" %}</label>
+              <span data-bind="text: uuid"></span>
+              <div class="form-inline"
+                   data-bind="css: { 'has-error': $root.validateSlug(instanceId()) },
                                                 visible: $root.supportCustomUcrSlug">
-                                    <label>{% trans "Custom alias:" %}</label>
-                                    <input type="text" class="form-control" data-bind="value: instanceId">
-                                    <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
-                                </div>
-                            </div>
-                            {% include 'app_manager/partials/modules/filter_configs.html' %}
-                            {% include 'app_manager/partials/modules/graph_configs.html' %}
-                        </td>
-                        <td data-bind="css: { 'has-error': validateDisplay }">
-                            <input type="text" class="form-control" data-bind="value: display">
-                            <p class="help-block" data-bind="text: validateDisplay"></p>
-                        </td>
-                        <td>
-                            <input type="text" class="form-control"
-                                   data-bind="value: xpathDescription, visible: useXpathDescription">
-                            <input type="text" class="form-control"
-                                   data-bind="value: localizedDescription, visible: !useXpathDescription()">
-                            <label>
-                                <input type="checkbox" data-bind="checked: useXpathDescription">
-                                {% trans "Use xpath expression" %}
-                            </label>
-                            <div data-bind="visible: useXpathDescription" class="help-block">
-                                <p>
-                                    <i class="fa fa-warning"></i>
-                                    {% trans "Must be a valid xpath expression." %}
-                                </p>
-                                <p>
-                                    <i class="fa fa-warning"></i>
-                                    {% trans "Not localizable." %}
-                                </p>
-                            </div>
-                        </td>
-                        <td data-bind="visible: $root.supportSyncDelay">
-                            <input type="number" class="form-control" data-bind="value: syncDelay">
-                            <p data-bind="visible: $root.globalSyncDelay > 0">
-                                {% trans "Domain sync delay set to: " %}<span data-bind="text: $root.globalSyncDelay"></span>{% trans " hours." %}
-                            </p>
-                        </td>
-                        <td>
-                            <label>
-                                <input type="checkbox" data-bind="checked: showDataTable">
-                            </label>
-                        </td>
-                        <td>
-                            <i title="{% trans 'Delete' %}" style="cursor: pointer;"
-                               class="fa fa-remove" data-bind="click: $root.removeReport"></i>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <button class="btn btn-default" data-bind="click: addReport" id="add-report-btn">
-                <i class="fa fa-plus"></i>
-                {% trans "Add Report" %}
-            </button>
-        </fieldset>
-    </div>
+                <label>{% trans "Custom alias:" %}</label>
+                <input type="text" class="form-control" data-bind="value: instanceId">
+                <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
+              </div>
+            </div>
+            {% include 'app_manager/partials/modules/filter_configs.html' %}
+            {% include 'app_manager/partials/modules/graph_configs.html' %}
+          </td>
+          <td data-bind="css: { 'has-error': validateDisplay }">
+            <input type="text" class="form-control" data-bind="value: display">
+            <p class="help-block" data-bind="text: validateDisplay"></p>
+          </td>
+          <td>
+            <input type="text" class="form-control"
+                   data-bind="value: xpathDescription, visible: useXpathDescription">
+            <input type="text" class="form-control"
+                   data-bind="value: localizedDescription, visible: !useXpathDescription()">
+            <label>
+              <input type="checkbox" data-bind="checked: useXpathDescription">
+              {% trans "Use xpath expression" %}
+            </label>
+            <div data-bind="visible: useXpathDescription" class="help-block">
+              <p>
+                <i class="fa fa-warning"></i>
+                {% trans "Must be a valid xpath expression." %}
+              </p>
+              <p>
+                <i class="fa fa-warning"></i>
+                {% trans "Not localizable." %}
+              </p>
+            </div>
+          </td>
+          <td data-bind="visible: $root.supportSyncDelay">
+            <input type="number" class="form-control" data-bind="value: syncDelay">
+            <p data-bind="visible: $root.globalSyncDelay > 0">
+              {% trans "Domain sync delay set to: " %}<span data-bind="text: $root.globalSyncDelay"></span>{% trans " hours." %}
+            </p>
+          </td>
+          <td>
+            <label>
+              <input type="checkbox" data-bind="checked: showDataTable">
+            </label>
+          </td>
+          <td>
+            <i title="{% trans 'Delete' %}" style="cursor: pointer;"
+               class="fa fa-remove" data-bind="click: $root.removeReport"></i>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <button class="btn btn-default" data-bind="click: addReport" id="add-report-btn">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Report" %}
+      </button>
+    </fieldset>
+  </div>
 
 </div>

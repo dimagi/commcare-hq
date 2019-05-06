@@ -2,12 +2,12 @@
 {% load i18n %}
 
 {% block report_filter_actions %}
-    <div id="savedReports" class="{{ report_filter_form_action_css_class }}">
-        <button id="apply-filters" type="submit"
-                class="filters btn disabled"
-                data-loading-text="{% trans 'Generating Report...' %}"
-                data-standard-text="{% trans 'Apply' %}">
-            {% trans 'Apply' %}
-        </button>
-    </div>
+  <div id="savedReports" class="{{ report_filter_form_action_css_class }}">
+    <button id="apply-filters" type="submit"
+            class="filters btn disabled"
+            data-loading-text="{% trans 'Generating Report...' %}"
+            data-standard-text="{% trans 'Apply' %}">
+      {% trans 'Apply' %}
+    </button>
+  </div>
 {% endblock %}

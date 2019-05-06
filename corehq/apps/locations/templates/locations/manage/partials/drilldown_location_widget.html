@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 
 <select class="locations-widget-primary-v4 form-control" id="{{ css_id }}" name="{{ name }}" style="width: 30em;"
-        {% if attrs.disabled %}
-            disabled="disabled"
-        {% endif %}
+  {% if attrs.disabled %}
+        disabled="disabled"
+  {% endif %}
         data-initial="{% html_attr initial_data %}" data-css-id="{{ css_id }}" data-source-css-id="{{ source_css_id }}"></select>

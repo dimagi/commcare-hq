@@ -5,68 +5,68 @@
 
 {% block stylesheets %}
 
-{% if less_debug %}
-<link type="text/less"
-    rel="stylesheet"
-    media="all"
-    href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-<link type="text/less"
-    rel="stylesheet"
-    media="all"
-    href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
-<link type="text/less"
-    rel="stylesheet"
-    media="all"
-    href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
-{% else %}
-{% compress css %}
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-  <link type="text/less"
-        rel="stylesheet"
-        media="all"
-        href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
-{% endcompress %}
-{% endif %}
+  {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
+  {% else %}
+    {% compress css %}
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+      <link type="text/less"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+    {% endcompress %}
+  {% endif %}
 
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "reports/js/edit_submission.js" %}"></script>
+  <script src="{% static "reports/js/edit_submission.js" %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
+  {% include 'cloudcare/includes/formplayer-inline.html' %}
 {% endblock %}
 
 {% block title %}{% trans 'Edit Submission' %}{% endblock %}
 {% block page_breadcrumbs %}{{ block.super }}
-    {% include 'reports/form/partials/form_breadcrumbs.html' %}
+  {% include 'reports/form/partials/form_breadcrumbs.html' %}
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'edit_context' edit_context %}
-    {% initial_page_data 'edit_formplayer' edit_formplayer %}
-    {% initial_page_data 'maps_api_key' maps_api_key %}
-    {% initial_page_data 'use_sqlite_backend' use_sqlite_backend %}
-    {% initial_page_data 'username' username %}
+  {% initial_page_data 'edit_context' edit_context %}
+  {% initial_page_data 'edit_formplayer' edit_formplayer %}
+  {% initial_page_data 'maps_api_key' maps_api_key %}
+  {% initial_page_data 'use_sqlite_backend' use_sqlite_backend %}
+  {% initial_page_data 'username' username %}
 
-    <div class='alert alert-info'>
-        {% blocktrans %}
-            This page will be removed in May 2019. Use the "Clean Form Submission" button on the form submission page
-            to edit this form.
-        {% endblocktrans %}
-    </div>
+  <div class='alert alert-info'>
+    {% blocktrans %}
+      This page will be removed in May 2019. Use the "Clean Form Submission" button on the form submission page
+      to edit this form.
+    {% endblocktrans %}
+  </div>
 
-    <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
-    <div id="loading" class="hq-loading" style="display: none;">
-        <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
-        {% trans "Loading" %}...
-    </div>
+  <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
+  <div id="loading" class="hq-loading" style="display: none;">
+    <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
+    {% trans "Loading" %}...
+  </div>
 {% endblock %}

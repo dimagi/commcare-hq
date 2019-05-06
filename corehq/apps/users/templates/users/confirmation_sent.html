@@ -5,18 +5,18 @@
 
 {% block content %}
   {% blocktrans %}
-  <div class="container">
-  <div class="page-header">
-    <h1>Request Access</h1>
-  </div>
+    <div class="container">
+      <div class="page-header">
+        <h1>Request Access</h1>
+      </div>
 
-  <div class="alert alert-info">
-    <p>A request has been sent to the administrators of <strong>{{ hr_name }}</strong>.</p>
-    <p>You will receive an email when the request is approved.</p>
-  </div>
+      <div class="alert alert-info">
+        <p>A request has been sent to the administrators of <strong>{{ hr_name }}</strong>.</p>
+        <p>You will receive an email when the request is approved.</p>
+      </div>
 
-  <p>In the meantime, you may explore the <a href={{ url }}>CommCare Exchange</a> to see examples of
-  projects being used today.</p>
-  </div>
+      <p>In the meantime, you may explore the <a href={{ url }}>CommCare Exchange</a> to see examples of
+        projects being used today.</p>
+    </div>
   {% endblocktrans %}
 {% endblock content %}

@@ -2,19 +2,19 @@
 {% load hq_shared_tags %}
 {% load xforms_extras %}
 <form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.unique_id %}'>
-    {% csrf_token %}
-    <fieldset>
-        <label for="other_module_id">{% trans "Module" %}: </label>
-        <select name='source_module_unique_id' class='form-control'>{% for other_mod in available_modules %}
-            <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
-        {% endfor %}</select>
-        <input name="detail_type" type="hidden" value="{{ detail_type }}" />
-        <button class='btn btn-danger' type="submit">
-            <i class="fa fa-copy"></i>
-            {% if detail_type == 'short' %}
-                {% trans "Overwrite Case List" %}
-            {% else %}
-                {% trans "Overwrite Case Detail" %}
-            {% endif %}
-    </fieldset>
+  {% csrf_token %}
+  <fieldset>
+    <label for="other_module_id">{% trans "Module" %}: </label>
+    <select name='source_module_unique_id' class='form-control'>{% for other_mod in available_modules %}
+      <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+    {% endfor %}</select>
+    <input name="detail_type" type="hidden" value="{{ detail_type }}" />
+    <button class='btn btn-danger' type="submit">
+      <i class="fa fa-copy"></i>
+      {% if detail_type == 'short' %}
+        {% trans "Overwrite Case List" %}
+      {% else %}
+        {% trans "Overwrite Case Detail" %}
+      {% endif %}
+  </fieldset>
 </form>

@@ -1,10 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <select id="{{ id }}" class="locations-widget-autocomplete-v4 form-control" name="{{ name }}" value="{{ value }}" style="width: 30em;"
-       {% if attrs.disabled %}
-          disabled="disabled"
-       {% endif %}
-       data-multiselect="{% html_attr multiselect %}"
-       data-query-url="{% html_attr query_url %}"
-       data-initial="{% html_attr initial_data %}">
+  {% if attrs.disabled %}
+        disabled="disabled"
+  {% endif %}
+        data-multiselect="{% html_attr multiselect %}"
+        data-query-url="{% html_attr query_url %}"
+        data-initial="{% html_attr initial_data %}">
 </select>
