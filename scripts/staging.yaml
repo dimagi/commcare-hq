@@ -54,6 +54,6 @@ branches:
   - nh/cdc/one_domain  # Norman March 26
   - odata-apikey  # Nick April 29
   - sr-ucr-mirror # Sravan May 1
-  - jls/locale-id-integrity-bug # Jenny May 2
+  #- jls/locale-id-integrity-bug # Jenny May 2
   #- mk/ccz-hosting-revamp # MK May 6
 submodules: {}
