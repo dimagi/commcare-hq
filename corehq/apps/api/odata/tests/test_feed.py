@@ -5,6 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
+from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -108,3 +109,17 @@ class TestOdataFeed(TestCase, OdataTestMixin):
     @staticmethod
     def _ensure_case_index_deleted():
         ensure_index_deleted(CASE_INDEX_INFO.index)
+
+
+class TestOdataFeedUsingApiKey(TestOdataFeed):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestOdataFeedUsingApiKey, cls).setUpClass()
+        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
+        cls.api_key.key = cls.api_key.generate_key()
+        cls.api_key.save()
+
+    @classmethod
+    def _get_correct_credentials(cls):
+        return TestOdataFeedUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
