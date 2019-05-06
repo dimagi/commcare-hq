@@ -174,7 +174,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             });
             setting.inheritanceMessage = ko.computed(function () {
                 if (setting.is_inherited) {
-                    return gettext("This value is inherited from the master app.");
+                    return gettext("This value is currently inherited from the master app. " +
+                        "Once this page is saved, it will no longer be inherited.");
                 }
                 return '';
             });

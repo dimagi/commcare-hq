@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.translations.app_translations.utils import (
-    get_app_translation_workbook,
     get_bulk_app_sheet_headers,
     get_form_sheet_name,
     get_menu_row,
@@ -35,7 +34,7 @@ from corehq.apps.translations.app_translations.upload_form import BulkAppTransla
 from corehq.apps.translations.app_translations.upload_module import BulkAppTranslationModuleUpdater
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME, SINGLE_SHEET_NAME
 from corehq.util.test_utils import flag_enabled
-from corehq.util.workbook_json.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONReader
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -67,7 +66,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
             f.seek(0)
-            workbook, messages = get_app_translation_workbook(f)
+            workbook = get_workbook(f)
             assert workbook, messages
             expected_headers = get_bulk_app_sheet_headers(app, lang=lang)
             messages = process_bulk_app_translation_upload(app, workbook, expected_headers, lang=lang)
@@ -181,26 +180,6 @@ class BulkAppTranslationTestBaseWithApp(BulkAppTranslationTestBase):
     def upload_raw_excel_translations(self, excel_headers, excel_data, lang=None, expected_messages=None):
         super(BulkAppTranslationTestBaseWithApp, self).upload_raw_excel_translations(self.app,
             excel_headers, excel_data, expected_messages, lang)
-
-    def do_upload(self, name, expected_messages=None):
-        """
-        Upload the bulk app translation file at file_path + upload.xlsx
-
-        Note: Use upload_raw_excel_translations() instead. It allows easy modifications
-        and diffs of xlsx data.
-
-        """
-        if not expected_messages:
-            expected_messages = ["App Translations Updated!"]
-        with io.open(self.get_path(name, "xlsx"), 'rb') as f:
-            workbook, messages = get_app_translation_workbook(f)
-            assert workbook, messages
-            expected_headers = get_bulk_app_sheet_headers(self.app)
-            messages = process_bulk_app_translation_upload(self.app, workbook, expected_headers)
-
-        self.assertListEqual(
-            [m[1] for m in messages], expected_messages
-        )
 
     def assert_question_label(self, text, module_id, form_id, language, question_path):
         """
@@ -792,7 +771,30 @@ class MismatchedItextReferenceTest(BulkAppTranslationTestBaseWithApp):
     file_path = "data", "bulk_app_translation", "mismatched_ref"
 
     def test_unchanged_upload(self):
-        self.do_upload("upload")
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
+                                            'image_en', 'image_fra', 'audio_en', 'audio_fra', 'unique_id')),
+            ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
+            ('menu1_form1', ('label', 'default_en', 'default_fra', 'image_en', 'image_fra',
+                             'audio_en', 'audio_fra', 'video_en', 'video_fra')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME,
+             (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', 'ecdcc5bb280f043a23f39eca52369abaa9e49bf9'),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'e1af3f8e947dad9862a4d7c32f5490cfff9edfda'))),
+            ('menu1',
+             (('name', 'list', 'Name', ''),
+              ('name', 'detail', 'Name', ''))),
+            ('menu1_form1',
+             (('foo-label', 'foo', 'foo', '', '', '', '', '', ''),
+              ('question1/question2-label', 'question2', 'question2', '', '', '', '', '', ''),
+              ('question1/question2-item1-label', 'item1', 'item1', '', '', '', '', '', ''),
+              ('question1/question2-item2-label', 'item2', 'item2', '', '', '', '', '', ''),
+              ('question1-label', 'question1', 'question1', '', '', '', '', '', ''),
+              ('question1/question2-label2', 'bar', 'bar', '', '', '', '', '', ''))),
+        )
+
+        self.upload_raw_excel_translations(headers, data)
         self.assert_question_label("question2", 0, 0, "en", "/data/foo/question2")
 
 
@@ -801,7 +803,27 @@ class BulkAppTranslationFormTest(BulkAppTranslationTestBaseWithApp):
     file_path = "data", "bulk_app_translation", "form_modifications"
 
     def test_removing_form_translations(self):
-        self.do_upload("modifications")
+        headers = (
+            (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'menu_or_form', 'default_en', 'default_fra',
+                                            'image_en', 'image_fra', 'audio_en', 'audio_fra', 'unique_id')),
+            ('menu1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
+            ('menu1_form1', ('label', 'default_en', 'default_fra', 'image_en', 'image_fra',
+                             'audio_en', 'audio_fra', 'video_en', 'video_fra')),
+        )
+        data = (
+            (MODULES_AND_FORMS_SHEET_NAME,
+             (('Menu', 'menu1', 'Untitled Module', '', '', '', '', '', '765f110eb62fd26240a6d8bcdccca91b246b96c9'),
+              ('Form', 'menu1_form1', 'Untitled Form', '', '', '', '', '', 'fffea2c32b7902a3efcb6b84c94e824820d11856'))),
+            ('menu1',
+             (('name', 'list', 'Name', ''),
+              ('name', 'detail', 'Name', ''))),
+            ('menu1_form1',
+             (('question1-label', '', 'french', '', 'jr://file/commcare/image/data/question1.png', '', '', '', ''),
+              ('question2-label', 'english', '', 'jr://file/commcare/image/data/question2.png', '', '', '', '', ''),
+              ('question3-label', '', '', '', '', '', '', '', ''))),
+        )
+
+        self.upload_raw_excel_translations(headers, data)
         form = self.app.get_module(0).get_form(0)
         self.assertXmlEqual(self.get_xml("expected_form"), form.render_xform())
 

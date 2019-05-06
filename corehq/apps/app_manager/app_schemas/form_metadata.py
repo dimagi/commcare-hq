@@ -1,16 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
 import six
-
-from corehq.apps.app_manager.app_schemas.app_case_metadata import (
-    AppCaseMetadata,
-    LoadSaveProperty,
-    FormQuestionResponse,
-)
-from corehq.apps.app_manager.exceptions import XFormException
-
 from jsonobject import (
     BooleanProperty,
     DictProperty,
@@ -19,6 +11,13 @@ from jsonobject import (
     ObjectProperty,
     StringProperty,
 )
+
+from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+    AppCaseMetadata,
+    FormQuestionResponse,
+    LoadSaveProperty,
+)
+from corehq.apps.app_manager.exceptions import XFormException
 
 REMOVED = 'removed'
 ADDED = 'added'
@@ -81,8 +80,7 @@ class _FormMetadataQuestion(FormQuestionResponse):
 
 
 class _FormMetadata(JsonObject):
-    id = StringProperty()
-    module_id = StringProperty()
+    unique_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     action_type = StringProperty()
@@ -93,7 +91,7 @@ class _FormMetadata(JsonObject):
 
 
 class _ModuleMetadata(JsonObject):
-    id = StringProperty()
+    unique_id = StringProperty()
     name = DictProperty()
     short_comment = StringProperty()
     module_type = StringProperty()
@@ -122,13 +120,13 @@ class _AppSummaryFormDataGenerator(object):
 
     def _compile_module(self, module):
         return _ModuleMetadata(**{
-            'id': module.unique_id,
+            'unique_id': module.unique_id,
             'name': module.name,
             'short_comment': module.short_comment,
             'module_type': module.module_type,
             'is_surveys': module.is_surveys,
             'module_filter': module.module_filter,
-            'forms': [self._compile_form(module.unique_id, form) for form in self._get_pertinent_forms(module)],
+            'forms': [self._compile_form(form) for form in self._get_pertinent_forms(module)],
         })
 
     def _get_pertinent_forms(self, module):
@@ -137,28 +135,37 @@ class _AppSummaryFormDataGenerator(object):
             return [form for form in module.get_forms() if not isinstance(form, ShadowForm)]
         return module.get_forms()
 
-    def _compile_form(self, module_id, form):
+    def _compile_form(self, form):
         form_meta = _FormMetadata(**{
-            'id': form.unique_id,
-            'module_id': module_id,
+            'unique_id': form.unique_id,
             'name': form.name,
             'short_comment': form.short_comment,
             'action_type': form.get_action_type(),
             'form_filter': form.form_filter,
         })
         try:
-            form_meta.questions = [
-                question
-                for raw_question in form.get_questions(self.app.langs, include_triggers=True,
-                                                       include_groups=True, include_translations=True)
-                for question in self._get_question(form.unique_id, raw_question)
-            ]
+            form_meta.questions = self._sort_questions_by_group(form)
         except XFormException as exception:
             form_meta.error = {
                 'details': six.text_type(exception),
             }
             self.errors.append(form_meta)
         return form_meta
+
+    def _sort_questions_by_group(self, form):
+        questions_by_path = OrderedDict(
+            (question.value, question)
+            for raw_question in form.get_questions(self.app.langs, include_triggers=True,
+                                                   include_groups=True, include_translations=True)
+            for question in self._get_question(form.unique_id, raw_question)
+        )
+        for path, question in six.iteritems(questions_by_path):
+            parent = question.group or question.repeat
+            if parent:
+                questions_by_path[parent].children.append(question)
+
+        return [question for question in six.itervalues(questions_by_path)
+                if not question.group and not question.repeat]
 
     def _get_question(self, form_unique_id, question):
         if self._needs_save_to_case_root_node(question, form_unique_id):
@@ -233,36 +240,47 @@ class _AppDiffGenerator(object):
         self._mark_retained_items()
 
     def _populate_id_caches(self):
+        def add_question_to_id_cache(id_cache, form_id, question_path, question):
+            for child in question.children:
+                add_question_to_id_cache(id_cache, form_id, child['value'], child)
+            id_cache[form_id][question_path] = question
+
         for module in self.first:
-            self._first_by_id[module['id']] = module
+            self._first_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._first_by_id[form['id']] = form
+                self._first_by_id[form['unique_id']] = form
                 for question in form['questions']:
-                    self._first_questions_by_form_id[form['id']][question['value']] = question
+                    add_question_to_id_cache(self._first_questions_by_form_id,
+                                             form['unique_id'], question['value'], question)
 
         for module in self.second:
-            self._second_by_id[module['id']] = module
+            self._second_by_id[module['unique_id']] = module
             for form in module['forms']:
-                self._second_by_id[form['id']] = form
+                self._second_by_id[form['unique_id']] = form
                 for question in form['questions']:
-                    self._second_questions_by_form_id[form['id']][question['value']] = question
+                    add_question_to_id_cache(self._second_questions_by_form_id,
+                                             form['unique_id'], question['value'], question)
 
     def _mark_removed_items(self):
         """Finds all removed modules, forms, and questions from the second app
         """
         for module in self.first:
-            if module['id'] not in self._second_by_id:
+            if module['unique_id'] not in self._second_by_id:
                 self._mark_item_removed(module, 'module')
                 continue
 
             for form in module['forms']:
-                if form['id'] not in self._second_by_id:
+                if form['unique_id'] not in self._second_by_id:
                     self._mark_item_removed(form, 'form')
                     continue
 
-                for question in form['questions']:
-                    if question.value not in self._second_questions_by_form_id[form['id']]:
-                        self._mark_item_removed(question, 'question')
+                self._mark_removed_questions(form['unique_id'], form['questions'])
+
+    def _mark_removed_questions(self, unique_id, questions):
+        for question in questions:
+            self._mark_removed_questions(unique_id, question.children)
+            if question.value not in self._second_questions_by_form_id[unique_id]:
+                self._mark_item_removed(question, 'question')
 
     def _mark_retained_items(self):
         """Looks through each module and form that was not removed in the second app
@@ -271,7 +289,7 @@ class _AppDiffGenerator(object):
         """
         for second_module in self.second:
             try:
-                first_module = self._first_by_id[second_module['id']]
+                first_module = self._first_by_id[second_module['unique_id']]
                 for attribute in MODULE_ATTRIBUTES:
                     self._mark_attribute(first_module, second_module, attribute)
                 self._mark_forms(second_module['forms'])
@@ -297,15 +315,16 @@ class _AppDiffGenerator(object):
     def _mark_forms(self, second_forms):
         for second_form in second_forms:
             try:
-                first_form = self._first_by_id[second_form['id']]
+                first_form = self._first_by_id[second_form['unique_id']]
                 for attribute in FORM_ATTRIBUTES:
                     self._mark_attribute(first_form, second_form, attribute)
-                self._mark_questions(second_form['id'], second_form['questions'])
+                self._mark_questions(second_form['unique_id'], second_form['questions'])
             except KeyError:
                 self._mark_item_added(second_form, 'form')
 
     def _mark_questions(self, form_id, second_questions):
         for second_question in second_questions:
+            self._mark_questions(form_id, second_question.children)
             try:
                 question_path = second_question['value']
                 first_question = self._first_questions_by_form_id[form_id][question_path]

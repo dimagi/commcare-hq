@@ -1,162 +1,162 @@
 {% load hq_shared_tags %}{% load i18n %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
-    <head>
-        <title>
-        {% block title %}
-            Chat - {{ contact_name }}
-        {% endblock %}
-        </title>
-        <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
-        {% compress css %}
-        <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
-        {% endcompress %}
-        {% javascript_libraries ko=True underscore=True %}
-        <script src="{% statici18n LANGUAGE_CODE %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static "sms/js/chat.js" %}"></script>
-        <style>
-            html, body {
-                height: 100%;
-                overflow: hidden;
-            }
-            body {
-                background-color: #F0F0F0;
-            }
-            #chat_header {
-                height: auto;
-            }
-            #chat_messages {
-                height: 200px;
-                overflow-y: auto;
-                border-top: 1px solid #CCC;
-                border-bottom: 1px solid #CCC;
-                background-color: #FFF;
-            }
-            #chat_footer {
-                height: auto;
-            }
-            .timestamp_content {
-                text-align: right;
-                white-space: nowrap;
-                overflow: hidden;
-            }
-            #message_table td {
-                padding-left: 5px;
-                padding-right: 5px;
-            }
-            #header_table {
-                width: 100%;
-            }
-            #header_table td {
-                vertical-align: top;
-            }
-            #message_table {
-                width: 100%;
-            }
-            #message_table td {
-                vertical-align: top;
-            }
-            #message_history_choices {
-                border-bottom: 1px solid #CCC;
-                text-align: center;
-                background-color: #FFF;
-            }
-            .message_history_choice {
-                cursor: pointer;
-                color: #44F;
-            }
-            .message_history_choice:hover {
-                text-decoration: underline;
-            }
-            .message_history_choice_selected {
-                font-weight: bold;
-            }
-            #footer_table {
-                width: 100%;
-            }
-            #text_box {
-                resize: none;
-                width: 100%;
-            }
-            #send_col {
-                text-align: right;
-            }
-            #message_length_label {
-                border: 1px solid black;
-                margin-right: 10px;
-                padding: 5px;
-                background-color: #FFF;
-            }
-            .highlight_bullet {
-                color: #44F;
-                padding-right: 3px;
-            }
-            #message_counter_container {
-                text-align: right;
-            }
-            #message_count {
-                padding: 5px 5px 5px 5px;
-                border: 1px solid black;
-                background-color: #FFF;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="chat_header">
-            <table id="header_table">
-                <tbody>
-                    <tr>
-                        <td>{% block chat_header %}{% endblock %}</td>
-                        <td><div id="message_counter_container" data-bind="visible: {{ use_message_counter|JSON }}"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
-                    </tr>
-                </tbody>
-            </table>
-            <div id="message_history_choices">
-                <span>Message History</span>
-                <span data-bind="foreach: history_choices">
-                    &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
-                </span>
-            </div>
-        </div>
-        <div id="chat_messages">
-            <table id="message_table">
-                <tbody data-bind="foreach: messages">
-                    <tr data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)">
-                        <td><div class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></div></td>
-                        <td><div class="timestamp_content"><strong><span class="highlight_bullet" data-bind="text: seen_text"></span></strong><span data-bind="text: timestamp"></span></div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="chat_footer">
-            <table id="footer_table">
-                <tbody>
-                    <tr>
-                        <td><textarea id="text_box"></textarea></td>
-                        <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><button id="send_sms_button" class="btn btn-primary" data-bind="click: send_message">Send</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+  <head>
+    <title>
+      {% block title %}
+        Chat - {{ contact_name }}
+      {% endblock %}
+    </title>
+    <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
+    {% compress css %}
+      <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
+    {% endcompress %}
+    {% javascript_libraries ko=True underscore=True %}
+    <script src="{% statici18n LANGUAGE_CODE %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    <script src="{% static "sms/js/chat.js" %}"></script>
+    <style>
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        background-color: #F0F0F0;
+      }
+      #chat_header {
+        height: auto;
+      }
+      #chat_messages {
+        height: 200px;
+        overflow-y: auto;
+        border-top: 1px solid #CCC;
+        border-bottom: 1px solid #CCC;
+        background-color: #FFF;
+      }
+      #chat_footer {
+        height: auto;
+      }
+      .timestamp_content {
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      #message_table td {
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      #header_table {
+        width: 100%;
+      }
+      #header_table td {
+        vertical-align: top;
+      }
+      #message_table {
+        width: 100%;
+      }
+      #message_table td {
+        vertical-align: top;
+      }
+      #message_history_choices {
+        border-bottom: 1px solid #CCC;
+        text-align: center;
+        background-color: #FFF;
+      }
+      .message_history_choice {
+        cursor: pointer;
+        color: #44F;
+      }
+      .message_history_choice:hover {
+        text-decoration: underline;
+      }
+      .message_history_choice_selected {
+        font-weight: bold;
+      }
+      #footer_table {
+        width: 100%;
+      }
+      #text_box {
+        resize: none;
+        width: 100%;
+      }
+      #send_col {
+        text-align: right;
+      }
+      #message_length_label {
+        border: 1px solid black;
+        margin-right: 10px;
+        padding: 5px;
+        background-color: #FFF;
+      }
+      .highlight_bullet {
+        color: #44F;
+        padding-right: 3px;
+      }
+      #message_counter_container {
+        text-align: right;
+      }
+      #message_count {
+        padding: 5px 5px 5px 5px;
+        border: 1px solid black;
+        background-color: #FFF;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat_header">
+      <table id="header_table">
+        <tbody>
+        <tr>
+          <td>{% block chat_header %}{% endblock %}</td>
+          <td><div id="message_counter_container" data-bind="visible: {{ use_message_counter|JSON }}"><div><strong><span id="message_count" data-bind="text: message_count"></span></strong></div><div><span class="btn btn-primary" data-bind="click: reset_message_count">Reset</span></div></div></td>
+        </tr>
+        </tbody>
+      </table>
+      <div id="message_history_choices">
+        <span>Message History</span>
+        <span data-bind="foreach: history_choices">
+                        &#8901; <span data-bind="text: description, css: {message_history_choice_selected: selected(), message_history_choice: !selected()}, click: function(data, event) {$parent.update_history_choice($index(), true);}"></span>
+                    </span>
+      </div>
+    </div>
+    <div id="chat_messages">
+      <table id="message_table">
+        <tbody data-bind="foreach: messages">
+        <tr data-bind="visible: (utc_timestamp > $parent.selected_history_choice().utc_timestamp) || (unread_message && !$parent.history_choice_selected)">
+          <td><div class="message_content"><strong><span data-bind="text: sender"></span></strong>: <span data-bind="text: text"></span></div></td>
+          <td><div class="timestamp_content"><strong><span class="highlight_bullet" data-bind="text: seen_text"></span></strong><span data-bind="text: timestamp"></span></div></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="chat_footer">
+      <table id="footer_table">
+        <tbody>
+        <tr>
+          <td><textarea id="text_box"></textarea></td>
+          <td id="send_col"><strong><span id="message_length_label" data-bind="text: message_length"></span></strong><button id="send_sms_button" class="btn btn-primary" data-bind="click: send_message">Send</button></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
 
-        {% initial_page_data 'contact_id' contact_id %}
-        {% initial_page_data 'history_choices' history_choices %}
-        {% initial_page_data 'message_count_threshold' message_count_threshold %}
-        {% initial_page_data 'vn_id' vn_id|default:'' %}
-        {% registerurl 'api_last_read_message' domain %}
-        {% registerurl 'api_send_sms' domain %}
-        {% registerurl 'api_history' domain %}
+    {% initial_page_data 'contact_id' contact_id %}
+    {% initial_page_data 'history_choices' history_choices %}
+    {% initial_page_data 'message_count_threshold' message_count_threshold %}
+    {% initial_page_data 'vn_id' vn_id|default:'' %}
+    {% registerurl 'api_last_read_message' domain %}
+    {% registerurl 'api_send_sms' domain %}
+    {% registerurl 'api_history' domain %}
 
-        <div class="initial-page-data" class="hide">
-        {% block initial_page_data %}
-            {# do not override this block, use initial_page_data template tag to populate #}
-        {% endblock %}
-        </div>
-        <div class="commcarehq-urls" class="hide">
-        {% block registered_urls %}
-            {# do not override this block, use registerurl template tag to populate #}
-        {% endblock %}
-        </div>
-    </body>
+    <div class="initial-page-data" class="hide">
+      {% block initial_page_data %}
+        {# do not override this block, use initial_page_data template tag to populate #}
+      {% endblock %}
+    </div>
+    <div class="commcarehq-urls" class="hide">
+      {% block registered_urls %}
+        {# do not override this block, use registerurl template tag to populate #}
+      {% endblock %}
+    </div>
+  </body>
 </html>

@@ -5,99 +5,99 @@
 {% load compress %}
 
 {% block stylesheets %}
-<style type="text/css">
+  <style type="text/css">
     .form-notice-container {
-        position: relative;
+      position: relative;
     }
     .form-notice {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.6);
-        /*The z-index is set to cover date input text-box with class .input-group .form-control */
-        /*Its z-index is set to 2 by bootstrap, so making this 3 */
-        z-index: 3;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.6);
+      /*The z-index is set to cover date input text-box with class .input-group .form-control */
+      /*Its z-index is set to 2 by bootstrap, so making this 3 */
+      z-index: 3;
 
     }
     .form-notice .label {
-        display: block;
+      display: block;
     }
     .progress-exports {
-        margin-bottom: 2px;
-        margin-top: 6px;
+      margin-bottom: 2px;
+      margin-top: 6px;
     }
     .form-actions-exports {
-        margin-bottom: 30px;
+      margin-bottom: 30px;
     }
-</style>
+  </style>
 {% endblock stylesheets %}
 
 {% requirejs_main 'export/js/download_export' %}
 
 {% block page_content %}
-    {% initial_page_data 'export_list' export_list %}
-    {% initial_page_data 'form_or_case' form_or_case %}
-    {% initial_page_data 'max_column_size' max_column_size %}
-    {% initial_page_data 'default_date_range' default_date_range %}
-    {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
-    {% initial_page_data 'sms_export' sms_export %}
-    {% initial_page_data 'user_types' user_types %}
+  {% initial_page_data 'export_list' export_list %}
+  {% initial_page_data 'form_or_case' form_or_case %}
+  {% initial_page_data 'max_column_size' max_column_size %}
+  {% initial_page_data 'default_date_range' default_date_range %}
+  {% initial_page_data 'check_for_multimedia' check_for_multimedia %}
+  {% initial_page_data 'sms_export' sms_export %}
+  {% initial_page_data 'user_types' user_types %}
 
-    {% registerurl 'add_export_email_request' domain %}
-    {% registerurl 'has_multimedia' domain %}
-    {% registerurl 'poll_custom_export_download' domain %}
-    {% registerurl 'prepare_custom_export' domain %}
-    {% registerurl 'prepare_form_multimedia' domain %}
+  {% registerurl 'add_export_email_request' domain %}
+  {% registerurl 'has_multimedia' domain %}
+  {% registerurl 'poll_custom_export_download' domain %}
+  {% registerurl 'prepare_custom_export' domain %}
+  {% registerurl 'prepare_form_multimedia' domain %}
 
-    <div id="download-export-form" class="ko-template">
-        {% if not sms_export %}
-            <div class="alert alert-info">
-                {% blocktrans %}
-                    You are downloading the following exports:
-                {% endblocktrans %}
-                <ul data-bind="foreach: exportList">
-                    <li>
-                        <a target="_blank" data-bind="attr: {href: edit_url}">
-                            <i class="fa fa-file-text"></i>
-                            <span data-bind="text: name"></span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        {% endif %}
-        {% if show_no_submissions_warning %}
-            <div class="alert alert-warning">
-                <h4>
-                    <i class="fa fa-exclamation-triangle"></i>
-                    {% trans "No submissions available." %}
-                </h4>
-                <p>
-                    {% blocktrans %}
-                        It seems your project doesn't have any submissions
-                        from its applications. Please submit data before
-                        using the export tool.
-                    {% endblocktrans %}
-                </p>
-                <p>
-                    {% blocktrans %}
-                        To get started, please
-                        <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
-                           target="_blank">deploy</a>
-                        your application and submit data from a phone. You may also
-                        <a href="https://help.commcarehq.org/display/commcarepublic/Web+Apps"
-                           target="_blank">submit data via Web Apps
-                        </a>
-                        , depending on your project's
-                        <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
-                    {% endblocktrans %}
-                </p>
-            </div>
-        {% else %}
-            {% include 'export/partials/export_download_prepare.html' %}
-        {% endif %}
-    </div>
-    {% include 'export/partials/export_download_progress.html' %}
+  <div id="download-export-form" class="ko-template">
+    {% if not sms_export %}
+      <div class="alert alert-info">
+        {% blocktrans %}
+          You are downloading the following exports:
+        {% endblocktrans %}
+        <ul data-bind="foreach: exportList">
+          <li>
+            <a target="_blank" data-bind="attr: {href: edit_url}">
+              <i class="fa fa-file-text"></i>
+              <span data-bind="text: name"></span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    {% endif %}
+    {% if show_no_submissions_warning %}
+      <div class="alert alert-warning">
+        <h4>
+          <i class="fa fa-exclamation-triangle"></i>
+          {% trans "No submissions available." %}
+        </h4>
+        <p>
+          {% blocktrans %}
+            It seems your project doesn't have any submissions
+            from its applications. Please submit data before
+            using the export tool.
+          {% endblocktrans %}
+        </p>
+        <p>
+          {% blocktrans %}
+            To get started, please
+            <a href="https://confluence.dimagi.com/display/commcarepublic/Deploy+and+Install+an+Application+on+CommCareHQ"
+               target="_blank">deploy</a>
+            your application and submit data from a phone. You may also
+            <a href="https://help.commcarehq.org/display/commcarepublic/Web+Apps"
+               target="_blank">submit data via Web Apps
+            </a>
+            , depending on your project's
+            <a href="https://www.commcarehq.org/pricing/" target="_blank">plan level</a>.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% else %}
+      {% include 'export/partials/export_download_prepare.html' %}
+    {% endif %}
+  </div>
+  {% include 'export/partials/export_download_progress.html' %}
 
 {% endblock page_content %}

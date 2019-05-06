@@ -5,31 +5,31 @@
 {% requirejs_main 'commtrack/js/sms' %}
 
 {% block page_content %}
-    {% initial_page_data "settings" settings %}
-    {% initial_page_data "other_sms_codes" other_sms_codes %}
-    <form id="settings" class="form form-horizontal" method="post">
-        {% csrf_token %}
-        <fieldset>
-            <legend>{% trans 'Stock Actions' %}</legend>
-            <div class="form-group">
-                <label class="{% css_label_class %} control-label">{% trans 'Edit Actions' %}</label>
-                <div class="{% css_field_class %}">
-                    {% include "domain/admin/commtrack_action_table.html" %}
-                    <button type="button" class="btn btn-default" data-bind="click: new_action">
-                        <i class="fa fa-plus"></i> {% trans "New Action" %}
-                    </button>
-                </div>
-            </div>
-        </fieldset>
-
-        <div class="form-actions">
-            <div class="{% css_action_class %}">
-                <button type="submit" class="btn btn-primary">
-                    {% trans "Save Settings" %}
-                </button>
-            </div>
+  {% initial_page_data "settings" settings %}
+  {% initial_page_data "other_sms_codes" other_sms_codes %}
+  <form id="settings" class="form form-horizontal" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>{% trans 'Stock Actions' %}</legend>
+      <div class="form-group">
+        <label class="{% css_label_class %} control-label">{% trans 'Edit Actions' %}</label>
+        <div class="{% css_field_class %}">
+          {% include "domain/admin/commtrack_action_table.html" %}
+          <button type="button" class="btn btn-default" data-bind="click: new_action">
+            <i class="fa fa-plus"></i> {% trans "New Action" %}
+          </button>
         </div>
+      </div>
+    </fieldset>
 
-        <input name="json" type="hidden" data-bind="value: json_payload" />
-    </form>
+    <div class="form-actions">
+      <div class="{% css_action_class %}">
+        <button type="submit" class="btn btn-primary">
+          {% trans "Save Settings" %}
+        </button>
+      </div>
+    </div>
+
+    <input name="json" type="hidden" data-bind="value: json_payload" />
+  </form>
 {% endblock %}

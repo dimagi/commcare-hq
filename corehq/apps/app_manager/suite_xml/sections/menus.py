@@ -123,8 +123,8 @@ class MenuContributor(SuiteContributorByModule):
                         menu_kwargs.update({
                             'menu_locale_id': get_module_locale_id(module),
                             'menu_enum_text': get_module_enum_text(module),
-                            'media_image': bool(len(module.all_image_paths())),
-                            'media_audio': bool(len(module.all_audio_paths())),
+                            'media_image': module.uses_image(),
+                            'media_audio': module.uses_audio(),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
                             'custom_icon_locale_id': (
