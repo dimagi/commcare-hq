@@ -20,7 +20,6 @@ hqDefine("aaa/js/models/eligible_couple", [
         self.id = options.id;
         self.name = ko.observable(options.name);
         self.dob = ko.observable(options.dob);
-        self.currentFamilyPlanningMethod = ko.observable(options.currentFamilyPlanningMethod);
         self.adoptionDateOfFamilyPlaning = ko.observable(options.adoptionDateOfFamilyPlaning);
 
         self.age = ko.computed(function () {
@@ -40,6 +39,14 @@ hqDefine("aaa/js/models/eligible_couple", [
             }
         });
 
+        self.currentFamilyPlanningMethod = ko.computed(function () {
+            return options.currentFamilyPlanningMethod !== null ? options.currentFamilyPlanningMethod : 'N/A';
+        });
+
+        self.adoptionDateOfFamilyPlaning = ko.computed(function () {
+            return options.adoptionDateOfFamilyPlaning !== null ? options.adoptionDateOfFamilyPlaning : 'N/A';
+        });
+
         self.name = ko.computed(function () {
             var url = initialPageData.reverse('unified_beneficiary_details');
             url = url.replace('details_type', 'eligible_couple');
@@ -55,7 +62,7 @@ hqDefine("aaa/js/models/eligible_couple", [
         var self = {};
         self.columns = [
             {data: 'name()', name: 'name', title: 'Name'},
-            {data: 'age()', name: 'age', title: 'Age'},
+            {data: 'age()', name: 'dob', title: 'Age'},
             {data: 'currentFamilyPlanningMethod()', name: 'currentFamilyPlanningMethod', title: 'Current Family Planning Method'},
             {data: 'adoptionDateOfFamilyPlaning()', name: 'adoptionDateOfFamilyPlaning', title: 'Adoption Date Of Family Planing'},
         ];
