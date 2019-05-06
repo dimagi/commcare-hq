@@ -34,6 +34,11 @@ class CCZHostingLink(models.Model):
         from custom.icds.serializers import CCZHostingLinkSerializer
         return CCZHostingLinkSerializer(self).data
 
+    def delete(self, *args, **kwargs):
+        for ccz_hosting in CCZHosting.objects.filter(link=self):
+            ccz_hosting.delete()
+        super(CCZHostingLink, self).delete(*args, **kwargs)
+
 
 class CCZHosting(models.Model):
     link = models.ForeignKey(CCZHostingLink, on_delete=models.CASCADE)
