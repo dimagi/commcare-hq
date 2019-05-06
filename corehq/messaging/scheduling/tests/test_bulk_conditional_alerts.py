@@ -45,6 +45,7 @@ class TestBulkConditionalAlerts(TestCase):
         )
         cls.domain_obj.save()
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
+        cls.langs = ['en', 'es']
 
     def setUp(self):
         self._translated_rule = self._add_rule(SMSContent(message={
@@ -110,11 +111,13 @@ class TestBulkConditionalAlerts(TestCase):
         return rule
 
     def test_download(self):
-        rows = get_conditional_alert_rows(self.domain)
+        (translated_rows, untranslated_rows) = get_conditional_alert_rows(self.domain, self.langs)
 
-        self.assertEqual(len(rows), 2)
-        self.assertListEqual(rows[0][1:], ['test', 'person'])
-        self.assertListEqual(rows[1][1:], ['test', 'person'])
+        self.assertEqual(len(translated_rows), 1)
+        self.assertListEqual(translated_rows[0][1:], ['test', 'person', 'Diamonds and Rust', 'Diamantes y Óxido'])
+
+        self.assertEqual(len(untranslated_rows), 1)
+        self.assertListEqual(untranslated_rows[0][1:], ['test', 'person', 'Joan'])
 
     def test_upload(self):
         headers = (("translations", ("id", "name", "case_type")),)
