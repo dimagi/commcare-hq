@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from elasticsearch.exceptions import ConnectionError
@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
 from corehq.apps.api.resources.v0_5 import ODataCommCareCaseResource
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -23,17 +24,26 @@ from corehq.util.test_utils import flag_enabled, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-class TestOdataFeed(OdataTestMixin, TestCase):
+class TestOdataFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
         super(TestOdataFeed, cls).setUpClass()
+
+        cls.client = Client()
+        cls.domain = Domain(name='test_domain')
+        cls.domain.save()
+        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+
         cls.account, _ = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by='')
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
         cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan_version)
 
     @classmethod
     def tearDownClass(cls):
+        cls.domain.delete()
+        cls.web_user.delete()
+
         SubscriptionAdjustment.objects.all().delete()
         cls.subscription.delete()
         cls.account.delete()
@@ -58,6 +68,11 @@ class TestOdataFeed(OdataTestMixin, TestCase):
             self._odata_feed_url_by_domain(other_domain.name),
             HTTP_AUTHORIZATION='Basic ' + correct_credentials,
         )
+        self.assertEqual(response.status_code, 404)
+
+    def test_missing_feature_flag(self):
+        correct_credentials = self._get_correct_credentials()
+        response = self._execute_query(correct_credentials)
         self.assertEqual(response.status_code, 404)
 
     @flag_enabled('ODATA')

@@ -3,20 +3,62 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
-from django.test import TestCase
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from mock import patch
 
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.domain.models import Domain
+from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 PATH_TO_TEST_DATA = ('..', '..', 'api', 'odata', 'tests', 'data')
 
 
-class TestMetadataDocument(OdataTestMixin, TestCase, TestXmlMixin):
+class TestMetadataDocument(TestCase, OdataTestMixin, TestXmlMixin):
 
     view_urlname = 'odata_meta'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestMetadataDocument, cls).setUpClass()
+        cls.client = Client()
+        cls.domain = Domain(name='test_domain')
+        cls.domain.save()
+        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.web_user.delete()
+        super(TestMetadataDocument, cls).tearDownClass()
+
+    def test_no_credentials(self):
+        response = self.client.get(self.view_url)
+        self.assertEqual(response.status_code, 401)
+
+    def test_wrong_password(self):
+        wrong_credentials = self._get_basic_credentials(self.web_user.username, 'wrong_password')
+        response = self._execute_query(wrong_credentials)
+        self.assertEqual(response.status_code, 401)
+
+    def test_wrong_domain(self):
+        other_domain = Domain(name='other_domain')
+        other_domain.save()
+        self.addCleanup(other_domain.delete)
+        correct_credentials = self._get_correct_credentials()
+        response = self.client.get(
+            reverse(self.view_urlname, kwargs={'domain': other_domain.name}),
+            HTTP_AUTHORIZATION='Basic ' + correct_credentials,
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_missing_feature_flag(self):
+        correct_credentials = self._get_correct_credentials()
+        response = self._execute_query(correct_credentials)
+        self.assertEqual(response.status_code, 404)
 
     @flag_enabled('ODATA')
     def test_no_case_types(self):
