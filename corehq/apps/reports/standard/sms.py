@@ -547,7 +547,7 @@ class MessageLogReport(BaseCommConnectLogReport):
     def _get_events_by_xforms_session(self, messages):
         session_ids = [
             m.xforms_session_couch_id for m in messages
-            if m.xforms_session_couch_id and not m.messaging_subevent
+            if m.xforms_session_couch_id and not m.messaging_subevent_id
         ]
         subevents = (MessagingSubEvent.objects
                      .filter(parent__domain=self.domain,
