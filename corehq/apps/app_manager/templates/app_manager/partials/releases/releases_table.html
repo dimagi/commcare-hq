@@ -35,7 +35,7 @@
   </p>
   <p>
     {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-      <a class="btn btn-default" data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary_diff', '{{ latest_build_id}}', '{{ app.id }}') }">
+      <a class="btn btn-default" href="{% url 'app_form_summary_diff' domain latest_build_id app.id %}">
         <i class="fa fa-exchange"></i>
         {% trans "View Changes" %}
       </a>
@@ -190,7 +190,7 @@
       </div><!-- .panel-body -->
       <div class="panel-footer">
         {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
-          <a class="btn btn-default" data-bind="attr: { href: hqImport('hqwebapp/js/initial_page_data').reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
+          <a class="btn btn-default" data-bind="attr: { href: $parent.reverse('app_form_summary_diff', $parent.previousBuildId($index()), $data.id()) }">
             <i class="fa fa-exchange"></i>
             {% trans "View Changes" %}
           </a>
