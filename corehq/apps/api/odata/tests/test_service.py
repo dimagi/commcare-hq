@@ -7,6 +7,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from mock import patch
+from tastypie.models import ApiKey
 
 from corehq.apps.api.odata.tests.utils import OdataTestMixin
 from corehq.apps.domain.models import Domain
@@ -87,3 +88,17 @@ class TestServiceDocument(TestCase, OdataTestMixin):
                 ],
             }
         )
+
+
+class TestServiceDocumentUsingApiKey(TestServiceDocument):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestServiceDocumentUsingApiKey, cls).setUpClass()
+        cls.api_key = ApiKey.objects.get_or_create(user=cls.web_user.get_django_user())[0]
+        cls.api_key.key = cls.api_key.generate_key()
+        cls.api_key.save()
+
+    @classmethod
+    def _get_correct_credentials(cls):
+        return TestServiceDocumentUsingApiKey._get_basic_credentials('test_user', cls.api_key.key)
