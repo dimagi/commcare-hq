@@ -158,6 +158,7 @@ def basic_or_api_key(realm=''):
                     # try api key auth
                     try:
                         user = User.objects.get(username=username, api_key__key=password)
+                        request.skip_two_factor_check = True
                     except (User.DoesNotExist, User.MultipleObjectsReturned):
                         pass
                 if user is not None and user.is_active:

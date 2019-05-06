@@ -305,7 +305,12 @@ def two_factor_check(view_func, api_key):
         def _inner(request, domain, *args, **kwargs):
             domain_obj = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and domain_obj and _two_factor_required(view_func, domain_obj, couch_user):
+            if (
+                not api_key and
+                not getattr(request, 'skip_two_factor_check', False) and
+                domain_obj and
+                _two_factor_required(view_func, domain_obj, couch_user)
+            ):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token and 'otp' in request.GET:
                     with mutable_querydict(request.GET):
