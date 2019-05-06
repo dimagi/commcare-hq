@@ -116,6 +116,11 @@ class CCZHostingForm(forms.Form):
             self.add_error('version', _("Please select version"))
         return version
 
+    def clean_profile_id(self):
+        profile_id = self.cleaned_data.get('profile_id')
+        # ugly hack for the null added in the javascript
+        return "" if profile_id and profile_id == "null" else profile_id
+
     def clean(self):
         if self.cleaned_data.get('app_id') and self.cleaned_data.get('version'):
             try:
