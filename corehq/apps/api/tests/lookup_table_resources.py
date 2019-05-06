@@ -41,7 +41,7 @@ class TestLookupTableResource(APIResourceTest):
                 },
             ],
             "id": self.data_type._id,
-            "is_global": True,
+            "is_global": False,
             "resource_uri": "",
             "tag": "lookup_table"
         }
@@ -52,7 +52,7 @@ class TestLookupTableResource(APIResourceTest):
 
         fixture_data_types = json.loads(response.content)['objects']
         self.assertEqual(len(fixture_data_types), 1)
-        self.assertEqual(fixture_data_types, self._data_type_json())
+        self.assertEqual(fixture_data_types, [self._data_type_json()])
 
     def test_get_single(self):
         response = self._assert_auth_get_resource(self.single_endpoint(self.data_type._id))
