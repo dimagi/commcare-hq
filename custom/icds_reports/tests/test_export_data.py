@@ -2103,14 +2103,9 @@ class TestExportData(TestCase):
     def test_aww_performance_export(self):
         data = IncentiveReport(
             location='b2',
-<<<<<<< HEAD
             month=datetime(2017, 5, 1),
-            aggregation_level=3
-=======
-            month=datetime(2017,5,1),
             aggregation_level=3,
             beta=False
->>>>>>> master
         ).get_excel_data()
 
         expected = [
