@@ -11,7 +11,7 @@ class ProjectAccessMiddleware(MiddlewareMixin):
                 and hasattr(request, 'domain'):
             return self.record_entry(request.domain, request.couch_user.username)
         if getattr(request, 'couch_user', None) and request.couch_user.is_web_user() \
-                and not request.couch_user.is_superuser and hasattr(request, 'domain'):
+                and hasattr(request, 'domain'):
             request.couch_user.update_domain_date(request.domain)
 
     @quickcache(['domain', 'username'], timeout=ENTRY_RECORD_FREQUENCY.seconds)
