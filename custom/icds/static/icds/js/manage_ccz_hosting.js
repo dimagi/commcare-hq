@@ -33,6 +33,9 @@ hqDefine('icds/js/manage_ccz_hosting', [
                 var appId = $("#app-id-search-select").val();
                 var version = $("#version-input").val() || '';
                 var profileId = $("#app-profile-id-input").val();
+                if (profileId == null || profileId == 'null') {
+                    profileId = '';
+                }
                 window.location.search = ("link_id=" + linkId + "&app_id=" + appId + "&version=" +
                     version + "&profile_id=" + profileId);
             };
