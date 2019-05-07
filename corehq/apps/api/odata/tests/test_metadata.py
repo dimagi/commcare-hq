@@ -105,7 +105,7 @@ class TestMetadataDocumentUsingApiKey(TestMetadataDocument):
 
 
 @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-class TestOdataFeedWithTwoFactorUsingApiKey(TestMetadataDocumentUsingApiKey):
+class TestMetadataDocumentWithTwoFactorUsingApiKey(TestMetadataDocumentUsingApiKey):
 
     # Duplicated because flag on inherited method doesn't work when outer flag is used
     @flag_enabled('ODATA')
