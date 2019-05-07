@@ -39,6 +39,7 @@ from corehq.form_processor.models import (
     RebuildWithReason,
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.soft_assert import soft_assert
 
@@ -373,21 +374,14 @@ def _transaction_sort_key_function(case):
     xform_ids = list(case.xform_ids)
     fudge_factor = datetime.timedelta(hours=12)
 
-    def cc_cmp(first, second):
-        if first > second:
-            return 1
-        if first < second:
-            return -1
-        return 0
-
     def _transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_transaction.user_id != second_transaction.user_id:
-            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+            return cmp(first_transaction.server_date, second_transaction.server_date)
 
         if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
             # short circuit if they are from the same form
-            return cc_cmp(
+            return cmp(
                 _type_sort(first_transaction.type),
                 _type_sort(second_transaction.type)
             )
@@ -397,7 +391,7 @@ def _transaction_sort_key_function(case):
 
         # checks if the dates received are within a particular range
         if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
-            return cc_cmp(first_transaction.server_date, second_transaction.server_date)
+            return cmp(first_transaction.server_date, second_transaction.server_date)
 
         def _sortkey(transaction):
             def form_index(form_id):
@@ -413,7 +407,7 @@ def _transaction_sort_key_function(case):
                 _type_sort(transaction.type),
             )
 
-        return cc_cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+        return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
 
     return cmp_to_key(_transaction_cmp)
 

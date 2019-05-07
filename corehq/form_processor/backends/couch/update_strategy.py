@@ -30,6 +30,7 @@ from dimagi.ext.couchdbkit import StringProperty
 from dimagi.utils.logging import notify_exception
 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.util import cmp
 from corehq.util.datadog.gauges import datadog_counter
 
 
