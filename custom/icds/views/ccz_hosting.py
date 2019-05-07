@@ -97,8 +97,8 @@ class EditCCZHostingLink(ManageCCZHostingLink):
     def form(self):
         link = CCZHostingLink.objects.get(id=self.kwargs['link_id'])
         if self.request.POST:
-            return CCZHostingLinkForm(instance=link, data=self.request.POST)
-        return CCZHostingLinkForm(instance=link)
+            return CCZHostingLinkForm(domain=self.domain, instance=link, data=self.request.POST)
+        return CCZHostingLinkForm(domain=self.domain, instance=link)
 
     def get_context_data(self, **kwargs):
         return {
