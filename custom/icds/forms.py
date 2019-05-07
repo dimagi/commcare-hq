@@ -32,9 +32,9 @@ from custom.icds.models import (
 class CCZHostingLinkForm(forms.ModelForm):
     class Meta:
         model = CCZHostingLink
-        fields = '__all__'
+        exclude = ('domain',)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain, *args, **kwargs):
         super(CCZHostingLinkForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         save_button_text = _('Update') if self.instance.pk else _('Create')
@@ -44,6 +44,7 @@ class CCZHostingLinkForm(forms.ModelForm):
         self.helper.layout = crispy.Fieldset(_("CCZ Hosting Link"), self.helper.layout)
         self.fields['identifier'].widget.attrs.update({'class': 'text-lowercase'})
         self.initial['password'] = b64_aes_decrypt(self.instance.password)
+        self.instance.domain = domain
 
     def clean_password(self):
         return b64_aes_encrypt(self.cleaned_data['password'])

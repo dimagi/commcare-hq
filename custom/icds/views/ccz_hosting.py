@@ -57,6 +57,7 @@ class ManageCCZHostingLink(BaseDomainView):
     @cached_property
     def form(self):
         return CCZHostingLinkForm(
+            domain=self.domain,
             data=self.request.POST if self.request.method == "POST" else None
         )
 
