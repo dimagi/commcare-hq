@@ -36,7 +36,7 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
 )
-from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin
+from corehq.apps.export.views.utils import DailySavedExportMixin, DashboardFeedMixin, ODataFeedMixin
 
 
 class BaseNewExportView(BaseProjectDataView):
@@ -257,7 +257,7 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 
 
 @method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
-class CreateODataCaseFeedView(CreateNewCustomCaseExportView):
+class CreateODataCaseFeedView(ODataFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_odata_case_feed'
     page_title = ugettext_lazy("Create OData Case Feed")
 

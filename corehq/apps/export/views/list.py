@@ -68,7 +68,10 @@ class ExportListHelper(object):
     allow_bulk_export = True
 
     @classmethod
-    def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_deid=False):
+    def get(self, request, form_or_case=None, is_daily_saved_export=False, is_feed=False, is_odata=False, is_deid=False):
+        if is_odata:
+            return ODataFeedListHelper(request)
+
         if is_feed:
             if is_deid:
                 return DeIdDashboardFeedListHelper(request)
@@ -257,7 +260,7 @@ class DailySavedExportListHelper(ExportListHelper):
     @property
     @memoized
     def create_export_form_title(self):
-        return "Select a model to export"  # could be form or case
+        return _("Select a model to export")
 
     @property
     def bulk_download_url(self):
@@ -512,6 +515,7 @@ def get_exports_page(request, domain):
     helper = ExportListHelper.get(request, form_or_case=request.GET.get('model_type'),
                                   is_daily_saved_export=json.loads(request.GET.get('is_daily_saved_export')),
                                   is_feed=json.loads(request.GET.get('is_feed')),
+                                  is_odata=json.loads(request.GET.get('is_odata')),
                                   is_deid=json.loads(request.GET.get('is_deid')))
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 5))
@@ -858,8 +862,33 @@ def submit_app_data_drilldown_form(request, domain):
     })
 
 
+class ODataFeedListHelper(ExportListHelper):
+    allow_bulk_export = False
+    form_or_case = 'case'
+    is_deid = False
+
+    @property
+    def create_export_form_title(self):
+        return _("Select a model to export")
+
+    @memoized
+    def get_saved_exports(self):
+        if self.permissions.has_case_export_permissions:
+            exports = get_case_exports_by_domain(self.domain,
+                                                 self.permissions.has_deid_view_permissions,
+                                                 include_docs=False)
+        return [x for x in exports if x['is_odata_config']]
+
+    def _edit_view(self, export):
+        from corehq.apps.export.views.edit import EditODataCaseFeedView
+        return EditODataCaseFeedView
+
+    def _download_view(self, export):
+        return None  # You can't download OData feeds directly
+
+
 @method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
-class ODataFeedListView(CaseExportListView):
+class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     urlname = 'list_odata_feeds'
     page_title = ugettext_lazy("OData Integration")
     lead_text = ugettext_lazy('''

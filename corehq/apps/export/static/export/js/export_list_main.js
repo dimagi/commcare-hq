@@ -39,6 +39,7 @@ hqDefine("export/js/export_list_main", [
             isDeid: initialPageData.get('is_deid'),
             isDailySavedExport: initialPageData.get('is_daily_saved_export', true),
             isFeed: initialPageData.get('is_feed', true),
+            isOData: initialPageData.get('is_odata', true),
             headers: {
                 my_export_type: initialPageData.get('my_export_type'),
                 shared_export_type: initialPageData.get('shared_export_type'),
