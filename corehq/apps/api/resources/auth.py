@@ -106,10 +106,10 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
-class RequirePermissionAuthenticationForOdata(RequirePermissionAuthentication):
+class ODataAuthentication(RequirePermissionAuthentication):
 
     def __init__(self, *args, **kwargs):
-        super(RequirePermissionAuthenticationForOdata, self).__init__(*args, **kwargs)
+        super(ODataAuthentication, self).__init__(*args, **kwargs)
         self.decorator_map = {
             'basic': basic_auth_or_try_api_key_auth,
             'api_key': api_key_auth,
