@@ -6,7 +6,7 @@ from django.views import View
 
 from corehq import toggles
 from corehq.apps.api.odata.utils import get_case_type_to_properties
-from corehq.apps.domain.decorators import api_auth, basic_auth_or_try_api_key_auth
+from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.util.view_utils import absolute_reverse
 
