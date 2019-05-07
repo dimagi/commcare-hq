@@ -124,7 +124,7 @@ class CCZHostingForm(forms.Form):
     def clean(self):
         if self.cleaned_data.get('app_id') and self.cleaned_data.get('version'):
             try:
-                self.version_build_id
+                self.version_build_id()
             except BuildNotFoundException as e:
                 self.add_error('version', e)
 

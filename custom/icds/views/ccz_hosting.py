@@ -43,7 +43,7 @@ from custom.icds_reports.models.helper import IcdsFile
 
 
 @location_safe
-@method_decorator([toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageCCZHostingLink(BaseDomainView):
     urlname = "manage_ccz_hosting_links"
     page_title = ugettext_lazy("Manage CCZ Hosting Links")
@@ -79,7 +79,6 @@ class ManageCCZHostingLink(BaseDomainView):
                 ccz_hosting_link.delete()
                 messages.success(self.request, _("Successfully removed link and all associated ccz hosting."))
 
-    @method_decorator(login_and_domain_required)
     def post(self, request, *args, **kwargs):
         if self.request.POST.get('delete'):
             self.delete()
@@ -108,7 +107,7 @@ class EditCCZHostingLink(ManageCCZHostingLink):
 
 
 @location_safe
-@method_decorator([toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageCCZHosting(BaseDomainView):
     urlname = "manage_ccz_hosting"
     page_title = ugettext_lazy("Manage CCZ Hosting")
@@ -166,7 +165,6 @@ class ManageCCZHosting(BaseDomainView):
             'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
 
-    @method_decorator(login_and_domain_required)
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             success, error_message = self.form.save()
@@ -232,7 +230,7 @@ class CCZHostingView(DomainViewMixin, TemplateView):
 @login_and_domain_required
 def remove_ccz_hosting(request, domain, hosting_id):
     try:
-        ccz_hosting = CCZHosting.objects.get(pk=hosting_id)
+        ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
         ccz_hosting.delete()
     except CCZHosting.DoesNotExist:
         pass
@@ -241,7 +239,7 @@ def remove_ccz_hosting(request, domain, hosting_id):
 
 @location_safe
 def download_ccz(request, domain, hosting_id, blob_id):
-    ccz_hosting = CCZHosting.objects.get(pk=hosting_id)
+    ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
     assert ccz_hosting.blob_id == blob_id
     file_size = ccz_hosting.utility.ccz_file_meta.content_length
     # check for file name of the ccz hosting object first because
