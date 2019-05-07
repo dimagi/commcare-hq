@@ -5,8 +5,8 @@ from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 
 
-LowercaseAlphanumbericValidator = RegexValidator(
+LowercaseAlphanumericValidator = RegexValidator(
     r'^[a-z0-9]*$',
     message=_('must be lowercase alphanumeric'),
-    code='invalid_lowercase_alphanumberic'
+    code='invalid_lowercase_alphanumeric'
 )

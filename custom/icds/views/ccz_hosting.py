@@ -192,9 +192,9 @@ class CCZHostingView(DomainViewMixin, TemplateView):
         except CCZHostingLink.DoesNotExist:
             return HttpResponse(status=404)
 
-        uname, passwd = get_username_and_password_from_request(request)
-        if uname and passwd:
-            if uname == ccz_hosting_link.username and passwd == ccz_hosting_link.get_password:
+        username, password = get_username_and_password_from_request(request)
+        if username and password:
+            if username == ccz_hosting_link.username and password == ccz_hosting_link.get_password:
                 return super(CCZHostingView, self).get(request, *args, **kwargs)
         # User did not provide an authorization header or gave incorrect credentials.
         response = HttpResponse(status=401)

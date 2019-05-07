@@ -10,13 +10,13 @@ from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from corehq.motech.utils import b64_aes_decrypt
 from custom.icds.utils.ccz_hosting import CCZHostingUtility
 from custom.icds.validators import (
-    LowercaseAlphanumbericValidator,
+    LowercaseAlphanumericValidator,
 )
 
 
 class CCZHostingLink(models.Model):
     identifier = models.CharField(null=False, unique=True, max_length=255, db_index=True,
-                                  validators=[LowercaseAlphanumbericValidator])
+                                  validators=[LowercaseAlphanumericValidator])
     username = models.CharField(null=False, max_length=255)
     # b64_aes_encrypt'ed raw password is stored in DB
     password = models.CharField(null=False, max_length=255)
