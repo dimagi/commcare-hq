@@ -17,6 +17,7 @@ from corehq.apps.translations.app_translations.utils import (
     BulkAppTranslationUpdater,
     get_unicode_dicts,
 )
+from corehq.apps.translations.utils import zip_with_gaps
 
 
 class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
@@ -279,7 +280,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             self._update_detail(row, detail)
 
     def _partial_upload(self, rows, details):
-        rows_by_property = {row['id']: row for row in rows}
-        for detail in details:
-            if rows_by_property.get(detail.field):
-                self._update_detail(rows_by_property.get(detail.field), detail)
+        row_keyfunc = lambda row: row['id']
+        detail_keyfunc = lambda detail: detail.field
+
+        for detail, row in zip_with_gaps(details, rows, detail_keyfunc, row_keyfunc):
+            self._update_detail(row, detail)
