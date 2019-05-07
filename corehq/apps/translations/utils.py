@@ -52,9 +52,9 @@ def zip_with_gaps(all_items, some_items, allitem_keyfunc=None, someitem_keyfunc=
 
     """
     if allitem_keyfunc is None:
-        allitem_keyfunc = lambda x: x[0]
+        allitem_keyfunc = lambda x: x[0]  # noqa: E731
     if someitem_keyfunc is None:
-        someitem_keyfunc = lambda x: x[0]
+        someitem_keyfunc = lambda x: x[0]  # noqa: E731
 
     all_iterable = iter(all_items)
     for s_item in some_items:
