@@ -161,19 +161,29 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             (long_details, detail_rows, _("case detail")),
         ]:
             if len(expected_list) != len(received_list):
-                # if a field is not referenced twice in a case list or
-                # detail, or duplicated fields are not included in the
-                # upload, then we can perform a partial upload using
-                # field (case property) as a key
+                # Partial uploads are supported in the following scenarios:
+                # 1. There are no duplicated fields
+                # 2. There are duplicated fields, but they are not included in
+                #    the upload
+                # 3. There are duplicated fields, and the upload includes all
+                #    duplicates of a field, or none of them.
+                #
+                # Support for the third scenario ASSUMES that the upload
+                # includes the duplicates in the same order.
                 expected_fields = [detail.field for detail in expected_list]
-                field_counter = Counter(expected_fields)
-                duplicated_fields = [field for field, count in field_counter.items() if count > 1]
+                received_fields = [detail.field for detail in received_list]
+                expected_field_counter = Counter(expected_fields)
+                received_field_counter = Counter(received_fields)
+                duplicated_fields = {field for field, count in expected_field_counter.items() if count > 1}
+                duplicates_not_included = all(field not in duplicated_fields for field in received_list)
+                duplicates_include_all_or_nothing = all(
+                    received_field_counter[field] == expected_field_counter[field] or
+                    received_field_counter[field] == 0
+                    for field in duplicated_fields
+                )
                 if (
                     toggles.ICDS.enabled(self.app.domain) and
-                    (
-                        not duplicated_fields or
-                        all(received_field not in duplicated_fields for received_field in received_list)
-                    )
+                    (not duplicated_fields or duplicates_not_included or duplicates_include_all_or_nothing)
                 ):
                     partial_upload = True
                     continue
