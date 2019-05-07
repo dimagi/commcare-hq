@@ -402,7 +402,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
 
 def _action_sort_key_function(case):
-    def _action_cmp(first_action, second_action):
+    def action_cmp(first_action, second_action):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_action.user_id != second_action.user_id:
             return cmp(first_action.server_date, second_action.server_date)
@@ -410,17 +410,17 @@ def _action_sort_key_function(case):
         if first_action.xform_id and first_action.xform_id == second_action.xform_id:
             # short circuit if they are from the same form
             return cmp(
-                _type_sort(first_action.action_type),
-                _type_sort(second_action.action_type)
+                type_index(first_action.action_type),
+                type_index(second_action.action_type)
             )
 
-        return cmp(_sortkey(first_action), _sortkey(second_action))
+        return cmp(sort_key(first_action), sort_key(second_action))
 
-    def _type_sort(action_type):
+    def type_index(action_type):
         """Consistent ordering for action types"""
         return const.CASE_ACTIONS.index(action_type)
 
-    def _sortkey(action):
+    def sort_key(action):
         if not action.server_date or not action.date:
             raise MissingServerDate()
 
@@ -432,7 +432,7 @@ def _action_sort_key_function(case):
             action.server_date.date(),
             action.date,
             form_index(action.xform_id),
-            _type_sort(action.action_type),
+            type_index(action.action_type),
         )
 
     class cache(object):
@@ -443,4 +443,4 @@ def _action_sort_key_function(case):
             cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
         return cache.ids.get(form_id, sys.maxsize)
 
-    return cmp_to_key(_action_cmp)
+    return cmp_to_key(action_cmp)

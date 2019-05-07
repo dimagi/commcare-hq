@@ -373,7 +373,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 def _transaction_sort_key_function(case):
     fudge_factor = datetime.timedelta(hours=12)
 
-    def _transaction_cmp(first_transaction, second_transaction):
+    def transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_transaction.user_id != second_transaction.user_id:
             return cmp(first_transaction.server_date, second_transaction.server_date)
@@ -381,8 +381,8 @@ def _transaction_sort_key_function(case):
         if first_transaction.form_id and first_transaction.form_id == second_transaction.form_id:
             # short circuit if they are from the same form
             return cmp(
-                _type_sort(first_transaction.type),
-                _type_sort(second_transaction.type)
+                type_index(first_transaction.type),
+                type_index(second_transaction.type)
             )
 
         if not (first_transaction.server_date and second_transaction.server_date):
@@ -392,21 +392,21 @@ def _transaction_sort_key_function(case):
         if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
             return cmp(first_transaction.server_date, second_transaction.server_date)
 
-        return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+        return cmp(sort_key(first_transaction), sort_key(second_transaction))
 
-    def _type_sort(action_type):
+    def type_index(action_type):
         """Consistent ordering for action types"""
         for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
             if action_type & type_action == action_type:
                 return idx
         return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
 
-    def _sortkey(transaction):
+    def sort_key(transaction):
         # if the user is the same you should compare with the special logic below
         return (
             transaction.client_date,
             form_index(transaction.form_id),
-            _type_sort(transaction.type),
+            type_index(transaction.type),
         )
 
     class cache(object):
@@ -417,4 +417,4 @@ def _transaction_sort_key_function(case):
             cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
         return cache.ids.get(form_id, sys.maxsize)
 
-    return cmp_to_key(_transaction_cmp)
+    return cmp_to_key(transaction_cmp)
