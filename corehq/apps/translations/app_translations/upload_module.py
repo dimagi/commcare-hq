@@ -283,8 +283,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             self._update_detail(row, detail)
 
     def _partial_upload(self, rows, details):
-        row_keyfunc = lambda row: row['id']
-        detail_keyfunc = lambda detail: detail.field
-
-        for detail, row in zip_with_gaps(details, rows, detail_keyfunc, row_keyfunc):
+        for detail, row in zip_with_gaps(details, rows,
+                                         lambda detail: detail.field,
+                                         lambda row: row['id']):
             self._update_detail(row, detail)
