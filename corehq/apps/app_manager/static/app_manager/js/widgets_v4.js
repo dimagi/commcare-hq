@@ -59,14 +59,18 @@ hqDefine("app_manager/js/widgets_v4", [
                 var buildProfiles = _.map(e.params.data.buildProfiles, function (details, profileId) {
                     return { id: profileId, text: details.name };
                 });
-                buildProfiles = Array.prototype.concat({id: 'null', text: gettext("Select profile")},
-                    buildProfiles);
-                $('#app-profile-id-input').select2({data: buildProfiles});
+                $('#app-profile-id-input').select2({
+                    placeholder: gettext("Select profile"),
+                    allowClear: true,
+                    data: buildProfiles
+                });
             });
             $select.on('change.select2', function () {
                 // https://stackoverflow.com/a/32115793
                 // clear all options manually since it's not getting deleted in this version of select2
-                $('#app-profile-id-input').html('').select2({data: {id: null, text: null }});
+                $('#app-profile-id-input').html('').select2({
+                    placeholder: gettext("Select profile"),
+                });
                 $('#app-profile-id-input').val(null).trigger('change');
             });
         }
@@ -77,9 +81,9 @@ hqDefine("app_manager/js/widgets_v4", [
             $select.append(option).trigger('change');
             $select.trigger({type: 'select2:select', params: {data: options.initialValue}});
         }
-        var appProfileInitialValue = initialPageData.get('appProfileInitialValue');
-        if (!_.isEmpty(appProfileInitialValue)) {
-            $('#app-profile-id-input').select2({data: appProfileInitialValue});
+        var appProfileInitialValues = initialPageData.get('appProfileInitialValues');
+        if (!_.isEmpty(appProfileInitialValues)) {
+            $('#app-profile-id-input').select2({data: appProfileInitialValues});
         }
     };
 
