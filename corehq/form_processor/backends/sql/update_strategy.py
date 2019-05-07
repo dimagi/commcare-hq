@@ -1,43 +1,47 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
 import logging
 import sys
-import datetime
 from functools import cmp_to_key
 
+from django.utils.translation import ugettext as _
+
 import six
+from ddtrace import tracer
 from iso8601 import iso8601
+
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import (
+    CaseValueError,
+    MissingServerDate,
+    ReconciliationError,
     UsesReferrals,
     VersionNotSupported,
-    CaseValueError,
-    ReconciliationError,
-    MissingServerDate
 )
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+
 from corehq import toggles
-from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
+from corehq.apps.couch_sql_migration.progress import (
+    couch_sql_migration_in_progress,
+)
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.models import (
-    CommCareCaseSQL,
-    CommCareCaseIndexSQL,
-    CaseTransaction,
     CaseAttachmentSQL,
-    RebuildWithReason
+    CaseTransaction,
+    CommCareCaseIndexSQL,
+    CommCareCaseSQL,
+    RebuildWithReason,
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL
-)
-from ddtrace import tracer
-from django.utils.translation import ugettext as _
-
-from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.soft_assert import soft_assert
+
 reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']), include_breadcrumbs=True)
 
 

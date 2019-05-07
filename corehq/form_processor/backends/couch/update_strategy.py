@@ -1,27 +1,36 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import copy
-from functools import cmp_to_key
 import logging
-from PIL import Image
-from io import BytesIO
-from couchdbkit import BadValueError
 import sys
 from datetime import date, datetime
+from functools import cmp_to_key
+from io import BytesIO
+
+from django.utils.translation import ugettext as _
+
+import six
+from couchdbkit import BadValueError
+from ddtrace import tracer
+from PIL import Image
+
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
-from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
+from casexml.apps.case.exceptions import (
+    MissingServerDate,
+    ReconciliationError,
+    UsesReferrals,
+)
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
-from django.utils.translation import ugettext as _
+from couchforms.models import XFormInstance
+from dimagi.ext.couchdbkit import StringProperty
+from dimagi.utils.logging import notify_exception
+
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util.datadog.gauges import datadog_counter
-from couchforms.models import XFormInstance
-from ddtrace import tracer
-from dimagi.utils.logging import notify_exception
-from dimagi.ext.couchdbkit import StringProperty
-import six
 
 
 def coerce_to_datetime(v):
