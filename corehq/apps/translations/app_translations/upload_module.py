@@ -188,9 +188,12 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 ):
                     partial_upload = True
                     continue
-                self.msgs.append((messages.error, _("Expected {expected_count} {list_or_detail} properties "
-                    "in menu {index}, found {actual_count}. No case list or detail properties for menu "
-                    "{index} were updated").format(
+
+                # TODO: Don't fail yet. Skips rows, not modules.
+                self.msgs.append((messages.error, _(
+                    'Unable to update {list_or_detail} properties in menu {index}, because some properties are '
+                    'duplicated and not all duplicates were found. Unable to determine which translations to '
+                    'apply. Skipping menu {index}.').format(
                         expected_count=len(expected_list),
                         actual_count=len(received_list),
                         index=self.module.id + 1,
