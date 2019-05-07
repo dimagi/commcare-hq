@@ -371,7 +371,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 
 def _transaction_sort_key_function(case):
-    fudge_factor = datetime.timedelta(hours=12)
 
     def transaction_cmp(first_transaction, second_transaction):
         # if the forms aren't submitted by the same user, just default to server dates
@@ -388,8 +387,7 @@ def _transaction_sort_key_function(case):
         if not (first_transaction.server_date and second_transaction.server_date):
             raise MissingServerDate()
 
-        # checks if the dates received are within a particular range
-        if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
+        if abs(first_transaction.server_date - second_transaction.server_date) > const.SIGNIFICANT_TIME:
             return cmp(first_transaction.server_date, second_transaction.server_date)
 
         return cmp(sort_key(first_transaction), sort_key(second_transaction))

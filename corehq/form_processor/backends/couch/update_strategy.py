@@ -402,6 +402,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
 
 def _action_sort_key_function(case):
+
     def action_cmp(first_action, second_action):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_action.user_id != second_action.user_id:
@@ -414,6 +415,12 @@ def _action_sort_key_function(case):
                 type_index(second_action.action_type)
             )
 
+        if not (first_action.server_date and second_action.server_date):
+            raise MissingServerDate()
+
+        if abs(first_action.server_date - second_action.server_date) > const.SIGNIFICANT_TIME:
+            return cmp(first_action.server_date, second_action.server_date)
+
         return cmp(sort_key(first_action), sort_key(second_action))
 
     def type_index(action_type):
@@ -421,15 +428,9 @@ def _action_sort_key_function(case):
         return const.CASE_ACTIONS.index(action_type)
 
     def sort_key(action):
-        if not action.server_date or not action.date:
-            raise MissingServerDate()
-
         # if the user is the same you should compare with the special logic below
         # if the user is not the same you should compare just using received_on
         return (
-            # this is sneaky - it's designed to use just the date for the
-            # server time in case the phone submits two forms quickly out of order
-            action.server_date.date(),
             action.date,
             form_index(action.xform_id),
             type_index(action.action_type),
