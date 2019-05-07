@@ -2522,12 +2522,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_location(self, domain):
         return self.get_sql_location(domain)
 
-    def update_domain_date(self, domain):
-        yesterday = datetime.today() - timedelta(hours=24)
-        if domain not in self.domains_accessed or self.domains_accessed[domain] < yesterday:
-            self.domains_accessed[domain] = datetime.today()
-            self.save()
-
 
 class FakeUser(WebUser):
     """
