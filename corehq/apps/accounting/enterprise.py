@@ -137,19 +137,23 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers + \
+               [_("Last Access Date [UTC]")]
 
     def rows_for_domain(self, domain_obj):
         rows = []
         for user in get_all_user_rows(domain_obj.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = CouchUser.wrap_correctly(user['doc'])
-            rows.append([
-                user.full_name,
-                user.username,
-                user.role_label(domain_obj.name),
-                self.format_date(user.last_login),
-            ] + self.domain_properties(domain_obj))
+            rows.append(
+                [
+                    user.full_name,
+                    user.username,
+                    user.role_label(domain_obj.name),
+                    self.format_date(user.last_login),
+                ]
+                + self.domain_properties(domain_obj)
+                + [user.domains_accessed[domain_obj.name] if domain_obj.name in user.domains_accessed else ""])
         return rows
 
     def total_for_domain(self, domain_obj):
