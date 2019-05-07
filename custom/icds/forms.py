@@ -94,9 +94,9 @@ class CCZHostingForm(forms.Form):
             choices.append((link.id, link))
         return choices
 
-    def version_build_id(self):
-        return get_version_build_id(self.domain, self.cleaned_data['app_id'],
-                                    self.cleaned_data['version'])
+    def _version_exists(self):
+        return bool(get_version_build_id(self.domain, self.cleaned_data['app_id'],
+                                         self.cleaned_data['version']))
 
     def clean_link_id(self):
         link_id = self.cleaned_data.get('link_id')
@@ -124,7 +124,7 @@ class CCZHostingForm(forms.Form):
     def clean(self):
         if self.cleaned_data.get('app_id') and self.cleaned_data.get('version'):
             try:
-                self.version_build_id()
+                self._version_exists()
             except BuildNotFoundException as e:
                 self.add_error('version', e)
 
