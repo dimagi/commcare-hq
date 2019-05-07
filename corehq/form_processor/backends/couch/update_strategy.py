@@ -406,15 +406,15 @@ def _action_sort_key_function(case):
         # if the forms aren't submitted by the same user, just default to server dates
         if first_action.user_id != second_action.user_id:
             return cmp(first_action.server_date, second_action.server_date)
-        else:
-            if first_action.xform_id and first_action.xform_id == second_action.xform_id:
-                # short circuit if they are from the same form
-                return cmp(
-                    _type_sort(first_action.action_type),
-                    _type_sort(second_action.action_type)
-                )
 
-            return cmp(_sortkey(first_action), _sortkey(second_action))
+        if first_action.xform_id and first_action.xform_id == second_action.xform_id:
+            # short circuit if they are from the same form
+            return cmp(
+                _type_sort(first_action.action_type),
+                _type_sort(second_action.action_type)
+            )
+
+        return cmp(_sortkey(first_action), _sortkey(second_action))
 
     def _sortkey(action):
         if not action.server_date or not action.date:
