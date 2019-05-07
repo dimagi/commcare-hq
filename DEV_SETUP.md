@@ -38,6 +38,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - Additional requirements:
   - [Homebrew](https://brew.sh)
   - [libmagic](https://macappstore.org/libmagic)
+  - [pango](https://www.pango.org/)
 
 #### Setup virtualenv
 
@@ -331,7 +332,7 @@ By default, HQ uses vellum minified build files to render form-designer. To use 
 VELLUM_DEBUG = "dev"
 ```
 
-    # simlink your Vellum code to submodules/formdesigner
+    # symlink your Vellum code to submodules/formdesigner
     $ ln -s absolute/path/to/Vellum absolute/path/to/submodules/formdesigner/
 
 Running Tests
