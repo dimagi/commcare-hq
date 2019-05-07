@@ -404,7 +404,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 def _action_sort_key_function(case):
 
     def action_cmp(first_action, second_action):
-        # if the forms aren't submitted by the same user, just default to server dates
+        # compare server dates if the forms aren't submitted by the same user
         if first_action.user_id != second_action.user_id:
             return cmp(first_action.server_date, second_action.server_date)
 
@@ -429,7 +429,6 @@ def _action_sort_key_function(case):
 
     def sort_key(action):
         # if the user is the same you should compare with the special logic below
-        # if the user is not the same you should compare just using received_on
         return (
             action.date,
             form_index(action.xform_id),

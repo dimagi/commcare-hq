@@ -373,7 +373,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 def _transaction_sort_key_function(case):
 
     def transaction_cmp(first_transaction, second_transaction):
-        # if the forms aren't submitted by the same user, just default to server dates
+        # compare server dates if the forms aren't submitted by the same user
         if first_transaction.user_id != second_transaction.user_id:
             return cmp(first_transaction.server_date, second_transaction.server_date)
 
