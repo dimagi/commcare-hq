@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import six
 from celery.exceptions import MaxRetriesExceededError
@@ -8,6 +8,7 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
