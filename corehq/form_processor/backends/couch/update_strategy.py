@@ -414,22 +414,22 @@ def _action_sort_key_function(case):
                     _type_sort(second_action.action_type)
                 )
 
-            def _sortkey(action):
-                if not action.server_date or not action.date:
-                    raise MissingServerDate()
-
-                # if the user is the same you should compare with the special logic below
-                # if the user is not the same you should compare just using received_on
-                return (
-                    # this is sneaky - it's designed to use just the date for the
-                    # server time in case the phone submits two forms quickly out of order
-                    action.server_date.date(),
-                    action.date,
-                    form_index(action.xform_id),
-                    _type_sort(action.action_type),
-                )
-
             return cmp(_sortkey(first_action), _sortkey(second_action))
+
+    def _sortkey(action):
+        if not action.server_date or not action.date:
+            raise MissingServerDate()
+
+        # if the user is the same you should compare with the special logic below
+        # if the user is not the same you should compare just using received_on
+        return (
+            # this is sneaky - it's designed to use just the date for the
+            # server time in case the phone submits two forms quickly out of order
+            action.server_date.date(),
+            action.date,
+            form_index(action.xform_id),
+            _type_sort(action.action_type),
+        )
 
     class cache(object):
         ids = None

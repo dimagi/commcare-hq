@@ -392,15 +392,15 @@ def _transaction_sort_key_function(case):
         if abs(first_transaction.server_date - second_transaction.server_date) > fudge_factor:
             return cmp(first_transaction.server_date, second_transaction.server_date)
 
-        def _sortkey(transaction):
-            # if the user is the same you should compare with the special logic below
-            return (
-                transaction.client_date,
-                form_index(transaction.form_id),
-                _type_sort(transaction.type),
-            )
-
         return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+
+    def _sortkey(transaction):
+        # if the user is the same you should compare with the special logic below
+        return (
+            transaction.client_date,
+            form_index(transaction.form_id),
+            _type_sort(transaction.type),
+        )
 
     class cache(object):
         ids = None
