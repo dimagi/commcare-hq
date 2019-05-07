@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from datetime import datetime, timedelta
+
 from django.test import TestCase
+
+from unittest2 import skip
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
 from corehq.apps.app_manager.tests.util import delete_all_apps
@@ -14,7 +18,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     hard_delete_deleted_users,
 )
-
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
@@ -128,6 +131,7 @@ class TestDbAccessors(TestCase):
             set(),
         )
 
+    @skip("temporary for two job test")
     def test_get_app_ids_by_last_modified(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
