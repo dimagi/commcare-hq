@@ -407,8 +407,6 @@ def _action_sort_key_function(case):
         if first_action.user_id != second_action.user_id:
             return cmp(first_action.server_date, second_action.server_date)
         else:
-            form_ids = list(case.xform_ids)
-
             if first_action.xform_id and first_action.xform_id == second_action.xform_id:
                 # short circuit if they are from the same form
                 return cmp(
@@ -420,9 +418,6 @@ def _action_sort_key_function(case):
                 if not action.server_date or not action.date:
                     raise MissingServerDate()
 
-                def form_cmp(form_id):
-                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
-
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on
                 return (
@@ -430,11 +425,19 @@ def _action_sort_key_function(case):
                     # server time in case the phone submits two forms quickly out of order
                     action.server_date.date(),
                     action.date,
-                    form_cmp(action.xform_id),
+                    form_index(action.xform_id),
                     _type_sort(action.action_type),
                 )
 
             return cmp(_sortkey(first_action), _sortkey(second_action))
+
+    class cache(object):
+        ids = None
+
+    def form_index(form_id):
+        if cache.ids is None:
+            cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
+        return cache.ids.get(form_id, sys.maxsize)
 
     return cmp_to_key(_action_cmp)
 

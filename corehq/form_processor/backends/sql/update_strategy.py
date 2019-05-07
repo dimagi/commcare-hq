@@ -371,7 +371,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
 
 def _transaction_sort_key_function(case):
-    xform_ids = list(case.xform_ids)
     fudge_factor = datetime.timedelta(hours=12)
 
     def _transaction_cmp(first_transaction, second_transaction):
@@ -394,12 +393,6 @@ def _transaction_sort_key_function(case):
             return cmp(first_transaction.server_date, second_transaction.server_date)
 
         def _sortkey(transaction):
-            def form_index(form_id):
-                try:
-                    return xform_ids.index(form_id)
-                except ValueError:
-                    return sys.maxsize
-
             # if the user is the same you should compare with the special logic below
             return (
                 transaction.client_date,
@@ -408,6 +401,14 @@ def _transaction_sort_key_function(case):
             )
 
         return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
+
+    class cache(object):
+        ids = None
+
+    def form_index(form_id):
+        if cache.ids is None:
+            cache.ids = {form_id: i for i, form_id in enumerate(case.xform_ids)}
+        return cache.ids.get(form_id, sys.maxsize)
 
     return cmp_to_key(_transaction_cmp)
 
