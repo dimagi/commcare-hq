@@ -187,6 +187,10 @@ hqDefine("aaa/js/models/pregnant_women", [
             return reachUtils.BLOODGROUPS[self.bloodGroup()];
         });
 
+        self.abortionWeeks = ko.computed(function () {
+            return Number.isInteger(self.abortionDays()) ? self.abortionDays / 7 : self.abortionDays();
+        });
+
         return self;
     };
 
