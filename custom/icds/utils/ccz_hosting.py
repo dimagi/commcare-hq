@@ -60,4 +60,3 @@ class CCZHostingUtility:
 
     def remove_file_from_blobdb(self):
         get_blob_db().delete(key=self.blob_id)
-

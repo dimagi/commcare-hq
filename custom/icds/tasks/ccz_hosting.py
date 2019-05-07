@@ -8,7 +8,6 @@ from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from corehq.apps.hqmedia.tasks import create_ccz_files
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from custom.icds.models import CCZHosting
-from custom.icds_reports.models.helper import IcdsFile
 
 
 @task
