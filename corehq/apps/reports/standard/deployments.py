@@ -66,6 +66,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def headers(self):
+        print(self.rendered_as)
         headers = DataTablesHeader(
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
@@ -92,7 +93,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
         )
-        headers.custom_sort = [[1, 'desc']]
+        headers.custom_sort = [[6, 'desc']]
         return headers
 
     @property
@@ -209,8 +210,51 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                        )
         return user_query
 
+    def get_bulk_locations(self, users):
+        from django.db.models import Q
+        from corehq.apps.locations.models import SQLLocation
+
+
+        location_ids = {user['location_id'] for user in users if user['location_id']}
+        where = Q(domain='icds-cas', location_id__in=location_ids)
+        p = SQLLocation.objects.get_ancestors(where)
+        location_map = {location.location_id: location for location in p}
+        location_map_id = {location.id: location for location in p}
+        return location_map, location_map_id
+
+    def get_location_types(self):
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        locationtype = LocationType.objects.filter(domain='icds-cas').all()
+        location_type_map = dict();
+
+        for i, loc_type in enumerate(locationtype):
+            location_type_map[loc_type.id] = {'position':i, 'name':loc_type.name}
+
+        return location_type_map
+
+    def demo(self, location_map, location_map_id, location_id, location_type_map):
+        location_list = list()
+        current_location = location_map[location_id].id
+        while(current_location is not None):
+            location_list.append(location_map[location_map_id[current_location].location_id].name)
+            current_location = location_map_id[current_location].parent_id
+
+        location_list.reverse()
+
+        location_list = location_list + ['---'] * (len(location_type_map)-len(location_list))
+
+        return location_list
+
+
     def process_rows(self, users, fmt_for_export=False):
         rows = []
+        print("PROCESS ROWS")
+        users  = list(users)
+        if toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user) and \
+            toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain) or True:
+            location_map,location_map_id = self.get_bulk_locations(users)
+            location_type_map = self.get_location_types()
+
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             build_version = _("Unknown")
@@ -247,13 +291,25 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
                     app_name = self.get_app_name(last_build['app_id'])
-            rows.append([
+
+            row_data = [
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---'
-            ])
+            ]
+
+            if toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(self.request.couch_user) and \
+                toggles.DASHBOARD_ICDS_REPORT.enabled(self.domain) or True:
+                if user['location_id']:
+                    location_data = self.demo(location_map, location_map_id, user['location_id'], location_type_map)
+                else:
+                    location_data = ['---']*len(location_type_map)
+
+                row_data = location_data + row_data
+
+            rows.append(row_data)
         return rows
 
     def process_users(self, users, fmt_for_export=False):
@@ -306,6 +362,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def rows(self):
+        print("ROWS")
         if self.warehouse:
             mobile_user_and_group_slugs = set(
                 # Cater for old ReportConfigs
@@ -337,18 +394,52 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def export_table(self):
+        print ("EXPORT")
+
         def _fmt_timestamp(timestamp):
             if timestamp is not None and timestamp >= 0:
+                print
                 return safe_strftime(date.fromtimestamp(timestamp), USER_DATE_FORMAT)
             return SCALAR_NEVER_WAS
 
-        result = super(ApplicationStatusReport, self).export_table
+        def export_table(self):
+            """
+            Exports the report as excel.
+
+            When rendering a complex cell, it will assign a value in the following order:
+            1. cell['raw']
+            2. cell['sort_key']
+            3. str(cell)
+            """
+            headers = self.headers
+
+            def _unformat_row(row):
+                def _unformat_val(val):
+                    if isinstance(val, dict):
+                        return val.get('raw', val.get('sort_key', val))
+                    return self._strip_tags(val)
+
+                return [_unformat_val(val) for val in row]
+
+            table = headers.as_export_table
+            self.exporting_as_excel = True
+            rows = (_unformat_row(row) for row in self.export_rows)
+            table = chain(table, rows)
+            if self.total_row:
+                table = chain(table, [_unformat_row(self.total_row)])
+            if self.statistics_rows:
+                table = chain(table, [_unformat_row(row) for row in self.statistics_rows])
+
+            return [[self.export_sheet_name, table]]
+
+
+        result = export_table(self)
         table = list(result[0][1])
         for row in table[1:]:
             # Last submission
-            row[1] = _fmt_timestamp(row[1])
+            row[6] = _fmt_timestamp(row[6])
             # Last sync
-            row[2] = _fmt_timestamp(row[2])
+            row[7] = _fmt_timestamp(row[7])
         result[0][1] = table
         return result
 
