@@ -106,6 +106,7 @@
         "column_id": "supervisor_id",
         "type": "expression",
         "is_primary_key": true,
+        "is_nullable": false,
         "expression": {
           "type": "ancestor_location",
           "location_id": {
