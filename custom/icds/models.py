@@ -100,7 +100,7 @@ class CCZHosting(models.Model):
         # if no other link is using this app+version+profile, delete the file reference
         if not (CCZHosting.objects.filter(app_id=self.app_id, version=self.version, profile_id=self.profile_id)
                 .exclude(link=self.link).exists()):
-            self.utility.icds_file_obj.delete()
+            self.utility.remove_file_from_blobdb()
 
     def delete(self, *args, **kwargs):
         self.delete_ccz()

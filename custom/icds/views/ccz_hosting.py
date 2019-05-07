@@ -39,7 +39,7 @@ from custom.icds.models import (
     CCZHostingLink,
     CCZHosting,
 )
-from custom.icds_reports.models.helper import IcdsFile
+from custom.icds.utils.ccz_hosting import CCZHostingUtility
 
 
 @location_safe
@@ -242,7 +242,7 @@ def remove_ccz_hosting(request, domain, hosting_id):
 def download_ccz(request, domain, hosting_id, blob_id):
     ccz_hosting = CCZHosting.objects.get(pk=hosting_id, link__domain=domain)
     assert ccz_hosting.blob_id == blob_id
-    file_size = ccz_hosting.utility.ccz_file_meta.content_length
+    file_size = ccz_hosting.utility.get_file_meta.content_length
     # check for file name of the ccz hosting object first because
     # the file meta might be coming from CCZ stored for another ccz hosting instance
     # since we don't re-store already present CCZs
@@ -250,7 +250,7 @@ def download_ccz(request, domain, hosting_id, blob_id):
     if file_name and not file_name.endswith('.ccz'):
         file_name = file_name + '.ccz'
     else:
-        file_name = ccz_hosting.utility.ccz_file_meta.name
+        file_name = ccz_hosting.utility.get_file_meta.name
     content_format = Format('', Format.ZIP, '', True)
     return get_download_response(ccz_hosting.utility.get_file(), file_size, content_format, file_name,
                                  request)
@@ -259,8 +259,7 @@ def download_ccz(request, domain, hosting_id, blob_id):
 @location_safe
 def download_ccz_supporting_files(request, domain, blob_id):
     assert blob_id in settings.CCZ_FILE_HOSTING_SUPPORTING_FILES.get(domain, {}).values()
-    file_ref = IcdsFile.objects.get(blob_id=blob_id)
-    _file = file_ref.get_file_from_blobdb()
+    ccz_utility = CCZHostingUtility(blob_id=blob_id)
     content_format = Format('', Format.ZIP, '', True)
-    return get_download_response(_file, file_ref.get_file_size(), content_format,
-                                 file_ref.get_file_meta.name, request)
+    return get_download_response(ccz_utility.get_file(), ccz_utility.get_file_size(), content_format,
+                                 ccz_utility.get_file_meta.name, request)

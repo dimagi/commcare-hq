@@ -4,36 +4,60 @@ from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils.functional import cached_property
 
-from custom.icds_reports.models.helper import IcdsFile
+from corehq.blobs import (
+    get_blob_db,
+    CODES,
+)
+from corehq.blobs.models import BlobMeta
 
 
 class CCZHostingUtility:
-    def __init__(self, ccz_hosting):
+    def __init__(self, ccz_hosting=None, blob_id=None):
         self.ccz_hosting = ccz_hosting
-        self.ccz_file_blob = None
+        self.blob_id = blob_id
+        if ccz_hosting and not blob_id:
+            self.blob_id = self.ccz_hosting.blob_id
 
-    @cached_property
-    def icds_file_obj(self):
-        try:
-            return IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)
-        except IcdsFile.DoesNotExist:
-            return None
+    def file_exists(self):
+        return get_blob_db().exists(key=self.blob_id)
 
     def get_file(self):
-        if self.icds_file_obj:
-            return self.icds_file_obj.get_file_from_blobdb()
+        return get_blob_db().get(key=self.blob_id)
+
+    def get_file_size(self):
+        return get_blob_db().size(key=self.blob_id)
 
     @cached_property
-    def ccz_file_meta(self):
-        if self.icds_file_obj:
-            return self.icds_file_obj.get_file_meta
+    def get_file_meta(self):
+        if self.file_exists():
+            return get_blob_db().metadb.get(key=self.blob_id, parent_id='CCZHosting')
 
     @property
     def ccz_details(self):
-        if self.icds_file_obj:
-            return {
-                'name': self.ccz_hosting.file_name or self.ccz_file_meta.name,
-                'download_url': reverse('ccz_hosting_download_ccz', args=[
-                    self.ccz_hosting.domain, self.ccz_hosting.id, self.ccz_hosting.blob_id])
+        file_name = self.ccz_hosting.file_name
+        if not file_name and self.get_file_meta:
+            file_name = self.get_file_meta.name
+        return {
+            'name': file_name,
+            'download_url': reverse('ccz_hosting_download_ccz', args=[
+                self.ccz_hosting.domain, self.ccz_hosting.id, self.blob_id])
+        }
+
+    def store_file_in_blobdb(self, ccz_file, name=None):
+        db = get_blob_db()
+        try:
+            kw = {"meta": db.metadb.get(parent_id='CCZHosting', key=self.blob_id)}
+        except BlobMeta.DoesNotExist:
+            kw = {
+                "domain": self.ccz_hosting.link.domain,
+                "parent_id": 'CCZHosting',
+                "type_code": CODES.tempfile,
+                "key": self.blob_id,
             }
-        return {}
+            if name:
+                kw["name"] = name
+        db.put(ccz_file, **kw)
+
+    def remove_file_from_blobdb(self):
+        get_blob_db().delete(key=self.blob_id)
+

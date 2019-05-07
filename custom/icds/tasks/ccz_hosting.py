@@ -18,18 +18,16 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
     except CCZHosting.DoesNotExist:
         return
     version = ccz_hosting.version
-    ccz_blob_id = ccz_hosting.blob_id
+    ccz_utility = ccz_hosting.utility
     # set up the file if not already present
-    if not IcdsFile.objects.filter(blob_id=ccz_blob_id, data_type="ccz").exists():
+    if not ccz_utility.file_exists():
         build = wrap_app(get_build_by_version(ccz_hosting.link.domain, ccz_hosting.app_id, version))
-        icds_file = IcdsFile(blob_id=ccz_blob_id, data_type="ccz")
         ccz_file = create_ccz_files(build, ccz_hosting.profile_id)
         ccz_file_name = ccz_hosting.file_name or "%s-v%s.ccz" % (build.name, version)
         try:
             with open(ccz_file, 'rb') as ccz:
-                icds_file.store_file_in_blobdb(ccz, name=ccz_file_name)
-                icds_file.save()
+                ccz_utility.store_file_in_blobdb(ccz, name=ccz_file_name)
         except Exception as e:
-            # delete the file from blob db if it was added but save failed
-            icds_file.remove_file_from_blobdb()
+            # delete the file from blob db if it was added but later failed
+            ccz_utility.remove_file_from_blobdb()
             raise e
