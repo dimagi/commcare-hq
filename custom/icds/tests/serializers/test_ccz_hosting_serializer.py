@@ -16,20 +16,19 @@ BUILD = {
 }
 
 
-class TestCCZHostingLinkSerializer(TestCase):
+class TestCCZHostingSerializer(TestCase):
     raw_password = "123456"
 
     @classmethod
     def setUpClass(cls):
-        super(TestCCZHostingLinkSerializer, cls).setUpClass()
+        super(TestCCZHostingSerializer, cls).setUpClass()
         cls.link = CCZHostingLink.objects.create(username="username", password="password",
                                                  identifier="link123", domain="test")
         cls.ccz_hosting = CCZHosting(link=cls.link, app_id="dummy", version=12, profile_id="12345",
                                      file_name="my file")
 
     @mock.patch('custom.icds.models.get_build_by_version', lambda *args: BUILD)
-    @mock.patch('custom.icds.utils.ccz_hosting.IcdsFile.objects.get')
-    def test_data(self, _):
+    def test_data(self):
         self.assertEqual(
             CCZHostingSerializer(self.ccz_hosting, context={'app_names': {
                 'dummy': 'Dummy App',
@@ -45,4 +44,4 @@ class TestCCZHostingLinkSerializer(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.link.delete()
-        super(TestCCZHostingLinkSerializer, cls).tearDownClass()
+        super(TestCCZHostingSerializer, cls).tearDownClass()

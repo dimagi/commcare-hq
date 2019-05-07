@@ -39,14 +39,12 @@ class TestCCZHosting(TestCase):
     def test_blob_id(self, _):
         self.assertEqual(self.ccz_hosting.blob_id, "dummy1212345")
 
-    @mock.patch('custom.icds.utils.ccz_hosting.IcdsFile.objects.get')
     @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True})
-    def test_setup_ccz_file_for_hosting_on_save(self, _, setup_mock):
+    def test_setup_ccz_file_for_hosting_on_save(self, setup_mock):
         self.ccz_hosting.save()
         setup_mock.assert_called_with(self.ccz_hosting.pk)
         self.ccz_hosting.delete()
 
-    @mock.patch('custom.icds.utils.ccz_hosting.IcdsFile.objects.get')
     @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True})
     def test_uniqueness(self, *_):
         self.ccz_hosting.save()
@@ -60,9 +58,9 @@ class TestCCZHosting(TestCase):
             )
         self.ccz_hosting.delete()
 
-    @mock.patch('custom.icds.utils.ccz_hosting.IcdsFile.objects.get')
+    @mock.patch('custom.icds.models.CCZHostingUtility.remove_file_from_blobdb')
     @mock.patch('custom.icds.models.get_build_by_version', lambda *args: {'is_released': True})
-    def test_delete_ccz(self, mock_get, _):
+    def test_delete_ccz(self, mock_delete, _):
         self.ccz_hosting.save()
         link2 = CCZHostingLink.objects.create(username="username", password="password",
                                               identifier="link1234", domain="test")
@@ -75,7 +73,7 @@ class TestCCZHosting(TestCase):
         self.assertEqual(self.ccz_hosting.blob_id, ccz_hosting.blob_id)
 
         self.ccz_hosting.delete()
-        self.assertFalse(mock_get.called)
+        self.assertFalse(mock_delete.called)
 
         ccz_hosting.delete()
-        mock_get.assert_called_with(blob_id=self.ccz_hosting.blob_id)
+        self.assertTrue(mock_delete.called)
