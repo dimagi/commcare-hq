@@ -49,20 +49,40 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         self._get_condensed_rows(rows)
 
-        partial_upload = self._check_for_detail_length_errors_and_partial_upload()
-        if self.msgs:
-            return self.msgs
-
         short_details = list(self.module.case_details.short.get_columns())
         long_details = list(self.module.case_details.long.get_columns())
         list_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'list']
         detail_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'detail']
-        if partial_upload:
+
+        if (
+            len(short_details) == len(list_rows) and
+            len(long_details) == len(detail_rows)
+        ):
+            self._update_details_based_on_position(list_rows, short_details,
+                                                   detail_rows, long_details)
+        elif toggles.ICDS.enabled(self.app.domain):
             self._partial_upload(list_rows, short_details)
             self._partial_upload(detail_rows, long_details)
         else:
-            self._update_details_based_on_position(list_rows, short_details,
-                                                   detail_rows, long_details)
+            if len(short_details) != len(list_rows):
+                expected_list = short_details
+                received_list = list_rows
+                list_or_detail = _("case list")
+            else:
+                expected_list = long_details
+                received_list = detail_rows
+                list_or_detail = _("case detail")
+            message = _(
+                'Expected {expected_count} {list_or_detail} properties in '
+                'menu {index}, found {actual_count}. No case list or detail '
+                'properties for menu {index} were updated.'
+            ).format(
+                expected_count=len(expected_list),
+                actual_count=len(received_list),
+                index=self.module.id + 1,
+                list_or_detail=list_or_detail
+            )
+            self.msgs.append((messages.error, message))
 
         for index, tab in enumerate(self.tab_headers):
             if tab:
@@ -150,58 +170,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
     def _remove_description_from_case_property(cls, row):
         return re.match('.*(?= \()', row['case_property']).group()
 
-    def _check_for_detail_length_errors_and_partial_upload(self):
-        list_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'list']
-        detail_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'detail']
-        short_details = list(self.module.case_details.short.get_columns())
-        long_details = list(self.module.case_details.long.get_columns())
-        partial_upload = False
-
-        for expected_list, received_list, list_or_detail in [
-            (short_details, list_rows, _("case list")),
-            (long_details, detail_rows, _("case detail")),
-        ]:
-            if len(expected_list) != len(received_list):
-                # Partial uploads are supported in the following scenarios:
-                # 1. There are no duplicated fields
-                # 2. There are duplicated fields, but they are not included in
-                #    the upload
-                # 3. There are duplicated fields, and the upload includes all
-                #    duplicates of a field, or none of them.
-                #
-                # Support for the third scenario ASSUMES that the upload
-                # includes the duplicates in the same order.
-                expected_fields = [detail.field for detail in expected_list]
-                received_fields = [detail.field for detail in received_list]
-                expected_field_counter = Counter(expected_fields)
-                received_field_counter = Counter(received_fields)
-                duplicated_fields = {field for field, count in expected_field_counter.items() if count > 1}
-                duplicates_not_included = all(field not in duplicated_fields for field in received_list)
-                duplicates_include_all_or_nothing = all(
-                    received_field_counter[field] == expected_field_counter[field] or
-                    received_field_counter[field] == 0
-                    for field in duplicated_fields
-                )
-                if (
-                    toggles.ICDS.enabled(self.app.domain) and
-                    (not duplicated_fields or duplicates_not_included or duplicates_include_all_or_nothing)
-                ):
-                    partial_upload = True
-                    continue
-
-                # TODO: Don't fail yet. Skips rows, not modules.
-                self.msgs.append((messages.error, _(
-                    'Unable to update {list_or_detail} properties in menu {index}, because some properties are '
-                    'duplicated and not all duplicates were found. Unable to determine which translations to '
-                    'apply. Skipping menu {index}.').format(
-                        expected_count=len(expected_list),
-                        actual_count=len(received_list),
-                        index=self.module.id + 1,
-                        list_or_detail=list_or_detail)
-                ))
-
-        return partial_upload
-
     def _has_at_least_one_translation(self, row, prefix):
         """
         Returns true if the given row has at least one translation.
@@ -283,7 +251,33 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
             self._update_detail(row, detail)
 
     def _partial_upload(self, rows, details):
+        expected_fields = [detail.field for detail in details]
+        received_fields = [row['id'] for row in rows]
+        message = _('The following rows are missing for menu {index}: {fields}').format(
+            index=self.module.id + 1,
+            fields=', '.join(set(expected_fields) - set(received_fields))
+        )
+        self.msgs.append((messages.info, message))
+
+        expected_field_counter = Counter(expected_fields)
+        received_field_counter = Counter(received_fields)
         for detail, row in zip_with_gaps(details, rows,
                                          lambda detail: detail.field,
                                          lambda row: row['id']):
+            field = row['id']
+            if (
+                received_field_counter[field] > 1 and
+                received_field_counter[field] != expected_field_counter[field]
+            ):
+                message = _(
+                    'There is more than one translation for case property '
+                    '"{field}" for menu {index}, but some translations are '
+                    'missing. Unable to determine which translation(s) to '
+                    'use. Skipping this case property.'
+                ).format(
+                    index=self.module.id + 1,
+                    field=row.get('case_property', '')
+                )
+                self.msgs.append((messages.info, message))
+                continue
             self._update_detail(row, detail)
