@@ -416,6 +416,10 @@ def _action_sort_key_function(case):
 
         return cmp(_sortkey(first_action), _sortkey(second_action))
 
+    def _type_sort(action_type):
+        """Consistent ordering for action types"""
+        return const.CASE_ACTIONS.index(action_type)
+
     def _sortkey(action):
         if not action.server_date or not action.date:
             raise MissingServerDate()
@@ -440,10 +444,3 @@ def _action_sort_key_function(case):
         return cache.ids.get(form_id, sys.maxsize)
 
     return cmp_to_key(_action_cmp)
-
-
-def _type_sort(action_type):
-    """
-    Consistent ordering for action types
-    """
-    return const.CASE_ACTIONS.index(action_type)

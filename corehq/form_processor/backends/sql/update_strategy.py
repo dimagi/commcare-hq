@@ -394,6 +394,13 @@ def _transaction_sort_key_function(case):
 
         return cmp(_sortkey(first_transaction), _sortkey(second_transaction))
 
+    def _type_sort(action_type):
+        """Consistent ordering for action types"""
+        for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
+            if action_type & type_action == action_type:
+                return idx
+        return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
+
     def _sortkey(transaction):
         # if the user is the same you should compare with the special logic below
         return (
@@ -411,13 +418,3 @@ def _transaction_sort_key_function(case):
         return cache.ids.get(form_id, sys.maxsize)
 
     return cmp_to_key(_transaction_cmp)
-
-
-def _type_sort(action_type):
-    """
-    Consistent ordering for action types
-    """
-    for idx, type_action in enumerate(CaseTransaction.FORM_TYPE_ACTIONS_ORDER):
-        if action_type & type_action == action_type:
-            return idx
-    return len(CaseTransaction.FORM_TYPE_ACTIONS_ORDER)
