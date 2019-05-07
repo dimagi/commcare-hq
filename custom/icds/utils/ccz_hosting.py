@@ -11,7 +11,6 @@ class CCZHostingUtility:
     def __init__(self, ccz_hosting):
         self.ccz_hosting = ccz_hosting
         self.ccz_file_blob = None
-        self._load_ccz_file()
 
     @cached_property
     def icds_file_obj(self):
@@ -21,21 +20,17 @@ class CCZHostingUtility:
             return None
 
     def get_file(self):
-        if self.ccz_file_blob:
-            return self.ccz_file_blob.get_file_from_blobdb()
-
-    def _load_ccz_file(self):
         if self.icds_file_obj:
-            self.ccz_file_blob = IcdsFile.objects.get(blob_id=self.ccz_hosting.blob_id)
+            return self.icds_file_obj.get_file_from_blobdb()
 
     @cached_property
     def ccz_file_meta(self):
-        if self.ccz_file_blob:
-            return self.ccz_file_blob.get_file_meta
+        if self.icds_file_obj:
+            return self.icds_file_obj.get_file_meta
 
     @property
     def ccz_details(self):
-        if self.ccz_file_blob:
+        if self.icds_file_obj:
             return {
                 'name': self.ccz_hosting.file_name or self.ccz_file_meta.name,
                 'download_url': reverse('ccz_hosting_download_ccz', args=[
