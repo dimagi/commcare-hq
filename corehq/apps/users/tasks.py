@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import six
 from celery.exceptions import MaxRetriesExceededError
@@ -8,6 +8,7 @@ from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -290,3 +291,11 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task(queue=settings.CELERY_MAIN_QUEUE)
+def update_domain_date(user, domain):
+    yesterday = datetime.today() - timedelta(hours=24)
+    if domain not in user.domains_accessed or user.domains_accessed[domain] < yesterday:
+        user.domains_accessed[domain] = datetime.today()
+        user.save()
