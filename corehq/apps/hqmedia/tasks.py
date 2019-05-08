@@ -1,29 +1,31 @@
 from __future__ import absolute_import, division, unicode_literals
-from io import open
+
+import itertools
+import json
 import os
+import re
 import tempfile
+import zipfile
+from io import open
 from wsgiref.util import FileWrapper
+
+from django.conf import settings
+from django.utils.translation import ugettext as _
+
 from celery import states
 from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
-from django.conf import settings
-import itertools
-import json
-import re
-import zipfile
+
+from soil import DownloadBase
+from soil.progress import update_task_state
+from soil.util import expose_cached_download, expose_file_download
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.logging import notify_exception
-from corehq.util.soft_assert import soft_assert
-from soil import DownloadBase
-from django.utils.translation import ugettext as _
-
-from soil.progress import update_task_state
-from soil.util import expose_file_download, expose_cached_download
 
 logging = get_task_logger(__name__)
 
