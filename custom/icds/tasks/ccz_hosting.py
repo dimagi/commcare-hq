@@ -22,10 +22,9 @@ def setup_ccz_file_for_hosting(ccz_hosting_id):
     if not ccz_utility.file_exists():
         build = wrap_app(get_build_by_version(ccz_hosting.link.domain, ccz_hosting.app_id, version))
         ccz_file = create_ccz_files(build, ccz_hosting.profile_id)
-        ccz_file_name = ccz_hosting.file_name or "%s-v%s.ccz" % (build.name, version)
         try:
             with open(ccz_file, 'rb') as ccz:
-                ccz_utility.store_file_in_blobdb(ccz, name=ccz_file_name)
+                ccz_utility.store_file_in_blobdb(ccz, name=ccz_hosting.file_name)
         except Exception as e:
             # delete the file from blob db if it was added but later failed
             ccz_utility.remove_file_from_blobdb()

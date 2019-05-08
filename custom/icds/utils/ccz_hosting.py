@@ -13,6 +13,9 @@ from corehq.blobs.models import BlobMeta
 
 class CCZHostingUtility:
     def __init__(self, ccz_hosting=None, blob_id=None):
+        """
+        utils for ccz file actions either via ccz hosting or a blob object id
+        """
         self.ccz_hosting = ccz_hosting
         self.blob_id = blob_id
         if ccz_hosting and not blob_id:
@@ -34,8 +37,10 @@ class CCZHostingUtility:
 
     @property
     def ccz_details(self):
-        file_name = self.ccz_hosting.file_name
-        if not file_name and self.get_file_meta:
+        file_name = ""
+        if self.ccz_hosting:
+            file_name = self.ccz_hosting.file_name
+        elif self.get_file_meta:
             file_name = self.get_file_meta.name
         return {
             'name': file_name,
@@ -43,7 +48,7 @@ class CCZHostingUtility:
                 self.ccz_hosting.domain, self.ccz_hosting.id, self.blob_id])
         }
 
-    def store_file_in_blobdb(self, ccz_file, name=None):
+    def store_file_in_blobdb(self, ccz_file, name):
         db = get_blob_db()
         try:
             kw = {"meta": db.metadb.get(parent_id='CCZHosting', key=self.blob_id)}
@@ -53,9 +58,8 @@ class CCZHostingUtility:
                 "parent_id": 'CCZHosting',
                 "type_code": CODES.tempfile,
                 "key": self.blob_id,
+                "name": name,
             }
-            if name:
-                kw["name"] = name
         db.put(ccz_file, **kw)
 
     def remove_file_from_blobdb(self):

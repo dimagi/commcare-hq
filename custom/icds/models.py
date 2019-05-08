@@ -88,6 +88,8 @@ class CCZHosting(models.Model):
         if not self.build_doc['is_released']:
             raise ValidationError({
                 'version': _("Version not released. Please mark it as released.")})
+        if not self.file_name:
+            self.file_name = "%s-v%s.ccz" % (self.build_doc['name'], self.version)
         super(CCZHosting, self).clean()
 
     def save(self, *args, **kwargs):
