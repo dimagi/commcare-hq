@@ -253,12 +253,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
     def _partial_upload(self, rows, details):
         expected_fields = [detail.field for detail in details]
         received_fields = [row['id'] for row in rows]
-        message = _('The following rows are missing for menu {index}: {fields}').format(
-            index=self.module.id + 1,
-            fields=', '.join(set(expected_fields) - set(received_fields))
-        )
-        self.msgs.append((messages.info, message))
-
         expected_field_counter = Counter(expected_fields)
         received_field_counter = Counter(received_fields)
         for detail, row in zip_with_gaps(details, rows,
@@ -278,6 +272,6 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                     index=self.module.id + 1,
                     field=row.get('case_property', '')
                 )
-                self.msgs.append((messages.info, message))
+                self.msgs.append((messages.error, message))
                 continue
             self._update_detail(row, detail)
