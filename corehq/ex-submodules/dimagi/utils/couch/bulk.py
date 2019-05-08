@@ -8,9 +8,6 @@ from collections import defaultdict
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.undo import DELETED_SUFFIX
-
 from corehq.util.soft_assert import soft_assert
 
 
