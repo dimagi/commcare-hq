@@ -9,8 +9,8 @@ hqDefine('reports/v2/js/datagrid', [
     'hqwebapp/js/assert_properties',
     'reports/v2/js/datagrid/data_models',
     'reports/v2/js/datagrid/columns',
-    'reports/v2/js/datagrid/reportFilters',
-    'reports/v2/js/datagrid/bindingHandlers',  // for custom ko bindingHandlers
+    'reports/v2/js/datagrid/report_filters',
+    'reports/v2/js/datagrid/binding_handlers',  // for custom ko bindingHandlers
     'hqwebapp/js/knockout_bindings.ko',  // for modal bindings
 ], function (
     $,

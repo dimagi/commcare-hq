@@ -6,7 +6,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'jquery',
     'knockout',
     'underscore',
-    'reports/v2/js/datagrid/columnFilters',
+    'reports/v2/js/datagrid/column_filters',
 ], function (
     $,
     ko,

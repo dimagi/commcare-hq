@@ -2,7 +2,7 @@
  * todo add docstring
  */
 
-hqDefine('reports/v2/js/datagrid/bindingHandlers', [
+hqDefine('reports/v2/js/datagrid/binding_handlers', [
     'jquery',
     'knockout',
     'underscore',
