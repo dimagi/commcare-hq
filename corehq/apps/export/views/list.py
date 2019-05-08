@@ -283,7 +283,10 @@ class DailySavedExportListHelper(ExportListHelper):
             combined_exports.extend(get_case_exports_by_domain(self.domain,
                                                                self.permissions.has_deid_view_permissions,
                                                                include_docs=False))
-        return [x for x in combined_exports if x['is_daily_saved_export'] and not x['export_format'] == "html"]
+        return [x for x in combined_exports
+                if x['is_daily_saved_export']
+                and not x['export_format'] == "html"
+                and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormDailySavedExportView, EditCaseDailySavedExportView
@@ -346,7 +349,7 @@ class CaseExportListHelper(ExportListHelper):
         exports = get_case_exports_by_domain(self.domain,
                                              self.permissions.has_deid_view_permissions,
                                              include_docs=False)
-        return [x for x in exports if not x['is_daily_saved_export']]
+        return [x for x in exports if not x['is_daily_saved_export'] and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditNewCustomCaseExportView
@@ -385,7 +388,10 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
             combined_exports.extend(get_case_exports_by_domain(self.domain,
                                                                self.permissions.has_deid_view_permissions,
                                                                include_docs=False))
-        return [x for x in combined_exports if x['is_daily_saved_export'] and x['export_format'] == "html"]
+        return [x for x in combined_exports
+                if x['is_daily_saved_export']
+                and x['export_format'] == "html"
+                and not x['is_odata_config']]
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
