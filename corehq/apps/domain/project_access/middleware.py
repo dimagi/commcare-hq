@@ -13,7 +13,7 @@ class ProjectAccessMiddleware(MiddlewareMixin):
             return self.record_entry(request.domain, request.couch_user.username)
         if getattr(request, 'couch_user', None) and request.couch_user.is_web_user() \
                 and hasattr(request, 'domain'):
-            update_domain_date(request.couch_user, request.domain)
+            update_domain_date.delay(request.couch_user, request.domain)
 
     @quickcache(['domain', 'username'], timeout=ENTRY_RECORD_FREQUENCY.seconds)
     def record_entry(self, domain, username):
