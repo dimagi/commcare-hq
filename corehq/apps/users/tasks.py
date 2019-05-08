@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import six
 from celery.exceptions import MaxRetriesExceededError
@@ -293,9 +293,7 @@ def remove_unused_custom_fields_from_users_task(domain):
     remove_unused_custom_fields_from_users(domain)
 
 
-@task(queue=settings.CELERY_MAIN_QUEUE)
+@task()
 def update_domain_date(user, domain):
-    yesterday = datetime.today() - timedelta(hours=24)
-    if domain not in user.domains_accessed or user.domains_accessed[domain] < yesterday:
-        user.domains_accessed[domain] = datetime.today()
-        user.save()
+    user.domains_accessed[domain] = datetime.today()
+    user.save()
