@@ -34,6 +34,7 @@ breadcrumbs todo
   {% initial_page_data "report.columns" report.columns %}
   {% initial_page_data "report.columnFilters" report.column_filters %}
   {% initial_page_data "report.reportFilters" report.report_filters %}
+  {% initial_page_data "report.initialReportFilters" report.initial_report_filters %}
 
 <div id="case_search--model">
 
@@ -63,6 +64,7 @@ breadcrumbs todo
                                 placeholder: placeholder(),
                                 multiple: true,
                                 url: endpoint.getUrl(),
+                                getInitialValue: getInitialValue,
                             },
                             attr: { id: 'filter_' + name() }"></select>
         </div>

@@ -16,6 +16,7 @@ from corehq.apps.reports.v2.exceptions import (
 
 EndpointContext = namedtuple('EndpointContext', 'slug urlname')
 ColumnMeta = namedtuple('ColumnMeta', 'title name width')
+ReportFilterData = namedtuple('ReportFilterData', 'name value')
 
 
 class BaseReport(object):
@@ -29,6 +30,7 @@ class BaseReport(object):
     columns = []
     column_filters = []
     report_filters = []
+    initial_report_filters = []  # list of ReportFilterData
 
     def __init__(self, request, domain):
         """
@@ -82,6 +84,8 @@ class BaseReport(object):
             'columns': [c._asdict() for c in self.columns],
             'column_filters': [c.get_context() for c in self.column_filters],
             'report_filters': [r.get_context() for r in self.report_filters],
+            'initial_report_filters': {r.name: r.value
+                                       for r in self.initial_report_filters},
         }
 
 

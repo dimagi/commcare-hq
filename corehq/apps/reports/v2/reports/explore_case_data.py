@@ -20,6 +20,7 @@ from corehq.apps.reports.v2.formatters.cases import CaseDataFormatter
 from corehq.apps.reports.v2.models import (
     BaseReport,
     ColumnMeta,
+    ReportFilterData,
 )
 from corehq.apps.es import CaseSearchES, cases as case_es
 
@@ -57,6 +58,18 @@ class ExploreCaseDataReport(BaseReport):
 
     report_filters = [
         CaseOwnerReportFilter,
+    ]
+
+    initial_report_filters = [
+        ReportFilterData(
+            name=CaseOwnerReportFilter.name,
+            value=[
+                {
+                    'text': "[{}]".format(ugettext_lazy("Project Data")),
+                    'id': 'project_data',
+                },
+            ],
+        ),
     ]
 
     def _get_base_query(self):

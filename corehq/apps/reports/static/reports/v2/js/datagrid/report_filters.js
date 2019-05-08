@@ -27,6 +27,10 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
             };
         });
 
+        self.getInitialValue = function () {
+            return data.value;
+        };
+
         return self;
     };
 
