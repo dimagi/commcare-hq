@@ -191,7 +191,12 @@ class ExportListHelper(object):
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
             'lastBuildDuration': '',
             'addedToBulk': False,
+            'emailedExport': self._get_emailed_export(export),
         }
+
+    def _get_emailed_export(self, export):
+        if export.is_daily_saved_export:
+            return self._get_daily_saved_export_metadata(export)
 
     def _get_daily_saved_export_metadata(self, export):
         """
@@ -300,7 +305,6 @@ class DailySavedExportListHelper(ExportListHelper):
                                   if export.last_build_duration else ''),
             'isDailySaved': True,
             'isAutoRebuildEnabled': export.auto_rebuild_enabled,
-            'emailedExport': self._get_daily_saved_export_metadata(export),
         })
         return data
 
@@ -332,18 +336,6 @@ class FormExportListHelper(ExportListHelper):
         from corehq.apps.export.views.download import DownloadNewFormExportView
         return DownloadNewFormExportView
 
-    def fmt_export_data(self, export):
-        data = super(FormExportListHelper, self).fmt_export_data(export)
-
-        emailed_export = None
-        if export.is_daily_saved_export:
-            emailed_export = self._get_daily_saved_export_metadata(export)
-
-        data.update({
-            'emailedExport': emailed_export,
-        })
-        return data
-
 
 class CaseExportListHelper(ExportListHelper):
     form_or_case = 'case'
@@ -366,14 +358,8 @@ class CaseExportListHelper(ExportListHelper):
 
     def fmt_export_data(self, export):
         data = super(CaseExportListHelper, self).fmt_export_data(export)
-
-        emailed_export = None
-        if export.is_daily_saved_export:
-            emailed_export = self._get_daily_saved_export_metadata(export)
-
         data.update({
             'case_type': export.case_type,
-            'emailedExport': emailed_export,
         })
         return data
 
@@ -879,12 +865,21 @@ class ODataFeedListHelper(ExportListHelper):
                                                  include_docs=False)
         return [x for x in exports if x['is_odata_config']]
 
+    def fmt_export_data(self, export):
+        data = super(ODataFeedListHelper, self).fmt_export_data(export)
+        data.update({
+            'case_type': export.case_type,
+        })
+        return data
+
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditODataCaseFeedView
         return EditODataCaseFeedView
 
     def _download_view(self, export):
-        return None  # You can't download OData feeds directly
+        # This isn't actually exposed in the UI
+        from corehq.apps.export.views.download import DownloadNewCaseExportView
+        return DownloadNewCaseExportView
 
 
 @method_decorator(toggles.ODATA.required_decorator(), name='dispatch')
