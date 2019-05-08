@@ -55,7 +55,7 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.workbook_json.excel import get_single_worksheet, WorkbookJSONError
+from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -1027,8 +1027,8 @@ class DownloadConditionalAlertView(ConditionalAlertBaseView):
 
     def get(self, request, domain):
         common_headers = ['id', 'name', 'case_type']
-        translated_sheet_name = 'translated'
-        untranslated_sheet_name = 'not translated'
+        translated_sheet_name = 'translated'        # TODO: make this a constant
+        untranslated_sheet_name = 'not translated'  # TODO: make this a constant
 
         langs = get_language_list(self.domain)
         headers = ((translated_sheet_name, common_headers + ['message_' + lang for lang in langs]),
@@ -1100,22 +1100,29 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            worksheet = get_single_worksheet(request.FILES['bulk_upload_file'])
+            workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
             messages.error(request, six.text_type(e))
             return self.get(request, *args, **kwargs)
 
-        msgs = upload_conditional_alert_rows(self.domain, worksheet)
+        langs = get_language_list(self.domain)
+        msgs = upload_conditional_alert_workbook(self.domain, langs, workbook)
         for msg in msgs:
             msg[0](request, msg[1])
 
         return self.get(request, *args, **kwargs)
 
 
-def upload_conditional_alert_rows(domain, rows):
+def upload_conditional_alert_workbook(domain, langs, workbook):
+    translated_rows_msgs = _upload_conditional_alert_rows(domain, langs, workbook, sheet_name='translated')
+    untranslated_rows_msgs = _upload_conditional_alert_rows(domain, langs, workbook, sheet_name='not translated')
+    return translated_rows_msgs + untranslated_rows_msgs
+
+
+def _upload_conditional_alert_rows(domain, langs, workbook, sheet_name):
     msgs = []
     success_count = 0
-
+    rows = workbook.get_worksheet(title=sheet_name)
     for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
         rule = None
         try:
@@ -1127,12 +1134,15 @@ def upload_conditional_alert_rows(domain, rows):
             )
         except AutomaticUpdateRule.DoesNotExist:
             msgs.append((messages.error,
-                        _("Could not find rule for row {index}, with id {id}").format(index=index, id=row['id'])))
+                        _("Could not find rule for row {index} in '{sheet_name}' sheet, with id {id}").format(
+                            index=index, id=row['id'], sheet_name=sheet_name)))
         dirty = False
         if rule:
             if not isinstance(_get_rule_content(rule), SMSContent):
-                msgs.append((messages.error, _("Row {index}, with rule id {id}, does not use SMS content.").format(
-                    index=index, id=row['id'])))
+                msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
+                                               "does not use SMS content.").format(index=index,
+                                                                                   id=row['id'],
+                                                                                   sheet_name=sheet_name)))
             else:
                 if rule.name != row['name']:
                     dirty = True
@@ -1144,7 +1154,8 @@ def upload_conditional_alert_rows(domain, rows):
             rule.save()
             success_count += 1
 
-    msgs.append((messages.success, _("Updated {count} rule(s)").format(count=success_count)))
+    msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
+        count=success_count, sheet_name=sheet_name)))
 
     return msgs
 

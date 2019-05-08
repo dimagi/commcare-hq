@@ -28,7 +28,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_case_schedule_instance
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
-from corehq.messaging.scheduling.views import get_conditional_alert_rows, upload_conditional_alert_rows
+from corehq.messaging.scheduling.views import get_conditional_alert_rows, upload_conditional_alert_workbook
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.util.workbook_json.excel import get_workbook
 
@@ -120,12 +120,18 @@ class TestBulkConditionalAlerts(TestCase):
         self.assertListEqual(untranslated_rows[0][1:], ['test', 'person', 'Joan'])
 
     def test_upload(self):
-        headers = (("translations", ("id", "name", "case_type")),)
+        headers = (
+            ("translated", ("id", "name", "case_type")),
+            ("not translated", ("id", "name", "case_type")),
+        )
         data = (
-            ("translations", (
+            ("translated", (
                 (self.translated_rule.id, 'test updated', 'song'),
                 (self.email_rule.id, 'test email', 'song'),
                 (1000, 'Not a rule', 'person'),
+            )),
+            ("not translated", (
+                (self.untranslated_rule.id, 'test untranslated', 'song'),
             )),
         )
         file = BytesIO()
@@ -135,12 +141,13 @@ class TestBulkConditionalAlerts(TestCase):
             f.write(file.getvalue())
             f.seek(0)
             workbook = get_workbook(f)
-            msgs = [m[1] for m in upload_conditional_alert_rows(self.domain, workbook.get_worksheet())]
-            self.assertEqual(len(msgs), 3)
-            self._assertPatternIn(r"Row 3, with rule id \d+, does not use SMS content", msgs)
-            self._assertPatternIn(r"Could not find rule for row 4, with id \d+", msgs)
-            self.assertIn("Updated 1 rule(s)", msgs)
+            msgs = [m[1] for m in upload_conditional_alert_workbook(self.domain, self.langs, workbook)]
+            self.assertEqual(len(msgs), 4)
+            self._assertPatternIn(r"Row 3 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
+            self._assertPatternIn(r"Could not find rule for row 4 in 'translated' sheet, with id \d+", msgs)
+            self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+            self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
             self.assertEqual(self.translated_rule.name, 'test updated')
             self.assertEqual(self.translated_rule.case_type, 'song')
-            self.assertEqual(self.untranslated_rule.name, 'test')
-            self.assertEqual(self.untranslated_rule.case_type, 'person')
+            self.assertEqual(self.untranslated_rule.name, 'test untranslated')
+            self.assertEqual(self.untranslated_rule.case_type, 'song')
