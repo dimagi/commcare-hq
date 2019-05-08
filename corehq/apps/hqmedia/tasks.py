@@ -185,7 +185,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                     if extension not in MULTIMEDIA_EXTENSIONS:
                         file_cache[path] = data
 
-        errors.extend(_find_missing_locale_ids_in_ccz(file_cache))
+        errors.extend(find_missing_locale_ids_in_ccz(file_cache))
 
         if include_index_files and include_multimedia_files:
             errors.extend(_check_ccz_multimedia_integrity(app.domain, fpath))
@@ -219,7 +219,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
     DownloadBase.set_progress(build_application_zip, 100, 100)
 
 
-def _find_missing_locale_ids_in_ccz(file_cache):
+def find_missing_locale_ids_in_ccz(file_cache):
     errors = [
         _("Could not find {file_path} in CCZ").format(file_path)
         for file_path in ('default/app_strings.txt', 'suite.xml') if file_path not in file_cache]
