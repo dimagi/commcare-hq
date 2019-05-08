@@ -667,7 +667,7 @@ class ExportInstance(BlobMixin, Document):
     name = StringProperty()
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
-    export_format = StringProperty(default='csv')
+    export_format = StringProperty(default='xlsx')
     app_id = StringProperty()
 
     # The id of the schema that was used to generate the instance.
