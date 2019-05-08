@@ -386,7 +386,7 @@ class PregnantWomanQueryHelper(object):
         details = ccs_record.ccs_record_details()
         pregnancy_length = 'N/A'
         if details['date_abortion'] and details['lmp']:
-            pregnancy_length = details['date_abortion'] - details['lmp']
+            pregnancy_length = (details['date_abortion'] - details['lmp']).days
         return {
             'abortionDate': details['date_abortion'] or 'N/A',
             'abortionType': details['abortion_type'] or 'N/A',

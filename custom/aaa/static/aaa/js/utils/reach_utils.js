@@ -60,7 +60,16 @@ hqDefine("aaa/js/utils/reach_utils", [
 
             _.each(paramValues, function (param) {
                 var paramValue = param.split("=");
-                params[paramValue[0]] = paramValue[1];
+                var paramKey = paramValue[0];
+
+                if (paramValue[0] === 'month') {
+                    paramKey = 'selectedMonth';
+                }
+                if (paramValue[0] === 'year') {
+                    paramKey = 'selectedYear';
+                }
+
+                params[paramKey] = paramValue[1];
             });
 
             options = params;
@@ -75,6 +84,10 @@ hqDefine("aaa/js/utils/reach_utils", [
 
         self.selectedMonthName = ko.computed(function () {
             return reachUtils().monthName(self.selectedMonth());
+        });
+
+        self.selectedDate = ko.computed(function () {
+            return new Date(self.selectedYear(), self.selectedMonth(), 1);
         });
 
         return self;
