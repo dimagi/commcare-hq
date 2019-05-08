@@ -1,9 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-import uuid
-from collections import defaultdict
+from __future__ import absolute_import, unicode_literals
+
 import json
 import logging
+import uuid
+from collections import defaultdict
+
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
