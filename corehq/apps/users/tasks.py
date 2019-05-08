@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import six
 from celery.exceptions import MaxRetriesExceededError
@@ -299,4 +299,3 @@ def update_domain_date(user_id, domain):
     user = WebUser.get_by_user_id(user_id, domain)
     domain_membership = user.get_domain_membership(domain)
     domain_membership.last_accessed = datetime.today().date()
-    user.save()
