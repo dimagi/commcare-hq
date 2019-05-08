@@ -39,8 +39,8 @@ def test_zip_with_gaps_key_funcs():
     zipped = zip_with_gaps(
         sorted(all_last_names, key=get_username),
         sorted(some_first_names, key=get_username),
-        allitem_keyfunc=get_username,
-        someitem_keyfunc=get_username
+        all_items_key=get_username,
+        some_items_key=get_username
     )
     names = [(f.first_name, l.last_name) for l, f in zipped]
     eq(names, [
@@ -49,3 +49,13 @@ def test_zip_with_gaps_key_funcs():
         ('Danny', 'Roberts'),
         ('Jenny', 'Schweers'),
     ])
+
+
+def test_zip_with_gaps_missing_from_all():
+    """
+    Items missing from `all_items` will be missing from the result
+    """
+    all_items = [1, 2, 2, 3, 3, 3, 5, 5, 5, 5, 5]
+    some_items = [3, 3, 3, 3, 3]
+    zipped = zip_with_gaps(all_items, some_items)
+    eq(list(zipped), [(3, 3), (3, 3), (3, 3)])
