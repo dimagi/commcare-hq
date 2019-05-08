@@ -16,6 +16,11 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
+    <div class="alert-container" ng-if="$ctrl.showInfoMessage()">
+        <div class="alert alert-info">
+            <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
+        </div>
+    </div>
     <div class="
         {$ $ctrl.label === 'Program Summary' ? 'report-content' : '' $}
         {$ $ctrl.showSystemUsageMessage ? 'report-content-with-message' : 'report-content-without-message' $}

@@ -6,17 +6,12 @@
 }
 
 .fixed-title {
-    position: fixed;
     z-index: 2;
-    width: inherit;
 }
 
 .fixes-filters {
-    position: fixed;
     z-index: 1;
-    top: 42px;
     background-color: white;
-    width: 83%;
     padding: 10px 0;
 }
 
@@ -273,10 +268,6 @@ nvd3#sectorChart > div.title.h4 {
     height: auto;
     position: absolute;
     right: 0;
-}
-
-.alert-container {
-    margin-top: 130px;
 }
 
 .crop {

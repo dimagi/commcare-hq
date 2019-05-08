@@ -4,6 +4,11 @@
             <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
+    <div class="alert-container" ng-if="$ctrl.showInfoMessage()">
+        <div class="alert alert-info">
+            <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
+        </div>
+    </div>
     <div class="report-content report-content-without-message">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."

@@ -38,6 +38,20 @@ function ProgressReportController($scope, $location, progressReportService,
     ) && !vm.showPreviousMonthWarning;
     vm.report = $routeParams.report;
 
+    vm.showInfoMessage = function () {
+        var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selectedYear = parseInt($location.search()['year']) || new Date().getFullYear();
+        var currentMonth = new Date().getMonth() + 1;
+        var currentYear = new Date().getFullYear();
+        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
+            selectedMonth === currentMonth && selectedYear === currentYear &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
+            vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+            return true;
+        }
+        return false;
+    };
+
     vm.dtOptions = DTOptionsBuilder
         .newOptions()
         .withOption('scrollY', '400px')

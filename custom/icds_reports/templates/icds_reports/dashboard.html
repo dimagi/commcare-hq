@@ -118,6 +118,9 @@
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
 </head>
 <body>
+<div class="row" style="height: 50px;">
+  {% maintenance_alert request False %}
+</div>
 <div id="app" ng-cloak>
     <div ng-controller="MainController" class="container-fluid">
         <div class="row">
@@ -225,12 +228,6 @@
                     </nav>
                 </div>
                 <div class="row no-margin">
-                    <div class="alert-container">
-                        {% maintenance_alert request False %}
-                        <div class="alert alert-info" ng-if="showInfoMessage()">
-                            <strong>Info!</strong> Data shown is for {$ lastDayOfPreviousMonth $}. Data for {$ currentMonth $} will be displayed beginning 3rd {$ currentMonth $}.
-                        </div>
-                    </div>
                     {% registerurl 'icds-ng-template' domain '---' %}
                     {% registerurl 'program_summary' domain '---' %}
                     {% registerurl 'awc_reports' domain '---' %}

@@ -19,6 +19,11 @@
             </div>
         </div>
     </div>
+    <div class="alert-container" ng-if="$ctrl.showInfoMessage()">
+        <div class="alert alert-info">
+            <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
+        </div>
+    </div>
     <div class="report-content report-content-without-message">
         <div class="row" ng-if="$ctrl.step === 'map'">
             <div class="row">
