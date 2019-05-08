@@ -59,3 +59,24 @@ def test_zip_with_gaps_missing_from_all():
     some_items = [3, 3, 3, 3, 3]
     zipped = zip_with_gaps(all_items, some_items)
     eq(list(zipped), [(3, 3), (3, 3), (3, 3)])
+
+
+def test_zip_with_gaps_not_in_all():
+    """
+    Items not found in `all_items` will skip all remaining items.
+    """
+    all_items = [1, 2, 4,]
+    some_items = [1, 3, 4]
+    zipped = zip_with_gaps(all_items, some_items)
+    eq(list(zipped), [(1, 1)])
+
+
+def test_zip_with_gaps_unsorted():
+    """
+    Unsorted `some_items` will return the first item from `all_items`
+    that matches and drop the skipped items.
+    """
+    all_items = [1, 2, 3, 4, 5]
+    some_items = [4, 5, 3]
+    zipped = zip_with_gaps(all_items, some_items)
+    eq(list(zipped), [(4, 4), (5, 5)])
