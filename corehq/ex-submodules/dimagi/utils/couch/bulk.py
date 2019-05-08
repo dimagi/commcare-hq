@@ -87,10 +87,12 @@ class CouchTransaction(object):
                 _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
                 _soft_assert(False, "CouchTransaction deleted docs when periodic_commit was not None")
             cls.bulk_delete(docs)
+        self.docs_to_delete = defaultdict(list)
 
         for cls, doc_map in self.docs_to_save.items():
             docs = list(doc_map.values())
             cls.bulk_save(docs)
+        self.docs_to_save = defaultdict(dict)
 
         for action in self.post_commit_actions:
             action()
