@@ -1,12 +1,15 @@
-from __future__ import absolute_import, division
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, unicode_literals
+
 import logging
-import six
 from collections import namedtuple
+
 from django.conf import settings
 from django.db import IntegrityError
+
+import six
 from celery.result import GroupResult
 
+from soil.exceptions import TaskFailedError
 
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])
@@ -105,6 +108,7 @@ def get_task_status(task, is_multiple_download_task=False):
     context_error = None
     is_ready = False
     failed = False
+
     if not task:
         progress = get_task_progress(None)
         context_result = False
@@ -114,22 +118,20 @@ def get_task_status(task, is_multiple_download_task=False):
             context_result, context_error = _get_download_context_multiple_tasks(task)
         progress = get_multiple_task_progress(task)
     else:
-        try:
-            if task.failed():
-                failed = True
-        except (TypeError, NotImplementedError):
-            # no result backend / improperly configured
-            pass
-        else:
-            result = task.result
-            if task.successful():
-                is_ready = True
-                context_result = result and result.get('messages')
-            elif result and isinstance(result, Exception):
-                context_error = six.text_type(result)
-            elif result and result.get('errors'):
-                failed = True
-                context_error = result.get('errors')
+        if task.failed():
+            failed = True
+
+        result = task.result
+        if task.successful():
+            is_ready = True
+            context_result = result and result.get('messages')
+        elif result and isinstance(result, Exception):
+            context_error = six.text_type(result)
+            if '\t' in context_error:
+                context_error = [err for err in context_error.split('\t') if err]
+        elif result and result.get('errors'):
+            failed = True
+            context_error = result.get('errors')
         progress = get_task_progress(task)
 
     def progress_complete():

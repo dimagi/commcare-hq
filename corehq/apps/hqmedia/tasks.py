@@ -13,12 +13,11 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from celery import states
-from celery.exceptions import Ignore
 from celery.task import task
 from celery.utils.log import get_task_logger
 
 from soil import DownloadBase
-from soil.progress import update_task_state
+from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, expose_file_download
 
 from corehq import toggles
@@ -204,8 +203,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
         if errors:
             os.remove(fpath)
-            update_task_state(build_application_zip, states.FAILURE, {'errors': errors})
-            raise Ignore()  # We want the task to fail hard, so ignore any future updates to it
+            raise TaskFailedError(errors=errors)
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
