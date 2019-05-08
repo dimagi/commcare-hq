@@ -18,6 +18,7 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
+from corehq.messaging.scheduling.forms import ContentForm
 from corehq.messaging.scheduling.models import (
     EmailContent,
     SMSContent,
@@ -121,17 +122,17 @@ class TestBulkConditionalAlerts(TestCase):
 
     def test_upload(self):
         headers = (
-            ("translated", ("id", "name", "case_type")),
-            ("not translated", ("id", "name", "case_type")),
+            ("translated", ("id", "name", "case_type", "message_en", "message_es")),
+            ("not translated", ("id", "name", "case_type", "message")),
         )
         data = (
             ("translated", (
-                (self.translated_rule.id, 'test updated', 'song'),
-                (self.email_rule.id, 'test email', 'song'),
+                (self.translated_rule.id, 'test translated', 'song', 'Rustier', 'Más Oxidado'),
+                (self.email_rule.id, 'test email', 'song', 'Email content', 'does not fit'),
                 (1000, 'Not a rule', 'person'),
             )),
             ("not translated", (
-                (self.untranslated_rule.id, 'test untranslated', 'song'),
+                (self.untranslated_rule.id, 'test untranslated', 'song', 'Joanie'),
             )),
         )
         file = BytesIO()
@@ -142,12 +143,29 @@ class TestBulkConditionalAlerts(TestCase):
             f.seek(0)
             workbook = get_workbook(f)
             msgs = [m[1] for m in upload_conditional_alert_workbook(self.domain, self.langs, workbook)]
+
             self.assertEqual(len(msgs), 4)
             self._assertPatternIn(r"Row 3 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
             self._assertPatternIn(r"Could not find rule for row 4 in 'translated' sheet, with id \d+", msgs)
             self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
             self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
-            self.assertEqual(self.translated_rule.name, 'test updated')
+
+            self.assertEqual(self.translated_rule.name, 'test translated')
             self.assertEqual(self.translated_rule.case_type, 'song')
             self.assertEqual(self.untranslated_rule.name, 'test untranslated')
             self.assertEqual(self.untranslated_rule.case_type, 'song')
+
+            translated_message = ContentForm.compute_initial(
+                self.translated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            )['message']
+            self.assertEqual(translated_message, {
+                'en': 'Rustier',
+                'es': 'Más Oxidado',
+            })
+
+            untranslated_message = ContentForm.compute_initial(
+                self.untranslated_rule.get_messaging_rule_schedule().memoized_events[0].content
+            )['message']
+            self.assertEqual(untranslated_message, {
+                '*': 'Joanie',
+            })
