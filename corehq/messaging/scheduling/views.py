@@ -1114,50 +1114,72 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
 
 def upload_conditional_alert_workbook(domain, langs, workbook):
-    translated_rows_msgs = _upload_conditional_alert_rows(domain, langs, workbook, sheet_name='translated')
-    untranslated_rows_msgs = _upload_conditional_alert_rows(domain, langs, workbook, sheet_name='not translated')
-    return translated_rows_msgs + untranslated_rows_msgs
+    translated_uploader = TranslatedConditionalAlertUploader(domain, langs)
+    untranslated_uploader = UntranslatedConditionalAlertUploader(domain, langs)
+    return translated_uploader.upload(workbook) + untranslated_uploader.upload(workbook)
 
 
-def _upload_conditional_alert_rows(domain, langs, workbook, sheet_name):
-    msgs = []
-    success_count = 0
-    rows = workbook.get_worksheet(title=sheet_name)
-    for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
-        rule = None
-        try:
-            rule = AutomaticUpdateRule.objects.get(
-                pk=row['id'],
-                domain=domain,
-                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                deleted=False,
-            )
-        except AutomaticUpdateRule.DoesNotExist:
-            msgs.append((messages.error,
-                        _("Could not find rule for row {index} in '{sheet_name}' sheet, with id {id}").format(
-                            index=index, id=row['id'], sheet_name=sheet_name)))
-        dirty = False
-        if rule:
-            if not isinstance(_get_rule_content(rule), SMSContent):
-                msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
-                                               "does not use SMS content.").format(index=index,
-                                                                                   id=row['id'],
-                                                                                   sheet_name=sheet_name)))
-            else:
-                if rule.name != row['name']:
-                    dirty = True
-                    rule.name = row['name']
-                if rule.case_type != row['case_type']:
-                    dirty = True
-                    rule.case_type = row['case_type']
-        if dirty:
-            rule.save()
-            success_count += 1
+class ConditionalAlertUploader(object):
+    sheet_name = None
 
-    msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
-        count=success_count, sheet_name=sheet_name)))
+    def __init__(self, domain, langs):
+        super(ConditionalAlertUploader, self).__init__()
+        self.domain = domain
+        self.langs = langs
+        self.msgs = []
 
-    return msgs
+    def upload(self, workbook):
+        self.msgs = []
+        self.success_count = 0
+        rows = workbook.get_worksheet(title=self.sheet_name)
+
+        for index, row in enumerate(rows, start=2):    # one-indexed, plus header row
+            rule = None
+            try:
+                rule = AutomaticUpdateRule.objects.get(
+                    pk=row['id'],
+                    domain=self.domain,
+                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    deleted=False,
+                )
+            except AutomaticUpdateRule.DoesNotExist:
+                self.msgs.append((messages.error,
+                                 _("""Could not find rule for row {index} in '{sheet_name}' sheet, """
+                                   """with id {id}""").format(index=index,
+                                                              id=row['id'],
+                                                              sheet_name=self.sheet_name)))
+            dirty = False
+            if rule:
+                if not isinstance(_get_rule_content(rule), SMSContent):
+                    self.msgs.append((messages.error, _("Row {index} in '{sheet_name}' sheet, with rule id {id}, "
+                                      "does not use SMS content.").format(index=index, id=row['id'],
+                                                                          sheet_name=self.sheet_name)))
+                else:
+                    if rule.name != row['name']:
+                        dirty = True
+                        rule.name = row['name']
+                    if rule.case_type != row['case_type']:
+                        dirty = True
+                        rule.case_type = row['case_type']
+            if dirty:
+                rule.save()
+                self.success_count += 1
+
+        self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
+            count=self.success_count, sheet_name=self.sheet_name)))
+
+        return self.msgs
+
+    def update_rule(rule):
+        raise NotImplementedError("Subclasses should override this")
+
+
+class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
+    sheet_name = 'translated'
+
+
+class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
+    sheet_name = 'not translated'
 
 
 def _get_rule_content(rule):
