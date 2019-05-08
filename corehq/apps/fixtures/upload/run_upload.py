@@ -54,7 +54,8 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
             processed = table_count * 10 + (10 * item_count / items_in_table)
             DownloadBase.set_progress(task, processed, 10 * total_tables)
 
-    with CouchTransaction() as transaction:
+    periodic_commit = 100 if replace is False else None
+    with CouchTransaction(periodic_commit) as transaction:
         for table_number, table_def in enumerate(type_sheets):
             data_type, delete, err = _create_data_type(domain, table_def, replace, transaction)
             return_val.errors.extend(err)

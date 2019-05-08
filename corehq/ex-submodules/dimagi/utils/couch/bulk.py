@@ -10,6 +10,8 @@ from simplejson import JSONDecodeError
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.util.soft_assert import soft_assert
+
 
 class BulkFetchException(Exception):
     pass
@@ -55,11 +57,12 @@ class CouchTransaction(object):
     and call this function either with no transaction or have it cooperate
     with an ongoing transaction that you pass in.
     """
-    def __init__(self):
+    def __init__(self, periodic_commit=None):
         self.depth = 0
         self.docs_to_delete = defaultdict(list)
         self.docs_to_save = defaultdict(dict)
         self.post_commit_actions = []
+        self.periodic_commit = periodic_commit
 
     def add_post_commit_action(self, action):
         self.post_commit_actions.append(action)
@@ -77,15 +80,14 @@ class CouchTransaction(object):
             doc._id = uuid.uuid4().hex
         self.docs_to_save[cls][doc.get_id] = doc
 
-    def preview_save(self, cls=None):
-        if cls:
-            return list(self.docs_to_save[cls].values())
-        else:
-            return [doc for _cls in self.docs_to_save
-                            for doc in self.preview_save(cls=_cls)]
+        if self.periodic_commit is not None and len(self.docs_to_save) > self.periodic_commit:
+            self.commit()
 
     def commit(self):
         for cls, docs in self.docs_to_delete.items():
+            if self.periodic_commit is not None:
+                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+                _soft_assert(False, "CouchTransaction deleted docs when periodic_commit was not None")
             cls.bulk_delete(docs)
 
         for cls, doc_map in self.docs_to_save.items():
