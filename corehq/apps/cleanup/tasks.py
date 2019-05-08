@@ -246,6 +246,10 @@ def check_for_ucr_tables_without_existing_domain():
 @periodic_task(run_every=crontab(minute=0, hour=16), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def delete_web_user():
     if settings.SERVER_ENVIRONMENT == 'production':
-        web_user = WebUser.get_by_username('growth-analytics' + '@' + 'outlook.com')
-        if web_user:
-            web_user.delete()
+        for username in [
+            'create_growth' + '@' + 'outlook.com',
+            'growth-analytics' + '@' + 'outlook.com',
+        ]:
+            web_user = WebUser.get_by_username(username)
+            if web_user:
+                web_user.delete()

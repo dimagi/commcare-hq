@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
 from memoized import memoized
 
 from corehq.apps.case_search.const import (
@@ -16,11 +15,6 @@ from corehq.apps.reports.v2.models import BaseOptionsEndpoint
 
 class CasePropertiesEndpoint(BaseOptionsEndpoint):
     slug = "case_properties"
-
-    @property
-    @memoized
-    def report_context(self):
-        return json.loads(self.data.get('reportContext', "{}"))
 
     @property
     @memoized

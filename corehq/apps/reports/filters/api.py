@@ -4,7 +4,6 @@ API endpoints for filter options
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
-import json
 
 from django.views.generic import View
 
@@ -13,19 +12,18 @@ from braces.views import JSONResponseMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.reports.filters.case_list import CaseListFilterUtils
-from corehq.apps.reports.util import SimplifiedUserInfo
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
-from corehq.apps.es import UserES, GroupES, groups
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.filters.controllers import (
+    EmwfOptionsController,
+    MobileWorkersOptionsController,
+    CaseListFilterOptionsController,
+)
 
 from phonelog.models import DeviceReportEntry
-from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -35,22 +33,24 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     """
     Paginated options for the ExpandedMobileWorkerFilter
     """
+
     @property
     @memoized
-    def utils(self):
-        return EmwfUtils(self.domain)
+    def options_controller(self):
+        return EmwfOptionsController(self.request, self.domain, self.search)
 
     def get(self, request, domain):
         self.domain = domain
-        self.q = self.request.GET.get('q', '')
+        self.search = self.request.GET.get('q', '')
+
         try:
-            count, options = self.get_options()
+            count, options = self.options_controller.get_options()
             return self.render_json_response({
                 'results': options,
                 'total': count,
             })
         except ESError as e:
-            if self.q:
+            if self.search:
                 # Likely caused by an invalid user query
                 # A query that causes this error immediately follows a very
                 # similar query that should be caught by the else clause if it
@@ -58,7 +58,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                 # introduced by the addition of the query_string query, which
                 # contains the user's input.
                 logger.info('ElasticSearch error caused by query "%s": %s',
-                            self.q, e)
+                            self.search, e)
             else:
                 # The error was our fault
                 notify_exception(request, e)
@@ -66,158 +66,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'results': [],
             'total': 0,
         })
-
-    @staticmethod
-    def _get_location_specific_custom_filters(query):
-        query_sections = query.split("/")
-        # first section would be u'"parent' or u'"parent_name"', so split with " to get
-        # ['', 'parent'] or ['', 'parent_name', '']
-        parent_name_section_splits = query_sections[0].split('"')
-        parent_name = parent_name_section_splits[1]
-        try:
-            search_query = query_sections[1]
-        except IndexError:
-            # when user has entered u'"parent_name"' without trailing "/"
-            # consider it same as u'"parent_name"/'
-            search_query = "" if len(parent_name_section_splits) == 3 else None
-        return parent_name, search_query
-
-    def get_locations_query(self, query):
-        show_inactive = json.loads(self.request.GET.get('show_inactive', 'false'))
-        if show_inactive:
-            included_objects = SQLLocation.inactive_objects
-        else:
-            included_objects = SQLLocation.active_objects
-        if self.q.startswith('"'):
-            parent_name, search_query = self._get_location_specific_custom_filters(query)
-            if search_query is None:
-                # autocomplete parent names while user is looking for just the parent name
-                # and has not yet entered any child location name
-                locations = included_objects.filter(name__istartswith=parent_name, domain=self.domain)
-            else:
-                # if any parent locations with name entered then
-                #    find locations under them
-                # else just return empty queryset
-                parents = included_objects.filter(name__iexact=parent_name, domain=self.domain)
-                if parent_name and parents.count():
-                    descendants = included_objects.get_queryset_descendants(parents, include_self=True)
-                    locations = descendants.filter_by_user_input(self.domain, search_query)
-                else:
-                    return included_objects.none()
-        else:
-            locations = included_objects.filter_path_by_user_input(self.domain, query)
-        return locations.accessible_to_user(self.domain, self.request.couch_user)
-
-    def get_locations(self, query, start, size):
-        """
-        start: The index of the first item to be returned
-        size: The number of items to return
-        """
-        return list(map(self.utils.location_tuple,
-                   self.get_locations_query(query)[start:start + size]))
-
-    def get_locations_size(self, query):
-        return self.get_locations_query(query).count()
-
-    @property
-    def data_sources(self):
-        if self.request.can_access_all_locations:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
-        else:
-            return [
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
-
-    def get_options(self):
-        page = int(self.request.GET.get('page', 1))
-        size = int(self.request.GET.get('page_limit', DEFAULT_PAGE_LIMIT))
-        start = size * (page - 1)
-        count, options = paginate_options(self.data_sources, self.q, start, size)
-        return count, [{'id': entry[0], 'text': entry[1]} if len(entry) == 2 else
-                       {'id': entry[0], 'text': entry[1], 'is_active': entry[2]} for entry in options]
-
-    def get_static_options_size(self, query):
-        return len(self.get_all_static_options(query))
-
-    def get_all_static_options(self, query):
-        return [user_type for user_type in self.utils.static_options
-                if query.lower() in user_type[1].lower()]
-
-    def get_static_options(self, query, start, size):
-        return self.get_all_static_options(query)[start:start+size]
-
-    def get_es_query_strings(self, query):
-        if query and query.strip():
-            tokens = query.split()
-            return ['%s*' % tokens.pop()] + tokens
-
-    def active_user_es_query(self, query):
-        search_fields = ["first_name", "last_name", "base_username"]
-        return (UserES()
-                .domain(self.domain)
-                .search_string_query(query, default_fields=search_fields))
-
-    def all_user_es_query(self, query):
-        return self.active_user_es_query(query).show_inactive()
-
-    def get_all_users(self, query, start, size):
-        return self._get_users(query, start, size, include_inactive=True)
-
-    def get_active_users(self, query, start, size):
-        return self._get_users(query, start, size, include_inactive=False)
-
-    def _get_users(self, query, start, size, include_inactive=False):
-        if include_inactive:
-            user_query = self.all_user_es_query(query)
-        else:
-            user_query = self.active_user_es_query(query)
-        users = (user_query
-                 .fields(SimplifiedUserInfo.ES_FIELDS)
-                 .start(start)
-                 .size(size)
-                 .sort("username.exact"))
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
-                self.request.domain, self.request.couch_user)
-            users = users.location(accessible_location_ids)
-        return [self.utils.user_tuple(u) for u in users.run().hits]
-
-    def get_all_users_size(self, query):
-        return self.all_user_es_query(query).count()
-
-    def get_active_users_size(self, query):
-        return self.active_user_es_query(query).count()
-
-    def get_groups_size(self, query):
-        return self.group_es_query(query).count()
-
-    def group_es_query(self, query, group_type="reporting"):
-        if group_type == "reporting":
-            type_filter = groups.is_reporting()
-        elif group_type == "case_sharing":
-            type_filter = groups.is_case_sharing()
-        else:
-            raise TypeError("group_type '{}' not recognized".format(group_type))
-
-        return (GroupES()
-                .domain(self.domain)
-                .filter(type_filter)
-                .not_deleted()
-                .search_string_query(query, default_fields=["name"]))
-
-    def get_groups(self, query, start, size):
-        groups = (self.group_es_query(query)
-                  .fields(['_id', 'name'])
-                  .start(start)
-                  .size(size)
-                  .sort("name.exact"))
-        return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):
@@ -226,12 +74,17 @@ class MobileWorkersOptionsView(EmwfOptionsView):
     """
     urlname = 'users_select2_options'
 
+    @property
+    @memoized
+    def options_controller(self):
+        return MobileWorkersOptionsController(self.request, self.domain, self.search)
+
     # This endpoint is used by select2 single option filters
     def post(self, request, domain):
         self.domain = domain
-        self.q = self.request.POST.get('q', None)
+        self.search = self.request.POST.get('q', None)
         try:
-            count, options = self.get_post_options()
+            count, options = self.options_controller.get_options()
             return self.render_json_response({
                 'items': options,
                 'total': count,
@@ -239,7 +92,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
                 'success': True
             })
         except ESError as e:
-            if self.q:
+            if self.search:
                 # Likely caused by an invalid user query
                 # A query that causes this error immediately follows a very
                 # similar query that should be caught by the else clause if it
@@ -247,7 +100,7 @@ class MobileWorkersOptionsView(EmwfOptionsView):
                 # introduced by the addition of the query_string query, which
                 # contains the user's input.
                 logger.info('ElasticSearch error caused by query "%s": %s',
-                            self.q, e)
+                            self.search, e)
             else:
                 # The error was our fault
                 notify_exception(request, e)
@@ -256,64 +109,14 @@ class MobileWorkersOptionsView(EmwfOptionsView):
             'total': 0,
         })
 
-    def get_post_options(self):
-        page = int(self.request.POST.get('page', 1))
-        size = int(self.request.POST.get('page_limit', DEFAULT_PAGE_LIMIT))
-        start = size * (page - 1)
-        count, options = paginate_options(self.data_sources, self.q, start, size)
-        return count, [{'id': id_, 'text': text} for id_, text in options]
-
-    @property
-    @memoized
-    def utils(self):
-        return UsersUtils(self.domain)
-
-    @property
-    def data_sources(self):
-        return [
-            (self.get_active_users_size, self.get_active_users),
-        ]
-
-    def active_user_es_query(self, query):
-        query = super(MobileWorkersOptionsView, self).active_user_es_query(query)
-        return query.mobile_users()
-
 
 @location_safe
 class CaseListFilterOptions(EmwfOptionsView):
 
     @property
     @memoized
-    def utils(self):
-        return CaseListFilterUtils(self.domain)
-
-    @property
-    # Case list shows all users, instead of just active users
-    def data_sources(self):
-        if self.request.can_access_all_locations:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_sharing_groups_size, self.get_sharing_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_all_users_size, self.get_all_users),
-            ]
-        else:
-            return [
-                (self.get_locations_size, self.get_locations),
-                (self.get_active_users_size, self.get_active_users),
-            ]
-
-    def get_sharing_groups_size(self, query):
-        return self.group_es_query(query, group_type="case_sharing").count()
-
-    def get_sharing_groups(self, query, start, size):
-        groups = (self.group_es_query(query, group_type="case_sharing")
-                  .fields(['_id', 'name'])
-                  .start(start)
-                  .size(size)
-                  .sort("name.exact"))
-        return list(map(self.utils.sharing_group_tuple, groups.run().hits))
+    def options_controller(self):
+        return CaseListFilterOptionsController(self.request, self.domain, self.search)
 
 
 @location_safe
@@ -331,31 +134,6 @@ class ReassignCaseOptions(CaseListFilterOptions):
         sources.append((self.get_all_users_size, self.get_all_users))
         return sources
 
-
-def paginate_options(data_sources, query, start, size):
-    """
-    Returns the appropriate slice of values from the data sources
-    data_sources is a list of (count_fn, getter_fn) tuples
-        count_fn returns the total number of entries in a data source,
-        getter_fn takes in a start and size parameter and returns entries
-    """
-    # Note this is pretty confusing, check TestEmwfPagination for reference
-    options = []
-    total = 0
-    for get_size, get_objects in data_sources:
-        count = get_size(query)
-        total += count
-
-        if start > count:  # skip over this whole data source
-            start -= count
-            continue
-
-        # return a page of objects
-        objects = list(get_objects(query, start, size))
-        start = 0
-        size -= len(objects)  # how many more do we need for this page?
-        options.extend(objects)
-    return total, options
 
 
 class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):

@@ -69,6 +69,26 @@
       },
       {
         "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "opened_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "opened_on"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "closed_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "display_name": null,
         "datatype": "string",
         "type": "expression",
         "transform": {},

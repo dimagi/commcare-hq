@@ -46,6 +46,9 @@ class AtomicBlobs(object):
         self.deletes.append(key)
         return None  # result is unknown
 
+    def expire(self, *args, **kw):
+        self.metadb.expire(*args, **kw)
+
     def copy_blob(self, *args, **kw):
         raise NotImplementedError
 

@@ -6,12 +6,12 @@ hqDefine('reports/v2/js/datagrid/columns', [
     'jquery',
     'knockout',
     'underscore',
-    'reports/v2/js/datagrid/filters',
+    'reports/v2/js/datagrid/columnFilters',
 ], function (
     $,
     ko,
     _,
-    filters
+    columnFilters
 ) {
     'use strict';
 
@@ -25,7 +25,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.clause = ko.observable(data.clause || 'all');
 
         self.appliedFilters = ko.observableArray(_.map(data.appliedFilters, function (filterData) {
-            return filters.appliedColumnFilter(filterData);
+            return columnFilters.appliedColumnFilter(filterData);
         }));
 
         self.showClause = ko.computed(function () {
@@ -69,7 +69,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         self.hasFilterUpdate = ko.observable(false);
 
         self.availableFilters = ko.observableArray(_.map(options.availableFilters, function (data) {
-            return filters.columnFilter(data);
+            return columnFilters.columnFilter(data);
         }));
 
         self.availableFilterNames = ko.computed(function () {
@@ -153,7 +153,7 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.addFilter = function () {
-            self.column().appliedFilters.push(filters.appliedColumnFilter({
+            self.column().appliedFilters.push(columnFilters.appliedColumnFilter({
                 filterName: self.selectedFilter().name(),
                 choiceName: self.selectedFilter().choices()[0].name(),
             }));
