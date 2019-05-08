@@ -6,27 +6,28 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
     'jquery',
     'knockout',
     'underscore',
-    'hqwebapp/js/atwho',
-    'atjs',
-    'caretjs',
     'bootstrap-daterangepicker/daterangepicker',
     "select2/dist/js/select2.full.min",
 ], function (
     $,
     ko,
-    _,
-    atwho
+    _
 ) {
     'use strict';
 
     ko.bindingHandlers.select2 = {
         init: function (element, valueAccessor) {
-            var options = ko.utils.unwrapObservable(valueAccessor()),
+            var $select = $(element),
+                options = ko.utils.unwrapObservable(valueAccessor()),
                 ajax = {};
+
+            ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+                $select.select2('destroy');
+            });
 
             if (options.url) {
                 ajax = {
-                    delay: 150,
+                    delay: options.delay || 150,
                     url: options.url,
                     dataType: 'json',
                     type: 'post',
@@ -54,16 +55,23 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
                 };
             }
 
-            $(element).select2({
+            $select.select2({
                 minimumInputLength: 0,
                 allowClear: true,
                 multiple: !!options.multiple,
                 placeholder: options.placeholder || gettext("Search..."), // some placeholder required for allowClear
                 width: options.width || '100%',
+                data: options.data,
                 ajax: ajax,
                 templateResult: function (result) {
                     if (_.isFunction(options.templateResult)) {
                         return options.templateResult(result);
+                    }
+                    if (result.labelText) {
+                        var $label = $('<span class="label pull-right"></span>')
+                                     .addClass(result.labelStyle)
+                                     .text(result.labelText);
+                        return $('<span>' + result.text + '</span>').append($label);
                     }
                     return result.text;
                 },
@@ -74,41 +82,21 @@ hqDefine('reports/v2/js/datagrid/bindingHandlers', [
                     return selection.text;
                 },
             });
-        },
-    };
 
-    ko.bindingHandlers.datagridAutocomplete = {
-        init: function (element) {
-            var $element = $(element);
-            if (!$element.atwho) {
-                throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+            if (_.isFunction(options.getInitialValue) && (_.isObject(options.getInitialValue()) || _.isArray(options.getInitialValue()))) {
+                // https://select2.org/programmatic-control/add-select-clear-items#preselecting-options-in-an-remotely-sourced-ajax-select2
+                var initialValue = options.getInitialValue();
+                if (!_.isArray(options.getInitialValue())) {
+                    initialValue = [initialValue];
+                }
+                _.each(initialValue, function (valObj) {
+                    var option = new Option(valObj.text, valObj.id, true, true);
+                    $select.append(option);
+                });
+                $select.trigger('change');
+                $select.trigger({type: 'select2:select', params: {data: initialValue}});
             }
 
-            atwho.init($element, {
-                atwhoOptions: {
-                    displayTpl: function (item) {
-                        if (item.case_type) {
-                            return '<li><span class="label label-default pull-right">${case_type}</span> ${name}</li>';
-                        } else if (item.meta_type) {
-                            return '<li><span class="label label-primary pull-right">${meta_type}</span> ${name}</li>';
-                        }
-                        return '<li>${name}</li>';
-                    },
-                },
-                afterInsert: function () {
-                    $element.trigger('textchange');
-                },
-            });
-
-            $element.on("textchange", function () {
-                if ($element.val()) {
-                    $element.change();
-                }
-            });
-        },
-
-        update: function (element, valueAccessor) {
-            $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
         },
     };
 

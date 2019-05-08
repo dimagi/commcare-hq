@@ -54,6 +54,14 @@ hqDefine('reports/v2/js/datagrid/columns', [
             };
         });
 
+        self.getInitialNameValue = function () {
+            if (!data.name) return null;
+            return {
+                id: data.name,
+                text: data.name,
+            };
+        };
+
         return self;
     };
 
@@ -124,7 +132,6 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.setNew = function () {
-            self.loadOptions();
             self.oldColumn(undefined);
 
             if (self.isNew() && self.column()) {
@@ -138,7 +145,6 @@ hqDefine('reports/v2/js/datagrid/columns', [
         };
 
         self.set = function (existingColumn) {
-            self.loadOptions();
             self.oldColumn(columnModel(existingColumn).unwrap());
             self.column(columnModel(existingColumn.unwrap()));
             self.isNew(false);
@@ -181,22 +187,11 @@ hqDefine('reports/v2/js/datagrid/columns', [
             self.hasFilterUpdate(true);
         };
 
-        self.loadOptions = function () {
-            if (!self.reportContext) {
-                throw new Error("Please call init() before calling loadOptions().");
+        self.getData = function (data) {
+            if (self.reportContext) {
+                data.reportContext = JSON.stringify(self.reportContext());
             }
-
-            $.ajax({
-                url: self.endpoint.getUrl(),
-                method: 'post',
-                dataType: 'json',
-                data: {
-                    reportContext: JSON.stringify(self.reportContext()),
-                },
-            })
-                .done(function (data) {
-                    self.columnNameOptions(data.options);
-                });
+            return data;
         };
 
         self.isColumnValid = ko.computed(function () {

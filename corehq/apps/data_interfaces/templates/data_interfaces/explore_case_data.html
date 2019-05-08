@@ -132,10 +132,16 @@ breadcrumbs todo
                        data-bind="textInput: title" />
               </div>
               <div class="form-group">
-                <input type="text"
+                <select type="text"
                        class="form-control"
-                       data-bind="textInput: name,
-                                  datagridAutocomplete: $root.editColumnController.columnNameOptions" />
+                       data-bind="value: name,
+                                  select2: {
+                                      placeholder: 'select property',
+                                      delay: 250,
+                                      getInitialValue: getInitialNameValue,
+                                      url: $root.editColumnController.endpoint.getUrl(),
+                                      getData: $root.editColumnController.getData,
+                                  }" ></select>
               </div>
 
               <div class="form-group"
