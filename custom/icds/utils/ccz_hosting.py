@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from memoized import memoized
 from django.urls import reverse
-from django.utils.functional import cached_property
 
 from corehq.blobs import (
     get_blob_db,
@@ -30,18 +30,20 @@ class CCZHostingUtility:
     def get_file_size(self):
         return get_blob_db().size(key=self.blob_id)
 
-    @cached_property
+    @memoized
     def get_file_meta(self):
         if self.file_exists():
             return get_blob_db().metadb.get(key=self.blob_id, parent_id='CCZHosting')
 
+    def get_file_name(self):
+        return self.get_file_meta().name if self.get_file_meta() else ''
+
     @property
     def ccz_details(self):
-        file_name = ""
         if self.ccz_hosting:
             file_name = self.ccz_hosting.file_name
-        elif self.get_file_meta:
-            file_name = self.get_file_meta.name
+        else:
+            file_name = self.get_file_name()
         return {
             'name': file_name,
             'download_url': reverse('ccz_hosting_download_ccz', args=[
