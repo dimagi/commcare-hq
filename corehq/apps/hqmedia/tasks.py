@@ -188,7 +188,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         errors.extend(find_missing_locale_ids_in_ccz(file_cache))
 
         if include_index_files and include_multimedia_files:
-            errors.extend(_check_ccz_multimedia_integrity(app.domain, fpath))
+            errors.extend(check_ccz_multimedia_integrity(app.domain, fpath))
 
         if errors:
             os.remove(fpath)
@@ -244,7 +244,7 @@ def find_missing_locale_ids_in_ccz(file_cache):
 
 
 # Check that all media files present in media_suite.xml were added to the zip
-def _check_ccz_multimedia_integrity(domain, fpath):
+def check_ccz_multimedia_integrity(domain, fpath):
     if not toggles.CAUTIOUS_MULTIMEDIA.enabled(domain):
         return []
 
