@@ -153,7 +153,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     self.format_date(user.last_login),
                 ]
                 + self.domain_properties(domain_obj)
-                + [user.domains_accessed[domain_obj.name] if domain_obj.name in user.domains_accessed else ""])
+                + [user.domains_accessed.get(domain_obj.name, "")])
         return rows
 
     def total_for_domain(self, domain_obj):
