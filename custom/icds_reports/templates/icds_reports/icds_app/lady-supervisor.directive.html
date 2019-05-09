@@ -16,11 +16,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="alert-container" ng-if="$ctrl.showInfoMessage()">
-        <div class="alert alert-info">
-            <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
-        </div>
-    </div>
+    <info-message></info-message>
     <div class="ls-dashboard-report-content">
         <div class="row" ng-repeat="section in $ctrl.data track by $index">
             <div class="col-md-6" ng-repeat="cell in section track by $index">
