@@ -37,8 +37,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
-  - [libmagic](https://macappstore.org/libmagic)
-  - [pango](https://www.pango.org/)
+  - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
+  - [pango](https://www.pango.org/) (available via homebrew)
 
 #### Setup virtualenv
 
@@ -66,7 +66,7 @@ Next, install the appropriate requirements (only one is necessary).
 * Minimum required packages
   * `$ pip install -r requirements/requirements.txt`
 
-(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+(If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
 
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
