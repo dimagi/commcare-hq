@@ -72,7 +72,7 @@ def update_calculated_properties():
             message="update_calculated_properties task has errored",
         )
     send_mail_async.delay(
-        subject="Calculated properties report task was " + "successful" if success else "unsuccessful",
+        subject="Calculated properties report task was " + ("successful" if success else "unsuccessful"),
         message="Sentry will have relevant exception in case of failure",
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=["{}@{}.com".format("dmore", "dimagi")]
