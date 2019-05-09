@@ -1004,9 +1004,9 @@ def send_prepaid_credits_export():
     )
 
 
-@task(serializer='pickle', queue="email_queue")
-def email_enterprise_report(domain, slug, couch_user):
-    email_enterprise_report_json_args(domain, slug, couch_user.get_id)
+@task(queue='email_queue')
+def email_enterprise_report(domain, slug, couch_user_id):
+    email_enterprise_report_json_args(domain, slug, couch_user_id)
 
 
 @task(queue='email_queue')
