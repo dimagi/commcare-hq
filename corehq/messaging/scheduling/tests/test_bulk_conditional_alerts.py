@@ -128,11 +128,13 @@ class TestBulkConditionalAlerts(TestCase):
         data = (
             ("translated", (
                 (self.translated_rule.id, 'test translated', 'song', 'Rustier', 'Más Oxidado'),
+                (self.untranslated_rule.id, 'test wrong sheet', 'wrong', 'wrong'),
                 (self.email_rule.id, 'test email', 'song', 'Email content', 'does not fit'),
                 (1000, 'Not a rule', 'person'),
             )),
             ("not translated", (
                 (self.untranslated_rule.id, 'test untranslated', 'song', 'Joanie'),
+                (self.translated_rule.id, 'test wrong sheet', 'wrong', 'wrong', 'wrong')
             )),
         )
         file = BytesIO()
@@ -144,10 +146,12 @@ class TestBulkConditionalAlerts(TestCase):
             workbook = get_workbook(f)
             msgs = [m[1] for m in upload_conditional_alert_workbook(self.domain, self.langs, workbook)]
 
-            self.assertEqual(len(msgs), 4)
-            self._assertPatternIn(r"Row 3 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
-            self._assertPatternIn(r"Could not find rule for row 4 in 'translated' sheet, with id \d+", msgs)
+            self.assertEqual(len(msgs), 6)
+            self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'translated' sheet.", msgs)
+            self._assertPatternIn(r"Row 4 in 'translated' sheet, with rule id \d+, does not use SMS content", msgs)
+            self._assertPatternIn(r"Could not find rule for row 5 in 'translated' sheet, with id \d+", msgs)
             self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
+            self._assertPatternIn(r"Rule in row 3 with id \d+ does not belong in 'not translated' sheet.", msgs)
             self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
 
             self.assertEqual(self.translated_rule.name, 'test translated')
