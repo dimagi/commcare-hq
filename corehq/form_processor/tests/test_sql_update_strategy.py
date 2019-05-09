@@ -3,9 +3,11 @@ from __future__ import absolute_import, unicode_literals
 from django.test import TestCase
 from freezegun import freeze_time
 from mock import patch
+from testil import eq
 from corehq.util.soft_assert.core import SoftAssert
 
 from casexml.apps.case.exceptions import ReconciliationError
+from casexml.apps.case.xml.parser import CaseUpdateAction, KNOWN_PROPERTIES
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
@@ -204,3 +206,21 @@ class SqlUpdateStrategyTest(TestCase):
         for call in soft_assert_mock.call_args_list:
             self.assertNotIn('ReconciliationError', call[0][1])
         soft_assert_mock.reset_mock()
+
+
+def test_update_known_properties_with_empty_values():
+    def test(prop):
+        case = SqlCaseUpdateStrategy.case_implementation_class()
+        setattr(case, prop, "value")
+        action = CaseUpdateAction(block=None, **{prop: ""})
+
+        SqlCaseUpdateStrategy(case)._update_known_properties(action)
+
+        eq(getattr(case, prop), "")
+
+    # verify that at least one property will be tested
+    assert any(v is not None for v in KNOWN_PROPERTIES.values()), KNOWN_PROPERTIES
+
+    for prop, default in KNOWN_PROPERTIES.items():
+        if default is not None:
+            yield test, prop
