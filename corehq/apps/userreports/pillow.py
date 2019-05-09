@@ -69,11 +69,11 @@ def _filter_by_hash(configs, ucr_division):
 
 def _filter_missing_domains(configs):
     """Return a list of configs whose domain exists on this environment"""
-    domain_names = [config.domain for config in configs]
-    ids_by_name = get_domain_ids_by_names(domain_names)
+    domain_names = [config.domain for config in configs if config.is_static]
+    existing_domains = list(get_domain_ids_by_names(domain_names))
     return [
         config for config in configs
-        if config.domain in ids_by_name
+        if not config.is_static or config.domain in existing_domains
     ]
 
 
