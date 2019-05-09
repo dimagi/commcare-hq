@@ -81,9 +81,9 @@
       <div class="form form-horizontal well"
            data-bind="foreach: reportFilters">
         <div class="form-group">
-          <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label"
+          <label class="{% css_label_class %} control-label"
                  data-bind="text: title, attr: { for: 'filter_' + name()}"></label>
-          <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6">
+          <div class="{% css_field_class %}">
             <select type="text"
                     class="form-control"
                     data-bind="selectedOptions: value,
