@@ -6,54 +6,54 @@
 {% requirejs_main 'accounting/js/billing_account_form' %}
 
 {% block page_content %}
-    {% initial_page_data 'account_form_is_active' basic_form.is_active.value %}
-    {% initial_page_data 'is_customer_billing_account' basic_form.is_customer_billing_account.value %}
-    {% initial_page_data 'enterprise_admin_emails' basic_form.enterprise_admin_emails.value %}
+  {% initial_page_data 'account_form_is_active' basic_form.is_active.value %}
+  {% initial_page_data 'is_customer_billing_account' basic_form.is_customer_billing_account.value %}
+  {% initial_page_data 'enterprise_admin_emails' basic_form.enterprise_admin_emails.value %}
 
-    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
-        <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
-        <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
-        <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
-        {% if account.auto_pay_user %}
-            <li><a href="#autopay" data-toggle="tab">{% trans "Autopay" %}</a></li>
-        {% endif %}
-    </ul>
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs">
+    <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
+    <li><a href="#subscriptions" data-toggle="tab">{% trans "Subscriptions" %}</a></li>
+    <li><a href="#credits" data-toggle="tab">{% trans "Credits" %}</a></li>
+    {% if account.auto_pay_user %}
+      <li><a href="#autopay" data-toggle="tab">{% trans "Autopay" %}</a></li>
+    {% endif %}
+  </ul>
 
-    <div class="tab-content tab-padded">
-        <div class="tab-pane" id="account">
-            <div style="margin: 20px 0;">
-                {{ block.super }}
-            </div>
-            <div style="margin: 20px 0;">
-                {% crispy contact_form %}
-            </div>
-        </div>
-
-        <div class="tab-pane" id="subscriptions">
-            {% include 'accounting/partials/subscriptions_tab.html' %}
-        </div>
-
-        <div class="tab-pane" id="credits">
-            {% include 'accounting/partials/credits_tab.html' %}
-        </div>
-        {% if account.auto_pay_user %}
-            <div class="tab-pane" id="autopay">
-                <p>
-                    <div>Auto Pay User: {{ account.auto_pay_user }}</div>
-                </p>
-                <p>
-                    <div><h4>Card info:</h4></div>
-                    <div>Last four digits: {{ auto_pay_card.last4 }}</div>
-                    <div>Brand: {{ auto_pay_card.brand }}</div>
-                    <div>Expiration: {{ auto_pay_card.exp_month }} / {{ auto_pay_card.exp_year }}</div>
-                </p>
-                <div>
-                    <form class="form form-horizontal" method="post" id="remove-autopay-form">
-                        {% crispy remove_autopay_form %}
-                    </form>
-                </div>
-            </div>
-        {% endif %}
+  <div class="tab-content tab-padded">
+    <div class="tab-pane" id="account">
+      <div style="margin: 20px 0;">
+        {{ block.super }}
+      </div>
+      <div style="margin: 20px 0;">
+        {% crispy contact_form %}
+      </div>
     </div>
+
+    <div class="tab-pane" id="subscriptions">
+      {% include 'accounting/partials/subscriptions_tab.html' %}
+    </div>
+
+    <div class="tab-pane" id="credits">
+      {% include 'accounting/partials/credits_tab.html' %}
+    </div>
+    {% if account.auto_pay_user %}
+      <div class="tab-pane" id="autopay">
+        <p>
+        <div>Auto Pay User: {{ account.auto_pay_user }}</div>
+        </p>
+        <p>
+        <div><h4>Card info:</h4></div>
+        <div>Last four digits: {{ auto_pay_card.last4 }}</div>
+        <div>Brand: {{ auto_pay_card.brand }}</div>
+        <div>Expiration: {{ auto_pay_card.exp_month }} / {{ auto_pay_card.exp_year }}</div>
+        </p>
+        <div>
+          <form class="form form-horizontal" method="post" id="remove-autopay-form">
+            {% crispy remove_autopay_form %}
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 
 {% endblock %}

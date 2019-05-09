@@ -198,15 +198,15 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "maternal_and_child/institutional_deliveries",
                 "color": "green",
-                "all": 24,
+                "all": 14,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the total number of women enrolled for Anganwadi services who gave birth in "
                              "the last month, the percentage who delivered in a public or private medical "
                              "facility. Delivery in medical instituitions is associated with a decrease in "
                              "maternal mortality rate",
-                "percent": 94.44444444444449,
-                "value": 20,
+                "percent": 80.0,
+                "value": 14,
                 "label": "Institutional Deliveries"
             }
         )

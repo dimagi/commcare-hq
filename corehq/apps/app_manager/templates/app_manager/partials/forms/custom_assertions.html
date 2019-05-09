@@ -1,60 +1,60 @@
 {% load i18n %}
 <label class="control-label col-sm-2">
-    {% trans "Custom Assertions" %}
-    <span class="hq-help-template"
-          data-title="{% trans "Custom Assertions" %}"
-          data-content="{% blocktrans %}Add custom assertions that you will use elsewhere.{% endblocktrans %}"
-    ></span>
+  {% trans "Custom Assertions" %}
+  <span class="hq-help-template"
+        data-title="{% trans "Custom Assertions" %}"
+        data-content="{% blocktrans %}Add custom assertions that you will use elsewhere.{% endblocktrans %}"
+  ></span>
 </label>
 <div class="col-sm-10" id="custom-assertions">
-    <table class="table table-condensed">
-        <thead>
-            <tr>
-                <th class="col-sm-4">{% trans "Test" %}</th>
-                <th class="col-sm-6">
-                    {% trans "Message Text" %}
-                </th>
-                <th class="col-sm-2">&nbsp;</th>
-            </tr>
-        </thead>
-        <tbody data-bind="foreach: customAssertions">
-            <tr>
-                <td class="col-sm-4">
-                    <input
-                        class="form-control"
-                        type="text"
-                        spellcheck="false"
-                        placeholder="e.g. foo='bar' or baz= 'buzz'"
-                        data-bind="value: test"
-                    /><!-- Not directly sent to server since there is no "name" attribute -->
-                </td>
-                <td class="col-sm-6">
-                    <input
-                        class="form-control"
-                        type="text"
-                        spellcheck="false"
-                        placeholder="e.g. There was a validation error"
-                        data-bind="value: text"
-                    /><!-- Not directly sent to server since there is no "name" attribute -->
-                </td>
-                <td class="col-sm-2">
-                    <i style="cursor: pointer;" class="fa fa-remove"
-                       data-bind="click: $parent.removeAssertion"></i>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <p>
-        <button type="button"
-                class="btn btn-default"
-                data-bind="click: addAssertion">
-            <i class="fa fa-plus"></i> {% trans "Add custom assertion" %}
-        </button>
-    </p>
-    <input
-        name="custom_assertions"
-        data-bind="value: serializedCustomAssertions"
-        hidden="true"
-        type="text"
-    /><!-- Serialized value of all custom assertions above, sent to server -->
+  <table class="table table-condensed">
+    <thead>
+    <tr>
+      <th class="col-sm-4">{% trans "Test" %}</th>
+      <th class="col-sm-6">
+        {% trans "Message Text" %}
+      </th>
+      <th class="col-sm-2">&nbsp;</th>
+    </tr>
+    </thead>
+    <tbody data-bind="foreach: customAssertions">
+    <tr>
+      <td class="col-sm-4">
+        <input
+          class="form-control"
+          type="text"
+          spellcheck="false"
+          placeholder="e.g. foo='bar' or baz= 'buzz'"
+          data-bind="value: test"
+        /><!-- Not directly sent to server since there is no "name" attribute -->
+      </td>
+      <td class="col-sm-6">
+        <input
+          class="form-control"
+          type="text"
+          spellcheck="false"
+          placeholder="e.g. There was a validation error"
+          data-bind="value: text"
+        /><!-- Not directly sent to server since there is no "name" attribute -->
+      </td>
+      <td class="col-sm-2">
+        <i style="cursor: pointer;" class="fa fa-remove"
+           data-bind="click: $parent.removeAssertion"></i>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <p>
+    <button type="button"
+            class="btn btn-default"
+            data-bind="click: addAssertion">
+      <i class="fa fa-plus"></i> {% trans "Add custom assertion" %}
+    </button>
+  </p>
+  <input
+    name="custom_assertions"
+    data-bind="value: serializedCustomAssertions"
+    hidden="true"
+    type="text"
+  /><!-- Serialized value of all custom assertions above, sent to server -->
 </div>

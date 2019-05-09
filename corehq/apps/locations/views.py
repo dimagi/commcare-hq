@@ -16,6 +16,7 @@ from django.views.decorators.http import require_http_methods
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import make_form_readonly
+from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -225,12 +226,21 @@ class LocationsListView(BaseLocationView):
             return [to_json(user.get_sql_location(self.domain))]
 
 
-class LocationsSearchView(EmwfOptionsView):
+class LocationOptionsController(EmwfOptionsController):
+
     @property
     def data_sources(self):
         return [
             (self.get_locations_size, self.get_locations),
         ]
+
+
+class LocationsSearchView(EmwfOptionsView):
+
+    @property
+    @memoized
+    def options_controller(self):
+        return LocationOptionsController(self.request, self.domain, self.search)
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):

@@ -19,11 +19,11 @@
     <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
   {% endcompress %}
-    {% if linked_domains_enabled %}
-        {% compress js %}
-        <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
-        {% endcompress %}
-    {% endif %}
+  {% if linked_domains_enabled %}
+    {% compress js %}
+      <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
+    {% endcompress %}
+  {% endif %}
   {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
   {% endcompress %}

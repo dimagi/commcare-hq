@@ -66,7 +66,7 @@ from corehq.apps.userreports.util import (
     get_indicator_adapter,
 )
 from corehq.pillows.utils import get_deleted_doc_types
-from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -206,6 +206,11 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
+class MirroredEngineIds(DocumentSchema):
+    server_environment = StringProperty()
+    engine_ids = StringListProperty()
+
+
 @six.python_2_unicode_compatible
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
@@ -231,6 +236,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
+    mirrored_engine_ids = ListProperty(default=[])
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -483,6 +489,22 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         Return the number of ReportConfigurations that reference this data source.
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
+
+    def validate_db_config(self):
+        mirrored_engine_ids = self.mirrored_engine_ids
+        if not mirrored_engine_ids:
+            return
+        if self.engine_id in mirrored_engine_ids:
+            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
+
+        for engine_id in mirrored_engine_ids:
+            if not connection_manager.engine_id_is_available(engine_id):
+                raise BadSpecError(
+                    "DB for engine_id {} is not availble".format(engine_id)
+                )
+
+        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
+            raise BadSpecError("No two engine_ids should point to the same database")
 
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
@@ -773,6 +795,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
+    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -840,6 +863,13 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
+
+        def _get_mirrored_engine_ids():
+            for env in static_config.mirrored_engine_ids:
+                if env.server_environment == settings.SERVER_ENVIRONMENT:
+                    return env.engine_ids
+            return []
+        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 

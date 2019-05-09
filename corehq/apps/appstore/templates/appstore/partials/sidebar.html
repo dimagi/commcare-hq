@@ -1,73 +1,73 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <ul class="nav nav-hq-sidebar">
-    {% if display_ua %}
-        {% if request.user.is_superuser %}
-            <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "Approved" %}</a></li>
-            <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}?is_approved=false">{% trans "Unapproved" %}</a></li>
-        {% else %}
-            <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "All" %}</a></li>
-        {% endif %}
-        <li class="nav-divider"></li>
+  {% if display_ua %}
+    {% if request.user.is_superuser %}
+      <li{% if not include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "Approved" %}</a></li>
+      <li{% if include_unapproved %} class="active"{% endif %}><a href="{% url "appstore" %}?is_approved=false">{% trans "Unapproved" %}</a></li>
+    {% else %}
+      <li{% if not include_unapproved and not search_query and not filter_by and not project %} class="active"{% endif %}><a href="{% url "appstore" %}">{% trans "All" %}</a></li>
     {% endif %}
+    <li class="nav-divider"></li>
+  {% endif %}
 
-    <li class="nav-input">
-        <button class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
-    </li>
-    <li {% if not_searchable %} class="hidden" {% else %} class="nav-input" {% endif %}>
-        <form action="{{ search_url }}" method="get" class="form-search" id="facet-search">
-            <input type="search" name="{{ search_name }}" placeholder="{% trans 'Search for' %} {{ search_for }}" value="{{ search_query }}" class="search-query form-control" />
-        </form>
-    </li>
+  <li class="nav-input">
+    <button class="btn btn-primary" id="update-facets" data-prefix="{{ facet_prefix }}" data-params="{{ persistent_params }}">{% trans "Apply" %}</button>
+  </li>
+  <li {% if not_searchable %} class="hidden" {% else %} class="nav-input" {% endif %}>
+    <form action="{{ search_url }}" method="get" class="form-search" id="facet-search">
+      <input type="search" name="{{ search_name }}" placeholder="{% trans 'Search for' %} {{ search_for }}" value="{{ search_query }}" class="search-query form-control" />
+    </form>
+  </li>
 </ul>
 <ul class="nav nav-hq-sidebar">
-{% for facet_group, expanded, facets in facet_map %}
+  {% for facet_group, expanded, facets in facet_map %}
 
     {% if grouped_facets and facet_group %}
-    <li>
+      <li>
         <a class="facet-group-btn" data-name="{{ facet_group }}" href="#">
-            <i class="facet-group-chevron fa fa-angle-double-{% if expanded %}down{% else %}right{% endif %}"></i>
-            <strong>{{ facet_group }}</strong>
+          <i class="facet-group-chevron fa fa-angle-double-{% if expanded %}down{% else %}right{% endif %}"></i>
+          <strong>{{ facet_group }}</strong>
         </a>
-    </li>
+      </li>
     {% endif %}
 
     <li {% if grouped_facets %}style="margin-left: 1em" {% endif %}class="facet-group {% if not expanded %}hide{% endif %}" data-show="{{ expanded|JSON }}" data-group-name="{{ facet_group }}">
-    {% for f in facets %}
+      {% for f in facets %}
         <a class="facet-btn" href="#" data-sortable="{{ f.facet }}" data-show="{{ f.expanded|JSON }}">
-            <strong>
+          <strong>
             {% if f.choices %}<i class="facet-chevron fa fa-angle-double-{% if f.expanded %}down{% else %}right{% endif %}"></i>{% endif %}
-                {{ f.name|default:f.facet }}
-            </strong>
-            {% ifequal f.name 'License' %}
-                <a id="license-info-label" target="_blank" href="http://creativecommons.org/licenses/#licenses">
-                    <i class="fa fa-info-circle"></i>
-                </a>
-            {% endifequal %}
+            {{ f.name|default:f.facet }}
+          </strong>
+          {% ifequal f.name 'License' %}
+            <a id="license-info-label" target="_blank" href="http://creativecommons.org/licenses/#licenses">
+              <i class="fa fa-info-circle"></i>
+            </a>
+          {% endifequal %}
         </a>
 
         <ul class="nav facet-nav">
-        {% for choice in f.choices %}
+          {% for choice in f.choices %}
             <li class="sortable sortable-{{ f.facet }}
                 {% if not f.expanded or forloop.counter > 5 and choices|length > 6 %}
                     hide
                 {% endif %}
                 " data-name="{{ f.facet }}">
-                <div class="row">
-                    <div class="col-sm-10">
-                        <label for="s-{{ f.facet }}-{{ choice.name }}">
-                            <span>{{ choice.display|default:choice.name }} ({{ choice.count }})</span>
-                        </label>
-                    </div>
-                    <div class="col-sm-2"><input id="s-{{ f.facet }}-{{ choice.name }}" name="{{ choice.name|urlencode }}" class="facet-checkbox" type="checkbox" {% if choice.active %}checked=checked{% endif %}/></div>
+              <div class="row">
+                <div class="col-sm-10">
+                  <label for="s-{{ f.facet }}-{{ choice.name }}">
+                    <span>{{ choice.display|default:choice.name }} ({{ choice.count }})</span>
+                  </label>
                 </div>
+                <div class="col-sm-2"><input id="s-{{ f.facet }}-{{ choice.name }}" name="{{ choice.name|urlencode }}" class="facet-checkbox" type="checkbox" {% if choice.active %}checked=checked{% endif %}/></div>
+              </div>
             </li>
-        {% endfor %}
-        {% if f.choices|length > 6 and f.expanded %}
+          {% endfor %}
+          {% if f.choices|length > 6 and f.expanded %}
             <li><a class="more-sortable-button" data-sortable="{{ f.facet }}" href="#">{% trans "More..." %}</a></li>
-        {% endif %}
+          {% endif %}
         </ul>
-    {% endfor %}
+      {% endfor %}
     </li>
-{% endfor %}
+  {% endfor %}
 </ul>

@@ -26,8 +26,7 @@ from corehq.apps.reports.v2.reports.explore_case_data import (
 )
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
-    InvalidExcelFileException
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
@@ -46,7 +45,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
+from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_select2_v4
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -121,6 +120,11 @@ class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
     page_title = ugettext_lazy("Explore Case Data")
+
+    @use_daterangepicker
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
@@ -366,18 +370,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
-            return WorkbookJSONReader(bulk_file)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
-                                           newline=None))
-                raise BulkUploadCasesException(_("CommCare HQ no longer supports CSV upload. "
-                                                 "Please convert to Excel 2007 or higher (.xlsx) "
-                                                 "and try again."))
-            except UnicodeDecodeError:
-                raise BulkUploadCasesException(_("Unrecognized format"))
-        except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
+            return get_workbook(bulk_file)
+        except WorkbookJSONError as e:
+            raise BulkUploadCasesException(six.text_type(e))
 
     def _get_item_data(self, case):
         return {

@@ -7,11 +7,11 @@
 {% block page_name %}{% trans "Request Access" %}{% endblock %}
 
 {% block page_content %}
-    {% blocktrans %}
-        <p>
-            You do not have access to {{ hr_name }}.
-            If you need access, fill out the form below to send a request to the project's admins.
-        </p>
-    {% endblocktrans %}
-    {% crispy request_form %}
+  {% blocktrans %}
+    <p>
+      You do not have access to {{ hr_name }}.
+      If you need access, fill out the form below to send a request to the project's admins.
+    </p>
+  {% endblocktrans %}
+  {% crispy request_form %}
 {% endblock %}

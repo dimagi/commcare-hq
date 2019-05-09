@@ -16,10 +16,10 @@ class IndicatorAdapter(object):
     def get_table(self):
         raise NotImplementedError
 
-    def rebuild_table(self, initiated_by=None, source=None):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
-    def drop_table(self, initiated_by=None, source=None):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
     @unit_testing_only
@@ -137,8 +137,10 @@ class IndicatorAdapter(object):
             # make this atomic so that errors don't affect outer transactions
             with transaction.atomic():
                 DataSourceActionLog.objects.create(**kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except:  # noqa
-            # blanket catchall to make sure errors here don't interfere with real workflows
+            # catchall to make sure errors here don't interfere with real workflows
             notify_exception(None, "Error saving UCR action log", details=kwargs)
 
 

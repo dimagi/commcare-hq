@@ -1,17 +1,17 @@
 <script type="text/html" id="ko-search-box-template">
-    <div class="ko-search-box">
-        <form class="input-group" data-bind="submit: clickAction">
-            <input type="text" class="form-control"
-                   data-bind="value: value, valueUpdate: 'afterkeydown', attr: {placeholder: placeholder}, event: {keypress: keypressAction}"  />
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-default" data-bind="click: clickAction">
-                    <i data-bind="visible: !immediate" class="fa fa-search"></i>
-                    <i data-bind="visible: immediate" class="fa fa-filter"></i>
-                </button>
-                <button class="btn btn-default" type="button" data-bind="click: clearQuery">
-                    <i class="fa fa-times"></i>
-                </button>
-            </span>
-        </form>
-    </div>
+  <div class="ko-search-box">
+    <form class="input-group" data-bind="submit: clickAction">
+      <input type="text" class="form-control"
+             data-bind="value: value, valueUpdate: 'afterkeydown', attr: {placeholder: placeholder}, event: {keypress: keypressAction}"  />
+      <span class="input-group-btn">
+        <button type="button" class="btn btn-default" data-bind="click: clickAction">
+          <i data-bind="visible: !immediate" class="fa fa-search"></i>
+          <i data-bind="visible: immediate" class="fa fa-filter"></i>
+        </button>
+        <button class="btn btn-default" type="button" data-bind="click: clearQuery">
+          <i class="fa fa-times"></i>
+        </button>
+      </span>
+    </form>
+  </div>
 </script>

@@ -2,22 +2,22 @@
 {% load i18n %}
 
 {% block page_content %}
-<form method="get" class="form form-horizontal" action="{% url "download_malt" %}">
+  <form method="get" class="form form-horizontal" action="{% url "download_malt" %}">
     <div class="alert alert-info">
-        {% trans 'Enter a month to download all MALT data as csv for that month' %}
+      {% trans 'Enter a month to download all MALT data as csv for that month' %}
     </div>
-	<div class="form-group">
-	    <label class="col-xs-2 control-label" for="month-year-input">{% trans "Year Month" %}</label>
-	    <div class="col-xs-4">
-	        <input type="text" name="year_month" class="form-control" id="month-year-input" placeholder="YYYY-MM"/>
-	    </div>
-	</div>
+    <div class="form-group">
+      <label class="col-xs-2 control-label" for="month-year-input">{% trans "Year Month" %}</label>
+      <div class="col-xs-4">
+        <input type="text" name="year_month" class="form-control" id="month-year-input" placeholder="YYYY-MM"/>
+      </div>
+    </div>
     <div class="form-actions">
-        <div class="col-xs-offset-2 col-xs-4">
-            <button type="submit" class="btn btn-primary">
-                <i class="fa fa-cloud-download"></i> {% trans 'Download as CSV' %}
-            </button>
-        </div>
+      <div class="col-xs-offset-2 col-xs-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-cloud-download"></i> {% trans 'Download as CSV' %}
+        </button>
+      </div>
     </div>
-</form>
+  </form>
 {% endblock %}

@@ -1,21 +1,21 @@
 {% load i18n %}
 
 <div class="appnav-name-wrapper{% if releases_active %} active{% endif %}">
-    <div class="appnav-name-settings">
-        <a href="{% url "app_settings" domain app_id %}"
-            class="appnav-responsive{% if settings_active %} active{% endif %}">
-            <i class="fa fa-gear"></i>
-        </a>
-    </div>
-    <h2 class="appnav-name">
-        <a href="{% url 'release_manager' domain app_id %}"
-           class="appnav-responsive">
-            <span class="variable-app_name appname-text">{{ app_name }}</span>
-        </a>
-    </h2>
-    <div id="js-publish-status"
-         class="appnav-name-publish"
-         style="display: none;">
-        {% trans "Updates Available to Publish" %}
-    </div>
+  <div class="appnav-name-settings">
+    <a href="{% url "app_settings" domain app_id %}"
+       class="appnav-responsive{% if settings_active %} active{% endif %}">
+      <i class="fa fa-gear"></i>
+    </a>
+  </div>
+  <h2 class="appnav-name">
+    <a href="{% url 'release_manager' domain app_id %}"
+       class="appnav-responsive">
+      <span class="variable-app_name appname-text">{{ app_name }}</span>
+    </a>
+  </h2>
+  <div id="js-publish-status"
+       class="appnav-name-publish"
+       style="display: none;">
+    {% trans "Updates Available to Publish" %}
+  </div>
 </div>

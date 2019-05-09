@@ -231,7 +231,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
                             "app_url": app_url,
                             "app_name": app.name,
                             "module_url": module_url,
-                            "module_name": module.name['en']
+                            "module_name": module.default_name()
                         })
         return to_ret
 

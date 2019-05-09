@@ -50,12 +50,10 @@ trunk: master
 name: autostaging
 branches:
   - es/module-display  # Ethan March 4th
-  #- jls/log-media-map-app-id # Jenny March 7
   #- jls/reports-select2-v4  # Jenny April 9
-  - nh/cdc/one_domain+sk/lazy-case-json  # Norman April 25
   - nh/cdc/one_domain  # Norman March 26
-  - sk/lazy-case-json # SK April 24
-  - je/inactivity-timeout # J$ April 26
-  - jls/kill-bulk-archive-forms # Jenny April 29
-  - odata-apikey  # Nick April 29
+  - sr-ucr-mirror # Sravan May 1
+  #- jls/locale-id-integrity-bug # Jenny May 2
+  - mk/ccz-hosting-revamp # MK May 6
+  - odata-apikey  # Nick P May 6
 submodules: {}

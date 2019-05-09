@@ -5,311 +5,311 @@
 
 {% requirejs_main 'users/js/web_users' %}
 {% block page_content %}
-    {% registerurl "delete_invitation" domain %}
-    {% registerurl "delete_request" domain %}
-    {% registerurl "paginate_web_users" domain %}
-    {% registerurl "reinvite_web_user" domain %}
+  {% registerurl "delete_invitation" domain %}
+  {% registerurl "delete_request" domain %}
+  {% registerurl "paginate_web_users" domain %}
+  {% registerurl "reinvite_web_user" domain %}
 
-    <p class="lead">
-        {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
-            Web Users can manage and view data on {{ hq_name }}.
-            However, these users cannot submit forms from phones
-            using the {{ cc_name }} Application.
-        {% endblocktrans %}
-        {% if not request.is_view_only %}
-        <div class="btn-toolbar">
-            <a class="btn btn-primary"
-               href="{% url "invite_web_user" domain %}">
-                <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
-            </a>
-        </div>
-        {% endif %}
-    </p>
-
-    {% if requests and not request.is_view_only %}
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    {% trans 'Pending Access Requests' %}
-                </h3>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped table-responsive">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Name" %}</th>
-                            <th>{% trans "E-mail" %}</th>
-                            <th>{% trans "Actions" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for req in requests %}
-                            <tr>
-                                <td>
-                                    {{ req.full_name }}
-                                </td>
-                                <td>
-                                    {{ req.email }}
-                                </td>
-                                <td>
-                                    <div>
-                                        <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
-                                            class="approve-request btn btn-default">
-                                            <i class="fa fa-check-square-o"></i>
-                                            {% trans "Approve Request" %}
-                                        </a>
-                                        <a href="#" class="btn btn-danger delete-request"
-                                           data-id={{ req.id }}>
-                                            <i class="fa fa-trash"></i>
-                                            {% trans "Delete Request" %}
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <p class="lead">
+    {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
+      Web Users can manage and view data on {{ hq_name }}.
+      However, these users cannot submit forms from phones
+      using the {{ cc_name }} Application.
+    {% endblocktrans %}
+    {% if not request.is_view_only %}
+      <div class="btn-toolbar">
+        <a class="btn btn-primary"
+           href="{% url "invite_web_user" domain %}">
+          <i class="fa fa-plus"></i> {% trans 'Invite Web User' %}
+        </a>
+      </div>
     {% endif %}
+  </p>
 
-    <div class="panel panel-default ko-template" id="web-users-panel">
-        <div class="panel-heading">
-            <div class="row">
-                <div class="col-sm-6">
-                    <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
+  {% if requests and not request.is_view_only %}
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% trans 'Pending Access Requests' %}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped table-responsive">
+          <thead>
+            <tr>
+              <th>{% trans "Name" %}</th>
+              <th>{% trans "E-mail" %}</th>
+              <th>{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for req in requests %}
+            <tr>
+              <td>
+                {{ req.full_name }}
+              </td>
+              <td>
+                {{ req.email }}
+              </td>
+              <td>
+                <div>
+                  <a href="{% url "invite_web_user" domain %}?request_id={{ req.id }}"
+                     class="approve-request btn btn-default">
+                    <i class="fa fa-check-square-o"></i>
+                    {% trans "Approve Request" %}
+                  </a>
+                  <a href="#" class="btn btn-danger delete-request"
+                     data-id={{ req.id }}>
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete Request" %}
+                  </a>
                 </div>
-                <div class="col-sm-6">
-                    <search-box data-apply-bindings="false"
-                                params="value: query,
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="panel panel-default ko-template" id="web-users-panel">
+    <div class="panel-heading">
+      <div class="row">
+        <div class="col-sm-6">
+          <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Current Users' %}</h3>
+        </div>
+        <div class="col-sm-6">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
                                         action: function() { goToPage(1); },
                                         placeholder: '{% trans_html_attr "Search Users..." %}'"></search-box>
-                </div>
-            </div>
         </div>
-        <div class="panel-body">
-            <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
-            <div data-bind="visible: showLoadingSpinner">
-                <i class="fa fa-spin fa-spinner"></i>
-                {% trans "Loading Users..." %}
-            </div>
-            <div data-bind="visible: noUsersMessage">
-              <p class="alert alert-info">
-                <i class="fa fa-info-circle"></i>
-                <!-- ko text: noUsersMessage --><!-- /ko -->
-              </p>
-            </div>
-            <table class="table table-striped table-responsive"
-                   data-bind="visible: showUsers"
-                   style="margin-bottom: 0;">
-                <thead>
-                    <tr>
-                        <th>{% trans "E-mail" %}</th>
-                        <th>{% trans "Role" %}</th>
-                        <th>{% trans "Name" %}</th>
-                        <th>{% trans "Phone Numbers" %}</th>
-                        {% if not request.is_view_only %}
-                        <th></th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody data-bind="foreach: users">
-                    <tr>
-                        <td>
-                            <a data-bind="attr: {href: editUrl}, text: email"></a>
-                        </td>
-                        <td data-bind="text: role"></td>
-                        <td data-bind="text: name"></td>
-                        <td>
-                            <ul data-bind="foreach: phoneNumbers">
-                                <li data-bind="text: $data"></li>
-                            </ul>
-                        </td>
-                        {% if not request.is_view_only %}
-                        <td>
-                            <div data-bind="visible: removeUrl">
-                                <button type="button"
-                                        class="btn btn-danger"
-                                        data-toggle="modal"
-                                        data-bind="attr: {'data-target': '#remove_membership_' + id}">
-                                    <i class="fa fa-trash"></i> {% trans "Remove Membership" %}
-                                </button>
-                            </div>
-                            <!-- ko if: removeUrl -->
-                                <div data-bind="attr: {id: 'remove_membership_' + id}" class="modal fade">
-                                    <div class="modal-dialog">
-                                        <form class="modal-content" method="post"
-                                              data-bind="attr: {action: removeUrl}">
-                                            {% csrf_token %}
-                                            <div class="modal-header">
-                                                <button type="button" class="close" data-dismiss="modal">
-                                                    <span aria-hidden="true">&times;</span>
-                                                    <span class="sr-only">{% trans "Close" %}</span>
-                                                </button>
-                                                <h4 class="modal-title">
-                                                    {% trans "Remove User Membership" %}:
-                                                    <span data-bind="text: name"></span>
-                                                </h4>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
-                                                <ul class="dl-horizontal">
-                                                    <dt>{% trans "E-mail" %}</dt>
-                                                    <dd data-bind="text: email"></dd>
-                                                    <dt>{% trans "Name" %}</dt>
-                                                    <dd data-bind="text: name"></dd>
-                                                    <dt>{% trans "Membership" %}</dt>
-                                                    <dd data-bind="text: domain"></dd>
-                                                    <dt>{% trans "Role" %}</dt>
-                                                    <dd data-bind="text: role"></dd>
-                                                </ul>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button"
-                                                        class="btn btn-default"
-                                                        data-dismiss="modal">
-                                                    {% trans "Cancel" %}
-                                                </button>
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="fa fa-trash"></i>
-                                                    {% trans "Remove Membership" %}
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            <!-- /ko -->
-                        </td>
-                        {% endif %}
-                    </tr>
-                </tbody>
-            </table>
-            <pagination data-bind="visible: showUsers" data-apply-bindings="false"
-                        params="goToPage: goToPage,
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+      <div data-bind="visible: showLoadingSpinner">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading Users..." %}
+      </div>
+      <div data-bind="visible: noUsersMessage">
+        <p class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          <!-- ko text: noUsersMessage --><!-- /ko -->
+        </p>
+      </div>
+      <table class="table table-striped table-responsive"
+             data-bind="visible: showUsers"
+             style="margin-bottom: 0;">
+        <thead>
+          <tr>
+            <th>{% trans "E-mail" %}</th>
+            <th>{% trans "Role" %}</th>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Phone Numbers" %}</th>
+            {% if not request.is_view_only %}
+              <th></th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: users">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: editUrl}, text: email"></a>
+            </td>
+            <td data-bind="text: role"></td>
+            <td data-bind="text: name"></td>
+            <td>
+              <ul data-bind="foreach: phoneNumbers">
+                <li data-bind="text: $data"></li>
+              </ul>
+            </td>
+            {% if not request.is_view_only %}
+              <td>
+                <div data-bind="visible: removeUrl">
+                  <button type="button"
+                          class="btn btn-danger"
+                          data-toggle="modal"
+                          data-bind="attr: {'data-target': '#remove_membership_' + id}">
+                    <i class="fa fa-trash"></i> {% trans "Remove Membership" %}
+                  </button>
+                </div>
+                <!-- ko if: removeUrl -->
+                <div data-bind="attr: {id: 'remove_membership_' + id}" class="modal fade">
+                  <div class="modal-dialog">
+                    <form class="modal-content" method="post"
+                          data-bind="attr: {action: removeUrl}">
+                      {% csrf_token %}
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                          <span aria-hidden="true">&times;</span>
+                          <span class="sr-only">{% trans "Close" %}</span>
+                        </button>
+                        <h4 class="modal-title">
+                          {% trans "Remove User Membership" %}:
+                          <span data-bind="text: name"></span>
+                        </h4>
+                      </div>
+                      <div class="modal-body">
+                        <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
+                        <ul class="dl-horizontal">
+                          <dt>{% trans "E-mail" %}</dt>
+                          <dd data-bind="text: email"></dd>
+                          <dt>{% trans "Name" %}</dt>
+                          <dd data-bind="text: name"></dd>
+                          <dt>{% trans "Membership" %}</dt>
+                          <dd data-bind="text: domain"></dd>
+                          <dt>{% trans "Role" %}</dt>
+                          <dd data-bind="text: role"></dd>
+                        </ul>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-default"
+                                data-dismiss="modal">
+                          {% trans "Cancel" %}
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                          <i class="fa fa-trash"></i>
+                          {% trans "Remove Membership" %}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <!-- /ko -->
+              </td>
+            {% endif %}
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-bind="visible: showUsers" data-apply-bindings="false"
+                  params="goToPage: goToPage,
                                 slug: 'web-users',
                                 perPage: itemsPerPage,
                                 maxPagesShown: 10,
                                 totalItems: totalItems,
                                 showSpinner: showPaginationSpinner"></pagination>
 
-        </div><!-- end .panel-body -->
-    </div><!-- end .panel -->
+    </div><!-- end .panel-body -->
+  </div><!-- end .panel -->
 
-    {% if invitations and not request.is_view_only %}
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    {% trans 'Pending Invitations' %}
-                </h3>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped table-responsive">
-                    <thead>
-                        <tr>
-                            <th>{% trans "E-mail" %}</th>
-                            <th>{% trans "Role" %}</th>
-                            <th>{% trans "Date" %} (UTC)</th>
-                            <th>{% trans "Actions" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for invitation in invitations %}
-                        <tr>
-                            <td>
-                                {{ invitation.email }}
-                            </td>
-                            <td>
-                                {{ invitation.role_label }}
-                            </td>
-                            <td>
-                                {{ invitation.invited_on }}
-                                {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
-                                <span class="label label-default">
+  {% if invitations and not request.is_view_only %}
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          {% trans 'Pending Invitations' %}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-striped table-responsive">
+          <thead>
+            <tr>
+              <th>{% trans "E-mail" %}</th>
+              <th>{% trans "Role" %}</th>
+              <th>{% trans "Date" %} (UTC)</th>
+              <th>{% trans "Actions" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for invitation in invitations %}
+            <tr>
+              <td>
+                {{ invitation.email }}
+              </td>
+              <td>
+                {{ invitation.role_label }}
+              </td>
+              <td>
+                {{ invitation.invited_on }}
+                {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
+                  <span class="label label-default">
                                     {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
                                 </span>
-                                {% else %}
-                                <span class="label label-danger">
+                {% else %}
+                  <span class="label label-danger">
                                      {% trans "Expired" %}
                                 </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div>
-                                    <button type="button" class="resend-invite btn btn-default"
-                                       data-invite={{ invitation.get_id }}>
-                                        <i class="fa fa-envelope-o"></i>
-                                        {% trans "Resend Invitation" %}
-                                    </button>
-                                    <button type="button" class="btn btn-danger delete-invitation"
-                                       data-id={{ invitation.get_id }}>
-                                        <i class="fa fa-trash"></i>
-                                        {% trans "Delete Invitation" %}
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    {% endif %}
-
-    {% if user.is_superuser %}
-        <div class="panel panel-default">
-            <div class="panel-heading"
-                 role="tab"
-                 id="adminEmailsHeading">
-                <h4 class="panel-title">
-                    <a class="collapsed"
-                       data-toggle="collapse"
-                       href="#adminEmails"
-                       aria-expanded="false"
-                       aria-controls="adminEmails">
-                        {% trans "Copy and paste admin emails" %}
-                    </a>
-                </h4>
-            </div>
-            <div id="adminEmails"
-                 class="panel-collapse collapse"
-                 role="tabpanel"
-                 aria-labelledby="adminEmailsHeading">
-                <div class="panel-body">
-                    {% for user in admins %}
-                        {% if user.first_name or user.last_name %}
-                            "{{ user.first_name }} {{ user.last_name }}"
-                            &lt;{{ user.username }}&gt;,
-                        {% else %}
-                            {{ user.username }},
-                        {% endif %}
-                    {% endfor %}
+                {% endif %}
+              </td>
+              <td>
+                <div>
+                  <button type="button" class="resend-invite btn btn-default"
+                          data-invite={{ invitation.get_id }}>
+                    <i class="fa fa-envelope-o"></i>
+                    {% trans "Resend Invitation" %}
+                  </button>
+                  <button type="button" class="btn btn-danger delete-invitation"
+                          data-id={{ invitation.get_id }}>
+                    <i class="fa fa-trash"></i>
+                    {% trans "Delete Invitation" %}
+                  </button>
                 </div>
-            </div>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if user.is_superuser %}
+    <div class="panel panel-default">
+      <div class="panel-heading"
+           role="tab"
+           id="adminEmailsHeading">
+        <h4 class="panel-title">
+          <a class="collapsed"
+             data-toggle="collapse"
+             href="#adminEmails"
+             aria-expanded="false"
+             aria-controls="adminEmails">
+            {% trans "Copy and paste admin emails" %}
+          </a>
+        </h4>
+      </div>
+      <div id="adminEmails"
+           class="panel-collapse collapse"
+           role="tabpanel"
+           aria-labelledby="adminEmailsHeading">
+        <div class="panel-body">
+          {% for user in admins %}
+            {% if user.first_name or user.last_name %}
+              "{{ user.first_name }} {{ user.last_name }}"
+              &lt;{{ user.username }}&gt;,
+            {% else %}
+              {{ user.username }},
+            {% endif %}
+          {% endfor %}
         </div>
-    {% endif %}
+      </div>
+    </div>
+  {% endif %}
 
 {% endblock %}
 
 {% block modals %}{{ block.super }}
-{% if not request.is_view_only %}
-<div id="modal-deletion" class="modal fade">
-    <div class="modal-dialog">
+  {% if not request.is_view_only %}
+    <div id="modal-deletion" class="modal fade">
+      <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <button type="button"
-                        class="close">
-                    <span aria-hidden="true">&times;</span>
-                    <span class="sr-only">{% trans "Close" %}</span>
-                </button>
-                <h4 class="modal-title"></h4>
-            </div>
-            <div class="modal-body"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
-            </div>
+          <div class="modal-header">
+            <button type="button"
+                    class="close">
+              <span aria-hidden="true">&times;</span>
+              <span class="sr-only">{% trans "Close" %}</span>
+            </button>
+            <h4 class="modal-title"></h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+            <button type="button" class="btn btn-danger" id="confirm-delete">{% trans "Delete" %}</button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-{% endif %}
+  {% endif %}
 {% endblock %}

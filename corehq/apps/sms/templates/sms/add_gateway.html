@@ -6,49 +6,49 @@
 {% requirejs_main 'sms/js/add_gateway' %}
 
 {% block page_content %}
-    {% initial_page_data 'give_other_domains_access' form.give_other_domains_access.value %}
-    {% initial_page_data 'use_load_balancing' use_load_balancing %}
-    {% initial_page_data 'phone_numbers' form.phone_numbers.value|default:'[]'|safe %}
+  {% initial_page_data 'give_other_domains_access' form.give_other_domains_access.value %}
+  {% initial_page_data 'use_load_balancing' use_load_balancing %}
+  {% initial_page_data 'phone_numbers' form.phone_numbers.value|default:'[]'|safe %}
 
-    <div id="add-gateway-form">
-        {% crispy form %}
-    </div>
+  <div id="add-gateway-form">
+    {% crispy form %}
+  </div>
 
-    <script type="text/html" id="ko-load-balancing-template">
-        <div class="control-group">
-            <div class="controls">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>{% trans 'Phone Number' %}</th>
-                            <th>{% trans 'Action' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: phone_numbers">
-                        <tr>
-                            <td><input type="text" data-bind="value: phone_number" /></td>
-                            <td>
-                                <button type="button"
-                                        class="btn btn-danger"
-                                        data-bind="click: $parent.removePhoneNumber">
-                                    <i class="fa fa-times"></i> {% trans 'Remove' %}
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div>
-                    {{ form.phone_numbers.errors }}
-                </div>
-                <input type="hidden"
-                       name="phone_numbers"
-                       data-bind="value: phone_numbers_json" />
-                <button type="button"
-                        class="btn btn-primary"
-                        data-bind="click: addPhoneNumber">
-                    <i class="fa fa-plus"></i> {% trans 'Add Phone Number' %}
-                </button>
-            </div>
+  <script type="text/html" id="ko-load-balancing-template">
+    <div class="control-group">
+      <div class="controls">
+        <table class="table table-bordered">
+          <thead>
+          <tr>
+            <th>{% trans 'Phone Number' %}</th>
+            <th>{% trans 'Action' %}</th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: phone_numbers">
+          <tr>
+            <td><input type="text" data-bind="value: phone_number" /></td>
+            <td>
+              <button type="button"
+                      class="btn btn-danger"
+                      data-bind="click: $parent.removePhoneNumber">
+                <i class="fa fa-times"></i> {% trans 'Remove' %}
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <div>
+          {{ form.phone_numbers.errors }}
         </div>
-    </script>
+        <input type="hidden"
+               name="phone_numbers"
+               data-bind="value: phone_numbers_json" />
+        <button type="button"
+                class="btn btn-primary"
+                data-bind="click: addPhoneNumber">
+          <i class="fa fa-plus"></i> {% trans 'Add Phone Number' %}
+        </button>
+      </div>
+    </div>
+  </script>
 {% endblock %}
