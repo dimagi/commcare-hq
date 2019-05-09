@@ -3,11 +3,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
-from collections import namedtuple
 from functools import partial
 
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
+import attr
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 from django.dispatch import Signal
@@ -91,7 +91,17 @@ def catch_signal(sender, **kwargs):
     engine.dispose()
 
 
-SimpleDiff = namedtuple('SimpleDiff', 'type table_name item_name')
+@attr.s
+class SimpleDiff(object):
+    type = attr.ib()
+    table_name = attr.ib()
+    item_name = attr.ib()
+
+    def to_dict(self):
+        return {
+            'type': self.type,
+            'item_name': self.item_name
+        }
 
 
 def reformat_alembic_diffs(raw_diffs):

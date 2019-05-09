@@ -121,7 +121,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return orm_table
 
     def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip_log)
+        self.log_table_rebuild(initiated_by, source, skip=skip_log)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())

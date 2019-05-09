@@ -5,9 +5,11 @@ import mock
 from django.test import TestCase
 from sqlalchemy.engine import reflection
 
+from corehq.apps.userreports.models import DataSourceActionLog
 from corehq.apps.userreports.tests.utils import get_sample_data_source
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.pillows.case import get_case_pillow
+from corehq.util.test_utils import softer_assert
 
 
 class RebuildTableTest(TestCase):
@@ -132,6 +134,43 @@ class RebuildTableTest(TestCase):
         self.assertEqual(
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
+
+    @softer_assert()
+    def test_skip_destructive_rebuild(self):
+        self._setup_data_source('add_non_nullable_col')
+
+        # assert new date isn't in the config
+        insp = reflection.Inspector.from_engine(self.engine)
+        table_name = get_table_name(self.config.domain, self.config.table_id)
+        self.assertEqual(
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
+        )
+
+        # add the column to the config
+        config = self._get_config('add_non_nullable_col')
+        self.addCleanup(config.delete)
+        config.configured_indicators.append({
+            "column_id": "new_date",
+            "type": "raw",
+            "display_name": "new_date opened",
+            "datatype": "datetime",
+            "property_name": "other_opened_on",
+            "is_nullable": False
+        })
+        config.disable_destructive_rebuild = True
+        config.save()
+
+        # mock rebuild table to ensure the table is rebuilt
+        with mock.patch('corehq.apps.userreports.pillow.rebuild_indicators.delay') as mock_task:
+            get_case_pillow(ucr_configs=[config])
+            self.assertFalse(mock_task.called)
+
+        logs = DataSourceActionLog.objects.filter(
+            indicator_config_id=config.data_source_id,
+            skip_destructive=True
+        )
+        self.assertEqual(1, len(logs))
+        self.assertEqual(logs[0].migration_diffs, [{'type': 'add_column', 'item_name': 'new_date'}])
 
     def test_implicit_pk(self):
         self._setup_data_source('implicit_pk')
