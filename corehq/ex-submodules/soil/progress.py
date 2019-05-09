@@ -1,3 +1,4 @@
+# encoding: utf-8
 from __future__ import absolute_import, division, unicode_literals
 
 import logging
@@ -11,6 +12,8 @@ from celery.result import GroupResult
 
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])
+
+SOIL_ERROR_SEPARATOR = "🐜🥜🌲"
 
 
 class STATES(object):
@@ -125,8 +128,8 @@ def get_task_status(task, is_multiple_download_task=False):
             context_result = result and result.get('messages')
         elif result and isinstance(result, Exception):
             context_error = six.text_type(result)
-            if '\t' in context_error:
-                context_error = [err for err in context_error.split('\t') if err]
+            if SOIL_ERROR_SEPARATOR in context_error:
+                context_error = [err for err in context_error.split(SOIL_ERROR_SEPARATOR) if err]
         elif result and result.get('errors'):
             failed = True
             context_error = result.get('errors')

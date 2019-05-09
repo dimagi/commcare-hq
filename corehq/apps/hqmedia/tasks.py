@@ -17,6 +17,7 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 
 from soil import DownloadBase
+from soil.progress import SOIL_ERROR_SEPARATOR
 from soil.util import expose_cached_download, expose_file_download
 
 from corehq import toggles
@@ -202,7 +203,9 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
 
         if errors:
             os.remove(fpath)
-            raise Exception('\t' + '\t'.join(errors))
+            # Add SOIL_ERROR_SEPARATOR first so that even with one error, soil assumes that this
+            # was originally a list
+            raise Exception(SOIL_ERROR_SEPARATOR + SOIL_ERROR_SEPARATOR.join(errors))
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
