@@ -167,3 +167,12 @@ def load_data_from_db(table_name):
                 elif value is None:
                     row[idx] = ''
             yield dict(zip(columns, row))
+
+
+def mock_filter_missing_domains(configs):
+    return configs
+
+
+skip_domain_filter_patch = patch(
+    'corehq.apps.userreports.pillow._filter_missing_domains', mock_filter_missing_domains
+)
