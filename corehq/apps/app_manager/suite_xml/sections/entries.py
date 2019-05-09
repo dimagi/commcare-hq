@@ -616,8 +616,8 @@ class EntriesHelper(object):
                             "Module with ID %s has no product details configuration" % module_id
                         )
                     return target
-                except ModuleNotFoundException as ex:
-                    raise ParentModuleReferenceError(ex.message)
+                except ModuleNotFoundException as e:
+                    raise ParentModuleReferenceError(six.text_type(e))
             else:
                 if case_type == module.case_type:
                     return module

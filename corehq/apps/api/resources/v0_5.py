@@ -394,9 +394,9 @@ class GroupResource(v0_4.GroupResource):
             try:
 
                 self.obj_create(bundle=bundle, **self.remove_api_resource_names(kwargs))
-            except AssertionError as ex:
+            except AssertionError as e:
                 status = http.HttpBadRequest
-                bundle.data['_id'] = ex.message
+                bundle.data['_id'] = six.text_type(e)
             bundles_seen.append(bundle)
 
         to_be_serialized = [bundle.data['_id'] for bundle in bundles_seen]
@@ -420,8 +420,8 @@ class GroupResource(v0_4.GroupResource):
                 updated_bundle = self.full_dehydrate(updated_bundle)
                 updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
                 return self.create_response(request, updated_bundle, response_class=http.HttpCreated, location=location)
-        except AssertionError as ex:
-            bundle.data['error_message'] = ex.message
+        except AssertionError as e:
+            bundle.data['error_message'] = six.text_type(e)
             return self.create_response(request, bundle, response_class=http.HttpBadRequest)
 
     def _update(self, bundle):

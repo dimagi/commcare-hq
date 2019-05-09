@@ -228,8 +228,8 @@ class ESView(View):
         try:
             raw_post = request.body
             raw_query = json.loads(raw_post)
-        except Exception as ex:
-            content_response = dict(message="Error parsing query request", exception=ex.message)
+        except Exception as e:
+            content_response = dict(message="Error parsing query request", exception=six.text_type(e))
             response = HttpResponse(status=406, content=json.dumps(content_response))
             return response
 
