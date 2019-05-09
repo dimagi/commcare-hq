@@ -5,7 +5,7 @@ from mock import patch
 from django.test.client import RequestFactory
 
 from corehq.apps.locations.models import LocationType
-from corehq.apps.reports.filters.api import paginate_options
+from corehq.apps.reports.filters.controllers import paginate_options
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
     PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE

@@ -33,6 +33,7 @@ class MessageLogReportTest(TestCase):
     def test_event_column(self):
         self.make_simple_sms('message')
         self.make_case_rule_sms('Rule 2')
+        # This sms tests this particular condition
         self.make_survey_sms('Rule 3')
 
         for report_value, rule_name in zip(
@@ -77,7 +78,7 @@ class MessageLogReportTest(TestCase):
         )
         report = MessageLogReport(request, domain=self.domain)
         headers = [h.html for h in report.headers.header]
-        for row in report.rows:
+        for row in report.export_rows:
             yield dict(zip(headers, row))
 
     def make_simple_sms(self, message, error_message=None):

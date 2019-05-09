@@ -1391,7 +1391,7 @@ UATBC_ADHERENCE_TASK = StaticToggle(
 VIEW_APP_CHANGES = StaticToggle(
     'app-changes-with-improved-diff',
     'Improved app changes view',
-    TAG_PRODUCT,
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 

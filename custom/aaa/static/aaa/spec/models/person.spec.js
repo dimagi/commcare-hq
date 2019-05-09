@@ -48,7 +48,7 @@ describe('Person models', function () {
             dob: '2018-09-01',
         };
         var personModel = personModels.personModel(initialData, postData);
-        assert.equal('1 Yr 4 Mon', personModel.age());
+        assert.equal('7 Mon', personModel.age());
     });
 
     it('test gender', function () {

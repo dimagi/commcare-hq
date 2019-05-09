@@ -87,6 +87,40 @@ def set_default_settings_path(argv):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
 
 
+def set_nosetests_verbosity(argv):
+    """Increase nose output verbosity with -v... argument
+
+        -v: print test names
+        -vv: do not capture stdout
+        -vvv: do not capture logging
+        -vvvv: enable nose internal logging
+    """
+    import logging
+
+    def set_verbosity(arg, i):
+        args = []
+        verbosity = sum(1 for c in arg if c == "v") + 1
+        if len(arg) > verbosity:
+            # preserve other single-letter arguments (ex: -xv)
+            args.append("".join(c for c in arg if c != "v"))
+        if verbosity > 2:
+            args.append("--nocapture")
+        if verbosity > 3:
+            verbosity -= 1
+            args.append("--nologcapture")
+            logging.basicConfig(level=logging.NOTSET)
+            logging.getLogger().info(
+                "Adjust logging with testsettings._set_logging_levels")
+        args.append("--nose-verbosity=%s" % verbosity)
+        argv[i:i + 1] = args
+
+    if len(argv) > 1 and argv[1] == 'test':
+        for i, arg in reversed(list(enumerate(argv))):
+            if arg[:1] == "-" and arg[1] != "-" and any(c == 'v' for c in arg):
+                set_verbosity(arg, i)
+                break
+
+
 def patch_jsonfield():
     """Patch the ``to_python`` method of JSONField
     See https://github.com/bradjasper/django-jsonfield/pull/173 for more details
@@ -168,5 +202,6 @@ if __name__ == "__main__":
     run_patches()
 
     set_default_settings_path(sys.argv)
+    set_nosetests_verbosity(sys.argv)
     from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)
