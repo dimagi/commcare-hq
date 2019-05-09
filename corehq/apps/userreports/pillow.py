@@ -197,6 +197,9 @@ class ConfigurableReportTableManagerMixin(object):
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
 
         if config.disable_destructive_rebuild:
+            # TODO: only skip if table exists - ie. don't skip if TABLE_TYPES
+            # also what about removing a column?
+
             diff_dicts = [diff.to_dict() for diff in diffs]
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
