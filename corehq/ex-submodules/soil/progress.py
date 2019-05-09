@@ -9,8 +9,6 @@ from django.db import IntegrityError
 import six
 from celery.result import GroupResult
 
-from soil.exceptions import TaskFailedError
-
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])
 
