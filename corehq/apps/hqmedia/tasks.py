@@ -12,7 +12,6 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
-from celery import states
 from celery.task import task
 from celery.utils.log import get_task_logger
 
@@ -23,6 +22,7 @@ from soil.util import expose_cached_download, expose_file_download
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
+from corehq.apps.hqmedia.exceptions import ApplicationBuildException
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
 
@@ -205,7 +205,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
             os.remove(fpath)
             # Add SOIL_ERROR_SEPARATOR first so that even with one error, soil assumes that this
             # was originally a list
-            raise Exception(SOIL_ERROR_SEPARATOR + SOIL_ERROR_SEPARATOR.join(errors))
+            raise ApplicationBuildException(SOIL_ERROR_SEPARATOR + SOIL_ERROR_SEPARATOR.join(errors))
     else:
         DownloadBase.set_progress(build_application_zip, initial_progress + file_progress, 100)
 
