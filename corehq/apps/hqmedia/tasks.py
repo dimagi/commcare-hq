@@ -22,7 +22,6 @@ from soil.util import expose_cached_download, expose_file_download
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
-from corehq.apps.hqmedia.exceptions import ApplicationBuildException
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.util.files import file_extention_from_filename
 
@@ -202,6 +201,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
                             errors += [_('Media file missing from CCZ: {}').format(r) for r in missing]
 
         if errors:
+            from corehq.apps.hqmedia.exceptions import ApplicationBuildException
             os.remove(fpath)
             # Add SOIL_ERROR_SEPARATOR first so that even with one error, soil assumes that this
             # was originally a list
