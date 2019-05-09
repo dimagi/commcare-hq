@@ -8,6 +8,7 @@ import tempfile
 import zipfile
 
 from django.test import TestCase
+from mock import patch
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -36,7 +37,8 @@ class CCZTest(TestCase):
             self.image.save()
             self.addCleanup(self.image.delete)
 
-    def test_missing_locale_ids(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_missing_locale_ids(self, mock):
         files = self.factory.app.create_all_files()
         errors = find_missing_locale_ids_in_ccz(files)
         self.assertEqual(len(errors), 0)
