@@ -5,7 +5,15 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.db import connections
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import (
+    Case,
+    IntegerField,
+    Sum,
+    When,
+    F,
+    Value,
+    ExpressionWrapper,
+)
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -32,6 +40,11 @@ class ChildQueryHelper(object):
             domain=domain,
             dob__range=(date_ - relativedelta(years=5), date_),
             **location_filters
+        ).annotate(
+            age_in_months=ExpressionWrapper(
+                (Value(date_) - F('dob')) / Value(30.417),
+                output_field=IntegerField()
+            )
         ).extra(
             select={
                 'lastImmunizationType': 'last_immunization_type',
@@ -40,7 +53,7 @@ class ChildQueryHelper(object):
                 'id': 'person_case_id',
             }
         ).values(
-            'id', 'name', 'dob', 'gender', 'lastImmunizationType', 'lastImmunizationDate'
+            'id', 'name', 'dob', 'gender', 'lastImmunizationType', 'lastImmunizationDate', 'age_in_months'
         ).order_by(sort_column)
 
     def infant_details(self):
@@ -238,6 +251,7 @@ class PregnantWomanQueryHelper(object):
                 (woman.person_case_id) AS "id",
                 woman.name AS "name",
                 woman.dob AS "dob",
+                ((%(start_date)s - "woman"."dob") / 30.417)::INT AS "age_in_months",
                 EXTRACT('month' FROM age(ccs_record.preg_reg_date)) AS "pregMonth",
                 ccs_record.hrp AS "highRiskPregnancy",
                 ccs_record.num_anc_checkups AS "noOfAncCheckUps"
@@ -515,6 +529,7 @@ class EligibleCoupleQueryHelper(object):
                 woman.person_case_id AS "id",
                 woman.name AS "name",
                 woman.dob AS "dob",
+                ((%(start_date)s - "woman"."dob") / 30.417)::INT AS "age_in_months",
                 eligible_couple."currentFamilyPlanningMethod" AS "currentFamilyPlanningMethod",
                 eligible_couple."adoptionDateOfFamilyPlaning" AS "adoptionDateOfFamilyPlaning"
             FROM "{woman_table}" woman
