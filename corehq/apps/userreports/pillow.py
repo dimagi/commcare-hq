@@ -196,7 +196,7 @@ class ConfigurableReportTableManagerMixin(object):
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
             adapter.rebuild_table(source='pillowtop')
         else:
-            rebuild_indicators.delay(adapter.config.get_id)
+            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop')
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):

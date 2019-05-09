@@ -401,7 +401,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
                 if report.config.is_deactivated:
                     report.config.is_deactivated = False
                     report.config.save()
-                    rebuild_indicators.delay(report.config._id)
+                    rebuild_indicators.delay(report.config._id, source='subscription_change')
             except DataSourceConfigurationNotFoundError:
                 pass
         return True
