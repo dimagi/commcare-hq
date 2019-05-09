@@ -51,5 +51,17 @@ hqDefine('reports/v2/js/context', [
         getColumns: function () {
             return initialPageData.get('report.columns');
         },
+        getColumnFilters: function () {
+            return initialPageData.get('report.columnFilters');
+        },
+        getReportFilters: function () {
+            var filterData = initialPageData.get('report.reportFilters'),
+                config = reportConfig();
+            filterData = _.map(filterData, function (data) {
+                data.endpoint = config.endpoint[data.endpointSlug];
+                return data;
+            });
+            return filterData;
+        },
     };
 });

@@ -9,6 +9,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 import six
 from six.moves import zip
 from django.core.files.uploadedfile import UploadedFile
+from django.utils.translation import ugettext as _
 
 from corehq.util.python_compatibility import soft_assert_type_text
 
@@ -26,6 +27,10 @@ class HeaderValueError(Exception):
 
 
 class StringTypeRequiredError(Exception):
+    pass
+
+
+class WorkbookJSONError(Exception):
     pass
 
 
@@ -146,6 +151,42 @@ class IteratorJSONReader(object):
             )
 
         obj[field] = value
+
+
+def get_workbook(file_or_filename):
+    try:
+        return WorkbookJSONReader(file_or_filename)
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        raise WorkbookJSONError(_(
+            "Upload failed! "
+            "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+            "Error details: {}."
+        ).format(e))
+    except JSONReaderError as e:
+        raise WorkbookJSONError(_(
+            "Upload failed due to a problem with Excel columns. Error details: {}."
+        ).format(e))
+    except HeaderValueError as e:
+        raise WorkbookJSONError(_(
+            "Upload encountered a data type error: {}."
+        ).format(e))
+    except AttributeError as e:
+        raise WorkbookJSONError(_(
+            "Error processing Excel file: {}."
+        ).format(e))
+
+
+def get_single_worksheet(file_or_filename, title=None):
+    workbook = get_workbook(file_or_filename)
+
+    try:
+        worksheet = workbook.get_worksheet(title=title)
+    except WorksheetNotFound:
+        raise WorkbookJSONError(_(
+            "Could not find sheet '{title}'."
+        ).format(title=title) if title else _("Uploaded file does not contian any sheets."))
+
+    return worksheet
 
 
 class WorksheetNotFound(Exception):

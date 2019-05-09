@@ -5,91 +5,91 @@
 {% load i18n %}
 
 {% block page_content %}
-    <div class="form form-horizontal">
-        <fieldset>
-            <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
-            <dl class="dl-horizontal hq-dl-userinfo">
-                <dt>{% trans 'Username' %}</dt>
-                <dd>{{ couch_user.html_username|safe }}</dd>
-                {% for field in form_uneditable.visible_fields %}
-                {% if couch_user|getattr:field.name %}
-                <dt>{{ field.label }}</dt>
-                <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
-                {% endif %}
-                {% endfor %}
-                {% if phonenumbers %}
-                <dt>{% trans 'Phone Numbers' %}</dt>
-                <dd>
-                    <ul>
-                        {% for phonenumber in phonenumbers %}
-                        <li>+{{ phonenumber.number }}</li>
-                        {% endfor %}
-                    </ul>
-                </dd>
-                {% endif %}
-                {% if token %}
-                <dt>{% trans 'Backup Token' %}</dt>
-                <dd>{{ token }}</dd>
-                {% endif %}
-            </dl>
-        </fieldset>
-    </div>
-    {% if can_edit_role and not request.is_view_only %}
+  <div class="form form-horizontal">
+    <fieldset>
+      <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
+      <dl class="dl-horizontal hq-dl-userinfo">
+        <dt>{% trans 'Username' %}</dt>
+        <dd>{{ couch_user.html_username|safe }}</dd>
+        {% for field in form_uneditable.visible_fields %}
+          {% if couch_user|getattr:field.name %}
+            <dt>{{ field.label }}</dt>
+            <dd class="hq-dd-userinfo">{{ couch_user|getattr:field.name }}</dd>
+          {% endif %}
+        {% endfor %}
+        {% if phonenumbers %}
+          <dt>{% trans 'Phone Numbers' %}</dt>
+          <dd>
+            <ul>
+              {% for phonenumber in phonenumbers %}
+                <li>+{{ phonenumber.number }}</li>
+              {% endfor %}
+            </ul>
+          </dd>
+        {% endif %}
+        {% if token %}
+          <dt>{% trans 'Backup Token' %}</dt>
+          <dd>{{ token }}</dd>
+        {% endif %}
+      </dl>
+    </fieldset>
+  </div>
+  {% if can_edit_role and not request.is_view_only %}
     <form class="form form-horizontal" name="user_role" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="form_type" value="update-user" />
-        <fieldset>
-            <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
-            {% crispy form_user_update %}
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="update-user" />
+      <fieldset>
+        <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Role{% endblocktrans %}</legend>
+        {% crispy form_user_update %}
 
-            <div class="form-actions">
-                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
-                </div>
-            </div>
-        </fieldset>
+        <div class="form-actions">
+          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Role' %}</button>
+          </div>
+        </div>
+      </fieldset>
     </form>
-    {% endif %}
-    {% if update_permissions and not request.is_view_only %}
-        <hr />
-        <form class="form form-horizontal" name="user_permissions" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="update-user-permissions" />
-            <fieldset>
+  {% endif %}
+  {% if update_permissions and not request.is_view_only %}
+    <hr />
+    <form class="form form-horizontal" name="user_permissions" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="update-user-permissions" />
+      <fieldset>
 
-            <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Staff Permissions{% endblocktrans %}</legend>
-            {% crispy form_user_update_permissions %}
+        <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Change {{ friendly_name }}'s Staff Permissions{% endblocktrans %}</legend>
+        {% crispy form_user_update_permissions %}
 
-            <div class="form-actions">
-                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
-                </div>
-            </div>
-            </fieldset>
-        </form>
-    {% endif %}
+        <div class="form-actions">
+          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Permissions' %}</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  {% endif %}
 
-    {% if update_form %}
-        <hr />
-        <form id="commtrack_form" class="form form-horizontal" name="" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="commtrack" />
-            <fieldset>
-                <legend>{% trans 'Location Settings' %}</legend>
-                {% crispy update_form %}
-            </fieldset>
-            {% if not request.is_view_only %}
-            <div class="form-actions">
-                <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
-                </div>
-            </div>
-            {% endif %}
-        </form>
-    {% endif %}
-    {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" and not request.is_view_only %}
-        <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
-            {% trans 'Edit EWS settings' %}
-        </a>
-    {% endif %}
+  {% if update_form %}
+    <hr />
+    <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="commtrack" />
+      <fieldset>
+        <legend>{% trans 'Location Settings' %}</legend>
+        {% crispy update_form %}
+      </fieldset>
+      {% if not request.is_view_only %}
+        <div class="form-actions">
+          <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
+            <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
+          </div>
+        </div>
+      {% endif %}
+    </form>
+  {% endif %}
+  {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" and not request.is_view_only %}
+    <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
+      {% trans 'Edit EWS settings' %}
+    </a>
+  {% endif %}
 {% endblock %}

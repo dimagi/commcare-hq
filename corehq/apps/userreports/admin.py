@@ -1,10 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.contrib import admin
+from .models import AsyncIndicator, DataSourceActionLog, InvalidUCRData
 
-from .models import AsyncIndicator, InvalidUCRData
 
-
+@admin.register(AsyncIndicator)
 class AsyncIndicatorAdmin(admin.ModelAdmin):
 
     model = AsyncIndicator
@@ -21,6 +21,7 @@ class AsyncIndicatorAdmin(admin.ModelAdmin):
     search_fields = ('doc_id',)
 
 
+@admin.register(InvalidUCRData)
 class InvalidUCRDataAdmin(admin.ModelAdmin):
 
     model = InvalidUCRData
@@ -35,5 +36,17 @@ class InvalidUCRDataAdmin(admin.ModelAdmin):
     search_fields = ('doc_id',)
 
 
-admin.site.register(AsyncIndicator, AsyncIndicatorAdmin)
-admin.site.register(InvalidUCRData, InvalidUCRDataAdmin)
+@admin.register(DataSourceActionLog)
+class DataSourceActionLogAdmin(admin.ModelAdmin):
+
+    model = DataSourceActionLog
+    list_display = [
+        'date_created',
+        'domain',
+        'indicator_config_id',
+        'initiated_by',
+        'action_source',
+        'action',
+    ]
+    list_filter = ('action_source', 'action')
+    search_fields = ('domain', 'indicator_config_id',)

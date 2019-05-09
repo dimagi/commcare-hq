@@ -18,7 +18,6 @@ from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
-from tastypie.paginator import Paginator
 from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
 
@@ -27,7 +26,8 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import ODataCommCareCaseSerializer
 from corehq.apps.api.odata.views import add_odata_headers
-from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication
+from corehq.apps.api.resources.auth import RequirePermissionAuthentication, AdminAuthentication, \
+    ODataAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -51,6 +51,7 @@ from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from phonelog.models import DeviceReportEntry
 from . import HqBaseResource, DomainSpecificResourceMixin
 from . import v0_1, v0_4, CouchResourceMixin
+from .pagination import NoCountingPaginator, DoesNothingPaginator
 
 MOCK_BULK_USER_ES = None
 
@@ -492,38 +493,6 @@ class DomainAuthorization(ReadOnlyAuthorization):
         return object_list.filter(**{self.domain_key: bundle.request.domain})
 
 
-class NoCountingPaginator(Paginator):
-    """
-    The default paginator contains the total_count value, which shows how
-    many objects are in the underlying object list. Obtaining this data from
-    the database is inefficient, especially with large datasets, and unfiltered API requests.
-
-    This class does not perform any counting and return 'null' as the value of total_count.
-
-    See:
-        * http://django-tastypie.readthedocs.org/en/latest/paginator.html
-        * http://wiki.postgresql.org/wiki/Slow_Counting
-    """
-
-    def get_previous(self, limit, offset):
-        if offset - limit < 0:
-            return None
-
-        return self._generate_uri(limit, offset-limit)
-
-    def get_next(self, limit, offset, count):
-        """
-        Always generate the next URL even if there may be no records.
-        """
-        return self._generate_uri(limit, offset+limit)
-
-    def get_count(self):
-        """
-        Don't do any counting.
-        """
-        return None
-
-
 class DeviceReportResource(HqBaseResource, ModelResource):
 
     class Meta(object):
@@ -725,14 +694,6 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
     class Meta(CustomResourceMeta):
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
-
-
-class DoesNothingPaginator(Paginator):
-    def page(self):
-        return {
-            self.collection_name: self.objects,
-            "meta": {'total_count': self.get_count()}
-        }
 
 
 class SimpleReportConfigurationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
@@ -964,6 +925,7 @@ class ODataCommCareCaseResource(v0_4.CommCareCaseResource):
         return add_odata_headers(response)
 
     class Meta(v0_4.CommCareCaseResource.Meta):
+        authentication = ODataAuthentication(Permissions.edit_data)
         resource_name = 'odata/{}'.format(ODATA_CASE_RESOURCE_NAME)
         serializer = ODataCommCareCaseSerializer()
         max_limit = 10000  # This is for experimental purposes only.  TODO: set to a better value soon after testing

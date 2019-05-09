@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
+from mock import patch
 
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
@@ -156,13 +157,15 @@ class UCRMultiDBTest(TestCase):
         adapter = get_indicator_adapter(ds3)
         self.assertEqual(type(adapter.adapter), MultiDBSqlAdapter)
         self.assertEqual(len(adapter.all_adapters), 2)
-        for _adapter in adapter.all_adapters:
-            self.assertEqual(0, adapter.get_query_object().count())
+        for db_adapter in adapter.all_adapters:
+            with db_adapter.session_context() as session:
+                self.assertEqual(0, session.query(db_adapter.get_table()).count())
 
-        pillow = get_case_pillow(ucr_configs=[ds3])
+        with patch('pillowtop.models.KafkaCheckpoint.get_or_create_for_checkpoint_id'):
+            pillow = get_case_pillow(ucr_configs=[ds3])
         sample_doc, _ = get_sample_doc_and_indicators()
         pillow.process_change(doc_to_change(sample_doc))
 
-        for _adapter in adapter.all_adapters:
-            self.assertEqual(1, adapter.get_query_object().count())
-
+        for db_adapter in adapter.all_adapters:
+            with db_adapter.session_context() as session:
+                self.assertEqual(1, session.query(db_adapter.get_table()).count())

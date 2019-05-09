@@ -4,55 +4,55 @@
 {% load humanize %}
 
 {% if request|toggle_enabled:"PAGINATED_EXPORTS" %}
-<div class="alert alert-info">
+  <div class="alert alert-info">
     {% blocktrans with max_rows=max_exportable_rows|intcomma %}
-    These exports are paginated. That means exports that have over {{ max_rows }} rows will be split into multiple files.
+      These exports are paginated. That means exports that have over {{ max_rows }} rows will be split into multiple files.
     {% endblocktrans %}
-</div>
+  </div>
 {% endif %}
 {% if is_deid %}
-<p>
+  <p>
     {% blocktrans %}
-        These {{ export_type_plural }} are <strong>De-Identified</strong>, meaning that
-        the administrator of this domain has removed all personally-identifying
-        properties from the exported data.
+      These {{ export_type_plural }} are <strong>De-Identified</strong>, meaning that
+      the administrator of this domain has removed all personally-identifying
+      properties from the exported data.
     {% endblocktrans %}
-</p>
+  </p>
 {% endif %}
 {% if has_edit_permissions %}
-    <div id="create-export" class="ko-template">
-        <p>
-            <a href="#createExportOptionsModal" data-toggle="modal" class="btn btn-primary">
-                <i class="fa fa-plus"></i>
-                {% blocktrans %}
-                    Add {{ export_type_caps }}
-                {% endblocktrans %}
-            </a>
-        </p>
-        {% include 'export/partials/export_list_create_export_modal.html' %}
-    </div>
+  <div id="create-export" class="ko-template">
+    <p>
+      <a href="#createExportOptionsModal" data-toggle="modal" class="btn btn-primary">
+        <i class="fa fa-plus"></i>
+        {% blocktrans %}
+          Add {{ export_type_caps }}
+        {% endblocktrans %}
+      </a>
+    </p>
+    {% include 'export/partials/export_list_create_export_modal.html' %}
+  </div>
 {% endif %}
 
 <div id="export-list" class="ko-template">
-    {% include 'export/partials/export_bulk_notice.html' %}
-    <div data-bind="foreach: panels">
-        <div class="panel panel-default">
-            <div class="panel-heading" data-bind="text: header"></div>
-            <div class="panel-body">
-                {% include 'export/partials/loading_exports.html' %}
-                {% include 'export/partials/table.html' %}
-                <pagination data-apply-bindings="false"
-                            data-bind="visible: showPagination"
-                            params="goToPage: goToPage,
+  {% include 'export/partials/export_bulk_notice.html' %}
+  <div data-bind="foreach: panels">
+    <div class="panel panel-default">
+      <div class="panel-heading" data-bind="text: header"></div>
+      <div class="panel-body">
+        {% include 'export/partials/loading_exports.html' %}
+        {% include 'export/partials/table.html' %}
+        <pagination data-apply-bindings="false"
+                    data-bind="visible: showPagination"
+                    params="goToPage: goToPage,
                                     slug: 'export-list',
                                     perPage: itemsPerPage,
                                     totalItems: totalItems,
                                     showSpinner: isLoadingPage"></pagination>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 
-    {% if is_daily_saved_export %}
-        {% include 'export/partials/feed_filter_modal.html' %}
-    {% endif %}
+  {% if is_daily_saved_export %}
+    {% include 'export/partials/feed_filter_modal.html' %}
+  {% endif %}
 </div>

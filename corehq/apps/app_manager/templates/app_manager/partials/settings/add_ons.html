@@ -3,66 +3,66 @@
 
 {% if request|toggle_enabled:"ENABLE_ALL_ADD_ONS" %}
 
-    <div class="alert alert-info">
-        {% blocktrans %}
-            <p>
-               All add-ons are enabled for this app.
-           </p>
-        {% endblocktrans %}
-    </div>
+  <div class="alert alert-info">
+    {% blocktrans %}
+      <p>
+        All add-ons are enabled for this app.
+      </p>
+    {% endblocktrans %}
+  </div>
 
 {% else %}
 
-    <form>
+  <form>
 
-        <div data-bind="saveButton: saveButton"></div>
+    <div data-bind="saveButton: saveButton"></div>
 
-        <div class="section-changer btn-group" data-collapse-key="add-ons">
-            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-                <i class="fa fa-reorder"></i>
-                <span class="caret"></span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-right checklist">
-                <li class="dropdown-header">{% trans "Show" %}</li>
-                <!-- ko foreach: sections -->
-                    <li>
-                        <a href="#" data-bind="attr: {'data-slug': slug, 'data-collapse': collapse}">
-                            <i class="fa fa-check"></i><span data-bind="text: name"></span>
-                        </a>
-                    </li>
-                <!-- /ko -->
-            </ul>
+    <div class="section-changer btn-group" data-collapse-key="add-ons">
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+        <i class="fa fa-reorder"></i>
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-right checklist">
+        <li class="dropdown-header">{% trans "Show" %}</li>
+        <!-- ko foreach: sections -->
+        <li>
+          <a href="#" data-bind="attr: {'data-slug': slug, 'data-collapse': collapse}">
+            <i class="fa fa-check"></i><span data-bind="text: name"></span>
+          </a>
+        </li>
+        <!-- /ko -->
+      </ul>
+    </div>
+
+    <p class="lead">
+      {% blocktrans %}
+        <strong>Add-ons</strong> enable you to build more complex applications.
+      {% endblocktrans %}
+    </p>
+
+    <div data-bind="foreach: sections">
+      <div class="panel panel-appmanager" data-bind="attr: {'data-slug': slug}, css: {hide: collapse}">
+        <div class="panel-heading">
+          <h4 class="panel-title panel-title-nolink">
+            <span data-bind="text: name"></span>
+            <small data-bind="text: description"></small>
+          </h4>
         </div>
-
-        <p class="lead">
-            {% blocktrans %}
-                <strong>Add-ons</strong> enable you to build more complex applications.
-            {% endblocktrans %}
-        </p>
-
-        <div data-bind="foreach: sections">
-            <div class="panel panel-appmanager" data-bind="attr: {'data-slug': slug}, css: {hide: collapse}">
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">
-                        <span data-bind="text: name"></span>
-                        <small data-bind="text: description"></small>
-                    </h4>
-                </div>
-                <div class="panel-body" data-bind="foreach: add_ons">
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: $root.addOns[slug], event: {change: $root.update}" />
-                            <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
-                            <div class="help-block">
-                                <span data-bind="text: description"></span>
-                                <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-            </div>
+        <div class="panel-body" data-bind="foreach: add_ons">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: $root.addOns[slug], event: {change: $root.update}" />
+              <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
+              <div class="help-block">
+                <span data-bind="text: description"></span>
+                <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
+              </div>
+            </label>
+          </div>
         </div>
+      </div>
+    </div>
 
-    </form>
+  </form>
 
 {% endif %}

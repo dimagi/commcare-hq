@@ -76,6 +76,6 @@ def _get_restore_state(restore_user):
         restore_user.project,
         restore_user,
         params,
-        async=False,
+        is_async=False,
         overwrite_cache=False
     )

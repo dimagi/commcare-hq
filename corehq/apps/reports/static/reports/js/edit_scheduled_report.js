@@ -65,6 +65,7 @@ hqDefine("reports/js/edit_scheduled_report", [
     };
 
     var isConfigurableMap = initialPageData.get('is_configurable_map');
+    var supportsTranslations = initialPageData.get('supports_translations');
     var languagesMap = initialPageData.get('languages_map');
     var languagesForSelect = initialPageData.get('languages_for_select');
     var isOwner = initialPageData.get('is_owner');
@@ -73,10 +74,14 @@ hqDefine("reports/js/edit_scheduled_report", [
         var showUcrElements = _.any(
             selectedConfigs, function (i) {return isConfigurableMap[i] === true;}
         );
+        var showTranslation = showUcrElements || _.any(
+            selectedConfigs, function (i) {return supportsTranslations[i] === true;}
+        );
 
-        if (showUcrElements) {
-            $("#ucr-privacy-warning").show();
-
+        if (showTranslation) {
+            if (showUcrElements) {
+                $("#ucr-privacy-warning").show();
+            }
             // Figure out which options to show in the select2
             var languageLists = _.map(selectedConfigs, function (i) {return languagesMap[i];});
             var languageSet = _.reduce(languageLists, function (memo, list) {

@@ -1,14 +1,14 @@
 {% load i18n %}
 <div class="panel panel-default">
-    <div class="panel-heading">
-        <h2 class="panel-title">{{ report.title }}: {% trans "Hour vs. Weekday" %}</h2>
-    </div>
-    <div class="panel-body">
-        {% if error %}
-            <div class="alert alert-info">{{ error }}</div>
-        {% endif %}
-        {% if chart_url %}
-            <img class="{{ report.title }}" src="{{chart_url}}" style="margin: 0 auto;" />
-        {% endif %}
-    </div>
+  <div class="panel-heading">
+    <h2 class="panel-title">{{ report.title }}: {% trans "Hour vs. Weekday" %}</h2>
+  </div>
+  <div class="panel-body">
+    {% if error %}
+      <div class="alert alert-info">{{ error }}</div>
+    {% endif %}
+    {% if chart_url %}
+      <img class="{{ report.title }}" src="{{chart_url}}" style="margin: 0 auto;" />
+    {% endif %}
+  </div>
 </div>

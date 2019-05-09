@@ -26,13 +26,11 @@ from corehq.apps.reports.v2.reports.explore_case_data import (
 )
 from corehq.apps.users.permissions import can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
-    InvalidExcelFileException
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
-from corehq.apps.data_interfaces.tasks import (
-    bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
+from corehq.apps.data_interfaces.tasks import bulk_upload_cases_to_group, bulk_form_management_async
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
     CaseUpdateRuleForm, CaseRuleCriteriaForm,
@@ -47,7 +45,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
+from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_select2_v4
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -122,6 +120,11 @@ class ExploreCaseDataView(BaseDomainView):
     template_name = "data_interfaces/explore_case_data.html"
     urlname = "explore_case_data"
     page_title = ugettext_lazy("Explore Case Data")
+
+    @use_daterangepicker
+    @use_select2_v4
+    def dispatch(self, request, *args, **kwargs):
+        return super(ExploreCaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
@@ -226,85 +229,6 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'itemData': item_data,
             'template': 'deleted-group-template',
         }
-
-
-class ArchiveFormView(DataInterfaceSection):
-    template_name = 'data_interfaces/interfaces/import_forms.html'
-    urlname = 'archive_forms'
-    page_title = ugettext_noop("Bulk Archive Forms")
-
-    ONE_MB = 1000000
-    MAX_SIZE = 3 * ONE_MB
-
-    @method_decorator(requires_privilege_with_fallback(privileges.BULK_CASE_MANAGEMENT))
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.BULK_ARCHIVE_FORMS.enabled(request.user.username):
-            raise Http404()
-        return super(ArchiveFormView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def page_context(self):
-        context = {}
-        context.update({
-            'bulk_upload': {
-                "download_url": static(
-                    'data_interfaces/xlsx/forms_bulk_example.xlsx'),
-                "adjective": _("example"),
-                "verb": _("archive"),
-                "plural_noun": _("forms"),
-            },
-        })
-        context.update({
-            'bulk_upload_form': get_bulk_upload_form(context),
-        })
-        return context
-
-    @property
-    @memoized
-    def uploaded_file(self):
-        try:
-            bulk_file = self.request.FILES['bulk_upload_file']
-            if bulk_file.size > self.MAX_SIZE:
-                raise BulkUploadCasesException(_("File size too large. "
-                                                 "Please upload file less than"
-                                                 " {size} Megabytes").format(size=self.MAX_SIZE // self.ONE_MB))
-
-        except KeyError:
-            raise BulkUploadCasesException(_("No files uploaded"))
-        try:
-            return WorkbookJSONReader(bulk_file)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
-                                           newline=None))
-                raise BulkUploadCasesException(_("CommCare HQ does not support that file type."
-                                                 "Please convert to Excel 2007 or higher (.xlsx) "
-                                                 "and try again."))
-            except UnicodeDecodeError:
-                raise BulkUploadCasesException(_("Unrecognized format"))
-        except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
-
-    def process(self):
-        try:
-            bulk_archive_forms.delay(
-                self.domain,
-                self.request.couch_user,
-                list(self.uploaded_file.get_worksheet())
-            )
-            messages.success(self.request, _("We received your file and are processing it. "
-                                             "You will receive an email when it has finished."))
-        except BulkUploadCasesException as e:
-            messages.error(self.request, six.text_type(e))
-        return None
-
-    def post(self, request, *args, **kwargs):
-        self.process()
-        return HttpResponseRedirect(self.page_url)
 
 
 class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
@@ -446,18 +370,9 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
-            return WorkbookJSONReader(bulk_file)
-        except InvalidExcelFileException:
-            try:
-                csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
-                                           newline=None))
-                raise BulkUploadCasesException(_("CommCare HQ no longer supports CSV upload. "
-                                                 "Please convert to Excel 2007 or higher (.xlsx) "
-                                                 "and try again."))
-            except UnicodeDecodeError:
-                raise BulkUploadCasesException(_("Unrecognized format"))
-        except JSONReaderError as e:
-            raise BulkUploadCasesException(_('Your upload was unsuccessful. %s') % six.text_type(e))
+            return get_workbook(bulk_file)
+        except WorkbookJSONError as e:
+            raise BulkUploadCasesException(six.text_type(e))
 
     def _get_item_data(self, case):
         return {

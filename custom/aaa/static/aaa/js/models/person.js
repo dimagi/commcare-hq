@@ -34,7 +34,7 @@ hqDefine("aaa/js/models/person", [
             if (self.dob === 'N/A') {
                 return self.dob;
             }
-            var age = Math.floor(moment(new Date()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
+            var age = Math.floor(moment(postData.selectedDate()).diff(moment(self.dob, "YYYY-MM-DD"),'months',true));
             if (age < 12) {
                 return age + " Mon";
             } else if (age % 12 === 0) {
@@ -52,7 +52,7 @@ hqDefine("aaa/js/models/person", [
         });
 
         self.aadhaarNo = ko.computed(function () {
-            if (self.gender === 'N/A') {
+            if (self.aadhaarNo === 'N/A') {
                 return self.aadhaarNo;
             }
             return self.aadhaarNo ? 'Yes' : 'No';

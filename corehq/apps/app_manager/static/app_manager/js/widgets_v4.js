@@ -11,7 +11,8 @@ hqDefine("app_manager/js/widgets_v4", [
 ) {
     var initVersionDropdown = function ($select, options) {
         options = options || {};
-        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues']);
+        assertProperties.assert(options, [], ['url', 'width', 'idValue', 'initialValue', 'extraValues',
+            'onlyShowReleased']);
         var idValue = options.idValue || 'id';
 
         $select.select2({
@@ -23,6 +24,7 @@ hqDefine("app_manager/js/widgets_v4", [
                         limit: 10,
                         query: params.term,
                         page: params.page,
+                        only_show_released: options.onlyShowReleased,
                     };
                 },
                 processResults: function (data) {
@@ -43,6 +45,9 @@ hqDefine("app_manager/js/widgets_v4", [
             },
             templateSelection: function (data) {
                 // Only show the version number when selected
+                if (initialPageData.get("latest_app_id") === data.id) {
+                    return gettext("Latest saved");
+                }
                 return data.text.split(": ")[0];
             },
             width: options.width || '200px',

@@ -5,31 +5,31 @@
 <form class="form-horizontal">
   <div id="settings-save-btn"></div>
   <div class="section-changer btn-group" data-collapse-key="app-settings">
-      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-          <i class="fa fa-reorder"></i>
-          <span class="caret"></span>
-      </a>
-      <ul class="dropdown-menu dropdown-menu-right checklist">
-          <li class="dropdown-header">{% trans "Show" %}</li>
-          <li data-bind="foreach: sections">
-              <a href="#" data-bind="attr: {'data-slug': id, 'data-collapse': collapse}, visible: isVisible">
-                  <i class="fa fa-check"></i><span data-bind="text: title"></span>
-              </a>
-          </li>
-          {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
-          <li>
-              <a href="#" data-slug="custom-properties">
-                  <i class="fa fa-check"></i>{% trans "Custom Properties" %}
-              </a>
-          </li>
-          {% endif %}
-      </ul>
+    <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+      <i class="fa fa-reorder"></i>
+      <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-right checklist">
+      <li class="dropdown-header">{% trans "Show" %}</li>
+      <li data-bind="foreach: sections">
+        <a href="#" data-bind="attr: {'data-slug': id, 'data-collapse': collapse}, visible: isVisible">
+          <i class="fa fa-check"></i><span data-bind="text: title"></span>
+        </a>
+      </li>
+      {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+        <li>
+          <a href="#" data-slug="custom-properties">
+            <i class="fa fa-check"></i>{% trans "Custom Properties" %}
+          </a>
+        </li>
+      {% endif %}
+    </ul>
   </div>
   <div data-bind="foreach: sections" id="app-settings-options" class="panel-group">
     <div class="panel panel-appmanager" data-bind="visible: isVisible, css: {hide: collapse}, attr: {'data-slug': id}">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">
-            <span data-bind="text: title"></span>
+          <span data-bind="text: title"></span>
         </h4>
       </div>
       <div class="panel-body">
@@ -57,7 +57,7 @@
               </span>
             </p>
           </div>
-          <div class="col-sm-2 control-label">
+          <div class="col-sm-4 control-label">
             <div class="pull-left">
               <span class="label label-danger" data-bind="text: $data.warning || $parents[1].warning, visible: !$data.valueIsLegal()"></span>
               <span class="label label-info" data-bind="visible: $data.preview">{% trans "Preview" %}</span>
@@ -65,6 +65,7 @@
                 <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
                 <span data-bind="text: disabledMessage()"></span>
               </span>
+              <span class="help-block" data-bind="text: inheritanceMessage"></span>
             </div>
           </div>
         </div>

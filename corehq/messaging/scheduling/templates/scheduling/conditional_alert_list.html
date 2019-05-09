@@ -31,10 +31,19 @@
     <div id="conditional-alert-list" class="ko-template">
         <div class="row">
             <div class="col-sm-8 col-md-9">
-                <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-primary">
-                    <i class="fa fa-plus"></i>
-                    {% trans "New Conditional Alert" %}
-                </a>
+                <div class="btn-toolbar">
+                    <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-primary">
+                        <i class="fa fa-plus"></i>
+                        {% trans "New Conditional Alert" %}
+                    </a>
+
+                    {% if request|toggle_enabled:'BULK_CONDITIONAL_ALERTS' %}
+                        <a href="{% url 'upload_conditional_alert' domain %}" class="btn btn-info">
+                            <i class="fa fa-cloud-upload"></i>
+                            {% trans "Bulk Upload Conditional Alerts" %}
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="col-sm-4 col-md-3">
                 <search-box data-apply-bindings="false"

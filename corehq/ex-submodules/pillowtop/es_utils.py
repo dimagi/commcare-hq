@@ -29,6 +29,86 @@ INDEX_STANDARD_SETTINGS = {
 }
 
 
+def _get_analysis(*names):
+    return {
+        "analyzer": {name: ANALYZERS[name] for name in names}
+    }
+
+
+ANALYZERS = {
+    "default": {
+        "type": "custom",
+        "tokenizer": "whitespace",
+        "filter": ["lowercase"]
+    },
+    "comma": {
+        "type": "pattern",
+        "pattern": r"\s*,\s*"
+    },
+    "sortable_exact": {
+        "type": "custom",
+        "tokenizer": "keyword",
+        "filter": ["lowercase"]
+    },
+}
+
+REMOVE_SETTING = None
+
+ES_ENV_SETTINGS = {
+    'production': {
+        'xforms': {
+            "number_of_replicas": REMOVE_SETTING,
+        },
+        'hqcases': {
+            "number_of_replicas": REMOVE_SETTING,
+        },
+        'hqusers': {
+            "number_of_replicas": 1,
+        },
+    },
+
+    'icds': {
+        'hqusers': {
+            "number_of_replicas": 1,
+        },
+    },
+}
+if settings.ES_SETTINGS is not None:
+    ES_ENV_SETTINGS.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
+
+ES_META = {
+    # Default settings for all indexes on ElasticSearch
+    'default': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default', 'sortable_exact'),
+        },
+    },
+    # Default settings for aliases on all environments (overrides default settings)
+    'hqdomains': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default', 'comma'),
+        },
+    },
+
+    'hqapps': {
+        "settings": {
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default'),
+        },
+    },
+
+    'hqusers': {
+        "settings": {
+            "number_of_shards": 2,
+            "number_of_replicas": 0,
+            "analysis": _get_analysis('default'),
+        },
+    },
+}
+
+
 @six.python_2_unicode_compatible
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
@@ -41,13 +121,20 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
-        meta_settings = deepcopy(settings.ES_META['default'])
+        meta_settings = deepcopy(ES_META['default'])
         meta_settings.update(
-            settings.ES_META.get(self.alias, {})
+            ES_META.get(self.alias, {})
         )
         meta_settings.update(
-            settings.ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
         )
+        for alias in ['default', self.alias]:
+            for key, value in ES_ENV_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
+                if value is REMOVE_SETTING:
+                    del meta_settings['settings'][key]
+                else:
+                    meta_settings['settings'][key] = value
+
         return meta_settings
 
     def to_json(self):

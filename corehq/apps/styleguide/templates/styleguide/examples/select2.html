@@ -1,43 +1,43 @@
 <div id="example-select2">
-    <!-- Manual javascript initialization -->
-    <select class="form-control basic">
-        <option>one</option>
-        <option>two</option>
-        <option>three</option>
-    </select>
-    <br><br>
+  <!-- Manual javascript initialization -->
+  <select class="form-control basic">
+    <option>one</option>
+    <option>two</option>
+    <option>three</option>
+  </select>
+  <br><br>
 
-    <!-- .hqwebapp-select2: Doesn't need javascript initialization, depends on hqwebapp/js/widgets module -->
-    <select class="form-control hqwebapp-select2">
-        <option>uno</option>
-        <option>dos</option>
-        <option>tres</option>
-    </select>
-    <br><br>
+  <!-- .hqwebapp-select2: Doesn't need javascript initialization, depends on hqwebapp/js/widgets module -->
+  <select class="form-control hqwebapp-select2">
+    <option>uno</option>
+    <option>dos</option>
+    <option>tres</option>
+  </select>
+  <br><br>
 
-    <!-- .hqwebapp-select2: Also handles multiselects -->
-    <select multiple class="form-control hqwebapp-select2">
-        <option>moja</option>
-        <option>mbili</option>
-        <option>tatu</option>
-    </select>
-    <br><br>
+  <!-- .hqwebapp-select2: Also handles multiselects -->
+  <select multiple class="form-control hqwebapp-select2">
+    <option>moja</option>
+    <option>mbili</option>
+    <option>tatu</option>
+  </select>
+  <br><br>
 
-    <!-- Knockout binding: initialized by the koApplyBindings call below -->
-    <div class="ko-model">
-        <select class="form-control" data-bind="options: letters, select2: {}, value: value"></select>
-    </div>
+  <!-- Knockout binding: initialized by the koApplyBindings call below -->
+  <div class="ko-model">
+    <select class="form-control" data-bind="options: letters, select2: {}, value: value"></select>
+  </div>
 </div>
 
 <script>
-    $(function () {
-        $("#example-select2 .basic").select2();
+  $(function () {
+    $("#example-select2 .basic").select2();
 
-        $("#example-select2 .ko-model").koApplyBindings(function () {
-            return {
-                letters: ['eins', 'zwei', 'drei'],
-                value: ko.observable('eins'),
-            };
-        });
+    $("#example-select2 .ko-model").koApplyBindings(function () {
+      return {
+        letters: ['eins', 'zwei', 'drei'],
+        value: ko.observable('eins'),
+      };
     });
+  });
 </script>

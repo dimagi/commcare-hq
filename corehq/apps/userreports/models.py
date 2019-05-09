@@ -14,7 +14,7 @@ import six
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 from django.utils.translation import ugettext as _
 from django_bulk_update.helper import bulk_update as bulk_update_helper
@@ -95,6 +95,26 @@ ID_REGEX_CHECK = re.compile(r"^[\w\-:]+$")
 def _check_ids(value):
     if not ID_REGEX_CHECK.match(value):
         raise BadValueError("Invalid ID: '{}'".format(value))
+
+
+class DataSourceActionLog(models.Model):
+    BUILD = 'build'
+    MIGRATE = 'migrate'
+    REBUILD = 'rebuild'
+    DROP = 'drop'
+
+    domain = models.CharField(max_length=126, null=False, db_index=True)
+    indicator_config_id = models.CharField(max_length=126, null=False, db_index=True)
+    initiated_by = models.CharField(max_length=126, null=True, blank=True)
+    action_source = models.CharField(max_length=126, null=True, db_index=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=32, choices=(
+        (BUILD, _('Build')),
+        (MIGRATE, _('Migrate')),
+        (REBUILD, _('Rebuild')),
+        (DROP, _('Drop')),
+    ), db_index=True, null=False)
+    migration_diffs = JSONField(null=True, blank=True)
 
 
 class SQLColumnIndexes(DocumentSchema):
@@ -483,6 +503,9 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                     "DB for engine_id {} is not availble".format(engine_id)
                 )
 
+        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
+            raise BadSpecError("No two engine_ids should point to the same database")
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -522,11 +545,11 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     def is_static(self):
         return id_is_static(self._id)
 
-    def deactivate(self):
+    def deactivate(self, initiated_by=None):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            get_indicator_adapter(self).drop_table()
+            get_indicator_adapter(self).drop_table(initiated_by=initiated_by, source='deactivate-data-source')
 
     def get_case_type_or_xmlns_filter(self):
         """Returns a list of case types or xmlns from the filter of this data source.

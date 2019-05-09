@@ -433,6 +433,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self._test_correct_audio_translations(self.app, self.module.case_list, audio_locale)
 
     def test_use_default_media(self):
+        self.app.langs = ['en', 'hin']
+
         self.module.use_default_image_for_all = True
         self.module.use_default_audio_for_all = True
 
@@ -445,6 +447,83 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
         self.assertEqual(en_app_strings['modules.m0.icon'], hin_app_strings['modules.m0.icon'])
         self.assertEqual(en_app_strings['modules.m0.audio'], hin_app_strings['modules.m0.audio'])
+
+    def test_use_default_media_ignore_lang(self):
+        # When use_default_media is true and there's media in a non-default language but not the default language
+        self.app.langs = ['en', 'hin']
+
+        self.form.use_default_image_for_all = True
+        self.form.use_default_audio_for_all = True
+
+        self.form.set_icon('en', '')
+        self.form.set_audio('en', '')
+        self.form.set_icon('hin', 'jr://file/commcare/case_list_image_hin.jpg')
+        self.form.set_audio('hin', 'jr://file/commcare/case_list_audio_hin.mp3')
+
+        en_app_strings = commcare_translations.loads(self.app.create_app_strings('en'))
+        hin_app_strings = commcare_translations.loads(self.app.create_app_strings('hin'))
+
+        self.assertFalse('forms.m0f0.icon' in en_app_strings)
+        self.assertFalse('forms.m0f0.icon' in hin_app_strings)
+        self.assertFalse('forms.m0f0.audio' in en_app_strings)
+        self.assertFalse('forms.m0f0.audio' in hin_app_strings)
+
+        self.assertXmlPartialEqual(
+            self.XML_without_media("forms.m0f0"),
+            self.app.create_suite(),
+            "./entry/command[@id='m0-f0']/"
+        )
+
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_suite_media_with_app_profile(self, *args):
+        # Test that suite includes only media relevant to the profile
+
+        app = Application.new_app('domain', "my app")
+        app.add_module(Module.new_module("Module 1", None))
+        app.new_form(0, "Form 1", None)
+        app.build_spec = BuildSpec.from_string('2.21.0/latest')
+        app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'hin': BuildProfile(langs=['hin'], name='hin-profile'),
+            'all': BuildProfile(langs=['en', 'hin'], name='all-profile'),
+        })
+        app.langs = ['en', 'hin']
+
+        image_path = 'jr://file/commcare/module0_en.png'
+        audio_path = 'jr://file/commcare/module0_en.mp3'
+        app.get_module(0).set_icon('en', image_path)
+        app.get_module(0).set_audio('en', audio_path)
+
+        # Generate suites and default app strings for each profile
+        suites = {}
+        locale_ids = {}
+        for build_profile_id in app.build_profiles.keys():
+            suites[build_profile_id] = app.create_suite(build_profile_id=build_profile_id)
+            default_app_strings = app.create_app_strings('default', build_profile_id)
+            locale_ids[build_profile_id] = {line.split('=')[0] for line in default_app_strings.splitlines()}
+
+        # Suite should have only the relevant images
+        media_xml = self.makeXML("modules.m0", "modules.m0.icon", "modules.m0.audio")
+        self.assertXmlPartialEqual(media_xml, suites['all'], "././menu[@id='m0']/display")
+
+        no_media_xml = self.XML_without_media("modules.m0")
+        self.assertXmlPartialEqual(media_xml, suites['en'], "././menu[@id='m0']/display")
+
+        no_media_xml = self.XML_without_media("modules.m0")
+        self.assertXmlPartialEqual(no_media_xml, suites['hin'], "././menu[@id='m0']/text")
+
+        # Default app strings should have only the relevant locales
+        self.assertIn('modules.m0', locale_ids['all'])
+        self.assertIn('modules.m0.icon', locale_ids['all'])
+        self.assertIn('modules.m0.audio', locale_ids['all'])
+
+        self.assertIn('modules.m0', locale_ids['en'])
+        self.assertIn('modules.m0.icon', locale_ids['en'])
+        self.assertIn('modules.m0.audio', locale_ids['en'])
+
+        self.assertIn('modules.m0', locale_ids['hin'])
+        self.assertNotIn('modules.m0.icon', locale_ids['hin'])
+        self.assertNotIn('modules.m0.audio', locale_ids['hin'])
 
     def _assert_app_strings_available(self, app, lang):
         et = etree.XML(app.create_suite())

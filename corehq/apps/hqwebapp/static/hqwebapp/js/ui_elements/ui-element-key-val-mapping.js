@@ -20,7 +20,7 @@
         Optional:
             keys_are_conditions: True iff KEYS are calculations rather than strings.
             values_are_icons: True iff values are image references ("jr://file...")
-            module_id: Module id, required iff values_are_icons being used in a module context
+            module_id: Module id, should be provided if values_are_icons is being used in a module context
                 (e.g., case list/detail config).
             multimedia: Only needed if values_are_icons. Object containing multimedia
                 to be passed as appMenuMediaManager's objectMap. Keys are image references;
@@ -147,9 +147,6 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             'multimedia',
             'values_are_icons',
         ]);
-        if (options.values_are_icons && !options.module_id) {
-            throw new Error("Module ID must be provided if values are icons.");
-        }
 
         var self = {};
         self.lang = options.lang;
@@ -304,7 +301,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             $modalDiv.koApplyBindings({
                 modalTitle: ko.computed(function () {
                     return _.template(gettext('Edit mapping for <%= property %>'))({
-                        property: self.getPropertyName(),
+                        property: m.getPropertyName(),
                     });
                 }),
                 mapList: copy,

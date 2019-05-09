@@ -1,43 +1,43 @@
 <table class="datatable table table-striped">
-    <thead>
-    {{ headers.render_html|safe }}
-    </thead>
-    <tbody>
-    {% for domain in domains %}
-        <tr>
-            <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
-            <td>{{ domain.active_users }}
-                <span title="{{ domain.active_users }}"></span></td>
-            <td>{{ domain.active_cases }}
-                <span title="{{ domain.active_cases }}"></span></td>
-{#            <td>{{ domain.web_users }}#}
-{#                <span title="{{ domain.web_users }}"></span></td>#}
-            <td>{{ domain.commcare_users }}
-                <span title="{{ domain.commcare_users }}"></span></td>
-            <td>{{ domain.cases }}
-                <span title="{{ domain.cases }}"></span></td>
-            <td>{{ domain.forms }}
-                <span title="{{ domain.forms }}"></span></td>
-            <td>{{ domain.first_form }}
-                <span title="{{ domain.first_form }}"></span></td>
-            <td>{{ domain.last_form }}
-                <span title="{{ domain.last_form }}"></span></td>
-            <td>{{ domain.admins|join:", " }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td>{{ domains|length }}</td>
-            <td>{{ num_active_users }}</td>
-            <td>{{ num_active_cases }}</td>
-{#            <td>{{ num_web_users }}</td>#}
-            <td>{{ num_mob_users }}</td>
-            <td>{{ num_cases }}</td>
-            <td>{{ num_forms }}</td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
-    </tfoot>
+  <thead>
+  {{ headers.render_html|safe }}
+  </thead>
+  <tbody>
+  {% for domain in domains %}
+    <tr>
+      <td><a href="{% url "reports_home" domain.name %}">{{ domain.display_name }}</a></td>
+      <td>{{ domain.active_users }}
+        <span title="{{ domain.active_users }}"></span></td>
+      <td>{{ domain.active_cases }}
+        <span title="{{ domain.active_cases }}"></span></td>
+      {#            <td>{{ domain.web_users }}#}
+      {#                <span title="{{ domain.web_users }}"></span></td>#}
+      <td>{{ domain.commcare_users }}
+        <span title="{{ domain.commcare_users }}"></span></td>
+      <td>{{ domain.cases }}
+        <span title="{{ domain.cases }}"></span></td>
+      <td>{{ domain.forms }}
+        <span title="{{ domain.forms }}"></span></td>
+      <td>{{ domain.first_form }}
+        <span title="{{ domain.first_form }}"></span></td>
+      <td>{{ domain.last_form }}
+        <span title="{{ domain.last_form }}"></span></td>
+      <td>{{ domain.admins|join:", " }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+  <tr>
+    <td>{{ domains|length }}</td>
+    <td>{{ num_active_users }}</td>
+    <td>{{ num_active_cases }}</td>
+    {#            <td>{{ num_web_users }}</td>#}
+    <td>{{ num_mob_users }}</td>
+    <td>{{ num_cases }}</td>
+    <td>{{ num_forms }}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  </tfoot>
 </table>

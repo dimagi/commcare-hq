@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.db import transaction
 from memoized import memoized
+
 from dimagi.utils.logging import notify_exception
 from corehq.util.test_utils import unit_testing_only
 
 
 class IndicatorAdapter(object):
-
     def __init__(self, config):
         self.config = config
 
@@ -14,10 +16,10 @@ class IndicatorAdapter(object):
     def get_table(self):
         raise NotImplementedError
 
-    def rebuild_table(self):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
-    def drop_table(self):
+    def drop_table(self, initiated_by=None, source=None, skip_log=False):
         raise NotImplementedError
 
     @unit_testing_only
@@ -100,6 +102,46 @@ class IndicatorAdapter(object):
 
     def get_distinct_values(self, column, limit):
         raise NotImplementedError
+
+    def log_table_build(self, initiated_by, source):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.BUILD)
+
+    def log_table_rebuild(self, initiated_by, source, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.REBUILD, skip=skip)
+
+    def log_table_drop(self, initiated_by, source, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(initiated_by, source, DataSourceActionLog.DROP, skip=skip)
+
+    def log_table_migrate(self, source, diffs):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        self._log_action(None, source, DataSourceActionLog.MIGRATE, diffs=diffs)
+
+    def _log_action(self, initiated_by, source, action, diffs=None, skip=False):
+        from corehq.apps.userreports.models import DataSourceActionLog
+        if skip or not self.config.data_source_id:
+            return
+
+        kwargs = {
+            'domain': self.config.domain,
+            'indicator_config_id': self.config.data_source_id,
+            'action': action,
+            'initiated_by': initiated_by,
+            'action_source': source,
+            'migration_diffs': diffs
+        }
+
+        try:
+            # make this atomic so that errors don't affect outer transactions
+            with transaction.atomic():
+                DataSourceActionLog.objects.create(**kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:  # noqa
+            # catchall to make sure errors here don't interfere with real workflows
+            notify_exception(None, "Error saving UCR action log", details=kwargs)
 
 
 class IndicatorAdapterLoadTracker(object):

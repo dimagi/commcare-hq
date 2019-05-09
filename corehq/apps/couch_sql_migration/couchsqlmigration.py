@@ -62,7 +62,6 @@ from corehq.form_processor.utils.general import (
 from corehq.toggles import (
     COUCH_SQL_MIGRATION_BLACKLIST,
     NAMESPACE_DOMAIN,
-    REMINDERS_MIGRATION_IN_PROGRESS,
 )
 from corehq.util import cache_utils
 from corehq.util.datadog.gauges import datadog_counter
@@ -77,7 +76,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
-log = logging.getLogger('main_couch_sql_datamigration')
+log = logging.getLogger(__name__)
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -438,18 +437,15 @@ class CouchSqlDomainMigrator(object):
             )
 
     def _check_for_migration_restrictions(self, domain_name):
+        msgs = []
         if not should_use_sql_backend(domain_name):
-            msg = "does not have SQL backend enabled"
-        elif COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
-            msg = "is blacklisted"
-        elif any(custom_report_domain == domain_name
-                 for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys()):
-            msg = "has custom reports"
-        elif REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name):
-            msg = "has reminders migration in progress"
-        else:
-            return
-        raise MigrationRestricted("{} {}".format(domain_name, msg))
+            msgs.append("does not have SQL backend enabled")
+        if COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
+            msgs.append("is blacklisted")
+        if domain_name in settings.DOMAIN_MODULE_MAP:
+            msgs.append("has custom reports")
+        if msgs:
+            raise MigrationRestricted("{}: {}".format(domain_name, "; ".join(msgs)))
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
@@ -581,8 +577,8 @@ def _copy_form_properties(domain, sql_form, couch_form):
         sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
     sql_form.edited_on = getattr(couch_form, 'edited_on', None)
-    if couch_form.is_deprecated or couch_form.is_deleted:
-        sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
+    if couch_form.is_deprecated:
+        sql_form.edited_on = getattr(couch_form, 'deprecated_date', sql_form.edited_on)
 
     if couch_form.is_submission_error_log:
         sql_form.xmlns = sql_form.xmlns or ''

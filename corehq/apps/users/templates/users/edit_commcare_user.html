@@ -5,216 +5,216 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
-    {% if strong_mobile_passwords and not hide_password_feedback %}
-        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-        <script src="{% static 'registration/js/password.js' %}"></script>
-    {% endif %}
-    <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script><!-- custom user data -->
-    <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
+  <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
+  {% include 'hqwebapp/includes/ui_element_js.html' %}
+  {% if strong_mobile_passwords and not hide_password_feedback %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+  {% endif %}
+  <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/widgets_v3.js' %}"></script><!-- custom user data -->
+  <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data "couch_user_id" couch_user.user_id %}
-    {% initial_page_data "couch_user_username" couch_user.username %}
-    {% initial_page_data "hide_password_feedback" hide_password_feedback %}
-    {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
-    {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
-    {% initial_page_data "path" request.path %}
-    {% if couch_user.is_demo_user %}
+  {% initial_page_data "couch_user_id" couch_user.user_id %}
+  {% initial_page_data "couch_user_username" couch_user.username %}
+  {% initial_page_data "hide_password_feedback" hide_password_feedback %}
+  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
+  {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}
+  {% initial_page_data "path" request.path %}
+  {% if couch_user.is_demo_user %}
     <p class="alert alert-warning">
-        {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
+      {% trans "This user is marked as a demo user.  All forms submitted by this user will be ignored and not appear in reports or data exports" %}
     </p>
+  {% endif %}
+  <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
+    <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
+    <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
+    {% if commtrack_enabled or uses_locations %}
+      <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
-    <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
-        <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
-        <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
-        {% if commtrack_enabled or uses_locations %}
-        <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
-        {% endif %}
-        {% if not request.is_view_only %}
-        <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
-        {% endif %}
-        {% if not is_currently_logged_in_user and not request.is_view_only %}
-        <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
-        {% endif %}
-    </ul>
-    <div class="tab-content" id="settings">
-        <div class="tab-pane" id="basic-info">
-            <div class="panel-body">
-                {% include 'users/partials/basic_info_form.html' with user_type="mobile"%}
-            </div>
-        </div>
-
-        <div class="tab-pane" id="groups">
-            <div class="panel-body">
-                {% include 'users/partials/commcare_user_groups.html' %}
-            </div>
-        </div>
-        {% if commtrack %}
-        <div class="tab-pane" id="commtrack-data">
-            <div class="panel-body">
-                {% if couch_user.user_location_id %}
-                    <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
-                        <i class="fa fa-external-link"></i> {% trans "User Location" %}
-                    </a>
-                {% endif %}
-                {% include "users/partials/edit_commtrack_user_settings.html" %}
-            </div>
-        </div>
-        {% endif %}
-        {% if not request.is_view_only %}
-        <div class="tab-pane" id="user-password">
-            <div class="panel-body">
-                {% include 'users/partials/reset_password.html' %}
-            </div>
-        </div>
-        {% endif %}
-        {% if not is_currently_logged_in_user and not request.is_view_only %}
-        <div class="tab-pane" id="user-permanent">
-            <div class="panel-body">
-                <div class="form form-horizontal">
-                    <fieldset>
-                        <legend>{% trans 'Delete Mobile Worker' %}</legend>
-                        <div class="alert alert-danger">
-                            <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
-                            <p>
-                                <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
-                                    <i class="fa fa-trash"></i> {% trans "Delete Mobile Worker" %}
-                                </a>
-                            </p>
-                        </div>
-                    </fieldset>
-                </div>
-                {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
-                <div class="alert alert-info">
-                    <p>
-                        <i class="fa fa-info-circle"></i>
-                        {% if couch_user.is_demo_user %}
-                            {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-                                Turn off demo mode to allow this mobile worker to start sending data to {{ hq_name }} again.
-                            {% endblocktrans %}
-                        {% else %}
-                            {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
-                                This will mark the mobile worker as a demo user and {{ hq_name }} will ignore future form submissions from the user.
-                            {% endblocktrans %}
-                        {% endif %}
-                    </p>
-                    <p>
-                        <form class="form form-horizontal"
-                              action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
-                              method="post">
-                            <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
-                            {% csrf_token %}
-                                <button type="submit" class="btn btn-default">
-                                    {% if couch_user.is_demo_user %}
-                                        <i class="icon-trash"></i>
-                                        {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
-                                    {% else %}
-                                        {% trans 'Turn On Demo Mode for this Mobile Worker' %}
-                                    {% endif %}
-                                </button>
-                        </form>
-                    </p>
-                    {% if couch_user.is_demo_user %}
-                    <p>
-                        <form class="form form-horizontal"
-                              action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
-                              method="post">
-                              {% csrf_token %}
-                                <button type="submit" class="btn btn-default">
-                                    <i class="icon-refresh"></i>
-                                    {% trans 'Refresh Demo Mode data' %}
-                                </button>
-                                {% blocktrans with when=demo_restore_date %}
-                                    <span> Last refreshed {{ when }}</span>
-                                {% endblocktrans %}
-                        </form>
-                    </p>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
+    {% if not request.is_view_only %}
+      <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
+    {% endif %}
+    {% if not is_currently_logged_in_user and not request.is_view_only %}
+      <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+    {% endif %}
+  </ul>
+  <div class="tab-content" id="settings">
+    <div class="tab-pane" id="basic-info">
+      <div class="panel-body">
+        {% include 'users/partials/basic_info_form.html' with user_type="mobile"%}
+      </div>
     </div>
+
+    <div class="tab-pane" id="groups">
+      <div class="panel-body">
+        {% include 'users/partials/commcare_user_groups.html' %}
+      </div>
+    </div>
+    {% if commtrack %}
+      <div class="tab-pane" id="commtrack-data">
+        <div class="panel-body">
+          {% if couch_user.user_location_id %}
+            <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
+              <i class="fa fa-external-link"></i> {% trans "User Location" %}
+            </a>
+          {% endif %}
+          {% include "users/partials/edit_commtrack_user_settings.html" %}
+        </div>
+      </div>
+    {% endif %}
+    {% if not request.is_view_only %}
+      <div class="tab-pane" id="user-password">
+        <div class="panel-body">
+          {% include 'users/partials/reset_password.html' %}
+        </div>
+      </div>
+    {% endif %}
+    {% if not is_currently_logged_in_user and not request.is_view_only %}
+      <div class="tab-pane" id="user-permanent">
+        <div class="panel-body">
+          <div class="form form-horizontal">
+            <fieldset>
+              <legend>{% trans 'Delete Mobile Worker' %}</legend>
+              <div class="alert alert-danger">
+                <p><i class="fa fa-exclamation-triangle"></i> {% trans 'The following action is permanent!' %}</p>
+                <p>
+                  <a class="btn btn-danger" href="#delete_user_{{ couch_user.user_id }}" data-toggle="modal">
+                    <i class="fa fa-trash"></i> {% trans "Delete Mobile Worker" %}
+                  </a>
+                </p>
+              </div>
+            </fieldset>
+          </div>
+          {% if request|toggle_enabled:"MOBILE_USER_DEMO_MODE" or couch_user.is_demo_user %}
+            <div class="alert alert-info">
+              <p>
+                <i class="fa fa-info-circle"></i>
+                {% if couch_user.is_demo_user %}
+                  {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+                    Turn off demo mode to allow this mobile worker to start sending data to {{ hq_name }} again.
+                  {% endblocktrans %}
+                {% else %}
+                  {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME %}
+                    This will mark the mobile worker as a demo user and {{ hq_name }} will ignore future form submissions from the user.
+                  {% endblocktrans %}
+                {% endif %}
+              </p>
+              <p>
+              <form class="form form-horizontal"
+                    action="{% url "toggle_demo_mode" domain couch_user.user_id %}"
+                    method="post">
+                <input type="hidden" name="demo_mode" value="{{ couch_user.is_demo_user|yesno:"no,yes" }}" />
+                {% csrf_token %}
+                <button type="submit" class="btn btn-default">
+                  {% if couch_user.is_demo_user %}
+                    <i class="icon-trash"></i>
+                    {% trans 'Turn Off Demo Mode for this Mobile Worker' %}
+                  {% else %}
+                    {% trans 'Turn On Demo Mode for this Mobile Worker' %}
+                  {% endif %}
+                </button>
+              </form>
+              </p>
+              {% if couch_user.is_demo_user %}
+                <p>
+                <form class="form form-horizontal"
+                      action="{% url "reset_demo_user_restore" domain couch_user.user_id %}"
+                      method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-default">
+                    <i class="icon-refresh"></i>
+                    {% trans 'Refresh Demo Mode data' %}
+                  </button>
+                  {% blocktrans with when=demo_restore_date %}
+                    <span> Last refreshed {{ when }}</span>
+                  {% endblocktrans %}
+                </form>
+                </p>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
 {% endblock %}
 
 {% block modals %} {{ block.super }}
-    {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
-    {% if not is_currently_logged_in_user %}
+  {% include 'users/partials/basic_info_modals.html' with user_type='mobile' %}
+  {% if not is_currently_logged_in_user %}
     <div id="delete_user_{{ couch_user.user_id }}" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
-                        <small>{% trans "Permanent Action" %}</small>
-                    </h4>
-                </div>
-                <form class="form-horizontal"
-                      style="margin: 0; padding: 0"
-                      action="{% url "delete_commcare_user" domain couch_user.user_id %}"
-                      method="post"
-                      data-bind="submit: submit">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <p class="alert alert-warning">
-                            <i class="fa fa-exclamation-triangle"></i>
-                            {% trans "Bad things will happen if you don't read this" %}
-                        </p>
-                        <p>
-                            {% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                            Are you sure you want to permanently delete <strong>{{ friendly_name }}</strong>?
-                            {% endblocktrans %}
-                        </p>
-                        <p>{% trans "This action:" %}</p>
-                        <ul>
-                            <li>
-                                {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}. They will no longer be able to sync or submit any data from their mobile devices.{% endblocktrans %}
-                            </li>
-                            <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                                Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
-                            {% endblocktrans %}</li>
-                            <li>{% trans "Is permanent." %}</li>
-                        </ul>
-                        <p>
-                            {% blocktrans with couch_user.human_friendly_name as friendly_name %}
-                            If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
-                                <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly%22Archive%22)andDeleteMobileWorkers" target="_blank">described here</a>.
-                            {% endblocktrans %}
-                        </p>
-                        <p>
-                            {% blocktrans with couch_user.username as username %}
-                            If even after reading this you decide that you really want
-                            to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
-                            {% endblocktrans %}
-                        </p>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">{% blocktrans with couch_user.human_friendly_name as friendly_name %}Delete Mobile Worker {{ friendly_name }}?{% endblocktrans %}
+              <small>{% trans "Permanent Action" %}</small>
+            </h4>
+          </div>
+          <form class="form-horizontal"
+                style="margin: 0; padding: 0"
+                action="{% url "delete_commcare_user" domain couch_user.user_id %}"
+                method="post"
+                data-bind="submit: submit">
+            {% csrf_token %}
+            <div class="modal-body">
+              <p class="alert alert-warning">
+                <i class="fa fa-exclamation-triangle"></i>
+                {% trans "Bad things will happen if you don't read this" %}
+              </p>
+              <p>
+                {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                  Are you sure you want to permanently delete <strong>{{ friendly_name }}</strong>?
+                {% endblocktrans %}
+              </p>
+              <p>{% trans "This action:" %}</p>
+              <ul>
+                <li>
+                  {% blocktrans with couch_user.human_friendly_name as friendly_name %}Will delete {{ friendly_name }}. They will no longer be able to sync or submit any data from their mobile devices.{% endblocktrans %}
+                </li>
+                <li>{% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                  Will delete <strong>all</strong> of {{ friendly_name }}'s form submissions.
+                {% endblocktrans %}</li>
+                <li>{% trans "Is permanent." %}</li>
+              </ul>
+              <p>
+                {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                  If you ever want to use {{ friendly_name }}'s data in the future, we suggest that you use the <strong>Deactivate User</strong> option
+                  <a href="https://confluence.dimagi.com/display/commcarepublic/Create+and+Manage+CommCare+Mobile+Workers#CreateandManageCommCareMobileWorkers-D.Deactivate(Formerly%22Archive%22)andDeleteMobileWorkers" target="_blank">described here</a>.
+                {% endblocktrans %}
+              </p>
+              <p>
+                {% blocktrans with couch_user.username as username %}
+                  If even after reading this you decide that you really want
+                  to delete this user and all of their data, type <strong>{{ username }}</strong> into the box below.
+                {% endblocktrans %}
+              </p>
 
-                        <input class="form-control" data-bind="value: signOff, valueUpdate: 'textchange'" />
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-                        <button type="submit" class="btn btn-danger" data-bind="
+              <input class="form-control" data-bind="value: signOff, valueUpdate: 'textchange'" />
+            </div>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+              <button type="submit" class="btn btn-danger" data-bind="
                              css: {disabled: disabled()},
                              attr: {disabled: disabled()}
                          ">
-                             <i id="delete-user-icon" class="fa fa-trash" data-bind="
+                <i id="delete-user-icon" class="fa fa-trash" data-bind="
                                  css: {
                                      'fa-trash': !formDeleteUserSent(),
                                      'fa-refresh': formDeleteUserSent,
                                      'fa-spin': formDeleteUserSent
                                  }
                              "></i>
-                             {% trans "Delete Mobile Worker" %}
-                         </button>
-                    </div>
-                </form>
+                {% trans "Delete Mobile Worker" %}
+              </button>
             </div>
+          </form>
         </div>
+      </div>
     </div>
-    {% endif %}
+  {% endif %}
 {% endblock %}
