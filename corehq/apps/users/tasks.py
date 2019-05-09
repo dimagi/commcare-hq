@@ -295,5 +295,6 @@ def remove_unused_custom_fields_from_users_task(domain):
 
 @task()
 def update_domain_date(user, domain):
-    user.domains_accessed[domain] = datetime.today()
+    domain_membership = user.get_domain_membership(domain)
+    domain_membership.last_accessed = datetime.today().date()
     user.save()
