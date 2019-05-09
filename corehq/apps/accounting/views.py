@@ -95,7 +95,7 @@ from corehq.apps.accounting.models import (
     Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription, CustomerBillingRecord,
     SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod, InvoicePdf
 )
-from corehq.apps.accounting.tasks import email_enterprise_report
+from corehq.apps.accounting.tasks import email_enterprise_report_json_args
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
@@ -1265,7 +1265,7 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
 def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
-    email_enterprise_report.delay(domain, slug, request.couch_user)
+    email_enterprise_report_json_args.delay(domain, slug, request.couch_user.get_id)
     message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
