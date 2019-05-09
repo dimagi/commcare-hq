@@ -15,7 +15,7 @@ hqDefine('reports/v2/js/datagrid/report_filters', [
         self.value = ko.observableArray();
         self.defaultValue = ko.observable(data.defaultValue);
         self.placeholder = ko.computed(function () {
-            return gettext("Select") + " " + self.title() + "...";
+            return _.template(gettext("Select <%= title %>..."))({ title: self.title() });
         });
 
         self.endpoint = data.endpoint;
